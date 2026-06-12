@@ -2595,7 +2595,7 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagKubernetesFolderCascadeDelete,
 		},
-		// The cascade watcher polls; keep it short so the multi-level cascade converges quickly.
+		// The cascade poller polls; keep it short so the multi-level cascade converges quickly.
 		FolderCascadeDeletePollInterval: time.Second,
 	})
 
@@ -2637,6 +2637,30 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 	createFolder(t, childAUID, rootUID)
 	createFolder(t, childBUID, rootUID)
 	createFolder(t, grandchildUID, childAUID)
+
+	// Put a dashboard inside a leaf folder so we also exercise content deletion: the cascade must
+	// delete the folder's contained resources (via the folder service registry) before removing the
+	// finalizer, otherwise the dashboard would be orphaned.
+	dashPayload := fmt.Sprintf(`{"dashboard": {"title": "cascade-dash"}, "folderUid": %q}`, childBUID)
+	dashCreate := apis.DoRequest(helper, apis.RequestParams{
+		User:   client.Args.User,
+		Method: http.MethodPost,
+		Path:   "/api/dashboards/db",
+		Body:   []byte(dashPayload),
+	}, &map[string]any{})
+	require.Equal(t, http.StatusOK, dashCreate.Response.StatusCode, "dashboard create should succeed: %s", string(dashCreate.Body))
+	dashboardUID, _ := (*dashCreate.Result)["uid"].(string)
+	require.NotEmpty(t, dashboardUID)
+
+	dashboardExists := func() bool {
+		getDash := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodGet,
+			Path:   fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/%s/dashboards/%s", client.Args.Namespace, dashboardUID),
+		}, &map[string]any{})
+		return getDash.Response.StatusCode == http.StatusOK
+	}
+	require.True(t, dashboardExists(), "dashboard should exist before the cascade")
 
 	// Best-effort cleanup if the cascade does not complete.
 	t.Cleanup(func() {
@@ -2683,4 +2707,7 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 		}
 		time.Sleep(time.Second)
 	}
+
+	// The dashboard contained in child-b must have been deleted as part of the cascade, not orphaned.
+	require.False(t, dashboardExists(), "dashboard in a cascaded folder should have been deleted")
 }

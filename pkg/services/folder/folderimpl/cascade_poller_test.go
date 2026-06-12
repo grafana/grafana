@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"sync"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -93,14 +95,14 @@ func TestListDirectChildFolders_marksTerminatingFromLabel(t *testing.T) {
 }
 
 func TestCascadePoller_Run_disabledByFeatureFlag(t *testing.T) {
-	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
+	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return false }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
 }
 
 func TestCascadePoller_Run_enabledFlagWithoutRestConfig(t *testing.T) {
-	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil)
+	w := ProvideCascadePoller(setting.NewCfg(), apiserver.WithoutRestConfig, nil, nil, nil, nil, nil)
 	w.flagEnabled = func(context.Context) bool { return true }
 	err := w.Run(context.Background())
 	require.NoError(t, err)
@@ -199,6 +201,52 @@ func TestCascadePoller_finalizeTerminatingFolder_marksChildrenAndKeepsFinalizer(
 	require.NotNil(t, mut.deleted[0].gracePeriod)
 	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
 	// Folder still has children, so its finalizer is NOT removed yet.
+	require.Empty(t, mut.finalizerRemove)
+}
+
+type fakeContentsDeleter struct {
+	deletedFolders []string
+	err            error
+}
+
+func (f *fakeContentsDeleter) deleteChildrenInFolder(_ context.Context, _ int64, folderUIDs []string, _ identity.Requester) error {
+	f.deletedFolders = append(f.deletedFolders, folderUIDs...)
+	return f.err
+}
+
+func TestCascadePoller_finalizeTerminatingFolder_deletesContentsThenRemovesFinalizer(t *testing.T) {
+	// A leaf: its contained resources (dashboards, library elements, alert rules) are deleted, then
+	// the finalizer is removed.
+	deleter := &fakeContentsDeleter{}
+	mut := &recordingFolderMutator{}
+	w := &CascadePoller{
+		folderSearch:    childSearch(map[string]bool{}),
+		folderMutator:   mut,
+		contentsDeleter: deleter,
+		log:             slog.Default(),
+	}
+	ctx := identity.WithServiceIdentityContext(context.Background(), 12)
+
+	w.finalizeTerminatingFolder(ctx, 12, "org-12", "leaf")
+
+	require.Equal(t, []string{"leaf"}, deleter.deletedFolders)
+	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
+}
+
+func TestCascadePoller_finalizeTerminatingFolder_keepsFinalizerWhenContentsDeleteFails(t *testing.T) {
+	// If deleting the contained resources fails, the finalizer is left in place to retry next tick.
+	deleter := &fakeContentsDeleter{err: errors.New("boom")}
+	mut := &recordingFolderMutator{}
+	w := &CascadePoller{
+		folderSearch:    childSearch(map[string]bool{}),
+		folderMutator:   mut,
+		contentsDeleter: deleter,
+		log:             slog.Default(),
+	}
+	ctx := identity.WithServiceIdentityContext(context.Background(), 12)
+
+	w.finalizeTerminatingFolder(ctx, 12, "org-12", "leaf")
+
 	require.Empty(t, mut.finalizerRemove)
 }
 

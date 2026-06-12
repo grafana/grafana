@@ -64,13 +64,20 @@ type orgLister interface {
 	Search(ctx context.Context, query *org.SearchOrgsQuery) ([]*org.OrgDTO, error)
 }
 
+// folderContentsDeleter deletes the non-folder resources contained in folders (dashboards,
+// library elements, alert rules) via the folder service registry. *Service satisfies it.
+type folderContentsDeleter interface {
+	deleteChildrenInFolder(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error
+}
+
 // CascadePoller drives terminating folders to completion. The folders API server marks a deleted
 // folder terminating and best-effort marks its subtree asynchronously; this poller is the source
 // of truth: every poll interval it enumerates orgs and, per org, searches for folders carrying the
-// terminating label. For each one it marks any not-yet-terminating direct children terminating (so
-// the mark always reaches the leaves even if the API server's async pass didn't finish), and once
-// a folder has no children left it removes the finalizer so the folder can be garbage-collected --
-// bottom-up, so a parent never outlives its subtree.
+// terminating label. For each one it marks any not-yet-terminating direct child folders terminating
+// (so the mark always reaches the leaves even if the API server's async pass didn't finish), and
+// once a folder has no child folders left it deletes the folder's contained resources (dashboards,
+// library elements, alert rules) and then removes the finalizer so the folder can be
+// garbage-collected -- bottom-up, so a parent never outlives its subtree.
 //
 // Discovery is a periodic poll, not a List+Watch: one search per org per tick, cheap when nothing
 // is terminating thanks to the label filter. The sweep is guarded by serverlock so only one
@@ -81,6 +88,7 @@ type CascadePoller struct {
 	namespaceMapper request.NamespaceMapper
 	folderSearch    folderSearcher
 	folderMutator   folderMutator
+	contentsDeleter folderContentsDeleter
 	serverLock      *serverlock.ServerLockService
 	flagEnabled     func(ctx context.Context) bool
 	log             *slog.Logger
@@ -94,6 +102,7 @@ func ProvideCascadePoller(
 	userService user.Service,
 	orgService org.Service,
 	serverLock *serverlock.ServerLockService,
+	folderService *Service,
 ) *CascadePoller {
 	folderSearch := client.NewK8sHandler(
 		request.GetNamespaceMapper(cfg),
@@ -111,6 +120,7 @@ func ProvideCascadePoller(
 		orgs:            orgService,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		folderSearch:    folderSearch,
+		contentsDeleter: folderService,
 		serverLock:      serverLock,
 		flagEnabled:     cascadeDeleteFlagEnabled,
 		log:             slog.Default().With("logger", "folder-cascade-poller"),
@@ -241,6 +251,12 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 	}
 
 	if len(children) == 0 {
+		// No child folders left: delete the folder's contained resources (dashboards, library
+		// elements, alert rules) before removing the finalizer, so they aren't orphaned by GC.
+		if err := w.deleteFolderContents(ctx, orgID, name); err != nil {
+			w.log.Warn("folder cascade poll: delete folder contents failed", "namespace", namespace, "name", name, "error", err)
+			return // keep the finalizer and retry next tick
+		}
 		if err := w.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name); err != nil && !apierrors.IsNotFound(err) {
 			w.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
 		}
@@ -258,6 +274,20 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 			w.log.Warn("folder cascade poll: mark child terminating failed", "namespace", namespace, "parent", name, "child", child.name, "error", err)
 		}
 	}
+}
+
+// deleteFolderContents deletes the non-folder resources contained in folderUID (dashboards,
+// library elements, alert rules) via the folder service registry, under the poller's service
+// identity.
+func (w *CascadePoller) deleteFolderContents(ctx context.Context, orgID int64, folderUID string) error {
+	if w.contentsDeleter == nil {
+		return nil
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	return w.contentsDeleter.deleteChildrenInFolder(ctx, orgID, []string{folderUID}, user)
 }
 
 // searchTerminatingFolders returns the UIDs of folders in orgID that carry the terminating label,
