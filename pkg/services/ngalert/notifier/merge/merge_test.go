@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/alerting/definition"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/assert"
@@ -407,7 +408,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		require.NoError(t, err)
 		route := mcfg.Route
 		RenameResourceUsagesInRoutes([]*v1.Route{route}, renames)
-		inhibitRules, err := BuildManagedInhibitionRules(identifier, mcfg.InhibitRules, models.ProvenanceConvertedPrometheus)
+		inhibitRules, _, err := MergeInhibitionRules(nil, mcfg.InhibitRules, identifier)
 		require.NoError(t, err)
 		return v1.ManagedRoutes{identifier: route}, inhibitRules
 	}
@@ -583,7 +584,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		assert.ElementsMatch(t, []string{"recv", "recv2"}, result.AddedReceivers)
 		assert.ElementsMatch(t, []string{"mti-2", "ti-2"}, result.AddedTimeIntervals)
 		assert.Empty(t, result.AddedTemplates)
-		assert.ElementsMatch(t, []string{"mimir-12345-imported-inhibition-rule-0000"}, result.AddedInhibitionRules)
+		assert.Len(t, result.AddedInhibitionRules, 1)
 	})
 
 	t.Run("should report renamed receiver in stats", func(t *testing.T) {
@@ -685,5 +686,101 @@ func TestMergeExtraConfig(t *testing.T) {
 		}
 		_, _, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, templateName)
+	})
+}
+
+func TestMergeInhibitionRules(t *testing.T) {
+	mkMatcher := func(name, value string) *labels.Matcher {
+		return &labels.Matcher{Type: labels.MatchEqual, Name: name, Value: value}
+	}
+	rule := func(srcLabel, tgtLabel string) config.InhibitRule {
+		return config.InhibitRule{
+			SourceMatchers: config.Matchers{mkMatcher("alertname", srcLabel)},
+			TargetMatchers: config.Matchers{mkMatcher("alertname", tgtLabel)},
+		}
+	}
+
+	t.Run("empty incoming returns existing unchanged with empty added", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.InhibitionRule{
+			"uid1": v1.NewInhibitionRule("uid1", nil, nil, nil, models.ProvenanceNone),
+		}
+		result, added, err := MergeInhibitionRules(existing, nil, "id")
+		require.NoError(t, err)
+		assert.Equal(t, existing, result)
+		assert.Empty(t, added)
+	})
+
+	t.Run("existing rules are preserved alongside incoming", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.InhibitionRule{
+			"existing-uid": v1.NewInhibitionRule("existing-uid", nil, nil, nil, models.ProvenanceNone),
+		}
+		result, added, err := MergeInhibitionRules(existing, []config.InhibitRule{rule("src", "tgt")}, "id")
+		require.NoError(t, err)
+		assert.Contains(t, result, v1.ResourceUID("existing-uid"))
+		assert.Len(t, result, 2)
+		assert.Len(t, added, 1)
+	})
+
+	t.Run("identifier scope matcher is appended last on both source and target", func(t *testing.T) {
+		identifier := "my-scope"
+		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("critical", "warning")}, identifier)
+		require.NoError(t, err)
+		require.Len(t, added, 1)
+		ir := result[v1.ResourceUID(added[0])]
+
+		require.NotEmpty(t, ir.SourceMatchers)
+		last := ir.SourceMatchers[len(ir.SourceMatchers)-1]
+		assert.Equal(t, models.NamedRouteLabel, last.Label)
+		assert.Equal(t, identifier, last.Value)
+
+		require.NotEmpty(t, ir.TargetMatchers)
+		last = ir.TargetMatchers[len(ir.TargetMatchers)-1]
+		assert.Equal(t, models.NamedRouteLabel, last.Label)
+		assert.Equal(t, identifier, last.Value)
+	})
+
+	t.Run("UID is deterministic for the same inputs", func(t *testing.T) {
+		incoming := []config.InhibitRule{rule("src", "tgt")}
+		result1, added1, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		result2, added2, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("different rules produce different UIDs", func(t *testing.T) {
+		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("a", "b"), rule("c", "d")}, "id")
+		require.NoError(t, err)
+		require.Len(t, added, 2)
+		assert.NotEqual(t, added[0], added[1])
+		assert.Len(t, result, 2)
+	})
+
+	t.Run("deprecated source_match and target_match fields are folded in", func(t *testing.T) {
+		incoming := []config.InhibitRule{
+			{
+				SourceMatch: map[string]string{"alertname": "test"},
+				TargetMatch: map[string]string{"severity": "warning"},
+			},
+		}
+		result, added, err := MergeInhibitionRules(nil, incoming, "id")
+		require.NoError(t, err)
+		require.Len(t, added, 1)
+		ir := result[v1.ResourceUID(added[0])]
+
+		var hasSourceLabel, hasTargetLabel bool
+		for _, m := range ir.SourceMatchers {
+			if m.Label == "alertname" && m.Value == "test" {
+				hasSourceLabel = true
+			}
+		}
+		for _, m := range ir.TargetMatchers {
+			if m.Label == "severity" && m.Value == "warning" {
+				hasTargetLabel = true
+			}
+		}
+		assert.True(t, hasSourceLabel)
+		assert.True(t, hasTargetLabel)
 	})
 }

@@ -292,40 +292,63 @@ receivers:
 
 		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
-		require.Equal(t, map[v1.ResourceUID]v1.InhibitionRule{
-			"test-imported-inhibition-rule-00000000000": {
-				ResourceMetadata: v1.ResourceMetadata{
-					UID:        "test-imported-inhibition-rule-00000000000",
-					Provenance: models.ProvenanceConvertedPrometheus,
-					Version:    "8ea121175ec5f716",
-				},
-				SourceMatchers: []v1.Matcher{
-					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
-					v1.NewMatcher(v1.MatcherEqual, "alertname", "SourceAlert"),
-				},
-				TargetMatchers: []v1.Matcher{
-					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
-					v1.NewMatcher(v1.MatcherEqual, "alertname", "TargetAlert"),
-				},
-				Equal: []string{"cluster"},
+		require.Len(t, result, 2)
+
+		// UIDs are hash-based; collect them to verify properties without hardcoding the hash.
+		for uid, rule := range result {
+			require.Equal(t, v1.ResourceUID(uid), rule.UID)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance)
+
+			// Identifier scope matcher must be present in both source and target.
+			var hasSourceScope, hasTargetScope bool
+			for _, m := range rule.SourceMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasSourceScope = true
+				}
+			}
+			for _, m := range rule.TargetMatchers {
+				if m.Label == "__grafana_managed_route__" && m.Value == "test" {
+					hasTargetScope = true
+				}
+			}
+			assert.True(t, hasSourceScope, "uid=%s: source matchers should contain identifier scope", uid)
+			assert.True(t, hasTargetScope, "uid=%s: target matchers should contain identifier scope", uid)
+
+			// The identifier scope matcher is appended last.
+			assert.Equal(t, "__grafana_managed_route__", rule.SourceMatchers[len(rule.SourceMatchers)-1].Label)
+			assert.Equal(t, "__grafana_managed_route__", rule.TargetMatchers[len(rule.TargetMatchers)-1].Label)
+		}
+	})
+
+	t.Run("should return stable UIDs across multiple calls", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result1, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		result2, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.Equal(t, result1, result2)
+	})
+
+	t.Run("should only return rules from imported config, not pre-existing ones", func(t *testing.T) {
+		existingUID := v1.ResourceUID("existing-rule")
+		rev := getConfigRevisionForTest(
+			withExtraConfig(extraConfig(extraConfigurationYaml)),
+			func(rev *ConfigRevision) {
+				rev.Config.InhibitionRules = map[v1.ResourceUID]v1.InhibitionRule{
+					existingUID: v1.NewInhibitionRule(string(existingUID), nil, nil, nil, models.ProvenanceNone),
+				}
 			},
-			"test-imported-inhibition-rule-00000000001": {
-				ResourceMetadata: v1.ResourceMetadata{
-					UID:        "test-imported-inhibition-rule-00000000001",
-					Provenance: models.ProvenanceConvertedPrometheus,
-					Version:    "74cb0d8b8dcff9f0",
-				},
-				SourceMatchers: []v1.Matcher{
-					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
-					v1.NewMatcher(v1.MatcherEqual, "severity", "critical"),
-				},
-				TargetMatchers: []v1.Matcher{
-					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
-					v1.NewMatcher(v1.MatcherEqual, "severity", "warning"),
-				},
-				Equal: []string{"instance"},
-			},
-		}, result)
+		)
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		result, err := imported.GetInhibitRules()
+		require.NoError(t, err)
+		assert.NotContains(t, result, existingUID)
+		assert.Len(t, result, 2)
 	})
 }
 

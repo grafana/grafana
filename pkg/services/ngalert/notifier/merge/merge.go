@@ -11,13 +11,13 @@ package merge
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"math"
-	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/utils/hash"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -143,18 +143,9 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 		managedRoutes[mimirCfg.Identifier] = extraRoute
 	}
 
-	var addedInhibitionRules []string
-	managedInhibitionRules := make(map[v1.ResourceUID]v1.InhibitionRule, len(mcfg.InhibitRules)+len(cfg.InhibitionRules))
-	{
-		maps.Copy(managedInhibitionRules, cfg.InhibitionRules)
-		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, provenance)
-		if err != nil {
-			return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
-		}
-		for uid := range importedRules {
-			addedInhibitionRules = append(addedInhibitionRules, string(uid))
-		}
-		maps.Copy(managedInhibitionRules, importedRules)
+	managedInhibitionRules, addedInhibitionRules, err := MergeInhibitionRules(cfg.InhibitionRules, mcfg.InhibitRules, mimirCfg.Identifier)
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to merge inhibition rules: %w", err)
 	}
 
 	var addedTemplates []string
@@ -336,54 +327,52 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 	return usedNames
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance models.Provenance) (map[v1.ResourceUID]v1.InhibitionRule, error) {
-	scopedRules := applyManagedRouteMatcher(identifier, rules)
-
-	res := make(map[v1.ResourceUID]v1.InhibitionRule, len(scopedRules))
-	for i, rule := range scopedRules {
-		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
-
-		intFmt := "%d"
-		if padLength := util.MaxUIDLength - len(namePrefix); padLength >= 0 {
-			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
+// MergeInhibitionRules merges incoming Alertmanager inhibition rules into an existing set of Grafana-managed ones.
+// Each incoming rule is scoped to the given identifier by appending a matcher on models.NamedRouteLabel,
+// and all deprecated match/match_re fields are folded into the modern matchers slice.
+// UIDs are derived from a stable hash of (rule, index, identifier); collisions fall back to a short random UID.
+// Returns the merged map (existing + incoming) and the UIDs of the newly added rules.
+func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []config.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
+	added = make([]string, 0, len(incoming))
+	result = make(map[v1.ResourceUID]v1.InhibitionRule, len(incoming)+len(existing))
+	maps.Copy(result, existing)
+	matcher := v1.NewMatcher(v1.MatcherEqual, models.NamedRouteLabel, identifier)
+	for idx, rule := range incoming {
+		var name string
+		{
+			hasher := fnv.New64a()
+			hash.DeepHashObject(hasher, []any{rule, idx, identifier})
+			name = fmt.Sprintf("%x", hasher.Sum64()) // uid is a hash of the rule and the index, which guarantees uniqueness
+			// try to generate a stable name for the rule. Fallback to uuid if the name is already taken.
+			if _, ok := result[v1.ResourceUID(name)]; ok || len(name) > util.MaxUIDLength {
+				name = util.GenerateShortUID()
+			}
 		}
-		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir := v1.NewInhibitionRule(name, v1.MatchersToModel(rule.SourceMatchers), v1.MatchersToModel(rule.TargetMatchers), rule.Equal, provenance)
+		source := append(foldMatchers(rule.SourceMatch, rule.SourceMatchRE, rule.SourceMatchers), matcher)
+		target := append(foldMatchers(rule.TargetMatch, rule.TargetMatchRE, rule.TargetMatchers), matcher)
+		ir := v1.NewInhibitionRule(name, source, target, rule.Equal, models.ProvenanceNone)
 		if err := ir.Validate(); err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("cannot convert inhibition rule at index %d: %w", idx, err)
 		}
-
-		res[ir.UID] = ir
+		result[ir.UID] = ir
+		added = append(added, string(ir.UID))
 	}
-
-	return res, nil
+	return result, added, nil
 }
 
-func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
-	result := make([]config.InhibitRule, 0, len(rules))
-	matcher := &labels.Matcher{
-		Type:  labels.MatchEqual,
-		Name:  models.NamedRouteLabel,
-		Value: identifier,
+func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
+	out := make([]v1.Matcher, 0, len(match)+len(matchRE)+len(matchers))
+	out = append(out, v1.MatchersToModel(matchers)...)
+	for ln, lv := range match {
+		m := v1.NewMatcher(v1.MatcherEqual, ln, lv)
+		out = append(out, m)
 	}
-
-	for _, rule := range rules {
-		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
-		sm = append(sm, matcher)
-		sm = append(sm, rule.SourceMatchers...)
-
-		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
-		tm = append(tm, matcher)
-		tm = append(tm, rule.TargetMatchers...)
-
-		result = append(result, config.InhibitRule{
-			SourceMatchers: sm,
-			TargetMatchers: tm,
-			Equal:          slices.Clone(rule.Equal),
-		})
+	for ln, lv := range matchRE {
+		m := v1.NewMatcher(v1.MatcherEqualRegex, ln, lv.String())
+		out = append(out, m)
 	}
-	return result
+	return out
 }
 
 func getUniqueName[T any](name string, suffix string, usedNames map[string]T) string {
