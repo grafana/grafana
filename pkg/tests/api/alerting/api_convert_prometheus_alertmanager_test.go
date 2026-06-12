@@ -415,7 +415,7 @@ receivers:
 		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, "")
 		require.Empty(t, mainConfig.ExtraConfigs)
-		var receiverNames []string
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
 		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
 			receiverNames = append(receiverNames, r.Name)
 		}
@@ -473,7 +473,7 @@ receivers:
 
 		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, "")
-		var receiverNames []string
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
 		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
 			receiverNames = append(receiverNames, r.Name)
 		}
@@ -568,7 +568,7 @@ receivers:
 		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, "")
 		require.Empty(t, mainConfig.ExtraConfigs)
-		var receiverNames []string
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
 		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
 			receiverNames = append(receiverNames, r.Name)
 		}
@@ -606,7 +606,7 @@ receivers:
 		// The renamed receiver must appear in the main config under its new name.
 		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
 		requireStatusCode(t, http.StatusOK, status, "")
-		var receiverNames []string
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
 		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
 			receiverNames = append(receiverNames, r.Name)
 		}
