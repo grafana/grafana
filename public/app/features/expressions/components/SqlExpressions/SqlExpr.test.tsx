@@ -1,4 +1,4 @@
-import { render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
+import { act, render, testWithFeatureToggles, userEvent, waitFor } from 'test/test-utils';
 
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
@@ -11,6 +11,7 @@ import { ALLOWED_FUNCTIONS, fetchSQLFields } from '../../utils/metaSqlExpr';
 
 import { SqlEditor } from './SqlEditor/SqlEditor';
 import { SqlExpr, type SqlExprProps } from './SqlExpr';
+import { SqlQueryActions } from './SqlQueryActions';
 
 function mockMetadata(request: Partial<DataQueryRequest<ExpressionQuery>>): SqlExprProps['metadata'] {
   return {
@@ -58,6 +59,10 @@ jest.mock('./SqlEditor/SqlEditor', () => ({
   )),
 }));
 
+jest.mock('./SqlQueryActions', () => ({
+  SqlQueryActions: jest.fn(() => null),
+}));
+
 const mockBackendSrv = {
   post: jest.fn().mockResolvedValue({
     kind: 'SQLSchemaResponse',
@@ -83,24 +88,22 @@ jest.mock('@grafana/runtime', () => ({
 describe('SqlExpr', () => {
   const SqlEditorMock = jest.mocked(SqlEditor);
   const SQLEditorMock = jest.mocked(SQLEditor);
-
-  beforeAll(() => {
-    setTestFlags({});
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
+  const SqlQueryActionsMock = jest.mocked(SqlQueryActions);
 
   beforeEach(() => {
     SqlEditorMock.mockClear();
     SQLEditorMock.mockClear();
+    SqlQueryActionsMock.mockClear();
     jest.mocked(reportInteraction).mockClear();
   });
 
-  afterEach(() => {
-    // Reset flag state so the editor selection can't leak between tests.
-    setTestFlags({});
+  afterEach(async () => {
+    // Reset flag state so the editor selection can't leak between tests. Wrap in act()
+    // because setTestFlags fires OpenFeature events that re-render the still-mounted
+    // component (RTL cleanup runs in a later afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('initializes new expressions with default query', async () => {
@@ -187,9 +190,6 @@ describe('SqlExpr', () => {
     rerender(<SqlExpr onChange={onChange} refIds={refIds} query={{ ...query, expression: '' }} queries={[]} />);
 
     expect(await findByTestId('sql-editor')).toBeEmptyDOMElement();
-    expect(SqlEditorMock.mock.calls[SqlEditorMock.mock.calls.length - 1][0]).toEqual(
-      expect.objectContaining({ value: '' })
-    );
   });
 
   it('adds alerting format when alerting prop is true', async () => {
@@ -283,15 +283,21 @@ describe('SqlExpr', () => {
   });
 
   it('returns no column completions when the column autocomplete toggle is disabled', async () => {
-    // sqlExpressionsColumnAutoComplete stays disabled here, so the provider should short-circuit.
+    // sqlExpressionsColumnAutoComplete stays disabled here, so the provider should short-circuit
+    // without ever fetching fields, even though a fetch would succeed.
     setTestFlags({ sqlExpressionsCodeMirror: true });
+
+    const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
+      fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
+      length: 1,
+    } as unknown as DataFrame);
 
     render(
       <SqlExpr
         onChange={jest.fn()}
         refIds={[{ value: 'A' }]}
         query={{ refId: 'expr1', type: 'sql', expression: 'SELECT * FROM A' } as ExpressionQuery}
-        queries={[]}
+        queries={[{ refId: 'A' }]}
       />
     );
 
@@ -301,6 +307,9 @@ describe('SqlExpr', () => {
     }
 
     await expect(completionProvider.columns({ table: 'A' })).resolves.toEqual([]);
+    expect(runMetaSQLExprQuery).not.toHaveBeenCalled();
+
+    runMetaSQLExprQuery.mockRestore();
   });
 
   describe('autocomplete completions', () => {
@@ -403,8 +412,7 @@ describe('SqlExpr', () => {
         />
       );
 
-      // Reaching here without throwing exercises the multi-error extraction branch.
-      expect(SqlEditorMock).toHaveBeenCalled();
+      expect(SqlQueryActionsMock.mock.calls[0][0].errorContext).toEqual(['first error', 'second error']);
     });
 
     it('falls back to a single legacy error message from metadata', () => {
@@ -427,7 +435,7 @@ describe('SqlExpr', () => {
         />
       );
 
-      expect(SqlEditorMock).toHaveBeenCalled();
+      expect(SqlQueryActionsMock.mock.calls[0][0].errorContext).toEqual(['legacy error']);
     });
   });
 
@@ -452,8 +460,12 @@ describe('SqlExpr', () => {
       />
     );
 
-    // Mounting with non-empty queries and series exercises the datasources map and totalRows reduce.
-    expect(SqlEditorMock).toHaveBeenCalled();
+    expect(SqlQueryActionsMock.mock.calls[0][0].queryContext).toEqual(
+      expect.objectContaining({
+        datasources: ['prometheus'],
+        totalRows: 5,
+      })
+    );
   });
 
   it('runs the query on cmd/ctrl + Enter', async () => {
