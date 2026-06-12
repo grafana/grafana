@@ -183,11 +183,11 @@ Select **Choose what to synchronize** to have the connection to your repository 
 
 ## Choose what to synchronize
 
-On this screen, you will sync the external resources you specified in the previous step with your Grafana instance. These provisioned resources will be stored in a new folder in Grafana without affecting the rest of your instance.
+On this screen, you'll sync the external resources you specified in the previous step with your Grafana instance. You can store these provisioned resources in Grafana, either at the root of the provisioned folder or in a new folder, without affecting the rest of your instance.
 
 To set up synchronization:
 
-1. Select the external storage you want to sync with your Grafana instance. The UI provides information about the available resources you can sync.
+1. Select wether you want to store synced resources in a new folder or at root level in Grafana. For more information on these options, refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets/). The UI provides information about the available resources you can sync.
 1. Enter a **Display name** for your repository connection. All the synced resources from this Git Sync connection will appear under the this name in the Grafana UI.
 1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
@@ -213,15 +213,25 @@ Click **Choose additional settings** for the final configuration steps.
 
 ## Choose additional settings
 
-In this last step, you can configure the **Sync interval (seconds)** to indicate how often you want your Grafana instance to pull updates from GitHub. The default value is 300 seconds in Grafana Cloud, and 60 seconds in Grafana OSS/Enterprise.
+In this last step, you can configure additional options for Git Sync. When you're done, click **Finish** to complete the setup.
+
+### Sync interval
+
+Use the **Sync interval (seconds)** setting to indicate how often you want your Grafana instance to automatically pull updates from the folder managed with Git Sync. The default value is 300 seconds in Grafana Cloud, and 60 seconds in Grafana OSS/Enterprise.
+
+### Other optional settings
 
 You can also select these optional settings:
 
 - Check **Read only** to ensure resources can't be modified in Grafana.
 - Check **Enable pull request option when saving** to choose whether to open a pull request when saving changes. If the repository does not allow direct changes to the main branch, a pull request may still be required.
 - Check **Enable push to configured branch** to allow direct commits to the configured branch.
+- Check **Generate dashboards previews** to create preview links for pull requests. This option requires using image rendering and activating public access.
+- Enter a **Webhook URL** to override the auto-detected URL to register webhooks.
 
-Select **Finish** to complete the setup.
+### Advanced commit options
+
+Use this option to enforce verified commits to use Git Sync. GPG, SSH, and S/MIME keys are supported.
 
 ## Verify your dashboards in Grafana
 
