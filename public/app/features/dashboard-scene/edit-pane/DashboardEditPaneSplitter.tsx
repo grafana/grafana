@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -14,9 +14,9 @@ import {
   Sidebar,
   type SidebarContextValue,
 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -28,9 +28,7 @@ import {
 import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
-import { StarButton } from '../scene/new-toolbar/actions/StarButton';
-import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
+import { BreadcrumbActions } from '../scene/new-toolbar/BreadcrumbActions';
 
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
 import { type DashboardSidebarPane } from './types';
@@ -72,11 +70,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
-
-  /**
-   * Adds star button and left side actions to app chrome breadcrumb area
-   */
-  useUpdateAppChromeActions(dashboard);
 
   const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
@@ -217,6 +210,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
 
   return (
     <AssistantPopoverContext.Provider value={popoverContextValue}>
+      <AppChromeUpdate breadcrumbActions={<BreadcrumbActions dashboard={dashboard} />} />
       <div className={styles.container}>
         <ElementSelectionContext.Provider value={selectionContext}>
           <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
@@ -250,42 +244,6 @@ function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, side
       originalPaneWidthRef.current = null;
     }
   }, [openPane, sidebarContext]);
-}
-
-function useUpdateAppChromeActions(dashboard: DashboardScene) {
-  const { chrome } = useGrafana();
-
-  useLayoutEffect(() => {
-    const hasUid = Boolean(dashboard.state.uid);
-    const canStar = Boolean(dashboard.state.meta.canStar);
-
-    const breadcrumbActions = (
-      <>
-        {hasUid && canStar && <StarButton dashboard={dashboard} />}
-        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
-        {renderDynamicNavActions()}
-      </>
-    );
-
-    chrome.update({ breadcrumbActions });
-
-    return () => {
-      chrome.update({ breadcrumbActions: undefined });
-    };
-  }, [chrome, dashboard]);
-}
-
-function renderDynamicNavActions() {
-  const dashboard = getDashboardSrv().getCurrent()!;
-  const showProps = { dashboard };
-
-  return dynamicDashNavActions.left.map((action, index) => {
-    if (action.show(showProps)) {
-      const ActionComponent = action.component;
-      return <ActionComponent key={index} dashboard={dashboard} />;
-    }
-    return null;
-  });
 }
 
 function getStyles(theme: GrafanaTheme2, headerHeight: number) {
