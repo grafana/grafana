@@ -295,10 +295,11 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		return nil
 	}
 
-	// Auth proxy keys the role asserted in the header by DefaultOrgID but never sets OrgID,
+	// Auth proxy and LDAP key the asserted role by DefaultOrgID but never set OrgID,
 	// so GetOrgRole() looks up key 0 and resolves to RoleNone. Align OrgID to DefaultOrgID so the
 	// asserted role is written to the k8s user's Spec.Role on create/update.
-	if id.OrgID == 0 && id.AuthenticatedBy == login.AuthProxyAuthModule &&
+	if id.OrgID == 0 &&
+		(id.AuthenticatedBy == login.AuthProxyAuthModule || id.AuthenticatedBy == login.LDAPAuthModule) &&
 		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
 		id.OrgID = s.cfg.DefaultOrgID()
 	}
@@ -548,6 +549,18 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		updateCmd.IsGrafanaAdmin = id.IsGrafanaAdmin
 		usr.IsAdmin = *id.IsGrafanaAdmin
 		needsUpdate = true
+	}
+
+	// Sync the asserted org role onto the k8s user's Spec.Role
+	if id.ClientParams.SyncOrgRoles && len(id.OrgRoles) > 0 &&
+		s.cfg.RBAC.SingleOrganization &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if assertedRole, ok := id.OrgRoles[id.OrgID]; ok && string(assertedRole) != usr.OrgRole {
+			role := string(assertedRole)
+			updateCmd.OrgRole = &role
+			usr.OrgRole = role
+			needsUpdate = true
+		}
 	}
 
 	span.SetAttributes(

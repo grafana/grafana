@@ -1,6 +1,6 @@
 import { defineFeatureEvents } from '@grafana/runtime/unstable';
 
-import { isSuggestedDashboardAssistantEnabled, isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
+import { isTemplateDashboardAssistantEnabled } from '../utils/assistantHelpers';
 
 import {
   type CompatibilityCheckCompletedProperties,
@@ -64,22 +64,5 @@ export const NewTemplateDashboardInteractions = {
   itemClicked: async (properties: ItemClickedProperties) => {
     const isDashboardTemplatesAssistantEnabled = await isTemplateDashboardAssistantEnabled();
     NewDashboardLibraryInteractions.itemClicked({ ...properties, isDashboardTemplatesAssistantEnabled });
-  },
-};
-
-/**
- * Dashboard Library events scoped to the Suggested Dashboards variant.
- */
-export const NewSuggestedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-
-  itemClicked: async (properties: ItemClickedProperties & { action: 'use_dashboard' | 'assistant' }) => {
-    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewDashboardLibraryInteractions.itemClicked({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
-  },
-
-  loaded: async (properties: LoadedProperties) => {
-    const isSuggestedDashboardAssistantButtonEnabled = await isSuggestedDashboardAssistantEnabled();
-    NewDashboardLibraryInteractions.loaded({ ...properties, isSuggestedDashboardAssistantButtonEnabled });
   },
 };

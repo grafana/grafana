@@ -53,7 +53,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && <ReadOnlyBadge isLocal={repoType === 'local'} />}
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
     </Stack>
   );

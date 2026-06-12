@@ -89,7 +89,7 @@ import { isManagedResourceReadOnly } from 'app/features/provisioning/utils/manag
 }
 ```
 
-Pass `isLocal` to switch the tooltip copy between git and local file provisioning. On folder and
+Pass `repoType` to switch the tooltip copy between git and local file provisioning. On folder and
 dashboard pages the read-only state also reflects a read-only repository (`isReadOnlyRepo`) resolved
 via [`useGetResourceRepositoryView`](./hooks/useGetResourceRepositoryView.ts).
 

@@ -34,12 +34,21 @@ const config: KnipConfig = {
     // we don't often use enums, but when we do we usually include members we'll utilise in the future
     'enumMembers',
   ],
-  ignore: ['**/*.gen.ts*', '**/*_gen.ts*'],
+  rules: {
+    // there are cases where duplicates are necessary e.g. React.lazy expects a default import
+    duplicates: 'off',
+  },
+  ignore: [
+    '**/*.gen.ts*',
+    '**/*_gen.ts*',
+    'public/app/features/alerting/unified/search/search.terms.js',
+    'scripts/grafana-server/tmp/**',
+    'devenv/**',
+  ],
   ignoreBinaries: ['jq', 'make', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
-      ignore: ['scripts/grafana-server/tmp/**', 'devenv/**'],
       ignoreDependencies: [
         // TODO remove these ignores when react 19 is released
         'react-19',
@@ -66,20 +75,22 @@ const config: KnipConfig = {
         'e2e-playwright/**',
 
         // paths to ignore
-        '!devenv/**',
         '!e2e-playwright/test-plugins/**',
         '!packages/**',
         '!pkg/**',
+        '!scripts/grafana-server/tmp/**',
         ...externalisedDatasources.map((ds) => `!public/app/plugins/datasource/${ds}/**`),
       ],
       entry: [
         ...defaultEntries,
         'public/app/app.ts',
         'public/app/index.ts',
+        'public/app/api/clients/**/index.ts',
+        'public/app/extensions/index.ts',
+        'public/app/extensions/api/clients/**/index.ts',
         'public/app/plugins/**/module.{ts,tsx,js}',
-        'scripts/**/*.{t,j}s*',
-        'scripts/**/*.m{t,j}s*',
-        'scripts/**/*.cjs',
+        'scripts/**/*.{t,j,mt,mj,cj}s*',
+        '!scripts/grafana-server/tmp/**',
 
         // reporter for playwright
         'e2e-playwright/utils/axe-a11y/reporter.ts',
