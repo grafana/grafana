@@ -24,11 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 func TestTeamSearchFallback(t *testing.T) {
@@ -99,7 +101,13 @@ func TestTeamSearchHandler(t *testing.T) {
 		if mockClient.LastSearchRequest == nil {
 			t.Fatalf("expected Search to be called, but it was not")
 		}
-		expectedFields := []string{"title", "fields.email", "fields.provisioned", "fields.externalUID"}
+		expectedFields := []string{
+			resource.SEARCH_FIELD_TITLE,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
+			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			teamsearch.LegacyIDField,
+		}
 		if fmt.Sprintf("%v", mockClient.LastSearchRequest.Fields) != fmt.Sprintf("%v", expectedFields) {
 			t.Errorf("expected fields %v, got %v", expectedFields, mockClient.LastSearchRequest.Fields)
 		}
