@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"strconv"
 
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -35,8 +36,8 @@ var (
 	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
 	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
 	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
-	fieldInternalID                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_INTERNAL_ID)
 	fieldCreated                                    = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_CREATED)
+	legacyIDField                                   = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
 	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{
@@ -215,10 +216,13 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_LOGIN])
 		case fieldDisabled:
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_DISABLED])
-		case fieldInternalID:
-			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_INTERNAL_ID])
 		case fieldCreated:
 			cols = append(cols, builders.UserTableColumnDefinitions[builders.USER_CREATED])
+		case legacyIDField:
+			cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
+				Name: legacyIDField,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			})
 		}
 	}
 	return cols
@@ -246,14 +250,12 @@ func createCells(u *org.OrgUserDTO, fields []string) [][]byte {
 			} else {
 				cells = append(cells, []byte{0})
 			}
-		case fieldInternalID:
-			b := make([]byte, 8)
-			binary.BigEndian.PutUint64(b, uint64(u.UserID))
-			cells = append(cells, b)
 		case fieldCreated:
 			b := make([]byte, 8)
 			binary.BigEndian.PutUint64(b, uint64(u.Created.UnixMilli()))
 			cells = append(cells, b)
+		case legacyIDField:
+			cells = append(cells, []byte(strconv.FormatInt(u.UserID, 10)))
 		}
 	}
 	return cells

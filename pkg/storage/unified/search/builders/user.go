@@ -2,10 +2,8 @@ package builders
 
 import (
 	"context"
-	"strconv"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -16,7 +14,6 @@ const (
 	USER_LAST_SEEN_AT = "lastSeenAt"
 	USER_ROLE         = "role"
 	USER_DISABLED     = "disabled"
-	USER_INTERNAL_ID  = "internalId"
 	USER_CREATED      = "createdAt"
 )
 
@@ -71,11 +68,6 @@ var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefin
 			Filterable: true,
 		},
 	},
-	USER_INTERNAL_ID: {
-		Name:        USER_INTERNAL_ID,
-		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-		Description: "The deprecated internal (legacy SQL) id of the user",
-	},
 	USER_CREATED: {
 		Name:        USER_CREATED,
 		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
@@ -117,11 +109,6 @@ func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	doc.Fields[USER_ROLE] = user.Spec.Role
 	doc.Fields[USER_DISABLED] = user.Spec.Disabled
 	doc.Fields[USER_CREATED] = doc.Created
-	if idStr, ok := doc.Labels[utils.LabelKeyDeprecatedInternalID]; ok {
-		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
-			doc.Fields[USER_INTERNAL_ID] = id
-		}
-	}
 
 	return doc, nil
 }
