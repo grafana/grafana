@@ -14,12 +14,6 @@ import { PanelLinks } from '../PanelLinks';
 
 import { PanelHeaderNotices } from './PanelHeaderNotices';
 
-export interface AngularNotice {
-  show: boolean;
-  isAngularPanel: boolean;
-  isAngularDatasource: boolean;
-}
-
 export interface Props {
   alertState?: string;
   data: PanelData;

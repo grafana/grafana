@@ -185,7 +185,7 @@ interface UserProfileRowProps {
   onChange?: (value: string) => void;
 }
 
-export const UserProfileRow = memo(
+const UserProfileRow = memo(
   ({
     label,
     value: valueProp = '',
@@ -302,7 +302,7 @@ interface LockedRowProps {
   lockMessage?: string;
 }
 
-export const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
+const LockedRow = ({ label, value, lockMessage }: LockedRowProps) => {
   const lockMessageClass = css({
     fontStyle: 'italic',
     marginRight: '0.6rem',

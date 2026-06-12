@@ -65,7 +65,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
   };
 };
 
-export const completeChangeVariableName =
+const completeChangeVariableName =
   (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> =>
   (dispatch, getState) => {
     const { rootStateKey } = identifier;

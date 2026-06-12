@@ -71,7 +71,7 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
   return 'File';
 }
 
-export function getDisplayTitle(path: string, resource?: ResourceListItem): string {
+function getDisplayTitle(path: string, resource?: ResourceListItem): string {
   if (resource?.title) {
     return resource.title;
   }

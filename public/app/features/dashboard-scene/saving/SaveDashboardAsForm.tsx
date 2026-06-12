@@ -217,11 +217,11 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
@@ -237,11 +237,11 @@ export function TitleFieldLabel(props: TitleLabelProps) {
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
