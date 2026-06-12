@@ -33,7 +33,9 @@
     }
   },
   "shape": {
-    "borderRadius": 0
+    "borderRadiusSm": 0,
+    "borderRadius": 0,
+    "borderRadiusLg": 0
   },
   "typography": {
     "fontFamily": "monospace"
