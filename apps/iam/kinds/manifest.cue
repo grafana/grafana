@@ -115,6 +115,11 @@ v0alpha1: {
 	lastSeenAt:    int64
 	lastSeenAtAge: string
 	provisioned:   bool
-	score:         float64
+	disabled:      bool
+	// Deprecated internal (legacy SQL) id of the user.
+	internalId: int64
+	// Creation timestamp, in epoch milliseconds.
+	created: int64
+	score:   float64
 	accessControl?: {[string]: bool}
 }

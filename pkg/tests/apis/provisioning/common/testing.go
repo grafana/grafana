@@ -1816,9 +1816,9 @@ func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *Fi
 }
 
 // Post sends a POST request to the given path with no body.
-func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
+func (c *FilesClient) Post(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()
-	return c.Do(t, http.MethodPost, filePath, nil)
+	return c.Do(t, http.MethodPost, filePath, body)
 }
 
 // Put sends a PUT request to the given path with a JSON body.

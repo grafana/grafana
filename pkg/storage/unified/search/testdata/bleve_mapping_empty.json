@@ -1,0 +1,274 @@
+{
+  "default_mapping": {
+    "enabled": true,
+    "dynamic": false,
+    "properties": {
+      "_all": {
+        "enabled": false,
+        "dynamic": false
+      },
+      "createdBy": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "createdBy",
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "description": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "description",
+            "type": "text",
+            "store": true,
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "fields": {
+        "enabled": true,
+        "dynamic": true
+      },
+      "folder": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "folder",
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "include_in_all": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "labels": {
+        "enabled": true,
+        "dynamic": true
+      },
+      "managedBy": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "managedBy",
+            "type": "text",
+            "analyzer": "keyword",
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "manager": {
+        "enabled": true,
+        "dynamic": false,
+        "properties": {
+          "id": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "name": "id",
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "kind": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "name": "kind",
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          }
+        }
+      },
+      "name": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "ownerReferences": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "ownerReferences",
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "reference": {
+        "enabled": true,
+        "dynamic": true,
+        "default_analyzer": "keyword"
+      },
+      "selectableFields": {
+        "enabled": true,
+        "dynamic": false
+      },
+      "source": {
+        "enabled": true,
+        "dynamic": false,
+        "properties": {
+          "checksum": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "name": "checksum",
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "path": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "name": "path",
+                "type": "text",
+                "analyzer": "keyword",
+                "store": true,
+                "index": true,
+                "skip_freq_norm": true
+              }
+            ]
+          },
+          "timestampMillis": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "number",
+                "store": true,
+                "index": true,
+                "include_in_all": true,
+                "skip_freq_norm": true
+              }
+            ]
+          }
+        }
+      },
+      "tags": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "name": "tags",
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "title": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "standard",
+            "store": true,
+            "index": true,
+            "include_in_all": true
+          }
+        ]
+      },
+      "title_ngram": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "title_analyzer",
+            "index": true,
+            "include_in_all": true
+          }
+        ]
+      },
+      "title_phrase": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "index": true,
+            "include_in_all": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      }
+    }
+  },
+  "type_field": "_type",
+  "default_type": "_default",
+  "default_analyzer": "standard",
+  "default_datetime_parser": "dateTimeOptional",
+  "scoring_model": "bm25",
+  "default_field": "_all",
+  "store_dynamic": true,
+  "index_dynamic": true,
+  "docvalues_dynamic": false,
+  "analysis": {
+    "token_filters": {
+      "ngram_filter": {
+        "max": 10,
+        "min": 3,
+        "type": "ngram"
+      }
+    },
+    "analyzers": {
+      "title_analyzer": {
+        "token_filters": [
+          "ngram_filter",
+          "to_lower",
+          "unique"
+        ],
+        "tokenizer": "whitespace",
+        "type": "custom"
+      }
+    }
+  }
+}

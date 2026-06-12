@@ -1463,6 +1463,8 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
+  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
@@ -1791,6 +1793,8 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
+  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned. */
+  commitSigningKey?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
@@ -1815,10 +1819,23 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
-  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
+  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
+  /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
+  signerEmail?: string;
+  /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
+  signerName?: string;
+  /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
+    
+    Possible enum values:
+     - `"gpg"`
+     - `"smime"`
+     - `"ssh"` */
+  signingMethod?: 'gpg' | 'smime' | 'ssh';
   /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
+  /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
+  smimeCertificate?: string;
 };
 export type ConnectionInfo = {
   name: string;
@@ -1887,7 +1904,7 @@ export type SyncOptions = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
 };
@@ -2165,7 +2182,7 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: The folderless target is not fully implemented yet. It is gated by the provisioning `allowed_targets` setting (which defaults to `folder`), so it must be explicitly enabled, and its behavior may still change.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
   /** Repository display */

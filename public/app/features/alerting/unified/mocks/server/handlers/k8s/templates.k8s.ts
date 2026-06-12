@@ -118,10 +118,6 @@ export function addTemplateToDb(title: string, content: string, kind: TemplateGr
   });
 }
 
-export function clearTemplatesDb(): void {
-  templatesDb.clear();
-}
-
 export function resetTemplatesDb(): void {
   templatesDb.clear();
   mappedTemplates.forEach((t) => templatesDb.set(t.metadata.name!, t));

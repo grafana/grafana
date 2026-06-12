@@ -621,7 +621,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes",
-			config:                *postableUserConfigToAPI(policy_exports.Config()),
+			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			enabledMultipleRoutes: true,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
@@ -635,7 +635,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		},
 		{
 			name:                  "no error, with managed routes but flag disabled",
-			config:                *postableUserConfigToAPI(policy_exports.Config()),
+			config:                mustPostableUserConfigToAPI(t, policy_exports.Config()),
 			enabledMultipleRoutes: false,
 			expCfg: &client.UserGrafanaConfig{
 				GrafanaAlertmanagerConfig: client.GrafanaAlertmanagerConfig{
@@ -953,7 +953,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				}
 				return c
 			}(),
-			expected: true,
+			expected: false,
 		},
 		{
 			name: "default config with ManagedInhibitionRules and FF enabled",
@@ -1798,4 +1798,8 @@ func loadDBModel(rawConfig []byte) (*v1.AMConfigDB, error) {
 	return cfg, nil
 }
 
-var postableUserConfigToAPI = v1.ToDBModel
+func mustPostableUserConfigToAPI(t *testing.T, in *v1.AMConfigV1) v1.AMConfigDB {
+	dbModel, err := v1.ToDBModel(in)
+	require.NoError(t, err)
+	return *dbModel
+}

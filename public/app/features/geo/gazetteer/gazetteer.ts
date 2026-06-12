@@ -25,7 +25,7 @@ export interface Gazetteer {
 }
 
 // Without knowing the datatype pick a good lookup function
-export function loadGazetteer(path: string, data: any): Gazetteer {
+function loadGazetteer(path: string, data: any): Gazetteer {
   // try loading geojson
   let frame: DataFrame | undefined = undefined;
 

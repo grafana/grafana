@@ -25,7 +25,7 @@ export interface ShareLinkTabState extends SceneShareTabState, ShareOptions {
   panelRef?: SceneObjectRef<VizPanel>;
 }
 
-export interface ShareLinkConfiguration {
+interface ShareLinkConfiguration {
   useLockedTime: boolean;
   useShortUrl: boolean;
   selectedTheme: string;

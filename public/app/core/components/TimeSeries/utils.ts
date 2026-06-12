@@ -102,7 +102,7 @@ import {
 import { ANNOTATION_LANE_SIZE } from '../../../plugins/panel/timeseries/plugins/utils';
 
 // See UPlotAxisBuilder.ts::calculateAxisSize for default axis size calculation
-export const UPLOT_DEFAULT_AXIS_SIZE = 17;
+const UPLOT_DEFAULT_AXIS_SIZE = 17;
 export const UPLOT_DEFAULT_AXIS_GAP = 5;
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));

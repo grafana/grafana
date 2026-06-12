@@ -244,6 +244,7 @@
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
 /devenv/secrets/ @grafana/grafana-operator-experience-squad
 
+/devenv/dev-dashboards/vizlegend @grafana/dataviz-squad
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-barchart @grafana/dataviz-squad
@@ -798,6 +799,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
+/mise.toml @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
@@ -1097,6 +1099,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
+/scripts/check-enterprise-linked.sh @grafana/grafana-frontend-platform
 /scripts/check-codeowner-affected.js @grafana/dataviz-squad
 /scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad

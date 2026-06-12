@@ -1103,9 +1103,6 @@
       },
       "unknown": "Unknown"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "You do not appear to have any compatible datasources."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -1183,12 +1180,6 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
-    "evaluation-group": {
-      "label-delete": "Delete",
-      "label-export": "Export",
-      "label-reorder-rules": "Re-order rules",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "A group evaluates all its rules over the same evaluation interval.",
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
@@ -1197,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Enter a name",
       "title-new-evaluation-group": "New evaluation group"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
     },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
@@ -1970,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "This data source has no rules configured",
         "new-alert-rule": "New alert rule",
-        "new-ds-managed-alerting-rule": "New data source-managed alerting rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
         "new-grafana-alerting-rule": "New alert rule",
         "new-grafana-recording-rule": "New recording rule",
@@ -2543,22 +2529,9 @@
         "aria-label": "add policy",
         "text": "New notification policy"
       },
-      "delete-reasons": {
-        "no-permissions": "You do not have the required permission to delete this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be deleted via the UI"
-      },
-      "delete-text": "Notification policy cannot be deleted for the following reasons:",
-      "empty-state": {
-        "message": "No policies found"
-      },
       "fetch": {
         "error": "Failed to fetch policies"
       },
-      "reset-reasons": {
-        "no-permissions": "You do not have the required permission to reset this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be reset via the UI"
-      },
-      "reset-text": "Notification policy cannot be reset for the following reasons:",
       "text-loading": "Loading...."
     },
     "policies-tree-wrapper": {
@@ -2768,16 +2741,6 @@
       "label-override-timings": "Override timings",
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-routing-trees": "search routing trees",
-      "clear": "Clear",
-      "label-search-by-name-or-receiver": "Search by policy name or contact point",
-      "placeholder-search": "Search"
-    },
-    "routing-tree-header": {
-      "reset": "Reset"
-    },
     "rule-actions-buttons": {
       "title-edit": "Edit",
       "title-view": "View"
@@ -2983,7 +2946,6 @@
       "return-button": {
         "title": "Alert rules"
       },
-      "rulerrule-loading-error": "Failed to load the rule",
       "toggle": {
         "use-new-experience": "Use new experience",
         "view-previous-experience": "Revert to previous experience"
@@ -3580,9 +3542,6 @@
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
-      "compact-firing": "firing",
-      "compact-pending": "pending",
-      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
@@ -5280,10 +5239,6 @@
       },
       "pane-header": "Add"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -5376,6 +5331,8 @@
     },
     "code-pane": {
       "collapse": "Collapse editor",
+      "copy-as-resource": "Copy as resource",
+      "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
       "expand": "Expand editor",
       "header": "Edit as code",
       "modal-title": "Edit dashboard as code"
@@ -5675,8 +5632,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom options"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5901,7 +5857,6 @@
     },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Error",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -5938,9 +5893,6 @@
       "panel-spec-label": "Panel Spec",
       "select-source": "Select source",
       "unknown": "Unknown Object: {{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
     },
     "inspect-stats": {
       "data-title": "Data source stats",
@@ -6019,13 +5971,6 @@
       "new-row": {
         "title": {
           "row-title": "Row title"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget title"
         }
       }
     },
@@ -6129,18 +6074,6 @@
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6421,7 +6354,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-as-template": {
@@ -6503,16 +6435,6 @@
       "discard": "Discard",
       "title-unsaved-changes": "Unsaved changes"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
@@ -6558,28 +6480,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -8810,19 +8710,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
-    "span-bar-section": {
-      "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
-      "title-span-bar": "Span bar"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Select label name",
-      "label-label": "Label",
-      "label-tag-key": "Tag key",
-      "placeholder-duration": "Duration",
-      "placeholder-enter-tag-key": "Enter tag key",
-      "tooltip-default-duration": "Default: duration",
-      "tooltip-tag-key": "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
-    },
     "span-detail": {
       "label": {
         "kind": "Kind:",
@@ -9052,9 +8939,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -9062,13 +8946,6 @@
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
       "folder-moved-success": "Folder moved"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Loading"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11032,6 +10909,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
   },
@@ -11053,10 +10931,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Change",
-      "confirmText-replace": "Replace"
     },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
@@ -11097,9 +10971,6 @@
       "select-no-options-message": "No dashboards found",
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Create new library panel"
     },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
@@ -11452,6 +11323,9 @@
         "oldest-first": "Oldest logs first",
         "show-search": "Search logs"
       },
+      "level": {
+        "unspecified": "Unspecified"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
@@ -11651,11 +11525,6 @@
     "noOptionsMessage-no-options-found": "No options found"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
-      "title": "No snapshot exists",
-      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
-    },
     "building-snapshot": {
       "description": "We're gathering your resources for migration to Grafana Cloud. This should only take a moment.",
       "description-eta": "Creating a snapshot typically takes less than two minutes.",
@@ -12513,13 +12382,6 @@
       "search": "Search",
       "starred-dashboards": "Starred dashboards"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Calculation name"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13164,6 +13026,14 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "branch-options": {
+      "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
+      "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
+      "label-branch-options": "Branch options (advanced)",
+      "label-enforce-template": "Enforce branch name template",
+      "label-name-template": "Branch name template",
+      "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -13183,12 +13053,24 @@
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
     },
+    "commit-options": {
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
+      "label-commit-options": "Commit options (advanced)",
+      "label-enforce-template": "Enforce commit message template",
+      "signer-required": "Required when commit signing is enabled.",
+      "signing-key-required": "Signing key is required",
+      "smime-certificate-configured": "Configured",
+      "smime-certificate-required": "Certificate is required"
+    },
+    "commit-signing-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13620,6 +13502,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
+      "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
+      "label-enforce-template": "Enforce pull request title template",
+      "label-pull-request-options": "Pull request options (advanced)",
+      "label-title-template": "Pull request title template",
+      "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
+    },
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
@@ -13642,6 +13532,9 @@
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
+    "read-only-badge": {
+      "text": "Read only"
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -13662,7 +13555,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -13784,11 +13676,24 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "Must match the signing key identity.",
+      "commit-signer-email-label": "Signer email",
+      "commit-signer-email-placeholder": "noreply@grafana.com",
+      "commit-signer-name-description": "Name of the commit signer.",
+      "commit-signer-name-label": "Signer name",
+      "commit-signer-name-placeholder": "Grafana",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "signing-method-description": "Sign commits so their author can be cryptographically verified.",
+      "signing-method-label": "Commit signing",
+      "signing-method-none": "None",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
@@ -14247,6 +14152,10 @@
       "query": "query",
       "transformation": "transformation"
     },
+    "queries-empty-state": {
+      "add-query": "Add query",
+      "message": "Add a query, expression, or transformation to get started"
+    },
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
@@ -14260,6 +14169,7 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
       "enter-stacked-view": "Enter stacked view",
       "exit-stacked-view": "Exit stacked view",
@@ -14270,9 +14180,11 @@
       "footer-select": "Select...",
       "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
+      "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
+      "transformations-empty": "No transformations",
       "view-toggle": "View"
     },
     "stacked": {
@@ -16634,9 +16546,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",
