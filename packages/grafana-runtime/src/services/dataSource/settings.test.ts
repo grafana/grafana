@@ -451,6 +451,29 @@ describe('instanceSettings', () => {
       expect(reload).toHaveBeenCalledTimes(1);
       expect(backendGet).not.toHaveBeenCalled();
     });
+
+    it('coalesces concurrent reloads into a single underlying reload', async () => {
+      let resolveReload: () => void = () => {};
+      const reload = jest.fn(() => new Promise<void>((resolve) => (resolveReload = resolve)));
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      const first = reloadDataSourceInstanceSettings();
+      const second = reloadDataSourceInstanceSettings();
+      resolveReload();
+      await Promise.all([first, second]);
+
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts a fresh reload once the in-flight one has settled', async () => {
+      const reload = jest.fn().mockResolvedValue(undefined);
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      await reloadDataSourceInstanceSettings();
+      await reloadDataSourceInstanceSettings();
+
+      expect(reload).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('syncDataSourceInstanceSettings', () => {

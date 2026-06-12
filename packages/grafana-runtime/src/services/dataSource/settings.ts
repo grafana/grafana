@@ -76,7 +76,21 @@ async function fetchAndPopulate(): Promise<void> {
   defaultName = settings.defaultDatasource;
 }
 
-export async function reloadDataSourceInstanceSettings(): Promise<void> {
+let inFlightReload: Promise<void> | null = null;
+
+export function reloadDataSourceInstanceSettings(): Promise<void> {
+  // Coalesce concurrent reloads so a burst of mutations triggers a single refetch
+  // rather than one backend request per caller. Cleared once settled so later calls refetch.
+  if (inFlightReload) {
+    return inFlightReload;
+  }
+  inFlightReload = performReload().finally(() => {
+    inFlightReload = null;
+  });
+  return inFlightReload;
+}
+
+async function performReload(): Promise<void> {
   const srv = getDataSourceSrv();
   if (srv) {
     await srv.reload();
@@ -357,4 +371,5 @@ export function _resetForTests(): void {
   runtimeByUid = {};
   expressionDsSettings = undefined;
   defaultName = '';
+  inFlightReload = null;
 }
