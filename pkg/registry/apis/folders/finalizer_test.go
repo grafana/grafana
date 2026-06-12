@@ -180,7 +180,7 @@ type fakeChildSearcher struct {
 
 func (f *fakeChildSearcher) Search(_ context.Context, in *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	parent := in.Options.Fields[0].Values[0]
-	rows := make([]*resourcepb.ResourceTableRow, 0)
+	rows := make([]*resourcepb.ResourceTableRow, 0, len(f.childrenByParent[parent]))
 	for _, name := range f.childrenByParent[parent] {
 		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: name}})
 	}
