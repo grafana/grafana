@@ -30,7 +30,6 @@ export interface AnnotationEvent {
   dashboardUID?: string | null;
   panelId?: number;
   userId?: number;
-  userUID?: string;
   login?: string;
   email?: string;
   avatarUrl?: string;
