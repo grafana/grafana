@@ -116,38 +116,28 @@ describe('validateNoUserInfoInUrl', () => {
 
   // Invalid inputs
   it('returns error for URL with username and password', () => {
-    expect(validateNoUserInfoInUrl('https://user:token@github.com/owner/repo')).toEqual(
-      // trufflehog:ignore
-      expect.stringContaining('must not include a username or password')
-    );
+    const url = 'https://user:token@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
   });
 
   it('returns error for URL with username only', () => {
-    expect(validateNoUserInfoInUrl('https://user@github.com/owner/repo')).toEqual(
-      // trufflehog:ignore
-      expect.stringContaining('must not include a username or password')
-    );
+    const url = 'https://user@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
   });
 
   it('returns error for URL with password only (empty username)', () => {
-    expect(validateNoUserInfoInUrl('https://:token@github.com/owner/repo')).toEqual(
-      // trufflehog:ignore
-      expect.stringContaining('must not include a username or password')
-    );
+    const url = 'https://:token@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
   });
 
   it('returns error for URL-encoded credentials', () => {
-    expect(validateNoUserInfoInUrl('https://user:%24TOKEN@github.com/owner/repo')).toEqual(
-      // trufflehog:ignore
-      expect.stringContaining('must not include a username or password')
-    );
+    const url = 'https://user:%24TOKEN@github.com/owner/repo'; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
   });
 
   it('returns error for URL with leading/trailing whitespace around credentials', () => {
-    expect(validateNoUserInfoInUrl('  https://user:token@github.com/owner/repo  ')).toEqual(
-      // trufflehog:ignore
-      expect.stringContaining('must not include a username or password')
-    );
+    const url = '  https://user:token@github.com/owner/repo  '; // trufflehog:ignore
+    expect(validateNoUserInfoInUrl(url)).toEqual(expect.stringContaining('must not include a username or password'));
   });
 });
 
