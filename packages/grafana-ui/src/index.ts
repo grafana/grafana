@@ -129,13 +129,13 @@ export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
+export { BigValue } from './components/BigValue/BigValue';
 export {
-  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-} from './components/BigValue/BigValue';
+} from './components/BigValue/BigValueTypes';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
 export { BarGauge } from './components/BarGauge/BarGauge';
