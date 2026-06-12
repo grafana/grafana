@@ -27,6 +27,7 @@ import { CommitSigningInfo } from '../Shared/CommitSigningInfo';
 import { getGitProviderFields, getSigningMethodOptions, getSigningKeyPlaceholder } from '../Wizard/fields';
 import { type RepoType } from '../Wizard/types';
 import { getHasTokenInstructions } from '../utils/git';
+import { validateSigner, validateSigningKey, validateSmimeCertificate } from '../utils/validators';
 
 interface Props<T extends FieldValues> {
   register: UseFormRegister<T>;
@@ -68,23 +69,8 @@ export function CommitOptionsSection<T extends FieldValues>({
   const signingMethod = useWatch({ control, name: signingMethodName });
   const signingEnabled = Boolean(signingMethod);
   const signingRequired = signingEnabled && !signingKeyConfigured;
-  const signerRequiredMessage = t(
-    'provisioning.commit-options.signer-required',
-    'Required when commit signing is enabled.'
-  );
   const hasTokenInstructions = getHasTokenInstructions(type);
   const gitFields = getGitProviderFields(type);
-
-  const notEmpty = (val: unknown) => typeof val === 'string' && val.trim().length > 0;
-  const validateSigner = (val: unknown) => !signingEnabled || notEmpty(val) || signerRequiredMessage;
-  const validateSigningKey = (val: unknown) =>
-    !signingRequired ||
-    notEmpty(val) ||
-    t('provisioning.commit-options.signing-key-required', 'Signing key is required');
-  const validateSmimeCertificate = (val: unknown) =>
-    signingMethod !== 'smime' ||
-    notEmpty(val) ||
-    t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
 
   const resetSigning = () => {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -173,7 +159,7 @@ export function CommitOptionsSection<T extends FieldValues>({
             <Controller
               name={signingKeyName}
               control={control}
-              rules={{ validate: validateSigningKey }}
+              rules={{ validate: validateSigningKey(signingRequired) }}
               render={({ field: { ref, ...field }, fieldState }) => (
                 <Field
                   noMargin
@@ -202,7 +188,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               <Controller
                 name={smimeCertificateName}
                 control={control}
-                rules={{ validate: validateSmimeCertificate }}
+                rules={{ validate: validateSmimeCertificate(signingMethod) }}
                 render={({ field: { ref, ...field }, fieldState }) => (
                   <Field
                     noMargin
@@ -235,7 +221,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               <Controller
                 name={signerNameName}
                 control={control}
-                rules={{ validate: validateSigner }}
+                rules={{ validate: validateSigner(signingEnabled) }}
                 render={({ field: { ref, ...field }, fieldState }) => (
                   <Field
                     noMargin
@@ -260,7 +246,7 @@ export function CommitOptionsSection<T extends FieldValues>({
               <Controller
                 name={signerEmailName}
                 control={control}
-                rules={{ validate: validateSigner }}
+                rules={{ validate: validateSigner(signingEnabled) }}
                 render={({ field: { ref, ...field }, fieldState }) => (
                   <Field
                     noMargin

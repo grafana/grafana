@@ -1,4 +1,10 @@
-import { validateNoHiddenCharacters, validateNoUserInfoInUrl } from './validators';
+import {
+  validateNoHiddenCharacters,
+  validateNoUserInfoInUrl,
+  validateSigner,
+  validateSigningKey,
+  validateSmimeCertificate,
+} from './validators';
 
 describe('validateNoHiddenCharacters', () => {
   // Should pass for valid inputs
@@ -142,5 +148,54 @@ describe('validateNoUserInfoInUrl', () => {
       // trufflehog:ignore
       expect.stringContaining('must not include a username or password')
     );
+  });
+});
+
+describe('validateSigner', () => {
+  it('returns true when signing is disabled, regardless of value', () => {
+    expect(validateSigner(false)('')).toBe(true);
+    expect(validateSigner(false)(undefined)).toBe(true);
+  });
+
+  it('returns true when signing is enabled and a value is provided', () => {
+    expect(validateSigner(true)('Jane Doe')).toBe(true);
+  });
+
+  it('returns an error when signing is enabled and the value is empty or whitespace', () => {
+    expect(validateSigner(true)('')).toEqual(expect.stringContaining('commit signing is enabled'));
+    expect(validateSigner(true)('   ')).toEqual(expect.stringContaining('commit signing is enabled'));
+    expect(validateSigner(true)(undefined)).toEqual(expect.stringContaining('commit signing is enabled'));
+  });
+});
+
+describe('validateSigningKey', () => {
+  it('returns true when a key is not required, regardless of value', () => {
+    expect(validateSigningKey(false)('')).toBe(true);
+    expect(validateSigningKey(false)(undefined)).toBe(true);
+  });
+
+  it('returns true when a key is required and a value is provided', () => {
+    expect(validateSigningKey(true)('key-material')).toBe(true);
+  });
+
+  it('returns an error when a key is required and the value is empty or whitespace', () => {
+    expect(validateSigningKey(true)('')).toEqual(expect.stringContaining('Signing key is required'));
+    expect(validateSigningKey(true)('   ')).toEqual(expect.stringContaining('Signing key is required'));
+  });
+});
+
+describe('validateSmimeCertificate', () => {
+  it('returns true when the method is not smime, regardless of value', () => {
+    expect(validateSmimeCertificate('gpg')('')).toBe(true);
+    expect(validateSmimeCertificate(undefined)('')).toBe(true);
+  });
+
+  it('returns true when the method is smime and a value is provided', () => {
+    expect(validateSmimeCertificate('smime')('-----BEGIN CERTIFICATE-----')).toBe(true);
+  });
+
+  it('returns an error when the method is smime and the value is empty or whitespace', () => {
+    expect(validateSmimeCertificate('smime')('')).toEqual(expect.stringContaining('Certificate is required'));
+    expect(validateSmimeCertificate('smime')('   ')).toEqual(expect.stringContaining('Certificate is required'));
   });
 });
