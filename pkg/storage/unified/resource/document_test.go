@@ -158,6 +158,43 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		assert.Empty(t, doc.Fields)
 	})
 
+	t.Run("missing apiVersion falls back to PreferredVersion", func(t *testing.T) {
+		// Body intentionally has no apiVersion; the only sane guess at the
+		// version is the manifest's preferred served version.
+		bodyNoVersion := []byte(`{
+			"kind": "Thing",
+			"metadata": {"name": "thing-1", "namespace": "default"},
+			"spec": {"email": "alice@example.com"}
+		}`)
+		provider := NewMapProvider(
+			map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {{Name: "email", Path: "spec.email", Type: SearchFieldTypeString}},
+			},
+			map[schema.GroupResource]string{
+				{Group: gvr.Group, Resource: gvr.Resource}: gvr.Version,
+			},
+		)
+		builder := StandardDocumentBuilderWithFields(nil, provider)
+		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
+		require.NoError(t, err)
+		assert.Equal(t, "alice@example.com", doc.Fields["email"])
+	})
+
+	t.Run("missing apiVersion and no PreferredVersion: no extraction", func(t *testing.T) {
+		bodyNoVersion := []byte(`{
+			"kind": "Thing",
+			"metadata": {"name": "thing-1", "namespace": "default"},
+			"spec": {"email": "alice@example.com"}
+		}`)
+		provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			gvr: {{Name: "email", Path: "spec.email", Type: SearchFieldTypeString}},
+		}, nil)
+		builder := StandardDocumentBuilderWithFields(nil, provider)
+		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
+		require.NoError(t, err)
+		assert.Empty(t, doc.Fields)
+	})
+
 	t.Run("nil provider preserves legacy behaviour", func(t *testing.T) {
 		// Constructor without a provider must produce the same shape as
 		// StandardDocumentBuilder(manifests).

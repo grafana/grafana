@@ -125,6 +125,8 @@ const maxInt64AsFloat float64 = 1 << 63
 
 func coerceScalar(val any, t SearchFieldType) (any, bool) {
 	switch t {
+	case SearchFieldTypeUnknown:
+		return nil, false
 	case SearchFieldTypeString, SearchFieldTypeDate:
 		s, ok := val.(string)
 		return s, ok

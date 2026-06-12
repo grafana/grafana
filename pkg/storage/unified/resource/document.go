@@ -299,7 +299,7 @@ func (s *standardDocumentBuilder) BuildDocument(ctx context.Context, key *resour
 // declarations when the schema diverges, so the builder leaves that
 // decision to manifest authors.
 func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, doc *IndexableDocument) {
-	gvr := gvrForLookup(tmp, key)
+	gvr := gvrForLookup(tmp, key, s.provider)
 	if gvr.Resource == "" {
 		return
 	}
@@ -337,16 +337,24 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 }
 
 // gvrForLookup resolves the GroupVersionResource the provider should be
-// queried with. The lookup is strict: only the document's declared
-// apiVersion is used. If the manifest does not register fields for that
-// exact version, no extraction happens. Manifest authors are responsible
-// for declaring all served versions of a kind.
-func gvrForLookup(tmp *unstructured.Unstructured, key *resourcepb.ResourceKey) schema.GroupVersionResource {
-	version := apiVersionOf(tmp)
-	if version == "" {
+// queried with. The lookup is strict on a declared apiVersion: if the
+// document carries one and the manifest does not cover that exact version,
+// no extraction happens. (Falling back across versions could silently
+// extract via a diverged schema, so manifest authors are expected to
+// declare every served version.) Only when the document has no apiVersion
+// at all do we fall back to the provider's PreferredVersion as the only
+// sane guess.
+func gvrForLookup(tmp *unstructured.Unstructured, key *resourcepb.ResourceKey, provider SearchFieldsProvider) schema.GroupVersionResource {
+	group := key.GetGroup()
+	resource := key.GetResource()
+	if version := apiVersionOf(tmp); version != "" {
+		return schema.GroupVersionResource{Group: group, Version: version, Resource: resource}
+	}
+	pref := provider.PreferredVersion(group, resource)
+	if pref == "" {
 		return schema.GroupVersionResource{}
 	}
-	return schema.GroupVersionResource{Group: key.GetGroup(), Version: version, Resource: key.GetResource()}
+	return schema.GroupVersionResource{Group: group, Version: pref, Resource: resource}
 }
 
 func apiVersionOf(tmp *unstructured.Unstructured) string {
