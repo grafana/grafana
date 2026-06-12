@@ -26,14 +26,14 @@ describe('WebhookSection', () => {
   it('renders collapsed by default, hiding the webhook URL field', () => {
     render(<Wrapper />);
 
-    expect(screen.getByText('Webhook')).toBeInTheDocument();
+    expect(screen.getByText('Webhook options')).toBeInTheDocument();
     expect(screen.queryByText('Webhook URL')).not.toBeInTheDocument();
   });
 
   it('registers the webhook URL input under webhook.baseUrl when expanded', async () => {
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Webhook'));
+    await user.click(screen.getByText('Webhook options'));
 
     expect(screen.getByText('Webhook URL')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'webhook.baseUrl');
@@ -43,7 +43,7 @@ describe('WebhookSection', () => {
     config.appUrl = 'http://localhost:3000/';
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Webhook'));
+    await user.click(screen.getByText('Webhook options'));
 
     expect(screen.getByRole('link', { name: 'Learn more' })).toBeInTheDocument();
   });
@@ -52,7 +52,7 @@ describe('WebhookSection', () => {
     config.appUrl = 'https://grafana.example.com/';
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Webhook'));
+    await user.click(screen.getByText('Webhook options'));
 
     expect(screen.queryByRole('link', { name: 'Learn more' })).not.toBeInTheDocument();
   });

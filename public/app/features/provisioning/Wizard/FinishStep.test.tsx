@@ -99,14 +99,14 @@ describe('FinishStep', () => {
     it('shows the webhook section for a GitHub repository', async () => {
       setup('github');
 
-      expect(await screen.findByText('Webhook')).toBeInTheDocument();
+      expect(await screen.findByText('Webhook options')).toBeInTheDocument();
     });
 
     it('does not show the webhook section for a non-GitHub repository', async () => {
       setup('gitlab');
 
       expect(await screen.findByText(PR_LABEL)).toBeInTheDocument();
-      expect(screen.queryByText('Webhook')).not.toBeInTheDocument();
+      expect(screen.queryByText('Webhook options')).not.toBeInTheDocument();
     });
   });
 

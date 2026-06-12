@@ -15,7 +15,7 @@ export function WebhookSection<T extends FieldValues>({ register, name }: Webhoo
   const isPublic = checkPublicAccess();
 
   return (
-    <ControlledCollapse label={t('provisioning.webhook-section.label-webhook', 'Webhook')} isOpen={false}>
+    <ControlledCollapse label={t('provisioning.webhook-section.label-webhook', 'Webhook options')} isOpen={false}>
       <Stack direction="column" gap={2}>
         <Field
           noMargin

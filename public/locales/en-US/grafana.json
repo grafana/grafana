@@ -13758,7 +13758,7 @@
     "webhook-section": {
       "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "description-webhook-url-learn-more": "Learn more",
-      "label-webhook": "Webhook",
+      "label-webhook": "Webhook options",
       "label-webhook-url": "Webhook URL",
       "placeholder-webhook-url": "https://grafana.example.com"
     },
