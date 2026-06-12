@@ -3,14 +3,14 @@ import { render, screen } from 'test/test-utils';
 
 import { type RepositoryFormData } from '../types';
 
-import { GitHubDashboardPreviewField } from './GitHubDashboardPreviewField';
+import { DashboardPreviewField } from './DashboardPreviewField';
 
 function Wrapper({ disabled }: { disabled?: boolean }) {
   const { register } = useForm<RepositoryFormData>();
-  return <GitHubDashboardPreviewField register={register} disabled={disabled} />;
+  return <DashboardPreviewField register={register} disabled={disabled} />;
 }
 
-describe('GitHubDashboardPreviewField', () => {
+describe('DashboardPreviewField', () => {
   it('renders the previews checkbox and registers generateDashboardPreviews', () => {
     render(<Wrapper />);
 

@@ -5,12 +5,12 @@ import { Checkbox, Field, Text, TextLink } from '@grafana/ui';
 
 import { type RepositoryFormData } from '../types';
 
-export interface GitHubDashboardPreviewFieldProps {
+export interface DashboardPreviewFieldProps {
   register: UseFormRegister<RepositoryFormData>;
   disabled?: boolean;
 }
 
-export function GitHubDashboardPreviewField({ register, disabled }: GitHubDashboardPreviewFieldProps) {
+export function DashboardPreviewField({ register, disabled }: DashboardPreviewFieldProps) {
   return (
     <Field noMargin>
       <Checkbox

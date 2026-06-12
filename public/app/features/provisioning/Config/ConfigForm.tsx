@@ -41,8 +41,8 @@ import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
+import { DashboardPreviewField } from './DashboardPreviewField';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
-import { GitHubDashboardPreviewField } from './GitHubDashboardPreviewField';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
@@ -91,10 +91,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
-  // Dashboard previews are a GitHub-only pull request feature and require image rendering.
-  const githubDashboardPreviewField =
+  // Dashboard previews currently apply only to GitHub pull requests and require image rendering.
+  const dashboardPreviewField =
     type === 'github' && checkImageRenderingAllowed(settings.data) ? (
-      <GitHubDashboardPreviewField register={register} disabled={!checkImageRenderer() || !checkPublicAccess()} />
+      <DashboardPreviewField register={register} disabled={!checkImageRenderer() || !checkPublicAccess()} />
     ) : null;
 
   // Detect if repository uses GitHub App authentication
@@ -408,7 +408,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
               >
-                {githubDashboardPreviewField}
+                {dashboardPreviewField}
               </PullRequestOptionsSection>
             )}
           </>
