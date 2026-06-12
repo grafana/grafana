@@ -28,6 +28,8 @@ export type DashboardPageRouteSearchParams = {
   // Used by the org dashboard templates flow on DashboardRoutes.Template.
   dashboardTemplateUid?: string;
   editTemplate?: string | true;
+  // UID of an existing dashboard to clone from on DashboardRoutes.NewFromExisting.
+  sourceUid?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

@@ -5,6 +5,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { CreateFromExistingModal } from 'app/features/browse-dashboards/components/CreateFromExistingModal';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
@@ -25,11 +26,22 @@ export interface Props {}
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
+  const [showCreateFromExisting, setShowCreateFromExisting] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const theme = useTheme2();
 
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
+
+    // Matches NavIDDashboards ("dashboards/browse") from pkg/services/navtree/models.go
+    const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
+    if (dashboardGroup) {
+      dashboardGroup.items.push({
+        id: 'dashboards/new-from-existing',
+        text: t('navigation.quick-add.create-from-existing', 'Create from existing'),
+        onClick: () => setShowCreateFromExisting(true),
+      });
+    }
 
     if (config.featureToggles.dashboardTemplates) {
       const testDataSources = getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' });
@@ -129,6 +141,7 @@ export const QuickAdd = ({}: Props) => {
         />
       </Dropdown>
       <NavToolbarSeparator />
+      {showCreateFromExisting && <CreateFromExistingModal onDismiss={() => setShowCreateFromExisting(false)} />}
     </>
   );
 };

@@ -28,6 +28,7 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { ManagerKind } from '../../apiserver/types';
 
+import { CreateFromExistingModal } from './CreateFromExistingModal';
 import { NewFolderForm } from './NewFolderForm';
 
 interface Props {
@@ -49,6 +50,7 @@ export default function CreateNewButton({
   const location = useLocation();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+  const [showCreateFromExisting, setShowCreateFromExisting] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
@@ -127,6 +129,12 @@ export default function CreateNewButton({
             }
             url={buildUrl('/dashboard/import', parentFolder?.uid)}
           />
+          <Menu.Item
+            label={t('browse-dashboards.create-new.create-from-existing', 'Create from existing')}
+            icon={ITEM_ICONS['dashboards/new-from-existing']}
+            iconColor={dashboardIconColor}
+            onClick={() => setShowCreateFromExisting(true)}
+          />
           {renderPreBuiltDashboardAction && (
             <Menu.Item
               label={getNewTemplateDashboardPhrase()}
@@ -191,6 +199,9 @@ export default function CreateNewButton({
             />
           )}
         </Drawer>
+      )}
+      {showCreateFromExisting && (
+        <CreateFromExistingModal folderUid={parentFolder?.uid} onDismiss={() => setShowCreateFromExisting(false)} />
       )}
     </>
   );

@@ -11,8 +11,16 @@ import {
   type Spec as DashboardV2Spec,
   defaultGridLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyFolder,
+  AnnoKeyFolderTitle,
+  AnnoKeyMessage,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+} from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type DashboardDTO } from 'app/types/dashboard';
@@ -170,4 +178,54 @@ export async function buildNewDashboardSaveModelV2(
   }
 
   return data;
+}
+
+/**
+ * Builds a "new dashboard" save model (V2) pre-populated from an existing
+ * dashboard. The source dashboard's identity is stripped so that saving creates
+ * a brand-new dashboard rather than overwriting the source.
+ */
+export async function buildFromExistingDashboardSaveModelV2(
+  sourceUid: string,
+  urlFolderUid?: string
+): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+  const api = await getDashboardAPI('v2');
+  const source = await api.getDashboardDTO(sourceUid);
+
+  // Deep clone so we never mutate anything held in the dashboard cache.
+  const clone: DashboardWithAccessInfo<DashboardV2Spec> = structuredClone(source);
+
+  // Strip identity so this is treated as a brand-new dashboard. In V2 an empty
+  // metadata.name (the uid) is what marks the dashboard as new.
+  clone.metadata.name = '';
+  clone.metadata.resourceVersion = '0';
+  clone.metadata.generation = undefined;
+  clone.metadata.creationTimestamp = new Date().toISOString();
+
+  // Drop server-managed save metadata; keep only the folder placement.
+  const annotations = { ...clone.metadata.annotations };
+  delete annotations[AnnoKeyCreatedBy];
+  delete annotations[AnnoKeyUpdatedBy];
+  delete annotations[AnnoKeyUpdatedTimestamp];
+  delete annotations[AnnoKeyFolderTitle];
+  delete annotations[AnnoKeyMessage];
+  annotations[AnnoKeyFolder] = urlFolderUid ?? '';
+  clone.metadata.annotations = annotations;
+
+  // Match the empty-new dashboard access defaults.
+  clone.access = {
+    ...clone.access,
+    canStar: false,
+    canShare: false,
+    canDelete: false,
+  };
+
+  clone.spec = {
+    ...clone.spec,
+    title: t('dashboard-scene.build-from-existing-dashboard-save-model-v2.title-copy', '{{title}} Copy', {
+      title: clone.spec.title,
+    }),
+  };
+
+  return clone;
 }

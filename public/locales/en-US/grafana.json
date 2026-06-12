@@ -4302,7 +4302,12 @@
       "total_one": "{{count}} item",
       "total_other": "{{count}} items"
     },
+    "create-from-existing": {
+      "placeholder": "Search for a dashboard",
+      "title": "Create dashboard from existing"
+    },
     "create-new": {
+      "create-from-existing": "Create from existing",
       "dashboard-group": "Dashboard"
     },
     "dashboards-tree": {
@@ -6772,6 +6777,9 @@
       "invalid-branch-name": "Invalid branch name.",
       "it-cannot-contain-or": "It cannot contain '//' or '..'.",
       "least-valid-character": "It must have at least one valid character."
+    },
+    "build-from-existing-dashboard-save-model-v2": {
+      "title-copy": "{{title}} Copy"
     },
     "build-new-dashboard-save-model": {
       "data": {
@@ -12186,6 +12194,7 @@
     },
     "quick-add": {
       "aria-label": "New",
+      "create-from-existing": "Create from existing",
       "new-template-dashboard-button": "Use template"
     },
     "rss-button": "Latest from the blog"

@@ -63,6 +63,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
         slug,
         route: route.routeName as DashboardRoutes,
         urlFolderUid: queryParams.folderUid,
+        sourceUid: typeof queryParams.sourceUid === 'string' ? queryParams.sourceUid : undefined,
         dashboardTemplateUid: queryParams.dashboardTemplateUid,
         editTemplate: queryParams.editTemplate === true,
       });
@@ -84,6 +85,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     uid,
     route.routeName,
     queryParams.folderUid,
+    queryParams.sourceUid,
     routeReloadCounter,
     type,
     queryParams.path,
