@@ -76,7 +76,7 @@ func TestConsolidation(t *testing.T) {
 			{"test-secret-4", "namespace2", "test-value-4"},
 		}
 
-		original := make([]entry, 0)
+		original := make([]entry, 0, len(testCases))
 
 		// Create secure values and store their original decrypted values and encrypted data
 		for _, tc := range testCases {
@@ -185,7 +185,7 @@ func TestConsolidation(t *testing.T) {
 			{"initial-secret-2", "namespace2", "initial-value-2"},
 		}
 
-		initial := make([]entry, 0)
+		initial := make([]entry, 0, len(initialSecrets))
 
 		for _, tc := range initialSecrets {
 			sv := &secretv1beta1.SecureValue{

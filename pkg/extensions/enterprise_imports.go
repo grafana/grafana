@@ -271,6 +271,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
+	_ "github.com/grafana/grafana/pkg/registry/apis/secret/rand"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/validator"
