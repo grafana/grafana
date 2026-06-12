@@ -10,7 +10,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"sigs.k8s.io/yaml"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -160,9 +159,7 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 	for i := 0; i < count; i++ {
 		name, title := playlistName(i)
 		names = append(names, name)
-		body, err := yaml.Marshal(common.NewPlaylist(name, title).Object)
-		require.NoError(t, err)
-		helper.WriteToProvisioningPath(t, name+".yaml", body)
+		helper.WriteToProvisioningPath(t, name+".json", common.ResourceToJSON(t, common.NewPlaylist(name, title)))
 		t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, name, metav1.DeleteOptions{}) })
 	}
 
