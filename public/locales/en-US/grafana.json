@@ -1180,12 +1180,6 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
-    "evaluation-group": {
-      "label-delete": "Delete",
-      "label-export": "Export",
-      "label-reorder-rules": "Re-order rules",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "A group evaluates all its rules over the same evaluation interval.",
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",

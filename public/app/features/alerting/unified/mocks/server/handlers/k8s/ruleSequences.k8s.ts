@@ -119,7 +119,7 @@ const getSequenceByName = (name: string) => {
   return allRuleSequences.items.find((seq) => seq.metadata.name === name);
 };
 
-export const listNamespacedRuleSequencesHandler = () =>
+const listNamespacedRuleSequencesHandler = () =>
   http.get(`${RULES_API_DEFAULT_NAMESPACE_URL}/rulesequences`, ({ request }) => {
     const url = new URL(request.url);
     const fieldSelector = url.searchParams.get('fieldSelector');
@@ -143,7 +143,7 @@ export const listNamespacedRuleSequencesHandler = () =>
     return HttpResponse.json({ ...allRuleSequences, items });
   });
 
-export const getNamespacedRuleSequenceHandler = () =>
+const getNamespacedRuleSequenceHandler = () =>
   http.get(`${RULES_API_DEFAULT_NAMESPACE_URL}/rulesequences/:name`, ({ params }) => {
     const { name } = params;
     if (typeof name !== 'string') {
@@ -158,7 +158,7 @@ export const getNamespacedRuleSequenceHandler = () =>
     return HttpResponse.json(matchingSequence);
   });
 
-export const listNamespacedAlertRulesHandler = () =>
+const listNamespacedAlertRulesHandler = () =>
   http.get(`${RULES_API_DEFAULT_NAMESPACE_URL}/alertrules`, ({ request }) => {
     const url = new URL(request.url);
     const fieldSelector = url.searchParams.get('fieldSelector');
@@ -171,7 +171,7 @@ export const listNamespacedAlertRulesHandler = () =>
     return HttpResponse.json(allAlertRules);
   });
 
-export const listNamespacedRecordingRulesHandler = () =>
+const listNamespacedRecordingRulesHandler = () =>
   http.get(`${RULES_API_DEFAULT_NAMESPACE_URL}/recordingrules`, ({ request }) => {
     const url = new URL(request.url);
     const fieldSelector = url.searchParams.get('fieldSelector');

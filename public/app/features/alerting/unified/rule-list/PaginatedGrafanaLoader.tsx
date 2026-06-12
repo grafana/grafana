@@ -240,7 +240,7 @@ interface GrafanaGroupActionsProps {
   readOnly: boolean;
 }
 
-export function GrafanaGroupActions({ folderUid, groupName, readOnly }: GrafanaGroupActionsProps) {
+function GrafanaGroupActions({ folderUid, groupName, readOnly }: GrafanaGroupActionsProps) {
   const [showExportDrawer, setShowExportDrawer] = useState(false);
 
   const [editRuleSupported, editRuleAllowed] = useAlertingAbility(AlertingAction.UpdateAlertRule);
