@@ -183,6 +183,16 @@ export function ResourcesToMigrate({
       {unmanagedFolders.length > 0 && (
         <div className={styles.selectAllRow}>
           <Checkbox
+            // Checkbox only ever sets the native `indeterminate` property to
+            // true and never clears it, so once this box has been partially
+            // selected it would stay visually indeterminate even after every
+            // row is selected. Drive the property ourselves so it resets to a
+            // plain checked state when allSelected becomes true.
+            ref={(el) => {
+              if (el) {
+                el.indeterminate = someSelected && !allSelected;
+              }
+            }}
             value={allSelected}
             indeterminate={someSelected && !allSelected}
             onChange={onToggleSelectAll}

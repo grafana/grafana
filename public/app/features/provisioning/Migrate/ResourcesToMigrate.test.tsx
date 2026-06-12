@@ -106,6 +106,22 @@ describe('ResourcesToMigrate', () => {
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
+  it('checks the select-all box (not indeterminate) when everything is selected', () => {
+    setup({ selectedCount: 1, allSelected: true, someSelected: true });
+
+    const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
+    expect(selectAll).toBeChecked();
+    expect(selectAll.indeterminate).toBe(false);
+  });
+
+  it('marks the select-all box indeterminate on a partial selection', () => {
+    setup({ selectedCount: 1, allSelected: false, someSelected: true });
+
+    const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
+    expect(selectAll).not.toBeChecked();
+    expect(selectAll.indeterminate).toBe(true);
+  });
+
   it('shows a tooltip and keeps the button disabled when no repository is connected', () => {
     setup({ selectedCount: 1, migrateDisabled: true, migrateTooltip: 'Connect a repository before migrating.' });
 
