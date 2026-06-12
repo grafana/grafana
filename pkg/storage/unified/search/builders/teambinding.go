@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"context"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -34,35 +34,39 @@ var TeamBindingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColu
 	},
 }
 
+// TeamBindingSearchFields declares paths and types for each team binding
+// search field. The standard document builder uses these to extract values
+// from the raw JSON, avoiding a custom builder.
+var TeamBindingSearchFields = []resource.SearchFieldDefinition{
+	{Name: TEAM_BINDING_SUBJECT, Path: "spec.subject.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	{Name: TEAM_BINDING_TEAM, Path: "spec.teamRef.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	{Name: TEAM_BINDING_PERMISSION, Path: "spec.permission", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+	{Name: TEAM_BINDING_EXTERNAL, Path: "spec.external", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+}
+
 func GetTeamBindingBuilder() (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(TeamBindingTableColumnDefinitions))
 	for _, v := range TeamBindingTableColumnDefinitions {
 		values = append(values, v)
 	}
-
 	fields, err := resource.NewSearchableDocumentFields(values)
+	if err != nil {
+		return resource.DocumentBuilderInfo{}, err
+	}
+
+	gvr := iamv0.TeamBindingResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: TeamBindingSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
+
 	return resource.DocumentBuilderInfo{
 		GroupResource: iamv0.TeamBindingResourceInfo.GroupResource(),
 		Fields:        fields,
-		Builder:       new(teamBindingDocumentBuilder),
-	}, err
-}
-
-type teamBindingDocumentBuilder struct{}
-
-func (b *teamBindingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	tb := &iamv0.TeamBinding{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, tb, iamv0.TeamBindingKind())
-	if err != nil {
-		return nil, err
-	}
-
-	doc.Fields = map[string]any{
-		TEAM_BINDING_SUBJECT:    tb.Spec.Subject.Name,
-		TEAM_BINDING_TEAM:       tb.Spec.TeamRef.Name,
-		TEAM_BINDING_PERMISSION: string(tb.Spec.Permission),
-		TEAM_BINDING_EXTERNAL:   tb.Spec.External,
-	}
-
-	return doc, nil
+		Builder:       resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+	}, nil
 }
