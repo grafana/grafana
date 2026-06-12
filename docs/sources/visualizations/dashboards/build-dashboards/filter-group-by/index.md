@@ -94,6 +94,7 @@ To add filter and group by controls, follow these steps:
 1. Click **Exit edit**.
 
 <!-- prettier-ignore-end -->
+
 {{< /shared >}}
 
 Now you can filter and group data on the dashboard.

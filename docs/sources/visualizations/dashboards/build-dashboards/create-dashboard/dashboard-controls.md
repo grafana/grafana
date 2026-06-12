@@ -21,7 +21,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-controls-v13.0.png" max-width="400px" alt="Dashboard controls in the Dashboard options sidebar view" >}}
 
-## Filter and Group by
+## Add filter and group by controls
 
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
@@ -34,90 +34,9 @@ However, in the dashboard schema, it's still referred to as `"kind": "AdhocVaria
 <!-- vale Grafana.WordList = YES -->
 <!-- vale Grafana.Spelling = YES -->
 
-{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="add-filter-group-by" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/index.md" id="add-filter-group-by" >}}
 
-### Add a filter and group by
-
-To add a filter and group by, follow these steps:
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Click the **Add new element** icon (blue plus sign).
-1. Click **Filter and Group by**.
-1. Enter a **Name** for the filter.
-1. (Optional) In the **Label** field, enter the display name for the filter drop-down list.
-
-   If you don't enter a display name, then the drop-down list label is the filter name.
-
-1. (Optional) In the **Description** field, enter a description of the filter. The description appears as an info icon tooltip next to the filter name on the dashboard.
-
-   Descriptions support links. You can use Markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links—other protocols are displayed as plain text.
-
-1. Choose a **Display** option:
-   - **Above dashboard** - The filter drop-down list displays above the dashboard with the filter **Name** or **Label** value. This is the default.
-   - **Above dashboard, label hidden** - The filter drop-down list displays above the dashboard, but without showing the name of the filter.
-   - **Controls menu** - The filter is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
-   - **Hidden** - No filter drop-down list is displayed on the dashboard.
-
-1. Under the **Filter options** section of the page, set the following options:
-
-   | Option                    | Description                                                                                                                                                                                                                                                                                                                          |
-   | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-   | Data source               | Select a target data source in the drop-down list. You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only). For more information about data sources, refer to [Add a data source](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/). |
-   | Default filters           | Set a default key/value pair. Optional. In the dashboard filter control, the default value is indicated with an information icon.                                                                                                                                                                                                    |
-   | Enable group by           | This option only appears if you selected a Prometheus or Loki data source. Toggle the switch on to enable data grouping.                                                                                                                                                                                                             |
-   | Default group by          | Set a default key for the dashboard. Optional. In the dashboard filter control, the default value is indicated with an information icon.                                                                                                                                                                                             |
-   | Use static key dimensions | To provide the filter dimensions as comma-separated values (CSV), toggle the switch on, and then enter the values in the space provided. Optional.                                                                                                                                                                                   |
-   | Allow custom values       | Toggle the switch on to allow dashboard users to add custom values to the filter and group by lists. Optional.                                                                                                                                                                                                                       |
-
-1. Click **Save**.
-1. Enter an optional description of your dashboard changes, and then click **Save**.
-1. Click **Exit edit**.
-
-Now you can filter and group data on the dashboard.
-
-You can remove and reset default filters and group by values, and see your recent ones:
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-reset-default-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Reset default filters and group by selections" >}}
-
-{{< figure src="/media/docs/grafana/screenshot-filters-group-recent-v13.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" caption="Recent filter and group by settings" >}}
-
-To see every active filter and grouping across the dashboard all at once, click the filter icon in the toolbar to open an overview.
-The overview lets you see your current filters and group by selections, search for specific keys, and adjust them without scrolling through the dashboard controls:
-
-{{< figure src="/media/docs/grafana/screenshot-filters-overview-v12.0.png" max-width="500px" alt="Dashboard with the filters and group by selections" >}}
-
-Add an operator and value for a key to add it as a filter or select the **Group by** checkbox to set a group by key.
-You can use a key for both a filter and a group by.
-
-### Group and filter from the panel
-
-When the **Group by** switch is toggled on, you can also set a group by from a panel rather than from the dashboard-level control.
-Hover the cursor over any panel using the data source of the filter to show the **Group by** selector:
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
-
-This can be helpful when you're working with a panel that's far away from the dashboard controls.
-Your selection is applied to the all the panels in the dashboard with the same data source.
-
-You can also further filter a time series panel, which allows you to drill down further into your data.
-After setting your group by and splitting your data, click on a series in a panel and click `Filter on this value` or `Filter out this value` which will filter by the labels found on that series, which are related to the set group by values.
-
-To enable this functionality, you need to add one or more overrides for the panel.
-In the following example, the override:
-
-- Adds a regular expression, so that all fields are filterable
-- Enables the **Filterable** switch
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filter-override-v13.0.png" max-width="400px" alt="Field override making all fields filterable" >}}
-
-However, you can create overrides to address specific fields.
-You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
-
-With the override in place, you can click a series on a time series panel and filter it in or out.
-The new filter is shown in the dashboard filter control and the it's applied to the whole dashboard.
-
-{{< figure src="/media/docs/grafana/dashboards/screenshot-panel-filters-v13.0.png" max-width="675px" alt="Panel with tooltip open showing options to filter on a value or filter it out" >}}
+For more detailed information on the **Filter and Group by** option, refer to the full [Filter and group by controls documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Add variables
 
