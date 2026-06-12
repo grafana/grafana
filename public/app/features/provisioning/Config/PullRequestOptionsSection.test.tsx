@@ -7,13 +7,20 @@ import { type RepositoryFormData } from '../types';
 
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 
-function Wrapper() {
+interface WrapperProps {
+  isGithub?: boolean;
+  dashboardPreviewName?: 'generateDashboardPreviews';
+}
+
+function Wrapper({ isGithub, dashboardPreviewName }: WrapperProps = {}) {
   const { register } = useForm<RepositoryFormData>();
   return (
     <PullRequestOptionsSection<RepositoryFormData>
       register={register}
       titleTemplateName="pullRequest.titleTemplate"
       enforceTemplateName="pullRequest.enforceTemplate"
+      isGithub={isGithub}
+      dashboardPreviewName={dashboardPreviewName}
     />
   );
 }
@@ -62,5 +69,23 @@ describe('PullRequestOptionsSection', () => {
 
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'pullRequest.titleTemplate');
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'pullRequest.enforceTemplate');
+  });
+
+  it('renders the dashboard previews toggle for GitHub even when the gitConventions flag is off', async () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    const { user } = render(<Wrapper isGithub dashboardPreviewName="generateDashboardPreviews" />);
+
+    await user.click(screen.getByText('Pull request options'));
+
+    expect(screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })).toBeInTheDocument();
+    // Template fields stay hidden while the flag is off.
+    expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
+  });
+
+  it('does not render the dashboard previews toggle for non-GitHub providers', () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    const { container } = render(<Wrapper dashboardPreviewName="generateDashboardPreviews" />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

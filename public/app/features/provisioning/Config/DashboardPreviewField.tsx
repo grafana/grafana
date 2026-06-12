@@ -1,16 +1,19 @@
-import { type UseFormRegister } from 'react-hook-form';
+import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, Field, Text, TextLink } from '@grafana/ui';
 
-import { type RepositoryFormData } from '../types';
-
-export interface DashboardPreviewFieldProps {
-  register: UseFormRegister<RepositoryFormData>;
+export interface DashboardPreviewFieldProps<T extends FieldValues> {
+  register: UseFormRegister<T>;
+  name: Path<T>;
   disabled?: boolean;
 }
 
-export function DashboardPreviewField({ register, disabled }: DashboardPreviewFieldProps) {
+export function DashboardPreviewField<T extends FieldValues>({
+  register,
+  name,
+  disabled,
+}: DashboardPreviewFieldProps<T>) {
   return (
     <Field noMargin>
       <Checkbox
@@ -36,7 +39,7 @@ export function DashboardPreviewField({ register, disabled }: DashboardPreviewFi
             </Text>
           </>
         }
-        {...register('generateDashboardPreviews')}
+        {...register(name)}
       />
     </Field>
   );

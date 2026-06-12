@@ -7,7 +7,7 @@ import { DashboardPreviewField } from './DashboardPreviewField';
 
 function Wrapper({ disabled }: { disabled?: boolean }) {
   const { register } = useForm<RepositoryFormData>();
-  return <DashboardPreviewField register={register} disabled={disabled} />;
+  return <DashboardPreviewField register={register} name="generateDashboardPreviews" disabled={disabled} />;
 }
 
 describe('DashboardPreviewField', () => {

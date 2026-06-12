@@ -1,16 +1,25 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { type ReactNode } from 'react';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Input, Stack } from '@grafana/ui';
+import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+
+import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+
+import { DashboardPreviewField } from './DashboardPreviewField';
 
 interface Props<T extends FieldValues> {
   register: UseFormRegister<T>;
   titleTemplateName: Path<T>;
   enforceTemplateName: Path<T>;
-  /** Provider-specific pull request options (e.g. GitHub dashboard previews) rendered above the template fields. */
-  children?: ReactNode;
+  /**
+   * When set, render the dashboard previews toggle bound to this field. Previews
+   * also require image rendering to be allowed and currently apply only to GitHub.
+   */
+  dashboardPreviewName?: Path<T>;
+  /** Dashboard previews currently apply only to GitHub pull requests. */
+  isGithub?: boolean;
 }
 
 /**
@@ -18,18 +27,23 @@ interface Props<T extends FieldValues> {
  * meaningful for providers that support pull/merge requests (GitHub, GitLab,
  * Bitbucket) — not the pure git type — so the caller is responsible for only
  * rendering it for those. The template fields are gated behind the
- * provisioning.gitConventions flag; the section still renders when provider-specific
- * children (e.g. GitHub dashboard previews) are provided.
+ * provisioning.gitConventions flag; the section still renders when the GitHub
+ * dashboard previews toggle is shown.
  */
 export function PullRequestOptionsSection<T extends FieldValues>({
   register,
   titleTemplateName,
   enforceTemplateName,
-  children,
+  dashboardPreviewName,
+  isGithub,
 }: Props<T>) {
   const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
+  const settings = useGetFrontendSettingsQuery();
 
-  if (!gitConventionsEnabled && !children) {
+  // Dashboard previews currently apply only to GitHub and require image rendering to be allowed.
+  const showDashboardPreviews = Boolean(isGithub && dashboardPreviewName && checkImageRenderingAllowed(settings.data));
+
+  if (!gitConventionsEnabled && !showDashboardPreviews) {
     return null;
   }
 
@@ -39,7 +53,13 @@ export function PullRequestOptionsSection<T extends FieldValues>({
       isOpen={false}
     >
       <Stack direction="column" gap={2}>
-        {children}
+        {showDashboardPreviews && dashboardPreviewName && (
+          <DashboardPreviewField
+            register={register}
+            name={dashboardPreviewName}
+            disabled={!checkImageRenderer() || !checkPublicAccess()}
+          />
+        )}
         {gitConventionsEnabled && (
           <>
             <Field

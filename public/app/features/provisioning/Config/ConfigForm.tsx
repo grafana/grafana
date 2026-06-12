@@ -26,7 +26,6 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
-import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
 import { DeleteRepositoryButton } from '../Repository/DeleteRepositoryButton';
 import { TokenPermissionsInfo } from '../Shared/TokenPermissionsInfo';
 import { getGitProviderFields, getLocalProviderFields } from '../Wizard/fields';
@@ -41,7 +40,6 @@ import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
-import { DashboardPreviewField } from './DashboardPreviewField';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
 import { WebhookSection } from './WebhookSection';
@@ -90,12 +88,6 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [type, readOnly] = watch(['type', 'readOnly']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
-
-  // Dashboard previews currently apply only to GitHub pull requests and require image rendering.
-  const dashboardPreviewField =
-    type === 'github' && checkImageRenderingAllowed(settings.data) ? (
-      <DashboardPreviewField register={register} disabled={!checkImageRenderer() || !checkPublicAccess()} />
-    ) : null;
 
   // Detect if repository uses GitHub App authentication
   // Repositories using GitHub App have a connection reference in their spec,
@@ -407,9 +399,9 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 register={register}
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
-              >
-                {dashboardPreviewField}
-              </PullRequestOptionsSection>
+                isGithub={type === 'github'}
+                dashboardPreviewName="generateDashboardPreviews"
+              />
             )}
           </>
         )}
