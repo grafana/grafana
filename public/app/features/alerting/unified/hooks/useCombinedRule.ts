@@ -304,6 +304,9 @@ export function useRuleWithLocation({
       rulerConfig: dsFeatures.rulerConfig,
       namespace: ruleLocation.namespace,
       group: ruleLocation.group,
+      // Suppress error notifications for 404s - the group may not exist yet (new group)
+      // or may have been deleted (last rule removed)
+      notificationOptions: { showErrorAlert: false },
     });
   }, [dsFeatures, fetchRulerRuleGroup, ruleLocation]);
 
