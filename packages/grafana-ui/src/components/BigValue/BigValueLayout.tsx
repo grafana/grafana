@@ -15,7 +15,7 @@ import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValueTypes';
 import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
