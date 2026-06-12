@@ -6034,9 +6034,6 @@
     "panel-editor-table-view": {
       "title-raw-data": "Raw data"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
