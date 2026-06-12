@@ -38,8 +38,9 @@ interface UserInfo {
   id?: number;
   login?: string;
   email?: string;
-  // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
-  // Absent when the legacy path (k8s annotations client disabled) populated this entry.
+  // The creator's uid, used to filter by user on both the k8s /search and legacy
+  // /api/annotations endpoints. Sourced from the k8s identity ref ("user:<uid>") or
+  // the legacy response's userUID.
   uid?: string;
 }
 
@@ -177,7 +178,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         dashboardUID,
         from,
         to,
-        userId: queryUser?.id,
+        userUID: queryUser?.uid,
       };
       annotations = await getBackendSrv().get('/api/annotations', params, requestId);
     }
@@ -305,10 +306,11 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   onUserClick = (anno: AnnotationEvent) => {
-    // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
-    // the k8s annotations client is enabled. Stash the uid so the next /search can filter by it.
+    // Both paths filter by the creator's uid. The k8s client exposes it via the identity
+    // ref ("user:<uid>") on createdBy; the legacy /api/annotations response carries it as
+    // userUID. Stash whichever is present so the next query can filter by it.
     const createdBy = 'createdBy' in anno && typeof anno.createdBy === 'string' ? anno.createdBy : undefined;
-    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
+    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : anno.userUID;
     this.setState({
       queryUser: {
         id: anno.userId,

@@ -86,6 +86,7 @@ const defaultOptions: Options = {
 const defaultResult = {
   text: 'Result text',
   userId: 1,
+  userUID: 'u-1',
   login: 'Result login',
   email: 'Result email',
   avatarUrl: 'Result avatarUrl',
@@ -333,7 +334,7 @@ describe('AnnoListPanel', () => {
     });
 
     describe('and the user clicks on the user avatar', () => {
-      it('then it should filter annotations by login and the filter should show', async () => {
+      it('then it should filter annotations by the creator uid and the filter should show', async () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
@@ -348,7 +349,7 @@ describe('AnnoListPanel', () => {
             limit: 10,
             tags: ['tag A', 'tag B'],
             type: 'annotation',
-            userId: 1,
+            userUID: 'u-1',
           },
           expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
