@@ -43,11 +43,20 @@ type ConnectionConfig struct {
 // installation link uses the public github.com host.
 func ConfigFromConnection(conn *provisioning.Connection) ConnectionConfig {
 	cfg := ConnectionConfig{}
-	if conn != nil && conn.Spec.GitHub != nil {
+	if conn == nil {
+		return cfg
+	}
+	switch {
+	case conn.Spec.GitHub != nil:
 		cfg.AppID = conn.Spec.GitHub.AppID
 		cfg.InstallationID = conn.Spec.GitHub.InstallationID
 		cfg.InstallationURL = BuildInstallationURL(githubWebHost, conn.Spec.GitHub.InstallationID)
-		cfg.WebhookDisabled = conn.Spec.GitHub.WebhookDisabled
+	case conn.Spec.GitHubEnterprise != nil:
+		ghe := conn.Spec.GitHubEnterprise
+		cfg.AppID = ghe.AppID
+		cfg.InstallationID = ghe.InstallationID
+		cfg.ServerURL = ghe.ServerURL
+		cfg.InstallationURL = BuildInstallationURL(ghe.ServerURL, ghe.InstallationID)
 	}
 	return cfg
 }
@@ -81,6 +90,13 @@ const (
 // BuildInstallationURL builds the browser-facing link to the GitHub App installation settings page.
 func BuildInstallationURL(webHost, installationID string) string {
 	return fmt.Sprintf("%s/%s/%s", strings.TrimRight(webHost, "/"), githubInstallationPath, installationID)
+}
+
+// hasGitHubConfig reports whether the connection carries a GitHub or GitHub Enterprise
+// App configuration. Both variants are normalized into c.config, so the runtime methods
+// below operate on c.config and only use this for a defensive guard.
+func (c *Connection) hasGitHubConfig() bool {
+	return c.obj != nil && (c.obj.Spec.GitHub != nil || c.obj.Spec.GitHubEnterprise != nil)
 }
 
 // Test validates the appID and installationID against the given github token.
@@ -392,7 +408,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	if repo == nil {
 		return nil, errors.New("a repository is required to generate a token")
 	}
-	if c.obj.Spec.GitHub == nil {
+	if !c.hasGitHubConfig() {
 		return nil, errors.New("connection is not a GitHub connection")
 	}
 	if repo.Spec.GitHub == nil {
@@ -433,7 +449,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 
 // ListRepositories returns the list of repositories accessible through this GitHub App connection.
 func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
-	if c.obj.Spec.GitHub == nil {
+	if !c.hasGitHubConfig() {
 		return nil, fmt.Errorf("github configuration is required")
 	}
 
@@ -473,7 +489,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 // GenerateConnectionToken generates a JWT token for GitHub App authentication.
 // Implements the connection.TokenConnection interface.
 func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecureValue, error) {
-	if c.obj.Spec.GitHub == nil {
+	if !c.hasGitHubConfig() {
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
@@ -525,10 +541,7 @@ const (
 // When webhookDisabled is true, the webhooks:write check is skipped because webhook
 // integration has been explicitly disabled for this connection.
 func validatePermissions(target permissionTarget, id string, permissions Permissions, webhookDisabled bool, installationURL string) []provisioning.ErrorDetails {
-	var errs []provisioning.ErrorDetails
-
-	requiredPerms := map[string]struct {
-		current  Permission
+	var errs []provisioning.ErrorDetails{
 		required Permission
 	}{
 		"contents": {
