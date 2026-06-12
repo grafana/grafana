@@ -332,7 +332,7 @@ jobs:
         run: |
           if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Coverage checks skipped for fork PR"
+            echo "⏭️ Coverage checks skipped for fork PR"
           elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
