@@ -61,15 +61,14 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 		return nil, err
 	}
 
-	// Request default permissions for new root folders via the App Platform path; the folder API
-	// server's permission setter acts on this annotation. Root-only (nested inherit from the parent).
-	if folder.IsRootFolderUID(cmd.ParentUID) {
-		meta, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	// Request default permissions via the App Platform path; the folder API server's permission setter
+	// acts on this annotation. Set for nested folders too so the creator is granted admin; the setter
+	// only seeds the Editor/Viewer defaults on root folders (nested inherit those from the parent).
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
 	}
+	meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 
 	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
 		FieldValidation: v1.FieldValidationIgnore})

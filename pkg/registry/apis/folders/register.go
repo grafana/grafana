@@ -281,10 +281,9 @@ var defaultPermissions = []map[string]any{
 	},
 }
 
-// buildDefaultFolderPermissions returns the default folder permissions with the creator granted
-// admin (in addition to the default basic-role permissions). Non-user/service-account identities
-// (anonymous, render service, etc.) get only the default permission set.
-func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
+// buildDefaultFolderPermissions grants the creator admin on the folder. Non-user identities get no
+// grant. Root folders also seed the default Editor/Viewer roles; nested folders inherit those.
+func buildDefaultFolderPermissions(id authlib.AuthInfo, isNested bool) []map[string]any {
 	var creatorKind string
 	switch id.GetIdentityType() {
 	case authlib.TypeUser:
@@ -296,16 +295,19 @@ func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
 		// default permission set; no creator admin grant.
 	}
 
-	if creatorKind == "" {
-		return defaultPermissions
+	permissions := make([]map[string]any, 0, len(defaultPermissions)+1)
+	if creatorKind != "" {
+		permissions = append(permissions, map[string]any{
+			"kind": creatorKind,
+			"name": id.GetIdentifier(),
+			"verb": "admin",
+		})
 	}
 
-	permissions := make([]map[string]any, 0, len(defaultPermissions)+1)
-	permissions = append(permissions, map[string]any{
-		"kind": creatorKind,
-		"name": id.GetIdentifier(),
-		"verb": "admin",
-	})
+	if isNested {
+		return permissions
+	}
+
 	return append(permissions, defaultPermissions...)
 }
 
@@ -348,13 +350,16 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		return nil
 	}
 
-	// only set default permissions for root folders
-	if !folder.IsRootFolderUID(obj.GetFolder()) {
+	isNested := !folder.IsRootFolderUID(obj.GetFolder())
+
+	// Nothing to write for a nested folder created by a non-user identity; keep inheriting from ancestors.
+	permissions := buildDefaultFolderPermissions(id, isNested)
+	if len(permissions) == 0 {
 		return nil
 	}
 
 	log := logging.FromContext(ctx)
-	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
+	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace(), "nested", isNested)
 
 	// Setting the default permissions is a system operation triggered by the creation of the
 	// folder, not an action the requester performs directly. The creator does not yet have
@@ -365,10 +370,6 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		return fmt.Errorf("parse namespace: %w", err)
 	}
 	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	// The creator gets admin on their folder, in addition to the default basic-role permissions.
-	// Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultFolderPermissions(id)
 
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
