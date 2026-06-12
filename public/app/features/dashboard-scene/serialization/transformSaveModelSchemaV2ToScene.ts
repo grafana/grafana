@@ -518,7 +518,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
