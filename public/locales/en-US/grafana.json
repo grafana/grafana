@@ -13029,7 +13029,7 @@
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
       "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
-      "label-branch-options": "Branch options (advanced)",
+      "label-branch-options": "Branch options",
       "label-enforce-template": "Enforce branch name template",
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
@@ -13055,8 +13055,15 @@
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
-      "label-commit-options": "Commit options (advanced)",
-      "label-enforce-template": "Enforce commit message template"
+      "label-commit-options": "Commit options",
+      "label-enforce-template": "Enforce commit message template",
+      "signer-required": "Required when commit signing is enabled.",
+      "signing-key-required": "Signing key is required",
+      "smime-certificate-configured": "Configured",
+      "smime-certificate-required": "Certificate is required"
+    },
+    "commit-signing-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
@@ -13087,13 +13094,6 @@
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
-      "description-webhook-url-learn-more": "Learn more",
-      "label-git-hub-features": "GitHub features",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13243,19 +13243,13 @@
     },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
-      "description-generate-dashboard-previews": "Create preview links for pull requests",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-preview-requirements": "(requires <2>image rendering</2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
-      "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
-      "label-sync-interval": "Sync Interval (seconds)",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
       "button": "Fix folder IDs"
@@ -13499,7 +13493,7 @@
       "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
       "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
       "label-enforce-template": "Enforce pull request title template",
-      "label-pull-request-options": "Pull request options (advanced)",
+      "label-pull-request-options": "Pull request options",
       "label-title-template": "Pull request title template",
       "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
     },
@@ -13669,11 +13663,24 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "Must match the signing key identity.",
+      "commit-signer-email-label": "Signer email",
+      "commit-signer-email-placeholder": "noreply@grafana.com",
+      "commit-signer-name-description": "Name of the commit signer.",
+      "commit-signer-name-label": "Signer name",
+      "commit-signer-name-placeholder": "Grafana",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "signing-method-description": "Sign commits so their author can be cryptographically verified.",
+      "signing-method-label": "Commit signing",
+      "signing-method-none": "None",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
@@ -13741,6 +13748,13 @@
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
       "error-title": "Live updates unavailable"
+    },
+    "webhook-section": {
+      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
+      "description-webhook-url-learn-more": "Learn more",
+      "label-webhook": "Webhook options",
+      "label-webhook-url": "Webhook URL",
+      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",

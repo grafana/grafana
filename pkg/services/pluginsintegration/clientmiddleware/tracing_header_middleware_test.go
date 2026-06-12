@@ -59,6 +59,23 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 
 			require.Len(t, cdt.CheckHealthReq.GetHTTPHeaders(), 0)
 		})
+
+		t.Run("tracing headers are not set for call resource", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
+				PluginContext: pluginCtx,
+			}, nopCallResourceSender)
+			require.NoError(t, err)
+
+			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 0)
+		})
 	})
 	t.Run("When a request comes in with tracing headers empty", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
@@ -168,6 +185,30 @@ func TestTracingHeaderMiddleware(t *testing.T) {
 			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.CheckHealthReq.GetHTTPHeader(`X-Query-Group-Id`))
 			require.Equal(t, `true`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-From-Expr`))
 			require.Equal(t, `grafana-assistant-app`, cdt.CheckHealthReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
+		})
+
+		t.Run("tracing headers are set for call resource", func(t *testing.T) {
+			cdt := handlertest.NewHandlerMiddlewareTest(t,
+				WithReqContext(req, &user.SignedInUser{
+					IsAnonymous: true,
+					Login:       "anonymous"},
+				),
+				handlertest.WithMiddlewares(NewTracingHeaderMiddleware()),
+			)
+
+			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
+				PluginContext: pluginCtx,
+			}, nopCallResourceSender)
+			require.NoError(t, err)
+
+			require.Len(t, cdt.CallResourceReq.GetHTTPHeaders(), 7)
+			require.Equal(t, `lN53lOcVk`, cdt.CallResourceReq.GetHTTPHeader(`X-Dashboard-Uid`))
+			require.Equal(t, `aIyC_OcVz`, cdt.CallResourceReq.GetHTTPHeader(`X-Datasource-Uid`))
+			require.Equal(t, `1`, cdt.CallResourceReq.GetHTTPHeader(`X-Grafana-Org-Id`))
+			require.Equal(t, `2`, cdt.CallResourceReq.GetHTTPHeader(`X-Panel-Id`))
+			require.Equal(t, `d26e337d-cb53-481a-9212-0112537b3c1a`, cdt.CallResourceReq.GetHTTPHeader(`X-Query-Group-Id`))
+			require.Equal(t, `true`, cdt.CallResourceReq.GetHTTPHeader(`X-Grafana-From-Expr`))
+			require.Equal(t, `grafana-assistant-app`, cdt.CallResourceReq.GetHTTPHeader(`X-Grafana-Caller-Id`))
 		})
 
 		t.Run("tracing headers are set for subscribe stream", func(t *testing.T) {

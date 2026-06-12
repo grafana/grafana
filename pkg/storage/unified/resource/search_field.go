@@ -16,12 +16,25 @@ import (
 type SearchCapability string
 
 const (
-	SearchCapabilityFilter   SearchCapability = "filter"   // exact-match filtering (Bleve keyword analyzer)
-	SearchCapabilityText     SearchCapability = "text"     // full-token search (Bleve standard analyzer)
-	SearchCapabilityPartial  SearchCapability = "partial"  // substring matching (Bleve ngram analyzer); requires text
-	SearchCapabilitySort     SearchCapability = "sort"     // sortable on the keyword variant
+	SearchCapabilityFilter SearchCapability = "filter" // exact-match filtering (Bleve keyword analyzer)
+	SearchCapabilityText   SearchCapability = "text"   // full-token search (Bleve standard analyzer)
+	// SearchCapabilityPartial enables substring matching (Bleve ngram
+	// analyzer). Requires SearchCapabilityText.
+	SearchCapabilityPartial SearchCapability = "partial"
+	// SearchCapabilitySort makes the field sortable. It also enables DocValues
+	// on the keyword variant, which the authz searcher reads column-wise to
+	// check folder permissions on every matching document.
+	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
+	// SearchCapabilityUnranked applies only to text fields. It drops per-term
+	// frequency stats and field-length norms from the index, saving space at
+	// the cost of BM25 ranking quality. Use it for text fields that are
+	// indexed (for example so the value can be retrieved or matched) but are
+	// never queried in a scored context. Redundant on filter / facet / sort
+	// fields: keyword variants are always exact-match and never carry BM25
+	// stats.
+	SearchCapabilityUnranked SearchCapability = "unranked"
 )
 
 // SearchFieldType is the value type of a search field.

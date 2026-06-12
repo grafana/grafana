@@ -4595,6 +4595,10 @@
             "type": "string",
             "default": ""
           },
+          "internalId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "memberCount": {
             "type": "integer",
             "format": "int64"
