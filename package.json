@@ -252,7 +252,7 @@
   },
   "dependencies": {
     "@bsull/augurs": "^0.10.0",
-    "@codemirror/autocomplete": "6.20.1",
+    "@codemirror/autocomplete": "6.20.3",
     "@codemirror/lang-sql": "6.10.0",
     "@codemirror/language": "6.12.3",
     "@codemirror/state": "6.6.0",
