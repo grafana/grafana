@@ -92,7 +92,7 @@ describe('BulkActionsBar', () => {
       });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable/i })).toBeInTheDocument();
     });
   });
 
