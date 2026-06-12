@@ -91,12 +91,13 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
       });
 
       try {
-        await deleteRepoFile({
+        const data = await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
           message: commitMessage,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -154,8 +155,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
   };
 
-  useProvisionedRequestHandler({
-    request,
+  const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType: 'folder',
     repository,
@@ -167,7 +167,6 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     handlers: {
       onDismiss,
       onBranchSuccess,
-      onError: showError,
     },
   });
 

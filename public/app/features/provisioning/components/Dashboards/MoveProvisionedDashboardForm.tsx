@@ -170,7 +170,7 @@ export function MoveProvisionedDashboardForm({
       });
 
       try {
-        await moveFile({
+        const data = await moveFile({
           name: repo,
           path: targetPath,
           ref: branchRef,
@@ -178,6 +178,7 @@ export function MoveProvisionedDashboardForm({
           body: currentFileData.resource.file,
           originalPath: path,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -217,12 +218,12 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const onBranchSuccess = (info: ProvisionedOperationInfo) => {
+  const onBranchSuccess = (urls: Record<string, string> | undefined, info: ProvisionedOperationInfo) => {
     dashboard.setState({ isDirty: false });
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
       paramName: 'new_pull_request_url',
-      paramValue: moveRequest?.data?.urls?.newPullRequestURL,
+      paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
     });
     navigate(url);
@@ -243,8 +244,7 @@ export function MoveProvisionedDashboardForm({
     [dashboard, panelEditor, navigate]
   );
 
-  useProvisionedRequestHandler({
-    request: moveRequest,
+  const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType: 'dashboard',
     repository,
@@ -254,9 +254,8 @@ export function MoveProvisionedDashboardForm({
       'Dashboard moved successfully'
     ),
     handlers: {
-      onBranchSuccess: (_, info) => onBranchSuccess(info),
+      onBranchSuccess: ({ urls }, info) => onBranchSuccess(urls, info),
       onDismiss,
-      onError: showError,
     },
   });
 

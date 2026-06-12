@@ -109,12 +109,13 @@ export function DeleteProvisionedDashboardForm({
       });
 
       try {
-        await deleteRepoFile({
+        const data = await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
           message: commitMessage,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -179,8 +180,7 @@ export function DeleteProvisionedDashboardForm({
     [panelEditor, navigate]
   );
 
-  useProvisionedRequestHandler({
-    request,
+  const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType: 'dashboard',
     repository,
@@ -192,7 +192,6 @@ export function DeleteProvisionedDashboardForm({
     handlers: {
       onDismiss,
       onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
-      onError: showError,
     },
   });
 
