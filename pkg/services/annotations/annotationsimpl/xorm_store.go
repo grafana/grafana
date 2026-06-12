@@ -268,12 +268,46 @@ func (r *xormRepositoryImpl) ensureTags(ctx context.Context, annotationID int64,
 			}
 		}
 		if len(tagsInsert) != 0 {
-			if _, err := sess.InsertMulti(tagsInsert); err != nil {
+			if err := r.insertTagsIgnoringConflicts(sess, tagsInsert); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+}
+
+// insertTagsIgnoringConflicts inserts annotation_tag rows, ignoring any conflicts
+// that arise from duplicate annotation_id/tag_id pairs.
+func (r *xormRepositoryImpl) insertTagsIgnoringConflicts(sess *sqlstore.DBSession, tags []annotationTag) error {
+	dialect := r.db.GetDialect()
+
+	switch dialect.DriverName() {
+	case migrator.MySQL:
+		args := make([]any, 0, len(tags)*2)
+		valuesClause := make([]string, 0, len(tags))
+		for _, t := range tags {
+			valuesClause = append(valuesClause, "(?, ?)")
+			args = append(args, t.AnnotationID, t.TagID)
+		}
+		sql := "INSERT IGNORE INTO annotation_tag (annotation_id, tag_id) VALUES " + strings.Join(valuesClause, ", ")
+		_, err := sess.Exec(append([]any{sql}, args...)...)
+		return err
+
+	default: // postgres, sqlite
+		args := make([]any, 0, len(tags)*2)
+		valuesClause := make([]string, 0, len(tags))
+		for i, t := range tags {
+			if dialect.DriverName() == migrator.Postgres {
+				valuesClause = append(valuesClause, fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2))
+			} else {
+				valuesClause = append(valuesClause, "(?, ?)")
+			}
+			args = append(args, t.AnnotationID, t.TagID)
+		}
+		sql := "INSERT INTO annotation_tag (annotation_id, tag_id) VALUES " + strings.Join(valuesClause, ", ") + " ON CONFLICT (annotation_id, tag_id) DO NOTHING"
+		_, err := sess.Exec(append([]any{sql}, args...)...)
+		return err
+	}
 }
 
 func tagSet[T any](fn func(T) int64, list []T) map[int64]struct{} {

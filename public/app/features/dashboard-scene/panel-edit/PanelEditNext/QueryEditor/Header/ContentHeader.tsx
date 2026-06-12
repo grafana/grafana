@@ -118,7 +118,7 @@ interface ContentHeaderProps {
  * All data and callbacks are passed via props, making it reusable across
  * different architectural patterns.
  */
-export function ContentHeader({
+function ContentHeader({
   selectedAlert,
   selectedQuery,
   selectedTransformation,

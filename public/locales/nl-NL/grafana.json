@@ -1180,12 +1180,6 @@
       "label-metric": "Metrisch",
       "label-pending-period": "Wachttijd"
     },
-    "evaluation-group": {
-      "label-delete": "Verwijderen",
-      "label-export": "Exporteren",
-      "label-reorder-rules": "Regels opnieuw ordenen",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Een groep evalueert al zijn regels over hetzelfde evaluatie-interval.",
       "description-often-rules-group-evaluated": "Hoe vaak alle regels in de groep worden geëvalueerd.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Voer een naam in",
       "title-new-evaluation-group": "Nieuwe evaluatiegroep"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Er is iets misgegaan bij het ophalen van de groepsgegevens"
     },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! Je hebt geen toestemming om deze regel te bewerken.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Deze gegevensbron heeft geen regels geconfigureerd",
         "new-alert-rule": "Nieuwe waarschuwingsregel",
-        "new-ds-managed-alerting-rule": "Nieuwe regel voor door gegevensbron beheerde waarschuwingen",
         "new-ds-managed-recording-rule": "Nieuwe regel voor door gegevensbron beheerde opnamen",
         "new-grafana-alerting-rule": "Nieuwe waarschuwingsregel",
         "new-grafana-recording-rule": "Nieuwe opnameregel",
@@ -2540,22 +2529,9 @@
         "aria-label": "beleid toevoegen",
         "text": "Nieuw meldingsbeleid"
       },
-      "delete-reasons": {
-        "no-permissions": "Je hebt niet de vereiste toestemming om dit meldingsbeleid te verwijderen",
-        "provisioned": "Meldingsbeleid is geprovisioneerd en kan niet worden verwijderd via de gebruikersinterface"
-      },
-      "delete-text": "Meldingsbeleid kan niet worden verwijderd om de volgende redenen:",
-      "empty-state": {
-        "message": "Geen beleid gevonden"
-      },
       "fetch": {
         "error": "Kan beleid niet ophalen"
       },
-      "reset-reasons": {
-        "no-permissions": "Je hebt niet de vereiste toestemming om dit meldingsbeleid opnieuw in te stellen",
-        "provisioned": "Meldingsbeleid is geprovisioneerd en kan niet worden gereset via de gebruikersinterface"
-      },
-      "reset-text": "Meldingsbeleid kan niet worden gereset om de volgende redenen:",
       "text-loading": "Laden...."
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Timings overschrijven",
       "repeat-interval": "Herhalingsinterval: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "wissen",
-      "aria-label-search-routing-trees": "routeringsbomen zoeken",
-      "clear": "Wissen",
-      "label-search-by-name-or-receiver": "Zoeken op beleidsnaam of contactpunt",
-      "placeholder-search": "Zoeken"
-    },
-    "routing-tree-header": {
-      "reset": "Resetten"
-    },
     "rule-actions-buttons": {
       "title-edit": "Bewerken",
       "title-view": "Weergave"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Waarschuwingsregels"
       },
-      "rulerrule-loading-error": "Kan de regel niet laden",
       "toggle": {
         "use-new-experience": "Nieuwe ervaring gebruiken",
         "view-previous-experience": "Terug naar de vorige ervaring"
@@ -3577,9 +3542,6 @@
       "collapse": "Samenvouwen",
       "collapse-all": "Alles samenvouwen",
       "collapse-sidebar": "Zijbalk samenvouwen",
-      "compact-firing": "geactiveerd",
-      "compact-pending": "in behandeling",
-      "compact-rules": "regels",
       "error-loading-rule": "Fout bij het laden van de regel",
       "expand": "Uitvouwen",
       "expand-all": "Alles uitvouwen",
@@ -5373,6 +5335,8 @@
     },
     "code-pane": {
       "collapse": "Editor samenvouwen",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Editor uitvouwen",
       "header": "Bewerken als code",
       "modal-title": "Dashboard bewerken als code"
@@ -5672,8 +5636,7 @@
           "apply": "Toepassen",
           "change-value": "Variabele waarde wijzigen",
           "discard": "Negeren",
-          "modal-title": "Aangepaste opties",
-          "values": "Waarden gescheiden door komma"
+          "modal-title": "Aangepaste opties"
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -5898,7 +5861,6 @@
     },
     "inspect": {
       "data-tab": "Gegevens",
-      "error-tab": "Fout",
       "json-tab": "JSON",
       "meta-tab": "Metagegevens",
       "query-tab": "Query",
@@ -6013,13 +5975,6 @@
       "new-row": {
         "title": {
           "row-title": "Rijtitel"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget-titel"
         }
       }
     },
@@ -8781,19 +8736,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Voeg extra informatie toe naast de service en bewerking op een spanbalkrij in de traceerweergave.",
-      "title-span-bar": "Spanbalk"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Selecteer labelnaam",
-      "label-label": "Label",
-      "label-tag-key": "Labelsleutel",
-      "placeholder-duration": "Duur",
-      "placeholder-enter-tag-key": "Labelsleutel invoeren",
-      "tooltip-default-duration": "Standaard: duur",
-      "tooltip-tag-key": "Labelsleutel die zal worden gebruikt om de labelwaarde op te halen. De attributen en bronnen van een span worden doorzocht op de labelsleutel"
-    },
     "span-detail": {
       "label": {
         "kind": "Type:",
@@ -9030,13 +8972,6 @@
       "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
       "folder-moved-success": "Map verplaatst"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Bezig met laden"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11551,6 @@
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Deze tool kan sommige bronnen van deze installatie naar je cloudstack migreren. Om aan de slag te gaan, moet je een snapshot van deze installatie maken. Het maken van een snapshot duurt meestal minder dan twee minuten. De snapshot wordt naast deze Grafana-installatie opgeslagen.",
-      "title": "Er bestaat geen snapshot",
-      "when-complete": "Zodra de snapshot is voltooid, kun je deze uploaden naar je cloudstack."
-    },
     "building-snapshot": {
       "description": "We verzamelen je bronnen voor migratie naar Grafana Cloud. Dit duurt maar even.",
       "description-eta": "Het maken van een snapshot duurt meestal minder dan twee minuten.",
@@ -12478,13 +12408,6 @@
       "search": "Zoeken",
       "starred-dashboards": "Favoriete dashboards"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Naam van berekening"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13129,6 +13052,14 @@
       "folders-count_one": "{{count}} map",
       "folders-count_other": "{{count}} map"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Sla de installatie over en krijg Git Sync volledig beheerd en gehost op Grafana Cloud met het <2>altijd gratis Grafana Cloud-abonnement</2>.",
       "title": "Je kunt Git-synchronisatie ook op Grafana Cloud gebruiken"
@@ -13147,6 +13078,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Instellingen voor repository zijn opgeslagen",
@@ -13584,6 +13520,14 @@
           "repository-request-failed": "Repository-aanvraag mislukt"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Opmerking:",
@@ -14214,6 +14158,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Onder {{id}} toevoegen",
       "add-expression": "Expressie toevoegen",
@@ -14232,9 +14180,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties",
+      "transformations-empty": "",
       "view-toggle": "Bekijken",
       "alerts_one": "Waarschuwingen ({{count}})",
       "alerts_other": "Waarschuwingen ({{count}})",
