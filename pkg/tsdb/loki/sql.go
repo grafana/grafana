@@ -88,7 +88,9 @@ func dsAbstractionEnabled(req *backend.QueryDataRequest) bool {
 //	STEP, RATE — Grafana duration strings; invalid values fail the rewrite.
 //	DIRECTION — forward/backward; applied on log queries only (QueryJSONModel.Direction).
 //	INSTANT — key presence selects instant API for metric queries only.
-//	PARSER — json or logfmt; appends a LogQL parser stage and routes non-stream filters to pipeline label filters.
+//	PARSER — json, logfmt, unpack, pattern, or regexp; appends a LogQL parser stage and routes non-stream filters to pipeline label filters.
+//	PATTERN — pattern expression when PARSER=pattern.
+//	REGEXP_EXPR — regexp expression when PARSER=regexp.
 //
 // Positive schemas.Query.limit is mapped to Loki MaxLines on log queries only (buildLogPlan).
 //
@@ -158,7 +160,7 @@ type sqlHints struct {
 	rateDur   time.Duration // parsed RATE duration, 0 if absent
 	direction string        // lowercased DIRECTION hint, "" if absent
 	instant   bool          // INSTANT hint key presence
-	parser    string        // lowercased PARSER hint (json, logfmt), "" if absent
+	parser    string        // LogQL parser stage fragment (e.g. json, pattern "<expr>"), "" if absent
 }
 
 // parseSQLHints validates and extracts the TableHintValues supported by Loki Grafana SQL. Errors
@@ -174,8 +176,10 @@ func parseSQLHints(hints map[string]string) (sqlHints, error) {
 	}
 	h.direction = strings.ToLower(hintGet(hints, grafanaSQLHintDirection))
 	h.instant = instantHintEnabled(hints)
-	if rawParser := hintGet(hints, grafanaSQLHintParser); rawParser != "" {
-		stage, err := validateLogQLParser(rawParser)
+	if hintGet(hints, grafanaSQLHintParser) != "" ||
+		hintGet(hints, grafanaSQLHintPattern) != "" ||
+		hintGet(hints, grafanaSQLHintRegexpExpr) != "" {
+		stage, err := buildParserStage(hints)
 		if err != nil {
 			return h, fmt.Errorf("loki grafana sql: %w", err)
 		}
@@ -541,7 +545,7 @@ func buildLogQLPipeline(ctx context.Context, tableLabel, tableValue string, filt
 					return "", err
 				}
 			}
-			return "", fmt.Errorf("column %q requires parser('json') or parser('logfmt') hint", f.Name)
+			return "", fmt.Errorf("column %q requires a parser FOR hint: parser('json'), parser('logfmt'), parser('unpack'), parser('pattern') with pattern('<expr>'), or parser('regexp') with regexp_expr('<re>')", f.Name)
 		}
 		streamFilters = append(streamFilters, f)
 	}

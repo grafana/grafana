@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -47,9 +46,8 @@ const schemaTableLabelCacheTTL = 5 * time.Minute
 const schemaCacheKeyTableLabel = "\x1fgrafana/loki/schema/table-label"
 
 const (
-	schemaProbeLimit   = 100
-	schemaProbeWindow  = 15 * time.Minute
-	grafanaSQLHintParser = "PARSER"
+	schemaProbeLimit  = 100
+	schemaProbeWindow = 15 * time.Minute
 )
 
 var reservedParsedLabels = map[string]struct{}{
@@ -92,7 +90,19 @@ var lokiTableHints = []schemas.TableHint{
 	{Name: "instant", Description: "Use Loki instant query API for metric expressions (requires aggregation or rate hint).", HasValue: false},
 	{
 		Name:          "parser",
-		Description:   "Log line parser: parser('json') or parser('logfmt').",
+		Description:   "Log line parser: parser('json'), parser('logfmt'), parser('unpack'), parser('pattern'), or parser('regexp').",
+		HasValue:      true,
+		AffectsSchema: true,
+	},
+	{
+		Name:          "pattern",
+		Description:   "Pattern expression for parser('pattern'), e.g. pattern('<status>').",
+		HasValue:      true,
+		AffectsSchema: true,
+	},
+	{
+		Name:          "regexp_expr",
+		Description:   "Regexp expression for parser('regexp'), e.g. regexp_expr('(?P<ip>\\d+)').",
 		HasValue:      true,
 		AffectsSchema: true,
 	},
@@ -213,7 +223,10 @@ func (p *SchemaProvider) LabelNamesForTable(ctx context.Context, table string) (
 // Columns implements schemas.ColumnsHandler.
 func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsRequest) (*schemas.ColumnsResponse, error) {
 	tblLabel := p.resolvedTableLabel(ctx)
-	parser := parserFromColumnsRequest(req.SchemaContext, req.TableParameters)
+	parserStage, err := parserStageFromSchemaContext(req.SchemaContext)
+	if err != nil {
+		p.logger.Warn("invalid parser hints for columns", "error", err)
+	}
 	out := make(map[string][]schemas.Column, len(req.Tables))
 	for _, table := range req.Tables {
 		labels, err := p.fetchLabelNamesForTable(ctx, tblLabel, table)
@@ -223,10 +236,10 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 			continue
 		}
 		cols := buildColumnsFromLabels(labels, tblLabel)
-		if parser != "" {
-			parsed, err := p.fetchParsedLabelNames(ctx, tblLabel, table, parser, labels)
+		if parserStage != "" {
+			parsed, err := p.fetchParsedLabelNames(ctx, tblLabel, table, parserStage, labels)
 			if err != nil {
-				p.logger.Warn("failed to probe parsed columns for table", "table", table, "parser", parser, "error", err)
+				p.logger.Warn("failed to probe parsed columns for table", "table", table, "parserStage", parserStage, "error", err)
 			} else {
 				cols = appendParsedColumns(cols, parsed)
 			}
@@ -239,10 +252,13 @@ func (p *SchemaProvider) Columns(ctx context.Context, req *schemas.ColumnsReques
 // ColumnValues implements schemas.ColumnValuesHandler.
 func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnValuesRequest) (*schemas.ColumnValuesResponse, error) {
 	tblLabel := p.resolvedTableLabel(ctx)
-	parser := parserFromColumnsRequest(req.SchemaContext, req.TableParameters)
+	parserStage, err := parserStageFromSchemaContext(req.SchemaContext)
+	if err != nil {
+		p.logger.Warn("invalid parser hints for column values", "error", err)
+	}
 
 	var streamSet map[string]struct{}
-	if parser != "" {
+	if parserStage != "" {
 		streamLabels, err := p.fetchLabelNamesForTable(ctx, tblLabel, req.Table)
 		if err != nil {
 			p.logger.Warn("failed to fetch stream labels for column values", "table", req.Table, "error", err)
@@ -262,9 +278,9 @@ func (p *SchemaProvider) ColumnValues(ctx context.Context, req *schemas.ColumnVa
 		if col == "timestamp" || col == "line" || col == "value" {
 			continue
 		}
-		if parser != "" && streamSet != nil {
+		if parserStage != "" && streamSet != nil {
 			if _, isStream := streamSet[col]; !isStream {
-				vals, err := p.fetchParsedColumnValues(ctx, tblLabel, req.Table, parser, col, req.TimeRange)
+				vals, err := p.fetchParsedColumnValues(ctx, tblLabel, req.Table, parserStage, col, req.TimeRange)
 				if err != nil {
 					resp.Errors[col] = err.Error()
 					continue
@@ -355,47 +371,20 @@ func (p *SchemaProvider) fetchAllLabelNames(ctx context.Context) ([]string, erro
 	return p.fetchLokiStringList(ctx, "/loki/api/v1/labels", "list labels")
 }
 
-func parserFromColumnsRequest(schemaContext, params map[string]string) string {
-	if p := tableParamGet(schemaContext, grafanaSQLHintParser); p != "" {
-		return strings.ToLower(strings.TrimSpace(p))
+func parserStageFromSchemaContext(schemaContext map[string]string) (string, error) {
+	hints := parserHintsFromSchemaContext(schemaContext)
+	if len(hints) == 0 {
+		return "", nil
 	}
-	raw := tableParamGet(params, grafanaSQLHintParser)
-	return strings.ToLower(strings.TrimSpace(raw))
+	return buildParserStage(hints)
 }
 
-func tableParamGet(params map[string]string, upperKey string) string {
-	if params == nil {
-		return ""
-	}
-	if v, ok := params[upperKey]; ok {
-		return strings.TrimSpace(v)
-	}
-	for k, v := range params {
-		if strings.EqualFold(k, upperKey) {
-			return strings.TrimSpace(v)
-		}
-	}
-	return ""
-}
-
-func validateLogQLParser(parser string) (string, error) {
-	switch strings.ToLower(strings.TrimSpace(parser)) {
-	case "json":
-		return "json", nil
-	case "logfmt":
-		return "logfmt", nil
-	default:
-		return "", fmt.Errorf("unsupported parser %q; use json or logfmt", parser)
-	}
-}
-
-func (p *SchemaProvider) fetchParsedLabelNames(ctx context.Context, tableLabel, table, parser string, streamLabels []string) ([]string, error) {
-	stage, err := validateLogQLParser(parser)
-	if err != nil {
-		return nil, err
+func (p *SchemaProvider) fetchParsedLabelNames(ctx context.Context, tableLabel, table, parserStage string, streamLabels []string) ([]string, error) {
+	if parserStage == "" {
+		return nil, fmt.Errorf("parser stage is empty")
 	}
 
-	cacheKey := schemaParsedLabelsCacheKey(tableLabel, table, stage)
+	cacheKey := schemaParsedLabelsCacheKey(tableLabel, table, parserStage)
 	c := p.schemaCacheOrInit()
 	if v, ok := c.Get(cacheKey); ok {
 		return append([]string(nil), v.([]string)...), nil
@@ -406,7 +395,7 @@ func (p *SchemaProvider) fetchParsedLabelNames(ctx context.Context, tableLabel, 
 		streamSet[l] = struct{}{}
 	}
 
-	keys, err := p.probeParsedLabelKeys(ctx, tableLabel, table, stage)
+	keys, err := p.probeParsedLabelKeys(ctx, tableLabel, table, parserStage)
 	if err != nil {
 		return nil, err
 	}
