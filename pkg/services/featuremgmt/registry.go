@@ -2150,7 +2150,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "newClickhouseConfigPageDesign",
