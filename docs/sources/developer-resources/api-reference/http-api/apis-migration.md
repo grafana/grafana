@@ -40,13 +40,13 @@ Currently the following replacements apply:
 - [Resource history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/)
 - [Secrets Management API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/)
 
-| **Feature**        | **New API**                                                                                                                                                                                 | **Legacy API**      |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| Dashboards         | [`apis/dashboard.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard)                                                   | `/api/dashboards/*` |
-| Folders            | [`apis/folder.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder)                                                         | `/api/folders/*`    |
-| Playlists          | [`apis/playlist.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist)                                                     | Not available       |
-| Resource history   | [`/apis/<group>/<version>/namespaces/<namespace>/<resource>/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history)             | Not available       |
-| Secrets management | [`/apis/secret.grafana.app/*v1beta1/namespaces/:namespace/securevalues*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_managemant) | Not available       |
+| **Feature**        | **New API**                                                                                                                                             | **Legacy API**      |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| Dashboards         | [`apis/dashboard.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard)               | `/api/dashboards/*` |
+| Folders            | [`apis/folder.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder)                     | `/api/folders/*`    |
+| Playlists          | [`apis/playlist.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist)                 | Not available       |
+| Resource history   | [`apis/<group>/<version>/namespaces/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history) | Not available       |
+| Secrets management | [`apis/secret.grafana.app/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_managemant)         | Not available       |
 
 ## Deprecation notes
 
