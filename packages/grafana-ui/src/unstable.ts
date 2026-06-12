@@ -12,8 +12,6 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export { CodeMirrorInlineInput } from './components/CodeMirror/InlineInput';
-export type { CodeMirrorInlineInputProps } from './components/CodeMirror/InlineInput';
 export type {
   CodeMirrorCompletion,
   CodeMirrorCompletionContext,
