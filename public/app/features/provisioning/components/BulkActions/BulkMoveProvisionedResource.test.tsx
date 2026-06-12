@@ -19,6 +19,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCou
 }));
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 

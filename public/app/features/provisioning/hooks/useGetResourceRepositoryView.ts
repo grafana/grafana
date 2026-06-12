@@ -34,9 +34,9 @@ interface RepositoryViewData {
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
   /**
-   * True when loading has settled and no repository could be resolved (and the
-   * target is not read-only). Consumers gating forms (e.g. ProvisionedFormShell)
-   * should use this instead of re-deriving it from isLoading/isReadOnlyRepo/repository.
+   * True when loading has settled and no repository could be resolved.
+   * Consumers gating forms (e.g. ProvisionedFormGate) should use this
+   * instead of re-deriving it from isLoading/repository.
    */
   isMissingRepo: boolean;
 }
@@ -46,7 +46,7 @@ export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): R
   const data = useResourceRepositoryViewData(args);
   return {
     ...data,
-    isMissingRepo: !data.isLoading && !data.isReadOnlyRepo && !data.repository,
+    isMissingRepo: !data.isLoading && !data.repository,
   };
 };
 

@@ -1,16 +1,16 @@
 import { render, screen } from 'test/test-utils';
 
-import { ProvisionedFormShell, type ProvisionedFormShellProps } from './ProvisionedFormShell';
+import { ProvisionedFormGate, type ProvisionedFormGateProps } from './ProvisionedFormGate';
 
-function setup(props: Partial<ProvisionedFormShellProps> = {}) {
+function setup(props: Partial<ProvisionedFormGateProps> = {}) {
   return render(
-    <ProvisionedFormShell {...props}>
+    <ProvisionedFormGate {...props}>
       <div data-testid="form-content">Form content</div>
-    </ProvisionedFormShell>
+    </ProvisionedFormGate>
   );
 }
 
-describe('ProvisionedFormShell', () => {
+describe('ProvisionedFormGate', () => {
   it('renders children when all flags are false', () => {
     setup();
     expect(screen.getByTestId('form-content')).toBeInTheDocument();

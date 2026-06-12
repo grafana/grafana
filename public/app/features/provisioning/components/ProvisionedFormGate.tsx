@@ -6,7 +6,7 @@ import { FormLoadingErrorAlert } from './Dashboards/FormLoadingErrorAlert';
 import { OrphanedProvisionedDrawerNotice } from './Dashboards/OrphanedProvisionedDrawerNotice';
 import { RepoInvalidStateBanner } from './Shared/RepoInvalidStateBanner';
 
-export interface ProvisionedFormShellProps {
+export interface ProvisionedFormGateProps {
   isLoading?: boolean;
   isOrphaned?: boolean;
   isError?: boolean;
@@ -33,7 +33,7 @@ export interface ProvisionedFormShellProps {
  *   pass the hook's `isLoading`, `isMissingRepo`, and `isReadOnly={isReadOnlyRepo}`
  *   straight through, with the form-specific `readOnlyMessage`.
  */
-export function ProvisionedFormShell({
+export function ProvisionedFormGate({
   isLoading,
   isOrphaned,
   isError,
@@ -42,7 +42,7 @@ export function ProvisionedFormShell({
   error,
   readOnlyMessage,
   children,
-}: ProvisionedFormShellProps) {
+}: ProvisionedFormGateProps) {
   if (isLoading) {
     return <Spinner />;
   }

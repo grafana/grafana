@@ -2,7 +2,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
 
@@ -33,7 +33,7 @@ export function MoveProvisionedDashboardDrawer({
   } = useProvisionedDashboardData(dashboard);
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={repoDataStatus === RepoViewStatus.Loading}
       isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
       isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
@@ -52,6 +52,6 @@ export function MoveProvisionedDashboardDrawer({
         onDismiss={onDismiss}
         onSuccess={onSuccess}
       />
-    </ProvisionedFormShell>
+    </ProvisionedFormGate>
   );
 }

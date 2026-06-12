@@ -17,14 +17,17 @@ import {
   getDefaultRef,
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -232,7 +235,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
@@ -246,15 +249,22 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   };
 
   return (
-    <ProvisionedFormShell isLoading={isLoading} isMissingRepo={isMissingRepo} isReadOnly={isReadOnlyRepo}>
-      <FormContent
-        selectedItems={selectedItems}
-        onDismiss={onDismiss}
-        initialValues={initialValues}
-        repository={repository!}
-        canPushToConfiguredBranch={canPushToConfiguredBranch}
-        folderPath={isRootPage ? '/' : folderPath}
-      />
-    </ProvisionedFormShell>
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isOrphaned={status === RepoViewStatus.Orphaned}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+    >
+      {repository && (
+        <FormContent
+          selectedItems={selectedItems}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          folderPath={isRootPage ? '/' : folderPath}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

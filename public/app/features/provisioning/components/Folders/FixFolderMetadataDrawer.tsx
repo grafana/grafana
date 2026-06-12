@@ -12,7 +12,7 @@ import { useGetResourceRepositoryView } from '../../hooks/useGetResourceReposito
 import { type StatusInfo } from '../../types';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 
@@ -60,7 +60,7 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
 
   return (
     <Drawer title={drawerTitle} onClose={onDismiss}>
-      <ProvisionedFormShell
+      <ProvisionedFormGate
         isLoading={repoLoading}
         isMissingRepo={isMissingRepo}
         isReadOnly={isReadOnlyRepo}
@@ -69,15 +69,17 @@ export function FixFolderMetadataDrawer({ repositoryName, onDismiss }: FixFolder
           'Folder metadata cannot be fixed automatically.'
         )}
       >
-        <FixFolderMetadataForm
-          repositoryName={repositoryName}
-          repository={repository!}
-          onDismiss={onDismiss}
-          submitError={jobError}
-          onJobCreated={setSubmittedJob}
-          onSubmitError={setJobError}
-        />
-      </ProvisionedFormShell>
+        {repository && (
+          <FixFolderMetadataForm
+            repositoryName={repositoryName}
+            repository={repository}
+            onDismiss={onDismiss}
+            submitError={jobError}
+            onJobCreated={setSubmittedJob}
+            onSubmitError={setJobError}
+          />
+        )}
+      </ProvisionedFormGate>
     </Drawer>
   );
 }

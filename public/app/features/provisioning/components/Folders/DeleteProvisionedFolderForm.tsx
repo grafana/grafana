@@ -23,7 +23,7 @@ import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 
@@ -228,7 +228,7 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
     });
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={isLoading}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
@@ -237,13 +237,15 @@ export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteP
         'To delete this folder, please remove the folder from your repository.'
       )}
     >
-      <FormContent
-        parentFolder={parentFolder}
-        onDismiss={onDismiss}
-        initialValues={initialValues!}
-        repository={repository}
-        canPushToConfiguredBranch={canPushToConfiguredBranch}
-      />
-    </ProvisionedFormShell>
+      {initialValues && (
+        <FormContent
+          parentFolder={parentFolder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

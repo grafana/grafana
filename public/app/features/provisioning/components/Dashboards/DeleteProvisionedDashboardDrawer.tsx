@@ -2,7 +2,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { DeleteProvisionedDashboardForm } from './DeleteProvisionedDashboardForm';
 
@@ -28,7 +28,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
   } = useProvisionedDashboardData(dashboard);
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={repoDataStatus === RepoViewStatus.Loading}
       isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
       isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
@@ -44,6 +44,6 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
         canPushToConfiguredBranch={canPushToConfiguredBranch}
         onDismiss={onDismiss}
       />
-    </ProvisionedFormShell>
+    </ProvisionedFormGate>
   );
 }

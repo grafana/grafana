@@ -4,7 +4,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
@@ -20,7 +20,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     useProvisionedDashboardData(dashboard, saveAsCopy);
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={repoDataStatus === RepoViewStatus.Loading}
       isOrphaned={repoDataStatus === RepoViewStatus.Orphaned}
       isError={repoDataStatus === RepoViewStatus.Error || !defaultValues}
@@ -37,6 +37,6 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
         readOnly={readOnly}
         saveAsCopy={saveAsCopy}
       />
-    </ProvisionedFormShell>
+    </ProvisionedFormGate>
   );
 }

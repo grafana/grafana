@@ -19,7 +19,7 @@ const mockRepoView: ReturnType<typeof useGetResourceRepositoryView> = {
   isLoading: false,
   isInstanceManaged: false,
   isReadOnlyRepo: false,
-  isMissingRepo: true,
+  isMissingRepo: false,
 };
 
 // Track which folderName the hook is called with so tests can configure per-folder responses.
@@ -35,10 +35,10 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
   },
   useGetResourceRepositoryView: jest.fn((args: { folderName?: string }) => {
     const perFolder = args.folderName ? repoViewByFolder[args.folderName] : undefined;
-    if (perFolder) {
-      return { ...mockRepoView, ...perFolder };
-    }
-    return mockRepoView;
+    const view = perFolder ? { ...mockRepoView, ...perFolder } : { ...mockRepoView };
+    // Derive isMissingRepo the same way the real hook does, so the mock can
+    // never produce impossible states like a defined repository with isMissingRepo=true.
+    return { ...view, isMissingRepo: !view.isLoading && !view.repository };
   }),
 }));
 

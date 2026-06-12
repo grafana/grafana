@@ -17,7 +17,7 @@ import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 interface FormProps extends RenameProvisionedFolderFormProps {
@@ -199,7 +199,7 @@ export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisi
     });
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={isLoading}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
@@ -208,13 +208,15 @@ export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisi
         'To rename this folder, please update the folder in your repository directly.'
       )}
     >
-      <FormContent
-        folder={folder}
-        onDismiss={onDismiss}
-        initialValues={initialValues!}
-        repository={repository}
-        canPushToConfiguredBranch={canPushToConfiguredBranch}
-      />
-    </ProvisionedFormShell>
+      {initialValues && (
+        <FormContent
+          folder={folder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

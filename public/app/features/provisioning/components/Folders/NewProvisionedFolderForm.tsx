@@ -19,7 +19,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { ProvisionedFormShell } from '../ProvisionedFormShell';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 import { joinPath } from '../utils/path';
@@ -247,7 +247,7 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
     });
 
   return (
-    <ProvisionedFormShell
+    <ProvisionedFormGate
       isLoading={isLoading}
       isMissingRepo={isMissingRepo}
       isReadOnly={isReadOnlyRepo}
@@ -256,15 +256,17 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
         'To create this folder, please add the resource in your repository directly.'
       )}
     >
-      <FormContent
-        parentFolder={parentFolder}
-        onDismiss={onDismiss}
-        initialValues={initialValues!}
-        repository={repository}
-        canPushToConfiguredBranch={canPushToConfiguredBranch}
-        folder={folder}
-      />
-    </ProvisionedFormShell>
+      {initialValues && (
+        <FormContent
+          parentFolder={parentFolder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          folder={folder}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }
 
