@@ -13,7 +13,7 @@ import {
   useQueryRunnerContext,
 } from '../QueryEditorContext';
 
-export interface BulkAction {
+interface BulkAction {
   key: string;
   icon: IconName;
   label: string;
