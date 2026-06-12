@@ -216,15 +216,15 @@ From here, you can:
 
 You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
-To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
+To access your saved queries, click the blue plus icon in the sidebar and select **Add saved query** or click **Replace** in the editor pane:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-add-save-reuse-query-v13.0.png" max-width="750px" alt="Access saved queries" >}}
-<!-- TODO: Update screenshot -->
+{{< figure src="add-save-reuse-query-temp.png" max-width="750px" alt="Access saved queries" >}}
+
 {{< admonition type="note" >}}
 The new query editor experience...etc
 {{< /admonition >}}
 
-Clicking **+ Add from saved queries** adds an additional query, while clicking **Replace query** in the **Saved queries** drop-down menu updates your existing query.
+Clicking **Add saved query** adds an additional query, while clicking **Replace** updates your configured query.
 
 {{< admonition type="tip">}}
 When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
@@ -252,11 +252,11 @@ To save a query you've created:
 
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-save-query-v13.0.png" max-width="750px" alt="Save a query" >}}
-   <!-- TODO: Update screenshot -->
+   {{< figure src="save-query-temp.png" max-width="750px" alt="Save a query" >}}
+
    {{< admonition type="note" >}}
-The new query editor experience...etc
-{{< /admonition >}}
+   The new query editor experience...etc
+   {{< /admonition >}}
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
@@ -299,12 +299,9 @@ Hover your cursor over a number to display information about the query editor el
 
 {{< image-map key="query-editor" >}}
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab2-v11.6.png" max-width="750px" alt="The Query tab of the panel editor" >}}
-<!-- TODO: Update screenshot -->
+For pipelines with many queries, expressions, or transformations, you can expand the sidebar to full height to see everything at once:
 
-For pipelines with many queries, expressions, or transformations, you can expand the sidebar to full height to see everything at once.
-
-<!-- TODO: screenshot here -->
+{{< figure src="expanded-sidebar-temp.png" max-width="750px" alt="Expanded sidebar" >}}
 
 ## Add a query
 
