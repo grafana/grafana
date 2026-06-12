@@ -37,7 +37,14 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
       role="button"
       tabIndex={0}
       className={styles.row}
-      onClick={onItemClick}
+      onClick={(e) => {
+        // A link inside the annotation text handles its own navigation; clicking
+        // anywhere else on the row opens the annotation.
+        if (e.target instanceof Element && e.target.closest('a')) {
+          return;
+        }
+        onItemClick();
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -45,13 +52,7 @@ export const AnnotationListItem = ({ options, annotation, formatDate, onClick, o
         }
       }}
     >
-      <RenderUserContentAsHTML
-        className={styles.heading}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-        content={text}
-      />
+      <RenderUserContentAsHTML className={styles.heading} content={text} />
       {showTimeStamp && (
         <div className={styles.timestamp}>
           <TimeStamp formatDate={formatDate} time={time!} />
