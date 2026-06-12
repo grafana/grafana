@@ -5,11 +5,36 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useRepositoryList } from '../hooks/useRepositoryList';
+import { createRepository } from '../mocks/factories';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import { Migrate } from './Migrate';
+import { type FolderRow, useFolderMigrationData } from './hooks/useFolderMigrationData';
 
 setupProvisioningMswServer();
+
+// The folder list is fed by the unified searcher (not an HTTP endpoint), so we
+// mock the hook here and exercise its own logic in useFolderMigrationData.test.
+jest.mock('./hooks/useFolderMigrationData', () => ({
+  useFolderMigrationData: jest.fn(),
+}));
+jest.mock('../hooks/useRepositoryList', () => ({
+  useRepositoryList: jest.fn(),
+}));
+
+const mockUseFolderMigrationData = jest.mocked(useFolderMigrationData);
+const mockUseRepositoryList = jest.mocked(useRepositoryList);
+
+function mockFolders(data: FolderRow[] = []) {
+  mockUseFolderMigrationData.mockReturnValue({ data, isLoading: false, isError: false });
+}
+
+beforeEach(() => {
+  mockFolders();
+  // One connected repository by default so the migrate actions are enabled.
+  mockUseRepositoryList.mockReturnValue([[createRepository({ metadata: { name: 'repo-1' } })], false]);
+});
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
 // 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform).
@@ -128,6 +153,59 @@ describe('Migrate', () => {
 
       // The real drawer opens with its repository-selection copy.
       expect(await screen.findByText(/all dashboards and folders will be migrated/i)).toBeInTheDocument();
+    });
+
+    it('lists unmanaged folders in the Dashboards to migrate table', async () => {
+      mockFolders([
+        {
+          uid: 'team-a',
+          title: 'Team A',
+          dashboardCount: 2,
+          directDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+          subfolders: [],
+          allDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+        },
+      ]);
+
+      render(<Migrate />);
+
+      expect(await screen.findByText('Dashboards to migrate')).toBeInTheDocument();
+      expect(screen.getByText('Team A')).toBeInTheDocument();
+    });
+
+    it('opens the drawer scoped to the selection when migrating selected folders', async () => {
+      mockFolders([
+        {
+          uid: 'team-a',
+          title: 'Team A',
+          dashboardCount: 2,
+          directDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+          subfolders: [],
+          allDashboards: [
+            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
+            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+          ],
+        },
+      ]);
+
+      const { user } = render(<Migrate />);
+
+      // Picking the folder cascades to its two dashboards.
+      await user.click(await screen.findByRole('checkbox', { name: /select folder team a/i }));
+      await user.click(screen.getByRole('button', { name: /migrate selected \(1\)/i }));
+
+      // The drawer opens in selective mode summarizing the two dashboards.
+      expect(await screen.findByText(/2 selected dashboards/i)).toBeInTheDocument();
+      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
     });
   });
 
