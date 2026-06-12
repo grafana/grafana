@@ -1,6 +1,7 @@
 import {
   type BitbucketRepositoryConfig,
   type BranchOptions,
+  type CommitOptions,
   type ConnectionSpec,
   type GitHubRepositoryConfig,
   type GitLabRepositoryConfig,
@@ -29,6 +30,9 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | R
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    signingMethod?: CommitOptions['signingMethod'] | '';
+    commitSigningKey?: string;
+    smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
     // Spec-level branch naming options (maps to RepositorySpec.branch)

@@ -1305,6 +1305,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-frontend
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
+/.github/workflows/pr-unified-storage-compatibility.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad

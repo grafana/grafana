@@ -1,0 +1,10 @@
+{
+  "name": "Visual Refresh (Dark)",
+  "id": "visual_refresh_dark",
+  "colors": {
+    "mode": "dark",
+    "background": {
+      "canvas": "#ff0000"
+    }
+  }
+}
