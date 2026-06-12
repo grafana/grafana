@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 
 import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -14,6 +14,14 @@ import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import { HomePageSkeleton } from './HomePageSkeleton';
 import useHomeGreeting from './useHomeGreeting';
+
+// Mounts (and runs its effect) only once the surrounding Suspense content has actually
+// committed — i.e. after any lazy-loaded extension components have resolved and any
+// extension tabs have registered (sibling effects flush before this one, in tree order).
+function SettleSentinel({ onSettled }: { onSettled: () => void }) {
+  useEffect(onSettled, [onSettled]);
+  return null;
+}
 
 const getEdition = () => {
   if (!isOnPrem()) {
@@ -45,15 +53,11 @@ export default function HomePage() {
 
   const isLoadingExtensions = isLoadingPre || isLoadingExtra || isLoadingTabs;
 
-  // Reveal one effect-flush after extensions finish loading: this gives extension
-  // tabs a chance to register() before the first visible paint, so the page and
-  // extension tabs appear together instead of the tabs popping in.
+  // The content is revealed only once it has fully committed (see SettleSentinel): until
+  // then it renders hidden behind the skeleton, so lazy-loaded extension components and
+  // extension tab registration never paint as a separate step.
   const [settled, setSettled] = useState(false);
-  useEffect(() => {
-    if (!isLoadingExtensions) {
-      setSettled(true);
-    }
-  }, [isLoadingExtensions]);
+  const onSettled = useCallback(() => setSettled(true), []);
 
   return (
     <Page
@@ -76,36 +80,42 @@ export default function HomePage() {
               </div>
             )}
             <div className={cx(!settled && styles.hiddenUntilSettled)}>
-              <Stack direction="column" gap={2}>
-                <Box
-                  backgroundColor="canvas"
-                  borderRadius="default"
-                  padding={4}
-                  direction="column"
-                  display="flex"
-                  gap={2}
-                >
+              {/* Local boundary: lazy-loaded extension components suspend here (keeping the
+                  skeleton up) instead of bubbling to the route-level Suspense, which would
+                  unmount the whole page */}
+              <Suspense fallback={null}>
+                <Stack direction="column" gap={2}>
+                  <Box
+                    backgroundColor="canvas"
+                    borderRadius="default"
+                    padding={4}
+                    direction="column"
+                    display="flex"
+                    gap={2}
+                  >
+                    {renderLimitedComponents({
+                      props: {},
+                      components: preComponents,
+                      pluginId: SETUPGUIDE_PLUGIN_ID,
+                    })}
+                    <DashboardTabs extensionComponents={tabComponents} />
+                  </Box>
+
                   {renderLimitedComponents({
                     props: {},
-                    components: preComponents,
+                    components: extraComponents,
                     pluginId: SETUPGUIDE_PLUGIN_ID,
+                    wrapper: ({ children }) => (
+                      <div className={styles.extra}>
+                        <Box backgroundColor="canvas" borderRadius="default" padding={4}>
+                          {children}
+                        </Box>
+                      </div>
+                    ),
                   })}
-                  <DashboardTabs extensionComponents={tabComponents} />
-                </Box>
-
-                {renderLimitedComponents({
-                  props: {},
-                  components: extraComponents,
-                  pluginId: SETUPGUIDE_PLUGIN_ID,
-                  wrapper: ({ children }) => (
-                    <div className={styles.extra}>
-                      <Box backgroundColor="canvas" borderRadius="default" padding={4}>
-                        {children}
-                      </Box>
-                    </div>
-                  ),
-                })}
-              </Stack>
+                </Stack>
+                <SettleSentinel onSettled={onSettled} />
+              </Suspense>
             </div>
           </div>
         )}

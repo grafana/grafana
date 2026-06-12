@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { render, screen } from 'test/test-utils';
+import { type ComponentType, lazy, useEffect } from 'react';
+import { act, render, screen } from 'test/test-utils';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
@@ -169,6 +169,43 @@ describe('HomePage', () => {
     expect(screen.getByRole('tab', { name: 'Plugin tab' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+
+    // let the dashboard fetches settle to avoid act() warnings
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+  });
+
+  it('keeps the skeleton up while a lazy extension component loads instead of unmounting the page', async () => {
+    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
+    const LazyExtension = lazy(
+      () =>
+        new Promise<{ default: ComponentType<{}> }>((resolve) => {
+          resolveComponent = resolve;
+        })
+    );
+    const lazyComponent = createComponentWithMeta(
+      { pluginId: 'grafana-setupguide-app', title: 'Lazy pre', component: LazyExtension },
+      PluginExtensionPoints.HomepagePre
+    );
+
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components: extensionPointId === PluginExtensionPoints.HomepagePre ? [lazyComponent] : [],
+    }));
+
+    render(<HomePage />);
+
+    // While the lazy extension is pending, the page chrome stays mounted and the
+    // skeleton stays visible — the suspension must not bubble to the route level
+    expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
+    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveComponent({ default: () => <div>Lazy pre content</div> });
+    });
+
+    expect(await screen.findByText('Lazy pre content')).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
 
     // let the dashboard fetches settle to avoid act() warnings
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
