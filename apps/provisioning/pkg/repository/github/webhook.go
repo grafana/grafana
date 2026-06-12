@@ -346,6 +346,7 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 	// extra.Build never wraps a webhookDisabled repository in a GithubWebhookRepository,
 	// so reaching here with the flag set would be a bug. Guard anyway to be safe.
 	if r.config.Spec.GitHub != nil && r.config.Spec.GitHub.WebhookDisabled {
+		logging.FromContext(ctx).Warn("webhook hooks invoked while webhookDisabled is true; skipping")
 		return nil, nil
 	}
 
