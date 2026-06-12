@@ -15,18 +15,18 @@ title: What's new in Grafana v13.1
 posts:
   - title: Dashboards and visualizations
     items:
-      - docs/grafana-cloud/whats-new/2026-04-22-time-series-to-table-transformation-is-now-generally-available.md
-      - docs/grafana-cloud/whats-new/2026-04-30-flexible-grouping-rules-and-field-overrides-for-nested-tables.md
-      - docs/grafana-cloud/whats-new/2026-05-05-annotations-clustering-now-generally-available.md
-      - docs/grafana-cloud/whats-new/2026-05-08-faceted-filter-for-time-series-legends.md
-      - docs/grafana-cloud/whats-new/2026-05-26-copy-and-paste-panel-styles-are-now-generally-available.md
-      - docs/grafana-cloud/whats-new/2026-05-26-panel-styles-are-now-generally-available.md
-      - docs/grafana-cloud/whats-new/2026-06-10-git-sync-ui-import-feature.md
-      - docs/grafana-cloud/whats-new/2026-06-11-add-variables-to-rows-and-tabs.md
-      - docs/grafana-cloud/whats-new/2026-06-11-revamped-query-editor-now-in-public-preview-with-multi-select-and-stacked-view.md
+      - whats-new/2026-04-22-time-series-to-table-transformation-is-now-generally-available.md
+      - whats-new/2026-04-30-flexible-grouping-rules-and-field-overrides-for-nested-tables.md
+      - whats-new/2026-05-05-annotations-clustering-now-generally-available.md
+      - whats-new/2026-05-08-faceted-filter-for-time-series-legends.md
+      -whats-new/2026-05-26-copy-and-paste-panel-styles-are-now-generally-available.md
+      - whats-new/2026-05-26-panel-styles-are-now-generally-available.md
+      - whats-new/2026-06-10-git-sync-ui-import-feature.md
+      - whats-new/2026-06-11-add-variables-to-rows-and-tabs.md
+      - whats-new/2026-06-11-revamped-query-editor-now-in-public-preview-with-multi-select-and-stacked-view.md
   - title: Data sources
     items:
-      - docs/grafana-cloud/whats-new/2026-06-11-pdc-now-supports-mqtt-github-and-ibm-db2.md
+      - whats-new/2026-06-11-pdc-now-supports-mqtt-github-and-ibm-db2.md
 whats_new_grafana_version: 13.1
 weight: -55
 ---
