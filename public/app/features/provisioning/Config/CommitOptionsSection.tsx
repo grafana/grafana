@@ -75,8 +75,6 @@ export function CommitOptionsSection<T extends FieldValues>({
   const hasTokenInstructions = getHasTokenInstructions(type);
   const gitFields = getGitProviderFields(type);
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const empty = '' as PathValue<T, Path<T>>;
   const notEmpty = (val: unknown) => typeof val === 'string' && val.trim().length > 0;
   const validateSigner = (val: unknown) => !signingEnabled || notEmpty(val) || signerRequiredMessage;
   const validateSigningKey = (val: unknown) =>
@@ -89,6 +87,8 @@ export function CommitOptionsSection<T extends FieldValues>({
     t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
 
   const resetSigning = () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const empty = '' as PathValue<T, Path<T>>;
     setValue(signingKeyName, empty);
     setValue(smimeCertificateName, empty);
     setValue(signerNameName, empty);
