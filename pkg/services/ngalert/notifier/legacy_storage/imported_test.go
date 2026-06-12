@@ -296,7 +296,7 @@ receivers:
 
 		// UIDs are hash-based; collect them to verify properties without hardcoding the hash.
 		for uid, rule := range result {
-			require.Equal(t, v1.ResourceUID(uid), rule.UID)
+			require.Equal(t, uid, rule.UID)
 			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance)
 
 			// Identifier scope matcher must be present in both source and target.
