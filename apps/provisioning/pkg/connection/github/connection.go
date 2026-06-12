@@ -541,10 +541,7 @@ const (
 // When webhookDisabled is true, the webhooks:write check is skipped because webhook
 // integration has been explicitly disabled for this connection.
 func validatePermissions(target permissionTarget, id string, permissions Permissions, webhookDisabled bool, installationURL string) []provisioning.ErrorDetails {
-	var errs []provisioning.ErrorDetails
-
-	requiredPerms := map[string]struct {
-		current  Permission
+	var errs []provisioning.ErrorDetails{
 		required Permission
 	}{
 		"contents": {
