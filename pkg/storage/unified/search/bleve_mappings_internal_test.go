@@ -71,6 +71,26 @@ func TestAddCapabilityFieldMappings_TextRetrieve(t *testing.T) {
 	assert.False(t, m.IncludeTermVectors)
 }
 
+func TestAddCapabilityFieldMappings_TextRetrieveUnranked(t *testing.T) {
+	// unranked on a text field drops BM25 frequency / length stats from the
+	// index. Used by standard "description" today.
+	got := flatMappings(t, resource.SearchFieldDefinition{
+		Name: "summary",
+		Type: resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{
+			resource.SearchCapabilityText,
+			resource.SearchCapabilityRetrieve,
+			resource.SearchCapabilityUnranked,
+		},
+	})
+
+	require.Equal(t, []string{"summary"}, slices.Sorted(maps.Keys(got)))
+	m := got["summary"]
+	assert.Equal(t, standard.Name, m.Analyzer)
+	assert.True(t, m.Store)
+	assert.True(t, m.SkipFreqNorm, "unranked must set SkipFreqNorm on the text mapping")
+}
+
 func TestAddCapabilityFieldMappings_FilterAndText(t *testing.T) {
 	// Filter together with text: text takes the base name, keyword variant
 	// moves to "<name>_keyword".
