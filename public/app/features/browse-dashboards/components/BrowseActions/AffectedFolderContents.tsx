@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, useStyles2 } from '@grafana/ui';
 import { useGetAffectedItems } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type DashboardTreeSelection } from '../../types';
@@ -28,6 +30,7 @@ interface Props {
  * warn about otherwise. `defaultMessage` is always rendered.
  */
 export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMessage, nonEmptyMessage }: Props) {
+  const styles = useStyles2(getStyles);
   const selectedFolders = getSelectedFolderUIDs(selectedItems);
   const { data, isLoading, isFetching, error } = useGetAffectedItems(selectedItems);
 
@@ -39,6 +42,7 @@ export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMes
     } else if (error) {
       contents = (
         <Alert
+          className={styles.alert}
           severity="warning"
           title={t(
             'browse-dashboards.affected-folder-contents-error',
@@ -50,8 +54,10 @@ export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMes
       const folderIsEmpty = getFolderIsEmpty(data, selectedItems);
       contents = (
         <>
-          {folderIsEmpty && emptyMessage && <Alert severity="success" title={emptyMessage} />}
-          {!folderIsEmpty && nonEmptyMessage && <Alert severity="warning" title={nonEmptyMessage} />}
+          {folderIsEmpty && emptyMessage && <Alert className={styles.alert} severity="success" title={emptyMessage} />}
+          {!folderIsEmpty && nonEmptyMessage && (
+            <Alert className={styles.alert} severity="warning" title={nonEmptyMessage} />
+          )}
         </>
       );
     }
@@ -64,3 +70,11 @@ export function AffectedFolderContents({ selectedItems, defaultMessage, emptyMes
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  // The alert title is a span that inherits font size, which in modals resolves to a size larger than the
+  // surrounding body text, so size it down to match.
+  alert: css({
+    fontSize: theme.typography.body.fontSize,
+  }),
+});
