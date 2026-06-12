@@ -8,6 +8,7 @@ import {
   getDataSourceInstanceSettingsList,
   getDataSourceInstanceSettings,
   initDataSourceInstanceSettings,
+  setExpressionDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
@@ -435,6 +436,83 @@ describe('instanceSettings', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       const result = await getDataSourceInstanceSettings(null);
       expect(result?.name).toBe('Alpha');
+    });
+  });
+
+  describe('setExpressionDataSourceInstanceSettings', () => {
+    it('makes the expression datasource available by uid after init', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('__expr__');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('resolves by name via isExpressionReference path', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('Expression');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('resolves by legacy id -100 via isExpressionReference path', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('-100');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('is not returned by getDataSourceInstanceSettingsList (byUid-only, matching legacy)', async () => {
+      // Set via the expression setter, but do NOT include it in the init map — it
+      // must only live in byUid so list results are unaffected.
+      const { Expression: _expr, ...withoutExpression } = fixtures;
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(withoutExpression, 'Bravo');
+      const items = await getDataSourceInstanceSettingsList({ all: true });
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
+    });
+
+    it('survives a cache repopulate via no-arg reload', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      // Reload with a payload that does not include the expression datasource.
+      backendGet.mockResolvedValue({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await reloadDataSourceInstanceSettings();
+
+      const result = await getDataSourceInstanceSettings('__expr__');
+      expect(result?.uid).toBe('__expr__');
+      expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
+    });
+
+    it('throws when called a second time outside of tests', () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        setExpressionDataSourceInstanceSettings(fixtures.Expression);
+        expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).toThrow(
+          'setExpressionDataSourceInstanceSettings() function should only be called once'
+        );
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('allows being called multiple times in tests', () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
+    });
+
+    it('coexists with a runtime datasource and both survive a repopulate', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const runtime = ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' });
+      upsertRuntimeDataSourceInstanceSettings(runtime);
+
+      backendGet.mockResolvedValue({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await reloadDataSourceInstanceSettings();
+
+      expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+      expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
     });
   });
 

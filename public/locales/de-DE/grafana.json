@@ -1180,12 +1180,6 @@
       "label-metric": "Metrik",
       "label-pending-period": "Wartezeit"
     },
-    "evaluation-group": {
-      "label-delete": "Löschen",
-      "label-export": "Exportieren",
-      "label-reorder-rules": "Regeln neu anordnen",
-      "text-provisioned": "Bereitgestellt"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Eine Gruppe bewertet ihre gesamten Regeln über das gleiche Bewertungsintervall.",
       "description-often-rules-group-evaluated": "Wie oft alle Regeln in der Gruppe bewertet werden.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Name eingeben",
       "title-new-evaluation-group": "Neue Evaluierungsgruppe"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Beim Versuch des Abrufs der Gruppendetails ist ein Fehler aufgetreten"
     },
     "existing-rule-editor": {
       "sorry-permission": "Es tut uns leid! Sie haben keine Berechtigung zum Bearbeiten dieser Regel.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Diese Datenquelle hat keine konfigurierten Regeln",
         "new-alert-rule": "Neue Warnregel",
-        "new-ds-managed-alerting-rule": "Neue von der Datenquelle verwaltete Alarmregel",
         "new-ds-managed-recording-rule": "Neue von der Datenquellen verwaltete Aufnahmeregel",
         "new-grafana-alerting-rule": "Neue Warnregel",
         "new-grafana-recording-rule": "Neue Aufnahmeregel",
@@ -2540,22 +2529,9 @@
         "aria-label": "Richtlinie hinzufügen",
         "text": "Neue Benachrichtigungsrichtlinie"
       },
-      "delete-reasons": {
-        "no-permissions": "Sie haben nicht die erforderliche Berechtigung, um diese Benachrichtigungsrichtlinie zu löschen",
-        "provisioned": "Die Benachrichtigungsrichtlinie ist bereitgestellt und kann nicht über die Benutzeroberfläche gelöscht werden"
-      },
-      "delete-text": "Die Benachrichtigungsrichtlinie kann aus folgenden Gründen nicht gelöscht werden:",
-      "empty-state": {
-        "message": "Keine Richtlinien gefunden"
-      },
       "fetch": {
         "error": "Abrufen der Richtlinien fehlgeschlagen"
       },
-      "reset-reasons": {
-        "no-permissions": "Sie haben nicht die erforderliche Berechtigung, um diese Benachrichtigungsrichtlinie zurückzusetzen",
-        "provisioned": "Die Benachrichtigungsrichtlinie ist bereitgestellt und kann nicht über die Benutzeroberfläche zurückgesetzt werden"
-      },
-      "reset-text": "Die Benachrichtigungsrichtlinie kann aus folgenden Gründen nicht zurückgesetzt werden:",
       "text-loading": "Lädt ...."
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Zeitsteuerungen überschreiben",
       "repeat-interval": "Wiederholungsintervall: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "löschen",
-      "aria-label-search-routing-trees": "Routing-Strukturen suchen",
-      "clear": "Löschen",
-      "label-search-by-name-or-receiver": "Suche nach Richtlinienname oder Kontaktpunkt",
-      "placeholder-search": "Suchen"
-    },
-    "routing-tree-header": {
-      "reset": "Zurücksetzen"
-    },
     "rule-actions-buttons": {
       "title-edit": "Bearbeiten",
       "title-view": "Anzeigen"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Warnregeln"
       },
-      "rulerrule-loading-error": "Die Regel konnte nicht geladen werden",
       "toggle": {
         "use-new-experience": "Neue Benutzeroberfläche verwenden",
         "view-previous-experience": "Zurück zur vorherigen Oberfläche"
@@ -3577,9 +3542,6 @@
       "collapse": "Einklappen",
       "collapse-all": "Alle einklappen",
       "collapse-sidebar": "Seitenleiste einklappen",
-      "compact-firing": "wird ausgelöst",
-      "compact-pending": "ausstehend",
-      "compact-rules": "Regeln",
       "error-loading-rule": "Fehler beim Laden der Regel",
       "expand": "Ausklappen",
       "expand-all": "Alle ausklappen",
@@ -5373,6 +5335,8 @@
     },
     "code-pane": {
       "collapse": "Editor einklappen",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Editor ausklappen",
       "header": "Als Code bearbeiten",
       "modal-title": "Dashboard als Code bearbeiten"
@@ -5672,8 +5636,7 @@
           "apply": "Anwenden",
           "change-value": "Variablenwert ändern",
           "discard": "Verwerfen",
-          "modal-title": "Benutzerdefinierte Optionen",
-          "values": "Werte werden durch Komma getrennt"
+          "modal-title": "Benutzerdefinierte Optionen"
         },
         "datasource-options": {
           "name-filter": "Namensfilter",
@@ -5898,7 +5861,6 @@
     },
     "inspect": {
       "data-tab": "Daten",
-      "error-tab": "Fehler",
       "json-tab": "JSON",
       "meta-tab": "Metadaten",
       "query-tab": "Abfrage",
@@ -6013,13 +5975,6 @@
       "new-row": {
         "title": {
           "row-title": "Zeilentitel"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget-Titel"
         }
       }
     },
@@ -8781,19 +8736,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Ergänzen Sie in einer Zeile der Spannenleiste in der Trace-Ansicht zusätzliche Informationen neben dem Dienst und der Operation.",
-      "title-span-bar": "Spannenleiste"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Label-Name auswählen",
-      "label-label": "Label",
-      "label-tag-key": "Tag-Key",
-      "placeholder-duration": "Dauer",
-      "placeholder-enter-tag-key": "Tag-Key eingeben",
-      "tooltip-default-duration": "Standard: Dauer",
-      "tooltip-tag-key": "Tag-Key, der genutzt wird, um den Tag-Wert zu erhalten. Die Attribute und Ressourcen einer Spanne werden nach dem Tag-Key durchsucht"
-    },
     "span-detail": {
       "label": {
         "kind": "Art:",
@@ -9030,13 +8972,6 @@
       "folder-deleted-success": "Ordner gelöscht",
       "folder-move-error-provisioned": "Bereitgestellter Ordner kann nicht verschoben werden. Um ihn zu verschieben, verschieben Sie ihn in das Repository und synchronisieren Sie es, um die Änderungen zu übernehmen.",
       "folder-moved-success": "Ordner verschoben"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Wird geladen"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11551,6 @@
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Dieses Tool kann Ressourcen von dieser Installation zu Ihrem Cloud-Stack migrieren. Erstellen Sie einen Snapshot dieser Installation, um zu beginnen. Das Erstellen eines Snapshots dauert in der Regel weniger als zwei Minuten. Der Snapshot wird neben dieser Grafana-Installation gespeichert.",
-      "title": "Kein Snapshot vorhanden",
-      "when-complete": "Sobald der Snapshot erstellt wurde, können Sie ihn in Ihren Cloud-Stack hochladen."
-    },
     "building-snapshot": {
       "description": "Wir sammeln Ihre Ressourcen für die Migration in Grafana Cloud. Dies sollte nur einen Moment dauern.",
       "description-eta": "Das Erstellen eines Snapshots dauert in der Regel weniger als zwei Minuten.",
@@ -12478,13 +12408,6 @@
       "search": "Suchen",
       "starred-dashboards": "Mit Stern versehene Dashboards"
     },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Name der Berechnung"
-        }
-      }
-    },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
         "label": {
@@ -13129,6 +13052,14 @@
       "folders-count_one": "{{count}} Ordner",
       "folders-count_other": "{{count}} Ordner"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Sparen Sie sich die Einrichtung und erhalten Sie Git Sync vollständig verwaltet und gehostet in Grafana Cloud – mit dem <2>jederzeit kostenlosen Grafana-Cloud-Plan</2>.",
       "title": "Sie können Git Sync auch in Grafana Cloud nutzen"
@@ -13147,6 +13078,11 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository-Einstellungen gespeichert",
@@ -13584,6 +13520,14 @@
           "repository-request-failed": "Repository-Anfrage fehlgeschlagen"
         }
       }
+    },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
     },
     "quota-limit": {
       "note": "Hinweis:",
@@ -14214,6 +14158,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Unter {{id}} hinzufügen",
       "add-expression": "Ausdruck hinzufügen",
@@ -14232,9 +14180,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "{{type}} neu",
+      "queries-empty": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
       "transformations": "Transformationen",
+      "transformations-empty": "",
       "view-toggle": "Anzeigen",
       "alerts_one": "Warnung ({{count}})",
       "alerts_other": "Warnungen ({{count}})",
