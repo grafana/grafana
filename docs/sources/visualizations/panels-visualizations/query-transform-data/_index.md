@@ -32,7 +32,7 @@ keywords:
 # Query and transform data
 
 Grafana supports many types of [data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/).
-Data source _queries_ return data that Grafana can _transform_ and visualize. <!-- TODO: Add glossary pop-up for transform here -->
+Data source {{< term "query" >}}queries{{< /term >}} return data that Grafana can {{< term "transformation" >}}transform{{< /term >}} and visualize.
 Each data source uses its own query language, and data source plugins each implement a query-building user interface called a _query editor_.
 
 ## About queries
