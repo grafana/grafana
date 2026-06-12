@@ -1,4 +1,4 @@
-package schemavalidation_test
+package validation
 
 import (
 	"testing"
@@ -9,16 +9,20 @@ import (
 
 	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	manifestdata "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
-	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/schemavalidation"
 )
 
-var gv = schema.GroupVersion{Group: "rules.alerting.grafana.app", Version: "v0alpha1"}
-
-func buildValidators(t *testing.T) map[string]*schemavalidation.SpecValidator {
+func buildValidators(t *testing.T) map[string]*SpecValidator {
 	t.Helper()
-	validators, err := schemavalidation.BuildAll(*manifestdata.LocalManifest().ManifestData, gv)
-	require.NoError(t, err)
-	return validators
+	md := *manifestdata.LocalManifest().ManifestData
+	out := make(map[string]*SpecValidator)
+	for _, kind := range []string{"AlertRule", "RecordingRule", "RuleSequence"} {
+		vs := schemaForKind(md, kind)
+		require.NotNil(t, vs, "missing schema for %s", kind)
+		sv, err := NewSpecValidator(schema.GroupKind{Group: md.Group, Kind: kind}, vs, kind)
+		require.NoError(t, err)
+		out[kind] = sv
+	}
+	return out
 }
 
 // causeFields asserts err is a 422 Invalid error and returns its cause field paths.
@@ -47,11 +51,14 @@ func validAlertRuleSpec() v1.AlertRuleSpec {
 	}
 }
 
-func TestBuildAll(t *testing.T) {
+func TestSchemaForKind(t *testing.T) {
 	validators := buildValidators(t)
 	for _, kind := range []string{"AlertRule", "RecordingRule", "RuleSequence"} {
 		require.NotNil(t, validators[kind], "missing validator for %s", kind)
 	}
+
+	md := *manifestdata.LocalManifest().ManifestData
+	require.Nil(t, schemaForKind(md, "DoesNotExist"))
 }
 
 func TestValidateSpec_AlertRule(t *testing.T) {
