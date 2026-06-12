@@ -256,6 +256,16 @@ func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, res
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
 // skipSelf: if true, skips the permissions of the folder itself (used for folders to avoid inheriting their own permissions)
 func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface, skipSelf bool) (getResourcePermissionsResponse, error) {
+	// Enumerate inherited permissions with a service identity. The caller is already authorized to read
+	// this resource's permissions (checked by the endpoint), but may only have edit—not
+	// permissions:read—on ancestor folders. Without elevation the parent ResourcePermission Get below
+	// returns Forbidden, which is swallowed, silently dropping every inherited assignment from that
+	// ancestor (e.g. a team grant). This mirrors the legacy SQL path, which fetched inherited
+	// permissions by parent scope rather than gating on per-ancestor permission read access.
+	if nsInfo, err := types.ParseNamespace(namespace); err == nil {
+		ctx, _ = identity.WithServiceIdentity(ctx, nsInfo.OrgID)
+	}
+
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
 		Version:  folderv1.APIVersion,
