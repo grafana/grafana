@@ -51,6 +51,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '40%',
       top: '30%',
     }),
+    // Decorative diagonal stripe overlay marking a span as a pruned summary (an
+    // aggregate of many spans), not encoding histogram or timing data. The bar's
+    // solid service color shows through the transparent stripes via background-blend.
+    barSummary: css({
+      label: 'barSummary',
+      backgroundImage: `repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.35),
+        rgba(255, 255, 255, 0.35) 3px,
+        transparent 3px,
+        transparent 7px
+      )`,
+    }),
     rpc: css({
       label: 'rpc',
       position: 'absolute',
@@ -174,7 +187,8 @@ function SpanBar({
     >
       <div
         aria-label={label}
-        className={cx(styles.bar)}
+        className={cx(styles.bar, { [styles.barSummary]: span.aggregation?.isSummary })}
+        data-testid="SpanBar--bar"
         style={{
           background: color,
           left: toPercent(viewStart),

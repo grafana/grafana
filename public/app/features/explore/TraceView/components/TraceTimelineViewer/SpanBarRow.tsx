@@ -28,6 +28,7 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type CriticalPathSection } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceDisplayName } from '../utils/service-name';
+import { formatSummaryDurations } from '../utils/summary-span';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -327,6 +328,17 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       width: '1em',
       verticalAlign: 'middle',
     }),
+    summaryCountBadge: css({
+      label: 'summaryCountBadge',
+      borderRadius: theme.shape.radius.pill,
+      display: 'inline-block',
+      fontSize: '0.85em',
+      fontWeight: 500,
+      lineHeight: 1.4,
+      marginRight: '0.25rem',
+      padding: '0 6px',
+      verticalAlign: 'middle',
+    }),
     labelRight: css({
       label: 'labelRight',
       left: '100%',
@@ -418,7 +430,11 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
 
   const { duration, hasChildren: isParent, operationName, process } = span;
   const serviceDisplayName = getServiceDisplayName(process);
-  const label = formatDuration(duration);
+  const isSummarySpan = span.aggregation?.isSummary === true;
+  // Summary spans show aggregated (min | median | max) stats in place of the single
+  // duration, falling back to the wall-clock duration when min/max are unavailable.
+  const summaryStats = isSummarySpan && span.aggregation ? formatSummaryDurations(span.aggregation) : null;
+  const label = summaryStats ?? formatDuration(duration);
   const showAdaptiveTracesRestoredHint = spanHasAdaptiveTraceRestoredTag(span.tags ?? []);
 
   const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
@@ -552,7 +568,24 @@ const UnthemedSpanBarRow = React.memo<SpanBarRowProps>((props) => {
               </span>
             )}
             <span className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</span>
-            <span className={styles.endpointName}> {getSpanBarLabel(span, spanBarOptions, label)}</span>
+            {isSummarySpan && span.aggregation?.spanCount !== undefined && (
+              <span
+                className={styles.summaryCountBadge}
+                data-testid="SpanBarRow--summaryCountBadge"
+                style={{ background: color, color: theme.colors.getContrastText(color) }}
+                aria-label={t('explore.span-bar-row.summary-count-aria', '', {
+                  count: span.aggregation.spanCount,
+                  defaultValue_one: '{{count}} aggregated span',
+                  defaultValue_other: '{{count}} aggregated spans',
+                })}
+              >
+                {span.aggregation.spanCount}
+              </span>
+            )}
+            <span className={styles.endpointName}>
+              {' '}
+              {isSummarySpan ? `(${label})` : getSpanBarLabel(span, spanBarOptions, label)}
+            </span>
           </button>
           {showAdaptiveTracesRestoredHint && (
             <Tooltip
