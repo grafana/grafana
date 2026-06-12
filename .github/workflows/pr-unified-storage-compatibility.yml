@@ -26,6 +26,9 @@ jobs:
         uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           files_yaml: |
+            # pkg/server/** is intentionally not in api_layer: it hosts the
+            # standalone storage/search server targets, and wire_gen.go churns
+            # on most storage provider changes, which would fail server-only PRs.
             api_layer:
               - 'pkg/registry/apis/**'
               - 'pkg/services/apiserver/**'
@@ -34,15 +37,18 @@ jobs:
               - 'pkg/services/search/**'
               - 'pkg/services/stats/**'
               - 'pkg/services/team/search/**'
+              # consumes pkg/storage/unified/resource/{kv,lease}
               - 'pkg/infra/leaderelection/kvlease/**'
               - 'pkg/storage/legacysql/**'
               # client-side unified storage code, runs inside the Grafana process
+              # (keep in sync with the negations in unified_storage below)
               - 'pkg/storage/unified/apistore/**'
               - 'pkg/storage/unified/federated/**'
               - 'pkg/storage/unified/*.go'
             unified_storage:
               - 'pkg/storage/unified/**'
-              # client-side code deployed with Grafana, not with the storage/search server
+              # client-side code deployed with Grafana, not with the storage/search
+              # server (keep in sync with the client-side block in api_layer above)
               - '!pkg/storage/unified/apistore/**'
               - '!pkg/storage/unified/federated/**'
               - '!pkg/storage/unified/*.go'
