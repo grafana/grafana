@@ -64,6 +64,34 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
+  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
+    const prUrl = urls?.newPullRequestURL;
+    if (prUrl) {
+      const url = buildResourceBranchRedirectUrl({
+        paramName: 'new_pull_request_url',
+        paramValue: prUrl,
+        repoType: info.repoType,
+        action: 'delete',
+      });
+      navigate(url);
+    }
+  };
+
+  const { handleSuccess } = useProvisionedRequestHandler({
+    workflow,
+    resourceType: 'folder',
+    repository,
+    selectedBranch: ref,
+    successMessage: t(
+      'browse-dashboards.delete-provisioned-folder-form.success-message',
+      'Folder deleted successfully'
+    ),
+    handlers: {
+      onDismiss,
+      onBranchSuccess,
+    },
+  });
+
   const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
@@ -135,40 +163,12 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
   };
 
-  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
-    const prUrl = urls?.newPullRequestURL;
-    if (prUrl) {
-      const url = buildResourceBranchRedirectUrl({
-        paramName: 'new_pull_request_url',
-        paramValue: prUrl,
-        repoType: info.repoType,
-        action: 'delete',
-      });
-      navigate(url);
-    }
-  };
-
   const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
     if (statusInfo.status === 'success') {
       onDismiss?.();
       navigate('/dashboards');
     }
   };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
-    resourceType: 'folder',
-    repository,
-    selectedBranch: ref,
-    successMessage: t(
-      'browse-dashboards.delete-provisioned-folder-form.success-message',
-      'Folder deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess,
-    },
-  });
 
   return (
     <>
