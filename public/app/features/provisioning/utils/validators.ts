@@ -53,3 +53,38 @@ export function validateNoUserInfoInUrl(value: string | undefined): string | tru
 
   return true;
 }
+
+const notEmpty = (value: string | undefined): boolean => typeof value === 'string' && value.trim().length > 0;
+
+/**
+ * Builds a react-hook-form `validate` function for the commit signer name/email fields.
+ * Both are required once commit signing is enabled.
+ */
+export function validateSigner(signingEnabled: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingEnabled ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signer-required', 'Required when commit signing is enabled.');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the signing key field.
+ * Required only when signing is enabled and no key has been configured yet.
+ */
+export function validateSigningKey(signingRequired: boolean) {
+  return (value: string | undefined): string | true =>
+    !signingRequired ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.signing-key-required', 'Signing key is required');
+}
+
+/**
+ * Builds a react-hook-form `validate` function for the S/MIME certificate field.
+ * Required only when the selected signing method is S/MIME.
+ */
+export function validateSmimeCertificate(signingMethod: string | undefined) {
+  return (value: string | undefined): string | true =>
+    signingMethod !== 'smime' ||
+    notEmpty(value) ||
+    t('provisioning.commit-options.smime-certificate-required', 'Certificate is required');
+}
