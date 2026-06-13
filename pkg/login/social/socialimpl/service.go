@@ -119,9 +119,14 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
+	timeout := info.TokenExchangeTimeout
+	if timeout <= 0 {
+		timeout = 15 * time.Second
+	}
+
 	oauthClient := &http.Client{
 		Transport: tr,
-		Timeout:   time.Second * 15,
+		Timeout:   timeout,
 	}
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
