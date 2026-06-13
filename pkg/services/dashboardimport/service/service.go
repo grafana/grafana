@@ -123,8 +123,9 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	if !req.HasFolderSelection() && interpolated.folderUID != "" {
 		req.FolderUid = interpolated.folderUID
 	}
+	folderID := req.FolderId // nolint:staticcheck
 	if req.HasFolderUIDSelection() {
-		req.FolderId = 0
+		folderID = 0
 	}
 
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
@@ -137,11 +138,10 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		if err != nil {
 			return nil, err
 		}
-		// nolint:staticcheck
-		req.FolderId = folder.ID
+		folderID = folder.ID //nolint:staticcheck
 	} else {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
-			ID:           &req.FolderId, // nolint:staticcheck
+			ID:           &folderID, // nolint:staticcheck
 			OrgID:        req.User.GetOrgID(),
 			SignedInUser: req.User,
 		})
@@ -162,7 +162,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		UserID:     userID,
 		Overwrite:  req.Overwrite,
 		PluginID:   req.PluginId,
-		FolderID:   req.FolderId, // nolint:staticcheck
+		FolderID:   folderID, // nolint:staticcheck
 		FolderUID:  req.FolderUid,
 		APIVersion: interpolated.apiVersion,
 	}
@@ -175,7 +175,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	// nolint:staticcheck
-	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId, req.FolderUid)
+	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), folderID, req.FolderUid)
 	if err != nil {
 		return nil, err
 	}
