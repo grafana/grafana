@@ -49,7 +49,13 @@ type ImportDashboardService struct {
 	features               featuremgmt.FeatureToggles
 }
 
-func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+type interpolatedDashboard struct {
+	data       *simplejson.Json
+	apiVersion string
+	folderUID  string
+}
+
+func (s *ImportDashboardService) interpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*interpolatedDashboard, error) {
 	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
@@ -73,14 +79,28 @@ func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *
 		return nil, err
 	}
 
-	return generatedDash, nil
+	return &interpolatedDashboard{
+		data:       generatedDash,
+		apiVersion: draftDashboard.APIVersion,
+		folderUID:  draftDashboard.FolderUID,
+	}, nil
 }
 
-func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	generatedDash, err := s.InterpolateDashboard(ctx, req)
+func (s *ImportDashboardService) InterpolateDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*simplejson.Json, error) {
+	result, err := s.interpolateDashboard(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+
+	return result.data, nil
+}
+
+func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
+	interpolated, err := s.interpolateDashboard(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	generatedDash := interpolated.data
 
 	// Maintain backwards compatibility by transforming array of library elements to map
 	libraryElements := generatedDash.Get("__elements")
@@ -100,6 +120,13 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	generatedDash.Del("__requires")
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
+	if !req.HasFolderSelection() && interpolated.folderUID != "" {
+		req.FolderUid = interpolated.folderUID
+	}
+	if req.HasFolderUIDSelection() {
+		req.FolderId = 0
+	}
+
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
@@ -130,13 +157,14 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	saveCmd := dashboards.SaveDashboardCommand{
-		Dashboard: generatedDash,
-		OrgID:     req.User.GetOrgID(),
-		UserID:    userID,
-		Overwrite: req.Overwrite,
-		PluginID:  req.PluginId,
-		FolderID:  req.FolderId, // nolint:staticcheck
-		FolderUID: req.FolderUid,
+		Dashboard:  generatedDash,
+		OrgID:      req.User.GetOrgID(),
+		UserID:     userID,
+		Overwrite:  req.Overwrite,
+		PluginID:   req.PluginId,
+		FolderID:   req.FolderId, // nolint:staticcheck
+		FolderUID:  req.FolderUid,
+		APIVersion: interpolated.apiVersion,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
