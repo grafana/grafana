@@ -1788,7 +1788,7 @@
   },
   "public/app/features/dashboard/components/PanelEditor/getVisualizationOptions.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard/components/PanelEditor/utils.ts": {
