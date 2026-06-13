@@ -12,6 +12,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import {
   canonicalSeverity,
   SEVERITY_DEFINITIONS,
@@ -210,7 +211,9 @@ function FiringAlertsCardInner() {
               return (
                 <li key={alert.fingerprint} className={styles.row}>
                   <Tooltip content={severity}>
-                    <span className={styles.severityDot} data-severity={level} role="img" aria-label={severity} />
+                    <span role="img" aria-label={severity} className={styles.severityIndicator}>
+                      <SeverityBars level={level} />
+                    </span>
                   </Tooltip>
                   {detailHref ? (
                     <TextLink href={detailHref} inline={false} className={styles.alertName}>
@@ -271,22 +274,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 0),
     minWidth: 0,
   }),
-  severityDot: css({
+  severityIndicator: css({
+    display: 'inline-flex',
     flexShrink: 0,
-    width: 8,
-    height: 8,
-    borderRadius: theme.shape.radius.circle,
-    backgroundColor: theme.colors.text.secondary,
-
-    '&[data-severity="critical"]': {
-      backgroundColor: theme.colors.error.main,
-    },
-    '&[data-severity="major"]': {
-      backgroundColor: theme.colors.warning.main,
-    },
-    '&[data-severity="minor"]': {
-      backgroundColor: theme.colors.info.main,
-    },
   }),
   alertName: css({
     overflow: 'hidden',
