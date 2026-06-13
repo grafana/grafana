@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
@@ -25,6 +25,7 @@ const STARRED_TAB_ID = 'starred';
 const MAX_RECENT = 20;
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
+const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
 
 function DashboardExtensionTab({
   Component,
@@ -88,10 +89,12 @@ export function DashboardTabs() {
     [mostUsedAvailable]
   );
 
-  const hasDashboards =
-    (recentDashboards?.length ?? 0) > 0 ||
-    (mostUsedDashboards?.length ?? 0) > 0 ||
-    (starredDashboards?.length ?? 0) > 0;
+  const hasRecent = !!recentDashboards?.length;
+  const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
+  const hasStarred = !!starredDashboards?.length;
+  const initialLoading = recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
+
+  const hasDashboards = hasRecent || hasMostUsed || hasStarred;
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const { components: extensionComponents } = usePluginComponents<HomepageTabExtensionProps>({
@@ -105,52 +108,36 @@ export function DashboardTabs() {
 
   // Auto-switch to the non-empty tab when initial data finishes loading
   const didAutoSwitch = useRef(false);
+
+  // Tabs worth landing on, in display order: default tabs with content, then non-link extension tabs.
+  const selectableTabs = useMemo(
+    () => [
+      ...(hasRecent ? [RECENT_TAB_ID] : []),
+      ...(hasMostUsed ? [MOST_USED_TAB_ID] : []),
+      ...(hasStarred ? [STARRED_TAB_ID] : []),
+      ...extensionTabs.filter((tab) => !tab.href).map((tab) => tab.id),
+    ],
+    [hasRecent, hasMostUsed, hasStarred, extensionTabs]
+  );
+
   useEffect(() => {
-    if (didAutoSwitch.current || recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading)) {
+    if (didAutoSwitch.current || initialLoading) {
       return;
     }
 
-    const recentEmpty = !recentDashboards?.length;
-    const mostUsedEmpty = !mostUsedDashboards?.length;
-    const starredEmpty = !starredDashboards?.length;
-
-    if (activeTab === RECENT_TAB_ID && recentEmpty) {
-      if (mostUsedAvailable && !mostUsedEmpty) {
-        setActiveTab(MOST_USED_TAB_ID);
-        didAutoSwitch.current = true;
-        return;
-      } else if (!starredEmpty) {
-        setActiveTab(STARRED_TAB_ID);
-        didAutoSwitch.current = true;
-        return;
-      }
-    }
-
-    if (activeTab === STARRED_TAB_ID && starredEmpty && !recentEmpty) {
-      setActiveTab(RECENT_TAB_ID);
+    // Already on a default tab with content or a custom/extension tab: lock in and stay.
+    if (selectableTabs.includes(activeTab)) {
       didAutoSwitch.current = true;
       return;
     }
 
-    if ((activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID) && recentEmpty && starredEmpty && mostUsedEmpty) {
-      const extensionTab = extensionTabs.find((tab) => !tab.href);
-      if (extensionTab) {
-        setActiveTab(extensionTab.id);
-        didAutoSwitch.current = true;
-        return;
-      }
+    // Current default tab is empty - switch to the first tab (extensions included) with content
+    const [target] = selectableTabs;
+    if (target) {
+      setActiveTab(target);
+      didAutoSwitch.current = true;
     }
-  }, [
-    recentLoading,
-    starredLoading,
-    mostUsedLoading,
-    mostUsedAvailable,
-    recentDashboards,
-    mostUsedDashboards,
-    starredDashboards,
-    extensionTabs,
-    activeTab,
-  ]);
+  }, [initialLoading, selectableTabs, activeTab]);
 
   const builtInTabs: HomepageTab[] = [
     {
@@ -186,11 +173,7 @@ export function DashboardTabs() {
         {contentTabs.map((tab) => {
           const isActive = activeTab === tab.id;
           // Keep a consistent tab bar width when on a custom tab by forcing the active label for recent dashboards
-          const forceActiveLabel =
-            activeTab !== RECENT_TAB_ID &&
-            activeTab !== MOST_USED_TAB_ID &&
-            activeTab !== STARRED_TAB_ID &&
-            tab.id === RECENT_TAB_ID;
+          const forceActiveLabel = !DEFAULT_TAB_IDS.includes(activeTab) && tab.id === RECENT_TAB_ID;
           return (
             <Tab
               key={tab.id}
@@ -210,7 +193,7 @@ export function DashboardTabs() {
         ))}
       </TabsBar>
 
-      {(activeTab === RECENT_TAB_ID || activeTab === STARRED_TAB_ID || activeTab === MOST_USED_TAB_ID) && (
+      {DEFAULT_TAB_IDS.includes(activeTab) && (
         <TabContent className={styles.tabContent}>
           <ScrollContainer showScrollIndicators maxHeight="256px" minHeight="256px">
             {activeTab === RECENT_TAB_ID && (

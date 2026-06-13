@@ -10675,7 +10675,11 @@
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
       "retry": "Retry",
-      "show-all": "Show all firing alerts",
+      "severity-critical": "Critical",
+      "severity-high": "High",
+      "severity-low": "Low",
+      "severity-minor": "Minor",
+      "severity-unknown": "Unknown severity",
       "title": "Firing alerts",
       "view-all": "View all firing alerts"
     },

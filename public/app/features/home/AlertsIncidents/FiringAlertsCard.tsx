@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { escapeRegExp } from 'lodash';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import { useAsync } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, LinkButton, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import {
@@ -45,8 +45,23 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function severityRank(level: SeverityLevel | undefined) {
+function severityRank(level?: SeverityLevel) {
   return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
+}
+
+function severityLabel(level?: SeverityLevel): string {
+  switch (level) {
+    case 'critical':
+      return t('home.firing-alerts-card.severity-critical', 'Critical');
+    case 'major':
+      return t('home.firing-alerts-card.severity-high', 'High');
+    case 'minor':
+      return t('home.firing-alerts-card.severity-minor', 'Minor');
+    case 'low':
+      return t('home.firing-alerts-card.severity-low', 'Low');
+    default:
+      return t('home.firing-alerts-card.severity-unknown', 'Unknown severity');
+  }
 }
 
 function buildTeamMatchers(teamNames: string[]) {
@@ -70,7 +85,6 @@ export function FiringAlertsCard() {
  */
 function FiringAlertsCardInner() {
   const styles = useStyles2(getStyles);
-  const [showAllAlerts, setShowAllAlerts] = useState(false);
 
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
@@ -79,9 +93,9 @@ function FiringAlertsCardInner() {
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // When showAllAlerts is toggled, drop the team matchers. No memo needed:
+  // Filter to the user's teams when they have any. No memo needed:
   // RTK Query serializes query args, so referential identity doesn't matter.
-  const matchers = hasTeams && !showAllAlerts ? buildTeamMatchers(teamNames) : [];
+  const matchers = hasTeams ? buildTeamMatchers(teamNames) : [];
 
   const {
     data: alerts,
@@ -122,12 +136,12 @@ function FiringAlertsCardInner() {
   const displayed = sorted.slice(0, MAX_ALERTS);
 
   return (
-    <HomeSection padding={3} flex={1} minWidth="320px">
+    <HomeSection>
       <Stack direction="column" gap={2}>
         {/* Header */}
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Stack direction="row" alignItems="center" gap={1}>
-            <Text variant="h5">
+            <Text element="h2" variant="h5">
               <Trans i18nKey="home.firing-alerts-card.title">Firing alerts</Trans>
             </Text>
             {!loading && !!alerts?.length && <Badge text={String(alerts.length)} color="red" />}
@@ -179,17 +193,12 @@ function FiringAlertsCardInner() {
         )}
 
         {!loading && !alertsError && displayed.length === 0 && (
-          <Stack direction="column" gap={1} alignItems="center">
+          <Stack direction="column" alignItems="center">
             <Text color="secondary">
-              {hasTeams && !showAllAlerts
+              {hasTeams
                 ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
                 : t('home.firing-alerts-card.empty', 'You have no firing alerts.')}
             </Text>
-            {hasTeams && !showAllAlerts && (
-              <Button variant="secondary" size="sm" fill="text" onClick={() => setShowAllAlerts(true)}>
-                <Trans i18nKey="home.firing-alerts-card.show-all">Show all firing alerts</Trans>
-              </Button>
-            )}
           </Stack>
         )}
 
@@ -197,9 +206,12 @@ function FiringAlertsCardInner() {
           <ul className={styles.list}>
             {displayed.map(({ alert, level, startedAt }) => {
               const detailHref = alertDetailHref(alert);
+              const severity = severityLabel(level);
               return (
                 <li key={alert.fingerprint} className={styles.row}>
-                  <span className={styles.severityDot} data-severity={level} />
+                  <Tooltip content={severity}>
+                    <span className={styles.severityDot} data-severity={level} role="img" aria-label={severity} />
+                  </Tooltip>
                   {detailHref ? (
                     <TextLink href={detailHref} inline={false} className={styles.alertName}>
                       {alert.labels.alertname}
@@ -273,7 +285,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       backgroundColor: theme.colors.warning.main,
     },
     '&[data-severity="minor"]': {
-      backgroundColor: theme.colors.warning.text,
+      backgroundColor: theme.colors.info.main,
     },
   }),
   alertName: css({

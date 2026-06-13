@@ -50,7 +50,7 @@ export default function HomePage() {
     >
       <Page.Contents>
         <Stack direction="column" gap={2}>
-          <HomeSection padding={4} direction="column" display="flex" gap={2}>
+          <HomeSection direction="column" display="flex" gap={2}>
             {renderLimitedComponents({
               props: {},
               components: preComponents,
@@ -66,7 +66,7 @@ export default function HomePage() {
             pluginId: SETUPGUIDE_PLUGIN_ID,
             wrapper: ({ children }) => (
               <div className={styles.extra}>
-                <HomeSection padding={4}>{children}</HomeSection>
+                <HomeSection>{children}</HomeSection>
               </div>
             ),
           })}

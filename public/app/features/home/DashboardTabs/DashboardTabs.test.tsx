@@ -141,6 +141,25 @@ describe('DashboardTabs', () => {
     });
   });
 
+  it('stays on a manually selected empty tab instead of bouncing back', async () => {
+    seedRecent(['recent-1', 'recent-2']);
+    seedStars([]);
+    server.use(getCustomSearchHandler([...recentHits]));
+
+    const { user } = render(<DashboardTabs />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
+    });
+
+    await user.click(screen.getByRole('tab', { name: /starred/i }));
+
+    expect(screen.getByRole('tab', { name: /starred/i })).toHaveAttribute('aria-selected', 'true');
+    await waitFor(() => {
+      expect(screen.getByText('Your starred dashboards will appear here.')).toBeInTheDocument();
+    });
+  });
+
   it('shows counter badges with correct counts', async () => {
     seedRecent(['recent-1', 'recent-2']);
     seedStars(['starred-1', 'starred-2', 'starred-3']);

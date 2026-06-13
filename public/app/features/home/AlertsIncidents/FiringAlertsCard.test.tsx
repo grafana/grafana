@@ -87,6 +87,20 @@ describe('FiringAlertsCard', () => {
     expect(screen.getByText(/1 high/i)).toBeInTheDocument();
   });
 
+  it('labels each severity dot with its level', async () => {
+    mockTeams([]);
+    mockAlerts([criticalAlert, highAlert]);
+
+    render(<FiringAlertsCard />);
+
+    await waitFor(() => {
+      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('img', { name: 'Critical' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'High' })).toBeInTheDocument();
+  });
+
   it('counts non-canonical severity aliases by canonical level', async () => {
     mockTeams([]);
     mockAlerts([critAliasAlert, sev2Alert]);
@@ -165,7 +179,7 @@ describe('FiringAlertsCard', () => {
     expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
   });
 
-  it('shows empty state with "Show all" toggle when team-filtered result is empty', async () => {
+  it('shows team-scoped empty state when team-filtered result is empty', async () => {
     mockTeams([{ name: 'empty-team' }]);
     mockAlerts([]);
 
@@ -175,7 +189,7 @@ describe('FiringAlertsCard', () => {
       expect(screen.getByText('No firing alerts for your teams.')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Show all firing alerts')).toBeInTheDocument();
+    expect(screen.queryByText('Show all firing alerts')).not.toBeInTheDocument();
   });
 
   it('shows generic empty state when user has no teams', async () => {
