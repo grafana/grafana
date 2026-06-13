@@ -300,7 +300,7 @@ Hover your cursor over a number to display information about the query editor el
 {{< image-map key="query-editor" >}}
 
 Grafana organizes queries, expressions, and transformations into rows, each with its own card and editor pane.
-Queries are identified with a letter (A, B, C, and so on) by default.
+Queries and expressions are identified with a letter (A, B, C, and so on) by default.
 You can rearrange the order of queries, expressions, and transformations by dragging and dropping them in the sidebar.
 
 To access duplicate, hide, and delete actions for a specific data element, hover your cursor over that card in the sidebar:
