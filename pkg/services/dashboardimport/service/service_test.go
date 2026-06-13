@@ -303,8 +303,9 @@ func TestImportDashboardService(t *testing.T) {
 		require.Equal(t, "plugin-v2-dashboard", importDashboardArg.Dashboard.UID)
 		require.Empty(t, importDashboardArg.Dashboard.FolderUID)
 		require.NotNil(t, folderQuery)
-		require.NotNil(t, folderQuery.ID)
-		require.Equal(t, int64(0), *folderQuery.ID)
+		folderQueryID := folderQuery.ID //nolint:staticcheck
+		require.NotNil(t, folderQueryID)
+		require.Equal(t, int64(0), *folderQueryID)
 		require.Nil(t, folderQuery.UID)
 	})
 }
