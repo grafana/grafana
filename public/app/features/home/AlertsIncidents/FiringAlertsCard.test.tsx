@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -75,9 +75,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
     expect(screen.getByText('Memory High')).toBeInTheDocument();
     expect(screen.getByText('Disk Warning')).toBeInTheDocument();
@@ -93,9 +91,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
     expect(screen.getByRole('img', { name: 'Critical' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'High' })).toBeInTheDocument();
@@ -107,9 +103,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('Crit Alias')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Crit Alias')).toBeInTheDocument();
 
     // 'crit' canonicalizes to critical, 'SEV2' to major (shown as the "high" badge)
     expect(screen.getByText(/1 critical/i)).toBeInTheDocument();
@@ -123,9 +117,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('No Severity')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('No Severity')).toBeInTheDocument();
 
     // Missing severity must not crash canonicalSeverity and must not be counted in either badge
     expect(screen.queryByText(/\d+ critical/i)).not.toBeInTheDocument();
@@ -145,9 +137,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
     // Verify that the request included a team filter matcher
     const lastReq = capturedRequests[capturedRequests.length - 1];
@@ -169,9 +159,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
     // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
     const lastReq = capturedRequests[capturedRequests.length - 1];
@@ -185,9 +173,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('No firing alerts for your teams.')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('No firing alerts for your teams.')).toBeInTheDocument();
 
     expect(screen.queryByText('Show all firing alerts')).not.toBeInTheDocument();
   });
@@ -198,8 +184,6 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    await waitFor(() => {
-      expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
   });
 });

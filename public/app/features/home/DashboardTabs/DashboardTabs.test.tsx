@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { useEffect, type ReactNode } from 'react';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
@@ -99,10 +99,8 @@ describe('DashboardTabs', () => {
 
     expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
 
-    await waitFor(() => {
-      expect(screen.getByText('Recent Dashboard 1')).toBeInTheDocument();
-      expect(screen.getByText('Recent Dashboard 2')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByText('Recent Dashboard 2')).toBeInTheDocument();
   });
 
   it('switches to Starred tab and shows starred dashboards', async () => {
@@ -115,19 +113,15 @@ describe('DashboardTabs', () => {
 
     expect(screen.getByRole('tab', { name: /starred/i })).toHaveAttribute('aria-selected', 'true');
 
-    await waitFor(() => {
-      expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-      expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
-      expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
+    expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
   });
 
   it('shows empty state when no recent dashboards', async () => {
     render(<DashboardTabs />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
-    });
+    expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
   });
 
   it('shows empty state when no starred dashboards', async () => {
@@ -136,9 +130,7 @@ describe('DashboardTabs', () => {
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Your starred dashboards will appear here.')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Your starred dashboards will appear here.')).toBeInTheDocument();
   });
 
   it('stays on a manually selected empty tab instead of bouncing back', async () => {
@@ -148,16 +140,12 @@ describe('DashboardTabs', () => {
 
     const { user } = render(<DashboardTabs />);
 
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
-    });
+    expect(await screen.findByRole('tab', { name: /recent/i, selected: true })).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
     expect(screen.getByRole('tab', { name: /starred/i })).toHaveAttribute('aria-selected', 'true');
-    await waitFor(() => {
-      expect(screen.getByText('Your starred dashboards will appear here.')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Your starred dashboards will appear here.')).toBeInTheDocument();
   });
 
   it('shows counter badges with correct counts', async () => {
@@ -167,15 +155,8 @@ describe('DashboardTabs', () => {
 
     render(<DashboardTabs />);
 
-    await waitFor(() => {
-      const recentTab = screen.getByRole('tab', { name: /recent/i });
-      expect(recentTab).toHaveTextContent('2');
-    });
-
-    await waitFor(() => {
-      const starredTab = screen.getByRole('tab', { name: /starred/i });
-      expect(starredTab).toHaveTextContent('3');
-    });
+    expect(await screen.findByRole('tab', { name: /recent.*2/i })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /starred.*3/i })).toBeInTheDocument();
   });
 
   it('refetches starred dashboards when star is toggled', async () => {
@@ -186,9 +167,7 @@ describe('DashboardTabs', () => {
 
     await user.click(screen.getByRole('tab', { name: /starred/i }));
 
-    await waitFor(() => {
-      expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
-    });
+    expect(await screen.findByText('Starred Dashboard 1')).toBeInTheDocument();
   });
 
   describe('Most used tab', () => {
@@ -201,9 +180,7 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs />);
 
-      await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /most used/i })).toBeInTheDocument();
-      });
+      expect(await screen.findByRole('tab', { name: /most used/i })).toBeInTheDocument();
     });
 
     it('does not render Most used tab when analytics feature is disabled', async () => {
@@ -213,9 +190,7 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Recent Dashboard 1')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
       expect(screen.queryByRole('tab', { name: /most used/i })).not.toBeInTheDocument();
     });
@@ -227,14 +202,10 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs />);
 
-      await waitFor(() => {
-        expect(screen.getByRole('tab', { name: /most used/i })).toHaveAttribute('aria-selected', 'true');
-      });
+      expect(await screen.findByRole('tab', { name: /most used/i, selected: true })).toBeInTheDocument();
 
-      await waitFor(() => {
-        expect(screen.getByText('Most Used Dashboard 1')).toBeInTheDocument();
-        expect(screen.getByText('Most Used Dashboard 2')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Most Used Dashboard 1')).toBeInTheDocument();
+      expect(screen.getByText('Most Used Dashboard 2')).toBeInTheDocument();
     });
 
     it('stays on Recent when recent has items even with most-used available', async () => {
@@ -244,9 +215,7 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Recent Dashboard 1')).toBeInTheDocument();
-      });
+      expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
       expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'true');
     });
@@ -305,9 +274,7 @@ describe('DashboardTabs', () => {
     const { user } = render(<DashboardTabs />);
 
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 1' })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: 'Plugin Tab 1' })).toHaveAttribute('aria-selected', 'true');
-    });
+    expect(await screen.findByRole('tab', { name: 'Plugin Tab 1', selected: true })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: 'Plugin Tab 2' })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Plugin Tab 3' })).not.toBeInTheDocument();
 
