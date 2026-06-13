@@ -3,11 +3,15 @@ package notifier
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"testing"
 
+	"github.com/grafana/alerting/receivers/schema"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 )
 
@@ -53,6 +57,96 @@ func TestEncryptExtraConfigs(t *testing.T) {
 			require.Equal(t, tt.expectedConfig, cfg.ExtraConfigs[0].AlertmanagerConfig)
 		})
 	}
+}
+
+func TestLoadSecureSettings_ReceiverNameCheck(t *testing.T) {
+	const orgID = int64(1)
+	const receiverName = "my-receiver"
+	const integrationUID = "test-integration-uid"
+
+	savedConfig := buildSavedConfig(t, receiverName, integrationUID)
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		orgID: savedConfig,
+	})
+
+	secretsSvc := fakes.NewFakeSecretsService()
+	crypto := &alertmanagerCrypto{
+		ExtraConfigsCrypto: NewExtraConfigsCrypto(secretsSvc),
+		configs:            configStore,
+		log:                log.NewNopLogger(),
+	}
+
+	authorizeProtected := AuthorizeProtectedFn(func(_ string, _ []schema.IntegrationFieldPath) error { return nil })
+
+	t.Run("succeeds when receiver name matches DB", func(t *testing.T) {
+		receivers := []*definitions.PostableApiReceiver{
+			buildTestReceiver(receiverName, integrationUID),
+		}
+		err := crypto.LoadSecureSettings(context.Background(), orgID, receivers, authorizeProtected)
+		require.NoError(t, err)
+	})
+
+	t.Run("succeeds when receiver name is empty", func(t *testing.T) {
+		receivers := []*definitions.PostableApiReceiver{
+			buildTestReceiver("", integrationUID),
+		}
+		err := crypto.LoadSecureSettings(context.Background(), orgID, receivers, authorizeProtected)
+		require.NoError(t, err)
+	})
+
+	t.Run("fails when receiver name is non-empty and does not match DB", func(t *testing.T) {
+		receivers := []*definitions.PostableApiReceiver{
+			buildTestReceiver("wrong-receiver-name", integrationUID),
+		}
+		err := crypto.LoadSecureSettings(context.Background(), orgID, receivers, authorizeProtected)
+		require.ErrorAs(t, err, &UnknownReceiverError{})
+	})
+}
+
+func buildSavedConfig(t *testing.T, receiverName, integrationUID string) *models.AlertConfiguration {
+	t.Helper()
+
+	raw, err := json.Marshal(map[string]interface{}{
+		"template_files": nil,
+		"alertmanager_config": map[string]interface{}{
+			"route": map[string]interface{}{
+				"receiver": receiverName,
+			},
+			"receivers": []interface{}{
+				map[string]interface{}{
+					"name": receiverName,
+					"grafana_managed_receiver_configs": []interface{}{
+						map[string]interface{}{
+							"uid":  integrationUID,
+							"name": receiverName,
+							"type": "email",
+							"disableResolveMessage": false,
+							"settings":              map[string]interface{}{"addresses": "test@example.com"},
+						},
+					},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	return &models.AlertConfiguration{
+		AlertmanagerConfiguration: string(raw),
+		OrgID:                     1,
+	}
+}
+
+func buildTestReceiver(receiverName, integrationUID string) *definitions.PostableApiReceiver {
+	recv := &definitions.PostableApiReceiver{}
+	recv.Name = receiverName
+	recv.GrafanaManagedReceivers = []*definitions.PostableGrafanaReceiver{
+		{
+			UID:  integrationUID,
+			Name: receiverName,
+			Type: "email",
+		},
+	}
+	return recv
 }
 
 func TestDecryptExtraConfigs(t *testing.T) {
