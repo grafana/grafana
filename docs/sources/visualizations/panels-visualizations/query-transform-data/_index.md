@@ -135,7 +135,7 @@ Because of the differences between query languages, each data source query edito
 Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab-v11.6.png" max-width="750px" alt="The InfluxDB query editor" >}}
-<!-- TODO: Update screenshot -->
+<!-- TODO: Update screenshot but I can't get this to render properly -->
 
 For details on a specific data source's unique query editor features, refer to its documentation:
 
