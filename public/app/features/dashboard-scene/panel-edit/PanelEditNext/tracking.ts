@@ -28,7 +28,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state';
 
 export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -130,6 +130,13 @@ export function trackSidebarViewChange(view: QueryEditorType) {
   });
 }
 
+export function trackStackedViewToggle(direction: 'enter' | 'exit') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_stacked_view',
+    direction,
+  });
+}
+
 export function trackQueryOptionsToggle(open: boolean) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'toggle_query_options',
@@ -137,9 +144,10 @@ export function trackQueryOptionsToggle(open: boolean) {
   });
 }
 
-export function trackSelectButtonClick() {
+export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'click_multi_select',
+    action: 'toggle_multi_select',
+    direction,
   });
 }
 

@@ -10,7 +10,13 @@ import {
   type ScopedVars,
 } from '@grafana/data';
 import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import {
+  ExpressionDatasourceRef,
+  getDataSourceInstanceSettingsList,
+  setExpressionDataSourceInstanceSettings,
+} from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { instanceSettings as expressionInstanceSettings } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
@@ -638,6 +644,27 @@ describe('datasource_srv', () => {
 
         expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
         expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
+      });
+
+      it('should sync the new async instance-settings cache from the same fetched payload', async () => {
+        // Mirror startup: the expression datasource is injected into the new cache.
+        setExpressionDataSourceInstanceSettings(expressionInstanceSettings);
+
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+
+        await dataSourceSrv.reload();
+
+        // The new API reflects the freshly fetched datasources...
+        const list = await getDataSourceInstanceSettingsList({ all: true });
+        expect(list.some((x) => x.name === 'mmm')).toBe(true);
+        // ...the expression built-in still resolves...
+        expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+        // ...and the sync added no second /api/frontend/settings request.
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
       });
 
       it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
