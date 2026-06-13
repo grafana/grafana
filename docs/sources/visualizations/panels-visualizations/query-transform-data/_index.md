@@ -299,6 +299,8 @@ Hover your cursor over a number to display information about the query editor el
 
 {{< image-map key="query-editor" >}}
 
+You can rearrange the order of queries, expressions and transformations by dragging and dropping them within the list in the sidebar.
+
 For pipelines with many queries, expressions, or transformations, you can expand the sidebar to full height to see everything at once:
 
 {{< figure src="expanded-sidebar-temp.png" max-width="750px" alt="Expanded sidebar" >}}
@@ -342,9 +344,8 @@ To add a query, follow these steps:
 Grafana queries the data source and visualizes the data.
 
 ## Manage queries
-<!-- TODO: Fix wording and add Replace -->
 
-Grafana organizes queries in collapsible query rows.
+Grafana organizes queries in query rows.
 Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
 
 You can:
@@ -352,13 +353,13 @@ You can:
 <!-- prettier-ignore-start -->
 | Icon    | Description                                  |
 | ------- | -------------------------------------------- |
-| {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" max-width="30px" max-height="30px" alt="Help icon" >}} | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries. |
+| {{< figure src="/media/docs/grafana/panels-visualizations/replace-query-icon-v13.1.png" max-width="30px" max-height="30px" alt="Help icon" >}} | Replace the configured query with a saved query. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
+| {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save query icon" >}} | Save query. Saves the query so it can be reused. Access saved queries by clicking **Replace**. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
 | {{< figure src="/media/docs/grafana/panels-visualizations/create-recorded-query-icon.png" max-width="30px" max-height="30px" alt="Create recorded query icon" >}} | Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) so you can see trends over time by taking a snapshot of a data point on a set interval (Enterprise and Cloud only). |
-| {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save query icon" >}} | Save query. Saves the query so it can be reused. Access saved queries by clicking **+ Add saved query**. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
-| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Duplicate icon" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. |
 | {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Hide icon" >}} | Hides a query. Grafana does not send hidden queries to the data source. |
 | {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Remove icon">}} | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel. |
-| {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" max-width="30px" max-height="30px" alt="Drag icon" >}} | Reorders queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Duplicate icon" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations. Click the **More query actions** menu to access this option. |
+| {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" max-width="30px" max-height="30px" alt="Help icon" >}} | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries. Click the **More query actions** menu to access this option. |
 <!-- prettier-ignore-end -->
 
 ## Query options
