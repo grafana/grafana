@@ -48,7 +48,7 @@ export function containsVariable(...args: any[]) {
     matches !== null
       ? matches.find((match) => {
           const varMatch = variableRegexExec(match);
-          return varMatch !== null && varMatch.indexOf(variableName) > -1;
+          return varMatch !== null && (varMatch[1] === variableName || varMatch[2] === variableName || varMatch[4] === variableName);
         })
       : false;
 
