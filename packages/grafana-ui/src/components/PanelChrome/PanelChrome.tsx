@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css, cx, keyframes } from '@emotion/css';
 import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
@@ -327,8 +327,22 @@ export function PanelChrome({
               : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
           }
         >
-          <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
-            <Icon name="circle-mono" size="md" className={styles.streaming} />
+          <TitleItem
+            className={cx(dragClassCancel, onCancelQuery && styles.pointer)}
+            data-testid="panel-streaming"
+            onClick={onCancelQuery}
+          >
+            <span
+              className={styles.streamingIndicator}
+              role={onCancelQuery ? undefined : 'status'}
+              aria-label={
+                onCancelQuery
+                  ? t('grafana-ui.panel-chrome.aria-label-stop-streaming', 'Stop streaming')
+                  : t('grafana-ui.panel-chrome.aria-label-streaming', 'Streaming data')
+              }
+            >
+              <Icon name="circle-mono" size="md" className={styles.streaming} aria-hidden />
+            </span>
           </TitleItem>
         </Tooltip>
       )}
@@ -517,6 +531,20 @@ const getContentStyle = (
 
 const getStyles = (theme: GrafanaTheme2) => {
   const { background, borderColor } = theme.components.panel;
+  const pulseStreaming = keyframes({
+    '0%': {
+      boxShadow: `0 0 0 0 ${theme.colors.success.transparent}`,
+      transform: 'scale(1)',
+    },
+    '70%': {
+      boxShadow: `0 0 0 ${theme.spacing(0.75)} transparent`,
+      transform: 'scale(1.08)',
+    },
+    '100%': {
+      boxShadow: '0 0 0 0 transparent',
+      transform: 'scale(1)',
+    },
+  });
 
   return {
     container: css({
@@ -617,6 +645,20 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         color: theme.colors.success.text,
+      },
+    }),
+    streamingIndicator: css({
+      label: 'panel-streaming-indicator',
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      borderRadius: theme.shape.radius.circle,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      animation: `${pulseStreaming} 1.6s ease-out infinite`,
+
+      '@media (prefers-reduced-motion: reduce)': {
+        animation: 'none',
       },
     }),
     title: css({
