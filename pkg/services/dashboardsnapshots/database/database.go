@@ -46,15 +46,16 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 
 func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
 	var result *dashboardsnapshots.DashboardSnapshot
+
+	dashboardJSON := simplejson.New()
+	if cmd.Dashboard != nil && cmd.Dashboard.Object != nil {
+		dashboardJSON = simplejson.NewFromAny(cmd.Dashboard.Object)
+	}
+
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
-		}
-
-		dashboardJSON := simplejson.New()
-		if cmd.Dashboard != nil && cmd.Dashboard.Object != nil {
-			dashboardJSON = simplejson.NewFromAny(cmd.Dashboard.Object)
 		}
 
 		snapshot := &dashboardsnapshots.DashboardSnapshot{
