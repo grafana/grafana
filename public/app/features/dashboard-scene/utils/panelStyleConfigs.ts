@@ -464,10 +464,38 @@ const xychartPanelStyleConfig: PanelStyleConfig = {
   },
 };
 
+/**
+ * Style config for the box plot panel.
+ *
+ * fieldConfig.defaults:
+ *   color – color scheme
+ *
+ * fieldConfig.defaults.custom:
+ *   lineWidth   – box outline and whisker line width
+ *   fillOpacity – box fill opacity
+ *   + axis config
+ *
+ * options:
+ *   boxWidth – width of each box as a fraction of the category slot
+ *
+ * Note: `fields` is excluded — it references specific field names and is data
+ * configuration, not visual style.
+ */
+const boxplotPanelStyleConfig: PanelStyleConfig = {
+  fieldConfig: {
+    defaultsProps: ['color'],
+    customProps: ['lineWidth', 'fillOpacity', ...axisCustomDefaults],
+  },
+  options: {
+    props: ['boxWidth'],
+  },
+};
+
 const PANEL_STYLE_CONFIGS: Record<string, PanelStyleConfig> = {
   timeseries: graphPanelStyleConfig,
   trend: graphPanelStyleConfig,
   candlestick: graphPanelStyleConfig,
+  boxplot: boxplotPanelStyleConfig,
   stat: statPanelStyleConfig,
   gauge: gaugePanelStyleConfig,
   bargauge: barGaugePanelStyleConfig,

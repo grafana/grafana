@@ -4217,6 +4217,40 @@
   "bouncing-loader": {
     "label": "Loading"
   },
+  "boxplot": {
+    "category": "Box plot",
+    "description-lower-whisker": "Optional lower whisker end. Enables outliers below it.",
+    "description-max": "Highest value. Drawn as an outlier when an upper whisker is mapped.",
+    "description-median": "Median (50th percentile). Line inside the box.",
+    "description-min": "Lowest value. Drawn as an outlier when a lower whisker is mapped.",
+    "description-q1": "First quartile (25th percentile). Lower edge of the box.",
+    "description-q3": "Third quartile (75th percentile). Upper edge of the box.",
+    "description-upper-whisker": "Optional upper whisker end. Enables outliers above it.",
+    "field-placeholder": "Auto",
+    "name-box-width": "Box width",
+    "name-fill-opacity": "Fill opacity",
+    "name-line-width": "Line width",
+    "name-lower-whisker": "Lower whisker",
+    "name-max": "Maximum",
+    "name-median": "Median",
+    "name-min": "Minimum",
+    "name-outlier-size": "Outlier size",
+    "name-q1": "Lower quartile (Q1)",
+    "name-q3": "Upper quartile (Q3)",
+    "name-upper-whisker": "Upper whisker",
+    "tooltip": {
+      "lower-whisker": "Lower whisker",
+      "max": "Maximum",
+      "median": "Median",
+      "min": "Minimum",
+      "q1": "Lower quartile (Q1)",
+      "q3": "Upper quartile (Q3)",
+      "upper-whisker": "Upper whisker"
+    },
+    "warn": {
+      "missing-fields": "Map fields (at least Q1, median, and Q3), or add a Reduce transformation"
+    }
+  },
   "browse-dashboards": {
     "action": {
       "bulk-delete-provisioned-resources": "Bulk Delete Provisioned Resources",

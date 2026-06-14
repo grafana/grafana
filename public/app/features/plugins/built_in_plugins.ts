@@ -22,6 +22,8 @@ const barChartPanel = async () =>
   await import(/* webpackChunkName: "barChartPanel" */ 'app/plugins/panel/barchart/module');
 const barGaugePanel = async () =>
   await import(/* webpackChunkName: "barGaugePanel" */ 'app/plugins/panel/bargauge/module');
+const boxplotPanel = async () =>
+  await import(/* webpackChunkName: "boxplotPanel" */ 'app/plugins/panel/boxplot/module');
 const candlestickPanel = async () =>
   await import(/* webpackChunkName: "candlestickPanel" */ 'app/plugins/panel/candlestick/module');
 const dashListPanel = async () =>
@@ -98,6 +100,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/piechart': pieChartPanel,
   'core:plugin/bargauge': barGaugePanel,
   'core:plugin/barchart': barChartPanel,
+  'core:plugin/boxplot': boxplotPanel,
   'core:plugin/logs': logsPanel,
   'core:plugin/logstable': logsTablePanel,
   'core:plugin/traces': tracesPanel,
