@@ -10,6 +10,9 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
+
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -67,13 +70,12 @@ function pathSegmentType(layoutType: LayoutType): 'rows' | 'tabs' | null {
   return null;
 }
 
-function applyAutoGridOptions(
+function buildAutoGridOptionsPatch(
   layout: DashboardLayoutManager,
-  path: string,
   options?: AutoGridOptions
-): Array<{ path: string; previousValue: unknown; newValue: unknown }> {
+): { patch: Record<string, unknown>; prev: Record<string, unknown> } | undefined {
   if (!options || !(layout instanceof AutoGridLayoutManager)) {
-    return [];
+    return undefined;
   }
   const patch: Record<string, unknown> = {};
   if (options.maxColumnCount !== undefined) {
@@ -88,16 +90,22 @@ function applyAutoGridOptions(
   if (options.rowHeightMode !== undefined) {
     patch.rowHeight = options.rowHeightMode === 'custom' ? (options.rowHeight ?? 200) : options.rowHeightMode;
   }
-  if (Object.keys(patch).length > 0) {
-    const stateRecord: Record<string, unknown> = { ...layout.state };
-    const prev: Record<string, unknown> = {};
-    for (const key of Object.keys(patch)) {
-      prev[key] = stateRecord[key];
-    }
-    layout.setState(patch);
-    return [{ path, previousValue: prev, newValue: patch }];
+  if (Object.keys(patch).length === 0) {
+    return undefined;
   }
-  return [];
+  const stateRecord: Record<string, unknown> = { ...layout.state };
+  const prev: Record<string, unknown> = {};
+  for (const key of Object.keys(patch)) {
+    prev[key] = stateRecord[key];
+  }
+  return { patch, prev };
+}
+
+function applyAutoGridOptionsDirect(layout: DashboardLayoutManager, options?: AutoGridOptions): void {
+  const built = buildAutoGridOptionsPatch(layout, options);
+  if (built && layout instanceof AutoGridLayoutManager) {
+    layout.setState(built.patch);
+  }
 }
 
 function validateGroupNesting(path: string, layoutType: LayoutType, currentLayout: DashboardLayoutManager): void {
@@ -140,23 +148,22 @@ function validateGroupNesting(path: string, layoutType: LayoutType, currentLayou
   }
 }
 
-function switchLayout(
+function resolveSwitchTarget(
   resolved: ReturnType<typeof resolveLayoutPath>,
-  newLayout: DashboardLayoutManager,
   path: string
-): void {
+): { switchLayout: (newLayout: DashboardLayoutManager) => void } {
   if (resolved.item) {
     if (!isLayoutParent(resolved.item)) {
       throw new Error(`Cannot switch layout: item at "${path}" is not a LayoutParent`);
     }
-    resolved.item.switchLayout(newLayout);
-  } else {
-    const layoutParent = resolved.layoutManager.parent;
-    if (!layoutParent || !isLayoutParent(layoutParent)) {
-      throw new Error('Cannot switch layout: parent is not a LayoutParent');
-    }
-    layoutParent.switchLayout(newLayout);
+    const item = resolved.item;
+    return { switchLayout: (newLayout) => item.switchLayout(newLayout) };
   }
+  const layoutParent = resolved.layoutManager.parent;
+  if (!layoutParent || !isLayoutParent(layoutParent)) {
+    throw new Error('Cannot switch layout: parent is not a LayoutParent');
+  }
+  return { switchLayout: (newLayout) => layoutParent.switchLayout(newLayout) };
 }
 
 function createNewLayout(layoutType: LayoutType, currentLayout: DashboardLayoutManager): DashboardLayoutManager {
@@ -202,8 +209,22 @@ export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
 
       // Update-only mode: same type, just apply options
       if (effectiveType === currentTypeId) {
-        const changes = applyAutoGridOptions(currentLayout, path, options);
-        return { success: true, data: { path, layoutType: currentTypeId }, changes };
+        const built = buildAutoGridOptionsPatch(currentLayout, options);
+        if (built && currentLayout instanceof AutoGridLayoutManager) {
+          const recordedLayout = currentLayout;
+          dashboardEditActions.edit({
+            description: t('dashboard.mutation-api.update-layout-options', 'Update layout options'),
+            source: currentLayout,
+            perform: () => recordedLayout.setState(built.patch),
+            undo: () => recordedLayout.setState(built.prev),
+          });
+          return {
+            success: true,
+            data: { path, layoutType: currentTypeId },
+            changes: [{ path, previousValue: built.prev, newValue: built.patch }],
+          };
+        }
+        return { success: true, data: { path, layoutType: currentTypeId }, changes: [] };
       }
 
       // Type switch
@@ -219,14 +240,22 @@ export const updateLayoutCommand: MutationCommand<UpdateLayoutPayload> = {
       }
 
       const newLayout = createNewLayout(effectiveType, currentLayout);
-      const optionChanges = applyAutoGridOptions(newLayout, path, options);
+      applyAutoGridOptionsDirect(newLayout, options);
 
-      switchLayout(resolved, newLayout, path);
+      const previousLayoutClone = currentLayout.clone({});
+      const switchTarget = resolveSwitchTarget(resolved, path);
+
+      dashboardEditActions.edit({
+        description: t('dashboard.mutation-api.convert-layout', 'Convert layout to {{type}}', { type: effectiveType }),
+        source: scene,
+        perform: () => switchTarget.switchLayout(newLayout),
+        undo: () => switchTarget.switchLayout(previousLayoutClone),
+      });
 
       return {
         success: true,
         data: { path, layoutType: effectiveType },
-        changes: [{ path, previousValue: currentTypeId, newValue: effectiveType }, ...optionChanges],
+        changes: [{ path, previousValue: currentTypeId, newValue: effectiveType }],
         warnings: [
           `Layout at "${path}" converted from ${currentTypeId} to ${effectiveType}. Previous paths may be invalidated; call GET_LAYOUT to refresh.`,
         ],

@@ -11,6 +11,16 @@ jest.mock('@grafana/scenes', () => ({
   },
 }));
 
+// Avoid pulling in the full edit-pane (which transitively imports scene data
+// layers that the @grafana/scenes mock above does not provide).
+jest.mock('../../edit-pane/shared', () => ({
+  dashboardEditActions: {
+    edit(props: { perform: () => void }) {
+      props.perform();
+    },
+  },
+}));
+
 function buildTestScene(
   overrides: Partial<{
     title: string;

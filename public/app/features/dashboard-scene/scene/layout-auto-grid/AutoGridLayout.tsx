@@ -8,6 +8,7 @@ import {
   type SceneGridItemLike,
 } from '@grafana/scenes';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutOrchestratorFor } from '../../utils/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
@@ -61,6 +62,18 @@ interface AutoGridLayoutOptions {
   justifyContent?: CSSProperties['justifyContent'];
 }
 
+function arraysShallowEqual<T>(a: T[], b: T[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> implements SceneLayout {
   public static Component = AutoGridLayoutRenderer;
 
@@ -75,6 +88,8 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   /** Container's initial page position, used to compensate for layout shifts during drag */
   private _initialContainerRect: { top: number; left: number } | null = null;
   private _lastDropTargetGridItemKey: string | null = null;
+  /** Snapshot of children at drag start, used to record a single undo entry on drop */
+  private _childrenBeforeDrag: AutoGridItem[] | null = null;
   protected _renderBeforeActivation = true;
 
   public constructor(state: Partial<AutoGridLayoutState>) {
@@ -161,6 +176,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
     this._draggedGridItem = gridItem;
     this._lastDropTargetGridItemKey = gridItem.state.key!;
+    this._childrenBeforeDrag = [...this.state.children];
 
     const { top, left, width, height } = this._draggedGridItem.getBoundingBox();
     this._initialGridItemPosition = { pageX: evt.pageX, pageY: evt.pageY, top, left: left };
@@ -186,17 +202,22 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
   private _onDragEnd() {
     window.getSelection()?.removeAllRanges();
 
+    const movedItem = this._draggedGridItem;
+    const childrenBefore = this._childrenBeforeDrag;
+
     this._draggedGridItem = null;
     this._initialGridItemPosition = null;
     this._initialContainerRect = null;
     this._lastDropTargetGridItemKey = null;
+    this._childrenBeforeDrag = null;
 
     // Only reset position/size and clear draggingKey if not dropping to a different layout.
     // For cross-grid drops, the orchestrator will call endExternalDrag() after the item is moved
     // to prevent flickering where the item would momentarily appear at wrong position
     // (CSS vars cleared but draggingKey still set = absolute positioning with no position).
     const orchestrator = getLayoutOrchestratorFor(this);
-    if (!orchestrator?.isDroppedElsewhere()) {
+    const droppedElsewhere = !!orchestrator?.isDroppedElsewhere();
+    if (!droppedElsewhere) {
       this._resetPanelPositionAndSize();
       this.setState({ draggingKey: undefined });
     }
@@ -204,6 +225,18 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
     document.body.removeEventListener('pointermove', this._onDrag);
     document.body.removeEventListener('pointerup', this._onDragEnd);
     document.body.classList.remove('dashboard-draggable-transparent-selection');
+
+    // Record a single undo entry if the same-grid drag actually reordered children.
+    // Cross-grid drops are recorded by the orchestrator.
+    if (!droppedElsewhere && movedItem && childrenBefore && !arraysShallowEqual(childrenBefore, this.state.children)) {
+      const childrenAfter = [...this.state.children];
+      dashboardEditActions.moveElement({
+        movedObject: movedItem,
+        source: this,
+        perform: () => this.setState({ children: childrenAfter }),
+        undo: () => this.setState({ children: childrenBefore }),
+      });
+    }
   }
 
   /**

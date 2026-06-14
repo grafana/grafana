@@ -6,6 +6,7 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
@@ -56,17 +57,43 @@ export const moveTabCommand: MutationCommand<MoveTabPayload> = {
         destParent = sourceParent;
       }
 
-      // Remove from source
-      const sourceTabs = [...sourceParent.state.tabs];
-      sourceTabs.splice(sourceSegment.index, 1);
-      sourceParent.setState({ tabs: sourceTabs });
+      const sourceTabsBefore = [...sourceParent.state.tabs];
+      const sourceSlugBefore = sourceParent.state.currentTabSlug;
+      const destTabsBefore = sourceParent === destParent ? sourceTabsBefore : [...destParent.state.tabs];
+      const destSlugBefore = destParent.state.currentTabSlug;
 
-      // Insert into destination
-      const destTabs = sourceParent === destParent ? sourceTabs : [...destParent.state.tabs];
+      const sourceTabsAfter = [...sourceTabsBefore];
+      sourceTabsAfter.splice(sourceSegment.index, 1);
+
+      const destTabsAfter = sourceParent === destParent ? sourceTabsAfter : [...destTabsBefore];
       const insertIndex =
-        toPosition !== undefined && toPosition >= 0 && toPosition <= destTabs.length ? toPosition : destTabs.length;
-      destTabs.splice(insertIndex, 0, tab);
-      destParent.setState({ tabs: destTabs });
+        toPosition !== undefined && toPosition >= 0 && toPosition <= destTabsAfter.length
+          ? toPosition
+          : destTabsAfter.length;
+      destTabsAfter.splice(insertIndex, 0, tab);
+
+      const sameParent = sourceParent === destParent;
+
+      dashboardEditActions.moveElement({
+        movedObject: tab,
+        source: sourceParent,
+        perform: () => {
+          if (sameParent) {
+            sourceParent.setState({ tabs: destTabsAfter });
+          } else {
+            sourceParent.setState({ tabs: sourceTabsAfter });
+            destParent.setState({ tabs: destTabsAfter });
+          }
+        },
+        undo: () => {
+          if (sameParent) {
+            sourceParent.setState({ tabs: sourceTabsBefore, currentTabSlug: sourceSlugBefore });
+          } else {
+            destParent.setState({ tabs: destTabsBefore, currentTabSlug: destSlugBefore });
+            sourceParent.setState({ tabs: sourceTabsBefore, currentTabSlug: sourceSlugBefore });
+          }
+        },
+      });
 
       const basePath = toParent ?? (path.substring(0, path.lastIndexOf('/tabs/')) || '/');
       const newPath = basePath === '/' ? `/tabs/${insertIndex}` : `${basePath}/tabs/${insertIndex}`;

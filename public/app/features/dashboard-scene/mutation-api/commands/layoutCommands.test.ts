@@ -28,6 +28,9 @@ jest.mock('../../edit-pane/shared', () => {
       removeElement(props: { perform: () => void }) {
         props.perform();
       },
+      moveElement(props: { perform: () => void }) {
+        props.perform();
+      },
     },
   };
 });

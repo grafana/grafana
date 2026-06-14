@@ -62,6 +62,38 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
   grid: SceneGridLayout;
 }
 
+interface GridItemSnapshot {
+  item: SceneGridItemLike;
+  x: number | undefined;
+  y: number | undefined;
+  width: number | undefined;
+  height: number | undefined;
+}
+
+function applyGridSnapshot(snapshot: GridItemSnapshot[]): void {
+  for (const entry of snapshot) {
+    entry.item.setState({ x: entry.x, y: entry.y, width: entry.width, height: entry.height });
+  }
+}
+
+function gridSnapshotsDiffer(a: GridItemSnapshot[], b: GridItemSnapshot[]): boolean {
+  if (a.length !== b.length) {
+    return true;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (
+      a[i].item !== b[i].item ||
+      a[i].x !== b[i].x ||
+      a[i].y !== b[i].y ||
+      a[i].width !== b[i].width ||
+      a[i].height !== b[i].height
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
   implements DashboardLayoutGrid
@@ -92,7 +124,78 @@ export class DefaultGridLayoutManager
   public constructor(state: DefaultGridLayoutManagerState) {
     super(state);
 
+    this._wrapGridDragResizeHooks();
     this.addActivationHandler(() => this._activationHandler());
+  }
+
+  /**
+   * Hooks the underlying SceneGridLayout's drag/resize callbacks so a single
+   * undo entry is recorded per gesture. Snapshots all child positions on start
+   * and compares to the post-gesture state to capture cascading repositions.
+   */
+  private _wrapGridDragResizeHooks() {
+    const grid = this.state.grid;
+    const originalOnDragStart = grid.onDragStart?.bind(grid);
+    const originalOnDragStop = grid.onDragStop?.bind(grid);
+    const originalOnResizeStop = grid.onResizeStop?.bind(grid);
+
+    let snapshotBefore: GridItemSnapshot[] | null = null;
+
+    const snapshotChildren = (): GridItemSnapshot[] =>
+      grid.state.children.map((child) => ({
+        item: child,
+        x: child.state.x,
+        y: child.state.y,
+        width: child.state.width,
+        height: child.state.height,
+      }));
+
+    const recordIfChanged = (movedKey: string | undefined, description: string) => {
+      const before = snapshotBefore;
+      snapshotBefore = null;
+      if (!before) {
+        return;
+      }
+      const after = snapshotChildren();
+      if (!gridSnapshotsDiffer(before, after)) {
+        return;
+      }
+      const movedItem = movedKey ? grid.state.children.find((c) => c.state.key === movedKey) : undefined;
+      dashboardEditActions.edit({
+        description,
+        source: movedItem ?? this,
+        movedObject: movedItem,
+        perform: () => applyGridSnapshot(after),
+        undo: () => applyGridSnapshot(before),
+      });
+    };
+
+    grid.onDragStart = (...args) => {
+      snapshotBefore = snapshotChildren();
+      originalOnDragStart?.(...args);
+    };
+
+    grid.onDragStop = (...args) => {
+      originalOnDragStop?.(...args);
+      const newItem = args[2];
+      recordIfChanged(newItem?.i, t('dashboard.edit-actions.move-panel', 'Move panel'));
+    };
+
+    grid.onResizeStop = (...args) => {
+      // No onResizeStart hook exists, so we capture lazily on first stop.
+      if (!snapshotBefore) {
+        const newItem = args[2];
+        const oldItem = args[1];
+        snapshotBefore = snapshotChildren().map((s) =>
+          s.item.state.key === newItem?.i && oldItem
+            ? { ...s, x: oldItem.x, y: oldItem.y, width: oldItem.w, height: oldItem.h }
+            : s
+        );
+      }
+      originalOnResizeStop?.(...args);
+      const newItem = args[2];
+      recordIfChanged(newItem?.i, t('dashboard.edit-actions.resize-panel', 'Resize panel'));
+    };
   }
 
   public getAllGridTypes(): string[] {

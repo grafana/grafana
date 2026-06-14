@@ -4,6 +4,30 @@ import type { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
+// Mock the edit-pane actions so that perform() is called synchronously
+// instead of publishing an event (which requires a DashboardEditPane subscriber).
+jest.mock('../../edit-pane/shared', () => {
+  const actual = jest.requireActual('../../edit-pane/shared');
+  return {
+    ...actual,
+    dashboardEditActions: {
+      ...actual.dashboardEditActions,
+      edit(props: { perform: () => void }) {
+        props.perform();
+      },
+      addElement(props: { perform: () => void }) {
+        props.perform();
+      },
+      removeElement(props: { perform: () => void }) {
+        props.perform();
+      },
+      moveElement(props: { perform: () => void }) {
+        props.perform();
+      },
+    },
+  };
+});
+
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
   const { editable = true, isEditing = false } = options;
   const state: Record<string, unknown> = {

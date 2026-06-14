@@ -18,7 +18,7 @@
  * appends children to the grid state, bypassing all of the above.
  */
 
-import { type VizPanel } from '@grafana/scenes';
+import { type SceneGridItemLike, type VizPanel } from '@grafana/scenes';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -70,6 +70,31 @@ function resolveLeafLayout(layout: DashboardLayoutManager): DefaultGridLayoutMan
   }
 
   throw new Error('Layout nesting too deep (max 10 levels)');
+}
+
+export type GridChildrenSnapshot =
+  | { kind: 'default'; layout: DefaultGridLayoutManager; children: SceneGridItemLike[] }
+  | { kind: 'auto'; layout: AutoGridLayoutManager; children: AutoGridItem[] };
+
+/**
+ * Snapshot the children of the leaf grid that {@link movePanelsToLayout} would
+ * write into. Use together with {@link restoreGridChildrenSnapshot} to support
+ * undo of `moveContentTo` operations.
+ */
+export function captureGridChildrenSnapshot(targetLayout: DashboardLayoutManager): GridChildrenSnapshot {
+  const leaf = resolveLeafLayout(targetLayout);
+  if (leaf instanceof DefaultGridLayoutManager) {
+    return { kind: 'default', layout: leaf, children: [...leaf.state.grid.state.children] };
+  }
+  return { kind: 'auto', layout: leaf, children: [...leaf.state.layout.state.children] };
+}
+
+export function restoreGridChildrenSnapshot(snapshot: GridChildrenSnapshot): void {
+  if (snapshot.kind === 'default') {
+    snapshot.layout.state.grid.setState({ children: snapshot.children });
+  } else {
+    snapshot.layout.state.layout.setState({ children: snapshot.children });
+  }
 }
 
 /**

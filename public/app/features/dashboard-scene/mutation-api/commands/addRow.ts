@@ -9,6 +9,7 @@
 import { type z } from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
@@ -47,6 +48,7 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
       if (targetLayout instanceof RowsLayoutManager) {
         rowsManager = targetLayout;
+        const localRowsManager = rowsManager;
 
         const newRow = new RowItem({
           layout: DefaultGridLayoutManager.fromVizPanels([]),
@@ -60,16 +62,25 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
             : undefined,
         });
 
-        const currentRows = [...rowsManager.state.rows];
+        const rowsBefore = [...localRowsManager.state.rows];
+        const rowsAfter = [...rowsBefore];
         newRowIndex =
-          position !== undefined && position >= 0 && position <= currentRows.length ? position : currentRows.length;
-        currentRows.splice(newRowIndex, 0, newRow);
-        rowsManager.setState({ rows: currentRows });
+          position !== undefined && position >= 0 && position <= rowsAfter.length ? position : rowsAfter.length;
+        rowsAfter.splice(newRowIndex, 0, newRow);
+
+        dashboardEditActions.addElement({
+          addedObject: newRow,
+          source: localRowsManager,
+          perform: () => localRowsManager.setState({ rows: rowsAfter }),
+          undo: () => localRowsManager.setState({ rows: rowsBefore }),
+        });
       } else {
         const layoutParent = targetLayout.parent;
         if (!layoutParent || !isLayoutParent(layoutParent)) {
           throw new Error('Cannot convert layout: parent is not a LayoutParent');
         }
+
+        const previousLayoutClone = targetLayout.clone({});
 
         // Nest the existing layout inside the requested row as-is,
         // preserving its structure (tabs, grid, etc.).
@@ -88,8 +99,14 @@ export const addRowCommand: MutationCommand<AddRowPayload> = {
 
         rowsManager = new RowsLayoutManager({ rows: [newRow] });
         newRowIndex = 0;
+        const newRowsManager = rowsManager;
 
-        layoutParent.switchLayout(rowsManager);
+        dashboardEditActions.addElement({
+          addedObject: newRow,
+          source: scene,
+          perform: () => layoutParent.switchLayout(newRowsManager),
+          undo: () => layoutParent.switchLayout(previousLayoutClone),
+        });
         wasConverted = true;
       }
 

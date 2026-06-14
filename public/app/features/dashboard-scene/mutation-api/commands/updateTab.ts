@@ -6,7 +6,10 @@
 
 import { type z } from 'zod';
 
+import { t } from '@grafana/i18n';
+
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 
 import { resolveLayoutPath } from './layoutPathResolver';
@@ -43,21 +46,43 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         conditionalRendering: tab.state.conditionalRendering?.serialize(),
       };
 
-      const updates: Record<string, unknown> = {};
-      if (spec.title !== undefined) {
-        updates.title = spec.title;
-      }
+      const stateBefore = {
+        title: tab.state.title,
+        repeatByVariable: tab.state.repeatByVariable,
+        repeatedTabs: tab.state.repeatedTabs,
+        $variables: tab.state.$variables,
+        conditionalRendering: tab.state.conditionalRendering,
+      };
 
-      tab.setState(updates);
+      const newGroup =
+        spec.conditionalRendering !== undefined
+          ? ConditionalRenderingGroup.deserialize(spec.conditionalRendering)
+          : undefined;
 
-      if (spec.repeat !== undefined) {
-        tab.onChangeRepeat(spec.repeat?.value || undefined);
-      }
-
-      if (spec.conditionalRendering !== undefined) {
-        const group = ConditionalRenderingGroup.deserialize(spec.conditionalRendering);
-        tab.setState({ conditionalRendering: group });
-      }
+      dashboardEditActions.edit({
+        description: t('dashboard.mutation-api.update-tab', 'Update tab'),
+        source: tab,
+        perform: () => {
+          if (spec.title !== undefined) {
+            tab.setState({ title: spec.title });
+          }
+          if (spec.repeat !== undefined) {
+            tab.onChangeRepeat(spec.repeat?.value || undefined);
+          }
+          if (newGroup !== undefined) {
+            tab.setState({ conditionalRendering: newGroup });
+          }
+        },
+        undo: () => {
+          tab.setState({
+            title: stateBefore.title,
+            repeatByVariable: stateBefore.repeatByVariable,
+            repeatedTabs: stateBefore.repeatedTabs,
+            $variables: stateBefore.$variables,
+            conditionalRendering: stateBefore.conditionalRendering,
+          });
+        },
+      });
 
       const currentSpec = {
         title: tab.state.title,

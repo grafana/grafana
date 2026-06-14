@@ -22,7 +22,7 @@ import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
-import { type DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
@@ -72,6 +72,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   public static Component = DragPreviewRenderer;
 
   private _sourceDropTarget: DashboardDropTarget | null = null;
+  private _sourceLayoutSnapshot: GridChildrenLayoutSnapshot | null = null;
   private _lastDropTarget: DashboardDropTarget | null = null;
   private _tabActivationTimer: ReturnType<typeof setTimeout> | null = null;
   private _lastHoveredTabKey: string | null = null;
@@ -146,6 +147,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     }
 
     this._sourceDropTarget = dropTarget;
+    this._sourceLayoutSnapshot = captureGridChildrenForDropTarget(dropTarget);
     this._lastDropTarget = dropTarget;
     this._sourceOriginalIndex = this._getGridItemIndex(gridItem);
 
@@ -220,6 +222,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
       // Handle cross-layout or cross-tab drop
       if (isCrossLayoutDrop) {
+        const sourceSnapshotBefore = this._sourceLayoutSnapshot;
+        const destSnapshotBefore = effectiveDropTarget ? captureGridChildrenForDropTarget(effectiveDropTarget) : null;
+
         // Wrapped in setTimeout to ensure that any event handlers are called
         // Useful for allowing react-grid-layout to remove placeholders, etc.
         setTimeout(() => {
@@ -238,6 +243,28 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
             // = absolute positioning with no valid position values).
             if (sourceDropTarget instanceof AutoGridLayoutManager) {
               sourceDropTarget.state.layout.endExternalDrag();
+            }
+
+            // Record one undo entry covering source removal + dest insertion.
+            if (sourceDropTarget && sourceSnapshotBefore && destSnapshotBefore) {
+              const sourceSnapshotAfter = captureGridChildrenForDropTarget(sourceDropTarget);
+              const destSnapshotAfter = effectiveDropTarget
+                ? captureGridChildrenForDropTarget(effectiveDropTarget)
+                : null;
+              if (sourceSnapshotAfter && destSnapshotAfter) {
+                dashboardEditActions.moveElement({
+                  movedObject: gridItem,
+                  source: sourceDropTarget,
+                  perform: () => {
+                    restoreGridChildrenForDropTarget(sourceSnapshotAfter);
+                    restoreGridChildrenForDropTarget(destSnapshotAfter);
+                  },
+                  undo: () => {
+                    restoreGridChildrenForDropTarget(destSnapshotBefore);
+                    restoreGridChildrenForDropTarget(sourceSnapshotBefore);
+                  },
+                });
+              }
             }
           } else {
             const warningMessage = 'No grid item to drag';
@@ -263,6 +290,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     this._lastHoveredAutoGridItemKey = null;
     this._lastDropTarget = null;
     this._sourceDropTarget = null;
+    this._sourceLayoutSnapshot = null;
     this._itemDetachedFromSource = false;
     this._sourceOriginalIndex = null;
     this.setState({ draggingGridItem: undefined, sourceTabKey: undefined, hoverTabKey: undefined });
@@ -1045,6 +1073,44 @@ function DragPreviewRenderer({ model }: SceneComponentProps<DashboardLayoutOrche
   );
 
   return createPortal(preview, document.body);
+}
+
+type GridChildrenLayoutSnapshot =
+  | { kind: 'auto'; layout: AutoGridLayoutManager['state']['layout']; children: SceneGridItemLike[] }
+  | { kind: 'default'; grid: DefaultGridLayoutManager['state']['grid']; children: SceneGridItemLike[] };
+
+function captureGridChildrenForDropTarget(target: DashboardDropTarget): GridChildrenLayoutSnapshot | null {
+  if (target instanceof AutoGridLayoutManager) {
+    const layout = target.state.layout;
+    return { kind: 'auto', layout, children: [...layout.state.children] };
+  }
+  if (target instanceof DefaultGridLayoutManager) {
+    const grid = target.state.grid;
+    return { kind: 'default', grid, children: [...grid.state.children] };
+  }
+  if (target instanceof TabItem) {
+    const innerLayout = target.state.layout;
+    if (innerLayout instanceof AutoGridLayoutManager) {
+      const layout = innerLayout.state.layout;
+      return { kind: 'auto', layout, children: [...layout.state.children] };
+    }
+    if (innerLayout instanceof DefaultGridLayoutManager) {
+      const grid = innerLayout.state.grid;
+      return { kind: 'default', grid, children: [...grid.state.children] };
+    }
+  }
+  return null;
+}
+
+function restoreGridChildrenForDropTarget(snapshot: GridChildrenLayoutSnapshot): void {
+  if (snapshot.kind === 'auto') {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    snapshot.layout.setState({
+      children: snapshot.children as Parameters<typeof snapshot.layout.setState>[0]['children'],
+    });
+  } else {
+    snapshot.grid.setState({ children: snapshot.children });
+  }
 }
 
 const getPreviewStyles = (theme: GrafanaTheme2) => ({

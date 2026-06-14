@@ -6,11 +6,12 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { resolveLayoutPath, resolveParentPath } from './layoutPathResolver';
-import { movePanelsToLayout } from './movePanelsHelper';
+import { captureGridChildrenSnapshot, movePanelsToLayout, restoreGridChildrenSnapshot } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
@@ -48,18 +49,38 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
         throw new Error(`Parent of "${path}" is not a RowsLayoutManager`);
       }
 
+      const rowsBefore = [...parent.state.rows];
+      const rowsAfter = [...rowsBefore];
+      rowsAfter.splice(segment.index, 1);
+
+      let targetSnapshot: ReturnType<typeof captureGridChildrenSnapshot> | undefined;
+      let panelsToMove: ReturnType<typeof resolved.item.state.layout.getVizPanels> = [];
       if (moveContentTo) {
-        const panels = resolved.item.state.layout.getVizPanels();
-        if (panels.length > 0) {
+        panelsToMove = resolved.item.state.layout.getVizPanels();
+        if (panelsToMove.length > 0) {
           const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo);
-          movePanelsToLayout(panels, targetResolved.layoutManager);
+          targetSnapshot = captureGridChildrenSnapshot(targetResolved.layoutManager);
         }
       }
 
-      // Remove the row
-      const currentRows = [...parent.state.rows];
-      currentRows.splice(segment.index, 1);
-      parent.setState({ rows: currentRows });
+      const removedRow = resolved.item;
+      dashboardEditActions.removeElement({
+        removedObject: removedRow,
+        source: parent,
+        perform: () => {
+          if (panelsToMove.length > 0) {
+            const targetResolved = resolveLayoutPath(scene.state.body, moveContentTo!);
+            movePanelsToLayout(panelsToMove, targetResolved.layoutManager);
+          }
+          parent.setState({ rows: rowsAfter });
+        },
+        undo: () => {
+          parent.setState({ rows: rowsBefore });
+          if (targetSnapshot) {
+            restoreGridChildrenSnapshot(targetSnapshot);
+          }
+        },
+      });
 
       return {
         success: true,
