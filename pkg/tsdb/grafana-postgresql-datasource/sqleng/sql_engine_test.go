@@ -396,6 +396,26 @@ func TestSQLEngine(t *testing.T) {
 		}
 	})
 
+	t.Run("convertSQLValueColumnToFloat converts large int64 values to float64 with IEEE 754 rounding", func(t *testing.T) {
+		// 2^53+1 = 9007199254740993 is the first integer that cannot be represented
+		// exactly in float64 (53-bit mantissa). IEEE 754 rounds it down to 2^53.
+		// This documents the precision boundary when bigint columns are converted
+		// in series format. See https://github.com/grafana/grafana/issues/115358
+		const input = int64(9007199254740993)
+		const rounded = float64(9007199254740992)
+
+		frame := data.NewFrame("",
+			data.NewField("bigint_col", nil, []*int64{Pointer(input)}),
+		)
+
+		result, err := convertSQLValueColumnToFloat(frame, 0)
+		require.NoError(t, err)
+
+		got := result.Fields[0].At(0).(*float64)
+		require.NotNil(t, got)
+		assert.Equal(t, rounded, *got)
+	})
+
 	t.Run("Should not return raw connection errors", func(t *testing.T) {
 		err := net.OpError{Op: "Dial", Err: fmt.Errorf("inner-error")}
 		transformer := &testQueryResultTransformer{}
@@ -687,6 +707,41 @@ func TestConvertResultsToFrame(t *testing.T) {
 			frame.Fields[0].At(1) // null id
 			frame.Fields[1].At(0) // null name
 		})
+	})
+
+	t.Run("bigint column preserves int64 precision in frame; series format converts to float64", func(t *testing.T) {
+		// Documents the precision boundary for PostgreSQL bigint (Int8OID) values
+		// flowing through the series-format pipeline.
+		//
+		// Stage 1 — convertResultsToFrame: Int8OID → FieldTypeNullableInt64. Value exact.
+		// Stage 2 — convertSQLValueColumnToFloat (series format): int64 → float64.
+		//            Values above 2^53 cannot be represented exactly in float64.
+		//
+		// See https://github.com/grafana/grafana/issues/115358
+		const input = int64(9007199254740993) // 2^53 + 1
+		const rounded = float64(9007199254740992)
+
+		fieldDescs := []pgconn.FieldDescription{
+			{Name: "ts", DataTypeOID: pgtype.TimestamptzOID},
+			{Name: "counter", DataTypeOID: pgtype.Int8OID},
+		}
+		mockRows := [][][]byte{
+			{[]byte("2024-01-01 00:00:00+00"), []byte("9007199254740993")},
+		}
+		result := &pgconn.Result{FieldDescriptions: fieldDescs, Rows: mockRows}
+		result.CommandTag = pgconn.NewCommandTag("SELECT 1")
+
+		frame, err := convertResultsToFrame([]*pgconn.Result{result}, 1000)
+		require.NoError(t, err)
+
+		// Stage 1: int64 is exact
+		require.Equal(t, data.FieldTypeNullableInt64, frame.Fields[1].Type())
+		assert.Equal(t, input, *frame.Fields[1].At(0).(*int64))
+
+		// Stage 2: series format converts numeric values to float64
+		converted, err := convertSQLValueColumnToFloat(frame, 1)
+		require.NoError(t, err)
+		assert.Equal(t, rounded, *converted.Fields[1].At(0).(*float64))
 	})
 }
 
