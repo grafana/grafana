@@ -243,6 +243,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
+	cfg.UnifiedStoragePollingInterval = section.Key("polling_interval").MustDuration(100 * time.Millisecond)
+	cfg.UnifiedStoragePollingMaxBackoff = section.Key("polling_max_backoff").MustDuration(5 * time.Second)
+	if cfg.UnifiedStoragePollingMaxBackoff <= 0 || cfg.UnifiedStoragePollingMaxBackoff <= cfg.UnifiedStoragePollingInterval {
+		cfg.UnifiedStoragePollingMaxBackoff = 5 * time.Second
+	}
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
