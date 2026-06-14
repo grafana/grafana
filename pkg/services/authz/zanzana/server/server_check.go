@@ -107,12 +107,19 @@ func (s *Server) checkGroupResource(ctx context.Context, subject, relation strin
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 
-	res, err := s.openfgaCheck(ctx, store, subject, relation, resource.GroupResourceIdent(), contextuals, nil)
-	if err != nil {
-		return nil, err
+	// Allow if the subject has the relation on any wildcard object (see
+	// ResourceInfo.WildcardGroupResourceIdents).
+	for _, ident := range resource.WildcardGroupResourceIdents() {
+		res, err := s.openfgaCheck(ctx, store, subject, relation, ident, contextuals, nil)
+		if err != nil {
+			return nil, err
+		}
+		if res.GetAllowed() {
+			return &authzv1.CheckResponse{Allowed: true}, nil
+		}
 	}
 
-	return &authzv1.CheckResponse{Allowed: res.GetAllowed()}, nil
+	return &authzv1.CheckResponse{Allowed: false}, nil
 }
 
 // checkTyped checks on our typed resources e.g. folder.

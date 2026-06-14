@@ -182,6 +182,32 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.Empty(t, tuples)
 	})
 
+	t.Run("should reconcile datasources-writer permissions", func(t *testing.T) {
+		// A "datasources writer" set: the full CRUD + query wildcard family. Each
+		// wildcard action maps to a canonical datasource.grafana.app group_resource
+		// tuple; instance-scoped grants would be dropped (covered separately).
+		permissions := []RolePermission{
+			{Action: "datasources:create", Kind: "", Identifier: ""},
+			{Action: "datasources:read", Kind: "datasources", Identifier: "*"},
+			{Action: "datasources:query", Kind: "datasources", Identifier: "*"},
+			{Action: "datasources:write", Kind: "datasources", Identifier: "*"},
+			{Action: "datasources:delete", Kind: "datasources", Identifier: "*"},
+		}
+
+		tuples, err := ConvertRolePermissionsToTuples("role-ds-writer", permissions)
+		require.NoError(t, err)
+
+		// query maps to create on the datasources/query subresource; the rest map to
+		// relations on the bare datasource group_resource.
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-ds-writer#assignee", Relation: "create", Object: "group_resource:datasource.grafana.app/datasources"},
+			{User: "role:role-ds-writer#assignee", Relation: "get", Object: "group_resource:datasource.grafana.app/datasources"},
+			{User: "role:role-ds-writer#assignee", Relation: "create", Object: "group_resource:datasource.grafana.app/datasources/query"},
+			{User: "role:role-ds-writer#assignee", Relation: "update", Object: "group_resource:datasource.grafana.app/datasources"},
+			{User: "role:role-ds-writer#assignee", Relation: "delete", Object: "group_resource:datasource.grafana.app/datasources"},
+		}), tupleKeyStrings(tuples))
+	})
+
 	t.Run("should reconcile global users-writer permissions", func(t *testing.T) {
 		// A "global users writer" (Grafana Admin) set: the users:* family plus the
 		// permissions sub-actions, mapping to full CRUD + permission relations.
@@ -526,6 +552,76 @@ func TestTeamManagementToTuples(t *testing.T) {
 	t.Run("returns nil for non-team actions", func(t *testing.T) {
 		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "users:read", Kind: "users", Identifier: "*"}))
 		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams:enable", Kind: "teams", Identifier: "*"}))
+	})
+}
+
+func TestDatasourceManagementToTuples(t *testing.T) {
+	const subject = "role:role-1#assignee"
+	const datasourcesObject = "group_resource:datasource.grafana.app/datasources"
+	const datasourcesQueryObject = "group_resource:datasource.grafana.app/datasources/query"
+
+	t.Run("maps each action to its tuples under an all-scope", func(t *testing.T) {
+		cases := []struct {
+			action     string
+			kind       string
+			identifier string
+			expected   []*openfgav1.TupleKey
+		}{
+			// datasources:create carries no scope (skipScope) and always translates.
+			{"datasources:create", "", "", []*openfgav1.TupleKey{
+				{User: subject, Relation: "create", Object: datasourcesObject},
+			}},
+			{"datasources:read", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get", Object: datasourcesObject},
+			}},
+			// query is authorized through the query subresource (create verb).
+			{"datasources:query", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "create", Object: datasourcesQueryObject},
+			}},
+			{"datasources:write", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "update", Object: datasourcesObject},
+			}},
+			{"datasources:delete", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "delete", Object: datasourcesObject},
+			}},
+			{"datasources.permissions:read", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "get_permissions", Object: datasourcesObject},
+			}},
+			{"datasources.permissions:write", "datasources", "*", []*openfgav1.TupleKey{
+				{User: subject, Relation: "set_permissions", Object: datasourcesObject},
+			}},
+			// The delegate scope form also counts as an "all" scope.
+			{"datasources.permissions:write", "permissions", "delegate", []*openfgav1.TupleKey{
+				{User: subject, Relation: "set_permissions", Object: datasourcesObject},
+			}},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.action+"/"+tc.identifier, func(t *testing.T) {
+				tuples := DatasourceManagementToTuples(subject, RolePermission{
+					Action: tc.action, Kind: tc.kind, Identifier: tc.identifier,
+				})
+				require.ElementsMatch(t, tupleKeyStrings(tc.expected), tupleKeyStrings(tuples))
+			})
+		}
+	})
+
+	t.Run("drops specific-instance scopes (except create)", func(t *testing.T) {
+		require.Nil(t, DatasourceManagementToTuples(subject, RolePermission{Action: "datasources:read", Kind: "datasources", Identifier: "abc"}))
+		require.Nil(t, DatasourceManagementToTuples(subject, RolePermission{Action: "datasources:write", Kind: "datasources", Identifier: "abc"}))
+
+		require.ElementsMatch(t,
+			tupleKeyStrings([]*openfgav1.TupleKey{{User: subject, Relation: "create", Object: datasourcesObject}}),
+			tupleKeyStrings(DatasourceManagementToTuples(subject, RolePermission{Action: "datasources:create", Kind: "datasources", Identifier: "abc"})),
+		)
+	})
+
+	t.Run("returns nil for unmapped datasource actions", func(t *testing.T) {
+		for _, action := range []string{"datasources:explore", "datasources.id:read", "datasources.caching:read", "datasources.caching:write"} {
+			require.Nil(t, DatasourceManagementToTuples(subject, RolePermission{
+				Action: action, Kind: "datasources", Identifier: "*",
+			}), "action %q should not translate", action)
+		}
 	})
 }
 
