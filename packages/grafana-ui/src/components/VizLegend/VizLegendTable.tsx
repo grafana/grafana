@@ -34,6 +34,7 @@ export const VizLegendTable = <T extends unknown>({
   limit = 0,
   filterAction,
   placement,
+  overflow
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
@@ -95,6 +96,7 @@ export const VizLegendTable = <T extends unknown>({
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
         hasMixedAxes={hasMixedAxes}
+        overflow={overflow}
       />
     );
   }

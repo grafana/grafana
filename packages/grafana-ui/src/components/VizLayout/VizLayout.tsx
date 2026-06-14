@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { type LegendPlacement } from '@grafana/schema';
+import { type LegendOverflow, type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
@@ -74,15 +74,19 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       break;
     case 'right':
       containerStyle.flexDirection = 'row';
-      if (legend.props.width == null) {
-        legendStyle.maxWidth = maxWidth;
-      }
 
       if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
       }
 
-      if (legend.props.width) {
+      if (typeof legend.props.width === 'string') {
+        legendStyle.width = legend.props.width;
+        break;
+      }
+
+      legendStyle.maxWidth = maxWidth;
+
+      if (legend.props.width != null) {
         legendStyle.width = legend.props.width;
         size = { width: width - legend.props.width, height };
       }
@@ -109,7 +113,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   );
 };
 
-const getVizStyles = (theme: GrafanaTheme2) => {
+export const getVizStyles = (theme: GrafanaTheme2) => {
   return {
     viz: css({
       flexGrow: 2,
@@ -134,7 +138,8 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
-  width?: number;
+  width?: number | string;
+  overflow?: LegendOverflow;
 }
 
 /**
