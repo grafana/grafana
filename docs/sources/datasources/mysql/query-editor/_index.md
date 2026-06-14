@@ -12,6 +12,7 @@ labels:
 menuTitle: Query editor
 title: MySQL query editor
 weight: 30
+review_date: 2026-05-11
 ---
 
 # MySQL query editor
@@ -35,8 +36,6 @@ If your table or database name contains a reserved word or a [prohibited charact
 {{< /admonition >}}
 
 ## MySQL Builder mode
-
-{{< figure alt="Builder mode" src="/media/docs/mysql/screenshot-mysql-query-editor.v11.3.png" class="docs-image--no-shadow" >}}
 
 The following components will help you build a MySQL query:
 
@@ -66,8 +65,6 @@ The following components will help you build a MySQL query:
 ## MySQL Code mode
 
 To create advanced queries, switch to **Code mode** by clicking **Code** in the upper right of the editor window. Code mode supports the auto-completion of tables, columns, SQL keywords, standard SQL functions, Grafana template variables, and Grafana macros. Columns cannot be completed before a table has been specified.
-
-{{< figure src="/static/img/docs/v92/sql_code_editor.png" class="docs-image--no-shadow" >}}
 
 Select **Table** or **Time Series** as the format. Click the **{}** in the bottom right to format the query. Click the **downward caret** to expand the Code mode editor. **CTRL/CMD + Return** serves as a keyboard shortcut to execute the query.
 
@@ -100,6 +97,10 @@ You can add macros to your queries to simplify the syntax and enable dynamic ele
 | `$__unixEpochGroup(dateColumn,'5m', [fillmode])`      | Same as $\_\_timeGroup but for times stored as Unix timestamp. **Note that `fillMode` only works with time series queries.**                                                                                                                   |
 | `$__unixEpochGroupAlias(dateColumn,'5m', [fillmode])` | Same as $\_\_timeGroup but also adds a column alias. **Note that `fillMode` only works with time series queries.**                                                                                                                             |
 
+{{< admonition type="note" >}}
+As of Grafana 13.0, fill resampling in `$__timeGroup` and `$__unixEpochGroup` includes additional safeguards to prevent incorrect data points when the query returns no rows or the time range falls outside the data boundaries.
+{{< /admonition >}}
+
 ## Table SQL queries
 
 If the **Format** option is set to **Table**, you can execute virtually any type of SQL query. The Table panel will automatically display the resulting columns and rows from your query.
@@ -115,10 +116,6 @@ SELECT
 INNER JOIN user on user.id = dashboard.created_by
 WHERE $__timeFilter(dashboard.created)
 ```
-
-Table panel results:
-
-![](/static/img/docs/v43/mysql_table.png)
 
 ## Time series queries
 
