@@ -44,7 +44,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 		entities.Get("/", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getAllHandler))                    // TODO: add wrapper for k8s - requires search
 		entities.Get("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getHandler))
 		entities.Get("/:uid/connections/", authorize(ac.EvalPermission(ActionLibraryPanelsRead, uidScope)), routing.Wrap(l.getConnectionsHandler))
-		entities.Get("/name/:name", routing.Wrap(l.getByNameHandler))                                                           // TODO: add wrapper for k8s - requires search
+		entities.Get("/name/:name", authorize(ac.EvalPermission(ActionLibraryPanelsRead)), routing.Wrap(l.getByNameHandler))    // TODO: add wrapper for k8s - requires search
 		entities.Patch("/:uid", authorize(ac.EvalPermission(ActionLibraryPanelsWrite, uidScope)), routing.Wrap(l.patchHandler)) // TODO: add wrapper for k8s
 	})
 }
