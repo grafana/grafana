@@ -2,6 +2,7 @@ package datasources
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -118,10 +119,16 @@ func TestDatasourceAsConfig(t *testing.T) {
 		err := dc.applyChanges(context.Background(), multipleOrgsWithDefault)
 		require.NoError(t, err)
 		require.Equal(t, len(store.inserted), 4)
-		require.True(t, store.inserted[0].IsDefault)
-		require.Equal(t, store.inserted[0].OrgID, int64(1))
-		require.True(t, store.inserted[2].IsDefault)
-		require.Equal(t, store.inserted[2].OrgID, int64(2))
+		// Inserts fan out in parallel; collect the default flag per org instead
+		// of relying on insertion order.
+		defaultsByOrg := map[int64]bool{}
+		for _, ins := range store.inserted {
+			if ins.IsDefault {
+				defaultsByOrg[ins.OrgID] = true
+			}
+		}
+		require.True(t, defaultsByOrg[int64(1)], "org 1 should have a default datasource")
+		require.True(t, defaultsByOrg[int64(2)], "org 2 should have a default datasource")
 	})
 
 	t.Run("Remove one datasource should have removed old datasource", func(t *testing.T) {
@@ -361,11 +368,14 @@ func TestDatasourceAsConfig(t *testing.T) {
 			}
 
 			require.Equal(t, 2, len(correlationsStore.created))
-			// triggered for each provisioned data source
+			// triggered for each provisioned data source; delete order is
+			// non-deterministic under parallel provisioning, check as a set.
 			require.Equal(t, 3, len(correlationsStore.deletedBySourceUID))
-			require.Equal(t, int64(1), correlationsStore.deletedBySourceUID[0].OrgId)
-			require.Equal(t, int64(2), correlationsStore.deletedBySourceUID[1].OrgId)
-			require.Equal(t, int64(3), correlationsStore.deletedBySourceUID[2].OrgId)
+			seenOrgs := map[int64]bool{}
+			for _, d := range correlationsStore.deletedBySourceUID {
+				seenOrgs[d.OrgId] = true
+			}
+			require.Equal(t, map[int64]bool{1: true, 2: true, 3: true}, seenOrgs)
 		})
 	})
 }
@@ -422,6 +432,7 @@ func validateDatasourceV1(t *testing.T, dsCfg *configs) {
 }
 
 type mockCorrelationsStore struct {
+	mu                 sync.Mutex
 	created            []correlations.CreateCorrelationCommand
 	deletedBySourceUID []correlations.DeleteCorrelationsBySourceUIDCommand
 	deletedByTargetUID []correlations.DeleteCorrelationsByTargetUIDCommand
@@ -429,21 +440,28 @@ type mockCorrelationsStore struct {
 }
 
 func (m *mockCorrelationsStore) CreateCorrelation(c context.Context, cmd correlations.CreateCorrelationCommand) (correlations.Correlation, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.created = append(m.created, cmd)
 	return correlations.Correlation{}, nil
 }
 
 func (m *mockCorrelationsStore) DeleteCorrelationsBySourceUID(c context.Context, cmd correlations.DeleteCorrelationsBySourceUIDCommand) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.deletedBySourceUID = append(m.deletedBySourceUID, cmd)
 	return nil
 }
 
 func (m *mockCorrelationsStore) DeleteCorrelationsByTargetUID(c context.Context, cmd correlations.DeleteCorrelationsByTargetUIDCommand) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.deletedByTargetUID = append(m.deletedByTargetUID, cmd)
 	return nil
 }
 
 type spyStore struct {
+	mu       sync.Mutex
 	inserted []*datasources.AddDataSourceCommand
 	deleted  []*datasources.DeleteDataSourceCommand
 	updated  []*datasources.UpdateDataSourceCommand
@@ -451,6 +469,8 @@ type spyStore struct {
 }
 
 func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for _, v := range s.items {
 		if query.Name == v.Name && query.OrgID == v.OrgID { // nolint:staticcheck
 			return v, nil
@@ -460,6 +480,8 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 }
 
 func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	prunableProvisionedDataSources := []*datasources.DataSource{}
 	for _, item := range s.items {
 		if item.IsPrunable {
@@ -470,6 +492,8 @@ func (s *spyStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*da
 }
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.deleted = append(s.deleted, cmd)
 	for i, v := range s.items {
 		if cmd.Name == v.Name && cmd.OrgID == v.OrgID {
@@ -482,6 +506,8 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 }
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.inserted = append(s.inserted, cmd)
 	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, IsPrunable: cmd.IsPrunable}
 	s.items = append(s.items, newDataSource)
@@ -489,6 +515,8 @@ func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSo
 }
 
 func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.updated = append(s.updated, cmd)
 	return nil, nil
 }

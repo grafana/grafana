@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -54,29 +55,31 @@ func TestPluginProvisioner(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, store.updateRequests, 4)
 
-		testCases := []struct {
-			ExpectedPluginID       string
-			ExpectedOrgID          int64
-			ExpectedEnabled        bool
-			ExpectedPluginVersion  string
-			ExpectedJSONData       map[string]any
-			ExpectedSecureJSONData map[string]string
-		}{
-			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 2, ExpectedEnabled: true, ExpectedPluginVersion: "2.0.1"},
-			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 3, ExpectedEnabled: false},
-			{ExpectedPluginID: "test-plugin", ExpectedOrgID: 4, ExpectedEnabled: true, ExpectedSecureJSONData: map[string]string{"token": "secret"}},
-			{ExpectedPluginID: "test-plugin-2", ExpectedOrgID: 1, ExpectedEnabled: true, ExpectedJSONData: map[string]any{"test": true}},
+		// applyChanges fans out in parallel, so update order is non-deterministic.
+		// Index expected results by (PluginID, OrgID) which is unique per app.
+		type expected struct {
+			PluginID       string
+			OrgID          int64
+			Enabled        bool
+			PluginVersion  string
+			JSONData       map[string]any
+			SecureJSONData map[string]string
+		}
+		want := map[[2]any]expected{
+			{"test-plugin", int64(2)}:   {"test-plugin", 2, true, "2.0.1", nil, nil},
+			{"test-plugin-2", int64(3)}: {"test-plugin-2", 3, false, "", nil, nil},
+			{"test-plugin", int64(4)}:   {"test-plugin", 4, true, "", nil, map[string]string{"token": "secret"}},
+			{"test-plugin-2", int64(1)}: {"test-plugin-2", 1, true, "", map[string]any{"test": true}, nil},
 		}
 
-		for index, tc := range testCases {
-			cmd := store.updateRequests[index]
+		for _, cmd := range store.updateRequests {
 			require.NotNil(t, cmd)
-			require.Equal(t, tc.ExpectedPluginID, cmd.PluginID)
-			require.Equal(t, tc.ExpectedOrgID, cmd.OrgID)
-			require.Equal(t, tc.ExpectedEnabled, cmd.Enabled)
-			require.Equal(t, tc.ExpectedPluginVersion, cmd.PluginVersion)
-			require.Equal(t, tc.ExpectedJSONData, cmd.JSONData)
-			require.Equal(t, tc.ExpectedSecureJSONData, cmd.SecureJSONData)
+			tc, ok := want[[2]any{cmd.PluginID, cmd.OrgID}]
+			require.True(t, ok, "unexpected update for %s/%d", cmd.PluginID, cmd.OrgID)
+			require.Equal(t, tc.Enabled, cmd.Enabled)
+			require.Equal(t, tc.PluginVersion, cmd.PluginVersion)
+			require.Equal(t, tc.JSONData, cmd.JSONData)
+			require.Equal(t, tc.SecureJSONData, cmd.SecureJSONData)
 		}
 	})
 
@@ -135,6 +138,7 @@ func (tcr *testConfigReader) readConfig(_ context.Context, _ string) ([]*plugins
 }
 
 type mockStore struct {
+	mu             sync.Mutex
 	updateRequests []*pluginsettings.UpdateArgs
 }
 
@@ -149,6 +153,8 @@ func (m *mockStore) GetPluginSettingByPluginID(_ context.Context, args *pluginse
 }
 
 func (m *mockStore) UpdatePluginSetting(_ context.Context, args *pluginsettings.UpdateArgs) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.updateRequests = append(m.updateRequests, args)
 	return nil
 }

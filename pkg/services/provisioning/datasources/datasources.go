@@ -5,12 +5,18 @@ import (
 	"errors"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	jsoniter "github.com/json-iterator/go"
 )
+
+// provisioningConcurrency bounds the fan-out for per-record provisioning loops.
+// Small cap keeps DB connection pressure reasonable; most tenants have <20 datasources.
+const provisioningConcurrency = 8
 
 type BaseDataSourceService interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
@@ -57,66 +63,95 @@ func newDatasourceProvisioner(log log.Logger, dsService BaseDataSourceService, c
 }
 
 func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *configs, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
+	// Deletes run first and serially: some delete entries are followed by a
+	// re-insert of the same (org, name), so the order is load-bearing.
 	if err := dc.deleteDatasources(ctx, cfg.DeleteDatasources, willExistAfterProvisioning); err != nil {
 		return err
 	}
 
-	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
-		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
-		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
-			return err
-		}
+	// Datasources within a config are upserted concurrently. Assumes
+	// (OrgID, Name) is unique within the config; duplicate detection lands
+	// in a follow-up.
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(provisioningConcurrency)
 
-		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			insertCmd := createInsertCommand(ds)
-			dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
-			_, err = dc.dsService.AddDataSource(ctx, insertCmd)
-			if err != nil {
-				return err
-			}
-		} else {
-			updateCmd := createUpdateCommand(ds, dataSource.ID)
-			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
-			if _, err := dc.dsService.UpdateDataSource(ctx, updateCmd); err != nil {
-				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
-					dc.log.Debug("ignoring old version of datasource", "name", updateCmd.Name, "uid", updateCmd.UID)
-				} else {
-					return err
-				}
-			}
-		}
+	for _, ds := range cfg.Datasources {
+		g.Go(func() error {
+			return dc.upsertDataSource(gctx, ds)
+		})
+	}
+	return g.Wait()
+}
+
+func (dc *DatasourceProvisioner) upsertDataSource(ctx context.Context, ds *upsertDataSourceFromConfig) error {
+	cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+	dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
+	if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+		return err
 	}
 
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
+		insertCmd := createInsertCommand(ds)
+		dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
+		if _, err := dc.dsService.AddDataSource(ctx, insertCmd); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	updateCmd := createUpdateCommand(ds, dataSource.ID)
+	dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
+	if _, err := dc.dsService.UpdateDataSource(ctx, updateCmd); err != nil {
+		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
+			dc.log.Debug("ignoring old version of datasource", "name", updateCmd.Name, "uid", updateCmd.UID)
+			return nil
+		}
+		return err
+	}
 	return nil
 }
 
 func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
+	// Each datasource's correlations live under a distinct SourceUID, so fan
+	// out per-datasource: the delete+create pair for one source does not
+	// interact with another's.
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(provisioningConcurrency)
+
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
-		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
+		g.Go(func() error {
+			return dc.provisionCorrelationsForDatasource(gctx, ds)
+		})
+	}
+	return g.Wait()
+}
 
-		if errors.Is(err, datasources.ErrDataSourceNotFound) {
+func (dc *DatasourceProvisioner) provisionCorrelationsForDatasource(ctx context.Context, ds *upsertDataSourceFromConfig) error {
+	cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+	dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
+		return err
+	}
+	if err != nil {
+		return err
+	}
+
+	if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
+		SourceUID:       dataSource.UID,
+		OrgId:           dataSource.OrgID,
+		OnlyProvisioned: true,
+	}); err != nil {
+		return err
+	}
+
+	for _, correlation := range ds.Correlations {
+		createCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, dataSource.OrgID)
+		if err != nil {
+			dc.log.Error("failed to parse correlation", "correlation", correlation)
 			return err
 		}
-
-		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
-			SourceUID:       dataSource.UID,
-			OrgId:           dataSource.OrgID,
-			OnlyProvisioned: true,
-		}); err != nil {
-			return err
-		}
-
-		for _, correlation := range ds.Correlations {
-			createCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, dataSource.OrgID)
-			if err != nil {
-				dc.log.Error("failed to parse correlation", "correlation", correlation)
-				return err
-			}
-			if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
-				return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
-			}
+		if _, err := dc.correlationsStore.CreateCorrelation(ctx, createCorrelationCmd); err != nil {
+			return fmt.Errorf("err=%s source=%s", err.Error(), createCorrelationCmd.SourceUID)
 		}
 	}
 	return nil

@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/grafana/dskit/services"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -113,36 +114,80 @@ func ProvideService(
 }
 
 func (ps *ProvisioningServiceImpl) starting(ctx context.Context) error {
-	if err := ps.ProvisionDatasources(ctx); err != nil {
-		ps.log.Error("Failed to provision data sources", "error", err)
-		return err
-	}
+	// Startup provisioning runs concurrently in two stages:
+	//   plugins ┃ (independent — runs parallel to everything)
+	//   datasources ➜ {alerting, dashboards, migratePrometheusType}
+	//
+	// The per-service mutex held by the public Provision* methods exists to
+	// coordinate with running()'s dashboard-polling loop, which has not started
+	// yet at this point; callers here invoke the underlying provisioners
+	// directly so parallel phases do not serialize on that mutex.
+	g, gctx := errgroup.WithContext(ctx)
 
-	if err := ps.ProvisionPlugins(ctx); err != nil {
-		ps.log.Error("Failed to provision plugins", "error", err)
-		return err
-	}
-
-	if err := ps.ProvisionAlerting(ctx); err != nil {
-		ps.log.Error("Failed to provision alerting", "error", err)
-		return err
-	}
-
-	// Migrating prom types relies on data source provisioning to already be completed
-	// If we can make services depend on other services completing first,
-	// then we should remove this from provisioning
-	if err := ps.migratePrometheusType(ctx); err != nil {
-		ps.log.Error("Failed to migrate Prometheus type", "error", err)
-		return err
-	}
-
-	if err := ps.ProvisionDashboards(ctx); err != nil {
-		ps.log.Error("Failed to provision dashboard", "error", err)
-		// Consider the allow list of errors for which running the provisioning service should not
-		// fail. For now this includes only dashboards.ErrGetOrCreateFolder.
-		if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
-			return err
+	g.Go(func() error {
+		appPath := filepath.Join(ps.Cfg.ProvisioningPath, "plugins")
+		if err := ps.provisionPlugins(gctx, appPath, ps.pluginStore, ps.pluginsSettings, ps.orgService); err != nil {
+			ps.log.Error("Failed to provision plugins", "error", err)
+			return fmt.Errorf("%v: %w", "app provisioning error", err)
 		}
+		return nil
+	})
+
+	g.Go(func() error {
+		datasourcePath := filepath.Join(ps.Cfg.ProvisioningPath, "datasources")
+		if err := ps.provisionDatasources(gctx, datasourcePath, ps.datasourceService, ps.correlationsService, ps.orgService); err != nil {
+			ps.log.Error("Failed to provision data sources", "error", err)
+			return fmt.Errorf("%v: %w", "Datasource provisioning error", err)
+		}
+
+		// Phase 2: alerting, dashboards, and the Prometheus-type migration all
+		// require datasources but are independent of each other.
+		phase2, p2ctx := errgroup.WithContext(gctx)
+
+		phase2.Go(func() error {
+			if err := ps.ProvisionAlerting(p2ctx); err != nil {
+				ps.log.Error("Failed to provision alerting", "error", err)
+				return err
+			}
+			return nil
+		})
+
+		phase2.Go(func() error {
+			if err := ps.migratePrometheusType(p2ctx); err != nil {
+				ps.log.Error("Failed to migrate Prometheus type", "error", err)
+				return err
+			}
+			return nil
+		})
+
+		phase2.Go(func() error {
+			if err := ps.provisionDashboardsStarting(p2ctx); err != nil {
+				ps.log.Error("Failed to provision dashboard", "error", err)
+				// Allow-list: only dashboards.ErrGetOrCreateFolder is tolerated.
+				if !errors.Is(err, dashboards.ErrGetOrCreateFolder) {
+					return err
+				}
+			}
+			return nil
+		})
+
+		return phase2.Wait()
+	})
+
+	return g.Wait()
+}
+
+// provisionDashboardsStarting mirrors ProvisionDashboards but omits the
+// per-service mutex so it can run in parallel with other startup phases.
+// Safe during starting() because running()'s polling loop has not begun.
+func (ps *ProvisioningServiceImpl) provisionDashboardsStarting(ctx context.Context) error {
+	if err := ps.setDashboardProvisioner(); err != nil {
+		return fmt.Errorf("%v: %w", "Failed to create provisioner", err)
+	}
+	ps.cancelPolling()
+	ps.dashboardProvisioner.CleanUpOrphanedDashboards(ctx)
+	if err := ps.dashboardProvisioner.Provision(ctx); err != nil {
+		return fmt.Errorf("%v: %w", "Failed to provision dashboards", err)
 	}
 	return nil
 }
