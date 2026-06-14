@@ -86,7 +86,7 @@ export default class GraphiteQuery {
         const sanitizeQuery = (o: string): string => o.replace(/\s|'|"|,/g, '');
         const oldSanitized = sanitizeQuery(oldQuery);
         const newSanitized = sanitizeQuery(newQuery);
-        if (oldSanitized && newSanitized && oldSanitized !== newSanitized) {
+        if (oldSanitized && newSanitized && oldSanitized !== newSanitized && !parser.hasPipe) {
           throw new Error(
             `Failed to make a visual query builder query that is equivalent to the query.\nOriginal query: ${oldQuery}\nQuery builder query: ${newQuery}`
           );
