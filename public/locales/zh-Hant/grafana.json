@@ -11866,9 +11866,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "管理身分識別提供者群組對應至 Grafana 角色"
-    },
     "help": {
       "title": "說明"
     },

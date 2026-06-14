@@ -11935,9 +11935,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Gérer les mappages des groupes de fournisseurs d'identité aux rôles Grafana"
-    },
     "help": {
       "title": "Aide"
     },

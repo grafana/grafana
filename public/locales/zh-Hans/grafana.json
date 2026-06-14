@@ -11866,9 +11866,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "管理身份提供商组与 Grafana 角色的映射"
-    },
     "help": {
       "title": "帮助"
     },

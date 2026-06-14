@@ -11866,9 +11866,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "IDプロバイダグループとGrafanaの役割のマッピングを管理する"
-    },
     "help": {
       "title": "ヘルプ"
     },

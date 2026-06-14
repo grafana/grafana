@@ -11935,9 +11935,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Identitásszolgáltató-csoportok Grafana-szerepkörökhöz rendeléseinek kezelése"
-    },
     "help": {
       "title": "Súgó"
     },

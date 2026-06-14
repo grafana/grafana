@@ -12073,9 +12073,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Управление сопоставлениями групп поставщиков идентификации с ролями Grafana"
-    },
     "help": {
       "title": "Справка"
     },

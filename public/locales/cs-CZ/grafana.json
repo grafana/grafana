@@ -12073,9 +12073,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Spravujte mapování skupin poskytovatelů identity na role Grafana"
-    },
     "help": {
       "title": "Nápověda"
     },
