@@ -2105,15 +2105,18 @@
     {
       "metadata": {
         "name": "faroSessionReplay",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781186485738",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-11 14:01:25.738987 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable Faro session replay for Grafana",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/session-replay",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
