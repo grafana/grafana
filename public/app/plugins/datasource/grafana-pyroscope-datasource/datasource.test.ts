@@ -9,7 +9,10 @@ import { type Query } from './types';
 function setupDatasource() {
   mockFetchPyroscopeDatasourceSettings();
   const templateSrv = {
-    replace: (query: string): string => {
+    replace: (query: string, _scopedVars?: unknown, format?: string): string => {
+      if (format === 'regex') {
+        return query.replace(/\$var/g, '(interpolated|interpolated2)');
+      }
       return query.replace(/\$var/g, 'interpolated');
     },
   } as unknown as TemplateSrv;
@@ -76,7 +79,20 @@ describe('Pyroscope data source', () => {
         defaultQuery({ labelSelector: `{$var="$var"}`, profileTypeId: '$var' }),
         {}
       );
-      expect(query).toMatchObject({ labelSelector: `{interpolated="interpolated"}`, profileTypeId: 'interpolated' });
+      expect(query).toMatchObject({
+        labelSelector: `{(interpolated|interpolated2)="(interpolated|interpolated2)"}`,
+        profileTypeId: 'interpolated',
+      });
+    });
+
+    it('should interpolate regex matchers using regex formatting for multi-value variables', () => {
+      const ds = setupDatasource();
+      const query = ds.applyTemplateVariables(
+        defaultQuery({ labelSelector: `{pod=~"$var"}`, profileTypeId: 'cpu' }),
+        {}
+      );
+
+      expect(query).toMatchObject({ labelSelector: `{pod=~"(interpolated|interpolated2)"}` });
     });
   });
 
