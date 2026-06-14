@@ -225,6 +225,7 @@ export { convertOldAngularValueMappings, LegacyMappingType } from './utils/value
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './utils/variables';
 export { renderLegendFormat } from './utils/legend';
 export { matchPluginId } from './utils/matchPluginId';
+export { resolvePluginIdFromStack } from './utils/resolvePluginIdFromStack';
 export { type RegistryItem, type RegistryItemWithOptions, Registry } from './utils/Registry';
 export {
   getDataSourceRef,

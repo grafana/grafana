@@ -15,6 +15,8 @@ export {
   reportPageview,
   reportExperimentView,
 } from './analytics/utils';
+export { reportLegacyDashboardApiUsage, type LegacyDashboardApiUsage } from './analytics/legacyDashboardApiUsage';
+export { resolvePluginIdFromStack } from '@grafana/data';
 export { featureEnabled } from './utils/licensing';
 export {
   logInfo,

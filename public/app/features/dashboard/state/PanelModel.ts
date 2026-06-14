@@ -21,7 +21,7 @@ import {
   getNextRefId,
   generateUUID,
 } from '@grafana/data';
-import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { getTemplateSrv, RefreshEvent, reportLegacyDashboardApiUsage } from '@grafana/runtime';
 import { type LibraryPanel, type LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
@@ -460,6 +460,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     if (plugin.onPanelMigration) {
       if (version !== this.pluginVersion || plugin.shouldMigrate?.(this)) {
+        reportLegacyDashboardApiUsage({
+          pluginId: this.type,
+          apiName: 'PanelMigrationHandler.invoke',
+          extra: { fromVersion: this.pluginVersion, toVersion: version },
+        });
         const newPanelOptions = plugin.onPanelMigration(this);
         this.options = await newPanelOptions;
         this.pluginVersion = version;

@@ -1,0 +1,46 @@
+{
+  "title": "Legacy Dashboard API Usage",
+  "uid": "legacy-dashboard-api-usage",
+  "tags": ["telemetry", "deprecation", "scenes-migration"],
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-30d", "to": "now" },
+  "panels": [
+    {
+      "type": "barchart",
+      "title": "Unique plugins per legacy API (30d)",
+      "id": 1,
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT api_name, COUNT(DISTINCT plugin_id) AS plugins FROM interactions WHERE event_name = 'grafana_legacy_dashboard_api_used' AND time > now() - interval '30 day' GROUP BY api_name ORDER BY plugins DESC"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Plugins still using legacy APIs",
+      "id": 2,
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 10 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT plugin_id, api_name, COUNT(*) AS sessions, MAX(time) AS last_seen FROM interactions WHERE event_name = 'grafana_legacy_dashboard_api_used' AND time > now() - interval '30 day' GROUP BY plugin_id, api_name ORDER BY sessions DESC"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Legacy-API sessions over time, split by api_name",
+      "id": 3,
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "refId": "A",
+          "rawSql": "SELECT time_bucket('1 day', time) AS time, api_name, COUNT(DISTINCT session_id) AS sessions FROM interactions WHERE event_name = 'grafana_legacy_dashboard_api_used' AND time > now() - interval '90 day' GROUP BY 1, api_name ORDER BY 1"
+        }
+      ]
+    }
+  ]
+}

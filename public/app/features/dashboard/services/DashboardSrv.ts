@@ -1,5 +1,6 @@
+import { resolvePluginIdFromStack } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest, reportLegacyDashboardApiUsage } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -25,6 +26,7 @@ export interface SaveDashboardOptions {
 
 export class DashboardSrv {
   dashboard?: DashboardModel;
+  private hasReportedLegacyGetCurrentUsage = false;
 
   constructor() {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
@@ -39,6 +41,13 @@ export class DashboardSrv {
   }
 
   getCurrent(): DashboardModel | undefined {
+    if (this.dashboard && !this.hasReportedLegacyGetCurrentUsage) {
+      const pluginId = resolvePluginIdFromStack(new Error().stack);
+      if (pluginId !== 'unknown') {
+        reportLegacyDashboardApiUsage({ pluginId, apiName: 'DashboardSrv.getCurrent' });
+        this.hasReportedLegacyGetCurrentUsage = true;
+      }
+    }
     return this.dashboard;
   }
 
