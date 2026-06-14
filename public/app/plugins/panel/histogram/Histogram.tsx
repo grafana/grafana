@@ -221,7 +221,24 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   let stackingGroups = getStackingGroups(xMinOnlyFrame(frame));
   builder.setStackingGroups(stackingGroups);
 
-  let pathBuilder = uPlot.paths.bars!({ align: 1, size: [1, Infinity] });
+  // Uniform bucket width only applies to linear numeric histograms.
+  let pathBuilder = uPlot.paths.bars!(
+    isOrdinalX || useLogScale
+      ? { align: 1, size: [1, Infinity] }
+      : {
+          align: 1,
+          disp: {
+            x0: {
+              unit: 1,
+              values: (u) => Array.from(u.data[0]),
+            },
+            size: {
+              unit: 1,
+              values: () => [bucketSize],
+            },
+          },
+        }
+  );
 
   let seriesIndex = 0;
 

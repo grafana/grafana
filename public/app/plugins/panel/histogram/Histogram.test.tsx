@@ -379,6 +379,34 @@ describe('Histogram', () => {
       expect(max).toBe(4);
     });
 
+    it('uses configured bucket width for sparse linear histogram bars', () => {
+      const barsMock = jest.requireMock('uplot').paths.bars as jest.Mock;
+      barsMock.mockClear();
+
+      const frame = createLinearHistogramFrame([0, 9], [1, 10], [5, 1]);
+      setUp(
+        {
+          alignedFrame: frame,
+          rawSeries: [frame],
+          bucketSize: getBucketSize(frame),
+        },
+        { legend: { ...defaultLegendOptions, showLegend: false } }
+      );
+
+      expect(barsMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          align: 1,
+          disp: expect.objectContaining({
+            x0: expect.objectContaining({ unit: 1 }),
+            size: expect.objectContaining({ unit: 1 }),
+          }),
+        })
+      );
+
+      const barsConfig = barsMock.mock.calls[0][0];
+      expect(barsConfig.disp.size.values()).toEqual([1]);
+    });
+
     /**
      * x scale range: xScaleMin/xScaleMax from count field config override wanted range.
      */
