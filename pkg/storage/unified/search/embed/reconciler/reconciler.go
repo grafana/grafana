@@ -89,6 +89,8 @@ type Options struct {
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
+	// PendingDelete is optional; nil disables the pending-delete filter.
+	PendingDelete embed.PendingDeleteChecker
 	// Metrics is optional; when nil the reconciler runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -107,6 +109,14 @@ type Reconciler struct {
 	backfiller        Backfiller
 	interval          time.Duration
 	lockRetryInterval time.Duration
+	pendingDelete     embed.PendingDeleteChecker
+	// pendingDeleteMemo caches IsPendingDelete results per namespace so a
+	// batch costs one lookup per tenant — the tenant watcher's labeling
+	// pass emits one MODIFIED event per resource, so batches are often
+	// dominated by a single namespace. Reset per processEvents call so
+	// cleared tenants embed again on the next batch. Only touched from
+	// the serial processEvents loop, so no lock.
+	pendingDeleteMemo map[string]bool
 	log               log.Logger
 	metrics           *resource.VectorMetrics
 
@@ -149,6 +159,8 @@ func New(opts Options) (*Reconciler, error) {
 		backfiller:        opts.Backfiller,
 		interval:          opts.Interval,
 		lockRetryInterval: opts.LockRetryInterval,
+		pendingDelete:     opts.PendingDelete,
+		pendingDeleteMemo: make(map[string]bool),
 		log:               log.New("embeddings_reconciler"),
 		metrics:           opts.Metrics,
 		pending:           make(map[string]*pendingEvent),
@@ -578,6 +590,7 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 // For new resources, it ensures a partition and backfill job is created
 func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
+	clear(s.pendingDeleteMemo)
 	maxRv = sinceRv
 	lowestFailedRv = math.MaxInt64
 	for _, ev := range batch {
@@ -669,6 +682,16 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
 
+	// Don't embed resources belonging to a tenant marked for deletion.
+	// The tenant watcher's labeling pass emits a MODIFIED event for every
+	// resource in the tenant, so without this check marking a tenant
+	// pending-delete would re-embed its entire catalog. DELETED events
+	// above still go through so vectors get cleaned up.
+	if s.shouldSkipPendingDelete(ctx, ev.namespace) {
+		statusLabel = "skipped_pending_delete"
+		return nil
+	}
+
 	if len(ev.value) == 0 {
 		return nil
 	}
@@ -719,6 +742,30 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("upsert: %w", err)
 	}
 	return nil
+}
+
+// shouldSkipPendingDelete returns true only when the checker definitively
+// reports the namespace's tenant as pending delete. Anything ambiguous
+// (nil checker, empty namespace, lookup error) returns false — embed it.
+// Successful lookups are memoized per batch; errors are not, so transient
+// failures retry on the next event.
+func (s *Reconciler) shouldSkipPendingDelete(ctx context.Context, namespace string) bool {
+	if s.pendingDelete == nil || namespace == "" {
+		return false
+	}
+	if pending, ok := s.pendingDeleteMemo[namespace]; ok {
+		return pending
+	}
+	pending, err := s.pendingDelete.IsPendingDelete(ctx, namespace)
+	if err != nil {
+		s.log.Error("reconciler: pending delete check failed", "namespace", namespace, "err", err)
+		return false
+	}
+	s.pendingDeleteMemo[namespace] = pending
+	if pending {
+		s.log.FromContext(ctx).Debug("reconciler: skipping pending-delete namespace", "namespace", namespace)
+	}
+	return pending
 }
 
 // requeue is the catch-all path when we can't tell what's persisted

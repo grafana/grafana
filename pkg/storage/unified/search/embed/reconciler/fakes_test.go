@@ -471,3 +471,33 @@ func (b *fakeBroadcaster) Unsubscribe(ch <-chan *resource.WrittenEvent) {
 func (b *fakeBroadcaster) emit(ev *resource.WrittenEvent) {
 	b.ch <- ev
 }
+
+// fakePendingDeleteChecker implements embed.PendingDeleteChecker. Tests
+// mark namespaces pending-delete via markPendingDelete(); err
+// short-circuits every call so the fail-open path can be exercised.
+type fakePendingDeleteChecker struct {
+	mu      sync.Mutex
+	pending map[string]bool
+	err     error
+	calls   int
+}
+
+func newFakePendingDeleteChecker() *fakePendingDeleteChecker {
+	return &fakePendingDeleteChecker{pending: map[string]bool{}}
+}
+
+func (f *fakePendingDeleteChecker) IsPendingDelete(_ context.Context, namespace string) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.calls++
+	if f.err != nil {
+		return false, f.err
+	}
+	return f.pending[namespace], nil
+}
+
+func (f *fakePendingDeleteChecker) markPendingDelete(namespace string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.pending[namespace] = true
+}

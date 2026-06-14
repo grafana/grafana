@@ -970,6 +970,80 @@ func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
 	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
 }
 
+// newReconcilerWithPendingDelete mirrors newReconciler but wires a
+// pending-delete checker.
+func newReconcilerWithPendingDelete(t *testing.T, st *fakeStorage, vec *fakeVector, pd embed.PendingDeleteChecker) (*Reconciler, *fakeText) {
+	t.Helper()
+	text := &fakeText{dim: 4}
+	s, err := New(Options{
+		Storage:       st,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*newFakeEmbedder(text)),
+		Builders:      []embed.Builder{dashboard.New()},
+		Interval:      time.Hour,
+		PendingDelete: pd,
+	})
+	require.NoError(t, err)
+	return s, text
+}
+
+func TestReconciler_PendingDelete_SkipsUpsertAndAdvancesCursor(t *testing.T) {
+	vec := newFakeVector()
+	pd := newFakePendingDeleteChecker()
+	pd.markPendingDelete("doomed")
+	s, text := newReconcilerWithPendingDelete(t, &fakeStorage{}, vec, pd)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "doomed", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "live", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the live namespace should be embedded")
+	assert.Equal(t, 1, text.calls, "skipped event must not call the embedder")
+	assert.Equal(t, int64(200), vec.latestRV, "skips count as processed so the cursor advances")
+	assert.Equal(t, 0, s.pendingLen(), "skipped events are not retried")
+}
+
+func TestReconciler_PendingDelete_DeleteEventStillProcessed(t *testing.T) {
+	vec := newFakeVector()
+	pd := newFakePendingDeleteChecker()
+	pd.markPendingDelete("doomed")
+	s, _ := newReconcilerWithPendingDelete(t, &fakeStorage{}, vec, pd)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "doomed", "dash-x", 50, nil))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.deletes, 1, "deletes must still drop vectors for pending-delete tenants")
+}
+
+func TestReconciler_PendingDelete_CheckerError_FailsOpen(t *testing.T) {
+	vec := newFakeVector()
+	pd := newFakePendingDeleteChecker()
+	pd.err = fmt.Errorf("kv down")
+	s, _ := newReconcilerWithPendingDelete(t, &fakeStorage{}, vec, pd)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "lookup errors must not block embedding")
+}
+
+func TestReconciler_PendingDelete_MemoizedPerBatch(t *testing.T) {
+	vec := newFakeVector()
+	pd := newFakePendingDeleteChecker()
+	s, _ := newReconcilerWithPendingDelete(t, &fakeStorage{}, vec, pd)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")))
+
+	s.processPending(context.Background())
+
+	assert.Len(t, vec.upserts, 2)
+	assert.Equal(t, 1, pd.calls, "one lookup per namespace per batch")
+}
+
 // TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch
 // path: Subscribe is called, events pushed onto the channel reach the
 // queue, and the next cycle drains them.
