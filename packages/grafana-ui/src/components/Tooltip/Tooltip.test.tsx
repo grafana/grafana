@@ -98,4 +98,53 @@ describe('Tooltip', () => {
       })
     ).toBeInTheDocument();
   });
+
+  it('moves focus into focusable tooltip content when tabbing', async () => {
+    render(
+      <Tooltip
+        content={
+          <TextLink external href="https://grafana.com">
+            Tooltip link
+          </TextLink>
+        }
+        focusable
+        interactive
+      >
+        <button>On the page</button>
+      </Tooltip>
+    );
+
+    await userEvent.tab();
+
+    expect(screen.getByRole('link', { name: 'Tooltip link' })).toHaveFocus();
+  });
+
+  it('lets tab move out of the tooltip to the next focusable element', async () => {
+    render(
+      <>
+        <button>Before</button>
+        <Tooltip
+          content={
+            <TextLink external href="https://grafana.com">
+              Tooltip link
+            </TextLink>
+          }
+          focusable
+          interactive
+        >
+          <button>Trigger</button>
+        </Tooltip>
+        <button>After</button>
+      </>
+    );
+
+    await userEvent.tab();
+    await userEvent.tab();
+
+    expect(screen.getByRole('link', { name: 'Tooltip link' })).toHaveFocus();
+
+    await userEvent.tab();
+
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+  });
 });
