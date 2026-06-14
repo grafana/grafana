@@ -42,7 +42,7 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
       {done ? (
         <div>
           {connected ? <HasConnectedDashboards dashboardTitles={dashboardTitles} /> : null}
-          {!connected ? <Confirm /> : null}
+          {!connected ? <Confirm name={libraryPanel.name} /> : null}
 
           <Modal.ButtonRow>
             <Button variant="secondary" onClick={onDismiss} fill="outline">
@@ -64,12 +64,14 @@ const LoadingIndicator = () => (
   </span>
 );
 
-const Confirm = () => {
+const Confirm: FC<{ name: string }> = ({ name }) => {
   const styles = useStyles2(getModalStyles);
 
   return (
     <div className={styles.modalText}>
-      <Trans i18nKey="library-panels.confirm.delete-panel">Do you want to delete this panel?</Trans>
+      <Trans i18nKey="library-panels.confirm.delete-panel" values={{ name }}>
+        Are you sure you want to delete the library panel "{name}"?
+      </Trans>
     </div>
   );
 };
