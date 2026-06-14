@@ -11,7 +11,8 @@ import {
   type VizPanelState,
 } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
-import { DashboardScene, type DashboardSceneState } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
 
 import { ShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';

@@ -4,7 +4,8 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { config } from '@grafana/runtime';
 
-import { type DashboardScene, type DashboardSceneState } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { type DashboardEditPane } from '../DashboardEditPane';

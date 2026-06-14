@@ -7,7 +7,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../../../alerting/unified/mocks';
-import { DashboardScene, type DashboardSceneState } from '../../scene/DashboardScene';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import ShareMenu from './ShareMenu';

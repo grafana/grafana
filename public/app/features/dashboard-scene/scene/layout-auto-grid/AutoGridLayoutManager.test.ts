@@ -12,7 +12,8 @@ import { ConditionalRenderingVariable } from '../../conditional-rendering/condit
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardEditActionEvent } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
+import { DashboardScene } from '../DashboardScene';
+import { type DashboardSceneState } from '../types/dashboard';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 

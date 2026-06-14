@@ -18,7 +18,8 @@ import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/lay
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import * as sharePublicDashboardUtils from '../../../../dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
-import { DashboardScene, type DashboardSceneState } from '../../../scene/DashboardScene';
+import { DashboardScene } from '../../../scene/DashboardScene';
+import { type DashboardSceneState } from '../../../scene/types/dashboard';
 import { activateFullSceneTree } from '../../../utils/test-utils';
 import { ShareDrawer } from '../../ShareDrawer/ShareDrawer';
 
