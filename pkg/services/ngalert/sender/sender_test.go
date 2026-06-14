@@ -434,6 +434,62 @@ func TestExternalAMcfgToAlertmanagerConfig(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "configuration with custom CA cert",
+			cfg: ExternalAMcfg{
+				URL:       "https://alertmanager.example.com:9093",
+				TLSCACert: "ca-cert-content",
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					TLSConfig: common_config.TLSConfig{
+						CA: "ca-cert-content",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "configuration with custom CA cert and client auth",
+			cfg: ExternalAMcfg{
+				URL:           "https://alertmanager.example.com:9093",
+				TLSCACert:     "ca-cert-content",
+				TLSClientCert: "client-cert-content",
+				TLSClientKey:  "client-key-content",
+			},
+			expected: &config.AlertmanagerConfig{
+				APIVersion: config.AlertmanagerAPIVersionV2,
+				Scheme:     "https",
+				PathPrefix: "",
+				Timeout:    model.Duration(defaultTimeout),
+				ServiceDiscoveryConfigs: discovery.Configs{
+					discovery.StaticConfig{
+						{
+							Targets: []model.LabelSet{{model.AddressLabel: "alertmanager.example.com:9093"}},
+						},
+					},
+				},
+				HTTPClientConfig: common_config.HTTPClientConfig{
+					TLSConfig: common_config.TLSConfig{
+						CA:   "ca-cert-content",
+						Cert: "client-cert-content",
+						Key:  "client-key-content",
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
 			name: "TLS client cert provided but key missing - should error",
 			cfg: ExternalAMcfg{
 				URL:           "https://alertmanager.example.com:9093",
