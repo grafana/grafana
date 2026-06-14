@@ -442,6 +442,50 @@ func sanitizeMetadataFromQueryData(res *backend.QueryDataResponse) {
 	}
 }
 
+// targetSafeFieldAllowList contains the set of target metadata fields that are safe
+// to expose to public dashboard viewers. Any top-level field NOT in this list is
+// considered a potential raw query expression and will be stripped before the
+// dashboard is returned.
+//
+// Note: sanitization is intentionally shallow — only top-level target keys are
+// evaluated. Known nested objects (e.g. "datasource": {"uid":..., "type":...}) are
+// retained verbatim; their subfields are standard Grafana metadata, not query text.
+//
+// Using an allowlist (rather than a denylist) ensures that new datasource-specific
+// query fields (e.g. rawQuery, rawSql, expr, query, flux, etc.) are automatically
+// removed without requiring a code change here each time.
+var targetSafeFieldAllowList = map[string]struct{}{
+	"refId":          {},
+	"datasource":     {},
+	"exemplar":       {},
+	"hide":           {},
+	"interval":       {},
+	"intervalMs":     {},
+	"intervalFactor": {},
+	"legendFormat":   {},
+	"maxDataPoints":  {},
+	"format":         {},
+	"instant":        {},
+	"range":          {},
+	"type":           {},
+	// expression is used by server-side __expr__ targets (references other refIds via $A+$B syntax)
+	"expression": {},
+}
+
+// sanitizeTarget removes any top-level fields from a target object that are not in
+// targetSafeFieldAllowList, protecting against raw query text exposure.
+func sanitizeTarget(target *simplejson.Json) {
+	m, err := target.Map()
+	if err != nil {
+		return
+	}
+	for key := range m {
+		if _, safe := targetSafeFieldAllowList[key]; !safe {
+			delete(m, key)
+		}
+	}
+}
+
 // sanitizeData removes the query expressions from the dashboard data
 func sanitizeData(data *simplejson.Json) {
 	for _, panelObj := range data.Get("panels").MustArray() {
@@ -455,10 +499,7 @@ func sanitizeData(data *simplejson.Json) {
 		}
 
 		for _, targetObj := range panel.Get("targets").MustArray() {
-			target := simplejson.NewFromAny(targetObj)
-			target.Del("expr")
-			target.Del("query")
-			target.Del("rawSql")
+			sanitizeTarget(simplejson.NewFromAny(targetObj))
 		}
 	}
 }
@@ -471,10 +512,7 @@ func sanitizeDataV2(data *simplejson.Json) {
 		queries := elem.Get("spec").Get("data").Get("spec").Get("queries").MustArray()
 		for _, queryObj := range queries {
 			query := simplejson.NewFromAny(queryObj)
-			dataQuerySpec := query.Get("spec").Get("query").Get("spec")
-			dataQuerySpec.Del("expr")
-			dataQuerySpec.Del("query")
-			dataQuerySpec.Del("rawSql")
+			sanitizeTarget(query.Get("spec").Get("query").Get("spec"))
 		}
 	}
 }
