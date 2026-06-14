@@ -13690,6 +13690,9 @@
       "label-current-step": "Current step",
       "label-pending-step": "Pending step"
     },
+    "source-link": {
+      "title": "Source ({{provider}})"
+    },
     "status-badge": {
       "automatic-pulling-disabled-tooltip": "Automatic pulling disabled. Review your connection configuration to enable pulling.",
       "deleting": "Deleting",

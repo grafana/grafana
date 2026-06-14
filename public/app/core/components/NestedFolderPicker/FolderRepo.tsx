@@ -17,25 +17,36 @@ export interface Props {
 }
 
 export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
-  // Check if we can skip early without needing the useIsProvisionedInstance query
-  // This reduces RTK Query subscriptions and prevents re-render loops on API errors
-  const canSkipEarly = getCanSkipEarly(folder);
+  const managedBy = folder?.managedBy;
+  const isRepoManaged = managedBy === ManagerKind.Repo;
 
-  const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
-  const skipRender = canSkipEarly || isProvisionedInstance;
+  // The repository view (read-only/orphaned/title) is only relevant for repository-managed folders.
+  // For other managers we still need the hooks to run (rules of hooks) but skip the queries.
+  const skipRepoView = !isRepoManaged || getCanSkipEarly(folder);
+  const isProvisionedInstance = useIsProvisionedInstance({ skip: skipRepoView });
+  const skipQuery = skipRepoView || isProvisionedInstance;
 
   const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
-    folderName: skipRender ? undefined : folder?.uid,
-    skipQuery: skipRender,
+    folderName: skipQuery ? undefined : folder?.uid,
+    skipQuery,
   });
 
-  if (skipRender) {
+  // We only display the badge on the managed (root) folder.
+  if (!folder || !managedBy || getCanSkipEarly(folder)) {
     return null;
   }
 
-  const isOrphaned = status === RepoViewStatus.Orphaned;
+  // Non-repository managers (terraform, kubectl, plugin, ...): a simple managed badge, no repo lookup.
+  if (!isRepoManaged) {
+    return <ManagedBadge managerKind={managedBy} />;
+  }
 
-  if (isOrphaned) {
+  // Whole instance is provisioned — the per-folder badge is handled elsewhere.
+  if (isProvisionedInstance) {
+    return null;
+  }
+
+  if (status === RepoViewStatus.Orphaned) {
     return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
   }
 
@@ -48,19 +59,11 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   );
 });
 
-// Check conditions that don't require the useIsProvisionedInstance hook
+// Skip rendering for the root-folder-only cases that don't require the useIsProvisionedInstance query.
 function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boolean {
   if (!folder) {
     return true;
   }
-  // Skip render if parentUID is present - we only display icon for root folders
-  const hasParent = Boolean('parentUID' in folder && folder.parentUID);
-  if (hasParent) {
-    return true;
-  }
-  const isNotManaged = folder.managedBy !== ManagerKind.Repo;
-  if (isNotManaged) {
-    return true;
-  }
-  return false;
+  // We only display the badge for root folders
+  return Boolean('parentUID' in folder && folder.parentUID);
 }

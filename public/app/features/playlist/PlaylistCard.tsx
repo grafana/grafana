@@ -6,6 +6,14 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  isManaged,
+  isManagedResourceReadOnly,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -19,10 +27,19 @@ interface Props {
 }
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
+  const isReadOnly = isManagedResourceReadOnly(playlist);
   return (
     <Card noMargin>
       <Card.Heading>
-        {playlist.spec?.title}
+        <Stack direction="row" gap={1} alignItems="center">
+          {playlist.spec?.title}
+          {isManaged(playlist) && (
+            <>
+              {isManagedResourceReadOnly(playlist) && <ReadOnlyBadge />}
+              <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
+            </>
+          )}
+        </Stack>
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
             <DashNavButton
@@ -45,11 +62,17 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {canWritePlaylists() && (
           <>
-            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
+            <LinkButton
+              key="edit"
+              variant="secondary"
+              href={`/playlists/edit/${playlist.metadata?.name}`}
+              icon="cog"
+              disabled={isReadOnly}
+            >
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
-              disabled={false}
+              disabled={isReadOnly}
               onClick={() => setPlaylistToDelete(playlist)}
               icon="trash-alt"
               variant="destructive"

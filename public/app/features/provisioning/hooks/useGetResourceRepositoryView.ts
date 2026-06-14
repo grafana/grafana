@@ -3,9 +3,9 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { type RepoType } from '../Wizard/types';
+import { getManagerIdentity, isManagedByRepository } from '../utils/managedResource';
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {
@@ -87,14 +87,8 @@ export const useGetResourceRepositoryView = ({
     // failing closed and blocking unrelated flows like dashboard import.
     // Repo-annotated folders and name-based lookups stay fail-closed: git-sync flows
     // cannot proceed without the settings data anyway.
-    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
-    if (
-      isFetchError(settingsError) &&
-      settingsError.status === 403 &&
-      !name &&
-      !folderError &&
-      annotatedManagerKind !== ManagerKind.Repo
-    ) {
+    const isFolderRepoManaged = folder ? isManagedByRepository(folder) : false;
+    if (isFetchError(settingsError) && settingsError.status === 403 && !name && !folderError && !isFolderRepoManaged) {
       return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
     }
     return {
@@ -156,9 +150,8 @@ export const useGetResourceRepositoryView = ({
     // For nested folders we need to see what the folder thinks.
     // Only treat as repo-managed if the manager kind is explicitly 'repo' —
     // folders managed by plugins, terraform, kubectl, etc. should not be matched against provisioning repos.
-    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
-    const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (annotatedFolderName && annotatedManagerKind === ManagerKind.Repo) {
+    const annotatedFolderName = folder ? getManagerIdentity(folder) : undefined;
+    if (annotatedFolderName && folder && isManagedByRepository(folder)) {
       repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
         return {

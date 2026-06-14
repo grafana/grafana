@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
@@ -54,8 +55,7 @@ export function useSelectionProvisioningStatus(
       }
       try {
         const folder = await folderClient.get(uid);
-        const managedBy = folder.metadata?.annotations?.[AnnoKeyManagerKind];
-        const result = managedBy === ManagerKind.Repo;
+        const result = isManagedByRepository(folder);
         setFolderCache((prev) => ({ ...prev, [uid]: result }));
         return result;
       } catch {

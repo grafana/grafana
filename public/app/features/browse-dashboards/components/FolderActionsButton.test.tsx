@@ -256,6 +256,16 @@ describe('browse-dashboards FolderActionsButton', () => {
     expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
   });
 
+  it('does not render the "Move" or "Delete" options when the folder is read-only (managed by another system)', async () => {
+    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Terraform }} isReadOnly />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: deleteMenuItemLabel })).not.toBeInTheDocument();
+    // managing permissions is still allowed
+    expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+  });
+
   describe('with provisioningFolderMetadata feature flag', () => {
     beforeEach(() => {
       setTestFlags({ provisioningFolderMetadata: true });
