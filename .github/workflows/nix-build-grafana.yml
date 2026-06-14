@@ -1,0 +1,227 @@
+name: Nix build Grafana
+
+on:
+  pull_request:
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  # Evaluate the flake, show its output tree, and DERIVE the build matrices.
+  discover:
+    name: Evaluate flake & derive matrix
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+    outputs:
+      targets: ${{ steps.matrix.outputs.targets }}
+      packages: ${{ steps.matrix.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@2a741a8cc7db7768a8a25d92521c2da7ff1846d2
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            keep-outputs = true
+            keep-env-derivations = true
+      - name: Show every output the flake produces
+        run: nix flake show
+      - name: Check the flake evaluates for all host systems
+        run: nix flake check --no-build --all-systems
+      - name: Derive the build matrices from the flake
+        id: matrix
+        run: |
+          set -euo pipefail
+          attrs="$(nix eval --json '.#packages.x86_64-linux' --apply builtins.attrNames)"
+          # build targets: every tar.gz, as a bare suffix (e.g. "linux-arm64").
+          targets="$(jq -c '[.[] | select(startswith("targz-")) | sub("^targz-"; "")]' <<<"$attrs")"
+          # packages: {attr, target} so each can restore its target's caches.
+          packages="$(jq -c '[.[] | select(startswith("deb-") or startswith("rpm-")) | {attr: ., target: sub("^(deb|rpm)-"; "")}]' <<<"$attrs")"
+          echo "targets=$targets" >> "$GITHUB_OUTPUT"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "build targets: $targets"
+          echo "package targets: $packages"
+
+  # Built ONCE (arch-independent), in parallel with the backends. Its cache is
+  # reused by every tar/packages job via the merge below.
+  frontend:
+    name: frontend (once)
+    needs: [discover]
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@2a741a8cc7db7768a8a25d92521c2da7ff1846d2
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            keep-outputs = true
+            keep-env-derivations = true
+      - uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-frontend-${{ hashFiles('**/*.nix', 'flake.lock', 'yarn.lock', 'missing-hashes.json') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-frontend-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-frontend-
+          purge-created: 0
+          purge-primary-key: never
+      - name: Build .#frontend
+        run: nix build --print-build-logs .#frontend
+      - name: Report closure size
+        run: nix path-info --closure-size --human-readable .#frontend
+
+  # Cross-compile the backend per target, in parallel with the frontend.
+  backend:
+    name: backend ${{ matrix.target }}
+    needs: [discover]
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.discover.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@2a741a8cc7db7768a8a25d92521c2da7ff1846d2
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            keep-outputs = true
+            keep-env-derivations = true
+      - uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-backend-${{ matrix.target }}-${{ hashFiles('**/*.nix', 'flake.lock', 'go.sum') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-backend-${{ matrix.target }}-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-backend-${{ matrix.target }}-
+          purge-created: 0
+          purge-primary-key: never
+      - name: Cross-compile the backend
+        env:
+          TARGET: ${{ matrix.target }}
+        run: nix build --print-build-logs ".#backend-$TARGET"
+      - name: Prove the binary targets ${{ matrix.target }}
+        # On a Linux x86_64 host, `file` still identifies ELF arm64/riscv64/s390x,
+        # PE32+ (Windows) and Mach-O (macOS) binaries — the cross-compile is real.
+        run: find -L result/bin -type f -name 'grafana*' -exec file -L {} +
+
+  # Assemble the tar.gz per target. MERGES the frontend cache + this target's
+  # backend cache, so neither is rebuilt — only the package tree and tar are.
+  tar:
+    name: tar.gz ${{ matrix.target }}
+    needs: [discover, frontend, backend]
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.discover.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@2a741a8cc7db7768a8a25d92521c2da7ff1846d2
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            keep-outputs = true
+            keep-env-derivations = true
+      - uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-tar-${{ matrix.target }}-${{ hashFiles('**/*.nix', 'flake.lock', 'go.sum', 'yarn.lock', 'missing-hashes.json') }}
+          # On a miss, restore AND merge: this target's own tar cache (re-runs),
+          # the shared frontend, and this target's backend.
+          restore-prefixes-all-matches: |
+            nix-${{ runner.os }}-tar-${{ matrix.target }}-
+            nix-${{ runner.os }}-frontend-
+            nix-${{ runner.os }}-backend-${{ matrix.target }}-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-tar-${{ matrix.target }}-
+          purge-created: 0
+          purge-primary-key: never
+      - name: Build plan — frontend & backend FETCHED from cache, only tar BUILT
+        env:
+          TARGET: ${{ matrix.target }}
+        run: nix build --dry-run ".#targz-$TARGET"
+      - name: Build the tar.gz
+        env:
+          TARGET: ${{ matrix.target }}
+        run: nix build --print-build-logs ".#targz-$TARGET"
+      - name: Stage artifact
+        run: |
+          mkdir -p dist
+          cp -L result/*.tar.gz dist/
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: nix-targz-${{ matrix.target }}
+          path: dist
+          retention-days: 1
+
+  # Native Linux packages (.deb / .rpm), in parallel. Merges this target's tar
+  # (package tree) + frontend + backend caches, so it only runs fpm.
+  packages:
+    name: ${{ matrix.pkg.attr }}
+    needs: [discover, tar]
+    runs-on: ubuntu-x64-large
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        pkg: ${{ fromJSON(needs.discover.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: nixbuild/nix-quick-install-action@2a741a8cc7db7768a8a25d92521c2da7ff1846d2
+        with:
+          nix_conf: |
+            experimental-features = nix-command flakes
+            keep-outputs = true
+            keep-env-derivations = true
+      - uses: nix-community/cache-nix-action@42506e270a07908a6cb6f5ab7ba9b2e60056d6be
+        with:
+          primary-key: nix-${{ runner.os }}-pkg-${{ matrix.pkg.attr }}-${{ hashFiles('**/*.nix', 'flake.lock', 'go.sum', 'yarn.lock', 'missing-hashes.json') }}
+          restore-prefixes-all-matches: |
+            nix-${{ runner.os }}-pkg-${{ matrix.pkg.attr }}-
+            nix-${{ runner.os }}-tar-${{ matrix.pkg.target }}-
+            nix-${{ runner.os }}-frontend-
+            nix-${{ runner.os }}-backend-${{ matrix.pkg.target }}-
+          gc-max-store-size-linux: 5G
+          purge: true
+          purge-prefixes: nix-${{ runner.os }}-pkg-${{ matrix.pkg.attr }}-
+          purge-created: 0
+          purge-primary-key: never
+      - name: Build plan — what the restored cache provides vs what must be built
+        env:
+          ATTR: ${{ matrix.pkg.attr }}
+        run: nix build --dry-run ".#$ATTR"
+      - name: Build the package
+        env:
+          ATTR: ${{ matrix.pkg.attr }}
+        run: nix build --print-build-logs ".#$ATTR"
+      - name: Stage artifact
+        run: |
+          mkdir -p dist
+          cp -L result/* dist/
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: nix-${{ matrix.pkg.attr }}
+          path: dist
+          retention-days: 1
