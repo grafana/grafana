@@ -160,6 +160,12 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
+		if hmacHeader := r.Header.Get("X-Hub-Signature-256"); hmacHeader == "" {
+			span.RecordError(err)
+			responder.Error(errors.NewBadRequest("X-Hub-Signature-256 header is missing"))
+			return
+		}
+
 		// Limit the webhook request body size
 		r.Body = http.MaxBytesReader(w, r.Body, webhookMaxBodySize)
 
