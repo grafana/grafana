@@ -63,6 +63,8 @@ const heatmapPanel = async () =>
 
 const nodeGraph = async () =>
   await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
+const orderBookPanel = async () =>
+  await import(/* webpackChunkName: "orderBookPanel" */ 'app/plugins/panel/orderbook/module');
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources
@@ -104,6 +106,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/welcome': welcomeBanner,
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
+  'core:plugin/orderbook': orderBookPanel,
 };
 
 export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
