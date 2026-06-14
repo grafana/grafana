@@ -208,6 +208,8 @@ type GetSignedInUserQuery struct {
 type AnalyticsSettings struct {
 	Identifier         string
 	IntercomIdentifier string
+	StackID            string
+	StackSlug          string
 }
 
 func (u *User) NameOrFallback() string {

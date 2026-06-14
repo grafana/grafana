@@ -224,6 +224,8 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 	return dtos.AnalyticsSettings{
 		Identifier:         identifier,
 		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
+		StackID:            hs.Cfg.StackID,
+		StackSlug:          hs.Cfg.Slug,
 	}
 }
 
