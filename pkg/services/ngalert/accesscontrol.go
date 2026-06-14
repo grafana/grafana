@@ -199,7 +199,7 @@ var (
 				},
 			},
 		},
-		Grants: []string{string(org.RoleAdmin)},
+		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)}, // LOGZ.IO GRAFANA CHANGE :: APPZ-2728 - Allow editors to use alert provisioning API with decrypted secrets
 	}
 )
 
