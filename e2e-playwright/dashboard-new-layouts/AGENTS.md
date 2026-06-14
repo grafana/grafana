@@ -136,7 +136,7 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-**9 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+**10 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
 
 | Spec                                                  | Status      | Lines of code | Selectors usage count |
 | ----------------------------------------------------- | ----------- | ------------- | --------------------- |
