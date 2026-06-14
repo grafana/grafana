@@ -35,21 +35,12 @@ type ModelKeeper struct {
 type ModelGsm struct {
 	SecureValues        []*ModelSecureValue
 	Keepers             []*ModelKeeper
+	clock               contracts.Clock
 	modelSecretsManager *ModelAWSSecretsManager
 }
 
-func NewModelGsm(modelSecretsManager *ModelAWSSecretsManager) *ModelGsm {
-	return &ModelGsm{modelSecretsManager: modelSecretsManager}
-}
-
-func (m *ModelGsm) getNewVersionNumber(namespace, name string) int64 {
-	latestVersion := int64(0)
-	for _, sv := range m.SecureValues {
-		if sv.Namespace == namespace && sv.Name == name {
-			latestVersion = max(latestVersion, sv.Status.Version)
-		}
-	}
-	return latestVersion + 1
+func NewModelGsm(clock contracts.Clock, modelSecretsManager *ModelAWSSecretsManager) *ModelGsm {
+	return &ModelGsm{clock: clock, modelSecretsManager: modelSecretsManager}
 }
 
 func (m *ModelGsm) SetVersionToActive(namespace, name string, version int64) {
@@ -79,7 +70,7 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 	return nil
 }
 
-func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+func (m *ModelGsm) Create(now time.Time, version int64, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
 	keeper := m.getActiveKeeper(sv.Namespace)
 
 	if sv.Spec.Ref != nil && keeper.keeperType == secretv1beta1.SystemKeeperType {
@@ -95,7 +86,8 @@ func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secret
 	}
 
 	modelSv := &ModelSecureValue{SecureValue: sv, active: false, created: created, updated: now}
-	modelSv.Status.Version = m.getNewVersionNumber(modelSv.Namespace, modelSv.Name)
+
+	modelSv.Status.Version = version
 	modelSv.Status.ExternalID = fmt.Sprintf("%d", modelSv.Status.Version)
 	modelSv.Status.Keeper = keeper.name
 	m.SecureValues = append(m.SecureValues, modelSv)
@@ -165,7 +157,7 @@ func (m *ModelGsm) SetKeeperAsActive(namespace, keeperName string) error {
 	return nil
 }
 
-func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
+func (m *ModelGsm) Update(now time.Time, version int64, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
 	sv := m.ReadActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
 	if sv == nil {
 		return nil, false, contracts.ErrSecureValueNotFound
@@ -185,7 +177,7 @@ func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureVal
 		newSecureValue.Spec.Value = sv.Spec.Value
 	}
 
-	createdSv, err := m.Create(now, newSecureValue)
+	createdSv, err := m.Create(now, version, newSecureValue)
 
 	return createdSv, true, err
 }

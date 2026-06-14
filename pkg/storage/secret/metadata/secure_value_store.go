@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/snowflake"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -25,26 +26,34 @@ var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
 func ProvideSecureValueMetadataStorage(
 	clock contracts.Clock,
+	rand contracts.Rand,
 	db contracts.Database,
 	tracer trace.Tracer,
 	reg prometheus.Registerer,
 ) (contracts.SecureValueMetadataStorage, error) {
+	// Ideally we'd ensure that each secrets manager instance gets its own unique id.
+	snowflake, err := snowflake.NewSnowflake(rand.Int64N(contracts.SnowflakeNodeIDUpperBound))
+	if err != nil {
+		return nil, fmt.Errorf("instantiating snowflake node: %w", err)
+	}
 	return &secureValueMetadataStorage{
-		clock:   clock,
-		db:      db,
-		dialect: sqltemplate.DialectForDriver(db.DriverName()),
-		metrics: metrics.NewStorageMetrics(reg),
-		tracer:  tracer,
+		clock:     clock,
+		snowflake: snowflake,
+		db:        db,
+		dialect:   sqltemplate.DialectForDriver(db.DriverName()),
+		metrics:   metrics.NewStorageMetrics(reg),
+		tracer:    tracer,
 	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	clock   contracts.Clock
-	db      contracts.Database
-	dialect sqltemplate.Dialect
-	metrics *metrics.StorageMetrics
-	tracer  trace.Tracer
+	clock     contracts.Clock
+	snowflake contracts.Snowflake
+	db        contracts.Database
+	dialect   sqltemplate.Dialect
+	metrics   *metrics.StorageMetrics
+	tracer    trace.Tracer
 }
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
@@ -81,14 +90,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 		s.metrics.SecureValueMetadataCreateDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	latest, err := s.getLatestVersionAndCreated(ctx, xkube.Namespace(sv.Namespace), sv.Name)
+	createdByInfo, err := s.getCreatedByInfo(ctx, xkube.Namespace(sv.Namespace), sv.Name)
 	if err != nil {
-		return nil, fmt.Errorf("fetching latest secure value version: %w", err)
-	}
-
-	version := int64(1)
-	if latest.version > 0 {
-		version = latest.version + 1
+		return nil, fmt.Errorf("fetching secure value creation metadata: %w", err)
 	}
 
 	// Some other concurrent request may have created the version we're trying to create,
@@ -96,19 +100,22 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	maxAttempts := 3
 	attempts := 0
 	for {
+		// Version collisions are only meaningful if they happen in the same {namespace, name} combination.
+		version := s.snowflake.Int64()
+
 		sv.Status.Version = version
 
 		now := s.clock.Now().UTC().Unix()
 
 		createdAt := now
-		if latest.createdAt > 0 {
-			createdAt = latest.createdAt
+		if createdByInfo.createdAt > 0 {
+			createdAt = createdByInfo.createdAt
 		}
 		updatedAt := now
 
 		createdBy := actorUID
-		if latest.createdBy != "" {
-			createdBy = latest.createdBy
+		if createdByInfo.createdBy != "" {
+			createdBy = createdByInfo.createdBy
 		}
 		updatedBy := actorUID
 
@@ -132,7 +139,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 			if sql.IsRowAlreadyExistsError(err) {
 				if attempts < maxAttempts {
 					attempts += 1
-					version += 1
 					continue
 				}
 				return nil, fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
@@ -158,70 +164,69 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, 
 	}
 }
 
-type versionAndCreated struct {
+type createdByInfo struct {
 	createdAt int64
 	createdBy string
-	version   int64
 }
 
-func (s *secureValueMetadataStorage) getLatestVersionAndCreated(ctx context.Context, namespace xkube.Namespace, name string) (versionAndCreated, error) {
-	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getLatestVersionAndCreated", trace.WithAttributes(
+func (s *secureValueMetadataStorage) getCreatedByInfo(ctx context.Context, namespace xkube.Namespace, name string) (createdByInfo, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.getCreatedByInfo", trace.WithAttributes(
 		attribute.String("name", name),
 		attribute.String("namespace", namespace.String()),
 	))
 	defer span.End()
 
-	req := getLatestSecureValueVersionAndCreatedAt{
+	req := getLatestSecureValueCreatedAtInfo{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
 	}
 
-	q, err := sqltemplate.Execute(sqlGetLatestSecureValueVersionAndCreatedAt, req)
+	q, err := sqltemplate.Execute(sqlGetLatestSecureValueCreatedAtInfo, req)
 	if err != nil {
-		return versionAndCreated{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueVersionAndCreatedAt.Name(), err)
+		return createdByInfo{}, fmt.Errorf("execute template %q: %w", sqlGetLatestSecureValueCreatedAtInfo.Name(), err)
 	}
 
 	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return versionAndCreated{}, fmt.Errorf("fetching latest version for secure value: namespace=%+v name=%+v %w", namespace, name, err)
+		return createdByInfo{}, fmt.Errorf("fetching created info for secure value: namespace=%+v name=%+v %w", namespace, name, err)
 	}
 	defer func() { _ = rows.Close() }()
 
 	if err := rows.Err(); err != nil {
-		return versionAndCreated{}, fmt.Errorf("error executing query: %w", err)
+		return createdByInfo{}, fmt.Errorf("error executing query: %w", err)
 	}
 
+	// If secure value doesn't exist or is there's no active version of it.
 	if !rows.Next() {
-		return versionAndCreated{}, nil
+		return createdByInfo{}, nil
 	}
 
 	var (
 		createdAt       int64
 		createdBy       string
-		version         int64
 		active          bool
 		namespaceFromDB string
 		nameFromDB      string
 	)
-	if err := rows.Scan(&createdAt, &createdBy, &version, &active, &namespaceFromDB, &nameFromDB); err != nil {
-		return versionAndCreated{}, fmt.Errorf("scanning version and created from returned rows: %w", err)
+	if err := rows.Scan(&createdAt, &createdBy, &active, &namespaceFromDB, &nameFromDB); err != nil {
+		return createdByInfo{}, fmt.Errorf("scanning rows: %w", err)
 	}
 
+	// Sanity check
+	if !active {
+		return createdByInfo{}, fmt.Errorf("bug: read inactive row")
+	}
+
+	// Sanity check
 	if namespaceFromDB != namespace.String() || nameFromDB != name {
-		return versionAndCreated{}, fmt.Errorf("bug: expected to find version and created for namespace=%+v name=%+v but got for namespace=%+v name=%+v",
+		return createdByInfo{}, fmt.Errorf("bug: expected to find row for namespace=%+v name=%+v but got for namespace=%+v name=%+v",
 			namespace, name, namespaceFromDB, nameFromDB)
 	}
 
-	if !active {
-		createdAt = 0
-		createdBy = ""
-	}
-
-	return versionAndCreated{
+	return createdByInfo{
 		createdAt: createdAt,
 		createdBy: createdBy,
-		version:   version,
 	}, nil
 }
 

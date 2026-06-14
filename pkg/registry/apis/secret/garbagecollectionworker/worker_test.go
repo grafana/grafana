@@ -203,7 +203,8 @@ func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
 		},
 	}, "actor-uid")
 	require.NoError(t, err)
-	require.Equal(t, int64(2), sv2.Status.Version)
+	require.NotZero(t, sv2.Status.Version)
+	require.NotEqual(t, sv1.Status.Version, sv2.Status.Version)
 
 	// Force the GC, nothing should have been cleaned, v1 is active and v2 is within the grace period
 	// If we were relying on the `created` field to check for eligible secure values, v2 would get deleted here!
@@ -233,7 +234,7 @@ func TestProperty(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := testutils.NewModelGsm(nil)
+		model := testutils.NewModelGsm(sut.Clock, nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
@@ -250,7 +251,7 @@ func TestProperty(t *testing.T) {
 				if err == nil {
 					svCopy.UID = createdSv.UID
 				}
-				_, modelErr := model.Create(sut.Clock.Now(), svCopy)
+				_, modelErr := model.Create(sut.Clock.Now(), testutils.GetVersion(createdSv), svCopy)
 				require.ErrorIs(t, err, modelErr)
 			},
 			"createKeeper": func(t *rapid.T) {
