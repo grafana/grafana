@@ -18,7 +18,7 @@ All page objects live in `page-objects/` and are re-exported from `page-objects/
 | `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `clickItem(name)`                                                                                                                                                                                                   |
 | `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
 | `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
-| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`, `groupIntoRow()`                                                       |
 
 > The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
@@ -136,7 +136,7 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-**8 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+**9 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
 
 | Spec                                                  | Status      | Lines of code | Selectors usage count |
 | ----------------------------------------------------- | ----------- | ------------- | --------------------- |
@@ -148,6 +148,7 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboards-remove-panel.spec.ts`                     | Migrated    | —             | —                     |
 | `dashboard-duplicate-panel.spec.ts`                   | Migrated    | —             | —                     |
 | `dashboard-sidepane.spec.ts`                          | Migrated    | —             | —                     |
+| `dashboards-move-panel.spec.ts`                       | Migrated    | —             | —                     |
 | `dashboard-group-panels.spec.ts`                      | Not started | 918           | 224                   |
 | `dashboards-repeats-tabs-layout.spec.ts`              | Not started | 482           | 74                    |
 | `dashboards-repeats-custom-grid.spec.ts`              | Not started | 551           | 70                    |
@@ -161,7 +162,6 @@ await expect(titleInput).toHaveValue(newTitle);
 | `dashboard-outline.spec.ts`                           | Not started | 85            | 17                    |
 | `dashboard-tabs-scroll.spec.ts`                       | Not started | 150           | 12                    |
 | `dashboards-repeats-snapshots.spec.ts`                | Not started | 117           | 11                    |
-| `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
 | `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
 | `dashboards-edit-query-variables.spec.ts`             | Not started | 83            | 6                     |
 | `dashboard-keybindings.spec.ts`                       | Not started | 60            | 6                     |
