@@ -707,6 +707,27 @@ describe('LokiDatasource', () => {
       );
       expect(templateSrvStub.replace).toHaveBeenCalledWith('label5', scopedVars, expect.any(Function));
     });
+
+    it('should wrap bare stream selector in braces for label_values', async () => {
+      const { ds } = getTestContext();
+
+      const result = await ds.metricFindQuery({
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: 'label1="value1"',
+        label: 'label5',
+      });
+
+      expect(result).toEqual([{ text: 'value5' }]);
+    });
+
+    it('should wrap bare stream selector from legacy label_values string', async () => {
+      const { ds } = getTestContext();
+
+      const result = await ds.metricFindQuery('label_values(label1="value1",label5)');
+
+      expect(result).toEqual([{ text: 'value5' }]);
+    });
   });
 
   describe('modifyQuery', () => {

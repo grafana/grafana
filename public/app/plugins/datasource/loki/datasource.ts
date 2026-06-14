@@ -63,7 +63,11 @@ import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor'
 import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiQueryType, SupportingQueryType } from './dataquery.gen';
 import { escapeLabelValueInSelector, getLokiLabelTypeFromFrame, isRegexSelector } from './languageUtils';
-import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
+import {
+  ensureStreamSelectorBraces,
+  labelNamesRegex,
+  labelValuesRegex,
+} from './migrations/variableQueryMigrations';
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
@@ -734,7 +738,7 @@ export class LokiDatasource
     }
 
     const result = await this.languageProvider.fetchLabelValues(query.label, {
-      streamSelector: query.stream,
+      streamSelector: query.stream ? ensureStreamSelectorBraces(query.stream) : query.stream,
       timeRange,
     });
     return result.map((value: string) => ({ text: value }));
@@ -759,7 +763,7 @@ export class LokiDatasource
       return {
         type: LokiVariableQueryType.LabelValues,
         label: labelValues[2],
-        stream: labelValues[1],
+        stream: labelValues[1] ? ensureStreamSelectorBraces(labelValues[1]) : labelValues[1],
         refId,
       };
     }
