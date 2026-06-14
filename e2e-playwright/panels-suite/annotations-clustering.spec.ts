@@ -62,7 +62,9 @@ const ALERT_ANNOTATIONS_COUNTS = {
 
 test.use({
   viewport: { width: 1000, height: 1840 },
-  featureToggles: { annotationsClustering: true, dashboardNewLayouts: false },
+  featureToggles: {
+    annotationsClustering: true,
+  },
 });
 
 test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, () => {
@@ -333,7 +335,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.press('Enter');
 
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -352,7 +357,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await page.keyboard.type('tag2');
         await page.keyboard.press('Enter');
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -456,7 +464,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         await descriptionTextarea.fill('description text goes here');
 
         // save
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await page
+          .getByTestId('data-testid portal-container')
+          .getByRole('button', { name: 'Save', exact: true })
+          .click();
         // Assert saving has closed the modal before we create another one
         await expect(
           page.getByText('Add annotation'),
@@ -480,7 +491,7 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
           .poll(() => {
             return markersLocator.first().getAttribute('style');
           })
-          .toMatch(/left: 547px/);
+          .toMatch(/left: 519px/);
 
         // Clean up annos
         const tooltip = page.getByTestId(selectors.pages.Dashboard.Annotations.tooltip);
