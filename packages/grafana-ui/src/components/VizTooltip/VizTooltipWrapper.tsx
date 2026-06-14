@@ -7,11 +7,11 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
-export interface Props extends HTMLAttributes<HTMLDivElement> {
+export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export const VizTooltipWrapper = ({ children, className }: Props) => {
+export const VizTooltipWrapper = ({ children, className }: VizTooltipWrapperProps) => {
   const styles = useStyles2(getStyles);
   return (
     <div className={clsx(styles, className)} data-testid={selectors.components.Panels.Visualization.Tooltip.Wrapper}>

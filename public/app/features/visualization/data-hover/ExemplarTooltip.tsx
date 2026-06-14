@@ -1,12 +1,12 @@
 import { type LinkModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
-  type VizTooltipItem,
   VizTooltipHeader,
   VizTooltipWrapper,
-} from '@grafana/ui/internal';
+} from '@grafana/ui';
 
 export interface Props {
   items: VizTooltipItem[];
