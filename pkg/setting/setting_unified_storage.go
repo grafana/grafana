@@ -318,6 +318,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
 	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
 	cfg.BedrockMaxAttempts = embedSection.Key("bedrock_max_attempts").MustInt(5)
+	cfg.BedrockCallTimeout = embedSection.Key("bedrock_call_timeout").MustDuration(3 * time.Minute)
 	cfg.AzureEndpoint = embedSection.Key("azure_endpoint").String()
 	cfg.AzureDeployment = embedSection.Key("azure_deployment").MustString("text-embedding-3-small")
 	cfg.AzureAPIVersion = embedSection.Key("azure_api_version").MustString("2024-02-01")
