@@ -56,7 +56,8 @@ import {
   type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { type DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';

@@ -26,7 +26,8 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';

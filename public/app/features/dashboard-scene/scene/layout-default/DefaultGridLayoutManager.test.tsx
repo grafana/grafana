@@ -9,7 +9,8 @@ import {
 } from '@grafana/scenes';
 
 import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
-import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
+import { DashboardScene } from '../DashboardScene';
+import { type DashboardSceneState } from '../types/dashboard';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
