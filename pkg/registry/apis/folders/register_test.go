@@ -305,11 +305,10 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				).Once()
 			}
 
-			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
-
 			b := &FolderAPIBuilder{
-				storage:  us,
-				searcher: sm,
+				storage:              us,
+				searcher:             sm,
+				cascadeDeleteEnabled: tt.cascadeDeleteEnabled,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -585,6 +584,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, false)
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
@@ -698,6 +698,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, false)
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
 				existingObj,
@@ -724,4 +725,54 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+func TestFolderAPIBuilder_Mutate_cascadeFinalizerGatedByBootDecision(t *testing.T) {
+	newAttrs := func(input *folders.Folder) admission.Attributes {
+		return admission.NewAttributesRecord(
+			input,
+			nil,
+			folders.SchemeGroupVersion.WithKind("folder"),
+			"stacks-123",
+			input.Name,
+			folders.SchemeGroupVersion.WithResource("folders"),
+			"",
+			"CREATE",
+			nil,
+			true,
+			&user.SignedInUser{},
+		)
+	}
+	newFolder := func() *folders.Folder {
+		return &folders.Folder{
+			Spec:       folders.FolderSpec{Title: "foo"},
+			TypeMeta:   metav1.TypeMeta{Kind: "Folder"},
+			ObjectMeta: metav1.ObjectMeta{Name: "valid-name"},
+		}
+	}
+
+	us := grafanarest.NewMockStorage(t)
+	sm := resource.NewMockResourceClient(t)
+	b := &FolderAPIBuilder{
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+	}
+
+	t.Run("disabled at boot does not add finalizer even if the flag is on per-request", func(t *testing.T) {
+		// The per-request flag must not matter: only the boot-time decision gates the finalizer,
+		// so a runtime/per-tenant flip cannot stamp a finalizer the watcher will never clear.
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		b.cascadeDeleteEnabled = false
+		f := newFolder()
+		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
+		require.Empty(t, f.Finalizers)
+	})
+
+	t.Run("enabled at boot adds cascade finalizer", func(t *testing.T) {
+		b.cascadeDeleteEnabled = true
+		f := newFolder()
+		require.NoError(t, b.Mutate(context.Background(), newAttrs(f), nil))
+		require.Contains(t, f.Finalizers, CascadeDeleteFinalizer)
+	})
 }
