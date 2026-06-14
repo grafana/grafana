@@ -9,7 +9,12 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
+import { Drawer, Icon, IconButton, JSONFormatter, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+
+function copyToClipboard(data: DataFrame[]) {
+  const text = JSON.stringify(data, null, 2);
+  navigator.clipboard.writeText(text);
+}
 
 import { type TransformationsEditorTransformation } from './types';
 
@@ -71,7 +76,16 @@ export const TransformationEditor = ({
           >
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
-                <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Trans i18nKey="dashboard.transformation-editor.input-data">Input data</Trans>
+                  <IconButton
+                    name="copy"
+                    size="sm"
+                    tooltip={t('dashboard.transformation-editor.copy-input', 'Copy input data to clipboard')}
+                    aria-label={t('dashboard.transformation-editor.copy-input', 'Copy input data to clipboard')}
+                    onClick={() => copyToClipboard(input)}
+                  />
+                </Stack>
               </div>
               <div className={styles.debugJson}>
                 <JSONFormatter json={input} />
@@ -82,7 +96,16 @@ export const TransformationEditor = ({
             </div>
             <div className={styles.debug}>
               <div className={styles.debugTitle}>
-                <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Trans i18nKey="dashboard.transformation-editor.output-data">Output data</Trans>
+                  <IconButton
+                    name="copy"
+                    size="sm"
+                    tooltip={t('dashboard.transformation-editor.copy-output', 'Copy output data to clipboard')}
+                    aria-label={t('dashboard.transformation-editor.copy-output', 'Copy output data to clipboard')}
+                    onClick={() => copyToClipboard(output)}
+                  />
+                </Stack>
               </div>
               <div className={styles.debugJson}>{output && <JSONFormatter json={output} />}</div>
             </div>
