@@ -55,7 +55,7 @@ const LoginPage = () => {
                     isLoggingIn={isLoggingIn}
                   >
                     <Stack justifyContent="flex-end">
-                      {!config.auth.disableLogin && (
+                      {!config.auth.disableLogin && !config.auth.disableForgotPassword && (
                         <LinkButton
                           className={styles.forgottenPassword}
                           fill="text"
