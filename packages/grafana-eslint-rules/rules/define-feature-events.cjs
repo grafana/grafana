@@ -46,6 +46,13 @@ const defineFeatureEventsRule = createRule({
       return false;
     }
 
+    /** @param {import('@typescript-eslint/utils').TSESTree.Node} node */
+    function hasJSDocBefore(node) {
+      return context.sourceCode
+        .getCommentsBefore(node)
+        .some((comment) => comment.type === 'Block' && comment.value.startsWith('*'));
+    }
+
     return {
       ImportSpecifier(node) {
         if (node.imported.type !== AST_NODE_TYPES.Identifier) {
@@ -118,7 +125,7 @@ const defineFeatureEventsRule = createRule({
             if (!propertyValueCallsFactory(prop.value)) {
               continue;
             }
-            if (context.sourceCode.getCommentsBefore(prop).length === 0) {
+            if (!hasJSDocBefore(prop)) {
               context.report({ node: prop, messageId: 'missingEventComment' });
             }
           }
@@ -127,7 +134,7 @@ const defineFeatureEventsRule = createRule({
 
         // Pattern (b) — individual export
         if (callsFactoryVariable(init)) {
-          if (context.sourceCode.getCommentsBefore(node).length === 0) {
+          if (!hasJSDocBefore(node)) {
             context.report({ node: decl.declarations[0].id, messageId: 'missingEventComment' });
           }
         }
@@ -150,7 +157,7 @@ const defineFeatureEventsRule = createRule({
         }
 
         for (const member of node.body.body) {
-          if (context.sourceCode.getCommentsBefore(member).length === 0) {
+          if (!hasJSDocBefore(member)) {
             context.report({ node: member, messageId: 'missingPropertyComment' });
           }
         }
