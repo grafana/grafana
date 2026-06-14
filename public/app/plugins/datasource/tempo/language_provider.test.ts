@@ -156,7 +156,9 @@ describe('Language_provider', () => {
             },
           ],
         })
-      ).toBe(`{name${operator}"api/v2/variants/by-upc/\\\\(\\\\?P<upc>\\\\[\\\\s\\\\S\\\\]\\\\*\\\\)/\\\\$"}`);
+        // A single value with a regex operator is treated as a regex pattern, so
+        // its metacharacters are preserved rather than escaped into a literal.
+      ).toBe(`{name${operator}"api/v2/variants/by-upc/(?P<upc>[\\\\s\\\\S]*)/$"}`);
     });
     it('two fields with everything filled in', () => {
       expect(

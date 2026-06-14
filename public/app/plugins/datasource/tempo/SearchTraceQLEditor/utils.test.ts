@@ -156,6 +156,48 @@ describe('filterToQuerySection returns the correct query section for a filter', 
     expect(result).toBe('span.foo=~"bar|baz"');
   });
 
+  it('filter with single value regex is not escaped', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=~',
+      value: ['.+'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+      isCustomValue: false,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('span.foo=~".+"');
+  });
+
+  it('filter with single value negative regex is not escaped', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '!~',
+      value: ['.+'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+      isCustomValue: false,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('span.foo!~".+"');
+  });
+
+  it('filter with multiple values regex still escapes each value for the alternation', () => {
+    const filter: TraceqlFilter = {
+      id: 'abc',
+      tag: 'foo',
+      operator: '=~',
+      value: ['a.b', 'c.d'],
+      scope: TraceqlSearchScope.Span,
+      valueType: 'string',
+      isCustomValue: false,
+    };
+    const result = filterToQuerySection(filter, [], lp);
+    expect(result).toBe('span.foo=~"a\\\\.b|c\\\\.d"');
+  });
+
   it('filter with multiple values and != operator', () => {
     const filter: TraceqlFilter = {
       id: 'abc',

@@ -38,7 +38,7 @@ const valueHelper = (f: TraceqlFilter) => {
   if (Array.isArray(value) && !f.isCustomValue) {
     value = getEscapedValues(value);
 
-    if (isRegExpOperator(f.operator!)) {
+    if (isRegExpOperator(f.operator!) && value.length > 1) {
       value = getEscapedRegexValues(value);
     }
   }
