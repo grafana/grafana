@@ -9,6 +9,8 @@ import {
   type PanelPlugin,
   type PluginExtensionPanelContext,
   PluginExtensionPoints,
+  rangeUtil,
+  type ScopedVars,
   urlUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -470,8 +472,15 @@ export function panelLinksBehavior(panelLinksMenu: VizPanelLinksMenu) {
 }
 
 export function getPanelLinks(panel: VizPanel) {
+  // Resolve __interval / __interval_ms eagerly against the panel's current time range and
+  // maxDataPoints. Without this, the scenes IntervalMacro reads from the SceneQueryRunner's
+  // last completed request, so the link URL is either the literal ${__interval} (cold load,
+  // panel never activated) or the previous range's value (stale after a time-range change).
+  // See #123832.
+  const intervalScopedVars = getPanelLinkIntervalScopedVars(panel);
+
   const interpolate: InterpolateFunction = (v, scopedVars) => {
-    return sceneGraph.interpolate(panel, v, scopedVars);
+    return sceneGraph.interpolate(panel, v, { ...intervalScopedVars, ...scopedVars });
   };
 
   const linkSupplier = getScenePanelLinksSupplier(panel, interpolate);
@@ -492,6 +501,29 @@ export function getPanelLinks(panel: VizPanel) {
     };
     return updatedLink;
   });
+}
+
+function getPanelLinkIntervalScopedVars(panel: VizPanel): ScopedVars {
+  const queryRunner = getQueryRunnerFor(panel);
+  const timeRange = sceneGraph.getTimeRange(panel);
+  // Fall back to the same default (500) the SceneQueryRunner uses when no explicit
+  // maxDataPoints is set; the queryRunner's getMaxDataPoints helper is private API.
+  const maxDataPoints = queryRunner?.state.maxDataPoints ?? 500;
+  const minInterval = queryRunner?.state.minInterval;
+  const lowerLimitInterval = minInterval ? sceneGraph.interpolate(panel, minInterval) : undefined;
+  // Re-evaluate the raw from/to against the current wall clock so that relative ranges
+  // ("now-6h") use a live TimeRange — SceneTimeRange.state.value can lag state.from/to
+  // when a setState only updates the raw fields.
+  const range = rangeUtil.convertRawToRange(
+    { from: timeRange.state.from, to: timeRange.state.to },
+    timeRange.getTimeZone(),
+    timeRange.state.fiscalYearStartMonth
+  );
+  const norm = rangeUtil.calculateInterval(range, maxDataPoints, lowerLimitInterval);
+  return {
+    __interval: { text: norm.interval, value: norm.interval },
+    __interval_ms: { text: norm.intervalMs.toString(), value: norm.intervalMs },
+  };
 }
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
