@@ -8,9 +8,11 @@ package apistore
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/storage"
 
@@ -55,8 +57,30 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 			return nil, predicate, nil // not selectable
 		}
 
+		// Track the search.* requirements so we can drop them from the predicate;
+		// they're sent to the server as field filters and don't exist as real labels
+		// on the returned objects.
+		var residualLabelReqs []labels.Requirement
+
 		for _, r := range requirements {
 			v := r.Key()
+
+			// grafana.app/search.* selections are converted to search requests
+			if field, ok := strings.CutPrefix(v, utils.LabelKeySearchPrefix); ok {
+				switch {
+				case strings.HasPrefix(field, "OR."): // Converts to a SHOULD condition in bleve
+					return nil, predicate, apierrors.NewBadRequest("OR conditions in search labels are not yet supported: " + v)
+				case strings.HasPrefix(field, "AND."):
+					field = strings.TrimPrefix(field, "AND.") // the default -- converts to a MUST condition in bleve
+				}
+				req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+					Key:      field,
+					Operator: string(r.Operator()),
+					Values:   r.Values().List(),
+				})
+				continue
+			}
+			residualLabelReqs = append(residualLabelReqs, r)
 
 			// Parse the history/trash request from labels
 			if v == utils.LabelKeyGetHistory || v == utils.LabelKeyGetTrash {
@@ -107,6 +131,16 @@ func toListRequest(k *resourcepb.ResourceKey, opts storage.ListOptions) (*resour
 				Operator: string(r.Operator()),
 				Values:   r.Values().List(),
 			})
+		}
+
+		// Rebuild the predicate's label selector without the search.* requirements
+		// so they aren't re-applied as client-side label filters.
+		if len(residualLabelReqs) != len(requirements) {
+			if len(residualLabelReqs) == 0 {
+				predicate.Label = labels.NewSelector()
+			} else {
+				predicate.Label = labels.NewSelector().Add(residualLabelReqs...)
+			}
 		}
 	}
 

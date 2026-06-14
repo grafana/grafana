@@ -17,6 +17,15 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+// LabelKeySearchPrefix is used to issue search requests using label selectors
+// For example:
+// * "grafana.app/search.title=foo" will search for resources with "foo" in the title
+// * "grafana.app/search.name in (a,b,c)" will find resources with the name "a", "b", or "c"
+// * "grafana.app/search.folder=xyz" will find resources with the folder "xyz"
+// By default the condition is required (AND), however you can express OR with multiple selectors using:
+// * ?labelSelector=grafana.app/search.OR.folder=A&labelSelector=grafana.app/search.OR.title=B"
+const LabelKeySearchPrefix = "grafana.app/search."
+
 // LabelKeyGetHistory is used to select object history for an given resource
 const LabelKeyGetHistory = "grafana.app/get-history"
 

@@ -189,6 +189,128 @@ func TestToListRequest(t *testing.T) {
 			wantErr:       nil,
 		},
 		{
+			name: "with search prefix label (equals)",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeySearchPrefix + "folder": "xyz"}),
+				},
+			},
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "folder",
+							Operator: string(selection.Equals),
+							Values:   []string{"xyz"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.NewSelector(),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "with search prefix label (in operator)",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: func() storage.ListOptions {
+				req, err := labels.NewRequirement(utils.LabelKeySearchPrefix+"name", selection.In, []string{"a", "b", "c"})
+				require.NoError(t, err)
+				return storage.ListOptions{
+					Predicate: storage.SelectionPredicate{
+						Label: labels.NewSelector().Add(*req),
+					},
+				}
+			}(),
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "name",
+							Operator: string(selection.In),
+							Values:   []string{"a", "b", "c"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.NewSelector(),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "with search prefix label (explicit AND)",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeySearchPrefix + "AND.title": "foo"}),
+				},
+			},
+			want: &resourcepb.ListRequest{
+				VersionMatchV2: 1,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     "test",
+						Resource:  "test",
+						Namespace: "default",
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      "title",
+							Operator: string(selection.Equals),
+							Values:   []string{"foo"},
+						},
+					},
+				},
+			},
+			wantPredicate: storage.SelectionPredicate{
+				Label: labels.NewSelector(),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "with search prefix label rejects OR variant",
+			key: &resourcepb.ResourceKey{
+				Group:     "test",
+				Resource:  "test",
+				Namespace: "default",
+			},
+			opts: storage.ListOptions{
+				Predicate: storage.SelectionPredicate{
+					Label: labels.SelectorFromSet(labels.Set{utils.LabelKeySearchPrefix + "OR.folder": "xyz"}),
+				},
+			},
+			want:          nil,
+			wantPredicate: storage.SelectionPredicate{},
+			wantErr:       apierrors.NewBadRequest("OR conditions in search labels are not yet supported: " + utils.LabelKeySearchPrefix + "OR.folder"),
+		},
+		{
 			name: "with history label",
 			key: &resourcepb.ResourceKey{
 				Group:     "test",

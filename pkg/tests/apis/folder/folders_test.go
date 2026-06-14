@@ -388,6 +388,82 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		errDelete := client.Resource.Delete(context.Background(), first.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, errDelete)
 	})
+
+	t.Run("Search folders by parent using labelSelector", func(t *testing.T) {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  gvr,
+		})
+
+		// Create a parent folder via legacy API so it is visible everywhere.
+		parentUID := "label-sel-parent"
+		parentPayload := fmt.Sprintf(`{"title": "Label Selector Parent", "uid": "%s"}`, parentUID)
+		parentCreate := apis.DoRequest(helper, apis.RequestParams{
+			User:   client.Args.User,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(parentPayload),
+		}, &folder.Folder{})
+		require.NotNil(t, parentCreate.Result)
+		require.Equal(t, parentUID, parentCreate.Result.UID)
+
+		// Create two child folders under that parent.
+		childUIDs := []string{"label-sel-child-a", "label-sel-child-b"}
+		for _, uid := range childUIDs {
+			childPayload := fmt.Sprintf(`{"title": "Child %s", "uid": "%s", "parentUid": "%s"}`, uid, uid, parentUID)
+			childCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   client.Args.User,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(childPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, childCreate.Result)
+			require.Equal(t, uid, childCreate.Result.UID)
+			require.Equal(t, parentUID, childCreate.Result.ParentUID)
+		}
+
+		// List using labelSelector to filter for folders inside the parent.
+		listed, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			LabelSelector: utils.LabelKeySearchPrefix + "folder=" + parentUID,
+		})
+		require.NoError(t, err)
+		items, err := meta.ExtractList(listed)
+		require.NoError(t, err)
+		require.Len(t, items, len(childUIDs))
+
+		gotUIDs := make([]string, 0, len(items))
+		for _, item := range items {
+			obj, ok := item.(*unstructured.Unstructured)
+			require.True(t, ok)
+			gotUIDs = append(gotUIDs, obj.GetName())
+		}
+		slices.Sort(gotUIDs)
+		require.Equal(t, childUIDs, gotUIDs)
+
+		// The "in" selector form should also return the children.
+		listed, err = client.Resource.List(context.Background(), metav1.ListOptions{
+			LabelSelector: utils.LabelKeySearchPrefix + "folder in (" + parentUID + ")",
+		})
+		require.NoError(t, err)
+		items, err = meta.ExtractList(listed)
+		require.NoError(t, err)
+		require.Len(t, items, len(childUIDs))
+
+		// A parent that has no children should return zero results.
+		listed, err = client.Resource.List(context.Background(), metav1.ListOptions{
+			LabelSelector: utils.LabelKeySearchPrefix + "folder=does-not-exist",
+		})
+		require.NoError(t, err)
+		items, err = meta.ExtractList(listed)
+		require.NoError(t, err)
+		require.Empty(t, items)
+
+		// Cleanup
+		for _, uid := range childUIDs {
+			require.NoError(t, client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{}))
+		}
+		require.NoError(t, client.Resource.Delete(context.Background(), parentUID, metav1.DeleteOptions{}))
+	})
 	return helper
 }
 

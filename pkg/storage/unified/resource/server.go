@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1408,6 +1409,9 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	for _, v := range req.Options.Labels {
 		if v.Key == utils.LabelKeyGetHistory || v.Key == utils.LabelKeyGetTrash {
 			return &resourcepb.ListResponse{Error: NewBadRequestError("history and trash must be requested as source")}, nil
+		}
+		if strings.HasPrefix(v.Key, utils.LabelKeySearchPrefix) {
+			return &resourcepb.ListResponse{Error: NewBadRequestError("search labels must be converted to field requirements before reaching the backend: " + v.Key)}, nil
 		}
 	}
 
