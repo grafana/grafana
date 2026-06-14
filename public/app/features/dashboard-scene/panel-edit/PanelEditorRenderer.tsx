@@ -9,14 +9,13 @@ import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
-import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { type PanelEditor } from './PanelEditor';
 import { useSnappingSplitter } from './splitter/useSnappingSplitter';
-import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollReflowLimit';
+import { useScrollReflowLimit } from './useScrollReflowLimit';
 
 // v1 panel editor. PanelEditNext/PanelEditorRendererNext.tsx is the v2 version and renders the same
 // PanelEditor scene, so anything the user can see here (modals, panes, toolbar actions) needs to
@@ -24,6 +23,7 @@ import { scrollReflowMediaCondition, useScrollReflowLimit } from './useScrollRef
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane } = model.useState();
+  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
@@ -47,8 +47,12 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   }, [splitterState.collapsed, setIsCollapsed]);
 
   return (
-    <>
-      <NavToolbarActions dashboard={dashboard} />
+    <div className={styles.pageContainer}>
+      {controls && (
+        <div className={styles.controlsWrapper}>
+          <controls.Component model={controls} />
+        </div>
+      )}
       <div
         {...containerProps}
         className={cx(containerProps.className, styles.content)}
@@ -78,7 +82,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           {!splitterState.collapsed && !optionsPane && <Spinner />}
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -86,7 +90,6 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { dataPane, tableView } = model.useState();
   const panel = model.getPanel();
-  const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const isScrollingLayout = useScrollReflowLimit();
@@ -100,7 +103,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
       disabled: isScrollingLayout,
     });
 
-  containerProps.className = cx(containerProps.className, styles.container);
+  containerProps.className = cx(containerProps.className, styles.vizAndDataPane);
 
   if (!dataPane && !isScrollingLayout) {
     primaryProps.style.flexGrow = 1;
@@ -109,70 +112,53 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   primaryProps.className = cx(primaryProps.className, styles.viz, isScrollingLayout && styles.fixedSizeViz);
 
   return (
-    <div className={cx(styles.pageContainer, controls && styles.pageContainerWithControls)}>
-      {controls && (
-        <div className={styles.controlsWrapper}>
-          <controls.Component model={controls} />
-        </div>
-      )}
-      <div {...containerProps}>
-        <div {...primaryProps}>
-          <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
-        </div>
-        <LibraryPanelEditModals model={model} />
-        {dataPane && (
-          <>
-            <div {...splitterProps} />
-            <div
-              {...secondaryProps}
-              className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}
-            >
-              {splitterState.collapsed && (
-                <div className={styles.expandDataPane}>
-                  <Button
-                    tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-                    icon={'arrow-to-right'}
-                    onClick={onToggleCollapse}
-                    variant="secondary"
-                    size="sm"
-                    className={styles.openDataPaneButton}
-                    aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
-                  />
-                </div>
-              )}
-              {/* @ts-expect-error - dataPane is a union type of PanelDataPane and PanelDataPaneNext */}
-              {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
-            </div>
-          </>
-        )}
+    <div {...containerProps}>
+      <div {...primaryProps} className={cx(primaryProps.className, isScrollingLayout && styles.fixedSizeViz)}>
+        <PanelEditPanelWrapper panel={panel} tableView={tableView} dashboard={dashboard} />
       </div>
+      <LibraryPanelEditModals model={model} />
+      {dataPane && (
+        <>
+          <div {...splitterProps} />
+          <div {...secondaryProps} className={cx(secondaryProps.className, isScrollingLayout && styles.fullSizeEditor)}>
+            {splitterState.collapsed && (
+              <div className={styles.expandDataPane}>
+                <Button
+                  tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
+                  icon={'arrow-to-right'}
+                  onClick={onToggleCollapse}
+                  variant="secondary"
+                  size="sm"
+                  className={styles.openDataPaneButton}
+                  aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+                />
+              </div>
+            )}
+            {/* @ts-expect-error - dataPane is a union type of PanelDataPane and PanelDataPaneNext */}
+            {!splitterState.collapsed && <dataPane.Component model={dataPane} />}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
-  const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
   return {
     pageContainer: css({
-      display: 'grid',
-      gridTemplateAreas: `
-        "panels"`,
-      gridTemplateColumns: `1fr`,
-      gridTemplateRows: '1fr',
+      display: 'flex',
+      flexDirection: 'column',
       height: '100%',
-      [scrollReflowMediaQuery]: {
-        gridTemplateColumns: `100%`,
-      },
+      flex: '1 1 0',
+      minHeight: 0,
+      position: 'relative',
     }),
-    pageContainerWithControls: css({
-      gridTemplateAreas: `
-        "controls"
-        "panels"`,
-      gridTemplateRows: 'auto 1fr',
-    }),
-    container: css({
-      gridArea: 'panels',
+    vizAndDataPane: css({
+      display: 'flex',
+      flexDirection: 'column',
       height: '100%',
+      flex: '1 1 0',
+      minHeight: 0,
     }),
     canvasContent: css({
       label: 'canvas-content',
@@ -184,18 +170,11 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
     content: css({
-      position: 'absolute',
       width: '100%',
-      height: '100%',
-      overflow: 'unset',
-      [scrollReflowMediaQuery]: {
-        height: 'auto',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(470px, 1fr) 330px',
-        gridTemplateRows: '1fr',
-        gap: theme.spacing(1),
-        position: 'static',
-        width: '100%',
+      overflow: 'hidden',
+      flexGrow: 1,
+      [theme.breakpoints.down('sm')]: {
+        overflow: 'unset',
       },
     }),
     body: css({
@@ -204,12 +183,12 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
+      position: 'relative',
     }),
     optionsPane: css({
       flexDirection: 'column',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-      marginTop: theme.spacing(2),
       borderTop: `1px solid ${theme.colors.border.weak}`,
       borderTopLeftRadius: theme.shape.radius.default,
     }),

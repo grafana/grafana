@@ -6,7 +6,6 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { NavToolbarActions } from '../../scene/NavToolbarActions';
 import { LibraryPanelEditModals } from '../LibraryPanelEditModals';
 import { type PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
@@ -14,17 +13,19 @@ import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
-// v2 panel editor (PanelEditNext). The classic ../PanelEditorRenderer.tsx renders the same
-// PanelEditor scene, so keep user-facing features in sync across both until v1 is removed.
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
-  const { dashboard, optionsPane, splitter } = usePanelEditorShell(model);
+  const { optionsPane, splitter, controls } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
 
   const styles = useStyles2(getWrapperStyles);
 
   return (
     <div className={styles.container}>
-      <NavToolbarActions dashboard={dashboard} />
+      {controls && (
+        <div className={styles.controlsWrapper}>
+          <controls.Component model={controls} />
+        </div>
+      )}
       <LibraryPanelEditModals model={model} />
       <div
         {...containerProps}
@@ -61,16 +62,19 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
 
 function getWrapperStyles(theme: GrafanaTheme2) {
   const scrollReflowMediaQuery = '@media ' + scrollReflowMediaCondition;
+
   return {
     container: css({
+      display: 'flex',
+      flexDirection: 'column',
       height: '100%',
+      flex: '1 1 0',
+      minHeight: 0,
     }),
     content: css({
-      position: 'absolute',
+      flexGrow: 1,
       width: '100%',
-      height: '100%',
       overflow: 'unset',
-      paddingTop: theme.spacing(2),
       [scrollReflowMediaQuery]: {
         height: 'auto',
         display: 'grid',
@@ -81,11 +85,13 @@ function getWrapperStyles(theme: GrafanaTheme2) {
         width: '100%',
       },
     }),
+    controlsWrapper: css({
+      display: 'flex',
+    }),
     body: css({
       label: 'body',
       flexGrow: 1,
       display: 'flex',
-      flexDirection: 'column',
       minHeight: 0,
     }),
     optionsPane: css({

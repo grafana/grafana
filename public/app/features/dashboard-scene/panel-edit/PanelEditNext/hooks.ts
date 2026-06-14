@@ -14,7 +14,6 @@ import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
 import { QUERY_EDITOR_BANNER_DISMISSED_KEY, QUERY_EDITOR_SIDEBAR_SIZE_KEY, SidebarSize } from './constants';
 
-const CONTROLS_ROW_HEIGHT = 'auto';
 const MIN_SIDEBAR_RATIO = 0.1;
 const MAX_SIDEBAR_RATIO = 0.5;
 const MIN_SIDEBAR_PIXELS = 250;
@@ -157,6 +156,7 @@ export function usePanelEditorShell(model: PanelEditor) {
     optionsPane,
     isScrollingLayout,
     splitter,
+    controls: dashboard.state.controls,
   };
 }
 
@@ -215,14 +215,13 @@ export function useVizAndDataPaneLayout(
   const gridStyles = useMemo(
     () =>
       buildVizAndDataPaneGrid({
-        controlsEnabled: Boolean(controls),
         hasDataPane: Boolean(dataPane),
         isSidebarFullWidth: sidebarSize === SidebarSize.Full,
         showBanner,
         vizRatio: vizResize.ratio,
         sidebarRatio: sidebarResize.ratio,
       }),
-    [controls, dataPane, sidebarSize, showBanner, vizResize.ratio, sidebarResize.ratio]
+    [dataPane, sidebarSize, showBanner, vizResize.ratio, sidebarResize.ratio]
   );
 
   return {
@@ -251,7 +250,6 @@ export function useVizAndDataPaneLayout(
 }
 
 type VizAndDataPaneGridInput = {
-  controlsEnabled: boolean;
   hasDataPane: boolean;
   isSidebarFullWidth: boolean;
   showBanner: boolean;
@@ -260,7 +258,6 @@ type VizAndDataPaneGridInput = {
 };
 
 export function buildVizAndDataPaneGrid({
-  controlsEnabled,
   hasDataPane,
   isSidebarFullWidth,
   showBanner,
@@ -269,11 +266,6 @@ export function buildVizAndDataPaneGrid({
 }: VizAndDataPaneGridInput) {
   const rows: string[] = [];
   const grid: Array<[string, string]> = [];
-
-  if (controlsEnabled) {
-    rows.push(CONTROLS_ROW_HEIGHT);
-    grid.push(['controls', 'controls']);
-  }
 
   // Convert ratio to fractional units (e.g. 0.5 → 1fr:1fr, 0.6 → 1.5fr:1fr).
   // vizRatio is clamped to [0.1, 0.9] so 0 and 1 are unreachable.

@@ -4,7 +4,7 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObjectState,
@@ -22,7 +22,7 @@ import {
   type SceneVariable,
   SceneVariableSet,
 } from '@grafana/scenes';
-import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -37,6 +37,7 @@ import { filterSectionRepeatLocalVariables } from '../variables/utils';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { type DashboardScene } from './DashboardScene';
+import { usePanelEditDirty } from './NavToolbarActions';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -45,6 +46,7 @@ import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
+import { type ToolbarActionProps } from './new-toolbar/types';
 
 function getPanelEditVariables(
   dashboard: DashboardScene,
@@ -262,10 +264,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   }
 
   return (
-    <div
-      data-testid={selectors.pages.Dashboard.Controls}
-      className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
-    >
+    <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
       <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
@@ -319,10 +318,6 @@ function DashboardControlActions({
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
 
-  if (editPanel) {
-    return null;
-  }
-
   if (kioskMode === KioskMode.Full) {
     return null;
   }
@@ -338,8 +333,9 @@ function DashboardControlActions({
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying;
   const showSaveButton = isEditing && (canSave || canSaveAs);
-  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable;
+  const showEditButton = hasUid && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+  const showPanelEditButtons = Boolean(editPanel);
 
   return (
     <>
@@ -347,6 +343,7 @@ function DashboardControlActions({
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
+      {showPanelEditButtons && <PanelEditButtons dashboard={dashboard} />}
       {isPlaying && (
         <ButtonGroup>
           {!hidePlaylistNav && (
@@ -376,6 +373,39 @@ function DashboardControlActions({
           )}
         </ButtonGroup>
       )}
+    </>
+  );
+}
+
+function PanelEditButtons(props: ToolbarActionProps) {
+  const editPanel = props.dashboard.state.editPanel;
+  const isEditedPanelDirty = usePanelEditDirty(editPanel);
+
+  return (
+    <>
+      <Button
+        tooltip={t('dashboard.toolbar.panel-edit-discard-tooltip', 'Discard panel changes')}
+        data-testid={selectors.components.NavToolbar.editDashboard.discardChangesButton}
+        disabled={!isEditedPanelDirty}
+        fill="outline"
+        variant="destructive"
+        onClick={(evt) => {
+          locationService.partial({ viewPanel: null, editPanel: null });
+        }}
+      >
+        <Trans i18nKey="dashboard.toolbar.panel-edit-discard">Discard</Trans>
+      </Button>
+      <ToolbarButton
+        tooltip={t('dashboard.toolbar.panel-edit-back-tooltip', 'Back to dashboard view')}
+        data-testid={selectors.components.NavToolbar.editDashboard.backToDashboardButton}
+        icon="arrow-left"
+        variant="canvas"
+        onClick={(evt) => {
+          locationService.partial({ viewPanel: null, editPanel: null });
+        }}
+      >
+        <Trans i18nKey="dashboard.toolbar.panel-edit-back">Back</Trans>
+      </ToolbarButton>
     </>
   );
 }
@@ -447,14 +477,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       '&:hover .dashboard-canvas-controls': {
         opacity: 1,
       },
-    }),
-    controlsPanelEdit: css({
-      flexWrap: 'wrap-reverse',
-      ...(isQueryEditorNext && {
-        padding: 0,
-        marginBottom: theme.spacing(-1),
-      }),
-      paddingRight: 0,
     }),
     embedded: css({
       background: 'unset',
