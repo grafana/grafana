@@ -52,8 +52,7 @@ func newIAMAuthorizer(
 			return authorizer.DecisionAllow, "", nil
 		}
 
-		req, err := identity.GetRequester(ctx)
-		if err == nil && req != nil && req.GetIsGrafanaAdmin() {
+		if isGrafanaAdmin(ctx) {
 			return authorizer.DecisionAllow, "", nil
 		}
 
@@ -152,8 +151,9 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 // newUserAuthorizer creates an authorizer for users that handles the "teams" and "status" subresources.
 // "teams" is read-only (Connecter/GET), so it checks user get.
 // "status" supports both GET and PUT, so the check verb mirrors the request verb.
+// GrafanaAdmin users are always allowed, matching the legacy behavior where GrafanaAdmin has full access.
 func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	delegate := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"teams": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
 				Verb:      utils.VerbGet,
@@ -190,6 +190,12 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 			}
 			return authorizer.DecisionAllow, "", nil
 		},
+	})
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if isGrafanaAdmin(ctx) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return delegate.Authorize(ctx, attr)
 	})
 }
 
@@ -260,4 +266,9 @@ func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyId
 	)
 
 	return client
+}
+
+func isGrafanaAdmin(ctx context.Context) bool {
+	req, err := identity.GetRequester(ctx)
+	return err == nil && req != nil && req.GetIsGrafanaAdmin()
 }

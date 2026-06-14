@@ -204,10 +204,24 @@ func (s *Service) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisableU
 
 func (s *Service) GetProfile(ctx context.Context, cmd *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {
 	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
-		return s.k8sService.GetProfile(s.k8sCtxWithIdentity(ctx), cmd)
+		return s.k8sService.GetProfile(s.k8sCtxForServerAdmin(ctx), cmd)
 	}
 
 	return s.legacyService.GetProfile(ctx, cmd)
+}
+
+// k8sCtxForServerAdmin elevates Grafana server admins to a service identity
+// for k8s user. The unified-storage/search authorization that filters
+// list/get results runs inside the resource server, behind an ID-token boundary
+// that does not carry the grafana-admin flag — so a server admin would be
+// filtered out like any other user. Elevating mirrors the IAM apiserver
+// authorizer's GrafanaAdmin bypass at the layer where the flag is still
+// available. Non-admins keep their own identity so per-user authz still applies.
+func (s *Service) k8sCtxForServerAdmin(ctx context.Context) context.Context {
+	if req, err := identity.GetRequester(ctx); err == nil && req != nil && req.GetIsGrafanaAdmin() {
+		return s.withServiceIdentity(ctx)
+	}
+	return s.k8sCtxWithIdentity(ctx)
 }
 
 // k8sCtxWithIdentity returns ctx unchanged when auth info is already present;
@@ -217,6 +231,12 @@ func (s *Service) k8sCtxWithIdentity(ctx context.Context) context.Context {
 	if _, ok := claims.AuthInfoFrom(ctx); ok {
 		return ctx
 	}
+	return s.withServiceIdentity(ctx)
+}
+
+// withServiceIdentity injects a service identity scoped to the caller's org
+// (falling back to the default org) into ctx.
+func (s *Service) withServiceIdentity(ctx context.Context) context.Context {
 	orgID := s.cfg.DefaultOrgID()
 	if id, ok := identity.OrgIDFrom(ctx); ok && id != 0 {
 		orgID = id
