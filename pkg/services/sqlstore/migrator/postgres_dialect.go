@@ -108,6 +108,12 @@ func (db *PostgresDialect) SQLType(c *Column) string {
 	return res
 }
 
+func (db *PostgresDialect) ColumnCheckSQL(tableName, columnName string) (string, []any) {
+	args := []any{tableName, columnName}
+	sql := "SELECT 1 FROM information_schema.columns WHERE table_schema = current_schema() AND table_name=? AND column_name=?"
+	return sql, args
+}
+
 func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	args := []any{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
