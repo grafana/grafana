@@ -120,7 +120,7 @@ describe('QueryEditor', () => {
     setup();
     await openOptions();
     expect(screen.getByText(/Metric/)).toBeDefined();
-    expect(screen.getByText(/Profile/)).toBeDefined();
+    expect(screen.getByText(/^Profile$/)).toBeDefined();
     expect(screen.getByText(/Both/)).toBeDefined();
 
     expect(screen.getByText(/Group by/)).toBeDefined();
@@ -130,7 +130,7 @@ describe('QueryEditor', () => {
     setup({ props: { app: CoreApp.Dashboard } });
     await openOptions();
     expect(screen.getByText(/Metric/)).toBeDefined();
-    expect(screen.getByText(/Profile/)).toBeDefined();
+    expect(screen.getByText(/^Profile$/)).toBeDefined();
     expect(screen.queryAllByText(/Both/).length).toBe(0);
   });
 });
