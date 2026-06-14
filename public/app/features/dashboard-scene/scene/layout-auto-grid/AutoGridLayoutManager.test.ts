@@ -208,6 +208,7 @@ describe('AutoGridItem repeat + conditional rendering', () => {
       conditions: [condition],
       result: true,
       renderHidden: false,
+      hasResolved: true,
     });
   }
 
@@ -343,6 +344,7 @@ describe('AutoGridItem repeat + conditional rendering', () => {
       conditions: [hideCondition, regionCondition],
       result: true,
       renderHidden: false,
+      hasResolved: true,
     });
 
     const { gridItem, hideVar, regionVar } = setupDashboardWithAutoGridItem({

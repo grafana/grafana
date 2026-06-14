@@ -347,8 +347,9 @@ You can only configure show/hide rules for panels in the **Auto grid** layout. S
 
 ### Query result rule
 
-Show or hide a panel based on whether or not the query returns any results.
-The rule provides **Has data** and **No data** options, so you can choose to show or hide the panel based on the presence or absence of data.
+Show or hide a panel or row based on whether or not the query returns any results.
+For rows, Grafana evaluates the query results from the panels inside the row.
+The rule provides **Has data** and **No data** options, so you can choose to show or hide the panel or row based on the presence or absence of data.
 
 For example, if you have a dashboard with several panels and only want panels that return data to appear, set the rule as follows:
 
@@ -404,7 +405,7 @@ To configure show/hide rules, follow these steps:
 1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
-   - **Query result**: Show or hide a panel based on query results. Choose from **Has data** and **No data**.
+   - **Query result**: Show or hide a panel or row based on query results. Choose from **Has data** and **No data**.
    - **Template variable**: Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
    - **Time range less than**: Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time range. Select a time range from **5 minutes** to **5 years**.
 
