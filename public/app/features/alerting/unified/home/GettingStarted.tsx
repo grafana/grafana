@@ -10,6 +10,7 @@ import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
 import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
 
 import { TUTORIAL_URL_ALERTING_GET_STARTED } from '../utils/docs';
+import { isAdmin } from '../utils/misc';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -170,6 +171,20 @@ export function WelcomeHeader({ className }: { className?: string }) {
           href="/alerting/routes"
           hrefText="Manage notification policies"
         />
+        {config.featureToggles.alertingMigrationWizardUI && isAdmin() && (
+          <>
+            <div className={styles.separator} />
+            <WelcomeCTABox
+              title={t('alerting.welcome-header.title-import-to-gma', 'Import to Grafana Alerting')}
+              description={t(
+                'alerting.welcome-header.description-import-to-gma',
+                'Bring existing alert rules and Alertmanager config into Grafana Alerting.'
+              )}
+              href="/alerting/import-to-gma"
+              hrefText={t('alerting.welcome-header.href-text-import-to-gma', 'Start import')}
+            />
+          </>
+        )}
       </ContentBox>
     </Stack>
   );
