@@ -137,6 +137,7 @@ export const availableIconsIndex = {
   'filter-plus': true,
   'filter-minus': true,
   flip: true,
+  'elastic': true,
   folder: true,
   font: true,
   fire: true,
