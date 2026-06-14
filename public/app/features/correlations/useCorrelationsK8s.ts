@@ -64,6 +64,12 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
           },
         };
 
+        if (item.spec.config.timeRange?.field !== undefined || item.spec.config.timeRange?.range !== undefined) {
+          queryCorr.config.timeRange = item.spec.config.timeRange;
+        } else {
+          queryCorr.config.timeRange = undefined;
+        }
+
         return toEnrichedCorrelationData(queryCorr);
       } else {
         return undefined;
