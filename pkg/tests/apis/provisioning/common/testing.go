@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -759,17 +760,18 @@ func (h *ProvisioningTestHelper) ValidateManagedDashboardsFolderMetadata(t *test
 	t.Helper()
 
 	// Check if folder is nested or not.
-	// If not, folder annotations should be empty as we have an "instance" sync target
+	// Unified storage now writes "general" (instead of an empty annotation)
+	// for resources parented at the root; treat both as the root sentinel.
 	for _, d := range dashboards {
 		sourcePath, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		isNested := strings.Contains(sourcePath, "/")
 
-		folder, found, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+		folderUID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
 		if isNested {
-			require.True(t, found, "dashboard should have a folder annotation")
-			require.NotEmpty(t, folder, "dashboard should be in a non-empty folder")
+			require.NotEmpty(t, folderUID, "dashboard should be in a non-empty folder")
+			require.False(t, foldermodel.IsRootFolderUID(folderUID), "nested dashboard should not be parented at the root, got %q", folderUID)
 		} else {
-			require.False(t, found, "dashboard should not have a folder annotation")
+			require.True(t, foldermodel.IsRootFolderUID(folderUID), "root dashboard folder annotation should be empty or %q, got %q", foldermodel.GeneralFolderUID, folderUID)
 		}
 
 		managerID, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/managerId")
@@ -1502,10 +1504,17 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 			}
 			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
 		case <-timer.C:
-			if lastErr != nil {
-				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (last delete error: %v)", len(remaining.Items), lastErr)
+			// Include each remaining item's name + finalizers in the error so a
+			// hung cleanup points directly at which controller is failing to
+			// remove its finalizer, not just a bare count.
+			names := make([]string, 0, len(remaining.Items))
+			for _, item := range remaining.Items {
+				names = append(names, fmt.Sprintf("%s(finalizers=%v)", item.GetName(), item.GetFinalizers()))
 			}
-			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
+			if lastErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining [%s] (last delete error: %v)", len(remaining.Items), strings.Join(names, ", "), lastErr)
+			}
+			return fmt.Errorf("deleteAndWait: timed out with %d items remaining [%s]", len(remaining.Items), strings.Join(names, ", "))
 		case <-ticker.C:
 		}
 	}
@@ -2284,7 +2293,8 @@ func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ct
 }
 
 // RequireRepoDashboardParent asserts that the dashboard managed by repoName at
-// the given sourcePath is parented to the expected folder UID.
+// the given sourcePath is parented to the expected folder UID. An empty
+// expectedFolderUID matches either "" or "general" (the canonical root).
 func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, repoName, sourcePath, expectedFolderUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -2300,7 +2310,13 @@ func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceC
 			if annotations["grafana.app/sourcePath"] != sourcePath {
 				continue
 			}
-			assert.Equal(c, expectedFolderUID, annotations["grafana.app/folder"], "dashboard %q parent folder", sourcePath)
+			got := annotations["grafana.app/folder"]
+			if foldermodel.IsRootFolderUID(expectedFolderUID) {
+				assert.True(c, foldermodel.IsRootFolderUID(got),
+					"dashboard %q parent folder: expected root (\"\" or %q), got %q", sourcePath, foldermodel.GeneralFolderUID, got)
+			} else {
+				assert.Equal(c, expectedFolderUID, got, "dashboard %q parent folder", sourcePath)
+			}
 			return
 		}
 		c.Errorf("dashboard with sourcePath %q not found for repo %q", sourcePath, repoName)
@@ -2586,6 +2602,9 @@ func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnaps
 		"%s: generation decreased — object was recreated instead of updated", label)
 }
 
+// RequireFolderState asserts the folder's title, source path, and parent
+// folder annotation. An empty expectedParent matches either "" or "general"
+// (the canonical root sentinel written by unified storage).
 func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -2599,7 +2618,13 @@ func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, fold
 
 		annotations := obj.GetAnnotations()
 		assert.Equal(c, expectedSourcePath, annotations["grafana.app/sourcePath"], "source path")
-		assert.Equal(c, expectedParent, annotations["grafana.app/folder"], "parent folder")
+		gotParent := annotations["grafana.app/folder"]
+		if foldermodel.IsRootFolderUID(expectedParent) {
+			assert.True(c, foldermodel.IsRootFolderUID(gotParent),
+				"parent folder: expected root (\"\" or %q), got %q", foldermodel.GeneralFolderUID, gotParent)
+		} else {
+			assert.Equal(c, expectedParent, gotParent, "parent folder")
+		}
 	}, 30*time.Second, 100*time.Millisecond,
 		"expected folder %q with title=%q sourcePath=%q parent=%q", folderUID, expectedTitle, expectedSourcePath, expectedParent)
 }

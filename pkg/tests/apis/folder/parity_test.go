@@ -233,7 +233,7 @@ func projectK8sFolder(u *unstructured.Unstructured) folderProjection {
 	return folderProjection{
 		UID:       u.GetName(),
 		Title:     title,
-		ParentUID: u.GetAnnotations()[utils.AnnoKeyFolder],
+		ParentUID: folder.ToLegacyFolderUID(u.GetAnnotations()[utils.AnnoKeyFolder]),
 	}
 }
 

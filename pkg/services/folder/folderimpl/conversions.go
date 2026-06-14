@@ -68,7 +68,7 @@ func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers ma
 		Title:       title,
 		Description: description,
 		ID:          meta.GetDeprecatedInternalID(), // nolint:staticcheck
-		ParentUID:   meta.GetFolder(),
+		ParentUID:   folder.ToLegacyFolderUID(meta.GetFolder()),
 		Version:     int(meta.GetGeneration()),
 		ManagedBy:   manager.Kind,
 

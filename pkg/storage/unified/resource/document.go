@@ -7,11 +7,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -237,7 +238,23 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 			doc.OwnerReferences = append(doc.OwnerReferences, fmt.Sprintf("%s/%s/%s", gv.Group, owner.Kind, owner.Name))
 		}
 	}
+
+	// TODO: this should eventually come from the manifest, but to simplify migration we
+	// will start with a hardcoded list
+	if doc.Folder == "" && isFolderResource(key) {
+		doc.Folder = folder.GeneralFolderUID
+	}
+
 	return doc.UpdateCopyFields()
+}
+
+func isFolderResource(key *resourcepb.ResourceKey) bool {
+	switch key.Group {
+	// All resources in dashboards and folders should have the folder annotation set
+	case "folders.grafana.app", "dashboards.grafana.app":
+		return true
+	}
+	return false
 }
 
 func StandardDocumentBuilder(manifests []app.Manifest) DocumentBuilder {

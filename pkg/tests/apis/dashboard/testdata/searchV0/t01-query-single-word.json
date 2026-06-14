@@ -10,6 +10,7 @@
         "panel-tests",
         "graph-ng"
       ],
+      "folder": "general",
       "score": 0.131
     },
     {
@@ -21,6 +22,7 @@
         "panel-tests",
         "graph-ng"
       ],
+      "folder": "general",
       "score": 0.123
     }
   ],

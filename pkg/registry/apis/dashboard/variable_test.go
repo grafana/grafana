@@ -303,6 +303,9 @@ func TestDeriveVariableMetadataName(t *testing.T) {
 	t.Run("global scope uses spec name", func(t *testing.T) {
 		require.Equal(t, "status", deriveVariableMetadataName("status", ""))
 	})
+	t.Run("general folder uid is treated as root", func(t *testing.T) {
+		require.Equal(t, "status", deriveVariableMetadataName("status", "general"))
+	})
 	t.Run("folder scope appends folder uid with delimiter", func(t *testing.T) {
 		require.Equal(t, "status--folder-a", deriveVariableMetadataName("status", "folder-a"))
 	})
@@ -317,6 +320,9 @@ func TestValidateVariableMetadataName(t *testing.T) {
 	})
 	t.Run("matching global metadata name is accepted", func(t *testing.T) {
 		require.NoError(t, validateVariableMetadataName("status", "status", ""))
+	})
+	t.Run("global metadata name is accepted when folder uid is the general sentinel", func(t *testing.T) {
+		require.NoError(t, validateVariableMetadataName("status", "status", "general"))
 	})
 	t.Run("mismatch returns actionable folder-scoped error", func(t *testing.T) {
 		err := validateVariableMetadataName("status5", "status", "abcdef")

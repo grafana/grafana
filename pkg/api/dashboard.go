@@ -572,13 +572,15 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 	title, _, _ = unstructured.NestedString(dash.Object, "spec", "title")
 	slug := slugify.Slugify(title)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"status":    "success",
-		"slug":      slug,
-		"version":   dashMeta.GetGeneration(),
-		"id":        dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
-		"uid":       dashMeta.GetName(),
-		"url":       dashboards.GetDashboardFolderURL(false, dashMeta.GetName(), slug),
-		"folderUid": dashMeta.GetFolder(),
+		"status":  "success",
+		"slug":    slug,
+		"version": dashMeta.GetGeneration(),
+		"id":      dashMeta.GetDeprecatedInternalID(), //nolint:staticcheck
+		"uid":     dashMeta.GetName(),
+		"url":     dashboards.GetDashboardFolderURL(false, dashMeta.GetName(), slug),
+		// Root-parented dashboards are stamped with the canonical "general"
+		// sentinel; the legacy API contract expects an empty folderUid for root.
+		"folderUid": folder.ToLegacyFolderUID(dashMeta.GetFolder()),
 	})
 }
 

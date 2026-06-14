@@ -826,10 +826,10 @@ func successfulResponse() response.Response {
 // if present. Otherwise, it returns the UID of the root folder.
 func getWorkingFolderUID(c *contextmodel.ReqContext) string {
 	folderUID := strings.TrimSpace(c.Req.Header.Get(folderUIDHeader))
-	if folderUID != "" {
-		return folderUID
+	if folder.IsRootFolderUID(folderUID) {
+		return folder.LegacyRootFolderUID // nolint:staticcheck // ""
 	}
-	return folder.LegacyRootFolderUID //nolint:staticcheck
+	return folderUID
 }
 
 func namespaceErrorResponse(err error) response.Response {

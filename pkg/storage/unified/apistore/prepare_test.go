@@ -242,6 +242,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 				Annotations: map[string]string{
 					"A":                           "B",
 					utils.AnnoKeyUpdatedTimestamp: "2025-12-17T01:01:00Z",
+					utils.AnnoKeyFolder:           "fff",
 				},
 				UID: "XXX",
 			},
@@ -339,6 +340,10 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		dash := &dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
 				Name: "test",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "abc",
+				},
+				UID: "xxx",
 			},
 			Spec: dashv1.DashboardSpec{
 				Object: map[string]interface{}{
@@ -364,7 +369,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		t.Run("increment when the folder changes", func(t *testing.T) {
 			b := dash.DeepCopy()
 			b.Annotations = map[string]string{
-				utils.AnnoKeyFolder: "abc",
+				utils.AnnoKeyFolder: "xyz",
 			}
 			out = getPreparedObject(t, ctx, s, b, dash)
 			require.Equal(t, int64(2), out.GetGeneration())
@@ -380,9 +385,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 		t.Run("keep when status, labels, or annotations change", func(t *testing.T) {
 			b := dash.DeepCopy()
-			b.Annotations = map[string]string{
-				"x": "hello",
-			}
+			b.Annotations["x"] = "hello"
 			b.Labels = map[string]string{
 				"a": "b",
 			}
@@ -726,14 +729,14 @@ func TestVerifyFolder(t *testing.T) {
 		return acc
 	}
 
-	t.Run("support enabled, empty folder passes", func(t *testing.T) {
+	t.Run("support enabled, empty folder normalizes to GeneralFolderUID", func(t *testing.T) {
 		s := &Storage{
 			gr:   dashv1.DashboardResourceInfo.GroupResource(),
 			opts: StorageOptions{EnableFolderSupport: true},
 		}
 		obj := makeDash(t, "")
 		require.NoError(t, s.verifyFolder(obj))
-		require.Empty(t, obj.GetFolder())
+		require.Equal(t, folder.GeneralFolderUID, obj.GetFolder())
 	})
 
 	t.Run("support enabled, folder set passes unchanged", func(t *testing.T) {

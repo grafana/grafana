@@ -323,7 +323,10 @@ func TestGetChildren(t *testing.T) {
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
-						Values:   []string{""}, // should be an empty string if general is passed in
+						// "general" is collapsed to the legacy empty value here;
+						// the search backend expands a root filter to match both
+						// root sentinels server-side.
+						Values: []string{""},
 					},
 					{
 						Key:      resource.SEARCH_FIELD_NAME,

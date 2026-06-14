@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 var (
@@ -169,9 +170,13 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	// Get the absolute path of the folder
 	rootFolder := RootFolder(r.repo.Config())
 
-	// If no folder is specified in the file, set it to the root to ensure everything is written under it
+	// If no folder is specified in the file (or the canonical "general"
+	// sentinel the apistore now writes for root-parented resources), route the
+	// write to the repository root and stamp the meta folder accordingly so
+	// downstream consumers see the repo's root identifier rather than the
+	// generic Grafana "general".
 	var fid Folder
-	if folder == "" {
+	if foldermodel.IsRootFolderUID(folder) {
 		fid = Folder{ID: rootFolder}
 		meta.SetFolder(rootFolder) // Set the folder in the metadata to the root folder
 	} else {

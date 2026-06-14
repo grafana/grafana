@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -895,10 +896,10 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return scopeMap[""], nil
 	}
 
-	// If creating a resource that goes in a folder, but no folder is specified,
-	// assume parent folder is the general folder
-	if req.Verb == utils.VerbCreate && t.HasFolderSupport() && req.ParentFolder == "" {
-		req.ParentFolder = accesscontrol.GeneralFolderUID
+	// Create against the synthetic root must match the fixed:folders.general:writer
+	// scope, so collapse every root sentinel to "general" before scope lookup.
+	if req.Verb == utils.VerbCreate && t.HasFolderSupport() && foldermodel.IsRootFolderUID(req.ParentFolder) {
+		req.ParentFolder = foldermodel.GeneralFolderUID
 	}
 
 	if !t.SkipWildcard() && scopeMap["*"] {
@@ -936,6 +937,15 @@ func (s *Service) getScopeMap(permissions []accesscontrol.Permission) map[string
 
 func (s *Service) checkInheritedPermissions(ctx context.Context, scopeMap map[string]bool, req *checkRequest, getTree folderTreeGetter) (bool, error) {
 	if req.ParentFolder == "" {
+		return false, nil
+	}
+
+	// For non-create verbs the synthetic root is not a real parent for
+	// inheritance — fixed:folders.general:reader exists only so Viewers see
+	// the root in the UI, and must not grant access to every root-parented
+	// resource. Create deliberately uses general as the inheritance target
+	// (see checkPermission above) so it skips this guard.
+	if foldermodel.IsRootFolderUID(req.ParentFolder) && req.Verb != utils.VerbCreate {
 		return false, nil
 	}
 
@@ -1061,7 +1071,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	if strings.HasPrefix(req.Action, "folders:") || strings.HasPrefix(req.Action, "folders.permissions:") {
 		res = buildFolderList(scopeMap, tree)
 	} else {
-		res = buildItemList(scopeMap, tree, t.Prefix())
+		res = buildItemList(scopeMap, tree, t.Prefix(), req.Verb)
 	}
 
 	if cacheHit {
@@ -1074,6 +1084,11 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 	return res, nil
 }
 
+// buildFolderList intentionally omits the buildItemList skipRootSentinel guard:
+// for folders:read / folders.permissions:read the synthetic root is the folder
+// itself, so a Viewer with fixed:folders.general:reader must keep seeing it in
+// the list. The inheritance hole closed by buildItemList only applies when the
+// scope grants access to root-parented non-folder resources.
 func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListResponse {
 	itemSet := make(map[string]struct{}, len(scopes))
 
@@ -1097,12 +1112,22 @@ func buildFolderList(scopes map[string]bool, tree folderTree) *authzv1.ListRespo
 	return &authzv1.ListResponse{Items: itemList}
 }
 
-func buildItemList(scopes map[string]bool, tree folderTree, prefix string) *authzv1.ListResponse {
+func buildItemList(scopes map[string]bool, tree folderTree, prefix string, verb string) *authzv1.ListResponse {
 	folderSet := make(map[string]struct{}, len(scopes))
 	itemSet := make(map[string]struct{}, len(scopes))
 
+	// For non-create verbs the synthetic root is not a real parent for
+	// inheritance — fixed:folders.general:reader exists only so Viewers see
+	// the root in the UI, and must not grant access to every root-parented
+	// resource via Compile/Watch. Mirrors the checkInheritedPermissions
+	// guard. Create deliberately uses general as the inheritance target.
+	skipRootSentinel := verb != utils.VerbCreate
+
 	for scope := range scopes {
 		if identifier, ok := strings.CutPrefix(scope, "folders:uid:"); ok {
+			if skipRootSentinel && foldermodel.IsRootFolderUID(identifier) {
+				continue
+			}
 			if _, ok := folderSet[identifier]; ok {
 				continue
 			}

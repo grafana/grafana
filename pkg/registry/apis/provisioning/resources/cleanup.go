@@ -8,6 +8,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 // JSONPatchOperation represents a single JSON Patch (RFC 6902) operation.
@@ -105,8 +106,13 @@ func SortResourceListForDeletion(list *provisioning.ResourceList) {
 			return false
 		}
 
-		hasFolderI := list.Items[i].Folder != ""
-		hasFolderJ := list.Items[j].Folder != ""
+		// "Has a parent folder" means the entry sits under another folder, so
+		// it must be deleted before that parent. The legacy empty annotation
+		// and the canonical "general" sentinel both denote root — treat them
+		// as "no parent" so root-parented folders sort to the end and their
+		// children are deleted first.
+		hasFolderI := !foldermodel.IsRootFolderUID(list.Items[i].Folder)
+		hasFolderJ := !foldermodel.IsRootFolderUID(list.Items[j].Folder)
 		if hasFolderI != hasFolderJ {
 			return hasFolderI
 		}
