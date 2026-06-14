@@ -11,7 +11,18 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { TemplateDashboardModal } from './TemplateDashboardModal';
 import { NewTemplateDashboardInteractions } from './analytics/main';
+import { getDashboardTemplatesTab } from './enterprise-components/DashboardTemplatesTabExtension';
 import { TemplateDashboardInteractions } from './interactions';
+
+jest.mock('./enterprise-components/DashboardTemplatesTabExtension', () => ({
+  getDashboardTemplatesTab: jest.fn(() => null),
+}));
+
+const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
+
+const MockCustomTemplatesTab = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
+  <div data-testid="custom-templates-tab">Custom Templates Tab Content</div>
+);
 
 const mockItemClicked = jest.spyOn(TemplateDashboardInteractions, 'itemClicked').mockImplementation();
 const mockNewItemClicked = jest.spyOn(NewTemplateDashboardInteractions, 'itemClicked').mockImplementation();
@@ -54,6 +65,9 @@ describe('TemplateDashboardModal', () => {
     mockGetList.mockReturnValue([
       { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
     ]);
+    // Default: no custom templates tab registered (matches the real default before the
+    // enterprise extension registers itself). Individual describes override this.
+    mockGetDashboardTemplatesTab.mockReturnValue(null);
     server.use(
       http.get('/api/gnet/dashboards', () => {
         return HttpResponse.json({
@@ -133,9 +147,7 @@ describe('TemplateDashboardModal', () => {
       });
 
       expect(
-        screen.getByText(
-          'Get started with Grafana templates using sample data. Connect your data to power them with real metrics.'
-        )
+        screen.getByText('Get started with Grafana templates. Connect your data to power them with real metrics.')
       ).toBeInTheDocument();
     });
     it('should show template dashboard cards', async () => {
@@ -348,5 +360,116 @@ describe('TemplateDashboardModal', () => {
         action: 'view_template',
       })
     );
+  });
+
+  describe('Custom templates tab', () => {
+    describe('when the grafana.orgDashboardTemplates flag is enabled and the extension is registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      });
+
+      it('renders both Custom and Grafana-provisioned tabs when grafana templates are available', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.getByRole('tab', { name: 'Custom templates' })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: 'Grafana-provisioned' })).toBeInTheDocument();
+      });
+
+      it('defaults to the Custom tab and renders its content', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        expect(await screen.findByTestId('custom-templates-tab')).toBeInTheDocument();
+        // Grafana cards should not be visible while Custom tab is active
+        expect(screen.queryByRole('heading', { level: 3, name: 'Test Template Dashboard' })).not.toBeInTheDocument();
+      });
+
+      it('shows the custom-tab description text by default', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        expect(
+          await screen.findByText('Get started with templates. Connect your data to power them with real metrics.')
+        ).toBeInTheDocument();
+      });
+
+      it('switches to the Grafana-provisioned tab when clicked', async () => {
+        const { user } = render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByTestId('custom-templates-tab');
+
+        await user.click(screen.getByRole('tab', { name: 'Grafana-provisioned' }));
+
+        await waitFor(() => {
+          const cardHeadings = screen.getAllByRole('heading', { level: 3 });
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+        });
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+
+      it('renders only the Custom tab content (no tab bar) when no grafana templates are available', async () => {
+        server.use(
+          http.get('/api/gnet/dashboards', () => {
+            return HttpResponse.json({ page: 1, pages: 1, items: [] });
+          })
+        );
+
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        // Modal still renders because the Custom tab is available even without grafana templates.
+        expect(await screen.findByTestId('custom-templates-tab')).toBeInTheDocument();
+        // Tab bar is only shown when both sources are available.
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('tab', { name: 'Grafana-provisioned' })).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when the grafana.orgDashboardTemplates flag is disabled', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
+        setTestFlags({ 'grafana.orgDashboardTemplates': false });
+      });
+
+      it('does not render the Custom tab even when the extension is registered', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
+
+    describe('when the extension is not registered', () => {
+      beforeEach(() => {
+        mockGetDashboardTemplatesTab.mockReturnValue(null);
+        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      });
+
+      it('does not render the Custom tab even when the feature flag is enabled', async () => {
+        render(<TemplateDashboardModal />, {
+          historyOptions: { initialEntries: [`/dashboards?templateDashboards=true`] },
+        });
+
+        await screen.findByRole('dialog', { name: 'Start a dashboard from a template' });
+
+        expect(screen.queryByRole('tab', { name: 'Custom templates' })).not.toBeInTheDocument();
+        expect(screen.queryByTestId('custom-templates-tab')).not.toBeInTheDocument();
+      });
+    });
   });
 });

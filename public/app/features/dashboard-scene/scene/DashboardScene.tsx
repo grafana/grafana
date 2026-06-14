@@ -1009,7 +1009,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
-    locationService.partial({ editview: 'settings' });
+    const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
+    locationService.partial({ editview });
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {

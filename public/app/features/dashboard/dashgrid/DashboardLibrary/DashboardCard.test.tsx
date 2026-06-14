@@ -661,4 +661,189 @@ describe('DashboardCard', () => {
       expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Custom template kind', () => {
+    it('should render exactly one heading containing the title', () => {
+      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      const headings = screen.getAllByRole('heading', { name: 'My Custom Template' });
+      expect(headings).toHaveLength(1);
+    });
+
+    it('should render the description inside the rectangle, not in the bottom section', () => {
+      const dashboard = createMockGnetDashboard({ description: 'A custom template description' });
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      const descriptions = screen.getAllByTestId('dashboard-card-description');
+      expect(descriptions).toHaveLength(1);
+      expect(descriptions[0]).toHaveTextContent('A custom template description');
+    });
+
+    it('should not render the "No preview available" placeholder', () => {
+      const dashboard = createMockGnetDashboard();
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.queryByText('No preview available')).not.toBeInTheDocument();
+    });
+
+    it('should render "Created by:" line with creator name when createdByName is provided', () => {
+      const dashboard = createMockGnetDashboard();
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+          createdByName="Jane Doe"
+        />
+      );
+
+      expect(screen.getByText('Created by:')).toBeInTheDocument();
+      expect(screen.getByText('Jane Doe')).toBeInTheDocument();
+    });
+
+    it('should not render "Created by:" line when createdByName is undefined', () => {
+      const dashboard = createMockGnetDashboard();
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.queryByText('Created by:')).not.toBeInTheDocument();
+    });
+
+    it('should not render "Created by:" line for non-custom kinds even when createdByName is provided', () => {
+      const dashboard = createMockGnetDashboard();
+      render(
+        <DashboardCard
+          title="Template Dashboard"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          createdByName="Jane Doe"
+        />
+      );
+
+      expect(screen.queryByText('Created by:')).not.toBeInTheDocument();
+    });
+
+    it('should render the "Use template" button (not "View template" or "View dashboard")', () => {
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'View dashboard: My Custom Template' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View dashboard: My Custom Template' })).toHaveTextContent(
+        'Use template'
+      );
+    });
+
+    it('should render Edit button when onEdit is provided', () => {
+      const mockOnEdit = jest.fn();
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onEdit={mockOnEdit}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Edit template: My Custom Template' })).toBeInTheDocument();
+    });
+
+    it('should render tags when provided', () => {
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+          tags={['observability', 'team-a']}
+        />
+      );
+
+      expect(screen.getByText('observability')).toBeInTheDocument();
+      expect(screen.getByText('team-a')).toBeInTheDocument();
+    });
+
+    it('should fall back to "No description available" when description is empty', () => {
+      const dashboard = createMockGnetDashboard({ description: '' });
+      render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={dashboard}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      expect(screen.getByTestId('dashboard-card-description')).toHaveTextContent('No description available');
+    });
+
+    it('should call onEdit when the Edit button is clicked', async () => {
+      const mockOnEdit = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onEdit={mockOnEdit}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Edit template: My Custom Template' }));
+
+      expect(mockOnEdit).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).not.toHaveBeenCalled();
+    });
+
+    it('should call onClick when the primary "Use template" button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="My Custom Template"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="custom_dashboard_template"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'View dashboard: My Custom Template' }));
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+  });
 });

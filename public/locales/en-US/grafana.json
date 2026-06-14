@@ -6512,7 +6512,10 @@
       "customize-with-assistant-button-label": "Customize with Assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
+      "edit-template-button": "Edit",
+      "edit-template-button-label": "Edit template: {{title}}",
       "no-preview": "No preview available ",
+      "use-template-button": "Use template",
       "view-dashboard-button": "View dashboard",
       "view-dashboard-button-label": "View dashboard: {{title}}",
       "view-template-button": "View template",
@@ -6543,7 +6546,13 @@
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
     "create-from-scratch": "Create a dashboard from scratch instead",
+    "custom-dashboard-template-filters": {
+      "creator-placeholder": "Filter by created by",
+      "search-placeholder": "Search",
+      "sort-placeholder": "Sort"
+    },
     "dashboard-card": {
+      "created-by-label": "Created by:",
       "details": {
         "datasource": "Datasource",
         "dependencies": "Dependencies",
@@ -6569,7 +6578,10 @@
     "suggested-error-description": "Failed to load suggested dashboard.",
     "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
-      "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
+      "description": "Get started with Grafana templates. Connect your data to power them with real metrics.",
+      "description-custom": "Get started with templates. Connect your data to power them with real metrics.",
+      "tab-custom": "Custom templates",
+      "tab-grafana": "Grafana-provisioned",
       "title": "Start a dashboard from a template"
     }
   },
@@ -6869,6 +6881,18 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-template-edit-banner": {
+      "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
+      "title": "You are editing {{ templateName }}"
+    },
+    "dashboard-template-saved-banner": {
+      "body": "The {{ templateName }} template was created. You can access it in the <1>template gallery</1>.",
+      "title": "Template created"
+    },
+    "dashboard-template-use-banner": {
+      "body": "Save this dashboard and edit it for your use case",
+      "title": "You are using {{ templateName }} template in a new dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Data source options",
@@ -7765,6 +7789,13 @@
     },
     "settings": {
       "title": "Settings"
+    },
+    "template": {
+      "title": "Template",
+      "unavailable-body": "This dashboard is not being edited as a template, so template settings cannot be shown.",
+      "unavailable-oss-body": "Editing dashboard template settings requires Grafana Enterprise.",
+      "unavailable-oss-title": "Available in Grafana Enterprise",
+      "unavailable-title": "Template metadata unavailable"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
