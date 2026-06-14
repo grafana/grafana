@@ -2,10 +2,12 @@ package remotecache
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -79,4 +81,40 @@ func TestIntegrationSecondSet(t *testing.T) {
 
 	err = db.Set(context.Background(), "killa-gorilla", obj, 0)
 	assert.Equal(t, err, nil)
+}
+
+func TestIntegrationConcurrentSet(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	sqlstore := db.InitTestDB(t)
+	cache := &databaseCache{
+		SQLStore: sqlstore,
+		log:      log.New("remotecache.database"),
+	}
+
+	const writers = 10
+	const key = "shared-key"
+	value := []byte("v")
+
+	var wg sync.WaitGroup
+	errs := make(chan error, writers)
+	for i := 0; i < writers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := cache.Set(context.Background(), key, value, 5*time.Minute); err != nil {
+				errs <- err
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		t.Errorf("concurrent Set returned error: %v", err)
+	}
+
+	got, err := cache.Get(context.Background(), key)
+	require.NoError(t, err)
+	assert.Equal(t, value, got)
 }
