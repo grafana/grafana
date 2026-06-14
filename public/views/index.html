@@ -195,6 +195,41 @@
         margin-bottom: 8px;
       }
 
+      .noscript-message {
+        display: none;
+        min-height: 100vh;
+        box-sizing: border-box;
+        padding: 32px;
+        font-family: Sans-serif;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .noscript-message__content {
+        max-width: 480px;
+        text-align: center;
+      }
+
+      .noscript-message__title {
+        margin: 0 0 12px;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      .noscript-message__text {
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .theme-light .noscript-message {
+        color: #1f2328;
+      }
+
+      .theme-dark .noscript-message {
+        color: #f4f5f5;
+      }
+
       [ng\:cloak],
       [ng-cloak],
       .ng-cloak {
@@ -264,6 +299,27 @@
         }
       </script>
     </div>
+
+    <noscript>
+      <style>
+        .preloader {
+          display: none;
+        }
+
+        .noscript-message {
+          display: flex;
+        }
+      </style>
+    </noscript>
+
+    <main class="noscript-message" role="alert" aria-labelledby="noscript-title">
+      <div class="noscript-message__content">
+        <h1 id="noscript-title" class="noscript-message__title">Grafana requires JavaScript to run</h1>
+        <p class="noscript-message__text">
+          Enable JavaScript in your browser settings and reload this page to continue using Grafana.
+        </p>
+      </div>
+    </main>
 
     <div id="reactRoot"></div>
 
