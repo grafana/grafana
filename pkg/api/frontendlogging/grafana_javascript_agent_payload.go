@@ -5,15 +5,12 @@ as soon as we can use agent as a dependency this can be refactored
 package frontendlogging
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	om "github.com/wk8/go-ordered-map"
-	"go.opentelemetry.io/collector/pdata/pcommon"
-	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 // KeyVal is an ordered map of string to interface
@@ -57,7 +54,6 @@ type Payload struct {
 	Logs         []Log         `json:"logs,omitempty"`
 	Measurements []Measurement `json:"measurements,omitempty"`
 	Meta         Meta          `json:"meta,omitempty"`
-	Traces       *Traces       `json:"traces,omitempty"`
 }
 
 // Frame struct represents a single stacktrace frame
@@ -139,77 +135,6 @@ func (tc TraceContext) KeyVal() *KeyVal {
 	KeyValAdd(retv, "traceID", tc.TraceID)
 	KeyValAdd(retv, "spanID", tc.SpanID)
 	return retv
-}
-
-// Traces wraps the otel traces model.
-type Traces struct {
-	ptrace.Traces
-}
-
-// UnmarshalJSON unmarshals Traces model.
-func (t *Traces) UnmarshalJSON(b []byte) error {
-	unmarshaler := ptrace.JSONUnmarshaler{}
-	td, err := unmarshaler.UnmarshalTraces(b)
-	if err != nil {
-		return err
-	}
-	*t = Traces{td}
-	return nil
-}
-
-// MarshalJSON marshals Traces model to json.
-func (t Traces) MarshalJSON() ([]byte, error) {
-	marshaler := ptrace.JSONMarshaler{}
-	return marshaler.MarshalTraces(t.Traces)
-}
-
-// SpanSlice unpacks Traces entity into a slice of Spans.
-func (t Traces) SpanSlice() []ptrace.Span {
-	spans := make([]ptrace.Span, 0)
-	rss := t.ResourceSpans()
-	for i := 0; i < rss.Len(); i++ {
-		rs := rss.At(i)
-		ilss := rs.ScopeSpans()
-		for j := 0; j < ilss.Len(); j++ {
-			s := ilss.At(j).Spans()
-			for si := 0; si < s.Len(); si++ {
-				spans = append(spans, s.At(si))
-			}
-		}
-	}
-	return spans
-}
-
-// SpanToKeyVal returns KeyVal representation of a Span.
-func SpanToKeyVal(s ptrace.Span) *KeyVal {
-	traceID := s.TraceID()
-	traceIDHex := hex.EncodeToString(traceID[:])
-
-	spanID := s.SpanID()
-	spanIDHex := hex.EncodeToString(spanID[:])
-
-	parentSpanID := s.ParentSpanID()
-	parentSpanIDHex := hex.EncodeToString(parentSpanID[:])
-
-	kv := NewKeyVal()
-	if s.StartTimestamp() > 0 {
-		KeyValAdd(kv, "timestamp", s.StartTimestamp().AsTime().String())
-	}
-	if s.EndTimestamp() > 0 {
-		KeyValAdd(kv, "end_timestamp", s.StartTimestamp().AsTime().String())
-	}
-	KeyValAdd(kv, "kind", "span")
-	KeyValAdd(kv, "traceID", traceIDHex)
-	KeyValAdd(kv, "spanID", spanIDHex)
-	KeyValAdd(kv, "span_kind", s.Kind().String())
-	KeyValAdd(kv, "name", s.Name())
-	KeyValAdd(kv, "parent_spanID", parentSpanIDHex)
-	s.Attributes().Range(func(k string, v pcommon.Value) bool {
-		KeyValAdd(kv, "attr_"+k, fmt.Sprintf("%v", v))
-		return true
-	})
-
-	return kv
 }
 
 // LogLevel is log level enum for incoming app logs

@@ -11,7 +11,6 @@ type FrontendGrafanaJavascriptAgentEvent struct {
 	Logs         []Log         `json:"logs,omitempty"`
 	Measurements []Measurement `json:"measurements,omitempty"`
 	Meta         Meta          `json:"meta,omitempty"`
-	Traces       *Traces       `json:"traces,omitempty"`
 }
 
 // KeyValToInterfaceMap converts KeyVal to map[string]interface
