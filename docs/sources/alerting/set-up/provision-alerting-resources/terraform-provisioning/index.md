@@ -57,6 +57,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
+  recording-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
   service-accounts:
     - pattern: /docs/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/
@@ -132,6 +137,7 @@ For Grafana Cloud, refer to the [instructions to manage a Grafana Cloud stack wi
 | Alerting resource                                   | Terraform resource                                                                                                               |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | [Alert rules](ref:alerting-rules)                   | [grafana_rule_group](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/rule_group)                   |
+| [Recording rules](ref:recording-rules)              | [grafana_apps_rules_recordingrule_v0alpha1](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_rules_recordingrule_v0alpha1) |
 | [Contact points](ref:contact-points)                | [grafana_contact_point](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/contact_point)             |
 | [Notification templates](ref:notification-template) | [grafana_message_template](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/message_template)       |
 | [Notification policy tree](ref:notification-policy) | [grafana_notification_policy](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy) |
@@ -239,6 +245,61 @@ In this section, we'll create Terraform configurations for each alerting resourc
    To link the alert rule group with its respective data source and folder in this example, replace the following field values:
    - `<terraform_data_source_name>` with the terraform name of the previously defined data source.
    - `<terraform_folder_name>` with the terraform name of the previously defined folder.
+
+1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
+
+### Add recording rules
+
+[Recording rules](ref:recording-rules) pre-compute frequently used or expensive queries and save the results as a new time series metric. The Terraform provider manages recording rules through the `recordingrules.rules.alerting.grafana.app` endpoint using the [`grafana_apps_rules_recordingrule_v0alpha1`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_rules_recordingrule_v0alpha1) resource.
+
+1. Define the recording rule using the `grafana_apps_rules_recordingrule_v0alpha1` resource.
+
+   ```terraform
+   resource "grafana_apps_rules_recordingrule_v0alpha1" "<terraform_recording_rule_name>" {
+       metadata {
+           uid        = "<RECORDING_RULE_UID>"
+           folder_uid = grafana_folder.<terraform_folder_name>.uid
+       }
+       spec {
+           title = "My Recording Rule"
+           trigger {
+               interval = "1m"
+           }
+           expressions = {
+               "A" = jsonencode({
+                   model = {
+                       editorMode    = "code"
+                       expr          = "sum(rate(http_requests_total[5m]))"
+                       instant       = true
+                       intervalMs    = 1000
+                       maxDataPoints = 43200
+                       refId         = "A"
+                   }
+                   datasource_uid = "<SOURCE_DATASOURCE_UID>"
+                   relative_time_range = {
+                       from = "600s"
+                       to   = "0s"
+                   }
+                   query_type = ""
+                   source     = true
+               })
+           }
+           target_datasource_uid = "<TARGET_DATASOURCE_UID>"
+           metric                = "http_requests:rate5m:sum"
+           labels = {
+               team = "backend"
+           }
+       }
+   }
+   ```
+
+   Replace the following values:
+
+   - `<terraform_recording_rule_name>` with the Terraform resource name for this recording rule.
+   - `<RECORDING_RULE_UID>` with a unique identifier for the recording rule.
+   - `<terraform_folder_name>` with the Terraform name of the previously defined folder.
+   - `<SOURCE_DATASOURCE_UID>` with the UID of the data source to query.
+   - `<TARGET_DATASOURCE_UID>` with the UID of the Prometheus-compatible data source to write results to.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 

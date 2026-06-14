@@ -39,6 +39,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/group-alert-notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/group-alert-notifications/
+  http-api-provisioning:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning/
 ---
 
 # Example of multi-dimensional alerts on time series data
@@ -162,4 +167,4 @@ For additional learning resources, check out:
 
 - [Get started tutorial – Create multi-dimensional alerts and route them](https://grafana.com/tutorials/alerting-get-started-pt2/)
 - [Example of alerting on tabular data](ref:table-data-example)
-  Update the interval of a rule group or modify the rules of the group.
+- [Use the HTTP API to manage alerting resources](ref:http-api-provisioning) — update the evaluation interval of a rule group or replace all rules in the group.
