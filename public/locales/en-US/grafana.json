@@ -3304,9 +3304,6 @@
       },
       "continue-in-alerting": "Continue in Alerting",
       "create": "Create",
-      "evaluation": {
-        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
-      },
       "notification": {
         "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
         "description": {
