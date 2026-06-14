@@ -2,6 +2,7 @@ import { acceptCompletion, autocompletion, startCompletion, type CompletionSourc
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
 import { render, screen, waitFor } from '@testing-library/react';
+import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
 import { EditorView } from '@uiw/react-codemirror';
 
 import { faro } from '@grafana/faro-web-sdk';
@@ -168,6 +169,28 @@ describe('CodeMirror CodeEditor', () => {
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
     );
+  });
+
+  it('defaults to the baked-in vscode theme when no theme prop is provided', () => {
+    render(<CodeEditor value="" onChange={jest.fn()} />);
+
+    expect([vscodeLight, vscodeDark]).toContain(capturedProps?.theme);
+  });
+
+  it('passes a provided theme through to CodeMirror, replacing the default vscode theme', () => {
+    const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
+
+    render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
+
+    expect(capturedProps?.theme).toBe(customTheme);
+  });
+
+  it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {
+    const basicSetup = { lineNumbers: false, foldGutter: false } as const;
+
+    render(<CodeEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
+
+    expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toBe(basicSetup);
   });
 
   it('loads language extensions lazily when language is provided', async () => {

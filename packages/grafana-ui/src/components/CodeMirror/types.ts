@@ -1,5 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type Extension } from '@codemirror/state';
+import { type BasicSetupOptions } from '@uiw/react-codemirror';
 
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
@@ -10,7 +11,20 @@ export type CodeMirrorExtension = Extension;
 
 export type CodeMirrorCompletionMode = 'override' | 'merge';
 
+/**
+ * Toggles for CodeMirror's bundled "basic setup" extensions (line numbers,
+ * gutters, bracket closing, default keymaps, etc.). Pass `false` to disable all
+ * of them, or an object to disable individual features.
+ */
+export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
+
 export type CodeMirrorEditorLanguage = 'json' | 'sql';
+
+/**
+ * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
+ * or one of CodeMirror's built-in keywords.
+ */
+export type CodeMirrorEditorTheme = CodeMirrorExtension | 'light' | 'dark' | 'none';
 
 export interface CodeMirrorEditorProps {
   /**
@@ -52,4 +66,18 @@ export interface CodeMirrorEditorProps {
    * Use this for linting, custom keymaps, themes, etc.
    */
   extensions?: CodeMirrorExtension[];
+  /**
+   * Toggles for CodeMirror's bundled "basic setup" extensions. Defaults to the
+   * full setup (line numbers, gutters, bracket closing, etc.). Pass `false` or a
+   * partial options object to opt features out — e.g. for a single-line input.
+   */
+  basicSetup?: CodeMirrorBasicSetup;
+  /**
+   * Replaces the editor's default VS Code theme. A layered theme extension
+   * cannot reliably override the default (the default's style module is mounted
+   * last and wins the CSS cascade for equal-specificity rules), so theming the
+   * editor differently must go through this prop. Defaults to the VS Code theme
+   * (dark or light) when omitted.
+   */
+  theme?: CodeMirrorEditorTheme;
 }

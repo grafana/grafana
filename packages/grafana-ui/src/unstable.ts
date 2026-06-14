@@ -20,6 +20,7 @@ export type {
   CodeMirrorCompletionSource,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
   CodeMirrorExtension,
 } from './components/CodeMirror/types';
 export { TableNG } from './components/Table/TableNG/TableNG';

@@ -92,6 +92,8 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
+  theme: themeOverride,
+  basicSetup,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
@@ -117,11 +119,12 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? (theme.isDark ? vscodeDark : vscodeLight)}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
+        basicSetup={basicSetup}
       />
     </>
   );
