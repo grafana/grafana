@@ -2797,6 +2797,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.viewPanelPane",
+			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
 			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
 			Stage:           FeatureStageExperimental,

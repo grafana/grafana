@@ -488,6 +488,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/repeating-an-empty-row.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/set-options-from-ui.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/templating-dashboard-links-and-variables.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/dashboard-view-panel.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/fixtures/exemplars-query-response.json @grafana/data-sources-plugins
