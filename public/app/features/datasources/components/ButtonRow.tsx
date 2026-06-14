@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { Button } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 
 export interface Props {
   canSave: boolean;
@@ -15,7 +15,7 @@ export interface Props {
 
 export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, children }: Props) {
   return (
-    <div className="gf-form-button-row">
+    <Stack direction="row" gap={2} wrap="wrap">
       <Button
         type="button"
         variant="destructive"
@@ -45,6 +45,6 @@ export function ButtonRow({ canSave, canDelete, onDelete, onSubmit, onTest, chil
           <Trans i18nKey="datasources.button-row.test">Test</Trans>
         </Button>
       )}
-    </div>
+    </Stack>
   );
 }
