@@ -252,7 +252,27 @@ export function prepConfig(opts: PrepConfigOpts) {
             // uPlot auto-ranges from the yMin facet data, so we grow by one bucket factor.
             // When yMin values are all 0, multiplicative expansion stays 0; fall back to max(yMax).
             const bucketFactor = calculateBucketExpansionFactor(yMinValues, yMaxValues);
-            dataMax *= bucketFactor;
+
+            // Native histograms with custom bounds (NHCB) can carry unbounded
+            // tail buckets such as (-Inf, first] and (last, +Inf]. uPlot's
+            // dataMin/dataMax can be ±Inf in that case, which breaks the
+            // downstream log-scale math. Substitute the finite bucket extrema
+            // and give each unbounded end one geometric bucket of room.
+            const bounds = findFiniteBucketBounds(yMinValues, yMaxValues);
+            if (bounds.finiteMin != null) {
+              dataMin = bounds.finiteMin;
+            }
+            if (bounds.finiteMax != null) {
+              dataMax = bounds.finiteMax;
+            }
+            if (bounds.hasUnboundedLower && bounds.finiteMin != null && bucketFactor > 1) {
+              dataMin = bounds.finiteMin / bucketFactor;
+            }
+            if (bounds.hasUnboundedUpper && bounds.finiteMax != null && bucketFactor > 1) {
+              dataMax = bounds.finiteMax * bucketFactor;
+            } else {
+              dataMax *= bucketFactor;
+            }
             if (dataMax <= 0) {
               dataMax = yMaxValues.reduce<number>((acc, v) => (typeof v === 'number' && v > acc ? v : acc), 1);
             }
@@ -406,6 +426,12 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
+    // Sparse heatmaps already do their own height-aware tick thinning in the
+    // splits callback (and need every remaining split labeled to match the
+    // classic histogram heatmap's row layout). Drop uPlot's default
+    // calculateSpace-based collision filter so it doesn't re-drop labels we
+    // explicitly asked for.
+    space: isSparseHeatmap ? 1 : undefined,
     splits: isOrdinalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
@@ -433,7 +459,53 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
           return splits;
         }
-      : undefined,
+      : isSparseHeatmap
+        ? (self: uPlot) => {
+            // Render bucket boundaries as y-axis ticks so the visualization
+            // mirrors the classic histogram heatmap (which is ordinal and
+            // labels each le= row). For NHCB the boundaries are exactly the
+            // explicit values in yMin/yMax; for exponential native histograms
+            // they're the discrete base^k step points. Thinning happens via
+            // the values callback below.
+            const yMinData = self.data[1]?.[1];
+            const yMaxData = self.data[1]?.[2];
+            const yMinVals = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxVals = Array.isArray(yMaxData) ? yMaxData : [];
+            const bounds = findFiniteBucketBounds(yMinVals, yMaxVals);
+            const factor = calculateBucketExpansionFactor(yMinVals, yMaxVals);
+
+            const finite = new Set<number>();
+            for (const v of yMinVals) {
+              if (typeof v === 'number' && Number.isFinite(v)) {
+                finite.add(v);
+              }
+            }
+            for (const v of yMaxVals) {
+              if (typeof v === 'number' && Number.isFinite(v)) {
+                finite.add(v);
+              }
+            }
+            let splits = [...finite].sort((a, b) => a - b);
+
+            if (bounds.hasUnboundedLower && bounds.finiteMin != null && factor > 1) {
+              splits.unshift(bounds.finiteMin / factor);
+            }
+            if (bounds.hasUnboundedUpper && bounds.finiteMax != null && factor > 1) {
+              splits.push(bounds.finiteMax * factor);
+            }
+
+            // Thin labels when the y-axis is too short to fit them all.
+            if (self.height < 60 && splits.length > 2) {
+              splits = [splits[0], splits[splits.length - 1]];
+            } else {
+              while (splits.length > 3 && (self.height - 15) / splits.length < 10) {
+                splits = splits.filter((_v, idx) => idx % 2 === 0);
+              }
+            }
+
+            return splits;
+          }
+        : undefined,
     values: isOrdinalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
@@ -446,7 +518,38 @@ export function prepConfig(opts: PrepConfigOpts) {
           }
           return splits;
         }
-      : undefined,
+      : isSparseHeatmap
+        ? (self: uPlot, splits) => {
+            // Label synthetic axis bounds (introduced for unbounded NHCB
+            // tails) as the conventional "0" / "+Inf" used by the classic
+            // histogram heatmap; finite bucket boundaries use the normal
+            // display formatter.
+            const yMinData = self.data[1]?.[1];
+            const yMaxData = self.data[1]?.[2];
+            const yMinVals = Array.isArray(yMinData) ? yMinData : [];
+            const yMaxVals = Array.isArray(yMaxData) ? yMaxData : [];
+            const bounds = findFiniteBucketBounds(yMinVals, yMaxVals);
+            const factor = calculateBucketExpansionFactor(yMinVals, yMaxVals);
+            const syntheticLower =
+              bounds.hasUnboundedLower && bounds.finiteMin != null && factor > 1
+                ? bounds.finiteMin / factor
+                : null;
+            const syntheticUpper =
+              bounds.hasUnboundedUpper && bounds.finiteMax != null && factor > 1
+                ? bounds.finiteMax * factor
+                : null;
+
+            return splits.map((v) => {
+              if (syntheticLower != null && v === syntheticLower) {
+                return '0';
+              }
+              if (syntheticUpper != null && v === syntheticUpper) {
+                return '+Inf';
+              }
+              return formattedValueToString(dispY(v, undefined));
+            });
+          }
+        : undefined,
   });
 
   const pathBuilder = isSparseHeatmap ? heatmapPathsSparse : heatmapPathsDense;
@@ -827,6 +930,16 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
         let xOffs = new Map();
         let yOffs = new Map();
 
+        // Native histograms with custom bounds (NHCB) can carry unbounded
+        // tail buckets, surfacing yMin = -Infinity or yMax = +Infinity.
+        // valToPosY of a non-finite value on a log scale returns NaN, which
+        // would otherwise silently drop the cell (Canvas2D rect with NaN
+        // dimensions is a no-op). Substitute the scale's resolved bounds —
+        // these are finite by construction, since the range callback above
+        // computes scaleMin/scaleMax from the finite bucket extrema.
+        const scaleYMin = scaleY.min!;
+        const scaleYMax = scaleY.max!;
+
         for (let i = 0; i < xMaxs.length; i++) {
           let xMax = xMaxs[i];
           let yMin = yMins[i];
@@ -837,11 +950,13 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           }
 
           if (!yOffs.has(yMin)) {
-            yOffs.set(yMin, round(valToPosY(yMin, scaleY, yDim, yOff)));
+            const yMinSafe = Number.isFinite(yMin) ? yMin : scaleYMin;
+            yOffs.set(yMin, round(valToPosY(yMinSafe, scaleY, yDim, yOff)));
           }
 
           if (!yOffs.has(yMax)) {
-            yOffs.set(yMax, round(valToPosY(yMax, scaleY, yDim, yOff)));
+            const yMaxSafe = Number.isFinite(yMax) ? yMax : scaleYMax;
+            yOffs.set(yMax, round(valToPosY(yMaxSafe, scaleY, yDim, yOff)));
           }
         }
 
@@ -893,6 +1008,53 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
     );
 
     return null;
+  };
+}
+
+/**
+ * Returns the smallest finite yMin, the largest finite yMax, and whether
+ * either tail of the bucket sequence is unbounded (e.g., NHCB's (-Inf, first]
+ * and (last, +Inf] tail buckets).
+ *
+ * @param yMinValues - Array of yMin bucket boundary values
+ * @param yMaxValues - Array of yMax bucket boundary values
+ */
+export function findFiniteBucketBounds(yMinValues: unknown[], yMaxValues: unknown[]) {
+  // Every bucket boundary appears as either the yMin of one sample or the yMax
+  // of another (or both). For sparse encodings — NHCB omits empty buckets —
+  // some boundaries appear only in yMax (e.g., the upper bound of the lowest
+  // populated bucket when the bucket immediately above it is empty). Combine
+  // both fields when computing the smallest / largest finite boundary so we
+  // don't miss those.
+  let finiteMin = Infinity;
+  let finiteMax = -Infinity;
+  let hasUnboundedLower = false;
+  let hasUnboundedUpper = false;
+
+  const consider = (v: unknown, position: 'min' | 'max') => {
+    if (typeof v !== 'number') {
+      return;
+    }
+    if (Number.isFinite(v)) {
+      finiteMin = Math.min(finiteMin, v);
+      finiteMax = Math.max(finiteMax, v);
+    } else if (position === 'min') {
+      hasUnboundedLower = true;
+    } else {
+      hasUnboundedUpper = true;
+    }
+  };
+
+  for (let i = 0; i < yMinValues.length; i++) {
+    consider(yMinValues[i], 'min');
+    consider(yMaxValues[i], 'max');
+  }
+
+  return {
+    finiteMin: Number.isFinite(finiteMin) ? finiteMin : null,
+    finiteMax: Number.isFinite(finiteMax) ? finiteMax : null,
+    hasUnboundedLower,
+    hasUnboundedUpper,
   };
 }
 
