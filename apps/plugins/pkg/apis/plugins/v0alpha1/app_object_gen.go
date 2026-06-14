@@ -15,26 +15,26 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type Plugin struct {
+type App struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the Plugin
-	Spec PluginSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the App
+	Spec AppSpec `json:"spec" yaml:"spec"`
 }
 
-func NewPlugin() *Plugin {
-	return &Plugin{
-		Spec: *NewPluginSpec(),
+func NewApp() *App {
+	return &App{
+		Spec: *NewAppSpec(),
 	}
 }
 
-func (o *Plugin) GetSpec() any {
+func (o *App) GetSpec() any {
 	return o.Spec
 }
 
-func (o *Plugin) SetSpec(spec any) error {
-	cast, ok := spec.(PluginSpec)
+func (o *App) SetSpec(spec any) error {
+	cast, ok := spec.(AppSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -42,25 +42,25 @@ func (o *Plugin) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *Plugin) GetSubresources() map[string]any {
+func (o *App) GetSubresources() map[string]any {
 	return map[string]any{}
 }
 
-func (o *Plugin) GetSubresource(name string) (any, bool) {
+func (o *App) GetSubresource(name string) (any, bool) {
 	switch name {
 	default:
 		return nil, false
 	}
 }
 
-func (o *Plugin) SetSubresource(name string, value any) error {
+func (o *App) SetSubresource(name string, value any) error {
 	switch name {
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
 }
 
-func (o *Plugin) GetStaticMetadata() resource.StaticMetadata {
+func (o *App) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -71,7 +71,7 @@ func (o *Plugin) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *Plugin) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *App) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -81,7 +81,7 @@ func (o *Plugin) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *Plugin) GetCommonMetadata() resource.CommonMetadata {
+func (o *App) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -113,7 +113,7 @@ func (o *Plugin) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *Plugin) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *App) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -158,7 +158,7 @@ func (o *Plugin) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *Plugin) GetCreatedBy() string {
+func (o *App) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -166,7 +166,7 @@ func (o *Plugin) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *Plugin) SetCreatedBy(createdBy string) {
+func (o *App) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -174,7 +174,7 @@ func (o *Plugin) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *Plugin) GetUpdateTimestamp() time.Time {
+func (o *App) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -183,7 +183,7 @@ func (o *Plugin) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *Plugin) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *App) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -191,7 +191,7 @@ func (o *Plugin) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *Plugin) GetUpdatedBy() string {
+func (o *App) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -199,7 +199,7 @@ func (o *Plugin) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *Plugin) SetUpdatedBy(updatedBy string) {
+func (o *App) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -207,60 +207,60 @@ func (o *Plugin) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *Plugin) Copy() resource.Object {
+func (o *App) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *Plugin) DeepCopyObject() runtime.Object {
+func (o *App) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *Plugin) DeepCopy() *Plugin {
-	cpy := &Plugin{}
+func (o *App) DeepCopy() *App {
+	cpy := &App{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *Plugin) DeepCopyInto(dst *Plugin) {
+func (o *App) DeepCopyInto(dst *App) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (Plugin) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.Plugin"
+func (App) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.App"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &Plugin{}
+var _ resource.Object = &App{}
 
 // +k8s:openapi-gen=true
-type PluginList struct {
+type AppList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []Plugin `json:"items" yaml:"items"`
+	Items           []App `json:"items" yaml:"items"`
 }
 
-func (o *PluginList) DeepCopyObject() runtime.Object {
+func (o *AppList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *PluginList) Copy() resource.ListObject {
-	cpy := &PluginList{
+func (o *AppList) Copy() resource.ListObject {
+	cpy := &AppList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]Plugin, len(o.Items)),
+		Items:    make([]App, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*Plugin); ok {
+		if item, ok := o.Items[i].Copy().(*App); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *PluginList) GetItems() []resource.Object {
+func (o *AppList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -268,40 +268,40 @@ func (o *PluginList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *PluginList) SetItems(items []resource.Object) {
-	o.Items = make([]Plugin, len(items))
+func (o *AppList) SetItems(items []resource.Object) {
+	o.Items = make([]App, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*Plugin)
+		o.Items[i] = *items[i].(*App)
 	}
 }
 
-func (o *PluginList) DeepCopy() *PluginList {
-	cpy := &PluginList{}
+func (o *AppList) DeepCopy() *AppList {
+	cpy := &AppList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *PluginList) DeepCopyInto(dst *PluginList) {
+func (o *AppList) DeepCopyInto(dst *AppList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (PluginList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.PluginList"
+func (AppList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.AppList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &PluginList{}
+var _ resource.ListObject = &AppList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *PluginSpec) DeepCopy() *PluginSpec {
-	cpy := &PluginSpec{}
+func (s *AppSpec) DeepCopy() *AppSpec {
+	cpy := &AppSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *PluginSpec) DeepCopyInto(dst *PluginSpec) {
+func (s *AppSpec) DeepCopyInto(dst *AppSpec) {
 	resource.CopyObjectInto(dst, s)
 }

@@ -105,8 +105,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(SettingsSpec{}.OpenAPIModelName()),
+							Ref: ref(SettingsSpec{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
@@ -186,27 +185,13 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"enabled": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"pinned": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"jsonData": {
+					"Unstructured": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
-				Required: []string{"enabled", "pinned", "jsonData"},
+				Required: []string{"Unstructured"},
 			},
 		},
 		Dependencies: []string{

@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
@@ -47,9 +48,7 @@ func TestSettingsGet_NoPersistedSettings(t *testing.T) {
 	require.Equal(t, "default", settings.Namespace)
 	require.Equal(t, getLegacySettingsUID(1, "test-app"), settings.UID)
 	require.Equal(t, getLegacySettingsResourceVersion(nil), settings.ResourceVersion)
-	require.False(t, settings.Spec.Enabled)
-	require.False(t, settings.Spec.Pinned)
-	require.Nil(t, settings.Spec.JsonData.Object)
+	require.Nil(t, settings.Spec.Object)
 }
 
 func TestSettingsGet_WithPersistedSettings(t *testing.T) {
@@ -80,9 +79,7 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 		JSONData: map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)},
 		Updated:  updated,
 	}), settings.ResourceVersion)
-	require.True(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
-	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)
+	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.Object)
 }
 
 func TestSettingsList(t *testing.T) {
@@ -103,8 +100,7 @@ func TestSettingsList(t *testing.T) {
 	list := obj.(*apppluginV0.SettingsList)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "instance", list.Items[0].Name)
-	require.True(t, list.Items[0].Spec.Enabled)
-	require.Equal(t, map[string]any{"key": "value"}, list.Items[0].Spec.JsonData.Object)
+	require.Equal(t, map[string]any{"key": "value"}, list.Items[0].Spec.Object)
 }
 
 func TestSettingsCreate(t *testing.T) {
@@ -114,8 +110,11 @@ func TestSettingsCreate(t *testing.T) {
 	input := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
 		Spec: apppluginV0.SettingsSpec{
-			Enabled: true,
-			Pinned:  true,
+			Unstructured: v0alpha1.Unstructured{
+				Object: map[string]any{
+					"Hello": "world",
+				},
+			},
 		},
 	}
 
@@ -123,8 +122,9 @@ func TestSettingsCreate(t *testing.T) {
 	require.NoError(t, err)
 
 	settings := obj.(*apppluginV0.Settings)
-	require.True(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
+	require.Equal(t, map[string]any{
+		"Hello": "world",
+	}, settings.Spec.Object)
 }
 
 func TestSettingsCreate_WithValidation(t *testing.T) {
@@ -150,8 +150,7 @@ func TestSettingsUpdate(t *testing.T) {
 		"test-app": {
 			PluginID: "test-app",
 			OrgID:    1,
-			Enabled:  true,
-			Pinned:   false,
+			JSONData: map[string]any{"A": "AA"},
 		},
 	})
 
@@ -161,8 +160,9 @@ func TestSettingsUpdate(t *testing.T) {
 		&apppluginV0.Settings{
 			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
 			Spec: apppluginV0.SettingsSpec{
-				Enabled: false,
-				Pinned:  true,
+				Unstructured: v0alpha1.Unstructured{
+					Object: map[string]any{"X": "YY"},
+				},
 			},
 		},
 	)
@@ -172,8 +172,7 @@ func TestSettingsUpdate(t *testing.T) {
 	require.False(t, created)
 
 	settings := obj.(*apppluginV0.Settings)
-	require.False(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
+	require.Equal(t, map[string]any{"X": "YY"}, settings.Spec.Object)
 }
 
 func TestSettingsDelete_Noop(t *testing.T) {

@@ -103,9 +103,11 @@ func defaultSchema() *pluginschema.PluginSchema {
 								Name: apppluginV0.INSTANCE_NAME,
 							},
 							Spec: apppluginV0.SettingsSpec{
-								Enabled:  true,
-								Pinned:   true,
-								JsonData: kcommon.Unstructured{},
+								Unstructured: kcommon.Unstructured{
+									Object: map[string]any{
+										"hello": "world",
+									},
+								},
 							},
 						},
 					},

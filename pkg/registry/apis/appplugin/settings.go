@@ -158,9 +158,7 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
 
-		obj.Spec.Enabled = ps.Enabled
-		obj.Spec.Pinned = ps.Pinned
-		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
+		obj.Spec.Object = ps.JSONData
 
 		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
 		for k, v := range ps.SecureJSONData {
@@ -225,9 +223,7 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (*appplu
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
 		PluginID:       s.pluginID,
 		OrgID:          nsInfo.OrgID,
-		Enabled:        p.Spec.Enabled,
-		Pinned:         p.Spec.Pinned,
-		JSONData:       p.Spec.JsonData.Object,
+		JSONData:       p.Spec.Object,
 		SecureJSONData: toSecureJSONData(p.Secure),
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
