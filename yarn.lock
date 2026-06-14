@@ -2750,28 +2750,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/prometheus@npm:13.1.2":
-  version: 13.1.2
-  resolution: "@grafana/prometheus@npm:13.1.2"
+"@grafana/prometheus@npm:13.1.5":
+  version: 13.1.5
+  resolution: "@grafana/prometheus@npm:13.1.5"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.19"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:0.13.1"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.5.2"
     "@lezer/highlight": "npm:1.2.3"
     "@lezer/lr": "npm:1.4.8"
     "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@types/debounce-promise": "npm:3.1.9"
-    "@types/lodash": "npm:4.17.20"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    "@types/react-highlight-words": "npm:0.20.0"
-    "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
-    lodash: "npm:^4.17.23"
+    lodash: "npm:4.18.1"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
     monaco-editor: "npm:0.34.1"
@@ -2783,9 +2776,8 @@ __metadata:
     react-window: "npm:1.8.11"
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.3"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
   peerDependencies:
-    "@grafana/assistant": ">=0.1.0"
     "@grafana/data": ">=11.5.0"
     "@grafana/e2e-selectors": ">=11.5.0"
     "@grafana/i18n": ">=12.3.0"
@@ -2794,10 +2786,7 @@ __metadata:
     "@grafana/ui": ">=11.5.0"
     react: ^18.0.0
     react-dom: ^18.0.0
-  peerDependenciesMeta:
-    "@grafana/assistant":
-      optional: true
-  checksum: 10/d96748add1b29ed9251dbf0f7d65ece846c3ce29760a6f74e21f8f4c7614a15ec79f657c8764d4a1fa117cb45ea531ab91d8bc99495919e78bcc6ae8ce82d7d2
+  checksum: 10/0d0cf4aad3df2e7fa19da6104f66ba5c756ad3acf340a707b4fa83ae507cd1b696a23ad32903e3708366c26c01e6cf9fdaf429c931fe513d25ffbae19c76996a
   languageName: node
   linkType: hard
 
@@ -10547,13 +10536,6 @@ __metadata:
   version: 0.0.6
   resolution: "@types/use-sync-external-store@npm:0.0.6"
   checksum: 10/a95ce330668501ad9b1c5b7f2b14872ad201e552a0e567787b8f1588b22c7040c7c3d80f142cbb9f92d13c4ea41c46af57a20f2af4edf27f224d352abcfe4049
-  languageName: node
-  linkType: hard
-
-"@types/uuid@npm:10.0.0":
-  version: 10.0.0
-  resolution: "@types/uuid@npm:10.0.0"
-  checksum: 10/e3958f8b0fe551c86c14431f5940c3470127293280830684154b91dc7eb3514aeb79fe3216968833cf79d4d1c67f580f054b5be2cd562bebf4f728913e73e944
   languageName: node
   linkType: hard
 
@@ -18364,7 +18346,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:3.7.2"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "npm:13.1.2"
+    "@grafana/prometheus": "npm:13.1.5"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^8.2.6"
     "@grafana/scenes-react": "npm:^8.2.6"
@@ -32172,21 +32154,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
-  languageName: node
-  linkType: hard
-
 "uuid@npm:14.0.0, uuid@npm:^14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.0, uuid@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 

@@ -277,7 +277,7 @@
     "@grafana/llm": "1.0.8",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "^0.13.1",
-    "@grafana/prometheus": "13.1.2",
+    "@grafana/prometheus": "13.1.5",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "^8.2.6",
     "@grafana/scenes-react": "^8.2.6",
