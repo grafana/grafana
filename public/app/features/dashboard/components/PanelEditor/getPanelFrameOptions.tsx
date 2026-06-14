@@ -53,6 +53,11 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
               id={descriptor.props.id}
               defaultValue={panel.title}
               onBlur={(e) => onPanelConfigChange('title', e.currentTarget.value)}
+              onChange={(e) => {
+                if (e.currentTarget.value === '') {
+                  onPanelConfigChange('title', '');
+                }
+              }}
             />
           );
         },

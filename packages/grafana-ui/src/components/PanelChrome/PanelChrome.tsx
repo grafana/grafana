@@ -166,8 +166,6 @@ export function PanelChrome({
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
 
-  const hasHeader = !hoverHeader;
-
   const [isOpen, toggleOpen] = useToggle(true);
 
   // Highlight the full panel when hovering over header
@@ -184,14 +182,17 @@ export function PanelChrome({
   const showOnHoverClass = showMenuAlways ? 'always-show' : 'show-on-hover';
   const isPanelTransparent = displayMode === 'transparent';
 
-  const headerHeight = getHeaderHeight(theme, hasHeader);
-  const subHeaderHeight = Math.min(measuredSubHeaderHeight, headerHeight);
+  const hasHeaderContent = Boolean(
+    title || description || titleItems || menu || dragClass || actions || statusMessage || subHeaderContent
+  );
+  const hasHeader = hasHeaderContent && !hoverHeader;
+  const headerHeight = hasHeader ? getHeaderHeight(theme, true) : 0;
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(
     padding,
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
+    measuredSubHeaderHeight,
     height,
     width
   );
@@ -352,7 +353,6 @@ export function PanelChrome({
 
   // Ignores streaming and loading (cancel query) states for simplicity
   // If you need to cancel streaming / loading panels set a title
-  const hasHeaderContent = title || description || titleItems || menu || dragClass || actions;
 
   return (
     <div className={styles.container}>
