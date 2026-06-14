@@ -18,7 +18,13 @@ import { isEqual as _isEqual } from 'lodash';
 import { type TraceKeyValuePair } from '@grafana/data';
 
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
-import { type TraceResponse, type Trace, type TraceSpan, type TraceProcess } from '../types/trace';
+import {
+  type TraceResponse,
+  type Trace,
+  type TraceSpan,
+  type TraceProcess,
+  type SpanAggregation,
+} from '../types/trace';
 // @ts-ignore
 import type TreeNode from '../utils/TreeNode';
 import { getConfigValue } from '../utils/config/get-config';
@@ -28,6 +34,63 @@ import { getTraceName } from './trace-viewer';
 
 function asTagArray(tags: unknown): TraceKeyValuePair[] {
   return Array.isArray(tags) ? tags : [];
+}
+
+const AGGREGATION_PREFIX = 'aggregation.';
+
+/**
+ * Detect a pruned (summary / preserved-outlier) span from its `aggregation.*` tags and
+ * extract the values downstream rendering needs, so components don't repeat tag lookups.
+ *
+ * Returns undefined for normal spans (no `aggregation.is_summary` /
+ * `aggregation.is_preserved_outlier`), leaving them unaffected.
+ */
+function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | undefined {
+  const byKey = new Map<string, unknown>();
+  for (const tag of tags) {
+    if (typeof tag.key === 'string' && tag.key.startsWith(AGGREGATION_PREFIX)) {
+      byKey.set(tag.key, tag.value);
+    }
+  }
+
+  // is_summary / is_preserved_outlier are emitted as real booleans by the processor
+  // (PutBool in aggregation.go), so match strictly on `true` rather than coercing.
+  const isSummary = byKey.get('aggregation.is_summary') === true;
+  const isPreservedOutlier = byKey.get('aggregation.is_preserved_outlier') === true;
+  if (!isSummary && !isPreservedOutlier) {
+    return undefined;
+  }
+
+  const aggregation: SpanAggregation = { isSummary, isPreservedOutlier };
+
+  // span_count and duration_*_ns are int64 (PutInt); coerce defensively in case a data
+  // source surfaces them as numeric strings. duration_median_ns is conditional.
+  const numericFields = [
+    ['aggregation.span_count', 'spanCount'],
+    ['aggregation.duration_min_ns', 'durationMinNs'],
+    ['aggregation.duration_max_ns', 'durationMaxNs'],
+    ['aggregation.duration_avg_ns', 'durationAvgNs'],
+    ['aggregation.duration_median_ns', 'durationMedianNs'],
+  ] as const;
+  for (const [key, field] of numericFields) {
+    if (byKey.has(key)) {
+      // Accept real numbers and numeric strings only. Number() would coerce null/boolean/[]/''
+      // to a misleading 0 or 1, so restrict the input before coercing rather than relying on a
+      // NaN check alone (the tag value type is `any`).
+      const raw = byKey.get(key);
+      const value = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN;
+      if (!Number.isNaN(value)) {
+        aggregation[field] = value;
+      }
+    }
+  }
+
+  const summarySpanId = byKey.get('aggregation.summary_span_id');
+  if (summarySpanId !== undefined) {
+    aggregation.summarySpanId = String(summarySpanId);
+  }
+
+  return aggregation;
 }
 
 // exported for tests
@@ -174,6 +237,11 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.dedupedTags, getConfigValue('topTagPrefixes'));
     span.warnings = span.warnings.concat(tagsInfo.warnings);
+
+    const aggregation = extractSpanAggregation(span.tags);
+    if (aggregation) {
+      span.aggregation = aggregation;
+    }
     span.references.forEach((ref, index) => {
       const refSpan = spanMap.get(ref.spanID);
       if (refSpan) {
