@@ -98,10 +98,10 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// filters.WithRequester needs to be after the K8s chain because it depends on the K8s user in context
 		handler = filters.WithRequester(handler)
 
-		// Call DefaultBuildHandlerChain on the main entrypoint http.Handler
-		// See https://github.com/kubernetes/apiserver/blob/v0.28.0/pkg/server/config.go#L906
-		// DefaultBuildHandlerChain provides many things, notably CORS, HSTS, cache-control, authz and latency tracking
-		handler = genericapiserver.DefaultBuildHandlerChain(handler, c)
+		// CustomBuildHandlerChain mirrors DefaultBuildHandlerChain but omits the
+		// inner WithTracing filter, which otherwise treats most callers as public
+		// endpoints and severs the upstream trace context. See custom_handler_chain.go.
+		handler = CustomBuildHandlerChain(handler, c)
 
 		handler = filters.WithAcceptHeader(handler)
 		handler = filters.WithPathRewriters(handler, PathRewriters)
