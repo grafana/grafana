@@ -1,4 +1,3 @@
-import { difference } from 'lodash';
 import { memo, useEffect } from 'react';
 
 import { fieldReducers, type FieldReducerInfo } from '@grafana/data';
@@ -52,7 +51,8 @@ export const StatsPicker = memo<StatsPickerProps>(
       const current = fieldReducers.list(stats);
       if (current.length !== stats.length) {
         const found = current.map((v) => v.id);
-        const notFound = difference(stats, found);
+        const foundSet = new Set(found);
+        const notFound = stats.filter((stat) => !foundSet.has(stat));
         console.warn('Unknown stats', notFound, stats);
         onChange(current.map((stat) => stat.id));
       }
