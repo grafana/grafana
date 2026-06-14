@@ -98,6 +98,8 @@ jobs:
 
       - name: Setup Node
         uses: ./.github/actions/setup-node
+        with:
+          cache: 'false'
 
       # Trusted Publishing is only available in npm v11.5.1 and later
       - name: Update npm
@@ -107,6 +109,8 @@ jobs:
         uses: ./.github/actions/yarn-install
         with:
           hardened-mode: 'true'
+          cache-download-cache: 'false'
+          cache-npm-cache: 'false'
 
       - name: Typecheck packages
         run: yarn run packages:typecheck

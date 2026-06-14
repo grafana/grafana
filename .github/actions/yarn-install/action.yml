@@ -31,6 +31,10 @@ inputs:
     description: 'Add a specific cache-prefix'
     required: false
     default: 'default'
+  cache-download-cache:
+    description: 'Cache yarn download cache folder (invalidated on lock/os/node-version)'
+    required: false
+    default: 'true'
   cache-npm-cache:
     description: 'Cache npm global cache folder often used by node-gyp, prebuild binaries (invalidated on lock/os/node-version)'
     required: false
@@ -77,6 +81,7 @@ runs:
     - name: Restore yarn cache
       uses: actions/cache@v5
       id: yarn-download-cache
+      if: inputs.cache-download-cache == 'true'
       with:
         path: ${{ steps.yarn-config.outputs.CACHE_FOLDER }}
         key: yarn-download-cache-${{ inputs.cache-prefix }}-${{ hashFiles(format('{0}/yarn.lock', inputs.cwd), format('{0}/.yarnrc.yml', inputs.cwd)) }}
