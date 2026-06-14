@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
 
+import { getInternalRadius } from '../../../../../../packages/grafana-ui/src/themes/mixins';
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';
 
@@ -199,10 +200,12 @@ const getStyles = <T extends unknown>(
     sizes.unshift('0');
   }
 
+  const containerBorderRadius = 'lg';
+
   return (theme: GrafanaTheme2) => ({
     container: css({
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius[containerBorderRadius],
       color: theme.colors.text.secondary,
     }),
     row: css({
@@ -212,10 +215,22 @@ const getStyles = <T extends unknown>(
 
       '&:nth-child(2n + 1)': {
         backgroundColor: theme.colors.background.secondary,
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
       },
 
       '&:nth-child(2n)': {
         backgroundColor: theme.colors.background.primary,
+        borderBottomLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
+        borderBottomRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: containerBorderRadius,
+        }),
       },
 
       [theme.breakpoints.down('sm')]: {

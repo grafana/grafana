@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     vizBox: css({
       position: 'relative',
       background: 'none',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       cursor: 'pointer',
       border: `1px solid ${theme.colors.border.medium}`,
 
