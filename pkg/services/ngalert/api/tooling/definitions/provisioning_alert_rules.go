@@ -279,7 +279,7 @@ type AlertRuleGroup struct {
 
 // AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.
 type AlertRuleGroupExport struct {
-	OrgID           int64             `json:"orgId" yaml:"orgId" hcl:"org_id"`
+	OrgID           int64             `json:"orgId" yaml:"orgId"`
 	Name            string            `json:"name" yaml:"name" hcl:"name"`
 	Folder          string            `json:"folder" yaml:"folder"`
 	FolderUID       string            `json:"-" yaml:"-" hcl:"folder_uid"`

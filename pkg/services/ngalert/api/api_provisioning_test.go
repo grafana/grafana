@@ -955,7 +955,6 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				insertRule(t, sut, createTestAlertRule("rule2", 1))
 
 				expectedResponse := `resource "grafana_rule_group" "rule_group_cc0954af8a53fa18" {
-  org_id           = 1
   name             = "my-cool-group"
   folder_uid       = "folder-uid"
   interval_seconds = 60
