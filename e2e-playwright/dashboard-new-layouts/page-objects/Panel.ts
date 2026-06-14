@@ -56,4 +56,11 @@ export class Panel extends PageObject {
         .click();
     });
   }
+
+  async groupIntoRow() {
+    await test.step('Group the panel into a row', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.groupPanels).click();
+      await this.page.getByText('Group into row').click();
+    });
+  }
 }
