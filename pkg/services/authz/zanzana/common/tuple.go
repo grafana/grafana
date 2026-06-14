@@ -192,6 +192,10 @@ func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
+func IsResourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsResource)
+}
+
 func IsSubresourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsSubresource)
 }
@@ -273,7 +277,7 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	translation, ok := resourceTranslations[kind]
 
 	if !ok {
-		return nil, false
+		return translateK8sNativeToTuple(subject, action, kind, name)
 	}
 
 	m, ok := translation.mapping[action]
@@ -301,6 +305,36 @@ func TranslateToResourceTuple(subject string, action, kind, name string) (*openf
 	}
 
 	return NewTypedTuple(translation.typ, subject, m.relation, name), true
+}
+
+// translateK8sNativeToTuple is the fallback for TranslateToResourceTuple when the scope kind
+// is not in resourceTranslations. It handles K8s-native format permissions whose kind is
+// "{group}/{resource}" (e.g. "notifications.alerting.grafana.app/alertmanagerimports") and
+// whose action is "{kind}:{verb}".
+//
+// Wildcard scope (name=="*") maps to a group_resource-level tuple; specific names map to
+// a resource-level tuple.
+func translateK8sNativeToTuple(subject, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	group, resource, ok := strings.Cut(kind, "/")
+	if !ok {
+		return nil, false
+	}
+
+	before, verb, ok := strings.Cut(action, kind+":")
+	if !ok || before != "" || !IsGroupResourceRelation(verb) {
+		return nil, false
+	}
+
+	if name == "*" {
+		return NewGroupResourceTuple(subject, verb, group, resource, ""), true
+	}
+
+	// A named instance maps to the "resource" type, which has no "create" relation
+	// (you can't create an already-named instance). Drop verbs that aren't valid there.
+	if !IsResourceRelation(verb) {
+		return nil, false
+	}
+	return NewResourceTuple(subject, verb, group, resource, "", name), true
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {

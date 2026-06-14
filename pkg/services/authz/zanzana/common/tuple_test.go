@@ -165,3 +165,110 @@ func TestTranslateToResourceTuple(t *testing.T) {
 		})
 	}
 }
+
+func TestTranslateToResourceTuple_K8sNativeFallback(t *testing.T) {
+	t.Run("wildcard scope produces group_resource tuple", func(t *testing.T) {
+		tuple, ok := TranslateToResourceTuple(
+			"role:fixed_tKsnflM69PHBFvDKdlsuXVvdwG0#assignee",
+			"notifications.alerting.grafana.app/alertmanagerimports:create",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"*",
+		)
+		require.True(t, ok)
+		require.Equal(t, "role:fixed_tKsnflM69PHBFvDKdlsuXVvdwG0#assignee", tuple.User)
+		require.Equal(t, "create", tuple.Relation)
+		require.Equal(t, "group_resource:notifications.alerting.grafana.app/alertmanagerimports", tuple.Object)
+	})
+
+	t.Run("specific name produces resource tuple", func(t *testing.T) {
+		tuple, ok := TranslateToResourceTuple(
+			"user:u001",
+			"notifications.alerting.grafana.app/alertmanagerimports:get",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"import-abc",
+		)
+		require.True(t, ok)
+		require.Equal(t, "user:u001", tuple.User)
+		require.Equal(t, "get", tuple.Relation)
+		require.Equal(t, "resource:notifications.alerting.grafana.app/alertmanagerimports/import-abc", tuple.Object)
+	})
+
+	t.Run("all verbs map correctly", func(t *testing.T) {
+		cases := []struct {
+			verb     string
+			relation string
+		}{
+			{"get", "get"},
+			{"create", "create"},
+			{"update", "update"},
+			{"delete", "delete"},
+			{"get_permissions", "get_permissions"},
+			{"set_permissions", "set_permissions"},
+		}
+		for _, c := range cases {
+			action := "myapp.ext.grafana.com/widgets:" + c.verb
+			kind := "myapp.ext.grafana.com/widgets"
+			tuple, ok := TranslateToResourceTuple("user:u001", action, kind, "*")
+			require.True(t, ok, "verb %s", c.verb)
+			require.Equal(t, c.relation, tuple.Relation, "verb %s", c.verb)
+		}
+	})
+
+	t.Run("create on a specific name returns false", func(t *testing.T) {
+		// The "resource" type has no "create" relation, so a named scope must not
+		// produce a create tuple (it would be invalid against the FGA model).
+		_, ok := TranslateToResourceTuple(
+			"user:u001",
+			"notifications.alerting.grafana.app/alertmanagerimports:create",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"import-abc",
+		)
+		require.False(t, ok)
+	})
+
+	t.Run("valid resource verbs map on a specific name", func(t *testing.T) {
+		for _, verb := range []string{"get", "update", "delete", "get_permissions", "set_permissions"} {
+			action := "myapp.ext.grafana.com/widgets:" + verb
+			kind := "myapp.ext.grafana.com/widgets"
+			tuple, ok := TranslateToResourceTuple("user:u001", action, kind, "widget-1")
+			require.True(t, ok, "verb %s", verb)
+			require.Equal(t, verb, tuple.Relation, "verb %s", verb)
+			require.Equal(t, "resource:myapp.ext.grafana.com/widgets/widget-1", tuple.Object, "verb %s", verb)
+		}
+	})
+
+	t.Run("unknown verb returns false", func(t *testing.T) {
+		_, ok := TranslateToResourceTuple(
+			"user:u001",
+			"notifications.alerting.grafana.app/alertmanagerimports:watch",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"*",
+		)
+		require.False(t, ok)
+	})
+
+	t.Run("action with extra prefix before kind returns false", func(t *testing.T) {
+		_, ok := TranslateToResourceTuple(
+			"user:u001",
+			"x-notifications.alerting.grafana.app/alertmanagerimports:get",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"*",
+		)
+		require.False(t, ok)
+	})
+
+	t.Run("non-k8s kind without slash returns false", func(t *testing.T) {
+		_, ok := TranslateToResourceTuple("user:u001", "unknown:read", "unknown", "*")
+		require.False(t, ok)
+	})
+
+	t.Run("action not matching kind prefix returns false", func(t *testing.T) {
+		_, ok := TranslateToResourceTuple(
+			"user:u001",
+			"other.group/other:get",
+			"notifications.alerting.grafana.app/alertmanagerimports",
+			"*",
+		)
+		require.False(t, ok)
+	})
+}
