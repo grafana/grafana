@@ -13,21 +13,36 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	schemas "github.com/grafana/schemads"
+
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana/pkg/tsdb/mssql/sqleng"
 )
 
 type Service struct {
-	im     instancemgmt.InstanceManager
-	logger log.Logger
+	im              instancemgmt.InstanceManager
+	logger          log.Logger
+	resourceHandler backend.CallResourceHandler
 }
 
 func ProvideService() *Service {
 	logger := backend.NewLoggerWith("logger", "tsdb.mssql")
-	return &Service{
+	s := &Service{
 		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),
 		logger: logger,
 	}
+
+	schemaHandler := newMSSQLSchema(s, logger)
+	s.resourceHandler = schemas.NewSchemaDatasource(
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		schemaHandler,
+		nil,
+	)
+
+	return s
 }
 
 func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
@@ -40,6 +55,7 @@ func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.Pl
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	req = preprocessGrafanaSQLQueries(req)
 	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
@@ -113,6 +129,10 @@ func NewInstanceSettings(logger log.Logger) datasource.InstanceFactoryFunc {
 		logger.Debug("Successfully connected to MSSQL")
 		return handler, nil
 	}
+}
+
+func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return s.resourceHandler.CallResource(azusercontext.WithUserFromResourceReq(ctx, req), req, sender)
 }
 
 // CheckHealth pings the connected SQL database

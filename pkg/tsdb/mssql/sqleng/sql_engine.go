@@ -201,6 +201,10 @@ type DBDataResponse struct {
 	refID        string
 }
 
+func (e *DataSourceHandler) GetDB(ctx context.Context) (*sql.DB, error) {
+	return e.getDB(ctx)
+}
+
 func (e *DataSourceHandler) Dispose() {
 	e.log.Debug("Disposing DB...")
 	if e.db != nil {
