@@ -120,7 +120,7 @@ var converterMap = map[string]data.FieldConverter{
 	"string":   stringConverter,
 	"guid":     stringConverter,
 	"timespan": stringConverter,
-	"dynamic":  stringConverter,
+	"dynamic":  dynamicConverter,
 	"object":   objectToStringConverter,
 	"datetime": timeConverter,
 	"int":      intConverter,
@@ -181,6 +181,37 @@ var tagsConverter = data.FieldConverter{
 		jsonTags := json.RawMessage(marshalledTags)
 
 		return &jsonTags, nil
+	},
+}
+
+var dynamicConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableJSON, //nolint:staticcheck
+	Converter: func(v any) (any, error) {
+		if v == nil {
+			return nil, nil
+		}
+
+		switch value := v.(type) {
+		case string:
+			if json.Valid([]byte(value)) {
+				raw := json.RawMessage(value)
+				return &raw, nil
+			}
+
+			marshalled, err := json.Marshal(value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal dynamic string value: %w", err)
+			}
+			raw := json.RawMessage(marshalled)
+			return &raw, nil
+		default:
+			marshalled, err := json.Marshal(value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal dynamic value: %w", err)
+			}
+			raw := json.RawMessage(marshalled)
+			return &raw, nil
+		}
 	},
 }
 
