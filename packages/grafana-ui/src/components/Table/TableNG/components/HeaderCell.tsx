@@ -9,6 +9,7 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';
 import { Icon } from '../../../Icon/Icon';
 import { Stack } from '../../../Layout/Stack/Stack';
+import { Tooltip } from '../../../Tooltip/Tooltip';
 import { Filter } from '../Filter/Filter';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getDisplayName } from '../utils';
@@ -46,6 +47,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const styles = useStyles2(getStyles, headerCellWrap);
   const displayName = getDisplayName(field);
+  const description = field.config.description;
   const filterable = field.config.custom?.filterable ?? false;
 
   // we have to remove/reset the filter if the column is not filterable
@@ -106,6 +108,12 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
         )}
       </button>
+
+      {description && (
+        <Tooltip placement="top" content={description} theme="info">
+          <Icon className={styles.headerCellIcon} name="info-circle" size="sm" />
+        </Tooltip>
+      )}
 
       {filterable && (
         <Filter
