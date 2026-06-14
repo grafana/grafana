@@ -175,6 +175,8 @@ type Cfg struct {
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningWebhookTrustedProxyDepth      int           // number of trusted reverse-proxy hops in front of the webhook endpoint; 0 ignores X-Forwarded-For and rate-limits on the real TCP peer
+	ProvisioningWebhookRateLimitRPS           int           // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -2522,6 +2524,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedProxyDepth = iniFile.Section("provisioning").Key("webhook_trusted_proxy_depth").MustInt(0)
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
