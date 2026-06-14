@@ -20,8 +20,10 @@ export default class ResponseParser {
     const normalizedQuery = query.toLowerCase();
     const isRetentionPolicyQuery = normalizedQuery.indexOf('show retention policies') >= 0;
     const isValueFirst = normalizedQuery.indexOf('show field keys') >= 0 || isRetentionPolicyQuery;
+    const isFieldKeysQuery = normalizedQuery.indexOf('show field keys') >= 0;
 
-    const res = new Set<string>();
+    // Use a Map for deduplication while preserving insertion order and any extra data.
+    const res = new Map<string, { text: string; value?: string }>();
     each(influxResults.series, (serie) => {
       each(serie.values, (value) => {
         if (isArray(value)) {
@@ -38,23 +40,37 @@ export default class ResponseParser {
           // (while the newer versions—first).
 
           if (isValueFirst) {
-            res.add(value[0].toString());
+            const text = value[0].toString();
+            if (!res.has(text)) {
+              // For SHOW FIELD KEYS, value[1] is the field type (string, integer, float, boolean).
+              // Store it in `value` so callers can use it for type-aware quoting.
+              const extra = isFieldKeysQuery && value[1] !== undefined ? { value: value[1].toString() } : {};
+              res.set(text, { text, ...extra });
+            }
           } else if (value[1] !== undefined) {
-            res.add(value[1].toString());
+            const text = value[1].toString();
+            if (!res.has(text)) {
+              res.set(text, { text });
+            }
           } else {
-            res.add(value[0].toString());
+            const text = value[0].toString();
+            if (!res.has(text)) {
+              res.set(text, { text });
+            }
           }
         } else {
-          res.add(value.toString());
+          const text = value.toString();
+          if (!res.has(text)) {
+            res.set(text, { text });
+          }
         }
       });
     });
 
     // NOTE: it is important to keep the order of items in the parsed output
     // the same as it was in the influxdb-response.
-    // we use a `Set` to collect the unique-results, and `Set` iteration
-    // order is insertion-order, so this should be ok.
-    return Array.from(res).map((v) => ({ text: v }));
+    // we use a Map to collect unique results; Map iteration order is insertion order.
+    return Array.from(res.values());
   }
 
   getTable(dfs: DataFrame[], target: InfluxQuery, meta: QueryResultMeta): TableModel {

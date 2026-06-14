@@ -445,9 +445,20 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         if (!field) {
           field = frame.fields.find((f) => f.type !== FieldType.time);
         }
+        // For SHOW FIELD KEYS responses, the backend returns a 'fieldType' column
+        // alongside 'fieldKey'. Pass it through as MetricFindValue.value so callers
+        // can use it for type-aware value quoting.
+        const typeField = frame.fields.find((f) => f.name === 'fieldType');
         if (field) {
-          field.values.forEach((v) => {
-            valueMap.set(v.toString(), { text: v.toString() });
+          field.values.forEach((v, i) => {
+            const text = v.toString();
+            if (!valueMap.has(text)) {
+              const mv: MetricFindValue = { text };
+              if (typeField && typeField.values[i] !== undefined) {
+                mv.value = typeField.values[i].toString();
+              }
+              valueMap.set(text, mv);
+            }
           });
         }
       }

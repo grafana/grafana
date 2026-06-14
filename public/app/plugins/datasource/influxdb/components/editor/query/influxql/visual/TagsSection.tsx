@@ -24,6 +24,7 @@ type Props = {
   onChange: (tags: InfluxQueryTag[]) => void;
   getTagKeyOptions: () => Promise<string[]>;
   getTagValueOptions: (key: string) => Promise<string[]>;
+  getTagKeyDataType?: (key: string) => Promise<string | undefined>;
 };
 
 type TagProps = {
@@ -33,13 +34,14 @@ type TagProps = {
   onChange: (tag: InfluxQueryTag) => void;
   getTagKeyOptions: () => Promise<string[]>;
   getTagValueOptions: (key: string) => Promise<string[]>;
+  getTagKeyDataType?: (key: string) => Promise<string | undefined>;
 };
 
 const loadConditionOptions = () => Promise.resolve(condititonOptions);
 
 const loadOperatorOptions = () => Promise.resolve(operatorOptions);
 
-const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions }: TagProps): JSX.Element => {
+const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOptions, getTagKeyDataType }: TagProps): JSX.Element => {
   const operator = getOperator(tag);
   const condition = getCondition(tag, isFirst);
 
@@ -86,7 +88,14 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
           if (value === undefined) {
             onRemove();
           } else {
-            onChange({ ...tag, key: value ?? '' });
+            const newKey = value ?? '';
+            if (getTagKeyDataType && newKey.endsWith('::field')) {
+              getTagKeyDataType(newKey).then((dataType) => {
+                onChange({ ...tag, key: newKey, dataType });
+              });
+            } else {
+              onChange({ ...tag, key: newKey, dataType: undefined });
+            }
           }
         }}
       />
@@ -119,7 +128,7 @@ const Tag = ({ tag, isFirst, onRemove, onChange, getTagKeyOptions, getTagValueOp
   );
 };
 
-export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptions }: Props): JSX.Element => {
+export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptions, getTagKeyDataType }: Props): JSX.Element => {
   const onTagChange = (newTag: InfluxQueryTag, index: number) => {
     const newTags = tags.map((tag, i) => {
       return index === i ? newTag : tag;
@@ -149,7 +158,13 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
       condition: getCondition(minimalTag, isFirst),
     };
 
-    onChange([...tags, newTag]);
+    if (getTagKeyDataType && tagKey.endsWith('::field')) {
+      getTagKeyDataType(tagKey).then((dataType) => {
+        onChange([...tags, { ...newTag, dataType }]);
+      });
+    } else {
+      onChange([...tags, newTag]);
+    }
   };
 
   return (
@@ -167,6 +182,7 @@ export const TagsSection = ({ tags, onChange, getTagKeyOptions, getTagValueOptio
           }}
           getTagKeyOptions={getTagKeyOptions}
           getTagValueOptions={getTagValueOptions}
+          getTagKeyDataType={getTagKeyDataType}
         />
       ))}
       <AddButton
