@@ -1,0 +1,189 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "infinitePan": false,
+        "inlineEditing": false,
+        "panZoom": false,
+        "root": {
+          "background": {
+            "color": {
+              "fixed": "transparent"
+            }
+          },
+          "border": {
+            "color": {
+              "fixed": "dark-green"
+            },
+            "width": 0
+          },
+          "constraint": {
+            "horizontal": "left",
+            "vertical": "top"
+          },
+          "elements": [
+            {
+              "background": {
+                "color": {
+                  "fixed": "#3D71D9"
+                }
+              },
+              "border": {
+                "color": {
+                  "fixed": "dark-green"
+                }
+              },
+              "config": {
+                "align": "center",
+                "color": {
+                  "fixed": "#FFFFFF"
+                },
+                "size": 18,
+                "text": {
+                  "fixed": "Click me (oneClick → var-foo=b)",
+                  "mode": "fixed"
+                },
+                "valign": "middle"
+              },
+              "constraint": {
+                "horizontal": "left",
+                "vertical": "top"
+              },
+              "name": "OneClickRect",
+              "options": {
+                "links": [
+                  {
+                    "title": "Soft-update var-foo to b",
+                    "url": "/d/oneclick-canvas-datalink/canvas-oneclick-datalink?var-foo=b",
+                    "oneClick": true
+                  }
+                ]
+              },
+              "placement": {
+                "height": 80,
+                "left": 40,
+                "top": 40,
+                "width": 360
+              },
+              "type": "rectangle"
+            }
+          ],
+          "name": "Element 1715",
+          "placement": {
+            "height": 100,
+            "left": 0,
+            "top": 0,
+            "width": 100
+          },
+          "type": "frame"
+        },
+        "showAdvancedTypes": false,
+        "tooltip": false
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-testdata-datasource"
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1
+        }
+      ],
+      "title": "Canvas oneClick data link — current var-foo: $foo",
+      "type": "canvas"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["gdev", "panel-tests", "canvas", "datalinks", "oneclick"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "a",
+          "value": "a"
+        },
+        "name": "foo",
+        "options": [
+          {
+            "selected": true,
+            "text": "a",
+            "value": "a"
+          },
+          {
+            "selected": false,
+            "text": "b",
+            "value": "b"
+          },
+          {
+            "selected": false,
+            "text": "c",
+            "value": "c"
+          }
+        ],
+        "query": "a,b,c",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Panel Tests - Canvas oneClick data link",
+  "uid": "oneclick-canvas-datalink",
+  "version": 1,
+  "weekStart": ""
+}

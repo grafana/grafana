@@ -14,6 +14,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { type AdHocFilterModel, FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -164,6 +165,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               getDataLinks={(seriesIdx, dataIdx) =>
                 vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
               }
+              onOneClickLink={navigateToOneClickLink}
               getAdHocFilters={(_seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];
 

@@ -21,6 +21,7 @@ import {
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
@@ -167,6 +168,7 @@ export const TimeSeriesPanel = ({
                 getDataLinks={(seriesIdx, dataIdx) =>
                   alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
+                onOneClickLink={navigateToOneClickLink}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);

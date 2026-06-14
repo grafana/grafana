@@ -281,6 +281,81 @@ describe('TooltipPlugin2', () => {
 
       windowOpen.mockRestore();
     });
+
+    it('oneClick: invokes onOneClickLink prop instead of window.open when provided', async () => {
+      const windowOpen = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const onOneClickLink = jest.fn();
+
+      const link = {
+        href: '/d/abc?var-foo=bar',
+        title: 'Internal link',
+        target: '_self' as const,
+        origin: {},
+        oneClick: true,
+      };
+      const getDataLinks = jest.fn(() => [link]);
+
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+        getDataLinks,
+        onOneClickLink,
+        render: renderFirstDataLinkTitle,
+      });
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      await act(async () => {
+        mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+      });
+
+      expect(onOneClickLink).toHaveBeenCalledTimes(1);
+      expect(onOneClickLink).toHaveBeenCalledWith(link, expect.any(MouseEvent));
+      expect(windowOpen).not.toHaveBeenCalled();
+
+      windowOpen.mockRestore();
+    });
+
+    it('oneClick: invokes link.onClick when set, in preference to onOneClickLink', async () => {
+      const windowOpen = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const linkOnClick = jest.fn();
+      const onOneClickLink = jest.fn();
+
+      const getDataLinks = jest.fn(() => [
+        {
+          href: '/internal',
+          title: 'Custom click link',
+          target: '_self' as const,
+          origin: {},
+          oneClick: true,
+          onClick: linkOnClick,
+        },
+      ]);
+
+      const { setSeriesCallback, initCallback, mockUPlot, setLegendCallback } = setUp(undefined, {
+        getDataLinks,
+        onOneClickLink,
+        render: renderFirstDataLinkTitle,
+      });
+
+      await act(async () => {
+        initCallback(mockUPlot);
+        setLegendCallback(mockUPlot);
+        setSeriesCallback(mockUPlot, 1);
+      });
+
+      await act(async () => {
+        mockUPlot.over.dispatchEvent(new MouseEvent('click'));
+      });
+
+      expect(linkOnClick).toHaveBeenCalledTimes(1);
+      expect(onOneClickLink).not.toHaveBeenCalled();
+      expect(windowOpen).not.toHaveBeenCalled();
+
+      windowOpen.mockRestore();
+    });
   });
 
   describe('setCursor', () => {

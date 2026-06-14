@@ -46,6 +46,11 @@ interface TooltipPlugin2Props {
   getDataLinks?: GetDataLinksCallback;
   getAdHocFilters?: GetAdHocFiltersCallback;
 
+  // Invoked when a oneClick data link is triggered. Lets the consumer perform
+  // SPA navigation (which @grafana/ui can't do directly because it must not
+  // depend on @grafana/runtime). Falls back to window.open if not provided.
+  onOneClickLink?: (link: LinkModel, e: MouseEvent) => void;
+
   render: (
     u: uPlot,
     dataIdxs: Array<number | null>,
@@ -124,6 +129,7 @@ export const TooltipPlugin2 = ({
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
   getAdHocFilters = getAdHocFiltersFallback,
+  onOneClickLink,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -146,6 +152,9 @@ export const TooltipPlugin2 = ({
 
   const getAdHocFiltersRef = useRef(getAdHocFilters);
   getAdHocFiltersRef.current = getAdHocFilters;
+
+  const onOneClickLinkRef = useRef(onOneClickLink);
+  onOneClickLinkRef.current = onOneClickLink;
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -395,7 +404,13 @@ export const TooltipPlugin2 = ({
             const oneClickLink = dataLinks.find((dataLink) => dataLink.oneClick === true);
 
             if (oneClickLink != null) {
-              window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+              if (oneClickLink.onClick) {
+                oneClickLink.onClick(e);
+              } else if (onOneClickLinkRef.current) {
+                onOneClickLinkRef.current(oneClickLink, e);
+              } else {
+                window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+              }
             } else {
               setTimeout(() => {
                 _isPinned = true;

@@ -15,6 +15,7 @@ import { TooltipHoverMode } from '@grafana/ui/internal';
 import { type XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
+import { navigateToOneClickLink } from 'app/core/navigation/navigateToHref';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -90,6 +91,7 @@ export const TrendPanel = ({
                 getDataLinks={(seriesIdx, dataIdx) =>
                   alignedDataFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
                 }
+                onOneClickLink={navigateToOneClickLink}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange, viaSync, dataLinks) => {
                   return (
                     <TimeSeriesTooltip
