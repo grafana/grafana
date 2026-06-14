@@ -460,6 +460,32 @@ var (
 		Grants: []string{string(org.RoleEditor)},
 	}
 
+	adminConfigReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.admin-config:reader",
+			DisplayName: "Alerting Admin Config Reader",
+			Description: "Read the alerting admin configuration, including external Alertmanager sync state.",
+			Group:       models.AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingConfigRead},
+			},
+		},
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	adminConfigWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.admin-config:writer",
+			DisplayName: "Alerting Admin Config Writer",
+			Description: "Update the alerting admin configuration, including the external Alertmanager sync target.",
+			Group:       models.AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(adminConfigReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingConfigWrite},
+			}),
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	// deprecatedActionsRole contains deprecated actions just to keep the actions in the registry. The actions are granted to Admin just to make sure we do not accidentally completely lose access to an API or feature that happen to use only legacy
 	deprecatedActionsRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
@@ -523,6 +549,7 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 		alertmanagerImportsAdminRole,
+		adminConfigReaderRole, adminConfigWriterRole,
 	}
 }
 

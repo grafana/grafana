@@ -2,6 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
+      "fixed:alerting.admin-config:writer",
       "fixed:alerting.alertmanager-imports:writer",
       "fixed:alerting.legacy:writer",
       "fixed:alerting.provisioning.provenance:writer",
@@ -209,6 +210,12 @@
         "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
       },
       {
+        "action": "notifications.alerting.grafana.app/configs:get"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:update"
+      },
+      {
         "action": "notifications.alerting.grafana.app/routingtrees:create"
       },
       {
@@ -389,6 +396,7 @@
   {
     "grant": "Viewer",
     "roles": [
+      "fixed:alerting.admin-config:reader",
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
       "fixed:alerting.notifications.external:reader",
@@ -437,6 +445,9 @@
       {
         "action": "alert.silences:read",
         "scope": "folders:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:get"
       }
     ]
   }

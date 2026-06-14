@@ -537,6 +537,23 @@ const (
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
 
+	// Config k8s resource actions, scoped per-resource. The action names
+	// encode the full resource name (like AlertingAlertmanagerImports above) so
+	// they stay forward-compatible with multi-tenant IAM. Reads are exposed to
+	// viewers so the UI can render consistent state for all roles (e.g.
+	// import-to-GMA button); writes match the legacy /api/v1/ngalert/admin_config
+	// HTTP API which gated mutations with ReqOrgAdmin.
+	AlertingConfigResource    = "configs"
+	AlertingConfigKind        = AlertingNotificationsApiGroup + "/" + AlertingConfigResource
+	ActionAlertingConfigRead  = AlertingConfigKind + ":get"
+	ActionAlertingConfigWrite = AlertingConfigKind + ":update"
+	// ActionAlertingConfigStatusWrite gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the sync worker
+	// owns it.
+	ActionAlertingConfigStatusWrite = AlertingConfigKind + "/status:update"
+
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"
 	ActionFeatureManagementWrite = "featuremgmt.write"

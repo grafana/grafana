@@ -425,6 +425,23 @@
     ]
   },
   {
+    "action": "notifications.alerting.grafana.app/configs/status:update",
+    "roles": null
+  },
+  {
+    "action": "notifications.alerting.grafana.app/configs:get",
+    "roles": [
+      "fixed:alerting.admin-config:reader",
+      "fixed:alerting.admin-config:writer"
+    ]
+  },
+  {
+    "action": "notifications.alerting.grafana.app/configs:update",
+    "roles": [
+      "fixed:alerting.admin-config:writer"
+    ]
+  },
+  {
     "action": "notifications.alerting.grafana.app/routingtrees:create",
     "roles": [
       "fixed:alerting.managed-routes:creator",
