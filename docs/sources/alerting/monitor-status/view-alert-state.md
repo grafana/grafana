@@ -20,11 +20,6 @@ labels:
 title: View alert state
 weight: 420
 refs:
-  time-series-visualizations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series/
   alert-list-panel:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/alert-list/
@@ -129,3 +124,31 @@ Additionally, Grafana provides an [alert list panel](ref:alert-list-panel) that 
 You can configure the alert list panel with various visualization options and filters to control how alerts are displayed. For more details, refer to the [Alert list documentation](ref:alert-list-panel).
 
 {{< docs/play title="this demo dashboard with alert list panels and linked alert rules" url="https://play.grafana.org/d/000000074/alerting?tech=docs&pg=alerting-demo&plcmt=callout-play&cta=alert-demo-dashboard" >}}
+
+## View alert state history
+
+Use the State history view to get insight into how your individual alert instances behave over time.
+
+View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+To access the State history view, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Click an alert rule.
+1. Click the **History** tab.
+
+   {{< figure src="/media/docs/alerting/alerting-state-history-view.png" max-width="750px" alt="State history view in Grafana Alerting" >}}
+
+   The timeline view at the top displays a timeline of changes for the past hour, so you can track how your alert instances are behaving over time.
+
+   The bottom part shows the alert instances, their previous and current state, the value of each part of the expression and a unique set of labels.
+
+   Common labels are displayed at the top to make it easier to identify different alert instances.
+
+1. From the timeline view, hover over a time to get an automatic display of all the changes that happened at that particular moment.
+
+   These changes are displayed in real time in the timestamp view at the bottom of the page. The timestamp view is a list of all the alert instances that changed state at that point in time. The visualization only displays 12 instances by default.
+
+   The value shown for each instance is for each part of the expression that was evaluated.
+
+1. Click the labels to filter and narrow down the results.
