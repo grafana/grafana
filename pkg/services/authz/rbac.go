@@ -54,7 +54,15 @@ func ProvideAuthZClient(
 	acService accesscontrol.Service,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
-) (authlib.AccessClient, error) {
+) (client authlib.AccessClient, err error) {
+	// Decorate so the forward Check sources team membership from external groups under
+	// id_use_external_groups_for_groups_claim. No-op when off; covers every return path.
+	defer func() {
+		if err == nil && client != nil {
+			client = newExternalGroupsAccessClient(cfg, client)
+		}
+	}()
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 
