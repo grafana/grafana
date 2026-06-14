@@ -11,11 +11,13 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsso"
 )
 
@@ -42,6 +44,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 		p.envVar("GF_VERSION", p.cfg.GrafanaVersion),
 	}
 
+	// Enterprise license
 	if p.license != nil {
 		hostEnv = append(
 			hostEnv,
@@ -50,6 +53,20 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 			p.envVar("GF_ENTERPRISE_APP_URL", p.license.AppURL()),
 		)
 		hostEnv = append(hostEnv, p.license.Environment()...)
+	}
+
+	// Marketplace license: forwarded when a licensing service is wired up
+	// and the feature toggle is enabled. The per-plugin marketplace license
+	// path is exposed so the plugin backend can locate its JWT.
+	marketplaceLicensingEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
+	if marketplaceLicensingEnabled && p.license != nil {
+		marketplaceLicenseFile, err := p.license.PluginLicensePath(plugin.ID)
+		if err != nil {
+			p.logger.Debug("Skipping marketplace license env var", "pluginID", plugin.ID, "error", err)
+		} else {
+			hostEnv = append(hostEnv, p.envVar("GF_MARKETPLACE_LICENSE_PATH", marketplaceLicenseFile))
+		}
+		// TODO: jwks
 	}
 
 	if plugin.ExternalService != nil {

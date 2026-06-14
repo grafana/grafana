@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -404,6 +405,13 @@ func (s *FakeLicensingService) Environment() []string {
 
 func (s *FakeLicensingService) ContentDeliveryPrefix() string {
 	return s.CDNPrefix
+}
+
+func (s *FakeLicensingService) PluginLicensePath(pluginID string) (string, error) {
+	if s.LicensePath == "" {
+		return "", nil
+	}
+	return filepath.Join(filepath.Dir(s.LicensePath), "license-"+pluginID+".jwt"), nil
 }
 
 type FakeRoleRegistry struct {

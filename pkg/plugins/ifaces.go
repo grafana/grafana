@@ -137,6 +137,7 @@ type Licensing interface {
 	Path() string
 	AppURL() string
 	ContentDeliveryPrefix() string
+	PluginLicensePath(pluginID string) (string, error)
 }
 
 type SignatureCalculator interface {

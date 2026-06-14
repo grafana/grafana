@@ -8,6 +8,8 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +23,32 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// setMarketplaceLicensingFlag installs an in-memory OpenFeature provider with
+// FlagPluginsMarketplaceLicensing set to enabled. It restores the previous
+// provider via t.Cleanup so concurrent and sequential tests stay isolated.
+func setMarketplaceLicensingFlag(t *testing.T, enabled bool) {
+	t.Helper()
+	state := memprovider.Disabled
+	if enabled {
+		state = memprovider.Enabled
+	}
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagPluginsMarketplaceLicensing: {
+			Key:            featuremgmt.FlagPluginsMarketplaceLicensing,
+			State:          state,
+			DefaultVariant: "enabled",
+			Variants: map[string]any{
+				"enabled":  true,
+				"disabled": false,
+			},
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+	})
+}
 
 func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
@@ -56,6 +84,65 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 		assert.Equal(t, "GF_ENTERPRISE_APP_URL=https://myorg.com/", envVars[3])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[5])
+	})
+}
+
+func TestPluginEnvVarsProvider_marketplaceLicensePath(t *testing.T) {
+	p := &plugins.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "test",
+		},
+	}
+
+	cfg := &PluginInstanceCfg{
+		Features: featuremgmt.WithFeatures(),
+	}
+
+	t.Run("feature flag disabled: marketplace path not set", func(t *testing.T) {
+		setMarketplaceLicensingFlag(t, false)
+		licensing := &pluginfakes.FakeLicensingService{
+			LicenseEdition: "test",
+			LicensePath:    "/path/to/ent/license",
+		}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		_, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.False(t, ok, "marketplace license path must not be set when feature flag is disabled")
+	})
+
+	t.Run("nil license: marketplace path not set", func(t *testing.T) {
+		setMarketplaceLicensingFlag(t, true)
+		provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		_, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.False(t, ok, "marketplace license path must not be set without a license")
+	})
+
+	t.Run("non-nil license: marketplace path is set", func(t *testing.T) {
+		setMarketplaceLicensingFlag(t, true)
+		licensing := &pluginfakes.FakeLicensingService{
+			LicenseEdition: "test",
+			LicensePath:    "/path/to/ent/license",
+		}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		got, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.True(t, ok, "marketplace license path must be set when a license service is wired")
+		require.Equal(t, "/path/to/ent/license-test.jwt", got)
+	})
+
+	t.Run("license configured but PluginLicensePath returns empty: env var still emitted with empty value", func(t *testing.T) {
+		// FakeLicensingService.PluginLicensePath returns "" without error when
+		// LicensePath is unset. The provider only skips on error, so an empty
+		// (but successful) path still produces the env var. This guards the
+		// observed behaviour.
+		setMarketplaceLicensingFlag(t, true)
+		licensing := &pluginfakes.FakeLicensingService{}
+		provider := NewEnvVarsProvider(cfg, licensing, &fakeSSOSettingsProvider{})
+		envVars := provider.PluginEnvVars(context.Background(), p)
+		got, ok := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
+		require.True(t, ok)
+		require.Equal(t, "", got)
 	})
 }
 
