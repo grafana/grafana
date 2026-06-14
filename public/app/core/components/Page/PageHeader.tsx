@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
+import { shouldShowConfigurationSubtitle } from 'app/core/utils/configurationSubtitle';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -21,6 +22,7 @@ export interface Props {
 export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
   const styles = useStyles2(getStyles);
   const sub = subTitle ?? navItem.subTitle;
+  const visibleSub = shouldShowConfigurationSubtitle(sub) ? sub : undefined;
 
   return (
     <div className={styles.pageHeader}>
@@ -40,7 +42,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         </div>
         <div className={styles.actions}>{actions}</div>
       </div>
-      {sub && <div className={styles.subTitle}>{sub}</div>}
+      {visibleSub && <div className={styles.subTitle}>{visibleSub}</div>}
     </div>
   );
 }
