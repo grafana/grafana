@@ -74,6 +74,14 @@ export default function Connections() {
         element={<DataSourceDashboardsPage />}
       />
 
+      {/* Redirect /connections/datasources/:id/new to the generic new-datasource page.
+          Some plugin pages or older links may reference plugin-specific /new URLs. */}
+      <Route
+        caseSensitive
+        path={`${ROUTES.DataSourcesDetails.replace(ROUTES.Base, '')}/new`}
+        element={<Navigate replace to={ROUTES.DataSourcesNew} />}
+      />
+
       {/* "Add new connection" page - we don't register a route in case a plugin already registers a standalone page for it */}
       {!isAddNewConnectionPageOverridden && (
         <Route
