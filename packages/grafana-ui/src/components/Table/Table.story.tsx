@@ -31,6 +31,12 @@ const meta: Meta<typeof Table> = {
     },
     docs: {
       page: mdx,
+      // Render the literal story source instead of serializing the rendered table. The data-heavy
+      // stories (e.g. SubTables) otherwise produce a huge dynamic-source string that the syntax
+      // highlighter turns into tens of thousands of spans, freezing the tab.
+      source: {
+        type: 'code',
+      },
     },
     a11y: {
       config: {
