@@ -152,12 +152,12 @@ async function initRudderstackBackend() {
   }
 
   // Logic: if only one of the sdk urls is provided, use respective code
-  // otherwise defer to the feature toggle.
+  // otherwise default to the new v3 SDK.
 
   const hasOldSdkUrl = Boolean(config.rudderstackSdkUrl);
   const hasNewSdkUrl = Boolean(config.rudderstackV3SdkUrl);
   const onlyOneSdkUrlSet = hasOldSdkUrl !== hasNewSdkUrl;
-  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : config.featureToggles.rudderstackUpgrade;
+  const useNewRudderstack = onlyOneSdkUrlSet ? hasNewSdkUrl : true;
 
   const sdkUrl = useNewRudderstack ? config.rudderstackV3SdkUrl : config.rudderstackSdkUrl;
 

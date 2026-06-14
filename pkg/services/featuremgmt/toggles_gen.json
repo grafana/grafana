@@ -4626,7 +4626,8 @@
       "metadata": {
         "name": "rudderstackUpgrade",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-11-19T16:48:23Z"
+        "creationTimestamp": "2025-11-19T16:48:23Z",
+        "deletionTimestamp": "2026-06-10T21:28:05Z"
       },
       "spec": {
         "description": "Enables the new version of rudderstack",
