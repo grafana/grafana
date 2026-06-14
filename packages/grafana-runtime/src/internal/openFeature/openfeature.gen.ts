@@ -19,6 +19,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enables the created by me search filter on the browse dashboards page */
   CreatedByMeSearchFilter: "createdByMeSearchFilter",
   /** Enables support for section level variables (rows and tabs) */
@@ -134,6 +136,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorBatchAPI", false, options).value;
 };
 
 /**
