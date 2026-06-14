@@ -36,7 +36,7 @@ The state timeline visualization is useful when you need to monitor and analyze 
 
 {{< youtube id="a9wZHM0mdxo" >}}
 
-{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1s" >}}
+{{< docs/play title="Grafana State Timeline & Status History" url="https://play.grafana.org/d/qD-rVv6Mz/6-state-timeline-and-status-history?orgId=1" >}}
 
 ## Supported data formats
 
@@ -116,12 +116,12 @@ Use these options to refine the visualization.
 | Merge equal consecutive values  | Controls whether Grafana merges identical values if they are next to each other. |
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
-| Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
+| Row height | Controls bar height as a fraction of each row. `1` fills the row, and lower values leave more space between rows. |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
+| Line width | Controls line width of state regions. This is a field option and can be set in field defaults or overrides. |
+| Fill opacity | Controls the fill opacity of state regions. This is a field option and can be set in field defaults or overrides. |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
-| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
+| [Disconnect values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
 <!-- prettier-ignore-end -->
 
