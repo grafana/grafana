@@ -96,15 +96,28 @@ func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
 type mockRoundTripper struct {
 	statusCode   int
 	responseBody []byte
+	responses    map[string]mockRoundTripResponse
+}
+
+type mockRoundTripResponse struct {
+	statusCode   int
+	responseBody []byte
 }
 
 func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	statusCode := m.statusCode
+	responseBody := m.responseBody
+	if resp, ok := m.responses[req.URL.Path]; ok {
+		statusCode = resp.statusCode
+		responseBody = resp.responseBody
+	}
+
 	header := http.Header{}
 	header.Set("Content-Type", "application/json")
 	return &http.Response{
-		StatusCode: m.statusCode,
+		StatusCode: statusCode,
 		Header:     header,
-		Body:       io.NopCloser(bytes.NewReader(m.responseBody)),
+		Body:       io.NopCloser(bytes.NewReader(responseBody)),
 		Request:    req,
 	}, nil
 }
@@ -209,6 +222,66 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetK8sDataSourceByUIDHandler_AccessControlMetadata(t *testing.T) {
+	transport := &mockRoundTripper{
+		responses: map[string]mockRoundTripResponse{
+			"/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid": {
+				statusCode: http.StatusOK,
+				responseBody: []byte(`{
+					"apiVersion": "prometheus.datasource.grafana.app/v0alpha1",
+					"kind": "DataSource",
+					"metadata": {"name": "test-uid", "namespace": "default"},
+					"spec": {"title": "Test Prometheus", "url": "http://localhost:9090"}
+				}`),
+			},
+			"/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/access": {
+				statusCode:   http.StatusOK,
+				responseBody: []byte(`{"permissions":{"datasources:read":true,"datasources:query":true}}`),
+			},
+		},
+	}
+
+	hs := &HTTPServer{
+		Cfg: setting.NewCfg(),
+		Features: featuremgmt.WithFeatures(
+			featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs,
+			featuremgmt.FlagQueryService,
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
+		),
+		dsConnectionClient: &mockConnectionClient{
+			result: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+				},
+			},
+		},
+		clientConfigProvider: &mockDirectRestConfigProvider{host: "http://localhost", transport: transport},
+		namespacer:           func(int64) string { return "default" },
+		DataSourcesService:   &dataSourcesServiceMock{},
+	}
+	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+
+	sc := setupScenarioContext(t, "/api/datasources/uid/test-uid?accesscontrol=true")
+	handler := hs.getK8sDataSourceByUIDHandler()
+	sc.m.Get("/api/datasources/uid/:uid", func(c *contextmodel.ReqContext) {
+		c.Req = web.SetURLParams(c.Req, map[string]string{":uid": "test-uid"})
+		c.SignedInUser = &user.SignedInUser{OrgID: 1}
+		handler.(func(*contextmodel.ReqContext))(c)
+	})
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+	require.Equal(t, http.StatusOK, sc.resp.Code)
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &body))
+
+	require.Equal(t, map[string]any{
+		"datasources:read":  true,
+		"datasources:query": true,
+	}, body["accessControl"])
 }
 
 func newTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
