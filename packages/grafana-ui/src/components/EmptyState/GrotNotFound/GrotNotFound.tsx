@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import { type SVGProps, useEffect, useRef } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -12,6 +12,11 @@ const MIN_ARM_ROTATION = -20;
 const MAX_ARM_ROTATION = 5;
 const MIN_ARM_TRANSLATION = -5;
 const MAX_ARM_TRANSLATION = 5;
+const MAX_FACE_TRANSLATE = 2.5;
+const MAX_TILT = 5;
+const MAX_SHADOW_TRANSLATION = 10;
+const MAX_MAGNIFIER_TILT_Y = 10;
+const MAX_MAGNIFIER_TILT_X = 6;
 
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
@@ -24,24 +29,41 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
-      // don't apply animation if reduced motion preference is set
-      if (window.matchMedia('(prefers-reduced-motion: reduce').matches) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         return;
       }
 
-      const grotArm = svgRef.current?.querySelector('#grot-not-found-arm');
-      const grotMagnifier = svgRef.current?.querySelector('#grot-not-found-magnifier');
-
       const { clientX, clientY } = event;
       const { innerWidth, innerHeight } = window;
-      const heightRatio = clientY / innerHeight;
       const widthRatio = clientX / innerWidth;
-      const rotation = getIntermediateValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
-      const translation = getIntermediateValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
+      const heightRatio = clientY / innerHeight;
+
+      const armRotation = getInterpolatedValue(heightRatio, MIN_ARM_ROTATION, MAX_ARM_ROTATION);
+      const armTranslation = getInterpolatedValue(widthRatio, MIN_ARM_TRANSLATION, MAX_ARM_TRANSLATION);
+      const faceX = getInterpolatedValue(widthRatio, -MAX_FACE_TRANSLATE, MAX_FACE_TRANSLATE);
+      const faceY = getInterpolatedValue(heightRatio, -MAX_FACE_TRANSLATE, MAX_FACE_TRANSLATE);
+      const tiltX = getInterpolatedValue(heightRatio, MAX_TILT, -MAX_TILT);
+      const tiltY = getInterpolatedValue(widthRatio, -MAX_TILT, MAX_TILT);
+      const magTiltX = getInterpolatedValue(heightRatio, -MAX_MAGNIFIER_TILT_X, MAX_MAGNIFIER_TILT_X);
+      const magTiltY = getInterpolatedValue(widthRatio, MAX_MAGNIFIER_TILT_Y, -MAX_MAGNIFIER_TILT_Y);
+      const shadowX = getInterpolatedValue(widthRatio, -MAX_SHADOW_TRANSLATION, MAX_SHADOW_TRANSLATION);
 
       window.requestAnimationFrame(() => {
-        grotArm?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
-        grotMagnifier?.setAttribute('style', `transform: rotate(${rotation}deg) translateX(${translation}%)`);
+        const root = svgRef.current;
+        if (!root) {
+          return;
+        }
+        const armTransform = `transform: rotate(${armRotation}deg) translateX(${armTranslation}%)`;
+        const faceTransform = `transform: translate(${faceX}px, ${faceY}px)`;
+        root.querySelector('#grot-not-found-arm')?.setAttribute('style', armTransform);
+        root.querySelector('#grot-not-found-magnifier')?.setAttribute('style', armTransform);
+        root
+          .querySelector('#grot-not-found-magnifier-tilt')
+          ?.setAttribute('style', `transform: perspective(500px) rotateY(${magTiltY}deg) rotateX(${magTiltX}deg)`);
+        root.querySelector('#grot-not-found-mouth')?.setAttribute('style', faceTransform);
+        root.querySelector('#grot-not-found-eyes')?.setAttribute('style', faceTransform);
+        root.querySelector('#grot-not-found-shadow')?.setAttribute('style', `transform: translateX(${-shadowX}px)`);
+        root.style.transform = `perspective(900px) rotateY(${tiltY}deg) rotateX(${tiltX}deg)`;
       });
     };
 
@@ -58,21 +80,53 @@ export const GrotNotFound = ({ width = 'auto', height }: Props) => {
 
 GrotNotFound.displayName = 'GrotNotFound';
 
+const blink = keyframes({
+  '0%, 92%, 100%': { transform: 'scaleY(1)' },
+  '94%, 96%': { transform: 'scaleY(0.05)' },
+});
+
+const sparkle = keyframes({
+  '0%, 100%': { opacity: 0.4, transform: 'scale(1)' },
+  '50%': { opacity: 1, transform: 'scale(1.08)' },
+});
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     svg: css({
+      transformStyle: 'preserve-3d',
+      willChange: 'transform',
+
       '#grot-not-found-arm, #grot-not-found-magnifier': {
         transformOrigin: 'center',
+      },
+      '#grot-not-found-mouth, #grot-not-found-mouth-blink, #grot-not-found-eyes, #grot-not-found-eyes-blink, #grot-not-found-shadow, #grot-not-found-decorations':
+        {
+          transformBox: 'fill-box',
+          transformOrigin: 'center',
+        },
+      '#grot-not-found-magnifier-tilt': {
+        transformBox: 'fill-box',
+        // Pivot near where the hand grips the handle so the base stays put while the glass tilts
+        transformOrigin: '30% 90%',
+      },
+
+      [theme.transitions.handleMotion('no-preference')]: {
+        '#grot-not-found-eyes-blink': {
+          animation: `${blink} 5.5s ease-in-out infinite`,
+        },
+        '#grot-not-found-decorations': {
+          animation: `${sparkle} 3.2s ease-in-out infinite`,
+        },
       },
     }),
   };
 };
 
 /**
- * Given a start value, end value, and a ratio, return the intermediate value
+ * Given a start value, end value, and a ratio, return the interpolated value
  * Works with negative and inverted start/end values
  */
-const getIntermediateValue = (ratio: number, start: number, end: number) => {
+const getInterpolatedValue = (ratio: number, start: number, end: number) => {
   const value = ratio * (end - start) + start;
   return value;
 };
