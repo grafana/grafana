@@ -1,14 +1,23 @@
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen } from 'test/test-utils';
+import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
+import { setupMswServer } from '../../mockApi';
+import {
+  grafanaRulerGroup2,
+  grafanaRulerGroupName2,
+  grafanaRulerNamespace,
+  grafanaRulerRule,
+} from '../../mocks/grafanaRulerApi';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL, getDefaultFormValues } from '../../rule-editor/formDefaults';
-import { type RuleFormValues } from '../../types/rule-form';
+import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 
 import {
   EvaluationGroupCreationModal,
+  ForInput,
   GrafanaEvaluationBehaviorStep,
   namespaceToGroupOptions,
 } from './GrafanaEvaluationBehavior';
@@ -197,6 +206,131 @@ describe('GrafanaEvaluationBehaviorStep — evaluateEvery validation (rule-based
 
     expect(screen.queryByText(/Cannot be less than \d+ seconds/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Must be a multiple of \d+ seconds/)).not.toBeInTheDocument();
+  });
+});
+
+// Wrapper that puts the form in group-based mode with a real folder UID so the
+// ruler namespace API is queried and the group picker is populated.
+function GroupBasedWrapper({ evaluateFor }: { evaluateFor: string }) {
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: {
+      ...getDefaultFormValues(),
+      // Override type directly — getDefaultFormValues() resolves type via RBAC permissions
+      // which are not set up in this unit test context. Setting it explicitly ensures
+      // isGrafanaAlertingRule = true so ForInput (pending period) renders.
+      type: RuleFormType.grafana,
+      isUngroupedRuleGroup: false,
+      folder: { uid: grafanaRulerNamespace.uid, title: grafanaRulerNamespace.name },
+      evaluateFor,
+    },
+    mode: 'onChange',
+  });
+  return (
+    <FormProvider {...formApi}>
+      <GrafanaEvaluationBehaviorStep existing={false} enableProvisionedGroups={false} />
+    </FormProvider>
+  );
+}
+
+describe('GrafanaEvaluationBehaviorStep — pending period auto-bump on existing group select', () => {
+  setupMswServer();
+
+  it('bumps pending period up to the group interval when the current pending period is shorter', async () => {
+    // grafanaRulerGroup2 has a 5m interval (served by the default MSW handler).
+    // Start with a 1m pending period — shorter than 5m — so the bump must fire.
+    render(<GroupBasedWrapper evaluateFor="1m" />);
+
+    const groupPicker = await screen.findByTestId('group-picker');
+    await clickSelectOption(groupPicker, grafanaRulerGroupName2);
+
+    // Pending period input should now read the group's interval (5m), not the original 1m.
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    expect(pendingInput).toHaveValue(grafanaRulerGroup2.interval);
+  });
+
+  it('does not change the pending period when it is already greater than or equal to the group interval', async () => {
+    // Start with 10m pending period — longer than grafanaRulerGroup2's 5m. No bump expected.
+    render(<GroupBasedWrapper evaluateFor="10m" />);
+
+    const groupPicker = await screen.findByTestId('group-picker');
+    await clickSelectOption(groupPicker, grafanaRulerGroupName2);
+
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    expect(pendingInput).toHaveValue('10m');
+  });
+
+  it('does not change the pending period when it is 0s (immediate-fire sentinel)', async () => {
+    // "0s" means fire immediately — the bump must not overwrite it.
+    render(<GroupBasedWrapper evaluateFor="0s" />);
+
+    const groupPicker = await screen.findByTestId('group-picker');
+    await clickSelectOption(groupPicker, grafanaRulerGroupName2);
+
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    expect(pendingInput).toHaveValue('0s');
+  });
+});
+
+// Wrapper that lets tests drive the evaluateEvery prop from outside so the
+// useUpdateEffect inside ForInput fires on prop changes.
+function ForInputWrapper({
+  initialInterval,
+  newInterval,
+  evaluateFor,
+}: {
+  initialInterval: string;
+  newInterval: string;
+  evaluateFor: string;
+}) {
+  const [evaluateEvery, setEvaluateEvery] = useState(initialInterval);
+  const formApi = useForm<RuleFormValues>({
+    defaultValues: {
+      ...getDefaultFormValues(),
+      type: RuleFormType.grafana,
+      evaluateFor,
+      evaluateEvery: initialInterval,
+    },
+    mode: 'onChange',
+  });
+  return (
+    <FormProvider {...formApi}>
+      <ForInput evaluateEvery={evaluateEvery} />
+      <button onClick={() => setEvaluateEvery(newInterval)}>change-interval</button>
+    </FormProvider>
+  );
+}
+
+describe('ForInput — pending period auto-bump on evaluation interval change', () => {
+  it('bumps pending period when evaluation interval increases past it', async () => {
+    // Start with evaluateEvery=1m and evaluateFor=30s (shorter). Increasing the
+    // interval to 5m must auto-bump evaluateFor to 5m.
+    const { user } = render(<ForInputWrapper initialInterval="1m" newInterval="5m" evaluateFor="30s" />);
+
+    await user.click(screen.getByRole('button', { name: 'change-interval' }));
+
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    await waitFor(() => expect(pendingInput).toHaveValue('5m'));
+  });
+
+  it('does not change pending period when evaluation interval decreases', async () => {
+    // Start with evaluateEvery=5m and evaluateFor=10m (already longer). Decreasing
+    // the interval to 1m must leave evaluateFor unchanged.
+    const { user } = render(<ForInputWrapper initialInterval="5m" newInterval="1m" evaluateFor="10m" />);
+
+    await user.click(screen.getByRole('button', { name: 'change-interval' }));
+
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    await waitFor(() => expect(pendingInput).toHaveValue('10m'));
+  });
+
+  it('does not change pending period when it is 0s (immediate-fire sentinel)', async () => {
+    // 0s sentinel must never be overwritten even when the interval is longer.
+    const { user } = render(<ForInputWrapper initialInterval="1m" newInterval="5m" evaluateFor="0s" />);
+
+    await user.click(screen.getByRole('button', { name: 'change-interval' }));
+
+    const pendingInput = screen.getByRole('textbox', { name: /pending period/i });
+    await waitFor(() => expect(pendingInput).toHaveValue('0s'));
   });
 });
 
