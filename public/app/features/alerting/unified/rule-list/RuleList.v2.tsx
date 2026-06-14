@@ -41,7 +41,16 @@ function RuleList() {
             {viewMode === 'list' ? (
               <FilterView filterState={filterState} />
             ) : (
-              <GroupedView groupFilter={filterState.groupName} namespaceFilter={filterState.namespace} />
+              <GroupedView
+                groupFilter={filterState.groupName}
+                namespaceFilter={filterState.namespace}
+                ruleFilter={{
+                  ruleType: filterState.ruleType,
+                  ruleName: filterState.ruleName,
+                  dashboardUid: filterState.dashboardUid,
+                  contactPoint: filterState.contactPoint,
+                }}
+              />
             )}
           </Box>
         </Stack>

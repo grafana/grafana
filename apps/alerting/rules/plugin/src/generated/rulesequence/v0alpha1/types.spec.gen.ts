@@ -13,7 +13,6 @@ export type PromDuration = string;
 export const defaultPromDuration = (): PromDuration => ("");
 
 export interface RuleRef {
-	// name is the metadata.name of an AlertRule or RecordingRule resource.
 	name: RuleUID;
 }
 
