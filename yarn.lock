@@ -5053,14 +5053,14 @@ __metadata:
   linkType: hard
 
 "@msagl/core@npm:^1.1.19, @msagl/core@npm:^1.1.23":
-  version: 1.1.23
-  resolution: "@msagl/core@npm:1.1.23"
+  version: 1.1.24
+  resolution: "@msagl/core@npm:1.1.24"
   dependencies:
     queue-typescript: "npm:^1.0.1"
     reliable-random: "npm:^0.0.1"
     stack-typescript: "npm:^1.0.4"
     typescript-string-operations: "npm:^1.4.1"
-  checksum: 10/6a7d7daacde555027bf2c867bc543047573a90b48214019f0f9bab45671233b8fcf201b014070b87fd2ffa824501e65ffcf8c41ce11ef836ece532b343a29504
+  checksum: 10/1a80801c7f6f4775c9af4b0b25dc7de4216b56aefb95ed10394e1e87c549a882c71aee9061a6e2f3074025113aef9691f06a0ccc06f3da65c296442a1a1bbbed
   languageName: node
   linkType: hard
 
