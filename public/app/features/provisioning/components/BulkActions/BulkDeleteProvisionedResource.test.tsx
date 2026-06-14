@@ -19,6 +19,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolde
 }));
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 
@@ -91,6 +92,7 @@ function setup(
         }
       : null,
     isInstanceManaged: false,
+    isMissingRepo: false,
   });
 
   mockUseBulkActionJob.mockReturnValue({
@@ -133,6 +135,51 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(await screen.findByText(/This will delete selected folders and their descendants/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
+  });
+
+  it('shows a spinner while repository data is loading', async () => {
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: undefined,
+      folder: null,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      isMissingRepo: false,
+      isLoading: true,
+    });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+
+    render(
+      <BulkDeleteProvisionedResource
+        folderUid="test-folder"
+        selectedItems={{ folder: { 'folder-1': true }, dashboard: {} }}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
+  });
+
+  it('shows RepoInvalidStateBanner when repository is not found', async () => {
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: undefined,
+      folder: null,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      isMissingRepo: true,
+    });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+
+    render(
+      <BulkDeleteProvisionedResource
+        folderUid="test-folder"
+        selectedItems={{ folder: { 'folder-1': true }, dashboard: {} }}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByText(/Repository not found/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
   it('calls onDismiss when Cancel is clicked', async () => {
@@ -257,6 +304,7 @@ describe('BulkDeleteProvisionedResource', () => {
           folder: null,
           isInstanceManaged: false,
           isReadOnlyRepo: false,
+          isMissingRepo: false,
         };
       }
       return {
@@ -264,6 +312,7 @@ describe('BulkDeleteProvisionedResource', () => {
         folder: null,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
+        isMissingRepo: true,
       };
     });
 
