@@ -142,7 +142,7 @@ func renderTags(tags []*Tag) []string {
 
 			// Always quote tag values
 			if strings.HasSuffix(tag.Key, "::tag") {
-				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+				textValue = fmt.Sprintf("'%s'", escapeStringLiteral(tag.Value))
 				return textValue, operator
 			}
 
@@ -155,7 +155,7 @@ func renderTags(tags []*Tag) []string {
 				textValue = tag.Value
 			} else {
 				// String (or unknown) - quote
-				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+				textValue = fmt.Sprintf("'%s'", escapeStringLiteral(tag.Value))
 			}
 
 			return removeRegexWrappers(textValue, `'`), operator
@@ -171,7 +171,7 @@ func renderTags(tags []*Tag) []string {
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
+			textValue = fmt.Sprintf("'%s'", escapeStringLiteral(removeRegexWrappers(tag.Value, "")))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
@@ -301,6 +301,13 @@ func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {
 	to := tr.To.UnixNano() / int64(time.Millisecond)
 
 	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to)
+}
+
+func escapeStringLiteral(value string) string {
+	// Escape backslashes before quotes so the \ we insert for ' is not itself re-escaped.
+	value = strings.ReplaceAll(value, `\`, `\\`)
+	value = strings.ReplaceAll(value, `'`, `\'`)
+	return value
 }
 
 func removeRegexWrappers(wrappedValue string, wrapper string) string {
