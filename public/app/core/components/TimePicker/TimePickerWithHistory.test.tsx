@@ -1,9 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { dateTime, getDefaultTimeRange, systemDateFormats, type TimeRange } from '@grafana/data';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const grafanaUi = require('@grafana/ui') as {
+  TimeRangePicker: (props: { onChange: (value: TimeRange) => void }) => unknown;
+};
 
 describe('TimePickerWithHistory', () => {
   // In some of the tests we close and re-open the picker. When we do that we must re-find these inputs
@@ -73,6 +78,30 @@ describe('TimePickerWithHistory', () => {
 
     expect(screen.queryByText(/2022-12-03 00:00:00 to 2022-12-03 23:59:59/i)).toBeInTheDocument();
     expect(screen.queryByText(/2022-12-02 00:00:00 to 2022-12-02 23:59:59/i)).toBeInTheDocument();
+  });
+
+  it('Should throw an Error if absolute time range history contains an invalid DateTime object', () => {
+    let pickerOnChange: ((value: TimeRange) => void) | undefined;
+    const timeRangePickerSpy = jest.spyOn(grafanaUi, 'TimeRangePicker').mockImplementation((pickerProps) => {
+      pickerOnChange = pickerProps.onChange;
+      return null;
+    });
+
+    try {
+      render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} />);
+
+      expect(pickerOnChange).toBeDefined();
+      expect(() =>
+        pickerOnChange?.({
+          raw: {
+            from: dateTime('2022-12-03T00:00:00.000Z'),
+            to: { invalid: true },
+          },
+        } as TimeRange)
+      ).toThrow('Invalid DateTime object passed to convertToISOString');
+    } finally {
+      timeRangePickerSpy.mockRestore();
+    }
   });
 
   it('Saves changes into local storage without duplicates', async () => {
