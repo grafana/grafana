@@ -124,6 +124,38 @@ func TestGenericStrategy(t *testing.T) {
 	})
 }
 
+type fixedNamer struct{ suffix string }
+
+func (f fixedNamer) GenerateName(base string) string { return base + f.suffix }
+
+func TestGenericStrategy_WithNameGenerator(t *testing.T) {
+	t.Parallel()
+	gv := schema.GroupVersion{Group: "test", Version: "v1"}
+
+	t.Run("default namer is SimpleNameGenerator", func(t *testing.T) {
+		t.Parallel()
+		strategy := generic.NewStrategy(runtime.NewScheme(), gv)
+		got := strategy.GenerateName("team-")
+		require.True(t, len(got) > len("team-"), "expected SimpleNameGenerator to append a suffix to the base")
+		require.Equal(t, "team-", got[:len("team-")])
+	})
+
+	t.Run("WithNameGenerator overrides the embedded namer", func(t *testing.T) {
+		t.Parallel()
+		strategy := generic.NewStrategy(runtime.NewScheme(), gv).
+			WithNameGenerator(fixedNamer{suffix: "fixed"})
+		require.Equal(t, "team-fixed", strategy.GenerateName("team-"))
+	})
+
+	t.Run("WithNameGenerator(nil) keeps the existing namer", func(t *testing.T) {
+		t.Parallel()
+		strategy := generic.NewStrategy(runtime.NewScheme(), gv).
+			WithNameGenerator(fixedNamer{suffix: "fixed"})
+		strategy = strategy.WithNameGenerator(nil)
+		require.Equal(t, "team-fixed", strategy.GenerateName("team-"))
+	})
+}
+
 func TestStatusStrategy(t *testing.T) {
 	t.Parallel()
 	gv := schema.GroupVersion{Group: "test", Version: "v1"}

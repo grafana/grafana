@@ -40,6 +40,14 @@ func (g *genericStrategy) WithClusterScope() *genericStrategy {
 	return g
 }
 
+// WithNameGenerator overrides the strategy's namer (default names.SimpleNameGenerator); nil is a no-op.
+func (g *genericStrategy) WithNameGenerator(ng names.NameGenerator) *genericStrategy {
+	if ng != nil {
+		g.NameGenerator = ng
+	}
+	return g
+}
+
 func (g *genericStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 	fields := map[fieldpath.APIVersion]*fieldpath.Set{
 		fieldpath.APIVersion(g.gv.String()): fieldpath.NewSet(

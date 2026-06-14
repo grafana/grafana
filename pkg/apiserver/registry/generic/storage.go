@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/names"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
@@ -20,16 +21,40 @@ type SelectableFieldsOptions struct {
 	GetAttrs func(obj runtime.Object) (labels.Set, fields.Set, error)
 }
 
-func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
-	return NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, SelectableFieldsOptions{})
+// StoreOptions allows per-resource customization of the registry store; naming mirrors grafana-app-sdk.
+type StoreOptions struct {
+	// NameGenerator is used when metadata.generateName is set; defaults to names.SimpleNameGenerator.
+	NameGenerator names.NameGenerator
 }
 
-// NewRegistryStoreWithSelectableFields creates a registry store with custom selectable fields support.
-// Use this when you need to filter resources by custom fields like spec.connection.name.
-func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, fieldOpts SelectableFieldsOptions) (*registry.Store, error) {
+// Option configures a registry store created by NewRegistryStore.
+type Option func(*storeConfig)
+
+type storeConfig struct {
+	nameGenerator names.NameGenerator
+	getAttrs      func(obj runtime.Object) (labels.Set, fields.Set, error)
+}
+
+// WithNameGenerator sets the name generator used when metadata.generateName is set.
+func WithNameGenerator(ng names.NameGenerator) Option {
+	return func(c *storeConfig) { c.nameGenerator = ng }
+}
+
+// WithGetAttrs sets a custom GetAttrs func for field-selector filtering.
+func WithGetAttrs(fn func(obj runtime.Object) (labels.Set, fields.Set, error)) Option {
+	return func(c *storeConfig) { c.getAttrs = fn }
+}
+
+// NewRegistryStore creates a registry store, optionally customized via Options.
+func NewRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, opts ...Option) (*registry.Store, error) {
+	cfg := &storeConfig{}
+	for _, o := range opts {
+		o(cfg)
+	}
+
 	gv := resourceInfo.GroupVersion()
 	gv.Version = runtime.APIVersionInternal
-	strategy := NewStrategy(scheme, gv)
+	strategy := NewStrategy(scheme, gv).WithNameGenerator(cfg.nameGenerator)
 	if resourceInfo.IsClusterScoped() {
 		strategy = strategy.WithClusterScope()
 	}
@@ -37,8 +62,8 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 	// Use custom GetAttrs if provided, otherwise use default
 	var attrFunc storage.AttrFunc
 	var predicateFunc func(label labels.Selector, field fields.Selector) storage.SelectionPredicate
-	if fieldOpts.GetAttrs != nil {
-		attrFunc = fieldOpts.GetAttrs
+	if cfg.getAttrs != nil {
+		attrFunc = cfg.getAttrs
 		// Pass nil predicateFunc to use default behavior with custom attrFunc
 		predicateFunc = nil
 	} else {
@@ -66,11 +91,21 @@ func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo u
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: attrFunc}
-	if err := store.CompleteWithOptions(options); err != nil {
+	storeOpts := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: attrFunc}
+	if err := store.CompleteWithOptions(storeOpts); err != nil {
 		return nil, err
 	}
 	return store, nil
+}
+
+// Deprecated: use NewRegistryStore with WithGetAttrs.
+func NewRegistryStoreWithSelectableFields(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, fieldOpts SelectableFieldsOptions) (*registry.Store, error) {
+	return NewRegistryStore(scheme, resourceInfo, optsGetter, WithGetAttrs(fieldOpts.GetAttrs))
+}
+
+// Deprecated: use NewRegistryStore with WithNameGenerator and/or WithGetAttrs.
+func NewRegistryStoreWithOptions(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter, storeOpts StoreOptions, fieldOpts SelectableFieldsOptions) (*registry.Store, error) {
+	return NewRegistryStore(scheme, resourceInfo, optsGetter, WithNameGenerator(storeOpts.NameGenerator), WithGetAttrs(fieldOpts.GetAttrs))
 }
 
 func NewCompleteRegistryStore(scheme *runtime.Scheme, resourceInfo utils.ResourceInfo, optsGetter generic.RESTOptionsGetter) (*registry.Store, error) {
