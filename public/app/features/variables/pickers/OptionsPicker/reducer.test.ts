@@ -899,6 +899,44 @@ describe('optionsPickerReducer', () => {
           highlightIndex: 1,
         });
     });
+
+    it('should match non-latin chars without requiring exact case', () => {
+      const searchQuery = 'åle';
+
+      const options: VariableOption[] = ['Ålesund', 'Maqv-Å', 'Oslo'].map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = [
+        {
+          selected: false,
+          text: '> ' + searchQuery,
+          value: searchQuery,
+        },
+        {
+          selected: false,
+          text: 'Ålesund',
+          value: 'Ålesund',
+        },
+      ];
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: searchQuery,
+          highlightIndex: 1,
+        });
+    });
   });
 
   describe('when large data for updateOptionsFromSearch is dispatched and variable has searchFilter', () => {
