@@ -192,6 +192,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-01-20,grafanaAdvisor,GA,@grafana/grafana-catalog,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
 2025-01-21,datasourceConnectionsTab,privatePreview,@grafana/grafana-catalog,false,false,true
+2026-05-21,connectionsFilterSidebar,experimental,@grafana/grafana-catalog,false,false,true
 2025-01-29,fetchRulesUsingPost,experimental,@grafana/alerting-squad,false,false,false
 2025-12-18,fetchRulesInCompactMode,experimental,@grafana/alerting-squad,false,false,false
 2025-02-04,newLogsPanel,GA,@grafana/observability-logs,false,false,true

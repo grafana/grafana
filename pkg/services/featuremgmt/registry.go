@@ -1653,6 +1653,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:        "connectionsFilterSidebar",
+			Description: "Enables the new sidebar filter panel in the Add new connection page",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyFrontend: true},
+		},
+		{
 			Name:         "fetchRulesUsingPost",
 			Description:  "Use a POST request to list rules by passing down the namespaces user has access to",
 			Stage:        FeatureStageExperimental,
