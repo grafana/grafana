@@ -37,6 +37,8 @@ type SQLCommand struct {
 	outputLimit int64
 	timeout     time.Duration
 	logger      log.Logger
+
+	functions []string
 }
 
 // NewSQLCommand creates a new SQLCommand.
@@ -57,6 +59,12 @@ func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL
 		sqlLogger.Debug("REF tables", "tables", tables, "sql", rawSQL)
 	}
 
+	// SQL already parsed by TablesList above, so a failure here is unexpected; non-fatal.
+	functions, err := sql.ExtractFunctionNames(rawSQL)
+	if err != nil {
+		sqlLogger.Warn("failed to extract function names for metrics", "error", err)
+	}
+
 	return &SQLCommand{
 		query:       rawSQL,
 		varsToQuery: tables,
@@ -66,6 +74,7 @@ func NewSQLCommand(ctx context.Context, logger log.Logger, refID, format, rawSQL
 		timeout:     timeout,
 		format:      format,
 		logger:      sqlLogger,
+		functions:   functions,
 	}, nil
 }
 
@@ -178,6 +187,22 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			}
 		} else {
 			obsCells.Observe(float64(tc))
+		}
+
+		// --- Per-function counter ---
+		// Incremented once per unique function name in the query regardless of
+		// execution outcome. Disallowed names are bounded by IsKnownEngineFunction
+		// to keep label cardinality finite; unrecognised names are bucketed as "unknown".
+		for _, fn := range gr.functions {
+			if sql.IsAllowedFunctionName(fn) {
+				metrics.SqlCommandFunctionCount.WithLabelValues(fn, "true").Inc()
+			} else {
+				label := "unknown"
+				if sql.IsKnownEngineFunction(fn) {
+					label = fn
+				}
+				metrics.SqlCommandFunctionCount.WithLabelValues(label, "false").Inc()
+			}
 		}
 	}()
 

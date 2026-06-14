@@ -13,6 +13,7 @@ type ExprMetrics struct {
 	SqlCommandCount         *prometheus.CounterVec
 	SqlCommandCellCount     *prometheus.HistogramVec
 	SqlCommandInputCount    *prometheus.CounterVec
+	SqlCommandFunctionCount *prometheus.CounterVec
 }
 
 func newExprMetrics(subsystem string) *ExprMetrics {
@@ -67,6 +68,13 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 			Name:      "sql_command_input_count",
 			Help:      "Total number of inputs to the SQL command. Errors here are also counted in the sql_command_count metric but without the datasource_type and input_frame_type. The attempted_conversion label indicates if the input was converted from another format (e.g. from labeled time series) or passed through as a table. Since a single SQL expression can have multiple inputs, this can count higher than sql_command_count.",
 		}, []string{"status", "attempted_conversion", "datasource_type", "input_frame_type"}),
+
+		SqlCommandFunctionCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Subsystem: subsystem,
+			Name:      "sql_command_function_count",
+			Help:      "Number of SQL expression execution attempts that include a call to a particular SQL function. The 'function' label is the lower-cased function name. The 'allowed' label is 'true' when the function is in the SQL expression allowlist and 'false' when it is not. Incremented once per unique function name per query execution attempt, regardless of whether the query succeeded, was blocked by the allowlist, or errored.",
+		}, []string{"function", "allowed"}),
 	}
 }
 
@@ -86,6 +94,8 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
 
 		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
+
+		SqlCommandFunctionCount: newExprMetrics(metricsSubSystem).SqlCommandFunctionCount,
 	}
 
 	if reg != nil {
@@ -96,6 +106,7 @@ func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandCount,
 			m.SqlCommandCellCount,
 			m.SqlCommandInputCount,
+			m.SqlCommandFunctionCount,
 		)
 	}
 
@@ -118,6 +129,8 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
 
 		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
+
+		SqlCommandFunctionCount: newExprMetrics(metricsSubSystem).SqlCommandFunctionCount,
 	}
 
 	if reg != nil {
@@ -128,6 +141,7 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandCount,
 			m.SqlCommandCellCount,
 			m.SqlCommandInputCount,
+			m.SqlCommandFunctionCount,
 		)
 	}
 

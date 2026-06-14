@@ -219,134 +219,143 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	}
 }
 
-// nolint:gocyclo,nakedret
-func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
-	b = true // so don't have to return true in every case but default
+func allowedFunction(f *sqlparser.FuncExpr) bool {
+	return IsAllowedFunctionName(f.Name.String())
+}
 
-	switch strings.ToLower(f.Name.String()) {
+// IsAllowedFunctionName reports whether name (case-insensitive) is in the SQL
+// Expressions function allowlist. It covers both regular FuncExpr calls and the
+// special AST node types that the parser uses for GROUP_CONCAT, EXTRACT, TRIM,
+// TIMESTAMPDIFF/TIMESTAMPADD, and CHAR.
+//
+//nolint:gocyclo
+func IsAllowedFunctionName(name string) bool {
+	switch strings.ToLower(name) {
+	// Special AST node types (not FuncExpr) that are treated as function calls
+	case "group_concat", "extract", "trim", "char":
+		return true
+
 	// Conditional functions
 	case "if", "coalesce", "ifnull", "nullif":
-		return
+		return true
 	case "least":
-		return
+		return true
 
 	// Aggregation functions
 	case "sum", "avg", "count", "min", "max":
-		return
+		return true
 	case "stddev", "std", "stddev_pop", "stddev_sample":
-		return
+		return true
 	case "variance", "var_pop", "var_samp":
-		return
-	case "group_concat":
-		return
+		return true
 
 	// Window Functions
 	case "row_number", "rank", "dense_rank", "percent_rank":
-		return
+		return true
 	case "first_value", "last_value", "ntile":
-		return
+		return true
 	case "lead", "lag":
-		return
+		return true
 
 	// Mathematical functions
 	case "abs":
-		return
+		return true
 	case "round", "floor", "ceiling", "ceil":
-		return
+		return true
 	case "sqrt", "pow", "power":
-		return
+		return true
 	case "mod", "log", "log2", "log10", "exp":
-		return
+		return true
 	case "sign", "ln", "truncate":
-		return
+		return true
 	case "sin", "cos", "tan", "cot":
-		return
+		return true
 	case "asin", "acos", "atan", "atan2":
-		return
+		return true
 	case "conv", "degrees", "radians":
-		return
+		return true
 	case "rand", "pi":
-		return
+		return true
 
 	// String functions
 	case "concat", "length", "char_length":
-		return
+		return true
 	case "lower", "upper":
-		return
+		return true
 	case "substring", "substring_index":
-		return
+		return true
 	case "left", "right":
-		return
+		return true
 	case "ltrim", "rtrim":
-		return
+		return true
 	case "replace", "reverse":
-		return
+		return true
 	case "lcase", "ucase", "mid", "repeat":
-		return
+		return true
 	case "position", "instr", "locate":
-		return
-	case "ascii", "ord", "char":
-		return
+		return true
+	case "ascii", "ord":
+		return true
 	case "elt", "quote":
-		return
+		return true
 	case "from_base64", "format":
-		return
+		return true
 	case "regexp_substr", "regexp_replace", "regexp_instr", "regexp_like":
-		return
+		return true
 
 	// Date functions
 	case "str_to_date":
-		return
+		return true
 	case "date_format", "get_format":
-		return
+		return true
 	case "date_add", "adddate", "date_sub", "subdate":
-		return
+		return true
 	case "year", "month", "day", "weekday", "last_day":
-		return
+		return true
 	case "yearweek", "weekofyear":
-		return
+		return true
 	case "datediff":
-		return
+		return true
 	case "unix_timestamp", "from_unixtime":
-		return
-	case "extract", "hour", "minute", "second", "microsecond":
-		return
+		return true
+	case "hour", "minute", "second", "microsecond":
+		return true
 	case "dayname", "monthname", "dayofweek", "dayofmonth", "dayofyear":
-		return
+		return true
 	case "week", "quarter", "time_to_sec", "sec_to_time":
-		return
+		return true
 	case "timestampdiff", "timestampadd":
-		return
+		return true
 	case "from_days", "to_days":
-		return
+		return true
 	case "time_format", "time", "timediff":
-		return
+		return true
 
 	// Type conversion
 	case "cast", "convert":
-		return
+		return true
 
 	// JSON functions
 	case "json_extract", "json_object", "json_array", "json_valid":
-		return
+		return true
 	case "json_merge", "json_merge_patch", "json_merge_preserve":
-		return
+		return true
 	case "json_contains", "json_length", "json_type", "json_keys":
-		return
+		return true
 	case "json_contains_path", "json_depth":
-		return
+		return true
 	case "json_search", "json_quote", "json_unquote":
-		return
+		return true
 	case "json_set", "json_insert", "json_replace", "json_remove":
-		return
+		return true
 	case "json_array_append", "json_array_insert":
-		return
+		return true
 	case "json_objectagg", "json_arrayagg":
-		return
+		return true
 	case "json_overlaps":
-		return
+		return true
 	case "json_pretty", "json_value":
-		return
+		return true
 
 	default:
 		return false
