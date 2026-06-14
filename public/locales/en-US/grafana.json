@@ -6795,6 +6795,31 @@
       "title-hidden-count_one": "Hidden ({{count}})",
       "title-hidden-count_other": "Hidden ({{count}})"
     },
+    "dashboard-config-diff": {
+      "label-added": "Added",
+      "label-changed": "Changed",
+      "label-removed": "Removed",
+      "no-option-changes": "No option changes",
+      "options-heading": "Dashboard options"
+    },
+    "dashboard-diff-view": {
+      "added-placeholder": "Did not exist",
+      "dismiss-tooltip": "Revert this change",
+      "new-heading": "New",
+      "no-panel-changes": "No panel changes",
+      "no-variable-changes": "No variable changes",
+      "old-heading": "Old",
+      "outline-aria": "Diff outline",
+      "outline-empty": "No changes",
+      "outline-heading": "Outline",
+      "outline-options": "Dashboard options",
+      "outline-panels": "Panels",
+      "outline-untitled-panel": "Untitled panel",
+      "outline-variables": "Variables",
+      "panels-heading": "Panels",
+      "removed-placeholder": "Removed",
+      "variables-heading": "Variables"
+    },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
@@ -7335,6 +7360,7 @@
       "tabs": {
         "label-changes": "Changes",
         "label-details": "Details",
+        "label-visual-diff": "Visual diff",
         "title": "Save dashboard",
         "title-copy": "Save dashboard copy",
         "title-provisioned": "Provisioned dashboard",
