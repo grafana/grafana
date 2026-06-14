@@ -165,6 +165,9 @@ export function PanelChrome({
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
+  const streamingLabel = onCancelQuery
+    ? t('grafana-ui.panel-chrome.aria-label-stop-streaming', 'Stop streaming')
+    : t('grafana-ui.panel-chrome.aria-label-streaming', 'Streaming data');
 
   const hasHeader = !hoverHeader;
 
@@ -320,26 +323,17 @@ export function PanelChrome({
       )}
 
       {loadingState === LoadingState.Streaming && (
-        <Tooltip
-          content={
-            onCancelQuery
-              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
-              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
-          }
-        >
+        <Tooltip content={streamingLabel}>
           <TitleItem
             className={cx(dragClassCancel, onCancelQuery && styles.pointer)}
             data-testid="panel-streaming"
             onClick={onCancelQuery}
+            aria-label={onCancelQuery ? streamingLabel : undefined}
           >
             <span
               className={styles.streamingIndicator}
               role={onCancelQuery ? undefined : 'status'}
-              aria-label={
-                onCancelQuery
-                  ? t('grafana-ui.panel-chrome.aria-label-stop-streaming', 'Stop streaming')
-                  : t('grafana-ui.panel-chrome.aria-label-streaming', 'Streaming data')
-              }
+              aria-label={onCancelQuery ? undefined : streamingLabel}
             >
               <Icon name="circle-mono" size="md" className={styles.streaming} aria-hidden />
             </span>
