@@ -166,7 +166,13 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
         </InlineField>
         <div className={styles.fieldContainer}>
           {featureState && <FeatureBadge featureState={featureState} />}
-          {helperText && <IconButton name="info-circle" tooltip={helperText} />}
+          {helperText && (
+            <IconButton
+              name="info-circle"
+              tooltip={helperText}
+              aria-label={t('expressions.expression-query-editor.info-label', 'Expression type information')}
+            />
+          )}
         </div>
       </div>
       {renderExpressionType()}

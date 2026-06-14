@@ -19,7 +19,7 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { type GraphThresholdsStyleMode, IconButton, InlineField, Input, Stack, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
@@ -121,16 +121,18 @@ export const QueryWrapper = ({
     const styles = useStyles2(getStyles);
     return (
       <div className={styles.dsTooltip}>
-        <Tooltip
-          content={
-            <Trans i18nKey="alerting.selecting-data-source-tooltip.tooltip-content">
-              Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon
-              for more information.
-            </Trans>
-          }
-        >
-          <Icon name="info-circle" onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')} />
-        </Tooltip>
+        <IconButton
+          name="info-circle"
+          aria-label={t(
+            'alerting.selecting-data-source-tooltip.aria-label',
+            'Data source alerting documentation'
+          )}
+          tooltip={t(
+            'alerting.selecting-data-source-tooltip.tooltip',
+            'Not finding the data source you want? Some data sources are not supported for alerting. Click for more information.'
+          )}
+          onClick={() => window.open(DOCS_URL_DATA_SOURCE_ALERTING, '_blank')}
+        />
       </div>
     );
   }
