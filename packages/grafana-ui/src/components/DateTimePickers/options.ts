@@ -40,6 +40,11 @@ export const getQuickOptions: () => TimeOption[] = () => [
   { from: 'now-1y', to: 'now', display: t('grafana-ui.date-time-pickers.quick-options.last-1-year', 'Last 1 year') },
   { from: 'now-2y', to: 'now', display: t('grafana-ui.date-time-pickers.quick-options.last-2-years', 'Last 2 years') },
   { from: 'now-5y', to: 'now', display: t('grafana-ui.date-time-pickers.quick-options.last-5-years', 'Last 5 years') },
+  {
+    from: 'now-10y',
+    to: 'now',
+    display: t('grafana-ui.date-time-pickers.quick-options.last-10-years', 'Last 10 years'),
+  },
   { from: 'now-1d/d', to: 'now-1d/d', display: t('grafana-ui.date-time-pickers.quick-options.yesterday', 'Yesterday') },
   {
     from: 'now-2d/d',
@@ -117,7 +122,7 @@ export const getQuickOptions: () => TimeOption[] = () => [
     display: t('grafana-ui.date-time-pickers.quick-options.this-fiscal-year', 'This fiscal year'),
   },
 ];
-
+console.log('test');
 export const getMonthOptions: () => Array<ComboboxOption<number>> = () => [
   { label: t('grafana-ui.date-time-pickers.month-options.label-january', 'January'), value: 0 },
   { label: t('grafana-ui.date-time-pickers.month-options.label-february', 'February'), value: 1 },
