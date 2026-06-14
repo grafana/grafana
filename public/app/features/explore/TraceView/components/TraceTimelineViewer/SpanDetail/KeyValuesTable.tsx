@@ -78,7 +78,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontWeight: 'bold',
     }),
     jsonTable: css({
-      display: 'inline-block',
+      display: 'block',
+      wordBreak: 'break-word',
     }),
   };
 };
