@@ -17,34 +17,60 @@ import (
 func TestTempo(t *testing.T) {
 	t.Run("createRequest v1 without time range - success", func(t *testing.T) {
 		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
-		req, err := service.createRequest(context.Background(), &DatasourceInfo{}, TraceRequestApiVersionV1, "traceID", 0, 0)
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{URL: "http://localhost:3200"}, TraceRequestApiVersionV1, "traceID", 0, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
-		assert.Equal(t, "/api/traces/traceID", req.URL.String())
+		assert.Equal(t, "http://localhost:3200/api/traces/traceID", req.URL.String())
 	})
 
 	t.Run("createRequest v1 with time range - success", func(t *testing.T) {
 		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
-		req, err := service.createRequest(context.Background(), &DatasourceInfo{}, TraceRequestApiVersionV1, "traceID", 1, 2)
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{URL: "http://localhost:3200"}, TraceRequestApiVersionV1, "traceID", 1, 2)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
-		assert.Equal(t, "/api/traces/traceID?start=1&end=2", req.URL.String())
+		assert.Equal(t, "/api/traces/traceID", req.URL.Path)
+		assert.Equal(t, "1", req.URL.Query().Get("start"))
+		assert.Equal(t, "2", req.URL.Query().Get("end"))
 	})
 
 	t.Run("createRequest v2 without time range - success", func(t *testing.T) {
 		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
-		req, err := service.createRequest(context.Background(), &DatasourceInfo{}, TraceRequestApiVersionV2, "traceID", 0, 0)
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{URL: "http://localhost:3200"}, TraceRequestApiVersionV2, "traceID", 0, 0)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
-		assert.Equal(t, "/api/v2/traces/traceID", req.URL.String())
+		assert.Equal(t, "http://localhost:3200/api/v2/traces/traceID", req.URL.String())
 	})
 
 	t.Run("createRequest v2 with time range - success", func(t *testing.T) {
 		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
-		req, err := service.createRequest(context.Background(), &DatasourceInfo{}, TraceRequestApiVersionV2, "traceID", 1, 2)
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{URL: "http://localhost:3200"}, TraceRequestApiVersionV2, "traceID", 1, 2)
 		require.NoError(t, err)
 		assert.Equal(t, 1, len(req.Header))
-		assert.Equal(t, "/api/v2/traces/traceID?start=1&end=2", req.URL.String())
+		assert.Equal(t, "/api/v2/traces/traceID", req.URL.Path)
+		assert.Equal(t, "1", req.URL.Query().Get("start"))
+		assert.Equal(t, "2", req.URL.Query().Get("end"))
+	})
+
+	t.Run("createRequest v2 path - with trailing slash", func(t *testing.T) {
+		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{
+			URL: "http://localhost:3200/route/prefix/",
+		}, TraceRequestApiVersionV2, "traceID", 1, 10)
+		require.NoError(t, err)
+		assert.Equal(t, "/route/prefix/api/v2/traces/traceID", req.URL.Path)
+		assert.Equal(t, "1", req.URL.Query().Get("start"))
+		assert.Equal(t, "10", req.URL.Query().Get("end"))
+	})
+
+	t.Run("createRequest v2 path - without trailing slash", func(t *testing.T) {
+		service := &Service{logger: backend.NewLoggerWith("logger", "tempo-test")}
+		req, err := service.createRequest(context.Background(), &DatasourceInfo{
+			URL: "http://localhost:3200/route/prefix",
+		}, TraceRequestApiVersionV2, "traceID", 1, 10)
+		require.NoError(t, err)
+		assert.Equal(t, "/route/prefix/api/v2/traces/traceID", req.URL.Path)
+		assert.Equal(t, "1", req.URL.Query().Get("start"))
+		assert.Equal(t, "10", req.URL.Query().Get("end"))
 	})
 
 	t.Run("getTrace v1 empty ResourceSpans returns downstream error", func(t *testing.T) {

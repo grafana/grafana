@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -196,19 +198,31 @@ const (
 
 func (s *Service) createRequest(ctx context.Context, dsInfo *DatasourceInfo, apiVersion TraceRequestApiVersion, traceID string, start int64, end int64) (*http.Request, error) {
 	ctxLogger := s.logger.FromContext(ctx)
-	var baseUrl string
-	var tempoQuery string
 
-	if apiVersion == TraceRequestApiVersionV1 {
-		baseUrl = fmt.Sprintf("%s/api/traces/%s", dsInfo.URL, traceID)
-	} else {
-		baseUrl = fmt.Sprintf("%s/api/v2/traces/%s", dsInfo.URL, traceID)
+	// attach correct path according to the base URL and version.
+	baseURL, err := url.Parse(dsInfo.URL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base URL: %w", err)
 	}
 
-	if start == 0 || end == 0 {
-		tempoQuery = baseUrl
+	if apiVersion == TraceRequestApiVersionV1 {
+		// <...>/api/traces/<traceID>
+		baseURL = baseURL.JoinPath("api", "traces", traceID)
 	} else {
-		tempoQuery = fmt.Sprintf("%s?start=%d&end=%d", baseUrl, start, end)
+		// <...>/api/v2/traces/<traceID>
+		baseURL = baseURL.JoinPath("api", "v2", "traces", traceID)
+	}
+
+	// append start and end query argument if needed.
+	var tempoQuery string
+	if start == 0 || end == 0 {
+		tempoQuery = baseURL.String()
+	} else {
+		query := baseURL.Query()
+		query.Add("start", strconv.FormatInt(start, 10))
+		query.Add("end", strconv.FormatInt(end, 10))
+		baseURL.RawQuery = query.Encode()
+		tempoQuery = baseURL.String()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
