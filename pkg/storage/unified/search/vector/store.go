@@ -25,18 +25,19 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// UpsertReplaceSubresources replaces, in a single transaction, the
-	// stored subresource set for each (model, namespace, resource, uid)
-	// present in `vectors`: any stored subresource for those tuples that
-	// isn't being upserted is deleted, then the input vectors are
-	// upserted. Used by the reconciler so stale-row cleanup and
-	// the new write commit atomically.
+	// UpsertReplaceSubresources reconciles the stored subresource set for
+	// one (namespace, model, resource, uid) in a single transaction: it
+	// upserts `changed` and deletes any stored subresource not listed in
+	// `desired`. `changed` is the subset whose content changed since the
+	// last write (so only those were re-embedded); `desired` is the full
+	// set of subresource keys that should exist afterwards. Pass
+	// `desired = keys(changed)` to replace the entire set.
 	//
-	// TODO: only re-embed and upsert subresources whose content actually
-	// changed since the last write. Today the reconciler re-embeds every
-	// panel on any dashboard write, which is wasteful when only one
-	// panel changed.
-	UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error
+	// Every vector in `changed` must belong to the given (namespace,
+	// model, resource, uid). The stale-delete and the upsert commit
+	// atomically, so a mid-way failure leaves the resource in its
+	// previous self-consistent state.
+	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) error
 
 	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error

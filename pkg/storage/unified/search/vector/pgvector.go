@@ -121,9 +121,18 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 	})
 }
 
-func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors []Vector) (retErr error) {
-	if len(vectors) == 0 {
+func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) (retErr error) {
+	// Both empty is a no-op: nothing to write and no survivor set means
+	// "leave the resource alone" rather than "delete everything" (the
+	// reconciler uses Delete for an intentional full wipe).
+	if len(changed) == 0 && len(desired) == 0 {
 		return nil
+	}
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := validateResource(resource); err != nil {
+		return err
 	}
 
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
@@ -135,58 +144,55 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, vectors
 		span.End()
 	}()
 	span.SetAttributes(
-		attribute.Int("vector_count", len(vectors)),
-		attribute.String("resource", vectors[0].Resource),
-		attribute.String("namespace", vectors[0].Namespace),
+		attribute.Int("changed_count", len(changed)),
+		attribute.Int("desired_count", len(desired)),
+		attribute.String("resource", resource),
+		attribute.String("namespace", namespace),
 	)
 
-	for i := range vectors {
-		if err := vectors[i].Validate(); err != nil {
+	for i := range changed {
+		if err := changed[i].Validate(); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
+		}
+		if changed[i].Namespace != namespace || changed[i].Model != model ||
+			changed[i].Resource != resource || changed[i].UID != uid {
+			return fmt.Errorf("vector[%d] does not belong to %s/%s/%s/%s", i, namespace, model, resource, uid)
 		}
 	}
 
-	type uidKey struct{ resource, namespace, model, uid string }
-	groups := map[uidKey][]string{}
-	for _, v := range vectors {
-		k := uidKey{v.Resource, v.Namespace, v.Model, v.UID}
-		groups[k] = append(groups[k], v.Subresource)
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
-		for k, kept := range groups {
-			if err := validateResource(k.resource); err != nil {
-				return err
-			}
-			stored, err := b.subresourceKeysTx(ctx, tx, k.namespace, k.model, k.resource, k.uid)
-			if err != nil {
-				return fmt.Errorf("read subresources %s/%s: %w", k.namespace, k.uid, err)
-			}
-			keep := make(map[string]struct{}, len(kept))
-			for _, s := range kept {
-				keep[s] = struct{}{}
-			}
-			var stale []string
-			for _, s := range stored {
-				if _, ok := keep[s]; !ok {
-					stale = append(stale, s)
-				}
-			}
-			if len(stale) > 0 {
-				req := &sqlVectorCollectionDeleteSubresourcesRequest{
-					SQLTemplate:  sqltemplate.New(b.dialect),
-					Resource:     k.resource,
-					Namespace:    k.namespace,
-					Model:        k.model,
-					UID:          k.uid,
-					Subresources: stale,
-				}
-				if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionDeleteSubresource, req); err != nil {
-					return fmt.Errorf("delete stale subresources %s/%s: %w", k.namespace, k.uid, err)
-				}
+		stored, err := b.subresourceKeysTx(ctx, tx, namespace, model, resource, uid)
+		if err != nil {
+			return fmt.Errorf("read subresources %s/%s: %w", namespace, uid, err)
+		}
+		var stale []string
+		for _, s := range stored {
+			if _, ok := keep[s]; !ok {
+				stale = append(stale, s)
 			}
 		}
-		return b.upsertAll(ctx, tx, vectors)
+		if len(stale) > 0 {
+			req := &sqlVectorCollectionDeleteSubresourcesRequest{
+				SQLTemplate:  sqltemplate.New(b.dialect),
+				Resource:     resource,
+				Namespace:    namespace,
+				Model:        model,
+				UID:          uid,
+				Subresources: stale,
+			}
+			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionDeleteSubresource, req); err != nil {
+				return fmt.Errorf("delete stale subresources %s/%s: %w", namespace, uid, err)
+			}
+		}
+		if len(changed) == 0 {
+			return nil
+		}
+		return b.upsertAll(ctx, tx, changed)
 	})
 }
 

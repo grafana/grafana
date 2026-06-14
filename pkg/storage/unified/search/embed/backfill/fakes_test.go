@@ -224,8 +224,8 @@ func (f *fakeVector) markExists(ns, model, res, uid string) {
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
-func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, vs []vector.Vector) error {
-	return f.Upsert(ctx, vs)
+func (f *fakeVector) UpsertReplaceSubresources(ctx context.Context, _, _, _, _ string, changed []vector.Vector, _ []string) error {
+	return f.Upsert(ctx, changed)
 }
 func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.mu.Lock()
