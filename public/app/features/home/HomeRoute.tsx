@@ -4,14 +4,15 @@ import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';
-import { LoadingPlaceholder } from '@grafana/ui';
+import { GrafanaRouteLoading } from 'app/core/navigation/GrafanaRouteLoading';
 
 import { type DashboardPageProxyProps } from '../dashboard/containers/DashboardPageProxy';
 
 const DashboardPageProxy = lazy(
   () => import(/* webpackChunkName: "DashboardPageProxy" */ '../dashboard/containers/DashboardPageProxy')
 );
-const HomePage = lazy(() => import(/* webpackChunkName: "HomePage" */ './HomePage'));
+const homePageImport = () => import(/* webpackChunkName: "HomePage" */ './HomePage');
+const HomePage = lazy(homePageImport);
 
 function HomeRouteInner(props: DashboardPageProxyProps) {
   const flagOn = useFlagGrafanaUnifiedHomepage({ suspend: true });
@@ -22,6 +23,12 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   const { data, isLoading, isError } = useMergedPreferencesQuery();
   const redirectUri = data?.spec?.homeURL;
 
+  // Warm the HomePage chunk in parallel with the preferences probe, so the
+  // lazy component resolves instantly once the probe finishes
+  useEffect(() => {
+    homePageImport();
+  }, []);
+
   useEffect(() => {
     if (!redirectUri) {
       return;
@@ -31,7 +38,7 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
   }, [redirectUri]);
 
   if (isLoading || redirectUri) {
-    return <LoadingPlaceholder text="" />;
+    return <GrafanaRouteLoading />;
   }
 
   // Probe failed: we cannot tell whether a home dashboard is configured.
@@ -50,7 +57,7 @@ function UnifiedHomeRoute(props: DashboardPageProxyProps) {
 
 export default function HomeRoute(props: DashboardPageProxyProps) {
   return (
-    <Suspense fallback={<LoadingPlaceholder text="" />}>
+    <Suspense fallback={<GrafanaRouteLoading />}>
       <HomeRouteInner {...props} />
     </Suspense>
   );

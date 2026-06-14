@@ -13,6 +13,7 @@ import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionLink,
   PluginExtensionTypes,
+  type PluginMeta,
   urlUtil,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
@@ -81,14 +82,38 @@ export const wrapWithPluginContext = <T,>({
   extensionTitle,
   Component,
   log,
+  pluginMeta,
 }: {
   pluginId: string;
   extensionTitle: string;
   Component: React.ComponentType<T>;
   log: ExtensionsLog;
+  pluginMeta?: PluginMeta;
 }) => {
+  const renderWithContext = (props: T & React.JSX.IntrinsicAttributes, meta: PluginMeta) => (
+    <PluginContextProvider meta={meta}>
+      <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <Component
+            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
+          />
+        </RestrictedGrafanaApisProvider>
+      </ExtensionErrorBoundary>
+    </PluginContextProvider>
+  );
+
+  // When the plugin meta is already known (e.g. captured at registration time, right after the
+  // plugin was imported), render synchronously. The async variant below renders `null` for at
+  // least one commit, which makes extension content pop in after the host page has painted.
+  if (pluginMeta) {
+    const WrappedExtensionComponentSync = (props: T & React.JSX.IntrinsicAttributes) =>
+      renderWithContext(props, pluginMeta);
+
+    return WrappedExtensionComponentSync;
+  }
+
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const { error, loading, value: pluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
+    const { error, loading, value: fetchedPluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;
@@ -102,22 +127,12 @@ export const wrapWithPluginContext = <T,>({
       return null;
     }
 
-    if (!pluginMeta) {
+    if (!fetchedPluginMeta) {
       log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
-    return (
-      <PluginContextProvider meta={pluginMeta}>
-        <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <RestrictedGrafanaApisProvider pluginId={pluginId}>
-            <Component
-              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
-            />
-          </RestrictedGrafanaApisProvider>
-        </ExtensionErrorBoundary>
-      </PluginContextProvider>
-    );
+    return renderWithContext(props, fetchedPluginMeta);
   };
 
   return WrappedExtensionComponent;
