@@ -128,6 +128,14 @@ type Options struct {
 
 	// MaxBatchSize determines the maximum number of alerts to send in a single request to the alertmanager.
 	MaxBatchSize int
+
+	// MaxLabelStringSize is the byte cap applied by [ExternalAlertmanager] to
+	// any single label/annotation name or value before forwarding alerts.
+	// Names exceeding the cap are dropped (truncating risks key collisions);
+	// values are truncated. A non-positive value disables the clamp; the zero
+	// value left after [NewExternalAlertmanagerSender] seeds the default is
+	// [DefaultMaxLabelStringSize]. This field is unused by [Manager] directly.
+	MaxLabelStringSize int
 }
 
 type alertMetrics struct {

@@ -2,6 +2,7 @@ package sender
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -230,6 +231,91 @@ func TestWithUTF8Labels(t *testing.T) {
 		result := am.alertToNotifierAlert(alert)
 		require.Equal(t, "test", result.Annotations.Get("some_name"))
 		require.Equal(t, "fire", result.Labels.Get("_0x1f525"))
+	})
+}
+
+func TestClampLabelSet(t *testing.T) {
+	logger := log.NewNopLogger()
+
+	t.Run("default cap: oversized value truncated, oversized name dropped, no panic", func(t *testing.T) {
+		// Above the prometheus stringlabels panic threshold (1<<24); without the
+		// clamp this would panic in labels.New downstream.
+		hugeVal := strings.Repeat("a", (1<<24)+1024)
+		hugeName := strings.Repeat("n", (1<<24)+1)
+
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{
+				"__value_string__": hugeVal,
+				hugeName:           "anything",
+			},
+			Alert: models.Alert{
+				Labels: models.LabelSet{
+					"alertname": "X",
+					"big":       hugeVal,
+				},
+			},
+		}
+
+		// Both code paths: the WithUTF8Labels closure (calls labels.New, the panic point)
+		// and the default sanitizeLabelSet, which also calls labels.New.
+		for _, opts := range [][]Option{{WithUTF8Labels()}, nil} {
+			am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), opts...)
+			require.NoError(t, err)
+
+			require.NotPanics(t, func() {
+				result := am.alertToNotifierAlert(alert)
+				require.Len(t, result.Labels.Get("big"), DefaultMaxLabelStringSize)
+				require.Len(t, result.Annotations.Get("__value_string__"), DefaultMaxLabelStringSize)
+				require.Equal(t, "", result.Labels.Get(hugeName))
+				require.Equal(t, "X", result.Labels.Get("alertname"))
+			})
+		}
+	})
+
+	t.Run("payload below cap is unchanged", func(t *testing.T) {
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": "ok"},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithUTF8Labels())
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, "ok", result.Annotations.Get("summary"))
+		require.Equal(t, "X", result.Labels.Get("alertname"))
+	})
+
+	t.Run("WithMaxLabelStringSize overrides the cap", func(t *testing.T) {
+		const customCap = 16
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": strings.Repeat("a", 100)},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(
+			logger, prometheus.NewRegistry(),
+			WithUTF8Labels(),
+			WithMaxLabelStringSize(customCap),
+		)
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Len(t, result.Annotations.Get("summary"), customCap)
+	})
+
+	t.Run("WithMaxLabelStringSize(0) disables the clamp", func(t *testing.T) {
+		// 100-byte string is well under any panic threshold; we just assert the
+		// value is unchanged when the clamp is disabled.
+		val := strings.Repeat("a", 100)
+		alert := models.PostableAlert{
+			Annotations: models.LabelSet{"summary": val},
+			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+		}
+		am, err := NewExternalAlertmanagerSender(
+			logger, prometheus.NewRegistry(),
+			WithUTF8Labels(),
+			WithMaxLabelStringSize(0),
+		)
+		require.NoError(t, err)
+		result := am.alertToNotifierAlert(alert)
+		require.Equal(t, val, result.Annotations.Get("summary"))
 	})
 }
 
