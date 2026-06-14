@@ -10,13 +10,21 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/open-feature/go-sdk/openfeature"
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
+	alertingv0 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -138,6 +146,15 @@ type ConvertPrometheusSrv struct {
 	featureToggles   featuremgmt.FeatureToggles
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
+	clientGenerator  resource.ClientGenerator
+
+	// Lazy-initialized k8s typed clients, protected by clientsMu. Created on
+	// first use when the feature flag is enabled, following the same pattern
+	// as K8sRuleSequenceStore.
+	clientsMu       sync.Mutex
+	alertRuleClient *alertingv0.AlertRuleClient
+	recordingClient *alertingv0.RecordingRuleClient
+	ruleSeqClient   *alertingv0.RuleSequenceClient
 }
 
 type Alertmanager interface {
@@ -156,6 +173,7 @@ func NewConvertPrometheusSrv(
 	featureToggles featuremgmt.FeatureToggles,
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
+	clientGenerator resource.ClientGenerator,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -166,6 +184,7 @@ func NewConvertPrometheusSrv(
 		featureToggles:   featureToggles,
 		am:               am,
 		importsAuthz:     importsAuthz,
+		clientGenerator:  clientGenerator,
 	}
 }
 
@@ -431,8 +450,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		logger.Error("Failed to parse version message header", "error", err)
 		return errorToResponse(err)
 	}
-	// 2. Convert Prometheus Rules to GMA
-	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
+	// 2. Resolve folders for every namespace up front (shared by both paths).
+	type nsGroups struct {
+		folderUID string
+		groups    []apimodels.PrometheusRuleGroup
+	}
+	resolved := make([]nsGroups, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
 		logger.Debug("Creating a new namespace", "title", ns)
 		namespace, errResp := srv.getOrCreateNamespace(c, ns, logger, workingFolderUID)
@@ -440,22 +463,65 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 			logger.Error("Failed to create a new namespace", "folder_uid", workingFolderUID)
 			return errResp
 		}
+		resolved = append(resolved, nsGroups{folderUID: namespace.UID, groups: rgs})
+	}
 
-		for _, rg := range rgs {
-			// If we're importing recording rules, we can only import them if the feature is enabled,
-			// and the feature flag that enables configuring target datasources per-rule is also enabled.
-			if promGroupHasRecordingRules(rg) {
-				if !srv.cfg.RecordingRules.Enabled {
-					logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
-					return errorToResponse(errRecordingRulesNotEnabled)
-				}
+	// Gate: check recording-rules enablement for every group before doing any work.
+	for _, ns := range resolved {
+		for _, rg := range ns.groups {
+			if promGroupHasRecordingRules(rg) && !srv.cfg.RecordingRules.Enabled {
+				logger.Error("Cannot import recording rules", "error", errRecordingRulesNotEnabled)
+				return errorToResponse(errRecordingRulesNotEnabled)
 			}
+		}
+	}
 
+	// 3. Branch: k8s path or legacy path.
+	useK8s := openfeature.NewDefaultClient().Boolean(
+		c.Req.Context(),
+		featuremgmt.FlagAlertingConvertPrometheusViaKubernetesAPI,
+		false,
+		openfeature.TransactionContext(c.Req.Context()),
+	)
+
+	if useK8s {
+		k8sGroups := make(map[string][]promGroupWithFolder, len(resolved))
+		for _, ns := range resolved {
+			for _, rg := range ns.groups {
+				pg := toPromGroup(rg)
+				k8sGroups[ns.folderUID] = append(k8sGroups[ns.folderUID], promGroupWithFolder{
+					folderUID: ns.folderUID,
+					group:     pg,
+				})
+			}
+		}
+		if notificationSettings != nil {
+			logger.Warn("Notification settings header is not supported by the Kubernetes conversion path and will be ignored")
+		}
+		if versionMessage != "" {
+			logger.Warn("Version message header is not supported by the Kubernetes conversion path and will be ignored")
+		}
+		if err := srv.createRulesViaK8sClient(
+			c.Req.Context(), c.GetOrgID(), ds, tds,
+			k8sGroups, keepOriginalRuleDefinition, provenance,
+			pauseAlertRules, pauseRecordingRules, extraLabels,
+			logger,
+		); err != nil {
+			logger.Error("Failed to create rules via k8s client", "error", err)
+			return errorToResponse(err)
+		}
+		return successfulResponse()
+	}
+
+	// Legacy path: convert to GMA domain models and persist via provisioning service.
+	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(resolved))
+	for _, ns := range resolved {
+		for _, rg := range ns.groups {
 			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
 				c,
 				ds,
 				tds,
-				namespace.UID,
+				ns.folderUID,
 				rg,
 				pauseRecordingRules,
 				pauseAlertRules,
@@ -468,12 +534,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
 			}
-
 			grafanaGroups = append(grafanaGroups, grafanaGroup)
 		}
 	}
-
-	// 3. Update the GMA Rules in the DB
 	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
@@ -590,6 +653,459 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	}
 
 	return grafanaGroup, nil
+}
+
+// toPromGroup converts an API-level PrometheusRuleGroup to the prom package type.
+func toPromGroup(rg apimodels.PrometheusRuleGroup) prom.PrometheusRuleGroup {
+	rules := make([]prom.PrometheusRule, len(rg.Rules))
+	for i, r := range rg.Rules {
+		rules[i] = prom.PrometheusRule{
+			Alert:         r.Alert,
+			Expr:          r.Expr,
+			For:           r.For,
+			KeepFiringFor: r.KeepFiringFor,
+			Labels:        r.Labels,
+			Annotations:   r.Annotations,
+			Record:        r.Record,
+		}
+	}
+	return prom.PrometheusRuleGroup{
+		Name:        rg.Name,
+		Interval:    rg.Interval,
+		Rules:       rules,
+		QueryOffset: rg.QueryOffset,
+		Limit:       rg.Limit,
+		Labels:      rg.Labels,
+	}
+}
+
+// getK8sClients lazily initializes and returns the typed k8s clients for
+// AlertRule, RecordingRule, and RuleSequence. Safe for concurrent use.
+func (srv *ConvertPrometheusSrv) getK8sClients() (*alertingv0.AlertRuleClient, *alertingv0.RecordingRuleClient, *alertingv0.RuleSequenceClient, error) {
+	srv.clientsMu.Lock()
+	defer srv.clientsMu.Unlock()
+	if srv.alertRuleClient != nil {
+		return srv.alertRuleClient, srv.recordingClient, srv.ruleSeqClient, nil
+	}
+	if srv.clientGenerator == nil {
+		return nil, nil, nil, fmt.Errorf("k8s client generator is not available")
+	}
+	ac, err := alertingv0.NewAlertRuleClientFromGenerator(srv.clientGenerator)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("building alert rule client: %w", err)
+	}
+	rc, err := alertingv0.NewRecordingRuleClientFromGenerator(srv.clientGenerator)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("building recording rule client: %w", err)
+	}
+	sc, err := alertingv0.NewRuleSequenceClientFromGenerator(srv.clientGenerator)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("building rule sequence client: %w", err)
+	}
+	srv.alertRuleClient = ac
+	srv.recordingClient = rc
+	srv.ruleSeqClient = sc
+	return ac, rc, sc, nil
+}
+
+// createRulesViaK8sClient converts each Prometheus rule group into k8s-native
+// AlertRule / RecordingRule / RuleSequence resources and upserts them through
+// the internal k8s API. Groups containing recording rules also get a
+// RuleSequence that references all rules in the group.
+func (srv *ConvertPrometheusSrv) createRulesViaK8sClient(
+	ctx context.Context,
+	orgID int64,
+	ds *datasources.DataSource,
+	tds *datasources.DataSource,
+	namespaces map[string][]promGroupWithFolder,
+	keepOriginalRuleDefinition bool,
+	provenance models.Provenance,
+	pauseAlertRules bool,
+	pauseRecordingRules bool,
+	extraLabels map[string]string,
+	logger log.Logger,
+) error {
+	arClient, rrClient, seqClient, err := srv.getK8sClients()
+	if err != nil {
+		return err
+	}
+
+	k8sNamespace := authlib.OrgNamespaceFormatter(orgID)
+
+	// FromTimeRange and NoDataState/ExecErrState are left at their zero values
+	// so withDefaults() applies the same defaults the legacy converter uses
+	// (600s, Ok/Ok). If the legacy path ever allows per-request overrides for
+	// these, they should be wired through here as well.
+	converter, err := prom.NewK8sConverter(prom.K8sConverterConfig{
+		DatasourceUID:        ds.UID,
+		DatasourceType:       ds.Type,
+		TargetDatasourceUID:  tds.UID,
+		TargetDatasourceType: tds.Type,
+		DefaultInterval:      srv.cfg.DefaultRuleEvaluationInterval,
+		EvaluationOffset:     srv.cfg.PrometheusConversion.RuleQueryOffset,
+		PauseAlertRules:      pauseAlertRules,
+		PauseRecordingRules:  pauseRecordingRules,
+		ExtraLabels:          extraLabels,
+	})
+	if err != nil {
+		return fmt.Errorf("creating k8s converter: %w", err)
+	}
+
+	var groupErr error
+	for _, groups := range namespaces {
+		for _, pg := range groups {
+			if err := pg.group.Validate(); err != nil {
+				groupErr = errors.Join(groupErr, fmt.Errorf("group %q: %w", pg.group.Name, err))
+				continue
+			}
+			if err := srv.upsertGroupViaK8s(
+				ctx, converter,
+				arClient, rrClient, seqClient,
+				k8sNamespace, pg.folderUID, pg.group,
+				keepOriginalRuleDefinition, provenance,
+				logger,
+			); err != nil {
+				groupErr = errors.Join(groupErr, fmt.Errorf("group %q: %w", pg.group.Name, err))
+			}
+		}
+	}
+	return groupErr
+}
+
+// promGroupWithFolder pairs a Prometheus rule group with its resolved folder UID.
+type promGroupWithFolder struct {
+	folderUID string
+	group     prom.PrometheusRuleGroup
+}
+
+func (srv *ConvertPrometheusSrv) upsertGroupViaK8s(
+	ctx context.Context,
+	converter *prom.K8sConverter,
+	arClient *alertingv0.AlertRuleClient,
+	rrClient *alertingv0.RecordingRuleClient,
+	seqClient *alertingv0.RuleSequenceClient,
+	k8sNamespace string,
+	folderUID string,
+	group prom.PrometheusRuleGroup,
+	keepOriginalRuleDefinition bool,
+	provenance models.Provenance,
+	logger log.Logger,
+) error {
+	// Pre-compute desired names for all rules in the group. This set drives
+	// pruning and must reflect the full input regardless of which upserts
+	// succeed, so that a transient upsert failure does not cause the prune
+	// step to delete a rule that was healthy from a prior import.
+	desiredNames := make(map[string]struct{}, len(group.Rules))
+	ruleNames := make([]string, len(group.Rules))
+	ruleNameErrs := make([]error, len(group.Rules))
+	for idx, rule := range group.Rules {
+		name, err := prom.RuleName(k8sNamespace, folderUID, group.Name, idx, rule)
+		if err != nil {
+			ruleNameErrs[idx] = fmt.Errorf("rule at position %d: %w", idx, err)
+			continue
+		}
+		ruleNames[idx] = name
+		desiredNames[name] = struct{}{}
+	}
+
+	var recordingRuleNames []string
+	var alertRuleNames []string
+	var upsertErr error
+
+	for idx, rule := range group.Rules {
+		name := ruleNames[idx]
+		if name == "" {
+			upsertErr = errors.Join(upsertErr, ruleNameErrs[idx])
+			continue
+		}
+		ruleYAML := ""
+		if keepOriginalRuleDefinition {
+			b, err := yaml.Marshal(rule)
+			if err != nil {
+				return fmt.Errorf("marshalling original rule definition: %w", err)
+			}
+			ruleYAML = string(b)
+		}
+
+		switch {
+		case rule.Record != "":
+			spec, err := converter.BuildRecordingRuleSpec(group, rule)
+			if err != nil {
+				upsertErr = errors.Join(upsertErr, fmt.Errorf("building recording rule spec for %q: %w", rule.Record, err))
+				continue
+			}
+			// Mark as converted from Prometheus, matching the legacy converter's behaviour.
+			if spec.Labels == nil {
+				spec.Labels = make(map[string]alertingv0.RecordingRuleTemplateString, 1)
+			}
+			spec.Labels[models.ConvertedPrometheusRuleLabel] = "true"
+			obj := &alertingv0.RecordingRule{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: alertingv0.GroupVersion.Identifier(),
+					Kind:       alertingv0.RecordingRuleKind().Kind(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: k8sNamespace,
+					Annotations: map[string]string{
+						alertingv0.FolderAnnotationKey: folderUID,
+					},
+					Labels: map[string]string{
+						prom.GroupNameLabelKey: group.Name,
+					},
+				},
+				Spec: spec,
+			}
+			setProvenance(obj.Annotations, provenance)
+			setOriginalDefinition(obj.Annotations, ruleYAML)
+			if err := upsertResource(ctx, rrClient, obj); err != nil {
+				upsertErr = errors.Join(upsertErr, err)
+				continue
+			}
+			recordingRuleNames = append(recordingRuleNames, name)
+
+		case rule.Alert != "":
+			spec, err := converter.BuildAlertRuleSpec(group, rule)
+			if err != nil {
+				upsertErr = errors.Join(upsertErr, fmt.Errorf("building alert rule spec for %q: %w", rule.Alert, err))
+				continue
+			}
+			if spec.Labels == nil {
+				spec.Labels = make(map[string]alertingv0.AlertRuleTemplateString, 1)
+			}
+			spec.Labels[models.ConvertedPrometheusRuleLabel] = "true"
+			obj := &alertingv0.AlertRule{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: alertingv0.GroupVersion.Identifier(),
+					Kind:       alertingv0.AlertRuleKind().Kind(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      name,
+					Namespace: k8sNamespace,
+					Annotations: map[string]string{
+						alertingv0.FolderAnnotationKey: folderUID,
+					},
+					Labels: map[string]string{
+						prom.GroupNameLabelKey: group.Name,
+					},
+				},
+				Spec: spec,
+			}
+			setProvenance(obj.Annotations, provenance)
+			setOriginalDefinition(obj.Annotations, ruleYAML)
+			if err := upsertResource(ctx, arClient, obj); err != nil {
+				upsertErr = errors.Join(upsertErr, err)
+				continue
+			}
+			alertRuleNames = append(alertRuleNames, name)
+
+		default:
+			logger.Warn("Skipping rule entry with neither alert nor record set", "position", idx)
+		}
+	}
+
+	// Always prune, even on partial failure, to remove stale resources from
+	// previous imports that are no longer in the desired set. This prevents a
+	// transient error from leaving dangling resources indefinitely.
+
+	// Create or prune the RuleSequence for this group. A sequence is needed
+	// when the group contains recording rules; otherwise any previous sequence
+	// for this group must be removed.
+	desiredSeqName := ""
+	if len(recordingRuleNames) > 0 {
+		seqSpec := converter.BuildRuleSequenceSpec(group, recordingRuleNames, alertRuleNames)
+		desiredSeqName = prom.SequenceName(k8sNamespace, folderUID, group.Name)
+		obj := &alertingv0.RuleSequence{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: alertingv0.GroupVersion.Identifier(),
+				Kind:       alertingv0.RuleSequenceKind().Kind(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      desiredSeqName,
+				Namespace: k8sNamespace,
+				Annotations: map[string]string{
+					alertingv0.FolderAnnotationKey: folderUID,
+				},
+				Labels: map[string]string{
+					prom.GroupNameLabelKey: group.Name,
+				},
+			},
+			Spec: seqSpec,
+		}
+		setProvenance(obj.Annotations, provenance)
+		if err := upsertResource(ctx, seqClient, obj); err != nil {
+			upsertErr = errors.Join(upsertErr, fmt.Errorf("upserting rule sequence: %w", err))
+		}
+	}
+	if err := pruneStaleRuleSequences(ctx, seqClient, k8sNamespace, folderUID, group.Name, desiredSeqName, logger); err != nil {
+		upsertErr = errors.Join(upsertErr, fmt.Errorf("pruning stale rule sequences: %w", err))
+	}
+
+	// Prune stale rules from previous imports of this group. desiredNames was
+	// pre-computed from the full input above, so a transient upsert failure
+	// does not cause a healthy rule from a prior import to be deleted.
+	if err := pruneStaleAlertRules(ctx, arClient, k8sNamespace, folderUID, group.Name, desiredNames, logger); err != nil {
+		upsertErr = errors.Join(upsertErr, fmt.Errorf("pruning stale alert rules: %w", err))
+	}
+	if err := pruneStaleRecordingRules(ctx, rrClient, k8sNamespace, folderUID, group.Name, desiredNames, logger); err != nil {
+		upsertErr = errors.Join(upsertErr, fmt.Errorf("pruning stale recording rules: %w", err))
+	}
+
+	return upsertErr
+}
+
+func setProvenance(annotations map[string]string, provenance models.Provenance) {
+	if provenance != "" {
+		annotations[alertingv0.ProvenanceStatusAnnotationKey] = string(provenance)
+	}
+}
+
+func setOriginalDefinition(annotations map[string]string, ruleYAML string) {
+	if ruleYAML != "" {
+		annotations[alertingv0.PrometheusRuleDefinitionAnnotationKey] = ruleYAML
+	}
+}
+
+// upsertMaxRetries is the maximum number of attempts for an upsert operation
+// when a conflict (stale ResourceVersion) is encountered.
+const upsertMaxRetries = 3
+
+// k8sResource is the minimal interface satisfied by the generated k8s resource
+// objects (AlertRule, RecordingRule, RuleSequence) that upsertResource needs.
+// GetObjectKind is provided by metav1.TypeMeta and supplies the Kind string
+// for error messages.
+type k8sResource interface {
+	GetName() string
+	GetNamespace() string
+	GetResourceVersion() string
+	SetResourceVersion(string)
+	GetObjectKind() schema.ObjectKind
+}
+
+// k8sClient is the minimal interface for a typed k8s client that supports
+// Get, Create, and Update. All three generated clients satisfy this.
+type k8sClient[T k8sResource] interface {
+	Get(ctx context.Context, id resource.Identifier) (T, error)
+	Create(ctx context.Context, obj T, opts resource.CreateOptions) (T, error)
+	Update(ctx context.Context, obj T, opts resource.UpdateOptions) (T, error)
+}
+
+// upsertResource performs a Get-then-Create-or-Update with retry on conflict.
+// It clears ResourceVersion before Create to avoid issues from prior retry
+// iterations that set it during an Update attempt. The Kind for error messages
+// is derived from the object's TypeMeta.
+func upsertResource[T k8sResource](ctx context.Context, c k8sClient[T], desired T) error {
+	kind := desired.GetObjectKind().GroupVersionKind().Kind
+	ident := resource.Identifier{Namespace: desired.GetNamespace(), Name: desired.GetName()}
+	for attempt := range upsertMaxRetries {
+		existing, err := c.Get(ctx, ident)
+		if apierrors.IsNotFound(err) {
+			desired.SetResourceVersion("") // Clear stale RV from prior retry iterations.
+			if _, createErr := c.Create(ctx, desired, resource.CreateOptions{}); createErr != nil {
+				// Another writer may have created it between our Get and Create.
+				if apierrors.IsAlreadyExists(createErr) && attempt < upsertMaxRetries-1 {
+					continue
+				}
+				return fmt.Errorf("creating %s %q: %w", kind, desired.GetName(), createErr)
+			}
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("fetching %s %q: %w", kind, desired.GetName(), err)
+		}
+		desired.SetResourceVersion(existing.GetResourceVersion())
+		if _, err = c.Update(ctx, desired, resource.UpdateOptions{}); err != nil {
+			if apierrors.IsConflict(err) && attempt < upsertMaxRetries-1 {
+				continue
+			}
+			return fmt.Errorf("updating %s %q: %w", kind, desired.GetName(), err)
+		}
+		return nil
+	}
+	return fmt.Errorf("%s %q: exceeded %d upsert retries", kind, desired.GetName(), upsertMaxRetries)
+}
+
+// groupLabelFilter returns the label selector string for the group-name label.
+// Note: the folder UID is stored as an annotation, which cannot be filtered
+// server-side via label selectors. The caller must filter by folder client-side.
+func groupLabelFilter(groupName string) string {
+	return prom.GroupNameLabelKey + "=" + groupName
+}
+
+func pruneStaleAlertRules(ctx context.Context, c *alertingv0.AlertRuleClient, namespace, folderUID, groupName string, desired map[string]struct{}, logger log.Logger) error {
+	list, err := c.List(ctx, namespace, resource.ListOptions{
+		LabelFilters: []string{groupLabelFilter(groupName)},
+	})
+	if err != nil {
+		return fmt.Errorf("listing alert rules for prune: %w", err)
+	}
+	for _, rule := range list.Items {
+		// Skip resources whose folder annotation is missing or belongs to a
+		// different folder. A missing annotation means the resource was not
+		// created by this code path (or the API returned a partial object);
+		// deleting it would be a false positive.
+		ruleFolder := rule.Annotations[alertingv0.FolderAnnotationKey]
+		if ruleFolder == "" || ruleFolder != folderUID {
+			continue
+		}
+		if _, keep := desired[rule.Name]; keep {
+			continue
+		}
+		logger.Info("Pruning stale alert rule", "name", rule.Name)
+		if err := c.Delete(ctx, resource.Identifier{Namespace: namespace, Name: rule.Name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("deleting stale alert rule %q: %w", rule.Name, err)
+		}
+	}
+	return nil
+}
+
+func pruneStaleRecordingRules(ctx context.Context, c *alertingv0.RecordingRuleClient, namespace, folderUID, groupName string, desired map[string]struct{}, logger log.Logger) error {
+	list, err := c.List(ctx, namespace, resource.ListOptions{
+		LabelFilters: []string{groupLabelFilter(groupName)},
+	})
+	if err != nil {
+		return fmt.Errorf("listing recording rules for prune: %w", err)
+	}
+	for _, rule := range list.Items {
+		ruleFolder := rule.Annotations[alertingv0.FolderAnnotationKey]
+		if ruleFolder == "" || ruleFolder != folderUID {
+			continue
+		}
+		if _, keep := desired[rule.Name]; keep {
+			continue
+		}
+		logger.Info("Pruning stale recording rule", "name", rule.Name)
+		if err := c.Delete(ctx, resource.Identifier{Namespace: namespace, Name: rule.Name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("deleting stale recording rule %q: %w", rule.Name, err)
+		}
+	}
+	return nil
+}
+
+// pruneStaleRuleSequences deletes RuleSequences for this group that are no
+// longer needed (e.g. the group no longer contains recording rules). If
+// desiredSeqName is empty, all sequences matching the group label are removed.
+func pruneStaleRuleSequences(ctx context.Context, c *alertingv0.RuleSequenceClient, namespace, folderUID, groupName, desiredSeqName string, logger log.Logger) error {
+	list, err := c.List(ctx, namespace, resource.ListOptions{
+		LabelFilters: []string{groupLabelFilter(groupName)},
+	})
+	if err != nil {
+		return fmt.Errorf("listing rule sequences for prune: %w", err)
+	}
+	for _, seq := range list.Items {
+		seqFolder := seq.Annotations[alertingv0.FolderAnnotationKey]
+		if seqFolder == "" || seqFolder != folderUID {
+			continue
+		}
+		if seq.Name == desiredSeqName {
+			continue
+		}
+		logger.Info("Pruning stale rule sequence", "name", seq.Name)
+		if err := c.Delete(ctx, resource.Identifier{Namespace: namespace, Name: seq.Name}, resource.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			return fmt.Errorf("deleting stale rule sequence %q: %w", seq.Name, err)
+		}
+	}
+	return nil
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {

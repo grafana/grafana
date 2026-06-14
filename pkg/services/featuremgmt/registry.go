@@ -2034,6 +2034,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "alertingConvertPrometheusViaKubernetesAPI",
+			Description:  "Use internal Kubernetes clients to create AlertRule, RecordingRule, and RuleSequence resources during Prometheus rule conversion instead of the legacy provisioning path",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "alertingDisableDMAinUI",
 			Description:  "Disables the DMA feature in the UI",
 			Stage:        FeatureStageExperimental,

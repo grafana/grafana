@@ -93,6 +93,13 @@ func convertToK8sResource(
 		return nil, fmt.Errorf("failed to set provenance status: %w", err)
 	}
 
+	if def, err := rule.PrometheusRuleDefinition(); err == nil {
+		if k8sRule.Annotations == nil {
+			k8sRule.Annotations = make(map[string]string, 1)
+		}
+		k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey] = def
+	}
+
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
@@ -291,6 +298,13 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmod
 	if domainRule.Record.From == "" {
 		return nil, fmt.Errorf("no query marked as source")
 	}
+
+	if def := k8sRule.Annotations[model.PrometheusRuleDefinitionAnnotationKey]; def != "" {
+		domainRule.Metadata.PrometheusStyleRule = &ngmodels.PrometheusStyleRule{
+			OriginalRuleDefinition: def,
+		}
+	}
+
 	return domainRule, nil
 }
 
