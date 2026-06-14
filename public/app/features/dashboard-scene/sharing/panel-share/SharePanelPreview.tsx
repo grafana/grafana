@@ -46,7 +46,7 @@ export function SharePanelPreview({ title, imageUrl, buildUrl, disabled, theme }
 
   useEffect(() => {
     buildUrl({ width: watch('width'), height: watch('height'), scale: watch('scaleFactor') });
-  }, [buildUrl, watch]);
+  }, [buildUrl, watch, theme]);
 
   const [{ loading, value: image, error }, renderImage] = useAsyncFn(async (imageUrl) => {
     const response = await lastValueFrom(getBackendSrv().fetch<BlobPart>({ url: imageUrl, responseType: 'blob' }));
