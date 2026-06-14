@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { Components, selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagQueryHistoryRecentQueriesUI } from '@grafana/runtime/internal';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -11,11 +13,11 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueryType } from './QueryLibrary/types';
+import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 
 type Props = {
   addQueryRowButtonDisabled?: boolean;
   addQueryRowButtonHidden?: boolean;
-  richHistoryRowButtonHidden?: boolean;
   queryInspectorButtonActive?: boolean;
 
   onClickAddQueryRowButton: () => void;
@@ -46,6 +48,8 @@ export function SecondaryActions({
   const styles = getStyles(theme);
   const { queryLibraryEnabled, openDrawer: openQueryLibraryDrawer } = useQueryLibraryContext();
   const { drawerOpened, setDrawerOpened } = useQueriesDrawerContext();
+  const recentQueriesUI = useFlagQueryHistoryRecentQueriesUI();
+  const [recentQueriesOpen, setRecentQueriesOpen] = useState(false);
   const canReadQueries = config.featureToggles.savedQueriesRBAC
     ? contextSrv.hasPermission(AccessControlAction.QueriesRead)
     : contextSrv.isSignedIn;
@@ -74,14 +78,34 @@ export function SecondaryActions({
                   options: { context: CoreApp.Explore },
                 })
               }
-              icon="plus"
+              icon={recentQueriesUI ? 'book-open' : 'plus'}
               disabled={addQueryRowButtonDisabled}
             >
               <Trans i18nKey="explore.secondary-actions.add-from-query-library">Add from saved queries</Trans>
             </ToolbarButton>
           )}
+
+          {!queryLibraryEnabled && recentQueriesUI && (
+            <>
+              <ToolbarButton
+                variant="canvas"
+                aria-label={t('explore.secondary-actions.recent-queries-button-aria-label', 'Recent queries')}
+                onClick={() => setRecentQueriesOpen(true)}
+                icon="history"
+              >
+                <Trans i18nKey="explore.secondary-actions.recent-queries-button">Recent queries</Trans>
+              </ToolbarButton>
+              <RecentQueriesModal
+                isOpen={recentQueriesOpen}
+                onClose={() => setRecentQueriesOpen(false)}
+                onSelectQuery={onSelectQueryFromLibrary}
+              />
+            </>
+          )}
         </>
       )}
+      {/* Keep the separate Query history entry point available during the deprecation period,
+          even when the recentQueriesUI flag is enabled. */}
       <ToolbarButton
         key="query-history"
         variant={drawerOpened ? 'active' : 'canvas'}

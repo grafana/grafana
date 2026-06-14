@@ -31,7 +31,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type StoreState } from 'app/types/store';
 
@@ -600,7 +599,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
-    const richHistoryRowButtonHidden = !supportedFeatures().queryHistoryAvailable;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
       [
@@ -676,7 +674,6 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
                           addQueryRowButtonHidden={false}
-                          richHistoryRowButtonHidden={richHistoryRowButtonHidden}
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
