@@ -110,6 +110,7 @@ afterAll(() => {
 
 describe('useGetFolderQueryFacade', () => {
   const originalAppSubUrl = String(config.appSubUrl);
+  const originalSharedWithMeFolderUID = config.sharedWithMeFolderUID;
 
   beforeEach(() => {
     config.appSubUrl = '/grafana';
@@ -118,6 +119,7 @@ describe('useGetFolderQueryFacade', () => {
   afterEach(() => {
     config.featureToggles = originalToggles;
     config.appSubUrl = originalAppSubUrl;
+    config.sharedWithMeFolderUID = originalSharedWithMeFolderUID;
   });
 
   it('merges multiple responses into a single FolderDTO-like object if flag is true', async () => {
@@ -154,6 +156,60 @@ describe('useGetFolderQueryFacade', () => {
         },
       ],
     });
+  });
+
+  it('runs a real access query for the root/general virtual folder', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+
+    const { result } = renderHook(() => useGetFolderQueryFacade('general'), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(result.current.data).toMatchObject({
+      uid: 'general',
+      title: 'Dashboards',
+      // The root folder has no URL — the backend leaves it blank.
+      url: '',
+      // Access comes from the real access query rather than being hardcoded to "no access".
+      canAdmin: true,
+      canDelete: true,
+      canEdit: true,
+      canSave: true,
+      accessControl: {
+        'dashboards.permissions:write': true,
+        'dashboards:create': true,
+        'folders:write': true,
+      },
+    });
+    // Virtual folders have no parents.
+    expect(result.current.data?.parents).toBeUndefined();
+  });
+
+  it('runs a real access query for the sharedwithme virtual folder (no access)', async () => {
+    config.featureToggles.foldersAppPlatformAPI = true;
+    config.sharedWithMeFolderUID = 'sharedwithme';
+
+    const { result } = renderHook(() => useGetFolderQueryFacade('sharedwithme'), {
+      wrapper: getWrapper({}),
+    });
+
+    await waitFor(() => {
+      expect(result.current.data).toBeDefined();
+    });
+
+    expect(result.current.data).toMatchObject({
+      uid: 'sharedwithme',
+      title: 'Shared with me',
+      canAdmin: false,
+      canDelete: false,
+      canEdit: false,
+      canSave: false,
+    });
+    expect(result.current.data?.accessControl).toBeUndefined();
   });
 
   it('returns legacy folder response if flag is false', async () => {
