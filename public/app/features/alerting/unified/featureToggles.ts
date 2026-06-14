@@ -24,11 +24,6 @@ export const shouldAllowRecoveringDeletedRules = () =>
 export const shouldAllowPermanentlyDeletingRules = () =>
   (shouldAllowRecoveringDeletedRules() && config.featureToggles.alertingRulePermanentlyDelete) ?? false;
 
-export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUseBackendFilters ?? false;
-
-export const shouldUseFullyCompatibleBackendFilters = () =>
-  config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
-
 /**
  * Alerts Activity Banner - shows a promotional banner on the Rule List page
  * directing users to try the new Alerts Activity (triage) view.
