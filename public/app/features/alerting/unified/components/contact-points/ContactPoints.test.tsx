@@ -197,6 +197,7 @@ describe('contact points', () => {
 
       // check for available actions – our mock 4 contact points, 1 of them is provisioned
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'export new contact point' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'export all' })).toBeInTheDocument();
 
       const unusedBadge = screen.getAllByLabelText('unused');
@@ -418,8 +419,9 @@ describe('contact points', () => {
       expect(screen.getByText('some webhook')).toBeInTheDocument();
       expect(screen.getAllByTestId('contact-point')).toHaveLength(2);
 
-      // check for available actions – export should be disabled
+      // check for available actions – export all should be disabled
       expect(screen.getByRole('link', { name: 'add contact point' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'export new contact point' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'export all' })).not.toBeInTheDocument();
 
       // 1 of them is used by a route in the mock response

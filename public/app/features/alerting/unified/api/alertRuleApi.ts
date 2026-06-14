@@ -57,6 +57,17 @@ interface ExportRulesParams {
   ruleUid?: string;
 }
 
+interface ReceiverExport {
+  type: string;
+  settings: Record<string, unknown>;
+  disableResolveMessage: boolean;
+}
+
+interface ContactPointExport {
+  name: string;
+  receivers: ReceiverExport[];
+}
+
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     preview: build.mutation<
@@ -390,6 +401,16 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         data: payload,
         method: 'POST',
       }),
+    }),
+    exportModifiedReceiver: build.query<string, { payload: ContactPointExport; format: ExportFormats }>({
+      query: ({ payload, format }) => ({
+        url: `/api/v1/provisioning/contact-points/modify-export`,
+        params: { format: format },
+        method: 'POST',
+        responseType: 'text',
+        data: payload,
+      }),
+      keepUnusedDataFor: 0,
     }),
     exportMuteTimings: build.query<string, { format: ExportFormats }>({
       query: ({ format }) => ({

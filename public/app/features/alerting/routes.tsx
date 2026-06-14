@@ -187,6 +187,34 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
+      path: 'alerting/notifications/receivers/export-new',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "ExportNewReceiverView" */ 'app/features/alerting/unified/components/export/ExportNewReceiverView'
+          )
+      ),
+    },
+    {
+      path: 'alerting/notifications/receivers/:name/modify-export',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        ...PERMISSIONS_CONTACT_POINTS,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "ReceiverModifyExport" */ 'app/features/alerting/unified/components/export/ReceiverModifyExport'
+          )
+      ),
+    },
+    {
       path: '/alerting/notifications/receivers/:name/edit',
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsWrite,
