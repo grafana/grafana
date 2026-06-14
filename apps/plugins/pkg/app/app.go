@@ -69,13 +69,24 @@ type PluginAppConfig struct {
 	MetaProviderManager *meta.ProviderManager
 }
 
+type PluginAppInstallerConfig struct {
+	Logger              logging.Logger
+	Authorizer          authorizer.Authorizer
+	MetaProviderManager *meta.ProviderManager
+	// DecoratePluginStorageHookProvider, if non-nil, wraps the default
+	// PluginStorageHookProvider (built around the resolved storage) with
+	// additional behavior — e.g. recording installs in an external system. It
+	// receives the default provider and returns the provider to install; return
+	// the default unchanged to opt out, or a different provider entirely. If nil,
+	// the default is used.
+	DecoratePluginStorageHookProvider func(base PluginStorageHookProvider) PluginStorageHookProvider
+}
+
 func NewPluginsAppInstaller(
-	logger logging.Logger,
-	authorizer authorizer.Authorizer,
-	metaProviderManager *meta.ProviderManager,
+	installerConfig PluginAppInstallerConfig,
 ) (*PluginAppInstaller, error) {
 	specificConfig := &PluginAppConfig{
-		MetaProviderManager: metaProviderManager,
+		MetaProviderManager: installerConfig.MetaProviderManager,
 	}
 	provider := simple.NewAppProvider(pluginsappapis.LocalManifest(), specificConfig, New)
 	appConfig := app.Config{
@@ -90,9 +101,7 @@ func NewPluginsAppInstaller(
 
 	appInstaller := &PluginAppInstaller{
 		AppInstaller: defaultInstaller,
-		authorizer:   authorizer,
-		metaManager:  metaProviderManager,
-		logger:       logger,
+		config:       installerConfig,
 		ready:        make(chan struct{}),
 	}
 	return appInstaller, nil
@@ -100,9 +109,7 @@ func NewPluginsAppInstaller(
 
 type PluginAppInstaller struct {
 	appsdkapiserver.AppInstaller
-	metaManager *meta.ProviderManager
-	authorizer  authorizer.Authorizer
-	logger      logging.Logger
+	config PluginAppInstallerConfig
 
 	// restConfig is set during InitializeApp and used by the client factory
 	restConfig *restclient.Config
@@ -142,16 +149,23 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 
 	pluginMetaGVR := pluginsv0alpha1.MetaKind().GroupVersionResource()
+	pluginGVR := pluginsv0alpha1.PluginKind().GroupVersionResource()
 	replacedStorage := map[schema.GroupVersionResource]rest.Storage{
-		pluginMetaGVR: NewMetaStorage(p.logger, p.metaManager, clientFactory),
+		pluginMetaGVR: NewMetaStorage(p.config.Logger, p.config.MetaProviderManager, clientFactory),
+	}
+	wrappedStorage := map[schema.GroupVersionResource]func(rest.Storage) (rest.Storage, error){
+		pluginGVR: func(storage rest.Storage) (rest.Storage, error) {
+			return newPluginStorage(storage, p.config.Logger, p.config.MetaProviderManager, p.config.DecoratePluginStorageHookProvider)
+		},
 	}
 	wrappedServer := &customStorageWrapper{
 		wrapped: server,
 		replace: replacedStorage,
+		wrap:    wrappedStorage,
 	}
 	return p.AppInstaller.InstallAPIs(wrappedServer, restOptsGetter)
 }
 
 func (p *PluginAppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return p.authorizer
+	return p.config.Authorizer
 }
