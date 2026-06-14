@@ -425,9 +425,9 @@ func (s *ModuleServer) initUnifiedVectorBackend(storageServerEnabled bool) func(
 }
 
 func (s *ModuleServer) initOperatorServer() (services.Service, error) {
-	operatorName := os.Getenv("GF_OPERATOR_NAME")
+	operatorName := s.cfg.Operator.Name
 	if operatorName == "" {
-		s.log.Debug("GF_OPERATOR_NAME environment variable empty or unset, can't start operator")
+		s.log.Debug("operator.name config empty or unset, can't start operator")
 		return nil, nil
 	}
 

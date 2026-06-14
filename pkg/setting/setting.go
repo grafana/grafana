@@ -572,6 +572,8 @@ type Cfg struct {
 
 	Search SearchSettings
 
+	Operator OperatorSettings
+
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
 	MaxNestedFolderDepth int
@@ -1508,6 +1510,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	if Target != "" {
 		cfg.Target = util.SplitString(Target)
 	}
+	cfg.Operator = readOperatorSettings(iniFile)
 	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
 	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
