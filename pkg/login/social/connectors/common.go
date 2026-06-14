@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
@@ -206,9 +207,23 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 		return data, nil
 	}
 
+	stringToDurationDecodeHook := func(from reflect.Type, to reflect.Type, data any) (any, error) {
+		if from.Kind() == reflect.String && to == reflect.TypeOf(time.Duration(0)) {
+			strData, ok := data.(string)
+			if !ok {
+				return nil, fmt.Errorf("failed to convert %v to string", data)
+			}
+			if strData == "" {
+				return time.Duration(0), nil
+			}
+			return time.ParseDuration(strData)
+		}
+		return data, nil
+	}
+
 	var oauthInfo social.OAuthInfo
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		DecodeHook:       emptyStrToSliceDecodeHook,
+		DecodeHook:       mapstructure.ComposeDecodeHookFunc(emptyStrToSliceDecodeHook, stringToDurationDecodeHook),
 		Result:           &oauthInfo,
 		WeaklyTypedInput: true,
 	})

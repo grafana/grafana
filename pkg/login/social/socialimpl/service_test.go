@@ -316,6 +316,7 @@ use_refresh_token = true
 empty_scopes =
 hosted_domain = test_hosted_domain
 signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com
+token_exchange_timeout = 42s
 `
 
 	iniFile, err := ini.Load([]byte(iniContent))
@@ -357,6 +358,7 @@ signout_redirect_url = https://oauth.com/signout?post_logout_redirect_uri=https:
 		SkipOrgRoleSync:             true,
 		HostedDomain:                "test_hosted_domain",
 		SignoutRedirectUrl:          "https://oauth.com/signout?post_logout_redirect_uri=https://grafana.com",
+		TokenExchangeTimeout:        42 * time.Second,
 		Extra: map[string]string{
 			"allowed_organizations":   "org1, org2",
 			"id_token_attribute_name": "id_token",

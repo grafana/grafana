@@ -1400,6 +1400,27 @@ func TestSocialAzureAD_Reload(t *testing.T) {
 	}
 }
 
+func TestSocialAzureAD_ExchangeAppliesTokenExchangeTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(server.Close)
+
+	provider := NewAzureADProvider(&social.OAuthInfo{
+		ClientId:             "client-id",
+		ClientSecret:         "client-secret",
+		TokenUrl:             server.URL,
+		TokenExchangeTimeout: 10 * time.Millisecond,
+	}, &setting.Cfg{}, nil, ssosettingstests.NewFakeService(), featuremgmt.WithFeatures(), nil)
+
+	start := time.Now()
+	_, err := provider.Exchange(context.Background(), "code")
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	require.Less(t, time.Since(start), time.Second)
+}
+
 func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
 	testCases := []struct {
 		name                         string
