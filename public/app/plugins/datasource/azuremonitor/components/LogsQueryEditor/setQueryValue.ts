@@ -43,12 +43,13 @@ export function setTimeColumn(query: AzureMonitorQuery, timeColumn: string): Azu
   };
 }
 
-export function setBasicLogsQuery(query: AzureMonitorQuery, basicLogsQuery: boolean): AzureMonitorQuery {
+export function setLogTier(query: AzureMonitorQuery, logTier: 'Basic' | 'Auxiliary' | undefined): AzureMonitorQuery {
   return {
     ...query,
     azureLogAnalytics: {
       ...query.azureLogAnalytics,
-      basicLogsQuery,
+      basicLogsQuery: logTier !== undefined,
+      logTier,
     },
   };
 }
