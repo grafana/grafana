@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
+import { matchLabelsSet } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, dateMath } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -26,7 +27,8 @@ import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
+import { matcherToObjectMatcher } from '../../utils/alertmanager';
+import { convertObjectMatcherToAlertingPackageMatcher, parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -220,11 +222,11 @@ function SilenceList({
       />
     );
   } else {
-    return <Trans i18nKey="silences.table.no-matching-silences">No matching silences found;</Trans>;
+    return <Trans i18nKey="silences.table.no-matching-silences">No matching silences found</Trans>;
   }
 }
 
-const useFilteredSilences = (silences: Silence[], expired = false) => {
+export const useFilteredSilences = (silences: Silence[], expired = false) => {
   const [queryParams] = useQueryParams();
   return useMemo(() => {
     const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
@@ -238,15 +240,27 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       }
       if (queryString) {
         const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
+        // For the "alertname" key we additionally check metadata.rule_title so that
+        // silences targeting a specific alert rule can be found by rule name even when the silence
+        // was not created with an explicit alertname label matcher. The rule_title check uses the
+        // same anchored regex semantics as Alertmanager (=~ is evaluated as ^(?:value)$).
+        const matchersMatch = matchers.every((matcher) => {
+          const labelMatcherMatch = silence.matchers?.some(
             ({ name, value, isEqual, isRegex }) =>
               matcher.name === name &&
               matcher.value === value &&
               matcher.isEqual === isEqual &&
               matcher.isRegex === isRegex
-          )
-        );
+          );
+          if (labelMatcherMatch) {
+            return true;
+          }
+          if (matcher.name === 'alertname' && silence.metadata?.rule_title !== undefined) {
+            const labelMatchers = [convertObjectMatcherToAlertingPackageMatcher(matcherToObjectMatcher(matcher))];
+            return matchLabelsSet(labelMatchers, [['alertname', silence.metadata.rule_title]]);
+          }
+          return false;
+        });
         if (!matchersMatch) {
           return false;
         }
