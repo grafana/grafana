@@ -20,7 +20,7 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
   filter?: (group: TGroup) => boolean
 ) {
   const [groups, setGroups] = useState<TGroup[]>([]);
-  const [hasMoreGroups, setHasMoreGroups] = useState<boolean>(true);
+  const [hasMoreGroups, setHasMoreGroups] = useState<boolean>(false);
 
   const [{ execute: fetchMoreGroups }, groupsRequestState] = useAsync(async () => {
     let done = false;
@@ -41,10 +41,7 @@ export function useLazyLoadPrometheusGroups<TGroup extends PromRuleGroupDTO>(
       currentGroups.push(group);
     }
 
-    if (done) {
-      setHasMoreGroups(false);
-    }
-
+    setHasMoreGroups(!done);
     setGroups((groups) => groups.concat(currentGroups));
   });
 
