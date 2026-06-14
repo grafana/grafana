@@ -13738,10 +13738,6 @@
         "in": "header",
         "name": "Authorization",
         "type": "apiKey"
-      },
-      "basic": {
-        "scheme": "basic",
-        "type": "http"
       }
     }
   },
@@ -27415,9 +27411,6 @@
     }
   },
   "security": [
-    {
-      "basic": []
-    },
     {
       "api_key": []
     }
