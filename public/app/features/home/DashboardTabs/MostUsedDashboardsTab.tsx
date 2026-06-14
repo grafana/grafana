@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
-import { t, Trans } from '@grafana/i18n';
-import { EmptyState, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { EmptyState, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
@@ -16,17 +16,17 @@ interface Props {
   foldersByUid: Record<string, LocationInfo>;
 }
 
-export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
-    return <PageLoader text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
+    return <PageLoader text={t('home.most-used-dashboards-tab.loading', 'Loading most viewed dashboards...')} />;
   }
 
   if (error) {
     return (
       <DashboardTabError
-        title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
+        title={t('home.most-used-dashboards-tab.error-title', 'Could not load most viewed dashboards')}
         retry={retry}
       />
     );
@@ -34,17 +34,14 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
 
   if (dashboards.length === 0) {
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        <EmptyState
-          hideImage
-          variant="completed"
-          message={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
-        >
-          <Trans i18nKey="home.starred-dashboards-tab.empty-description">
-            You can star your favorite dashboards by clicking the <Icon name="star" /> from the dashboard page.
-          </Trans>
-        </EmptyState>
-      </Stack>
+      <EmptyState
+        hideImage
+        variant="completed"
+        message={t(
+          'home.most-used-dashboards-tab.empty',
+          'Most viewed dashboards in your organization will appear here once usage data is collected.'
+        )}
+      />
     );
   }
 
@@ -58,8 +55,7 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
             showFolderNames={true}
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
-            source="homepage_starredTab"
-            onStarChange={retry}
+            source="homepage_mostUsedTab"
           />
         </li>
       ))}
