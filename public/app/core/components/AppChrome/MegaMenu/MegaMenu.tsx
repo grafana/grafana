@@ -62,7 +62,15 @@ export const MegaMenu = memo(
       }, []);
     }
 
-    const activeItem = getActiveItem(navItems, state.sectionNav.node, location.pathname);
+    // Hide the Starred and Bookmarks sections entirely when they have no children
+    const visibleItems = navItems.filter((item) => {
+      if (item.id === 'starred' || item.id === 'bookmarks') {
+        return Boolean(item.children?.length);
+      }
+      return true;
+    });
+
+    const activeItem = getActiveItem(visibleItems, state.sectionNav.node, location.pathname);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -111,7 +119,7 @@ export const MegaMenu = memo(
           <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
-                {navItems.map((link, index) => (
+                {visibleItems.map((link, index) => (
                   <MegaMenuItem
                     key={link.text}
                     link={link}
