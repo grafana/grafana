@@ -1,18 +1,22 @@
 package reconciler
 
 import (
+	"context"
 	"fmt"
 
+	claims "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -44,9 +48,15 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 
 // TranslateRoleToTuples converts a Role CRD to permission tuples.
 // globalRolePerms, if non-nil, is used to resolve RoleRefs + PermissionsOmitted via the shared resolver.
+// teamStore, if non-nil, resolves id-based team scopes (teams:id:N) to uid so per-instance
+// team-management permissions are emitted instead of dropped; a nil store is a no-op.
 func TranslateRoleToTuples(
+	ctx context.Context,
 	obj *unstructured.Unstructured,
 	globalRolePerms map[string][]*authzextv1.RolePermission,
+	teamStore legacy.ScopeResolverStore,
+	ns claims.NamespaceInfo,
+	logger log.Logger,
 ) ([]*openfgav1.TupleKey, error) {
 	var role iamv0.Role
 	if err := convertUnstructured(obj, &role); err != nil {
@@ -80,7 +90,12 @@ func TranslateRoleToTuples(
 	for _, p := range effective {
 		perms = append(perms, &authzextv1.RolePermission{Action: p.Action, Scope: p.Scope})
 	}
-	return zanzana.RoleToTuples(role.Name, perms)
+
+	resolved, err := resolveTeamScopes(ctx, teamStore, ns, logger, perms)
+	if err != nil {
+		return nil, err
+	}
+	return zanzana.RoleToTuples(role.Name, resolved)
 }
 
 func roleSpecPermsToActionScopes(perms []iamv0.RolespecPermission) []roleeffective.ActionScope {

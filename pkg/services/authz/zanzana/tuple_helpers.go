@@ -149,6 +149,7 @@ const (
 	scopeIdentifierDelegate = "delegate"
 	scopeKindRoles          = "roles"
 	scopeIdentifierWildcard = "*"
+	scopeAttributeUID       = "uid"
 )
 
 // TupleStringWithoutCondition returns the string representation of a tuple without its condition.
@@ -164,8 +165,12 @@ func TupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 
 // RolePermission represents a permission that can be converted to a Zanzana tuple.
 type RolePermission struct {
-	Action     string
-	Kind       string
+	Action string
+	Kind   string
+	// Attribute is the scope's middle segment (e.g. "uid" or "id" in "teams:uid:x").
+	// It lets the translation distinguish a uid-based instance scope from an
+	// (unresolved) id-based one — only uid scopes become per-instance tuples.
+	Attribute  string
 	Identifier string
 }
 
@@ -264,10 +269,11 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	rolePerms := make([]RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
 		// Split the scope to get kind, attribute, identifier
-		kind, _, identifier := splitScope(perm.Scope)
+		kind, attribute, identifier := splitScope(perm.Scope)
 		rolePerms = append(rolePerms, RolePermission{
 			Action:     perm.Action,
 			Kind:       kind,
+			Attribute:  attribute,
 			Identifier: identifier,
 		})
 	}
@@ -406,9 +412,15 @@ func isAllUsersScope(kind, identifier string) bool {
 }
 
 // TeamManagementToTuples translates a team-management permission into iam tuples.
-// Only "all" scopes translate (see isAllTeamsScope); specific-instance scopes are
-// dropped, since the FGA teams type is uid-based while the legacy scope is id-based
-// and rolebindings is wildcard-only. teams:create is unscoped and always translates.
+//
+// "All" scopes (see isAllTeamsScope) and teams:create grant namespace-wide
+// group_resource relations. A specific team scope translates only when it is
+// uid-based (teams:uid:<uid>) AND the action maps to the teams resource (the FGA
+// team type has the matching per-instance relations) — it becomes a per-instance
+// team:<uid> tuple. Id-based instance scopes (teams:id:N) are still dropped here:
+// callers resolve them to uid via ResolveTeamScopes before translation. The
+// teams.roles:* actions map to the wildcard-only rolebindings group_resource, so
+// their specific scopes are dropped too.
 func TeamManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
 	m, ok := teamManagementMappings[permission.Action]
 	if !ok {
@@ -416,6 +428,17 @@ func TeamManagementToTuples(subject string, permission RolePermission) []*openfg
 	}
 
 	if !m.skipScope && !isAllTeamsScope(permission.Kind, permission.Identifier) {
+		if isSpecificTeamScope(m.resource, permission) {
+			tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
+			for _, relation := range m.relations {
+				tuples = append(tuples, &openfgav1.TupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   NewTupleEntry(TypeTeam, permission.Identifier, ""),
+				})
+			}
+			return tuples
+		}
 		return nil
 	}
 
@@ -424,6 +447,18 @@ func TeamManagementToTuples(subject string, permission RolePermission) []*openfg
 		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
 	}
 	return tuples
+}
+
+// isSpecificTeamScope reports whether the permission targets a single team by uid
+// (teams:uid:<uid>) on the teams resource, the only shape that maps to a per-instance
+// FGA team object. The rolebindings resource (teams.roles:*) is wildcard-only and is
+// excluded; id-based scopes are excluded because the FGA team type is uid-keyed.
+func isSpecificTeamScope(resource string, permission RolePermission) bool {
+	return resource == teamsResource &&
+		permission.Kind == teamsResource &&
+		permission.Attribute == scopeAttributeUID &&
+		permission.Identifier != "" &&
+		permission.Identifier != scopeIdentifierWildcard
 }
 
 // isTeamManagementAction reports whether the action is one of the team-management
