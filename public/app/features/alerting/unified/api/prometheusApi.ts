@@ -50,6 +50,7 @@ export type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'nam
   type?: 'alerting' | 'recording';
   ruleMatchers?: string[];
   plugins?: 'hide' | 'only';
+  policy?: string;
 };
 
 export const prometheusApi = alertingApi.injectEndpoints({
@@ -108,6 +109,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         dashboardUid,
         ruleMatchers,
         plugins,
+        policy,
       }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
@@ -115,6 +117,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
           rule_group: groupName,
           rule_name: ruleName,
           receiver_name: contactPoint,
+          routing_policy: policy,
           health: health,
           state: state,
           rule_type: type,
