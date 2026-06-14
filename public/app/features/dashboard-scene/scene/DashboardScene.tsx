@@ -85,6 +85,7 @@ import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { type DashboardEditView } from '../settings/utils';
+import { UserActionsService } from '../user-actions/UserActionsService';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -242,6 +243,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Dashboard changes tracker
    */
   private _changeTracker: DashboardSceneChangeTracker;
+  private _userActionsService?: UserActionsService;
+  private _writeLocks = new Set<string>();
+
+  public get userActionsService(): UserActionsService {
+    if (!this._userActionsService) {
+      this._userActionsService = new UserActionsService(this);
+    }
+    return this._userActionsService;
+  }
+
+  /**
+   * Acquire a write lock for the given target identifier (e.g. 'variables').
+   * Subsequent mutations against the same target return locked:true until released.
+   * Reads via Scenes subscriptions are unaffected.
+   */
+  public acquireWriteLock(target: string): void {
+    this._writeLocks.add(target);
+  }
+
+  public releaseWriteLock(target: string): void {
+    this._writeLocks.delete(target);
+  }
+
+  public isWriteLocked(target: string): boolean {
+    return this._writeLocks.has(target);
+  }
 
   /**
    * Remember scroll position when going into panel edit

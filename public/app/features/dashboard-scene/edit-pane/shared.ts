@@ -14,6 +14,7 @@ import {
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem } from '@grafana/ui';
 
+import { createVariableKindFromSceneVariable } from '../mutation-api/commands/variableUtils';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
@@ -26,6 +27,9 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
+import { AddVariableCommand } from '../user-actions/commands/AddVariableCommand';
+import { RemoveVariableCommand } from '../user-actions/commands/RemoveVariableCommand';
+import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -238,32 +242,24 @@ export const dashboardEditActions = {
   }),
 
   addVariable({ source, addedObject }: AddVariableActionHelperProps) {
-    const varsBeforeAddition = [...(source.state.variables ?? [])];
-
-    dashboardEditActions.addElement({
-      source,
-      addedObject,
-      perform() {
-        source.setState({ variables: [...varsBeforeAddition, addedObject] });
-      },
-      undo() {
-        source.setState({ variables: [...varsBeforeAddition] });
-      },
-    });
+    const dashboard = getDashboardSceneFor(source);
+    const variableKind = createVariableKindFromSceneVariable(addedObject);
+    const position = source.state.variables.length;
+    const result = dashboard.userActionsService.execute(new AddVariableCommand(dashboard, variableKind, position));
+    if (!result.success) {
+      // TODO(POC): surface to UI as toast/banner. For now, log so the failure isn't silent.
+      console.warn('addVariable failed', { error: result.error, locked: result.locked });
+    }
   },
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
-    const varsBeforeRemoval = [...source.state.variables];
-
-    dashboardEditActions.removeElement({
-      source,
-      removedObject,
-      perform() {
-        source.setState({ variables: varsBeforeRemoval.filter((v) => v !== removedObject) });
-      },
-      undo() {
-        source.setState({ variables: varsBeforeRemoval });
-      },
-    });
+    const dashboard = getDashboardSceneFor(source);
+    const variableKind = createVariableKindFromSceneVariable(removedObject);
+    const result = dashboard.userActionsService.execute(
+      new RemoveVariableCommand(dashboard, removedObject.state.name, variableKind)
+    );
+    if (!result.success) {
+      console.warn('removeVariable failed', { error: result.error, locked: result.locked });
+    }
   },
   changeVariableType({ source, oldVariable, newVariable }: ChangeVariableTypeActionHelperProps) {
     const varsBeforeChange = [...source.state.variables];

@@ -1,14 +1,17 @@
 /**
  * REMOVE_VARIABLE command
  *
- * Remove a template variable from the dashboard by name.
+ * Agent-facing REMOVE_VARIABLE handler. Goes through the layered architecture:
+ *   ClientCommand (validate + look up + map) -> UserActionsService.execute -> RemoveVariableCommand
  */
 
 import { type z } from 'zod';
 
+import { MutationApiClient } from '../Client';
+
+import { RemoveVariableClientCommand } from './RemoveVariableClientCommand';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -24,36 +27,24 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
   handler: async (payload, context) => {
     const { scene } = context;
-    const { name } = payload;
     enterEditModeIfNeeded(scene);
 
-    try {
-      const variables = scene.state.$variables;
-      if (!variables) {
-        throw new Error('Dashboard has no variable set');
-      }
+    const client = new MutationApiClient(scene, scene.userActionsService);
+    const result = await client.execute(new RemoveVariableClientCommand(), payload);
 
-      const variable = variables.getByName(name);
-      if (!variable) {
-        throw new Error(`Variable '${name}' not found`);
-      }
-
-      const previousState = variable.state;
-
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
-
-      return {
-        success: true,
-        data: { name },
-        changes: [{ path: `/variables/${name}`, previousValue: previousState, newValue: null }],
-      };
-    } catch (error) {
+    if (!result.success) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: result.error ?? 'Unknown error',
         changes: [],
+        ...(result.locked ? { locked: true } : {}),
       };
     }
+
+    return {
+      success: true,
+      data: { name: payload.name },
+      changes: [{ path: `/variables/${payload.name}`, previousValue: 'removed', newValue: null }],
+    };
   },
 };

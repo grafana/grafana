@@ -1,19 +1,17 @@
 /**
  * ADD_VARIABLE command
  *
- * Add a template variable to the dashboard using v2beta1 VariableKind format.
+ * Agent-facing ADD_VARIABLE handler. Goes through the layered architecture:
+ *   ClientCommand (validate + map) -> UserActionsService.execute -> AddVariableCommand
  */
 
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
-import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { MutationApiClient } from '../Client';
 
-import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
-
+import { AddVariableClientCommand } from './AddVariableClientCommand';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
 
 const addVariablePayloadSchema = payloads.addVariable;
 
@@ -31,43 +29,22 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
     const { scene } = context;
     enterEditModeIfNeeded(scene);
 
-    try {
-      const { variable: variableKind, position } = payload;
-      const name = variableKind.spec.name;
+    const client = new MutationApiClient(scene, scene.userActionsService);
+    const result = await client.execute(new AddVariableClientCommand(), payload);
 
-      const existingVariables = scene.state.$variables;
-      if (existingVariables) {
-        const existing = existingVariables.state.variables.find((v) => v.state.name === name);
-        if (existing) {
-          throw new Error(`Variable '${name}' already exists`);
-        }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
-      const sceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
-
-      const varSet = sceneGraph.getVariables(scene);
-      const currentVariables = [...varSet.state.variables];
-
-      if (position !== undefined && position >= 0 && position < currentVariables.length) {
-        currentVariables.splice(position, 0, sceneVariable);
-      } else {
-        currentVariables.push(sceneVariable);
-      }
-
-      replaceVariableSet(scene, currentVariables);
-
-      return {
-        success: true,
-        data: { variable: variableKind },
-        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
-      };
-    } catch (error) {
+    if (!result.success) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: result.error ?? 'Unknown error',
         changes: [],
+        ...(result.locked ? { locked: true } : {}),
       };
     }
+
+    return {
+      success: true,
+      data: { variable: payload.variable },
+      changes: [{ path: `/variables/${payload.variable.spec.name}`, previousValue: null, newValue: payload.variable }],
+    };
   },
 };

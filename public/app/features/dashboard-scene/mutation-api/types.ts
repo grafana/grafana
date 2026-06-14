@@ -19,6 +19,12 @@ export interface MutationResult {
   changes: MutationChange[];
   warnings?: string[];
   data?: unknown;
+  /**
+   * True when the targeted object is currently write-locked. The agent should
+   * wait and retry. Absent / false means the mutation was either applied or
+   * failed for a non-lock reason.
+   */
+  locked?: boolean;
 }
 
 interface MutationChange {
