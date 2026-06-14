@@ -44,6 +44,7 @@ import {
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
+import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 
 import { DurationQuickPick } from './DurationQuickPick';
@@ -157,7 +158,7 @@ export function GrafanaEvaluationBehaviorStep({
     setValue,
     getValues,
     clearErrors,
-    formState: { errors },
+    formState: { errors, defaultValues },
     control,
     register,
   } = useFormContext<RuleFormValues>();
@@ -209,6 +210,7 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
   const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
   const showGroupSelection = evaluationMode === 'group-based';
 
@@ -286,6 +288,14 @@ export function GrafanaEvaluationBehaviorStep({
               className={styles.modeField}
             />
           </Field>
+        )}
+        {v2Enabled && wasGroupedRule && evaluationMode === 'rule-based' && (
+          <MetaText icon="exclamation-triangle" color="warning">
+            <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
+              Removing this rule from its group is irreversible. After you save, you will not be able to add it back to
+              a group.
+            </Trans>
+          </MetaText>
         )}
         {showGroupSelection ? (
           <Stack alignItems="end" gap={1}>

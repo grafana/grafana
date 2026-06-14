@@ -2812,7 +2812,8 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval"
+        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "ungroup-warning": "Removing this rule from its group is irreversible. After you save, you will not be able to add it back to a group."
       },
       "evaluation-behaviour": {
         "description": {
