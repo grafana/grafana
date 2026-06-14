@@ -656,6 +656,36 @@ func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
 	}
 }
 
+func TestParsedResource_DryRun_CarriesResourceVersion(t *testing.T) {
+	existing := managedGrafanaObj("my-resource", "default", nil)
+	existing.SetResourceVersion("42")
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	mockClient := &MockDynamicResourceInterface{}
+	mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+		Return(existing, nil)
+	mockClient.On("Update", mock.Anything, mock.MatchedBy(func(o *unstructured.Unstructured) bool {
+		return o.GetResourceVersion() == "42"
+	}), mock.Anything, mock.Anything).Return(obj, nil)
+
+	parsed := &ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		GVR:    FolderResource,
+		Client: mockClient,
+		Repo:   testRepoInfo(),
+	}
+
+	require.NoError(t, parsed.DryRun(context.Background()))
+	require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+	mockClient.AssertExpectations(t)
+}
+
 func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "dashboard.grafana.app/v1",
@@ -764,8 +794,12 @@ func TestParsedResource_Run(t *testing.T) {
 	})
 
 	t.Run("create AlreadyExists falls through to update", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
 		mc := &MockDynamicResourceInterface{}
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetches the existing resource to carry its
+		// resourceVersion into the update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc, withDryRun())
@@ -793,6 +827,23 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.AssertNotCalled(t, "Create")
 	})
 
+	t.Run("update carries the existing resourceVersion", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == "42"
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Update", 1)
+	})
+
 	t.Run("update validation error returns immediately without create fallback", func(t *testing.T) {
 		existing := managedGrafanaObj("my-dash", "default", nil)
 		mc := &MockDynamicResourceInterface{}
@@ -818,6 +869,24 @@ func TestParsedResource_Run(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Update", 1)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+	})
+
+	t.Run("update NotFound clears carried resourceVersion before create fallback", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Create", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == ""
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Create", 1)
 	})
 

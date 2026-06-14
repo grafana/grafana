@@ -385,6 +385,11 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 		f.Action = provisioning.ResourceActionUpdate
 		// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
 		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+		// Carry the existing object's resourceVersion into the update. The parser
+		// clears the RV on parse because it is not persisted in the repository file,
+		// but some apiservers (e.g. playlists) reject an RV-less update. Dashboards
+		// and folders tolerate it, so restoring the live RV is safe for all kinds.
+		f.Obj.SetResourceVersion(f.Existing.GetResourceVersion())
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
 			DryRun:          []string{"All"},
 			FieldValidation: fieldValidation,
@@ -506,9 +511,19 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// Try update, otherwise create
 	f.Action = provisioning.ResourceActionUpdate
 
+	// The update needs the live resourceVersion: the parser clears it on parse
+	// (it is not stored in the repository file) and some apiservers (e.g.
+	// playlists) reject an RV-less update. If we don't already have the existing
+	// object (e.g. we fell through here after a create returned AlreadyExists),
+	// fetch it now so we can carry its RV.
+	if f.Existing == nil {
+		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
+	}
+
 	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
 	if f.Existing != nil {
 		f.Meta.SetDeprecatedInternalID(0) // nolint:staticcheck
+		f.Obj.SetResourceVersion(f.Existing.GetResourceVersion())
 	}
 
 	updateCtx, updateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.update")
@@ -523,6 +538,9 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 	if apierrors.IsNotFound(err) {
 		f.Action = provisioning.ResourceActionCreate
+		// The resource was deleted between the read and the update. Clear the
+		// stale resourceVersion we carried for the update — create rejects it.
+		f.Obj.SetResourceVersion("")
 		fallbackCreateCtx, fallbackCreateSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.create_fallback")
 		fallbackCreateSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
 		f.Upsert, err = f.Client.Create(fallbackCreateCtx, f.Obj, metav1.CreateOptions{
