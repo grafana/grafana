@@ -286,6 +286,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apps/correlations"
 	_ "github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/example"
+	_ "github.com/grafana/grafana/pkg/registry/apps/librarypanel"
+	_ "github.com/grafana/grafana/pkg/registry/apps/librarypanel/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/live"
 	_ "github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	_ "github.com/grafana/grafana/pkg/registry/apps/playlist"
