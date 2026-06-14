@@ -1686,6 +1686,23 @@ func TestDeleteAlertRule(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("when DeleteProvenance fails the rule deletion is rolled back", func(t *testing.T) {
+		rule := rules[0]
+		service, _, provenanceStore, ac := initServiceWithData(t)
+
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+
+		expectedErr := errors.New("provenance delete failed")
+		provenanceStore.DeleteProvenanceFunc = func(ctx context.Context, o models.Provisionable, org int64) error {
+			return expectedErr
+		}
+
+		err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+		require.ErrorIs(t, err, expectedErr)
+	})
 }
 
 func TestGetAlertRule(t *testing.T) {

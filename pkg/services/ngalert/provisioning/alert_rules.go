@@ -1104,8 +1104,7 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, user identity.
 	}
 	for _, uid := range uids {
 		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, user.GetOrgID()); err != nil {
-			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("Failed to delete provenance record for rule: %w", err)
+			return err
 		}
 	}
 	return nil
