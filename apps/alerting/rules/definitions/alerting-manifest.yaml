@@ -46,22 +46,14 @@ spec:
           properties:
             datasourceUID:
               $ref: '#/components/schemas/DatasourceUID'
-              description: The UID of the datasource to run this expression against.
-                If omitted, the expression will be run against the `__expr__` datasource
             model:
               additionalProperties: {}
               type: object
             queryType:
-              description: The type of query if this is a query expression
               type: string
             relativeTimeRange:
               $ref: '#/components/schemas/RelativeTimeRange'
             source:
-              description: |-
-                Used to mark the expression to be used as the final source for the rule evaluation
-                Only one expression in a rule can be marked as the source
-                For AlertRules, this is the expression that will be evaluated against the alerting condition
-                For RecordingRules, this is the expression that will be recorded
               type: boolean
           required:
           - model
@@ -69,9 +61,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -100,8 +89,6 @@ spec:
           - KeepLast
           type: string
         NotificationSettings:
-          description: 'TODO(@moustafab): this should be imported from the notifications
-            package'
           oneOf:
           - $ref: '#/components/schemas/SimplifiedRouting'
           - $ref: '#/components/schemas/NamedRoutingTree'
@@ -203,7 +190,6 @@ spec:
         TemplateString:
           type: string
         TimeIntervalRef:
-          description: 'TODO(@moustafab): validate regex for time interval ref'
           type: string
         spec:
           additionalProperties: false
@@ -295,22 +281,14 @@ spec:
           properties:
             datasourceUID:
               $ref: '#/components/schemas/DatasourceUID'
-              description: The UID of the datasource to run this expression against.
-                If omitted, the expression will be run against the `__expr__` datasource
             model:
               additionalProperties: {}
               type: object
             queryType:
-              description: The type of query if this is a query expression
               type: string
             relativeTimeRange:
               $ref: '#/components/schemas/RelativeTimeRange'
             source:
-              description: |-
-                Used to mark the expression to be used as the final source for the rule evaluation
-                Only one expression in a rule can be marked as the source
-                For AlertRules, this is the expression that will be evaluated against the alerting condition
-                For RecordingRules, this is the expression that will be recorded
               type: boolean
           required:
           - model
@@ -318,9 +296,6 @@ spec:
         ExpressionMap:
           additionalProperties:
             $ref: '#/components/schemas/Expression'
-          description: |-
-            TODO: validate that only one can specify source=true
-            & struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per
           type: object
         IntervalTrigger:
           additionalProperties: false
@@ -331,7 +306,6 @@ spec:
           - interval
           type: object
         MetricName:
-          description: 'TODO(@moustafab): validate the metric name regex'
           pattern: ^[a-zA-Z_:][a-zA-Z0-9_:]*$
           type: string
         OperatorState:
@@ -496,8 +470,6 @@ spec:
           properties:
             name:
               $ref: '#/components/schemas/RuleUID'
-              description: name is the metadata.name of an AlertRule or RecordingRule
-                resource.
           required:
           - name
           type: object
@@ -547,4 +519,543 @@ spec:
       scope: Namespaced
       userReadable: false
     name: v0alpha1
+    routes:
+      namespaced:
+        /search:
+          get:
+            operationId: getSearchRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: dashboardUID
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: metric
+              schema:
+                type: string
+            - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: notificationType
+              schema:
+                type: string
+            - in: query
+              name: panelID
+              schema:
+                type: integer
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: receiver
+              schema:
+                type: string
+            - in: query
+              name: routingTree
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            - in: query
+              name: targetDatasourceUID
+              schema:
+                type: string
+            - in: query
+              name: type
+              schema:
+                type: string
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchRulesRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+        /search/alertrules:
+          get:
+            operationId: getSearchAlertRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: dashboardUID
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: notificationType
+              schema:
+                type: string
+            - in: query
+              name: panelID
+              schema:
+                type: integer
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: receiver
+              schema:
+                type: string
+            - in: query
+              name: routingTree
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchAlertRulesAlertRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+        /search/recordingrules:
+          get:
+            operationId: getSearchRecordingRules
+            parameters:
+            - in: query
+              name: continueToken
+              schema:
+                type: string
+            - in: query
+              name: datasourceUIDs
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: folders
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: groups
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: labels
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: limit
+              schema:
+                type: integer
+            - in: query
+              name: metric
+              schema:
+                type: string
+            - in: query
+              name: names
+              schema:
+                items:
+                  type: string
+                type: array
+            - in: query
+              name: paused
+              schema:
+                type: boolean
+            - in: query
+              name: q
+              schema:
+                type: string
+            - in: query
+              name: sort
+              schema:
+                $ref: '#/components/schemas/RuleSearchSortField'
+            - in: query
+              name: targetDatasourceUID
+              schema:
+                type: string
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        items:
+                          items:
+                            $ref: '#/components/schemas/getSearchRecordingRulesRecordingRuleHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          properties:
+                            continue:
+                              type: string
+                            remainingItemCount:
+                              type: integer
+                            resourceVersion:
+                              type: string
+                            selfLink:
+                              type: string
+                          type: object
+                          x-grafana-app-uses-kubernetes-list-metadata: true
+                      required:
+                      - items
+                      - apiVersion
+                      - kind
+                      - metadata
+                      type: object
+                description: Default OK response
+      schemas:
+        getSearchAlertRulesAlertRuleHit:
+          additionalProperties: false
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              type: object
+            dashboardUID:
+              type: string
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            for:
+              type: string
+            group:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            name:
+              type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
+            paused:
+              type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
+            title:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchAlertRulesRuleSearchType'
+          required:
+          - type
+          - name
+          - title
+          - folder
+          type: object
+        getSearchAlertRulesRuleSearchType:
+          enum:
+          - alertrule
+          - recordingrule
+          type: string
+        getSearchRecordingRulesRecordingRuleHit:
+          additionalProperties: false
+          properties:
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            group:
+              type: string
+            interval:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            metric:
+              type: string
+            name:
+              type: string
+            paused:
+              type: boolean
+            targetDatasourceUID:
+              type: string
+            title:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchRecordingRulesRuleSearchType'
+          required:
+          - type
+          - name
+          - title
+          - folder
+          type: object
+        getSearchRecordingRulesRuleSearchType:
+          enum:
+          - alertrule
+          - recordingrule
+          type: string
+        getSearchRulesAlertRuleHit:
+          additionalProperties: false
+          properties:
+            annotations:
+              additionalProperties:
+                type: string
+              type: object
+            dashboardUID:
+              type: string
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            for:
+              type: string
+            group:
+              type: string
+            interval:
+              type: string
+            keepFiringFor:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            name:
+              type: string
+            notificationType:
+              type: string
+            panelID:
+              type: integer
+            paused:
+              type: boolean
+            receiver:
+              type: string
+            routingTree:
+              type: string
+            title:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchRulesRuleSearchType'
+          required:
+          - type
+          - name
+          - title
+          - folder
+          type: object
+        getSearchRulesRecordingRuleHit:
+          additionalProperties: false
+          properties:
+            datasourceUIDs:
+              items:
+                type: string
+              type: array
+            folder:
+              type: string
+            group:
+              type: string
+            interval:
+              type: string
+            labels:
+              additionalProperties:
+                type: string
+              type: object
+            metric:
+              type: string
+            name:
+              type: string
+            paused:
+              type: boolean
+            targetDatasourceUID:
+              type: string
+            title:
+              type: string
+            type:
+              $ref: '#/components/schemas/getSearchRulesRuleSearchType'
+          required:
+          - type
+          - name
+          - title
+          - folder
+          type: object
+        getSearchRulesRuleHit:
+          description: RuleHit is the cross-kind union returned by /search.
+          oneOf:
+          - $ref: '#/components/schemas/AlertRuleHit'
+          - $ref: '#/components/schemas/RecordingRuleHit'
+        getSearchRulesRuleSearchType:
+          enum:
+          - alertrule
+          - recordingrule
+          type: string
     served: true
