@@ -11,6 +11,7 @@ import {
   type GrafanaTheme2,
   MappingType,
   escapeStringForRegex,
+  formattedValueToString,
 } from '@grafana/data';
 import {
   IconButton,
@@ -25,7 +26,7 @@ import {
 
 import { diffColorBlindColors, diffDefaultColors } from '../FlameGraph/colors';
 import { type FlameGraphDataContainer } from '../FlameGraph/dataTransform';
-import { TOP_TABLE_COLUMN_WIDTH } from '../constants';
+import { OTHER_LABEL, TOP_TABLE_COLUMN_WIDTH } from '../constants';
 import { type ColorScheme, ColorSchemeDiff, type TableData } from '../types';
 
 type Props = {
@@ -54,12 +55,42 @@ const FlameGraphTopTableContainer = memo(
     onTableSort,
     colorScheme,
   }: Props) => {
-    const table = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
+    const { table, otherData } = useMemo(() => buildFilteredTable(data, matchedLabels), [data, matchedLabels]);
 
     const styles = useStyles2(getStyles);
     const theme = useTheme2();
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
+
+    const minTotalValue = useMemo(() => {
+      if (!otherData) {
+        return undefined;
+      }
+      let min = Infinity;
+      for (const key in table) {
+        if (table[key].total < min) {
+          min = table[key].total;
+        }
+      }
+      return min === Infinity ? undefined : min;
+    }, [table, otherData]);
+
+    const otherExplanation = useMemo(() => {
+      if (!otherData || otherData.self === 0) {
+        return null;
+      }
+      const formattedTotal = formattedValueToString(data.valueDisplayProcessor(otherData.self));
+      const formattedMinThreshold = minTotalValue !== undefined
+        ? formattedValueToString(data.valueDisplayProcessor(minTotalValue))
+        : undefined;
+
+      return {
+        totalValue: formattedTotal,
+        minThreshold: formattedMinThreshold,
+      };
+    }, [otherData, minTotalValue, data]);
+
+    const otherSectionHeight = otherExplanation ? 70 : 0;
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
@@ -68,6 +99,8 @@ const FlameGraphTopTableContainer = memo(
             if (width < 3 || height < 3) {
               return null;
             }
+
+            const tableHeight = height - otherSectionHeight;
 
             const frame = buildTableDataFrame(
               data,
@@ -82,18 +115,29 @@ const FlameGraphTopTableContainer = memo(
               sandwichItem
             );
             return (
-              <Table
-                initialSortBy={sort}
-                onSortByChange={(s) => {
-                  if (s && s.length) {
-                    onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
-                  }
-                  setSort(s);
-                }}
-                data={frame}
-                width={width}
-                height={height}
-              />
+              <>
+                <Table
+                  initialSortBy={sort}
+                  onSortByChange={(s) => {
+                    if (s && s.length) {
+                      onTableSort?.(s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'));
+                    }
+                    setSort(s);
+                  }}
+                  data={frame}
+                  width={width}
+                  height={tableHeight > 0 ? tableHeight : height}
+                />
+                {otherExplanation && (
+                  <OtherSection
+                    explanation={otherExplanation}
+                    onSearch={onSearch}
+                    onSandwich={onSandwich}
+                    search={search}
+                    sandwichItem={sandwichItem}
+                  />
+                )}
+              </>
             );
           }}
         </AutoSizer>
@@ -104,7 +148,12 @@ const FlameGraphTopTableContainer = memo(
 
 FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
-function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>) {
+type FilteredTableResult = {
+  table: { [key: string]: TableData };
+  otherData: TableData | undefined;
+};
+
+function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<string>): FilteredTableResult {
   // Group the data by label, we show only one row per label and sum the values
   // TODO: should be by filename + funcName + linenumber?
   let filteredTable: { [key: string]: TableData } = Object.create(null);
@@ -145,7 +194,13 @@ function buildFilteredTable(data: FlameGraphDataContainer, matchedLabels?: Set<s
     callStack.push(label);
   }
 
-  return filteredTable;
+  // Extract "other" from the table if present
+  const otherData = filteredTable[OTHER_LABEL];
+  if (otherData) {
+    delete filteredTable[OTHER_LABEL];
+  }
+
+  return { table: filteredTable, otherData };
 }
 
 function buildTableDataFrame(
@@ -362,6 +417,87 @@ function ActionCell(props: ActionCellProps) {
     </div>
   );
 }
+
+type OtherSectionProps = {
+  explanation: {
+    totalValue: string;
+    minThreshold: string | undefined;
+  };
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (symbol: string) => void;
+  onSandwich: (symbol?: string) => void;
+};
+
+function OtherSection({ explanation, onSearch, onSandwich, search, sandwichItem }: OtherSectionProps) {
+  const styles = useStyles2(getStylesOtherSection);
+  const isSearched = search === `^${escapeStringForRegex(OTHER_LABEL)}$`;
+  const isSandwiched = sandwichItem === OTHER_LABEL;
+
+  return (
+    <div className={styles.container} data-testid="other-section">
+      <div className={styles.content}>
+        <div className={styles.actions}>
+          <IconButton
+            name={'search'}
+            variant={isSearched ? 'primary' : 'secondary'}
+            tooltip={isSearched ? 'Clear from search' : 'Highlight in flamegraph'}
+            aria-label={isSearched ? 'Clear from search' : 'Highlight in flamegraph'}
+            onClick={() => {
+              onSearch(isSearched ? '' : OTHER_LABEL);
+            }}
+          />
+          <IconButton
+            name={'gf-show-context'}
+            tooltip={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+            variant={isSandwiched ? 'primary' : 'secondary'}
+            aria-label={isSandwiched ? 'Remove from sandwich view' : 'Show in sandwich view'}
+            onClick={() => {
+              onSandwich(isSandwiched ? undefined : OTHER_LABEL);
+            }}
+          />
+        </div>
+        <div className={styles.text}>
+          A total of <strong>{explanation.totalValue}</strong> has been truncated and is represented by{' '}
+          <strong>&quot;other&quot;</strong> in the flamegraph.
+          {explanation.minThreshold && (
+            <> Each truncated stacktrace had a total resource consumption below {explanation.minThreshold}.</>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const getStylesOtherSection = (theme: GrafanaTheme2) => {
+  return {
+    container: css({
+      label: 'otherSectionContainer',
+      marginTop: theme.spacing(1),
+      padding: theme.spacing(1),
+      backgroundColor: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
+      border: `1px solid ${theme.colors.border.weak}`,
+    }),
+    content: css({
+      label: 'otherSectionContent',
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: theme.spacing(1),
+    }),
+    actions: css({
+      label: 'otherSectionActions',
+      display: 'flex',
+      flexShrink: 0,
+    }),
+    text: css({
+      label: 'otherSectionText',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      lineHeight: 1.5,
+    }),
+  };
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

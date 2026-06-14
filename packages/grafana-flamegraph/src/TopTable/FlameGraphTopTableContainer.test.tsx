@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -10,6 +10,20 @@ import { textToDataContainer } from '../FlameGraph/testHelpers';
 import { ColorScheme } from '../types';
 
 import FlameGraphTopTableContainer, { buildFilteredTable } from './FlameGraphTopTableContainer';
+
+function createTestDataWithOther() {
+  return new FlameGraphDataContainer(
+    createDataFrame({
+      fields: [
+        { name: 'level', type: FieldType.number, values: [0, 1, 2, 1, 2] },
+        { name: 'value', type: FieldType.number, values: [100, 50, 30, 50, 20] },
+        { name: 'self', type: FieldType.number, values: [0, 20, 30, 30, 20] },
+        { name: 'label', type: FieldType.string, values: ['root', 'func1', 'func2', 'other', 'func3'] },
+      ],
+    }),
+    { collapsing: false }
+  );
+}
 
 describe('FlameGraphTopTableContainer', () => {
   const setup = () => {
@@ -92,15 +106,16 @@ describe('buildFilteredTable', () => {
 [3][4]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table, otherData } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 1, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(otherData).toBeUndefined();
   });
 
   it('should sum values for duplicate labels', () => {
@@ -109,12 +124,13 @@ describe('buildFilteredTable', () => {
 [1][1]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table, otherData } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 0, total: 6, totalRight: 0 },
       '1': { self: 6, total: 6, totalRight: 0 },
     });
+    expect(otherData).toBeUndefined();
   });
 
   it('should filter by matchedLabels when provided', () => {
@@ -125,12 +141,13 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set(['1', '3']);
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table, otherData } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '1': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(otherData).toBeUndefined();
   });
 
   it('should handle empty matchedLabels set', () => {
@@ -141,9 +158,9 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set<string>();
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(table).toEqual({});
   });
 
   it('should handle data with no matches', () => {
@@ -154,9 +171,9 @@ describe('buildFilteredTable', () => {
     `);
 
     const matchedLabels = new Set(['9']);
-    const result = buildFilteredTable(container!, matchedLabels);
+    const { table } = buildFilteredTable(container!, matchedLabels);
 
-    expect(result).toEqual({});
+    expect(table).toEqual({});
   });
 
   it('should work without matchedLabels filter', () => {
@@ -165,12 +182,13 @@ describe('buildFilteredTable', () => {
 [1]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table, otherData } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 0, total: 3, totalRight: 0 },
       '1': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(otherData).toBeUndefined();
   });
   it('should not inflate totals for recursive calls', () => {
     const container = textToDataContainer(`
@@ -180,14 +198,52 @@ describe('buildFilteredTable', () => {
 [0]
     `);
 
-    const result = buildFilteredTable(container!);
+    const { table, otherData } = buildFilteredTable(container!);
 
-    expect(result).toEqual({
+    expect(table).toEqual({
       '0': { self: 4, total: 7, totalRight: 0 },
       '1': { self: 0, total: 3, totalRight: 0 },
       '2': { self: 0, total: 3, totalRight: 0 },
       '3': { self: 0, total: 3, totalRight: 0 },
       '4': { self: 3, total: 3, totalRight: 0 },
     });
+    expect(otherData).toBeUndefined();
+  });
+
+  it('should extract "other" label from table and return it separately', () => {
+    const container = createTestDataWithOther();
+
+    const { table, otherData } = buildFilteredTable(container);
+
+    expect(table['root']).toBeDefined();
+    expect(table['func1']).toBeDefined();
+    expect(table['func2']).toBeDefined();
+    expect(table['func3']).toBeDefined();
+    expect(table['other']).toBeUndefined();
+    expect(otherData).toBeDefined();
+    expect(otherData?.self).toBe(30);
+    expect(otherData?.total).toBe(50);
+  });
+});
+
+describe('FlameGraphTopTableContainer with other', () => {
+  it('should render other section when data contains other label', async () => {
+    mockBoundingClientRect({ width: 500, height: 500 });
+    const container = createTestDataWithOther();
+
+    render(
+      <FlameGraphTopTableContainer
+        data={container}
+        onSymbolClick={jest.fn()}
+        onSearch={jest.fn()}
+        onSandwich={jest.fn()}
+        colorScheme={ColorScheme.ValueBased}
+      />
+    );
+
+    const otherSection = screen.getByTestId('other-section');
+    expect(otherSection).toBeInTheDocument();
+    expect(otherSection.textContent).toContain('truncated');
+    expect(otherSection.textContent).toContain('other');
   });
 });

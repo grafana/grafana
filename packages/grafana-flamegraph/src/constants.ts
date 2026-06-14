@@ -13,3 +13,4 @@ export const MIN_WIDTH_FOR_SPLIT_VIEW = 800;
 export const MIN_WIDTH_TO_SHOW_SPLIT_PANE_SELECTORS = 1100;
 export const TOP_TABLE_COLUMN_WIDTH = 120;
 export const FLAMEGRAPH_CONTAINER_HEIGHT = 800;
+export const OTHER_LABEL = 'other';
