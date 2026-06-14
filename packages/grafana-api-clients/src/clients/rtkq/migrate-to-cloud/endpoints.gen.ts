@@ -46,6 +46,7 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/cloudmigration/migration/${queryArg.uid}/snapshot/${queryArg.snapshotUid}/upload`,
         method: 'POST',
+        body: queryArg.uploadSnapshotRequestDto ?? {},
       }),
     }),
     getShapshotList: build.query<GetShapshotListApiResponse, GetShapshotListApiArg>({
@@ -132,6 +133,11 @@ export type UploadSnapshotApiArg = {
   uid: string;
   /** UID of a snapshot */
   snapshotUid: string;
+  uploadSnapshotRequestDto?: UploadSnapshotRequestDto;
+};
+
+export type UploadSnapshotRequestDto = {
+  force?: boolean;
 };
 export type GetShapshotListApiResponse = /** status 200 (empty) */ SnapshotListResponseDto;
 export type GetShapshotListApiArg = {
@@ -165,10 +171,26 @@ export type GetLibraryElementByUidApiArg = {
   libraryElementUid: string;
 };
 export type CloudMigrationSessionResponseDto = {
+  activeSnapshotUid?: string;
   created?: string;
   slug?: string;
   uid?: string;
   updated?: string;
+  workflow?: SessionWorkflowDto;
+};
+
+export type SessionWorkflowDto =
+  | 'idle'
+  | 'building_snapshot'
+  | 'uploading_snapshot'
+  | 'processing_snapshot';
+
+export type SessionConflictResponseDto = {
+  activeSnapshotUid?: string;
+  canForce: boolean;
+  message: string;
+  messageId: string;
+  workflow: SessionWorkflowDto;
 };
 export type CloudMigrationSessionListResponseDto = {
   sessions?: CloudMigrationSessionResponseDto[];
@@ -190,6 +212,7 @@ export type CreateSnapshotResponseDto = {
   uid?: string;
 };
 export type CreateSnapshotRequestDto = {
+  force?: boolean;
   resourceTypes?: (
     | 'DASHBOARD'
     | 'DATASOURCE'

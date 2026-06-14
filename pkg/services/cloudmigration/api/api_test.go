@@ -203,7 +203,7 @@ func TestCloudMigrationAPI_GetMigrationList(t *testing.T) {
 			requestUrl:         "/api/cloudmigration/migration",
 			user:               userWithPermissions,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"sessions":[{"uid":"mock_uid_1","slug":"mock_stack_1","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","slug":"mock_stack_2","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
+			expectedBody:       `{"sessions":[{"uid":"mock_uid_1","slug":"mock_stack_1","workflow":"idle","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"},{"uid":"mock_uid_2","slug":"mock_stack_2","workflow":"idle","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}]}`,
 		},
 		{
 			desc:               "returns 403 if the user does not have the right permissions",
@@ -238,7 +238,7 @@ func TestCloudMigrationAPI_CreateMigration(t *testing.T) {
 			requestBody:        `{"auth_token":"asdf"}`,
 			user:               userWithPermissions,
 			expectedHttpResult: http.StatusOK,
-			expectedBody:       `{"uid":"fake_uid","slug":"fake_stack","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
+			expectedBody:       `{"uid":"fake_uid","slug":"fake_stack","workflow":"idle","created":"2024-06-05T17:30:40Z","updated":"2024-06-05T17:30:40Z"}`,
 		},
 		{
 			desc:               "returns 403 if the user does not have the right permissions",
