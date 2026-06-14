@@ -15963,6 +15963,7 @@
       "label-column": "Column",
       "label-empty-value": "Empty value",
       "label-row": "Row",
+      "multiple-frames-warning": "Grouping to matrix only processes the first data frame. Consider applying a merge or join transformation first.",
       "name": {
         "grouping-to-matrix": "Grouping to matrix"
       }
