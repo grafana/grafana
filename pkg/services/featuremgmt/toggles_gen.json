@@ -3532,15 +3532,18 @@
     {
       "metadata": {
         "name": "newLogContext",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "resourceVersion": "1781279681608",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
+        }
       },
       "spec": {
         "description": "New Log Context component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
