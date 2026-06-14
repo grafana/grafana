@@ -7,6 +7,8 @@ import { config } from '@grafana/runtime';
 import { type PageInfoItem } from '@grafana/runtime/internal';
 import { type CellProps, type Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
 
+import { AssistantGetStarted } from '../components/AssistantGetStarted';
+import { ASSISTANT_PLUGIN_ID } from '../components/AssistantGetStarted/constants';
 import { Changelog } from '../components/Changelog';
 import { PluginDetailsPanel } from '../components/PluginDetailsPanel';
 import { VersionList } from '../components/VersionList';
@@ -29,7 +31,7 @@ type Cell<T extends keyof Permission = keyof Permission> = CellProps<Permission,
 
 export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetails }: Props): JSX.Element {
   const styles = useStyles2(getStyles);
-  const { value: pluginConfig } = usePluginConfig(plugin);
+  const { value: pluginConfig, loading: pluginConfigLoading } = usePluginConfig(plugin);
   const columns: Array<Column<Permission>> = useMemo(
     () => [
       {
@@ -51,6 +53,11 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
   };
 
   if (pageId === PluginTabIds.OVERVIEW) {
+    if (plugin.id === ASSISTANT_PLUGIN_ID) {
+      return (
+        <AssistantGetStarted plugin={plugin} pluginConfig={pluginConfig} pluginConfigLoading={pluginConfigLoading} />
+      );
+    }
     return (
       <div
         className={styles.readme}

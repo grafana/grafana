@@ -12624,6 +12624,80 @@
       "error-loading-plugin": "Plugin failed to load",
       "no-root-app-page-component-found": "No root app page component found"
     },
+    "assistant-get-started": {
+      "capabilities": {
+        "heading": "What Grafana Assistant can do",
+        "item-analysis": "Data analysis and querying: Ask about performance, launch investigations, correlate metrics, logs, traces, profiles, and SQL data.",
+        "item-dashboards": "Dashboard management: Create dashboards or refine existing panels, layouts, and variables.",
+        "item-knowledge": "Knowledge and best practices: Get Grafana guidance and observability strategies in context.",
+        "item-navigation": "Navigation and discovery: Find dashboards, data sources, and tools without leaving the conversation.",
+        "item-queries": "Query assistance: Build and refine PromQL, LogQL, TraceQL, SQL, and k6 queries with validation."
+      },
+      "data-access": {
+        "col-answer": "Answer",
+        "col-question": "Question",
+        "faq-non-admin-a": "Yes, once an admin has installed the plugin and connected to Cloud, any user in the org can use the Assistant based on their existing permissions.",
+        "faq-non-admin-q": "Can non-admin users use it?",
+        "faq-rbac-a": "Yes. The Assistant respects your existing role-based access control. Users only see resources they have access to.",
+        "faq-rbac-q": "Does this work with RBAC?",
+        "faq-self-managed-a": "Yes — that's exactly what this setup flow is for.",
+        "faq-self-managed-q": "Is this available for self-managed Grafana?",
+        "faq-third-parties-a": "No. Queries are processed by Grafana Labs infrastructure. All communication is encrypted in transit.",
+        "faq-third-parties-q": "Is my data sent to third parties?",
+        "heading": "What data does the Assistant access?",
+        "intro": "The Assistant reads <strong>metadata and schema only</strong> — dashboard names, panel titles, data source types, and metric/label names. It never reads your actual metric data or query results."
+      },
+      "included-free": {
+        "badge": "Included free",
+        "description": "Grafana Assistant is included in the Grafana Cloud forever free plan with generous limits so you can get started right away.",
+        "heading": "Included free, no credit card required",
+        "item-alerts": "Alert investigation and troubleshooting",
+        "item-dashboards": "Dashboard creation and editing",
+        "item-navigation": "Navigation and discovery assistance",
+        "item-nl": "Natural language to PromQL, LogQL, TraceQL, and SQL",
+        "item-team": "Free access for your team on Grafana Cloud",
+        "item-usage": "Generous usage for getting started",
+        "pricing": "Need more capacity or advanced plan features? <2>View pricing plans →</2>"
+      },
+      "requirements": {
+        "heading": "Requirements",
+        "item-admin": "Organization administrator access (for installation and Cloud connection)",
+        "item-cloud": "A Grafana Cloud account (free tier available)",
+        "item-version": "Grafana 13.0.0 or later"
+      },
+      "step-card": {
+        "label": "Step {{number}}",
+        "label-complete": "Step {{number}}: complete"
+      },
+      "step1": {
+        "description": "You're already here! Click Install to add the Grafana Assistant plugin to your instance.",
+        "description-no-permission": "An administrator needs to install this plugin.",
+        "description-reloading": "The page will refresh automatically.",
+        "install": "Install",
+        "installing": "Installing...",
+        "title": "Install the plugin",
+        "title-reloading": "Installed! Loading plugin..."
+      },
+      "step2": {
+        "connect": "Connect",
+        "description": "Sign in or create a free Grafana Cloud account to enable AI-powered assistance.",
+        "title": "Connect to Grafana Cloud"
+      },
+      "step3": {
+        "description": "Click the Assistant icon in the sidebar. Ask about your data sources, build queries, or create dashboards.",
+        "open": "Open Assistant",
+        "title": "Start a conversation"
+      },
+      "steps-heading": "Set up in 3 steps",
+      "steps-label": "Setup steps",
+      "try-asking": {
+        "heading": "Try asking:",
+        "query-cpu": "Show me CPU usage across my hosts",
+        "query-dashboard": "Create a dashboard for my database",
+        "query-datasources": "What data sources do I have?",
+        "query-promql": "Help me write a PromQL query for error rate"
+      }
+    },
     "browse": {
       "aria-label-plugin-type-filter": "Plugin type filter",
       "filter-by-options": {
