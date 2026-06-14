@@ -236,6 +236,26 @@ With our Grafana and Apache containers running, you can now connect to http://lo
 If the user is deleted from Grafana, the user will be not be able to login and resync until after the `sync_ttl` has expired.
 {{< /admonition >}}
 
+### Grant Grafana server administrator privileges via header
+
+Auth proxy can mark the authenticated user as a Grafana server administrator (the `isGrafanaAdmin` flag) by reading a boolean from an HTTP header. Map the `GrafanaAdmin` field to your chosen header in the `headers` setting:
+
+```bash
+[auth.proxy]
+enabled = true
+header_name = X-WEBAUTH-USER
+header_property = username
+headers = GrafanaAdmin:X-WEBAUTH-GRAFANA-ADMIN
+```
+
+Then set the header on the upstream proxy when forwarding requests for a server administrator:
+
+```bash
+curl -H "X-WEBAUTH-USER: alice" -H "X-WEBAUTH-GRAFANA-ADMIN: true" http://localhost:3000/api/user
+```
+
+Accepted truthy values follow Go's [`strconv.ParseBool`](https://pkg.go.dev/strconv#ParseBool) (`1`, `t`, `T`, `TRUE`, `true`, `True`). Unparseable values are ignored and leave the existing administrator state untouched. Sending `false` (or `0`, `f`, etc.) explicitly demotes the user.
+
 ### Team Sync
 
 {{< admonition type="note" >}}
