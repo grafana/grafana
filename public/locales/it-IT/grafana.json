@@ -29,7 +29,7 @@
       "add-label": "Aggiungi un'autorizzazione",
       "loading": "Caricamento delle autorizzazioni in corso...",
       "no-permissions": "Non sono presenti autorizzazioni",
-      "permissions-change-warning": "Questa operazione modificherà le autorizzazioni per questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
+      "permissions-change-warning": "",
       "role": "Ruolo",
       "serviceaccount": "Account del servizio",
       "team": "Team",
@@ -1180,12 +1180,6 @@
       "label-metric": "Metrica",
       "label-pending-period": "Periodo di attesa"
     },
-    "evaluation-group": {
-      "label-delete": "Elimina",
-      "label-export": "Esporta",
-      "label-reorder-rules": "Riordina regole",
-      "text-provisioned": "Fornito"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Un gruppo valuta tutte le sue regole sullo stesso intervallo di valutazione.",
       "description-often-rules-group-evaluated": "Con quale frequenza vengono valutate tutte le regole del gruppo.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Inserisci un nome",
       "title-new-evaluation-group": "Nuovo gruppo di valutazione"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Si è verificato un errore durante il recupero dei dettagli del gruppo"
     },
     "existing-rule-editor": {
       "sorry-permission": "Ci dispiace! Non hai l'autorizzazione per modificare questa regola.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Questa origine dei dati non ha regole configurate",
         "new-alert-rule": "Nuova regola di avviso",
-        "new-ds-managed-alerting-rule": "Nuova regola di avviso gestita dall'origine dei dati",
         "new-ds-managed-recording-rule": "Nuova regola di registrazione gestita dall'origine dati",
         "new-grafana-alerting-rule": "Nuova regola di avviso",
         "new-grafana-recording-rule": "Nuova regola di registrazione",
@@ -2540,22 +2529,9 @@
         "aria-label": "aggiungi criterio",
         "text": "Nuovo criterio di notifica"
       },
-      "delete-reasons": {
-        "no-permissions": "Non disponi dell'autorizzazione necessaria per eliminare questo criterio di notifica",
-        "provisioned": "Il criterio di notifica è stato sottoposto a provisioning e non può essere eliminato tramite l'interfaccia utente"
-      },
-      "delete-text": "Il criterio di notifica non può essere eliminato per i seguenti motivi:",
-      "empty-state": {
-        "message": "Nessun criterio trovato"
-      },
       "fetch": {
         "error": "Impossibile recuperare i criteri"
       },
-      "reset-reasons": {
-        "no-permissions": "Non disponi dell'autorizzazione necessaria per reimpostare questo criterio di notifica",
-        "provisioned": "Il criterio di notifica è stato sottoposto a provisioning e non può essere reimpostato tramite l'interfaccia utente"
-      },
-      "reset-text": "Il criterio di notifica non può essere reimpostato per i seguenti motivi:",
       "text-loading": "Caricamento in corso..."
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Sovrascrivi orari",
       "repeat-interval": "Intervallo di ripetizione: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "cancella",
-      "aria-label-search-routing-trees": "ricerca struttura di instradamento",
-      "clear": "Cancella",
-      "label-search-by-name-or-receiver": "Cerca per nome del criterio o punto di contatto",
-      "placeholder-search": "Cerca"
-    },
-    "routing-tree-header": {
-      "reset": "Ripristina"
-    },
     "rule-actions-buttons": {
       "title-edit": "Modifica",
       "title-view": "Visualizza"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Regole di avviso"
       },
-      "rulerrule-loading-error": "Impossibile caricare la regola",
       "toggle": {
         "use-new-experience": "Usa la nuova esperienza",
         "view-previous-experience": "Torna all'esperienza precedente"
@@ -3577,9 +3542,6 @@
       "collapse": "Comprimi",
       "collapse-all": "Comprimi tutto",
       "collapse-sidebar": "Comprimi barra laterale",
-      "compact-firing": "in attivazione",
-      "compact-pending": "in attesa",
-      "compact-rules": "regole",
       "error-loading-rule": "Errore durante il caricamento della regola",
       "expand": "Espandi",
       "expand-all": "Espandi tutto",
@@ -4262,13 +4224,9 @@
       "cancel-button": "Annulla",
       "confirmation-text": "Elimina",
       "delete-button": "Elimina",
-      "delete-modal-invalid-text": "Una o più cartelle contengono pannelli della libreria o regole di avviso. Eliminarli prima di procedere.",
-      "delete-modal-invalid-title": "Impossibile eliminare la cartella",
       "delete-modal-restore-dashboards-common": "Le dashboard eliminate verranno conservate nella cronologia per un massimo di 12 mesi. Gli utenti con autorizzazioni di eliminazione possono ripristinare le dashboard che hanno eliminato e gli amministratori possono ripristinare le dashboard eliminate da qualsiasi utente. La cronologia è limitata a 1000 dashboard: quelle più vecchie possono essere rimosse prima se viene raggiunto il limite.",
       "delete-modal-restore-dashboards-prefix-folder": "Questa azione eliminerà immediatamente le cartelle selezionate.",
       "delete-modal-restore-dashboards-suffix-folder": "Non è possibile ripristinare le cartelle.",
-      "delete-modal-text": "Questa azione eliminerà il seguente contenuto:",
-      "delete-modal-text-one-folder": "Questa azione eliminerà la cartella \"<1>{{ folderName }}</1>\" e il seguente contenuto:",
       "delete-modal-title": "Elimina",
       "delete-provisioned-folder": "Elimina cartella fornita",
       "deleting": "Eliminazione in corso...",
@@ -4276,8 +4234,6 @@
       "move-button": "Sposta",
       "move-modal-alert": "Lo spostamento di questo elemento potrebbe modificarne le autorizzazioni.",
       "move-modal-field-label": "Nome cartella",
-      "move-modal-text": "Questa azione sposterà il seguente contenuto:",
-      "move-modal-text-one-folder": "Questa azione sposterà la cartella \"<1>{{ folderName }}</1>\" e il seguente contenuto:",
       "move-modal-title": "Sposta",
       "move-provisioned-folder": "Sposta cartella con provisioning",
       "moving": "Spostamento in corso...",
@@ -4287,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Assegna un proprietario alla cartella",
       "rename-provisioned-folder": "Rinomina cartella con provisioning",
       "selected-mix-resources-modal-text": "Hai selezionato sia risorse sottoposte a provisioning che risorse non sottoposte a provisioning. Non possono essere elaborate insieme. Seleziona solo risorse sottoposte a provisioning o solo risorse non sottoposte a provisioning e riprova.",
-      "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati"
+      "selected-mix-resources-modal-title": "Tipi di risorse miste selezionati",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Eliminati di recente"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Cartella non trovata",
       "title-ruler-namespace-error": "Impossibile caricare le regole"
@@ -4306,13 +4269,19 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
-      "delete-warning": "Questa operazione eliminerà le cartelle selezionate e i relativi discendenti. In totale, questo influenzerà:",
-      "error-deleting-resources": "Errore durante l'eliminazione delle risorse"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Errore durante l'eliminazione delle risorse",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annulla",
       "button-move": "Sposta",
       "button-moving": "Spostamento in corso...",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Se disponi di accesso diretto alla destinazione, apporta le modifiche direttamente nel repository di destinazione.",
         "read-only-saving-message": "Il repository è di sola lettura e fornito in git. {{readOnlyMessage}}",
@@ -4323,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Errore durante lo spostamento delle risorse",
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
-      "move-total": "In totale, questo influenzerà:",
       "move-warning": "Questa operazione sposterà le cartelle selezionate e i relativi discendenti. Le cartelle di destinazione disponibili dipendono dalle risorse selezionate.",
       "move-warning-tooltip": "È possibile spostare solo le risorse sottoposte a provisioning all'interno della relativa cartella sottoposta a provisioning e le risorse locali nelle cartelle locali.",
-      "target-folder": "Cartella di destinazione"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} regola di avviso",
-      "alertRule_other": "{{count}} regole di avviso",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
-      "folder_one": "{{count}} cartella",
-      "folder_other": "{{count}} cartelle",
-      "libraryPanel_one": "{{count}} pannello della libreria",
-      "libraryPanel_other": "{{count}} pannelli della libreria",
-      "total_one": "{{count}} articolo",
-      "total_other": "{{count}} articoli"
+      "target-folder": "Cartella di destinazione",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4367,12 +4325,11 @@
       "button-cancel": "Annulla",
       "button-delete": "Elimina",
       "button-deleting": "Eliminazione in corso...",
-      "delete-warning": "Questa operazione eliminerà questa cartella e tutti i suoi discendenti. In totale, questo influenzerà:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Campi obbligatori mancanti",
       "success-message": "Cartella eliminata correttamente"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Impossibile recuperare le informazioni sui discendenti"
     },
     "empty-state": {
       "button-title": "Crea dashboard",
@@ -5277,10 +5234,6 @@
       },
       "pane-header": "Aggiungi"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Chiudi il widget \"Aggiungi pannello\"",
-      "tooltip-close-widget": "Chiudi widget"
-    },
     "add-menu": {
       "import": "Importa dalla libreria",
       "paste-panel": "Incolla pannello",
@@ -5373,6 +5326,8 @@
     },
     "code-pane": {
       "collapse": "Comprimi editor",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Espandi editor",
       "header": "Modifica come codice",
       "modal-title": "Modifica la dashboard come codice"
@@ -5672,8 +5627,7 @@
           "apply": "Applica",
           "change-value": "Modifica il valore variabile",
           "discard": "Annulla",
-          "modal-title": "Opzioni personalizzate",
-          "values": "Valori separati da virgola"
+          "modal-title": "Opzioni personalizzate"
         },
         "datasource-options": {
           "name-filter": "Filtro nome",
@@ -5898,7 +5852,6 @@
     },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Errore",
       "json-tab": "JSON",
       "meta-tab": "Meta dati",
       "query-tab": "Query",
@@ -6016,13 +5969,6 @@
         }
       }
     },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Titolo del widget"
-        }
-      }
-    },
     "options": {
       "description": "Descrizione",
       "title-option": "Titolo"
@@ -6080,9 +6026,6 @@
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Dati grezzi"
-    },
     "panel-links": {
       "aria-label-panel-links": "Collegamenti del pannello"
     },
@@ -6123,18 +6066,6 @@
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opzioni riga"
-    },
-    "row-options-form": {
-      "cancel": "Annulla",
-      "label-repeat-for": "Ripeti per",
-      "label-title": "Titolo",
-      "update": "Aggiorna"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opzioni riga"
     },
     "rows-layout": {
       "cancel": "Annulla",
@@ -6495,16 +6426,6 @@
       "changes": "Desideri salvare le modifiche?",
       "discard": "Rimuovi’",
       "title-unsaved-changes": "Modifiche non salvate"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "I pannelli in questa riga utilizzano l'origine dati {{SHARED_DASHBOARD_QUERY}}. Questi pannelli faranno riferimento al pannello nella riga originale, non a quelli nelle righe ripetute."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Elimina riga",
-      "learn-more": "Scopri di più",
-      "title": {
-        "delete-row": "Elimina riga"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
@@ -8781,19 +8702,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Aggiungi ulteriori informazioni accanto al servizio e all'operazione su una riga della barra di intervallo nella visualizzazione della traccia.",
-      "title-span-bar": "Barra di intervallo"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Seleziona nome etichetta",
-      "label-label": "Etichetta",
-      "label-tag-key": "Chiave tag",
-      "placeholder-duration": "Durata",
-      "placeholder-enter-tag-key": "Inserisci la chiave del tag",
-      "tooltip-default-duration": "Impostazione predefinita: durata",
-      "tooltip-tag-key": "Chiave tag che verrà utilizzata per ottenere il valore del tag. Gli attributi e le risorse di un intervallo verranno cercati per la chiave del tag"
-    },
     "span-detail": {
       "label": {
         "kind": "Tipo:",
@@ -9006,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Esegui query"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "Errore",
       "loading": "Caricamento delle informazioni sullo schema in corso...",
@@ -9030,13 +8943,6 @@
       "folder-deleted-success": "Cartella eliminata",
       "folder-move-error-provisioned": "Impossibile spostare la cartella configurata. Per spostarla, trasferiscila nel repository ed esegui la sincronizzazione per applicare le modifiche.",
       "folder-moved-success": "Cartella spostata"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Caricamento"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11522,6 @@
     "noOptionsMessage-no-options-found": "Nessuna opzione trovata"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Questo strumento può migrare alcune risorse da questa installazione al tuo stack cloud. Per iniziare, è necessario creare un'istantanea di questa installazione. La creazione di un'istantanea richiede in genere meno di due minuti. L'istantanea viene archiviata insieme a questa installazione di Grafana.",
-      "title": "Non esiste alcuna istantanea",
-      "when-complete": "Una volta completata l'istantanea, potrai caricarla sul tuo stack cloud."
-    },
     "building-snapshot": {
       "description": "Stiamo raccogliendo le tue risorse per la migrazione a Grafana Cloud. L'operazione dovrebbe richiedere solo un attimo.",
       "description-eta": "La creazione di un'istantanea richiede in genere meno di due minuti. ",
@@ -12245,8 +12146,10 @@
       "undock": "Disancora menu"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Riduci sezione: {{sectionName}}",
-      "expand-aria-label": "Ingrandisci sezione: {{sectionName}}"
+      "expand-aria-label": "Ingrandisci sezione: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Cambia organizzazione"
@@ -12477,13 +12380,6 @@
       "recently-viewed-dashboards": "Dashboard visualizzate di recente",
       "search": "Cerca",
       "starred-dashboards": "Dashboard preferite"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Nome calcolo"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13129,6 +13025,14 @@
       "folders-count_one": "{{count}} cartella",
       "folders-count_other": "{{count}} cartella"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Ignora la configurazione e utilizza Git Sync completamente gestito e ospitato su Grafana Cloud con il <2>piano Grafana Cloud gratuito per sempre</2>.",
       "title": "Puoi anche utilizzare la sincronizzazione Git su Grafana Cloud"
@@ -13147,6 +13051,18 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Impostazioni del repository salvate",
@@ -13177,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "La mia configurazione"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Sostituisce l'URL rilevato automaticamente per la registrazione dei webhook.",
-      "description-webhook-url-learn-more": "Scopri di più",
-      "label-git-hub-features": "Funzionalità di GitHub",
-      "label-webhook-url": "URL webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13333,25 +13242,20 @@
     },
     "finish-step": {
       "description-enable-previews": "Aggiunge un'anteprima dell'immagine delle modifiche alla dashboard nelle richieste di pull. Le immagini delle dashboard Grafana verranno condivise nel repository Git e saranno visibili a chiunque abbia accesso al repository.",
-      "description-generate-dashboard-previews": "Crea collegamenti di anteprima per le richieste di pull",
       "description-image-rendering": "Richiede il rendering dell'immagine. <2>Configura il rendering delle immagini</2>",
-      "description-preview-requirements": "(richiede <2>il rendering delle immagini</2> e l'accesso pubblico abilitato)",
       "description-read-only": "Le risorse non possono essere modificate tramite Grafana.",
       "description-sync-interval": "Con quale frequenza sincronizzare le modifiche dal repository",
-      "description-webhook-url": "Sostituisce l'URL rilevato automaticamente per la registrazione dei webhook.",
       "error-sync-interval-required": "L'intervallo di sincronizzazione è obbligatorio",
       "label-enable-previews": "Abilita le anteprime della dashboard nelle richieste di pull",
-      "label-generate-dashboard-previews": "Genera anteprime della dashboard",
       "label-read-only": "Solo lettura",
-      "label-sync-interval": "Intervallo di sincronizzazione (secondi)",
-      "label-webhook-url": "URL webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Intervallo di sincronizzazione (secondi)"
     },
     "fix-folder-metadata": {
       "button": "Correggi gli ID delle cartelle"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Annulla",
+      "default-commit-message": "",
       "error-message": "Impossibile avviare l'attività di correzione dei metadati della cartella. Riprova.",
       "error-title": "Errore durante la correzione dei metadati della cartella",
       "loading": "Caricamento del repository in corso...",
@@ -13585,6 +13489,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
+    },
     "quota-limit": {
       "note": "Nota:",
       "to-increase-limits": "Per aggiungere più {{type}} di risorse,",
@@ -13751,11 +13663,24 @@
     "shared": {
       "branch-description": "Il ramo da utilizzare per il provisioning",
       "branch-label": "Ramo",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Facoltativo. Percorso della directory secondaria contenente le risorse che desideri sincronizzare.",
       "path-label": "Percorso",
       "progress-bar": {
         "aria-label": "Barra di avanzamento"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Nome utente",
       "url-label": "URL repository",
       "url-pattern": "Deve essere un URL di repository valido (https://hostname/owner/repo)"
@@ -13823,6 +13748,13 @@
     "watch-stream": {
       "error-description": "Non è stato possibile avviare gli aggiornamenti in tempo reale. Aggiorna la pagina per vedere i dati più recenti.",
       "error-title": "Aggiornamenti in tempo reale non disponibili"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Tieni presente le seguenti limitazioni. Per ulteriori dettagli, consulta la <2>documentazione di Git Sync</2>.",
@@ -14129,7 +14061,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14138,6 +14069,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14214,6 +14146,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Aggiungi {{id}} sotto",
       "add-expression": "Aggiungi espressione",
@@ -14232,9 +14168,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nuovo {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Query ed espressioni",
       "toggle-size": "Attiva/disattiva dimensione barra laterale",
       "transformations": "Trasformazioni",
+      "transformations-empty": "",
       "view-toggle": "Visualizza",
       "alerts_one": "Avviso ({{count}})",
       "alerts_other": "Avviso ({{count}})",

@@ -31,21 +31,24 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.5.2 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
-	github.com/aws/aws-sdk-go v1.55.7 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2 v1.41.7 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go v1.55.7 // indirect; @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2 v1.41.9 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/config v1.32.15 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.3 // @grafana/alerting-backend
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.50.5 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.0 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/kms v1.41.2 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.37.14 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.1 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.41.10 // @grafana/grafana-operator-experience-squad
-	github.com/aws/smithy-go v1.25.1 // @grafana/data-sources-plugins
+	github.com/aws/smithy-go v1.26.0 // @grafana/data-sources-plugins
 	github.com/beevik/etree v1.6.0 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
@@ -106,7 +109,7 @@ require (
 	github.com/grafana/grafana-app-sdk/logging v0.55.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.4.4 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
-	github.com/grafana/grafana-cloud-migration-snapshot v1.10.0 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // @grafana/grafana-catalog
@@ -137,7 +140,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/klauspost/pgzip v1.2.6 // @grafana/grafana-backend-group
-	github.com/lib/pq v1.10.9 // @grafana/grafana-backend-group
+	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
 	github.com/mattn/go-isatty v0.0.20 // @grafana/grafana-backend-group
@@ -214,7 +217,7 @@ require (
 	google.golang.org/api v0.278.0 // @grafana/grafana-backend-group
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // @grafana/identity-access-team
-	google.golang.org/grpc v1.81.0 // @grafana/grafana-catalog
+	google.golang.org/grpc v1.81.1 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // @grafana/grafana-catalog
 	gopkg.in/ini.v1 v1.67.2 // @grafana/alerting-backend
 	gopkg.in/mail.v2 v2.3.1 // @grafana/grafana-backend-group
@@ -361,15 +364,13 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.23 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.23 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.25 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.25 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.24 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/kms v1.41.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.19 // indirect
@@ -735,7 +736,7 @@ replace (
 
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
 	// and makes non-cgo the default for developer builds.
-	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-3
+	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.

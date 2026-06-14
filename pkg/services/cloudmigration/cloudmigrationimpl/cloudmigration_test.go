@@ -969,7 +969,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 					"name": "email receiver",
 					"type": "email",
 					"settings": {
-						"addresses": "<example@email.com>"
+						"addresses": "<example@example.com>"
 					}
 				}]
 			}]

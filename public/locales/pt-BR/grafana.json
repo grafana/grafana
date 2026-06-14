@@ -29,7 +29,7 @@
       "add-label": "Adicionar uma permissão",
       "loading": "Carregando permissões…",
       "no-permissions": "Não há permissões",
-      "permissions-change-warning": "Isto irá alterar as permissões para este diretório e todos os seus descendentes. No total, isto afetará:",
+      "permissions-change-warning": "",
       "role": "Função",
       "serviceaccount": "Conta de serviço",
       "team": "Equipe",
@@ -1180,12 +1180,6 @@
       "label-metric": "Métrica",
       "label-pending-period": "Período pendente"
     },
-    "evaluation-group": {
-      "label-delete": "Excluir",
-      "label-export": "Exportar",
-      "label-reorder-rules": "Regras para pedidos repetidos",
-      "text-provisioned": "Provisionado"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Um grupo avalia todas as suas regras com o mesmo intervalo de avaliação.",
       "description-often-rules-group-evaluated": "Com que frequência todas as regras do grupo são avaliadas.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Insira um nome",
       "title-new-evaluation-group": "Novo grupo de avaliação"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Ocorreu um erro ao tentar obter detalhes do grupo"
     },
     "existing-rule-editor": {
       "sorry-permission": "Desculpe! Você não tem permissão para editar esta regra.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Esta fonte de dados não possui regras configuradas",
         "new-alert-rule": "Nova regra de alerta",
-        "new-ds-managed-alerting-rule": "Nova regra de alerta gerenciada pela fonte de dados",
         "new-ds-managed-recording-rule": "Nova regra de registro gerenciada pela fonte de dados",
         "new-grafana-alerting-rule": "Nova regra de alerta",
         "new-grafana-recording-rule": "Nova regra de gravação",
@@ -2540,22 +2529,9 @@
         "aria-label": "adicionar política",
         "text": "Nova política de notificação"
       },
-      "delete-reasons": {
-        "no-permissions": "Você não tem a permissão necessária para excluir esta política de notificação",
-        "provisioned": "A política de notificação foi provisionada e não pode ser excluída por meio da interface do usuário"
-      },
-      "delete-text": "A política de notificações não pode ser excluída pelos seguintes motivos:",
-      "empty-state": {
-        "message": "Nenhuma política encontrada"
-      },
       "fetch": {
         "error": "Falha ao buscar políticas"
       },
-      "reset-reasons": {
-        "no-permissions": "Você não tem a permissão necessária para redefinir esta política de notificação",
-        "provisioned": "A política de notificação foi provisionada e não pode ser redefinida por meio da interface do usuário"
-      },
-      "reset-text": "A política de notificações não pode ser redefinida pelos seguintes motivos:",
       "text-loading": "Carregando…"
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Substituir cronogramas",
       "repeat-interval": "Intervalo de repetição: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "limpar",
-      "aria-label-search-routing-trees": "buscar árvores de encaminhamento",
-      "clear": "Limpar",
-      "label-search-by-name-or-receiver": "Buscar por nome da política ou ponto de contato",
-      "placeholder-search": "Buscar"
-    },
-    "routing-tree-header": {
-      "reset": "Redefinir"
-    },
     "rule-actions-buttons": {
       "title-edit": "Editar",
       "title-view": "Visualizar"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Regras de alerta"
       },
-      "rulerrule-loading-error": "Falha ao carregar a regra",
       "toggle": {
         "use-new-experience": "Usar nova experiência",
         "view-previous-experience": "Reverter para a experiência anterior"
@@ -3577,9 +3542,6 @@
       "collapse": "Recolher",
       "collapse-all": "Recolher tudo",
       "collapse-sidebar": "Recolher barra lateral",
-      "compact-firing": "ativo",
-      "compact-pending": "pendente",
-      "compact-rules": "regras",
       "error-loading-rule": "Erro ao carregar a regra",
       "expand": "Expandir",
       "expand-all": "Expandir tudo",
@@ -4262,13 +4224,9 @@
       "cancel-button": "Cancelar",
       "confirmation-text": "Excluir",
       "delete-button": "Excluir",
-      "delete-modal-invalid-text": "Uma ou mais pastas contêm painéis de biblioteca, ou regras de alerta. Exclua-as primeiro para prosseguir.",
-      "delete-modal-invalid-title": "Não é possível excluir pasta",
       "delete-modal-restore-dashboards-common": "Os painéis excluídos serão mantidos no histórico por até 12 meses. Os usuários com permissões de exclusão podem restaurar os painéis que excluíram, e os administradores podem restaurar os painéis excluídos por qualquer usuário. O histórico é limitado a 1.000 painéis: os mais antigos podem ser removidos antes, caso o limite seja atingido.",
       "delete-modal-restore-dashboards-prefix-folder": "Esta ação excluirá as pastas selecionadas imediatamente.",
       "delete-modal-restore-dashboards-suffix-folder": "Não é possível restaurar as pastas.",
-      "delete-modal-text": "Esta ação apagará o seguinte conteúdo:",
-      "delete-modal-text-one-folder": "Esta ação excluirá a pasta \"<1>{{ folderName }}</1>\" e o seguinte conteúdo:",
       "delete-modal-title": "Excluir",
       "delete-provisioned-folder": "Excluir pasta provisionada",
       "deleting": "Excluindo...",
@@ -4276,8 +4234,6 @@
       "move-button": "Mover",
       "move-modal-alert": "Mover este item pode alterar suas permissões.",
       "move-modal-field-label": "Nome da pasta",
-      "move-modal-text": "Esta ação moverá o seguinte conteúdo:",
-      "move-modal-text-one-folder": "Esta ação moverá a pasta \"<1>{{ folderName }}</1>\" e o seguinte conteúdo:",
       "move-modal-title": "Mover",
       "move-provisioned-folder": "Mover pasta provisionada",
       "moving": "Movendo...",
@@ -4287,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Atribuir um proprietário à pasta",
       "rename-provisioned-folder": "Renomear pasta provisionada",
       "selected-mix-resources-modal-text": "Você selecionou recursos provisionados e não provisionados. Não éo possível processá-los juntos. Selecione apenas um dos tipos de recurso e tente novamente.",
-      "selected-mix-resources-modal-title": "Tipos de recursos mistos selecionados"
+      "selected-mix-resources-modal-title": "Tipos de recursos mistos selecionados",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Excluídos recentemente"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Pasta não encontrada",
       "title-ruler-namespace-error": "Não é possível carregar regras"
@@ -4306,13 +4269,19 @@
       "button-cancel": "Cancelar",
       "button-delete": "Excluir",
       "button-deleting": "Excluindo…",
-      "delete-warning": "Isso excluirá as pastas selecionadas e as subpastas delas. No total, isso afetará:",
-      "error-deleting-resources": "Erro ao excluir recursos"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Erro ao excluir recursos",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancelar",
       "button-move": "Mover",
       "button-moving": "Movendo…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Se você tiver acesso direto ao destino, faça modificações diretamente no repositório de destino.",
         "read-only-saving-message": "O repositório é de somente leitura e está provisionado no Git. {{readOnlyMessage}}",
@@ -4323,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Erro ao mover recursos",
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio. Selecione outra.",
-      "move-total": "No total, isso afetará:",
       "move-warning": "Isso moverá as pastas selecionadas e suas subpastas. As pastas de destino disponíveis dependem dos recursos selecionados.",
       "move-warning-tooltip": "Você só pode mover recursos provisionados dentro de sua pasta provisionada e recursos locais para pastas locais.",
-      "target-folder": "Pasta de destino"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} regra de alerta",
-      "alertRule_other": "{{count}} regras de alerta",
-      "dashboard_one": "{{count}} painel de controle",
-      "dashboard_other": "{{count}} painéis de controle",
-      "folder_one": "{{count}} pasta",
-      "folder_other": "{{count}} pastas",
-      "libraryPanel_one": "{{count}} painel de biblioteca",
-      "libraryPanel_other": "{{count}} painéis de biblioteca",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} itens"
+      "target-folder": "Pasta de destino",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4367,12 +4325,11 @@
       "button-cancel": "Cancelar",
       "button-delete": "Excluir",
       "button-deleting": "Excluindo…",
-      "delete-warning": "Essa ação excluirá esta pasta e todos os elementos contidos nela. No total, isso afetará:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Faltam campos obrigatórios",
       "success-message": "Pasta excluída com sucesso"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Não é possível recuperar informações de elementos subordinados"
     },
     "empty-state": {
       "button-title": "Criar painel de controle",
@@ -5277,10 +5234,6 @@
       },
       "pane-header": "Adicionar"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Fechar o widget \"Adicionar painel\"",
-      "tooltip-close-widget": "Fechar widget"
-    },
     "add-menu": {
       "import": "Importar da biblioteca",
       "paste-panel": "Colar painel",
@@ -5373,6 +5326,8 @@
     },
     "code-pane": {
       "collapse": "Recolher editor",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Expandir editor",
       "header": "Editar como código",
       "modal-title": "Editar painel como código"
@@ -5672,8 +5627,7 @@
           "apply": "Aplicar",
           "change-value": "Alterar valor da variável",
           "discard": "Descartar",
-          "modal-title": "Opções personalizadas",
-          "values": "Valores separados por vírgula"
+          "modal-title": "Opções personalizadas"
         },
         "datasource-options": {
           "name-filter": "Filtro de nome",
@@ -5898,7 +5852,6 @@
     },
     "inspect": {
       "data-tab": "Dados",
-      "error-tab": "Erro",
       "json-tab": "JSON",
       "meta-tab": "Metadados",
       "query-tab": "Consulta",
@@ -6016,13 +5969,6 @@
         }
       }
     },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Título do widget"
-        }
-      }
-    },
     "options": {
       "description": "Descrição",
       "title-option": "Título"
@@ -6080,9 +6026,6 @@
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Dados brutos"
-    },
     "panel-links": {
       "aria-label-panel-links": "Links do painel"
     },
@@ -6123,18 +6066,6 @@
       "body-restore-version": "Tem certeza de que deseja restaurar o painel para a versão {{version}}? Todas as alterações não salvas serão perdidas.",
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opções de linha"
-    },
-    "row-options-form": {
-      "cancel": "Cancelar",
-      "label-repeat-for": "Repetir para",
-      "label-title": "Título",
-      "update": "Atualizar"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opções de linha"
     },
     "rows-layout": {
       "cancel": "Cancelar",
@@ -6495,16 +6426,6 @@
       "changes": "Deseja salvar suas alterações?",
       "discard": "Descartar",
       "title-unsaved-changes": "Alterações não salvas"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Os painéis nesta linha usam a fonte de dados {{SHARED_DASHBOARD_QUERY}}. Esses painéis farão referência ao painel na linha original, não àqueles nas linhas repetidas."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Excluir linha",
-      "learn-more": "Saiba mais",
-      "title": {
-        "delete-row": "Excluir linha"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Não foi possível encontrar um ID do Grafana.com válido",
@@ -8781,19 +8702,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Adicione informações adicionais ao lado do serviço e da operação em uma linha da barra de intervalo na visualização de rastros.",
-      "title-span-bar": "Barra de intervalo"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Selecionar nome do rótulo",
-      "label-label": "Etiqueta",
-      "label-tag-key": "Chave de tag",
-      "placeholder-duration": "Duração",
-      "placeholder-enter-tag-key": "Inserir a chave de tag",
-      "tooltip-default-duration": "Padrão: duração",
-      "tooltip-tag-key": "Chave de tag que será usada para obter o valor da tag. Os atributos e recursos de um intervalo serão pesquisados para a chave de tag"
-    },
     "span-detail": {
       "label": {
         "kind": "Tipo:",
@@ -9006,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Executar consulta"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "Erro",
       "loading": "Carregando informações do esquema…",
@@ -9030,13 +8943,6 @@
       "folder-deleted-success": "Pasta excluída",
       "folder-move-error-provisioned": "Não é possível mover a pasta provisionada. Para movê-la, altere o local da pasta no repositório e realize a sincronização para aplicar as alterações.",
       "folder-moved-success": "Pasta movida"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Carregando"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11522,6 @@
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Esta ferramenta pode migrar alguns recursos desta instalação para a sua pilha da nuvem. Para começar, você precisará criar uma captura desta instalação. A criação de uma captura normalmente leva menos de dois minutos. A captura é armazenada juntamente com esta instalação da Grafana.",
-      "title": "Não há nenhuma captura",
-      "when-complete": "Assim que a captura estiver concluída, você poderá enviá-la para a sua pilha da nuvem."
-    },
     "building-snapshot": {
       "description": "Estamos reunindo seus recursos para a migração para a Grafana Cloud. Isso deve demorar um pouco.",
       "description-eta": "A criação de uma captura normalmente leva menos de dois minutos.",
@@ -12245,8 +12146,10 @@
       "undock": "Desacoplar menu"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Recolher seção: {{sectionName}}",
-      "expand-aria-label": "Expandir seção: {{sectionName}}"
+      "expand-aria-label": "Expandir seção: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Alterar organização"
@@ -12477,13 +12380,6 @@
       "recently-viewed-dashboards": "Painéis visualizados recentemente",
       "search": "Buscar",
       "starred-dashboards": "Painéis de controle favoritos"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Nome do cálculo"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13129,6 +13025,14 @@
       "folders-count_one": "{{count}} pasta",
       "folders-count_other": "{{count}} pasta"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Pule a configuração e tenha acesso ao Git Sync totalmente gerenciado e hospedado no Grafana Cloud com o <2>plano gratuito vitalício do Grafana Cloud</2>.",
       "title": "Você também pode usar o Git Sync no Grafana Cloud"
@@ -13147,6 +13051,18 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Configurações de repositório salvas",
@@ -13177,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Minha configuração"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Substitui a URL detectada automaticamente para registrar webhooks.",
-      "description-webhook-url-learn-more": "Saiba mais",
-      "label-git-hub-features": "Recursos do GitHub",
-      "label-webhook-url": "URL do webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13333,25 +13242,20 @@
     },
     "finish-step": {
       "description-enable-previews": "Adiciona uma pré-visualização em imagem das alterações do painel nas solicitações de extração. As imagens dos seus painéis da Grafana serão compartilhadas no seu repositório Git e estarão disponíveis para qualquer pessoa com acesso ao repositório.",
-      "description-generate-dashboard-previews": "Criar links de prévia para solicitações de extração",
       "description-image-rendering": "Requer renderização de imagem. <2>Configurar a renderização de imagens</2>",
-      "description-preview-requirements": "(requer <2>renderização de imagem</2> e acesso público ativado)",
       "description-read-only": "Os recursos não podem ser modificados por meio da Grafana.",
       "description-sync-interval": "Com que frequência sincronizar as alterações do repositório",
-      "description-webhook-url": "Substitui a URL detectada automaticamente para registrar webhooks.",
       "error-sync-interval-required": "O intervalo de sincronização é obrigatório",
       "label-enable-previews": "Ativar pré-visualizações do painel em solicitações de extração",
-      "label-generate-dashboard-previews": "Gerar prévias do painel de controle",
       "label-read-only": "Apenas leitura",
-      "label-sync-interval": "Intervalo (segundos)",
-      "label-webhook-url": "URL do webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Intervalo (segundos)"
     },
     "fix-folder-metadata": {
       "button": "Corrigir IDs de pasta"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Cancelar",
+      "default-commit-message": "",
       "error-message": "Falha ao iniciar a tarefa de correção de metadados da pasta. Tente novamente.",
       "error-title": "Erro ao corrigir metadados da pasta",
       "loading": "Carregando repositório…",
@@ -13585,6 +13489,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
+    },
     "quota-limit": {
       "note": "Observação:",
       "to-increase-limits": "Para adicionar mais {{type}},",
@@ -13751,11 +13663,24 @@
     "shared": {
       "branch-description": "A ramificação que será usada para provisionamento",
       "branch-label": "Ramificação",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Opcional. Caminho para o subdiretório com os recursos que você deseja sincronizar.",
       "path-label": "Caminho",
       "progress-bar": {
         "aria-label": "Barra de progresso"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Nome de usuário",
       "url-label": "URL do repositório",
       "url-pattern": "Deve ser um URL válido do repositório (https://hostname/owner/repo)"
@@ -13823,6 +13748,13 @@
     "watch-stream": {
       "error-description": "Não foi possível iniciar as atualizações em tempo real. Atualize a página para ver os dados mais recentes.",
       "error-title": "Atualizações em tempo real indisponíveis"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Esteja ciente das seguintes limitações. Para obter mais informações, consulte a <2>documentação do Git Sync</2>.",
@@ -14129,7 +14061,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14138,6 +14069,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14214,6 +14146,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Adicionar abaixo {{id}}",
       "add-expression": "Adicionar expressão",
@@ -14232,9 +14168,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Novo {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Consultas e expressões",
       "toggle-size": "Alternar tamanho da barra lateral",
       "transformations": "Transformações",
+      "transformations-empty": "",
       "view-toggle": "Visualizar",
       "alerts_one": "Alerta ({{count}})",
       "alerts_other": "Alertas ({{count}})",
