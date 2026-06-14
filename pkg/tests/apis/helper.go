@@ -35,6 +35,7 @@ import (
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dualwriterrest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -759,17 +760,46 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	} else if orgId > 1 {
 		login = fmt.Sprintf("%s-%s", login, c.Namespacer(orgId))
 	}
+	email := fmt.Sprintf("%s@example.com", login)
 
-	u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
-		DefaultOrgRole: string(basicRole),
-		Password:       user.Password(name),
-		Login:          login,
-		OrgID:          orgId,
-		IsAdmin:        isGrafanaAdmin,
-		Name:           name,
-		Email:          fmt.Sprintf("%s@example.com", login),
-	})
-	require.NoError(c.t, err)
+	// Create via /api/admin/users when:
+	//   - the IAM apiserver is wired (FlagKubernetesUsersApi),
+	//   - a bootstrap admin already exists to authenticate the request,
+	//   - the users.iam.grafana.app resource is in a DualWrite mode (Mode1-3) so that
+	//     the underlying create still populates the legacy SQL `user` table that this
+	//     helper looks up downstream (Mode4/5 write to unified only; legacy lookup fails),
+	//   - the target org is Org1. Under FlagKubernetesUsersRedirect, k8sService.Create
+	//     derives the K8s namespace from the requester's org (not form.orgId), so
+	//     cross-org creates land in the bootstrap admin's org instead of the target.
+	//     For other orgs, fall back to the legacy user service which honours OrgID.
+	// The API path goes through userimpl.Service.Create, which redirects to the K8s API
+	// under FlagKubernetesUsersRedirect — exercising the production routing chain.
+	// Otherwise fall back to the legacy user service directly.
+	usersMode := c.env.Cfg.UnifiedStorage["users.iam.grafana.app"].DualWriterMode
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	useAdminAPI := c.env.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagKubernetesUsersApi) &&
+		c.Org1.Admin.Identity != nil && !c.Org1.Admin.Identity.IsNil() &&
+		usersMode >= dualwriterrest.Mode1 && usersMode <= dualwriterrest.Mode3 &&
+		orgId == 1
+
+	var userID int64
+	if useAdminAPI {
+		userID = c.createUserViaAdminAPI(name, login, email, orgId, isGrafanaAdmin, basicRole)
+	} else {
+		u, err := c.userSvc.Create(context.Background(), &user.CreateUserCommand{
+			DefaultOrgRole: string(basicRole),
+			Password:       user.Password(name),
+			Login:          login,
+			OrgID:          orgId,
+			IsAdmin:        isGrafanaAdmin,
+			Name:           name,
+			Email:          email,
+		})
+		require.NoError(c.t, err)
+		require.Equal(c.t, orgId, u.OrgID)
+		require.True(c.t, u.ID > 0)
+		userID = u.ID
+	}
 
 	// for tests to work we need to add grafana admins to every org
 	if isGrafanaAdmin {
@@ -779,20 +809,16 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 			_ = c.orgSvc.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
 				Role:   identity.RoleAdmin,
 				OrgID:  o.ID,
-				UserID: u.ID,
+				UserID: userID,
 			})
 		}
 	}
 
-	require.NoError(c.t, err)
-	require.Equal(c.t, orgId, u.OrgID)
-	require.True(c.t, u.ID > 0)
-
 	// should this always return a user with ID token?
 	s, err := c.userSvc.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
-		UserID: u.ID,
-		Login:  u.Login,
-		Email:  u.Email,
+		UserID: userID,
+		Login:  login,
+		Email:  email,
 		OrgID:  orgId,
 	})
 	require.NoError(c.t, err)
@@ -816,6 +842,79 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 	}
 
 	return usr
+}
+
+// createUserViaAdminAPI POSTs to /api/admin/users using the bootstrap admin's
+// credentials, then issues the follow-up calls needed to match the legacy create
+// command's role and IsAdmin behaviour. /api/admin/users routes through
+// userimpl.Service.Create, which under FlagKubernetesUsersRedirect forwards to
+// the IAM apiserver — so this exercises the production routing chain instead of
+// bypassing it.
+func (c *K8sTestHelper) createUserViaAdminAPI(name, login, email string, orgId int64, isGrafanaAdmin bool, basicRole org.RoleType) int64 {
+	c.t.Helper()
+
+	type adminCreateResp struct {
+		Message string `json:"message"`
+		ID      int64  `json:"id"`
+		UID     string `json:"uid"`
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"login":    login,
+		"email":    email,
+		"name":     name,
+		"password": name,
+		"orgId":    orgId,
+	})
+	require.NoError(c.t, err)
+
+	resp := DoRequest(c, RequestParams{
+		User:        c.Org1.Admin,
+		Method:      http.MethodPost,
+		Path:        "/api/admin/users",
+		Body:        body,
+		ContentType: "application/json",
+	}, &adminCreateResp{})
+	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode,
+		"POST /api/admin/users failed (login=%s): %s", login, string(resp.Body))
+	require.NotZero(c.t, resp.Result.ID, "admin create returned zero ID; body=%s", string(resp.Body))
+	userID := resp.Result.ID
+
+	// /api/admin/users assigns the default org role (AutoAssignOrgRole). Override
+	// when the caller wants a different role so basic auth/RBAC tests behave like
+	// the legacy CreateUserCommand DefaultOrgRole path did.
+	if string(basicRole) != "" && basicRole != org.RoleType(c.env.Cfg.AutoAssignOrgRole) {
+		roleBody, err := json.Marshal(map[string]any{"role": string(basicRole)})
+		require.NoError(c.t, err)
+		roleResp := DoRequest(c, RequestParams{
+			User:        c.Org1.Admin,
+			Method:      http.MethodPatch,
+			Path:        fmt.Sprintf("/api/orgs/%d/users/%d", orgId, userID),
+			Body:        roleBody,
+			ContentType: "application/json",
+		}, &struct{}{})
+		require.Equal(c.t, http.StatusOK, roleResp.Response.StatusCode,
+			"PATCH /api/orgs/%d/users/%d role=%s failed: %s", orgId, userID, basicRole, string(roleResp.Body))
+	}
+
+	// Promote to Grafana admin when requested — the legacy CreateUserCommand path
+	// supported IsAdmin inline; the admin create form does not, so do it as a
+	// follow-up PUT against the user's permissions endpoint.
+	if isGrafanaAdmin {
+		permBody, err := json.Marshal(map[string]bool{"isGrafanaAdmin": true})
+		require.NoError(c.t, err)
+		permResp := DoRequest(c, RequestParams{
+			User:        c.Org1.Admin,
+			Method:      http.MethodPut,
+			Path:        fmt.Sprintf("/api/admin/users/%d/permissions", userID),
+			Body:        permBody,
+			ContentType: "application/json",
+		}, &struct{}{})
+		require.Equal(c.t, http.StatusOK, permResp.Response.StatusCode,
+			"PUT /api/admin/users/%d/permissions failed: %s", userID, string(permResp.Body))
+	}
+
+	return userID
 }
 
 func (c *K8sTestHelper) AddUserToOrg(u User, orgName string, role org.RoleType) {
