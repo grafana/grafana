@@ -87,7 +87,10 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
 
-		reqCtx, reqSpan := tracing.Start(ctx, "datasource.query.request",
+		// req.Context() carries the upstream trace context re-attached by the
+		// builder's reparentingConnecter wrap; use it instead of the captured
+		// Connect-time ctx so this span lands in the upstream trace.
+		reqCtx, reqSpan := tracing.Start(req.Context(), "datasource.query.request",
 			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),

@@ -14,6 +14,7 @@ import (
 	klog "k8s.io/klog/v2"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	apifilters "github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -95,11 +96,13 @@ func AugmentWebServicesWithCustomRoutes(
 
 			// Add root handlers using OpenAPI specs
 			for _, route := range routes.Root {
+				// Re-parent the request context onto the upstream caller's trace
+				// before dispatching, to compensate for k8s framework severance.
 				instrumentedHandler := metrics.InstrumentHandler(
 					gv.Group,
 					gv.Version,
 					route.Path,
-					route.Handler,
+					apifilters.WithUpstreamSpanContext(route.Handler),
 				)
 				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
 
@@ -115,7 +118,7 @@ func AugmentWebServicesWithCustomRoutes(
 					gv.Group,
 					gv.Version,
 					route.Path,
-					route.Handler,
+					apifilters.WithUpstreamSpanContext(route.Handler),
 				)
 				routeFunction := convertHandlerToRouteFunction(instrumentedHandler)
 

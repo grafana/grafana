@@ -350,6 +350,9 @@ func installAPIGroupsForBuilder(g *genericapiserver.APIGroupInfo, group string, 
 	}); err != nil {
 		return err
 	}
+	for _, resources := range g.VersionedResourcesStorageMap {
+		wrapConnectersForTracing(resources)
+	}
 	if len(g.PrioritizedVersions) < 1 {
 		return nil
 	}
