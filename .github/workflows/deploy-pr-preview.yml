@@ -19,7 +19,7 @@ jobs:
       pull-requests: write # Create or update PR comments.
       statuses: write # Update GitHub status check with deploy preview link.
     if: "!github.event.pull_request.head.repo.fork"
-    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main # zizmor: ignore[unpinned-uses]
+    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@robbymilo/deploy-preview # zizmor: ignore[unpinned-uses]
     with:
       branch: ${{ github.head_ref }}
       event_number: ${{ github.event.number }}
@@ -29,10 +29,11 @@ jobs:
         [
           {
             "index_file": "content/docs/grafana/_index.md",
-            "relative_prefix": "/docs/grafana/latest/",
+            "relative_prefix": "/docs/grafana/next/",
             "repo": "grafana",
             "source_directory": "docs/sources",
-            "website_directory": "content/docs/grafana/latest"
+            "website_directory": "content/docs/grafana/next"
           }
         ]
       title: ${{ github.event.pull_request.title }}
+      toolkit_ref: robbymilo/deploy-preview
