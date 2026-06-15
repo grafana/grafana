@@ -1,5 +1,4 @@
 import { dateTime, rangeUtil } from '@grafana/data';
-import { isCustomVariableValue } from '@grafana/scenes';
 
 import { type ScopedVars } from '../types/ScopedVars';
 import { type Field } from '../types/dataFrame';
@@ -39,6 +38,11 @@ export type LinkToExploreOptions = {
   replaceVariables: InterpolateFunction;
 };
 
+// from scenes...
+function isCustomVariableValue(value: any) {
+  return typeof value === 'object' && 'formatter' in value;
+}
+
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
   const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
@@ -66,9 +70,8 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     (link.meta?.timeRange.field !== undefined || link.meta?.timeRange.range !== undefined)
   ) {
     const timeRangeField = link.meta?.timeRange?.field;
-    // default to "now", if field is not defined or is not a valid variable
-    let baseTimeStr: string | undefined = 'now';
-
+    // default to undefined, which is "now", if field is not defined or is not a valid variable
+    let baseTimeStr: string | undefined = undefined;
     if (
       timeRangeField !== undefined &&
       Object.keys(scopedVars).includes(timeRangeField) &&
@@ -108,7 +111,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     title: replaceVariables(title, scopedVars),
     // In this case this is meant to be internal link (opens split view by default) the href will also points
     // to explore but this way you can open it in new tab.
-    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, range, interpolatedPanelsState),
+    href: generateInternalHref(internalLink.datasourceUid, interpolatedQuery, exploreRange, interpolatedPanelsState),
     onClick: onClickFn
       ? (event) => {
           // Explore data links can be displayed not only in DataLinkButton but it can be used by the consumer in
