@@ -31,7 +31,7 @@ require (
 	github.com/andybalholm/brotli v1.2.0 // @grafana/data-sources-plugins
 	github.com/apache/arrow-go/v18 v18.5.2 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
-	github.com/aws/aws-sdk-go v1.55.7 // indirect; @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go v1.55.8 // indirect; @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2 v1.41.9 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/config v1.32.15 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // @grafana/grafana-operator-experience-squad
@@ -114,7 +114,7 @@ require (
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // @grafana/grafana-catalog
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
-	github.com/grafana/loki/v3 v3.7.1 // @grafana/observability-logs
+	github.com/grafana/loki/v3 v3.7.2 // @grafana/observability-logs
 	github.com/grafana/nanogit/gittest v0.10.2 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/data-sources-plugins
@@ -433,7 +433,7 @@ require (
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
-	github.com/edsrzf/mmap-go v1.2.0 // indirect
+	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
 	github.com/elazarl/goproxy v1.8.3 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
