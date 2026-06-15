@@ -6,6 +6,7 @@
 
 import { type z } from 'zod';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
@@ -66,7 +67,7 @@ export const removePanelCommand: MutationCommand<RemovePanelPayload> = {
             continue;
           }
 
-          layoutManager.removePanel(vizPanel);
+          dashboardEditActions.removePanel(layoutManager, vizPanel);
           removed.push(elementName);
         } catch (err) {
           errors.push(`${elementName}: ${err instanceof Error ? err.message : String(err)}`);

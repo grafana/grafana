@@ -3,6 +3,7 @@ import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   dataLayers,
   LocalValueVariable,
@@ -18,6 +19,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { type BulkActionElement, isBulkActionElement } from '../scene/types/BulkActionElement';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { type EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
@@ -26,6 +28,7 @@ import { LocalVariableEditableElement } from '../settings/variables/LocalVariabl
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
+import { getLayoutManagerFor } from '../utils/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
@@ -237,6 +240,65 @@ export const dashboardEditActions = {
       source,
       perform,
       undo,
+    });
+  },
+
+  /**
+   * Adds a panel to a layout and records it on the undo stack. The layout's
+   * own `addPanel`/`removePanel` are pure state mutations; the inverse for undo
+   * is to remove the panel from wherever it ended up.
+   */
+  addPanel(layout: DashboardLayoutManager, panel: VizPanel) {
+    if (!config.featureToggles.dashboardNewLayouts) {
+      // No undo/redo support in legacy edit mode
+      layout.addPanel(panel);
+      return;
+    }
+
+    const element = getEditableElementFor(panel);
+    if (!element) {
+      throw new Error('Added panel is not an editable element');
+    }
+
+    const typeName = element.getEditableElementInfo().typeName;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.add', 'Add {{typeName}}', { typeName }),
+      addedObject: panel,
+      source: layout,
+      perform: () => layout.addPanel(panel),
+      undo: () => getLayoutManagerFor(panel).removePanel?.(panel),
+    });
+  },
+
+  /**
+   * Removes a panel from a layout and records it on the undo stack. Undo
+   * re-adds the panel to the same layout at its original position.
+   */
+  removePanel(layout: DashboardLayoutManager, panel: VizPanel) {
+    if (!config.featureToggles.dashboardNewLayouts) {
+      // No undo/redo support in legacy edit mode
+      layout.removePanel?.(panel);
+      return;
+    }
+
+    const element = getEditableElementFor(panel);
+    if (!element) {
+      throw new Error('Removed panel is not an editable element');
+    }
+
+    const typeName = element.getEditableElementInfo().typeName;
+
+    let restoreIndex: number | undefined;
+
+    dashboardEditActions.edit({
+      description: t('dashboard.edit-actions.remove', 'Remove {{typeName}}', { typeName }),
+      removedObject: panel,
+      source: layout,
+      perform: () => {
+        restoreIndex = layout.removePanel?.(panel);
+      },
+      undo: () => layout.addPanel(panel, restoreIndex),
     });
   },
 

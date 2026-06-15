@@ -10,7 +10,6 @@ import {
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardEditActionEvent } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -25,13 +24,15 @@ describe('AutoGridLayoutManager', () => {
     it('can remove panel', () => {
       const { manager, panel1 } = setup();
 
-      manager.subscribeToEvent(DashboardEditActionEvent, (event) => {
-        event.payload.perform();
-      });
-
       manager.removePanel(panel1);
 
       expect(manager.state.layout.state.children.length).toBe(1);
+    });
+
+    it('returns the removed grid item index', () => {
+      const { manager, gridItems } = setup();
+
+      expect(manager.removePanel(gridItems[1].state.body)).toBe(1);
     });
   });
 

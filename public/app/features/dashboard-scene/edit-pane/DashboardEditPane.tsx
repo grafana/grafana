@@ -17,6 +17,7 @@ import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
+  dashboardEditActions,
   DashboardEditActionEvent,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
@@ -427,12 +428,8 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const panel = getDefaultVizPanel();
     const dashboard = getDashboardSceneFor(this);
 
-    if (target) {
-      const layout = getLayoutForObject(target) ?? dashboard;
-      layout.addPanel(panel);
-    } else {
-      dashboard.addPanel(panel);
-    }
+    const layout = (target ? getLayoutForObject(target) : null) ?? dashboard.state.body;
+    dashboardEditActions.addPanel(layout, panel);
 
     DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
   }

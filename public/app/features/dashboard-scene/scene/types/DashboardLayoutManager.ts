@@ -25,15 +25,23 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
   serialize(isSnapshot?: boolean): DashboardV2Spec['layout'];
 
   /**
-   * Adds a new panel to the layout
+   * Adds a panel to the layout. Pure state mutation — undo/redo is handled by
+   * `dashboardEditActions.addPanel`, not here.
+   *
+   * @param panel
+   * @param index Optional position to insert the panel's grid item at. Used when
+   *   re-adding a previously removed panel (undo) to restore its original order.
    */
-  addPanel(panel: VizPanel): void;
+  addPanel(panel: VizPanel, index?: number): void;
 
   /**
-   * Remove an element / panel
+   * Removes a panel from the layout. Pure state mutation — undo/redo is handled
+   * by `dashboardEditActions.removePanel`, not here.
+   *
    * @param panel
+   * @returns The index the panel's grid item was at, so it can be restored on undo.
    */
-  removePanel?(panel: VizPanel): void;
+  removePanel?(panel: VizPanel): number | undefined;
 
   /**
    * Creates a copy of an existing element and adds it to the layout

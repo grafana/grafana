@@ -687,7 +687,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     // Add panel to layout
-    this.state.body.addPanel(vizPanel);
+    dashboardEditActions.addPanel(this.state.body, vizPanel);
   }
 
   public createLibraryPanel(panelToReplace: VizPanel, libPanel: LibraryPanel) {
@@ -925,7 +925,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public removePanel(panel: VizPanel) {
-    getLayoutManagerFor(panel).removePanel?.(panel);
+    dashboardEditActions.removePanel(getLayoutManagerFor(panel), panel);
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {

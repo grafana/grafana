@@ -11,6 +11,7 @@ import { type z } from 'zod';
 
 import type { VizPanel } from '@grafana/scenes';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -194,9 +195,9 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       if (!currentLayout.removePanel) {
         throw new Error('Source layout does not support panel removal');
       }
-      currentLayout.removePanel(vizPanel);
+      dashboardEditActions.removePanel(currentLayout, vizPanel);
 
-      targetLayout.addPanel(panelClone);
+      dashboardEditActions.addPanel(targetLayout, panelClone);
 
       if (effectivePosition) {
         if (isTargetAutoGrid) {

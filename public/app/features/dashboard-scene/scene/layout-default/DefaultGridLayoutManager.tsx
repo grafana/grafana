@@ -148,7 +148,19 @@ export class DefaultGridLayoutManager
     );
   }
 
-  public addPanel(vizPanel: VizPanel) {
+  public addPanel(vizPanel: VizPanel, index?: number) {
+    // Re-adding a previously removed panel (undo/redo): reuse the existing grid
+    // item so the panel id, item identity and grid position are preserved.
+    if (vizPanel.parent instanceof DashboardGridItem && vizPanel.parent.parent === this.state.grid) {
+      const gridItem = vizPanel.parent;
+      const children = this.state.grid.state.children.filter((child) => child !== gridItem);
+      const insertAt = index ?? children.length;
+      this.state.grid.setState({
+        children: [...children.slice(0, insertAt), gridItem, ...children.slice(insertAt)],
+      });
+      return;
+    }
+
     const panelId = dashboardSceneGraph.getNextPanelId(this);
 
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
@@ -163,18 +175,7 @@ export class DefaultGridLayoutManager
         key: getGridItemKeyForPanelId(panelId),
       });
 
-      dashboardEditActions.addElement({
-        addedObject: vizPanel,
-        source: this,
-        perform: () => {
-          this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
-        },
-        undo: () => {
-          this.state.grid.setState({
-            children: this.state.grid.state.children.filter((child) => child !== newGridItem),
-          });
-        },
-      });
+      this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
     } else {
       const newGridItem = new DashboardGridItem({
         height: NEW_PANEL_HEIGHT,
@@ -224,7 +225,7 @@ export class DefaultGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel): number | undefined {
     const gridItem = panel.parent!;
 
     if (!(gridItem instanceof DashboardGridItem)) {
@@ -242,23 +243,17 @@ export class DefaultGridLayoutManager
     }
 
     if (row) {
+      const index = row.state.children.indexOf(gridItem);
       row.setState({ children: row.state.children.filter((child) => child !== gridItem) });
       layout.forceRender();
-      return;
+      return index;
     }
 
-    if (!config.featureToggles.dashboardNewLayouts) {
-      // No undo/redo support in legacy edit mode
-      layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
-      return;
-    }
-
-    dashboardEditActions.removeElement({
-      removedObject: gridItem.state.body,
-      source: this,
-      perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
-      undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
-    });
+    // Note: the grid item keeps its parent reference so addPanel can re-attach
+    // the same instance (and panel id) on undo.
+    const index = layout.state.children.indexOf(gridItem);
+    layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
+    return index;
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
