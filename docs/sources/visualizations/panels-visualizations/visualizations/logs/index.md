@@ -82,7 +82,7 @@ To limit the number of log lines rendered in the visualization, you can use the 
 
 ## Log level
 
-For logs where a `level` label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we try to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions](ref:log-levels).
+For logs where a `level`, `detected_level`, `lvl`, or `loglevel` label is specified, Grafana uses the value of the label to determine the log level and update color accordingly. If the log doesn't have one of these labels, Grafana tries to find out if its content matches any supported expressions. The log level is always determined by the first match. If Grafana can't determine a log level, it visualizes the log with the **unknown** log level. For more information, refer to [supported log levels and mappings of log level abbreviation and expressions](ref:log-levels).
 
 ## Configuration options
 
@@ -101,16 +101,21 @@ Use these settings to refine your visualization:
 |      Option     |   Description   |
 | --------------- | --------------- |
 | Show timestamps | Show or hide the time column. This is the timestamp associated with the log line as reported from the data source. |
+| Timestamp resolution | Select whether timestamps use **Milliseconds** or **Nanoseconds**. This option is displayed when **Show timestamps** is enabled. |
+| Display log level | Show or hide the detected log level. |
 | Unique labels | Show or hide the unique labels column, which shows only non-common labels. |
 | Wrap lines | Turn line wrapping on or off. |
+| Enable columns for displayed fields | Align values using columns when displayed fields are used. This option is displayed when **Wrap lines** is disabled. |
 | Prettify JSON | Toggle the switch on to pretty print all JSON logs. This setting does not affect logs in any format other than JSON. |
-| Enable highlighting | Use a predefined syntax coloring grammar to highlight relevant parts of the log lines |
+| Enable logs highlighting | Use a predefined coloring scheme to highlight relevant parts of the log lines. |
 | Enable log details | Toggle the switch on to see an extendable area with log details including labels and detected fields. Each field or label has a stats icon to display ad-hoc statistics in relation to all displayed logs. The default setting is on. |
 | Log Details panel mode | Choose to display the log details in a sidebar panel or inline, below the log line. |
+| Enable field selector | Show a component to manage the displayed fields from the logs. |
 | Enable infinite scrolling | Request more results by scrolling to the bottom of the logs list. |
-| Show controls | Display controls to jump to the last or first log line, and filters by log level |
+| Show controls | Display controls to jump to the last or first log line, and filters by log level. |
+| Display download control | Show an option to download the logs on display. This option is displayed when **Show controls** is enabled. |
 | Font size | Select between the default font size and small font size. |
-| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numerical** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signatures** - Removing successive lines with identical punctuation and white space.</li></ul> |
+| Deduplication | Hide log messages that are duplicates of others shown, according to your selected criteria. Choose from: <ul><li>**None** - No deduplication.</li><li>**Exact** - Ignoring ISO datetimes.</li><li>**Numbers** - Ignoring only those that differ by numbers such as IPs or latencies.</li><li>**Signature** - Removing successive lines with identical punctuation and white space.</li></ul> |
 | Order | Set whether to show results **Newest first** or **Oldest first**. |
 
 <!-- prettier-ignore-end -->

@@ -59,7 +59,7 @@ Once you’ve created a [dashboard](ref:dashboards), the following video shows y
 
 ## Supported data formats
 
-Heatmaps support time series data.
+Heatmaps support time series data, numeric fields that Grafana calculates into a heatmap, and pre-bucketed heatmap data returned as heatmap rows or heatmap cells.
 
 ### Example
 
@@ -128,7 +128,7 @@ The following options define the display of the y-axis.
 
 <!-- prettier-ignore-end -->
 
-{{< docs/shared lookup="visualizations/multiple-y-axes.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+3" >}}
+Heatmaps use a single y-axis. To change the scale for a heatmap field, use the **Y Bucket scale** option.
 
 ### Colors options
 
@@ -151,7 +151,7 @@ Use the following options to define the heatmap colors.
 
 #### Steps
 
-Set a value between `1` and `128`.
+Set a value between `2` and `128`.
 
 #### Reverse
 
@@ -174,6 +174,7 @@ Use these settings to control the display of heatmap cells.
 | ------ | ----------- |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
+| Value name | Set the name of the value field for pre-bucketed data. This option is displayed when **Calculate from data** is set to **No**. |
 | Cell gap | Set how much space there is between cells. |
 | Hide cells with values <= | Enter a value. |
 | Hide cells with values >= | Enter a value. |
@@ -190,15 +191,15 @@ Tooltip options control the information overlay that appears when you hover over
 | Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
 | [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
 | Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Max height                            | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** or when exemplars are available.                             |
 
 #### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
 
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
-- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the visualization.
+- **Single** - The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All** - The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden** - Do not display the tooltip when you interact with the visualization.
 
 Use an override to hide individual series from the tooltip.
 

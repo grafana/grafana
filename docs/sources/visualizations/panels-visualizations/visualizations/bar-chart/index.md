@@ -124,14 +124,14 @@ Use these options to refine your visualization.
 | X Axis                           | Specify which field is used for the x-axis.          |
 | Orientation                      | Choose from: <ul><li>**Auto** - Grafana decides the bar orientation based on the panel dimensions.</li><li>**Horizontal** - Will make the X axis the category axis.</li><li>**Vertical** - Will make the Y axis the category axis.</li></ul> |
 | Rotate x-axis tick labels        | When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.  |
-| X-axis tick label max length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`. |
+| X-axis tick label max length | Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated and appended with `...`. This option is displayed when **Rotate x-axis tick labels** isn't set to `0°`. |
 | X-axis labels minimum spacing | Sets the minimum spacing between x-axis labels. Depending on your choice, you can select the **RTL** checkbox to require space from the right side. Choose from: <ul><li>**None** - All tick marks are shown.</li><li>**Small** - 100 px of space is required between labels.</li><li>**Medium** - 200 px of space is required between labels.</li><li>**Large** - 300 px of space is required between labels.</li></ul>  |
 | Show values                      | This controls whether values are shown. Values are shown on top or to the left of bars. Choose from: <ul><li>**Auto** Values will be shown if there is space.</li><li>**Always** Always show values.</li><li>**Never** Never show values.</li></ul>                                                               |
-| Stacking                         | Controls bar chart stacking. Choose from: <ul><li>**Off**: Bars will not be stacked.</li><li>**Normal**: Bars will be stacked on each other.</li><li>**Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.</li></ul> |
-| Group width                      | Controls the width of groups. 1 = Max with, 0 = Min width.       |
+| Stacking                         | Controls bar chart stacking. Choose from: <ul><li>**Off**: Bars will not be stacked.</li><li>**Normal**: Bars will be stacked on each other.</li><li>**100%**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.</li></ul> |
+| Group width                      | Controls the width of groups. 1 = Max width, 0 = Min width.       |
 | Bar width                        | Controls the width of bars. 1 = Max width, 0 = Min width.    |
 | Bar radius                       | Controls the radius of the bars. Choose from: <ul><li>0 = Minimum radius</li><li>0.5 = Maximum radius</li></ul>     |
-| Highlight full area on cover     | Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.    |
+| Highlight full area on hover     | Controls if the entire surrounding area of the bar is highlighted when you hover over the bar. This option is displayed when **Stacking** is set to **Off**.    |
 | Color by field    | Use the color value for a sibling field to color each bar value. |
 | Line width                       | Controls line width of the bars.    |
 | Fill opacity                     | Controls the fill opacity bars.                    |

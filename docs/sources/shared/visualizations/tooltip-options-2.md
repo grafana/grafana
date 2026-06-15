@@ -15,15 +15,15 @@ Tooltip options control the information overlay that appears when you hover over
 | Hide zeros                              | When you set the **Tooltip mode** to **All**, the **Hide zeros** option is displayed. This option controls whether or not series with `0` values are shown in the list in the tooltip. |
 | [Hover proximity](#hover-proximity)     | Set the hover proximity (in pixels) to control how close the cursor must be to a data point to trigger the tooltip to display.                                                         |
 | Max width                               | Set the maximum width of the tooltip box.                                                                                                                                              |
-| Max height                              | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                                  |
+| Max height                              | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** or when exemplars are available.                                           |
 
 ### Tooltip mode
 
 When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.
 
-- **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
-- **All -** The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-- **Hidden -** Do not display the tooltip when you interact with the visualization.
+- **Single** - The hover tooltip shows only a single series, the one that you are hovering over on the visualization.
+- **All** - The hover tooltip shows all series in the visualization. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+- **Hidden** - Do not display the tooltip when you interact with the visualization.
 
 Use an override to hide individual series from the tooltip.
 

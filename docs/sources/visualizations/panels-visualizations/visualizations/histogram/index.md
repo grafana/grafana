@@ -105,7 +105,7 @@ Use the following options to refine your histogram visualization.
 | Option | Description |
 | ------ | ----------- |
 | Bucket count | Specifies the number of bins used to group your data in the histogram, affecting the granularity of the displayed distribution. Leave this empty for automatic bucket count of 30. |
-| Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing (~10% of the full range). |
+| Bucket size | The size of the buckets. Leave this empty for automatic bucket sizing. Grafana derives the size from the data range and bucket count, then snaps it to a predefined bucket size. |
 | [Bucket offset](#bucket-offset) | If the first bucket should not start at zero. A non-zero offset has the effect of shifting the aggregation window. |
 | Combine series | This will merge all series and fields into a combined histogram. |
 | Stacking | Controls how multiple series are displayed in the histogram. Choose from the following:<ul><li>**Off** - Series are not stacked, but instead shown side by side.</li><li>**Normal** - Series are stacked on top of each other, showing cumulative values.</li><li>**100%** - Series are stacked to fill 100% of the chart, showing the relative proportion of each series.</li></ul> |
@@ -114,6 +114,8 @@ Use the following options to refine your histogram visualization.
 | [Gradient mode](#gradient-mode) | Set the mode of the gradient fill. Fill gradient is based on the line color. |
 
 <!-- prettier-ignore-end -->
+
+If the query already returns a pre-calculated histogram, Grafana hides **Bucket count**, **Bucket size**, **Bucket offset**, **Combine series**, and **Stacking**. In that case, the editor shows a read-only **Values** row that indicates the frequencies are calculated in the query.
 
 #### Bucket offset
 

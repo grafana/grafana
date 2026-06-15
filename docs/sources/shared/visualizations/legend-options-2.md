@@ -31,3 +31,7 @@ Choose where to display the legend.
 ### Width
 
 Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
+
+### Limit
+
+Limit how many legend items are shown by default. The rest become expandable using a **Show all** link.

@@ -80,7 +80,7 @@ The following sections describe the different elements available.
 - [Triangle](#basic-shapes)
 - [Cloud](#basic-shapes)
 - [Parallelogram](#basic-shapes)
-- [Button](#button)
+- [Button](#button) (when **Experimental Element types** is enabled)
 
 {{< /column-list >}}
 
@@ -130,6 +130,7 @@ The server element lets you easily represent a single server, a stack of servers
 
 #### Button
 
+The button element is available when **Experimental Element types** is enabled.
 The button element lets you add a basic button to the canvas. Button elements support triggering basic, unauthenticated API calls. [API settings](#button-api-options) are found in the button element editor. You can also pass template variables in the API editor.
 
 {{< admonition type="note" >}}
@@ -147,13 +148,13 @@ The following options let you configure basic, unauthenticated API calls:
 <!-- prettier-ignore-start -->
 | Option  | Description  |
 | ------- | ------------ |
-| Endpoint | Enter the endpoint URL. |
-| Method | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| URL | Enter the action URL. |
+| Method | Choose from **GET** and **POST**. |
+| Content-Type | Select an option in the drop-down list. Choose from `application/json`, `text/plain`, `application/xml`, and `application/x-www-form-urlencoded`. |
 | Query parameters | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters | Enter as many **Key**, **Value** pairs as you need. |
+| Headers | Enter as many **Key**, **Value** pairs as you need. |
 | Success message | Enter a message that will appear if the API call is successful. If you leave the field empty, the default message "API call was successful" appears. |
-| Payload | Enter the body of the API call. |
+| Body | Enter the body of the API call. |
 
 <!-- prettier-ignore-end -->
 
@@ -259,7 +260,7 @@ Use the following pointer and keyboard strokes:
 
 - **Zoom in** - Scroll up
 - **Zoom out** - Scroll down
-- **Pan** - Middle mouse/wheel + drag OR Control + right-click + drag
+- **Pan** - Middle mouse or Ctrl + right mouse
 - **Reset** - Double-click
 
 {{< video-embed src="/media/docs/grafana/2024-01-05-Canvas-Pan-&-Zoom-Enablement-Video.mp4" max-width="750px" alt="Canvas pan and zoom enablement video" >}}
@@ -267,14 +268,6 @@ Use the following pointer and keyboard strokes:
 ##### Zoom to content
 
 When you toggle on the **Zoom to content** switch, Grafana automatically adjusts the view to fit all visible elements in your canvas visualization into the viewport, adding a small margin around the edges. This makes it easy to reset your view, present content, or switch between devices without losing your framing. The content will re‑fit even if you resize the panel.
-
-##### Infinite panning
-
-You can enable infinite panning in a canvas when pan and zoom is enabled. This allows you to pan and zoom the canvas and uncover larger designs.
-
-{{< admonition type="note" >}}
-Infinite panning is an experimental feature that may not work as expected in all scenarios. For example, elements that are not top-left constrained may experience unexpected movement when panning.
-{{< /admonition >}}
 
 ### Tooltip options
 
@@ -394,7 +387,7 @@ Control the placement of elements on the canvas with the following options:
 | Option          | Description     |
 | --------------- | --------------- |
 | Quick placement | Select an alignment option to automatically place the element. Choose from:<ul><li>Align left</li><li>Align horizontal centers</li><li>Align right</li><li>Align top</li><li>Align vertical centers</li><li>Align bottom</li></ul> |
-| Constraints     | Set element constraints. Choose from: **Left**, **Right**, **Left & Right**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
+| Constraints     | Set horizontal and vertical element constraints. Horizontal constraints include **Left**, **Right**, **Left & right**, **Center**, and **Scale**. Vertical constraints include **Top**, **Bottom**, **Top & bottom**, **Center**, and **Scale**.<br></br>Use the **Scale** option to ensure that elements are automatically resized when the panel size changes. |
 | Position        | Use these settings to manually set the position of an element. Set any or all of the following options: **top**, **left**, **width**, **height**, and **rotation**. |
 
 <!-- prettier-ignore-end -->
@@ -465,12 +458,12 @@ To add a data link, follow these steps:
    | Title                | A human-readable label for the action that's displayed in the UI.                                                                                                                                                                           |
    | Confirmation message | A descriptive prompt to confirm or cancel the action.                                                                                                                                                                                       |
    | One click            | If you want the action to be triggered by a single click on the element, toggle the switch.</p><p>Only one data link or action can have **One click** enabled at a time.                                                                    |
-   | Method               | Select from **POST**, **PUT**, or **GET**.                                                                                                                                                                                                  |
+   | Method               | Select from **GET** or **POST**.                                                                                                                                                                                                            |
    | URL                  | The request URL or variable to which you want to link.</p><p>To add a variable, click in the **URL** field and enter `$` or press Ctrl+Space or Cmd+Space to see a list of available variables.                                             |
    | Variables            | **Key** and **Name** pairs with a type selection. Click the **+** icon to add as many variables as you need. To add a variable to the request, prefix the key with `$`. You can set the values for the variables when performing an action. |
    | Query parameters     | **Key** and **Value** pairs. Click the **+** icon to add as many key/value pairs as you need.                                                                                                                                               |
    | Headers              | Comprised of **Key** and **Value** pairs and a **Content-Type**.</p><p>Click the **+** icon to add as many key/value pairs as you need.                                                                                                     |
-   | Content-Type         | Select from the following: **application/json**, **text/plain**, **application/XML**, and **application/x-www-form-urlencoded**.                                                                                                            |
+   | Content-Type         | Select from the following: `application/json`, `text/plain`, `application/xml`, and `application/x-www-form-urlencoded`.                                                                                                                    |
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
@@ -498,7 +491,7 @@ You can style the selected connection using the following options:
   - **Negative values** - Display reverse arrows.
   - **Zero** - Display no arrow heads.
 
-- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**.
+- **Line style** - Choose from the following line styles: **Solid**, **Dashed**, and **Dotted**. When you choose **Dashed** or **Dotted**, you can toggle on **Animate**.
 
 ### Standard options
 

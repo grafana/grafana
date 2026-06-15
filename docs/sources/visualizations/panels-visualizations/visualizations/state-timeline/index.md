@@ -116,10 +116,22 @@ Use these options to refine the visualization.
 | Merge equal consecutive values  | Controls whether Grafana merges identical values if they are next to each other. |
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
-| Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
+| Row height | Controls row spacing. `1` uses the full row height with no gap between rows. Lower values add more space between rows. |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
+
+<!-- prettier-ignore-end -->
+
+### Field options
+
+These options apply to state timeline fields and can be set as defaults or field overrides.
+
+#### State timeline field options
+
+<!-- prettier-ignore-start -->
+| Option | Description                                                                                     |
+| ------ | ----------------------------------------------------------------------------------------------- |
 | Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
+| Fill opacity | Controls the fill opacity of state regions. |
 | [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
 | [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 

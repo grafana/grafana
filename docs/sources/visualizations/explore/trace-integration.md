@@ -81,7 +81,7 @@ Use the highlight to focus on spans that drive end‑to‑end latency. Spans out
 
 {{< figure src="/media/docs/grafana/explore/traces-panel-critical-path.png" class="docs-image--no-shadow" max-width= "900px"  caption="Critical path span" >}}
 
-You can also focus on this path by clicking the **Show critical path only** button in the **Span filters** options.
+You can also focus on this path by clicking the **Select critical path** button in the **Span filters** options.
 
 ### Span details
 

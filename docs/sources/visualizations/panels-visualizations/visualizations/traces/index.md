@@ -155,7 +155,7 @@ To create a set of data links in the panel, use the following steps:
 
    {{< figure src="/static/img/docs/panels/traces/screensnot-traces-uuid-url.png" alt="Unique identifier for the dashboard" >}}
 
-1. In the **URL** field, make a self-reference to the dashboard that contains both of the panels. This self-reference uses the value of the selected trace in the table to fill in the dashboard variable. Use the path for the dashboard from the previous step and then fill in the value of `traceId` using the selected results from the TraceQL table.
+1. In the **URL** field, make a self-reference to the dashboard that contains both of the panels. This self-reference uses the value of the selected trace in the table to fill in the dashboard variable. Use the path for the dashboard from the previous step and then fill in the value of `traceID` using the selected results from the TraceQL table.
    The trace ID is exposed using the `traceID` data field in the returned results, so use that as the value for the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" alt="Edit link and add the Trace link" >}}
@@ -164,7 +164,7 @@ To create a set of data links in the panel, use the following steps:
 1. Enter an optional description of your changes, and click **Save**.
 1. Click **Back to dashboard** and **Exit edit**.
 
-You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
+You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceID` dashboard variable, and then shows the relevant trace in the trace panel.
 
 {{< figure src="/static/img/docs/panels/traces/screenshot-traces-trace-link.png" alt="Selecting the trace link" >}}
 
@@ -182,19 +182,14 @@ You should now see a list of matching traces in the table visualization. While s
 
 The **Span filters** options control the initial state of the span filters when the visualization loads, allowing you to customize your trace analysis view.
 
-The following options support variable interpolation, where you can set the service name to a variable `$var` and the visualization will replace it with the value for the variable named `$var` in the span filters: **Service name**, **Span name**, **Min duration**, **Max duration**, and **Tags**.
+The **Filters** option supports variable interpolation in adhoc filter keys and values. The filter control can search text, duration, and span attributes.
 
 <!-- prettier-ignore-start -->
 
 | Option | Description |
 | ------ | ----------- |
-| Find in trace | Set the initial value to focus on spans relevant to your query. |
+| Filters | Add adhoc filters. The filter control placeholder is **Filter by attribute or text** and supports **Text search**, **duration**, and span attribute keys. |
 | Show matches only | Toggle the switch on to display only spans that match the defined filter criteria. This helps simplify trace interpretation. |
-| Show critical path only | Toggle the switch on to highlight only the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
-| Service name | Along with the **Service name operator**, define a specific service or pattern to narrow analysis to spans related to particular services. |
-| Span name | Along with the **Span name operator**, filter spans by name or pattern to focus on specific span types or processes. |
-| Min duration | Set the minimum duration threshold to exclude spans outside the desired time range. |
-| Max duration | Set the maximum duration threshold to exclude spans outside the desired time range. |
-| Tags | Add one or more tags to further refine the filtering criteria so only relevant spans are displayed. |
+| Select critical path | Toggle the switch on to highlight the spans in the critical path, which helps identify performance bottlenecks and their impact on overall latency. |
 
 <!-- prettier-ignore-end -->

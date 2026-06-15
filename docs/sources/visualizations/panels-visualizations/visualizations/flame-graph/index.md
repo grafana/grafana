@@ -125,7 +125,7 @@ The sandwich view allows you to show the context of the clicked function. It sho
 Under the **Grouping** section of the menu, the following options let you expand and collapse groups of functions:
 
 - **Expand group** - Expands the grouped function you've clicked. Displayed if you click a function that's been automatically grouped in the flame graph.
-- **Expand all groups** - Expands all grouped functions in the flame graph. Always displayed when you click the graph.
+- **Expand all groups** - Expands all grouped functions in the flame graph. Displayed when at least one group is still collapsed.
 - **Collapse group** - Collapses the expanded function you've clicked. Displayed if you click a function in the flame graph that's been manually expanded.
 - **Collapse all groups** - Collapses all expanded functions in the flame graph. Displayed if there are any expanded functions when you click the graph.
 
@@ -137,7 +137,7 @@ The status bar shows metadata about the flame graph and currently applied modifi
 
 ## Top table mode
 
-The top table shows the functions from the profile in table format. The table has three columns: symbols, self, and total. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
+The top table shows the functions from the profile in table format. The table has three columns: **Symbol**, **Self**, and **Total**. The table is sorted by self time by default, but can be reordered by total time or symbol name by clicking the column headers. Each row represents aggregated values for the given function if the function appears in multiple places in the profile.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-flamegraph-toptable-v12.0.png" max-width="700px" alt="Table view">}}
 

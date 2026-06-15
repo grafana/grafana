@@ -73,10 +73,10 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 #### Example
 
-| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
-| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
-| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+| id    | source | target | mainstat | secondarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | ------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub        | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2          | 1         | false       | orange |
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
@@ -94,7 +94,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 #### Nodes
 
 {{< admonition type="note" >}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs show 200 nodes by default. If this limit is crossed, some nodes are hidden behind **Hidden nodes** markers. You can expand hidden parts of the graph by clicking those markers.
 {{< /admonition >}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -165,7 +165,7 @@ Use the following options to refine your node graph visualization.
 
 Choose how the node graph should handle zoom and scroll events:
 
-- **Cooperative** - Allows you to scroll the visualization normally.
+- **Cooperative** - Allows you to scroll the page normally.
 - **Greedy** - Reacts to all zoom gestures.
 
 #### Layout algorithm
@@ -179,6 +179,8 @@ Choose how the visualization layout is generated:
   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-node-graph-grid.png" max-width="650px" alt="Node graph in grid layout" >}}
 
   For more information about using the graph in grid layout, refer to [Switch layouts](#switch-layouts).
+
+When the **Layered** layout is used with more than 500 nodes, Grafana shows a warning because the layout can become slow or difficult to read.
 
 ### Nodes options
 
@@ -253,15 +255,24 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
-| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                         |
-| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                        |
-| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                            |
-| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                    |
-| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
-| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
-| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
-| nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
-| highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+| Field name     | Type          | Description                                                                                                                                                                                                                                                                                                                                                              |
+| -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| title          | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                         |
+| subtitle       | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                        |
+| mainstat       | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                            |
+| secondarystat  | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                    |
+| arc\_\_\*      | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                           |
+| detail\_\_\*   | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                         |
+| color          | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behavior depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
+| icon           | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
+| nodeRadius     | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
+| highlighted    | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+| fixedx         | number        | Fixed x position for the node. If you use fixed positions, all nodes must include both `fixedx` and `fixedy`.                                                                                                                                                                                                                                                            |
+| fixedy         | number        | Fixed y position for the node. If you use fixed positions, all nodes must include both `fixedx` and `fixedy`.                                                                                                                                                                                                                                                            |
+| isinstrumented | boolean       | Sets whether the node is instrumented.                                                                                                                                                                                                                                                                                                                                   |
+
+{{< admonition type="caution" >}}
+Starting with 10.5, `highlighted` is deprecated.
+It will be removed in a future release.
+Use `color` to indicate a highlighted node state instead.
+{{< /admonition >}}

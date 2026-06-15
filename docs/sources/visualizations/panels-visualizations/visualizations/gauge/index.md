@@ -119,7 +119,7 @@ Use the following options to refine how your visualization displays the value:
 | ------ | ----------- |
 | Show | Set how Grafana displays your data. Choose from:<ul><li>**Calculate** - Show a calculated value based on all rows.</li><li>**All values** - Show a separate value for every row. If you select this option, then you can also limit the number of rows to display.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 5,000. |
+| Limit | If you chose **All values** as your **Show** option, enter the maximum number of rows to display. The default is 25, and the maximum is 5,000. |
 | Fields | Select the fields display in the panel. |
 
 <!-- prettier-ignore-end -->
@@ -137,7 +137,9 @@ Adjust how the gauge is displayed.
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
 | Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Bar width | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Bar width factor | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
+| Bar style | Choose whether the gauge bar uses a **Flat** or **Rounded** style. This option is displayed when **Segments** is set to `1`. |
+| Endpoint marker | Choose how to mark the end of the gauge bar. Choose from **Point**, **Glow**, or **None**. This option is displayed when **Segments** is set to `1` and **Bar style** is set to **Rounded**. The **Glow** marker appears only in dark mode. |
 | Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |
 | Segment spacing | Enter a value between 0 and 1 to set the factor that controls the size of the gap between each segment. This option is only applies when the **Segments** value is more than `1`. |
 | Text mode | Choose what text to render in the gauge:<ul><li>**Auto** - Grafana determines the text to show.</li><li>**Value and name** - Renders both the value and series name.</li><li>**Value** - Renders only the value.</li><li>**Name** - Renders only the series name.</li><li>**None** - Renders the gauge with no labels.</li></ul> |
@@ -145,7 +147,7 @@ Adjust how the gauge is displayed.
 | [Show sparkline](#show-sparkline) | Toggle on the switch to render a sparkline containing the series data for the gauge. |
 | [Show thresholds](#show-threshold-markers) | Control whether a threshold band is shown outside the inner gauge value band. |
 | Show labels | Control whether threshold, neutral and min/max labels are shown outside of the gauge. |
-| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> |
+| Effects | Other styling choices you can apply to your gauge include: <ul><li>**Gradient** - Color transitions are represented with gradients for color schemes where the gauge color differs by value.</li><li>**Bar glow** - Adds a glowing shadow outside the gauge bar.</li><li>**Center glow** - The color representing the current gauge value is visible in the center of the gauge.</li></ul> The **Bar glow** effect is separate from the rounded-bar **Endpoint marker** option. |
 
 <!-- prettier-ignore-end -->
 

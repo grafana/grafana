@@ -118,7 +118,7 @@ value4 , value5 , value6
 value7 , value8 , value9
 ```
 
-If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
+If a row has fewer values than the table has columns, Grafana fills the missing cells with empty values:
 
 ```csv
 Column1, Column2, Column3
@@ -240,6 +240,8 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 
 ### Table options
 
+These options apply to the whole table panel.
+
 <!-- prettier-ignore-start -->
 | Option               | Description                                               |
 | -------------------- | --------------------------------------------------------- |
@@ -248,6 +250,18 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
+
+<!-- prettier-ignore-end -->
+
+### Field options
+
+These options apply to fields in the table and can be set as defaults or field overrides.
+
+#### Table field options
+
+<!-- prettier-ignore-start -->
+| Option               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
@@ -256,9 +270,9 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Wrap header text     | Enables text wrapping for column headers. |
 <!-- prettier-ignore-end -->
 
-### Table footer options
+#### Table footer options
 
-The table footer displays the results of calculations (and reducer functions) on fields.
+The table footer displays the results of calculations (and reducer functions) on fields. Configure footer calculations in field options or field overrides.
 The footer is only displayed after you select an option in the **Calculation** drop-down list:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-footer-selector-v12.2.png" max-width="300px" alt="The footer calculation selector, open" >}}
@@ -286,7 +300,7 @@ Calculations applied to cell types like **Markdown + HTML** might have unexpecte
 ### Cell options
 
 Cell options allow you to control how data is displayed in a table.
-The options are differ based on the cell type that you select and are outlined within the descriptions of each cell type.
+The options differ based on the cell type that you select and are outlined within the descriptions of each cell type.
 The following table provides short descriptions for each cell type and links to a longer description and the cell type options.
 
 #### Cell type
@@ -499,17 +513,17 @@ It has the following options:
 #### Actions
 
 The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
+Configure the API call under **Data links and actions > Actions** on the field. The **Actions** cell type renders the configured action as a button.
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| URL                | Enter the action URL. |
+| Method             | Choose from **GET** and **POST**. |
+| Content-Type       | Select an option in the drop-down list. Choose from `application/json`, `text/plain`, `application/xml`, and `application/x-www-form-urlencoded`. |
 | Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
+| Headers            | Enter as many **Key**, **Value** pairs as you need. |
+| Body               | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 

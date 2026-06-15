@@ -12,7 +12,7 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 
 | Option                             | Description                                                                                                        |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Time zone                          | Set the desired time zones to display along the x-axis. Choose from: **Auto**, **Left**, **Right**, and **Hidden**. |
+| Time zone                          | Add one or more time zones to display along the x-axis. When no time zone is selected, Grafana uses the dashboard time zone. |
 | [Placement](#placement)            | Select the placement of the y-axis.                                                                                |
 | Label                              | Set a y-axis text label. If you have more than one y-axis, then you can assign different labels using an override. |
 | Width                              | Set a fixed width for the axis. By default, Grafana dynamically calculates the width of an axis.                   |

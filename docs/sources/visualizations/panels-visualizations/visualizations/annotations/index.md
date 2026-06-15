@@ -78,6 +78,8 @@ These options control additional metadata included in the annotations list displ
 
 <!-- prettier-ignore-end -->
 
+In view mode, click a tag or user avatar in the list to filter annotations to that tag or user. The panel header shows a removable **Filter:** chip while the filter is active.
+
 ### Link behavior options
 
 Use the following options to control the behavior of annotation links in the list:

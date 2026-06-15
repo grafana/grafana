@@ -144,7 +144,7 @@ Set the maximum width of the tooltip box.
 
 ### Max height
 
-Set the maximum height of the tooltip box. The default is 600 pixels.
+Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is set to **All** or when exemplars are available.
 
 ### Show histogram (Y axis)
 
