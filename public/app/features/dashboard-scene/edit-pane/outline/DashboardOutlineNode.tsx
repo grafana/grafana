@@ -276,7 +276,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-export function getVisibleOutlineChildren(sceneObject: SceneObject, isEditing: boolean): SceneObject[] {
+function getVisibleOutlineChildren(sceneObject: SceneObject, isEditing: boolean): SceneObject[] {
   const editableElement = getEditableElementFor(sceneObject);
   if (!editableElement?.getOutlineChildren) {
     return [];
