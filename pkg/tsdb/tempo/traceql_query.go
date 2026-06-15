@@ -87,16 +87,10 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to execute TraceQL query", "error", err, "function", logEntrypoint())
-		err := fmt.Errorf("failed to execute TraceQL query: %s Status: %s Body: %s", *tempoQuery.Query, resp.Status, string(responseBody))
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
-			err = backend.DownstreamError(err)
-		}
-
-		return nil, err
+		result = dataResponseFromHTTPError(resp, responseBody, fmt.Sprintf("failed to execute TraceQL query: %s Status: %s", *tempoQuery.Query, resp.Status))
+		span.RecordError(result.Error)
+		span.SetStatus(codes.Error, result.Error.Error())
+		return result, nil
 	}
 
 	if isInstantQuery(tempoQuery.MetricsQueryType) {

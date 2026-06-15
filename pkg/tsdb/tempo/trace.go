@@ -69,16 +69,10 @@ func (s *Service) getTrace(ctx context.Context, pCtx backend.PluginContext, quer
 
 	if resp.StatusCode != http.StatusOK {
 		ctxLogger.Error("Failed to get trace", "error", err, "function", logEntrypoint())
-		err := fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", *model.Query, resp.Status, string(traceBody))
-
-		span.RecordError(err)
-		span.SetStatus(codes.Error, err.Error())
-
-		if backend.ErrorSourceFromHTTPStatus(resp.StatusCode) == backend.ErrorSourceDownstream {
-			return nil, backend.DownstreamError(err)
-		}
-
-		return nil, err
+		result = dataResponseFromHTTPError(resp, traceBody, fmt.Sprintf("failed to get trace with id: %s Status: %s", *model.Query, resp.Status))
+		span.RecordError(result.Error)
+		span.SetStatus(codes.Error, result.Error.Error())
+		return result, nil
 	}
 
 	var frame *data.Frame
