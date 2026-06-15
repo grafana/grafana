@@ -3,13 +3,13 @@ import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { type DashboardEditPane } from '../../edit-pane/DashboardEditPane';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
 import { type DashboardLayoutManager } from './DashboardLayoutManager';
+import { DashboardEditPaneLike } from '../../edit-pane/types';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** Dashboard-specific preferences **/
@@ -62,7 +62,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
   /** options pane */
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
   /** True while default variables from datasources are being loaded */

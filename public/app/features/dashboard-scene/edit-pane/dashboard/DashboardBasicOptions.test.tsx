@@ -8,9 +8,9 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { type DashboardEditPane } from '../DashboardEditPane';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
+import { DashboardEditPaneLike } from '../types';
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
@@ -137,13 +137,13 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   return { dashboard, renderTitleInput, renderDescriptionInput };
 }
 
-function undo(editPane: DashboardEditPane) {
+function undo(editPane: DashboardEditPaneLike) {
   act(() => {
     editPane.undoAction();
   });
 }
 
-function redo(editPane: DashboardEditPane) {
+function redo(editPane: DashboardEditPaneLike) {
   act(() => {
     editPane.redoAction();
   });

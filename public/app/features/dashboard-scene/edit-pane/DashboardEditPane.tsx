@@ -1,11 +1,7 @@
 import { isEqual } from 'lodash';
 
-import { type SceneObject, SceneObjectBase, type SceneObjectState, sceneGraph } from '@grafana/scenes';
-import {
-  type ElementSelectionContextItem,
-  type ElementSelectionContextState,
-  type ElementSelectionOnSelectOptions,
-} from '@grafana/ui';
+import { type SceneObject, SceneObjectBase, sceneGraph } from '@grafana/scenes';
+import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -26,25 +22,9 @@ import {
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
 } from './shared';
-import { type DashboardSidebarPane, type EditPaneSelectionActions } from './types';
+import { type DashboardSidebarPane, type DashboardEditPaneLike, type DashboardEditPaneState } from './types';
 
-export interface DashboardEditPaneState extends SceneObjectState {
-  selectionContext: ElementSelectionContextState;
-
-  undoStack: DashboardEditActionEventPayload[];
-  redoStack: DashboardEditActionEventPayload[];
-  outlinePane?: DashboardOutline;
-  openPane?: DashboardSidebarPane;
-  /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
-  selectedDisconnectedObject?: SceneObject;
-  /** Previous state */
-  previousState?: DashboardEditPaneState;
-  /** True when a new element is being added and selected */
-  isNewElement: boolean;
-  isDocked?: boolean;
-}
-
-export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements EditPaneSelectionActions {
+export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements DashboardEditPaneLike {
   public constructor(state?: Partial<DashboardEditPaneState>) {
     super({
       selectionContext: {

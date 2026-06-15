@@ -15,9 +15,9 @@ import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
+import { DashboardEditPaneLike } from './types';
 
 interface DashboardOutlineState extends SceneObjectState {
   collapsedState: Map<string, boolean>;
@@ -81,7 +81,7 @@ function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutlin
 
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   outline: DashboardOutline;
   isEditing: boolean | undefined;
   depth: number;

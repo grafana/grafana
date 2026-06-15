@@ -19,22 +19,21 @@ import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardCodePane } from './DashboardCodePane';
-import { type DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { ToggleViewPanePaneEvent } from './events';
-import { type DashboardSidebarPane } from './types';
+import { DashboardEditPaneLike, type DashboardSidebarPane } from './types';
 
 export interface Props {
-  editPane: DashboardEditPane;
   dashboard: DashboardScene;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
+export function DashboardEditPaneRenderer({ dashboard }: Props) {
+  const editPane = dashboard.state.editPane;
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
     shouldActivateOrKeepAlive: true,
   });
@@ -182,7 +181,7 @@ function FiltersOverviewButton({
   editPane,
   openPane,
 }: {
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   openPane: DashboardSidebarPane | undefined;
 }) {
   const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];

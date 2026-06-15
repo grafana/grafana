@@ -163,11 +163,9 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
-  const editPane = dashboard.state.editPane;
-
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+      <DashboardEditPaneRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
