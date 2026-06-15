@@ -10,7 +10,10 @@ import { AffectedFolderContents } from 'app/features/browse-dashboards/component
 import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -18,7 +21,7 @@ import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
 import { withSavedByTrailer } from '../../utils/currentUser';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
 import { generateTimestamp } from '../utils/timestamp';
@@ -169,7 +172,7 @@ export function BulkDeleteProvisionedResource({
   }
 
   // For root provisioned folders, the folder UID is the repository name
-  const { repository, isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { repository, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
@@ -181,17 +184,22 @@ export function BulkDeleteProvisionedResource({
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository || isReadOnlyRepo) {
-    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
-  }
-
   return (
-    <FormContent
-      selectedItems={selectedItems}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isOrphaned={status === RepoViewStatus.Orphaned}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+    >
+      {repository && (
+        <FormContent
+          selectedItems={selectedItems}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

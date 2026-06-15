@@ -20,6 +20,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolde
 }));
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 
@@ -110,6 +111,7 @@ function setup(
       : null,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
+    isMissingRepo: false,
   });
 
   mockUseBulkActionJob.mockReturnValue({
@@ -318,6 +320,7 @@ describe('BulkMoveProvisionedResource', () => {
       },
       isInstanceManaged: false,
       isReadOnlyRepo: false,
+      isMissingRepo: false,
     });
 
     const mockCreateBulkJob = jest.fn().mockResolvedValue({
@@ -352,6 +355,7 @@ describe('BulkMoveProvisionedResource', () => {
       folder: null,
       isInstanceManaged: false,
       isReadOnlyRepo: false,
+      isMissingRepo: true,
     });
 
     mockUseBulkActionJob.mockReturnValue({
@@ -381,6 +385,7 @@ describe('BulkMoveProvisionedResource', () => {
       folder: null,
       isInstanceManaged: false,
       isReadOnlyRepo: true,
+      isMissingRepo: false,
     });
 
     mockUseBulkActionJob.mockReturnValue({
@@ -424,6 +429,7 @@ describe('BulkMoveProvisionedResource', () => {
           folder: null,
           isInstanceManaged: false,
           isReadOnlyRepo: false,
+          isMissingRepo: false,
         };
       }
       return {
@@ -431,6 +437,7 @@ describe('BulkMoveProvisionedResource', () => {
         folder: null,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
+        isMissingRepo: true,
       };
     });
 
