@@ -13,6 +13,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { BatchAction } from './BatchAction';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import {
@@ -146,6 +147,21 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
    * @param payload
    */
   private handleEditAction(action: DashboardEditActionEventPayload) {
+    const lastAction = this.state.undoStack[this.state.undoStack.length - 1];
+
+    // If a batch is open (it's the last item on the stack and still in progress), perform
+    // the action and collect it into the batch rather than pushing it as its own entry.
+    if (lastAction instanceof BatchAction && lastAction.inProgress) {
+      // A nested batch flattens into the open one — ignore its wrapper.
+      if (action instanceof BatchAction) {
+        return;
+      }
+
+      this.performAction(action);
+      lastAction.add(action);
+      return;
+    }
+
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
