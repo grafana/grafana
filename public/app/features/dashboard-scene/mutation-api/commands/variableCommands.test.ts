@@ -1,8 +1,21 @@
-import { SceneVariableSet } from '@grafana/scenes';
+import { type SceneVariable, SceneVariableSet } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
+
+jest.mock('../../edit-pane/shared', () => {
+  const actual = jest.requireActual('../../edit-pane/shared');
+  return {
+    ...actual,
+    dashboardEditActions: {
+      ...actual.dashboardEditActions,
+      removeVariable({ source, removedObject }: { source: SceneVariableSet; removedObject: SceneVariable }) {
+        source.setState({ variables: source.state.variables.filter((v) => v !== removedObject) });
+      },
+    },
+  };
+});
 
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
   const { editable = true, isEditing = false } = options;
@@ -104,6 +117,9 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect(result.changes.length).toBeGreaterThan(0);
+    // The variable is actually removed from the set (delegated to dashboardEditActions).
+    const variables = scene.state.$variables;
+    expect(variables instanceof SceneVariableSet && variables.getByName('env')).toBeUndefined();
   });
 
   it('ADD_VARIABLE with position inserts at the specified index', async () => {
