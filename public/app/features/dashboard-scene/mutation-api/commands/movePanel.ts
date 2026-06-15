@@ -9,8 +9,7 @@
 
 import { type z } from 'zod';
 
-import type { VizPanel } from '@grafana/scenes';
-
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -25,34 +24,6 @@ import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationComman
 export const movePanelPayloadSchema = payloads.movePanel;
 
 export type MovePanelPayload = z.infer<typeof movePanelPayloadSchema>;
-
-function applyGridPosition(
-  panel: VizPanel,
-  position: { x?: number; y?: number; width?: number; height?: number }
-): void {
-  const gridItem = panel.parent;
-  if (!(gridItem instanceof DashboardGridItem)) {
-    return;
-  }
-
-  const updates: Record<string, number> = {};
-  if (position.x !== undefined) {
-    updates.x = position.x;
-  }
-  if (position.y !== undefined) {
-    updates.y = position.y;
-  }
-  if (position.width !== undefined) {
-    updates.width = position.width;
-  }
-  if (position.height !== undefined) {
-    updates.height = position.height;
-  }
-
-  if (Object.keys(updates).length > 0) {
-    gridItem.setState(updates);
-  }
-}
 
 function resolveEffectivePosition(
   payload: MovePanelPayload,
@@ -144,7 +115,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
           if (isAutoGrid) {
             warnings.push('Position ignored: current layout uses AutoGridLayout which auto-arranges panels.');
           } else {
-            applyGridPosition(vizPanel, effectivePosition);
+            dashboardEditActions.changeGridPosition({ source: vizPanel, position: effectivePosition });
           }
         }
 
@@ -202,10 +173,10 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         if (isTargetAutoGrid) {
           warnings.push('Position ignored: target uses AutoGridLayout which auto-arranges panels.');
         } else {
-          applyGridPosition(panelClone, effectivePosition);
+          dashboardEditActions.changeGridPosition({ source: panelClone, position: effectivePosition });
         }
       } else if (originalPosition && !isTargetAutoGrid) {
-        applyGridPosition(panelClone, originalPosition);
+        dashboardEditActions.changeGridPosition({ source: panelClone, position: originalPosition });
       }
 
       const resultLayoutItem = serializeResultLayoutItem(panelClone);
