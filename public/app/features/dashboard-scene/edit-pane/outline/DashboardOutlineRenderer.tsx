@@ -10,8 +10,7 @@ import { Box, FilterInput, ScrollContainer, Sidebar, Text, useStyles2 } from '@g
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { type DashboardOutline } from './DashboardOutline';
-import { DashboardOutlineNode } from './DashboardOutlineNode';
-import { computeSearchMatches } from './utils';
+import { computeSearchMatches, DashboardOutlineNode } from './DashboardOutlineNode';
 
 export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
   const styles = useStyles2(getStyles);
