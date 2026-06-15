@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -14,6 +14,7 @@ import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 import { HistoryEntry } from './types';
 
 export interface AppChromeState {
@@ -59,6 +60,21 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
+
+  public headerHeightObservable = this.state.pipe(
+    map(({ actions, breadcrumbActions, chromeless, kioskMode }) => {
+      if (kioskMode === KioskMode.Full || chromeless) {
+        return 0;
+      }
+
+      if (kioskMode === KioskMode.Embed) {
+        return actions || breadcrumbActions ? getChromeHeaderLevelHeight() : 0;
+      }
+
+      return actions ? getChromeHeaderLevelHeight() : 0; // NI fork: adjusted height to account for removed navigation bar
+    }),
+    distinctUntilChanged()
+  );
 
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
@@ -227,6 +243,10 @@ export class AppChromeService {
       case '1':
       case true:
         newKioskMode = KioskMode.Full;
+        break;
+      case 'embed':
+        newKioskMode = KioskMode.Embed;
+        break;
     }
 
     if (newKioskMode && newKioskMode !== this.state.getValue().kioskMode) {
@@ -238,6 +258,8 @@ export class AppChromeService {
     switch (mode) {
       case KioskMode.Full:
         return true;
+      case KioskMode.Embed:
+        return 'embed';
       default:
         return null;
     }

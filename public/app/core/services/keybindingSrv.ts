@@ -7,6 +7,7 @@ import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { KioskMode } from 'app/types/dashboard';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import {
@@ -172,7 +173,7 @@ export class KeybindingSrv {
     }
 
     const { kioskMode } = this.chromeService.state.getValue();
-    if (kioskMode) {
+    if (kioskMode && kioskMode !== KioskMode.Embed) {
       this.chromeService.exitKioskMode();
     }
   }

@@ -6,6 +6,7 @@ import { ScopesContext } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { KioskMode } from 'app/types/dashboard';
 import { useSelector } from 'app/types/store';
 
 import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
@@ -26,6 +27,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    kioskMode,
   } = model.useState();
   const { type } = useParams();
   const location = useLocation();
@@ -43,6 +45,20 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
+
+  // Hide panel menu buttons in embed kiosk mode
+  useEffect(() => {
+    if (kioskMode === KioskMode.Embed) {
+      const style = document.createElement('style');
+      style.id = 'kiosk-embed-panel-menu-hide';
+      style.textContent = '[data-testid^="data-testid Panel menu"], [data-testid="panel-menu-button"] { display: none !important; }';
+      document.head.appendChild(style);
+      return () => {
+        style.remove();
+      };
+    }
+    return undefined;
+  }, [kioskMode]);
 
   // Remember scroll pos when going into view panel, edit panel or settings
   useMemo(() => {

@@ -26,6 +26,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/repository';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { KioskMode } from 'app/types/dashboard';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
@@ -49,6 +50,11 @@ interface Props {
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
   const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+  const { kioskMode } = dashboard.useState();
+
+  if (kioskMode === KioskMode.Embed) {
+    return <AppChromeUpdate actions={null} />;
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate

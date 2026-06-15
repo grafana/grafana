@@ -8,13 +8,13 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
-import { DashboardMeta } from 'app/types/dashboard';
+import { DashboardMeta, KioskMode } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
-import { ToolbarActions } from './NavToolbarActions';
+import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 jest.mock('../utils/interactions', () => ({
@@ -200,6 +200,34 @@ describe('NavToolbarActions', () => {
       setup();
       const newExportButton = screen.getByRole('button', { name: /export dashboard/i });
       expect(newExportButton).toBeInTheDocument();
+    });
+  });
+
+  describe('NavToolbarActions in embed kiosk mode', () => {
+    it('should clear toolbar actions when kioskMode is Embed', () => {
+      const dashboard = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        uid: 'dash-1',
+        title: 'hello',
+        kioskMode: KioskMode.Embed,
+        body: DefaultGridLayoutManager.fromVizPanels([]),
+      });
+      const context = getGrafanaContextMock();
+      locationService.push('/');
+
+      render(
+        <TestProvider grafanaContext={context}>
+          <LocationServiceProvider service={locationService}>
+            <UrlSyncContextProvider scene={dashboard}>
+              <NavToolbarActions dashboard={dashboard} />
+            </UrlSyncContextProvider>
+          </LocationServiceProvider>
+        </TestProvider>
+      );
+
+      expect(context.chrome.state.getValue().actions).toBeNull();
+      expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+      expect(screen.queryByText('Share')).not.toBeInTheDocument();
     });
   });
 

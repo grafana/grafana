@@ -12,6 +12,7 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import store from 'app/core/store';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
+import { KioskMode } from 'app/types/dashboard';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -25,6 +26,7 @@ import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
+import { SingleTopBarActions } from './TopBar/SingleTopBarActions';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
 export interface Props extends PropsWithChildren<{}> {}
@@ -45,7 +47,16 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const headerHeight = (headerLevels - 1) * getChromeHeaderLevelHeight();
+  // In embed kiosk mode the only rendered header row (SingleTopBarActions) is fully
+  // visible when present, so content must clear the full header height.
+  // useChromeHeaderLevels already accounts for whether actions exist in embed mode
+  // (returns 1 if actions present, 0 otherwise).
+  // On normal pages the NI-fork breadcrumb row is hidden via display:none, so we
+  // subtract one level instead.
+  const isKioskEmbed = state.kioskMode === KioskMode.Embed;
+  const headerHeight = isKioskEmbed
+    ? headerLevels * getChromeHeaderLevelHeight()
+    : (headerLevels - 1) * getChromeHeaderLevelHeight();
   const styles = useStyles2(getStyles, headerHeight);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
@@ -97,20 +108,29 @@ export function AppChrome({ children }: Props) {
           <LinkButton className={styles.skipLink} href="#pageContent">
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
-          {menuDockedAndOpen && (
+          {menuDockedAndOpen && state.kioskMode !== KioskMode.Embed && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
-            <SingleTopBar
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-              actions={state.actions}
-              breadcrumbActions={state.breadcrumbActions}
-              scopes={scopes}
-              showToolbarLevel={headerLevels === 2}
-            />
+            {state.kioskMode !== KioskMode.Embed && (
+              <SingleTopBar
+                sectionNav={state.sectionNav.node}
+                pageNav={state.pageNav}
+                onToggleMegaMenu={handleMegaMenu}
+                onToggleKioskMode={chrome.onToggleKioskMode}
+                actions={state.actions}
+                breadcrumbActions={state.breadcrumbActions}
+                scopes={scopes}
+                showToolbarLevel={headerLevels === 2}
+              />
+            )}
+            {state.kioskMode === KioskMode.Embed && (state.actions || state.breadcrumbActions) && (
+              <SingleTopBarActions
+                actions={state.actions}
+                breadcrumbActions={state.breadcrumbActions}
+                scopes={scopes}
+              />
+            )}
           </header>
         </>
       )}
@@ -153,8 +173,8 @@ export function AppChrome({ children }: Props) {
           )}
         </div>
       </div>
-      {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && !state.megaMenuDocked && state.kioskMode !== KioskMode.Embed && <AppChromeMenu />}
+      {!state.chromeless && state.kioskMode !== KioskMode.Embed && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

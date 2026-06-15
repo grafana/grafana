@@ -2,6 +2,7 @@ import { render } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariableSet, ScopesVariable, TextBoxVariable } from '@grafana/scenes';
+import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -138,6 +139,54 @@ describe('DashboardControls', () => {
 
       jest.restoreAllMocks();
     });
+
+    it('should hide variables and links in embed kiosk mode', async () => {
+      const scene = buildTestScene();
+
+      // Set embed kiosk mode on the parent dashboard
+      const dashboard = getDashboardForControls(scene);
+      dashboard.setState({ kioskMode: KioskMode.Embed });
+
+      const renderer = render(<scene.Component model={scene} />);
+
+      // Variables submenu should not be visible
+      expect(await renderer.queryByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).not.toBeInTheDocument();
+      // Links should not be visible
+      expect(await renderer.queryByTestId(selectors.components.DashboardLinks.container)).not.toBeInTheDocument();
+      // Time picker should still be visible
+      expect(await renderer.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+    });
+
+    it('should show variables and links when NOT in embed kiosk mode', async () => {
+      const scene = buildTestScene();
+
+      // No kiosk mode set (normal mode)
+      const renderer = render(<scene.Component model={scene} />);
+
+      // Variables submenu should be visible
+      expect(await renderer.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).toBeInTheDocument();
+      // Links should be visible
+      expect(await renderer.findByTestId(selectors.components.DashboardLinks.container)).toBeInTheDocument();
+      // Time picker should be visible
+      expect(await renderer.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+    });
+
+    it('should show variables and links in Full kiosk mode (only chrome is hidden)', async () => {
+      const scene = buildTestScene();
+
+      // Set Full kiosk mode — this hides chrome only, not variables/links
+      const dashboard = getDashboardForControls(scene);
+      dashboard.setState({ kioskMode: KioskMode.Full });
+
+      const renderer = render(<scene.Component model={scene} />);
+
+      // Variables submenu should still be visible in Full mode
+      expect(await renderer.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem)).toBeInTheDocument();
+      // Links should still be visible in Full mode
+      expect(await renderer.findByTestId(selectors.components.DashboardLinks.container)).toBeInTheDocument();
+      // Time picker should be visible
+      expect(await renderer.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+    });
   });
 
   describe('UrlSync', () => {
@@ -272,4 +321,8 @@ function buildTestScene(state?: Partial<DashboardControlsState>): DashboardContr
   variable.activate();
 
   return dashboard.state.controls as DashboardControls;
+}
+
+function getDashboardForControls(controls: DashboardControls): DashboardScene {
+  return controls.parent as DashboardScene;
 }

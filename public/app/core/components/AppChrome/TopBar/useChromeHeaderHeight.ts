@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { config, useScopes } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { KioskMode } from 'app/types/dashboard';
 
 import { AppChromeState } from '../AppChromeService';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
@@ -41,9 +42,16 @@ function getHeaderLevelsGivenState(
   scopesEnabled: boolean | undefined = false,
   isLargeScreen: boolean
 ) {
-  // No levels when chromeless or kiosk mode
-  if (chromeState.kioskMode || chromeState.chromeless) {
+  // No levels when chromeless or full kiosk mode
+  if (chromeState.kioskMode === KioskMode.Full || chromeState.chromeless) {
     return 0;
+  }
+
+  // Embed kiosk mode: show one level only when there are actions to display.
+  // SingleTopBarActions is conditionally rendered on actions/breadcrumbActions,
+  // so the header height should be zero when neither is present.
+  if (chromeState.kioskMode === KioskMode.Embed) {
+    return chromeState.actions || chromeState.breadcrumbActions ? 1 : 0;
   }
 
   // Always use two levels scopes is enabled

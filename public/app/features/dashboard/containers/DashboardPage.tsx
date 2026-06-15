@@ -114,6 +114,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'none',
     },
   }),
+  embedKiosk: css({
+    '[data-testid^="data-testid Panel menu"], [data-testid="panel-menu-button"]': {
+      display: 'none !important',
+    },
+  }),
 });
 
 export class UnthemedDashboardPage extends PureComponent<Props, State> {
@@ -371,6 +376,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
     const pageClassName = cx({
       [styles.fullScreenPanel]: Boolean(viewPanel),
+      [styles.embedKiosk]: kioskMode === KioskMode.Embed,
       'page-hidden': Boolean(queryParams.editview || editPanel),
     });
 

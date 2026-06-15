@@ -11,6 +11,8 @@ import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
+import { KioskMode } from 'app/types/dashboard';
+
 import { Page } from '../Page/Page';
 
 import { AppChrome } from './AppChrome';
@@ -109,5 +111,18 @@ describe('AppChrome', () => {
     waitFor(() => {
       expect(screen.queryByRole('link', { name: 'Skip to main content' })).not.toBeInTheDocument();
     });
+  });
+
+  it('should hide mega menu button in embed kiosk mode but render page content', async () => {
+    const { context } = setup(<Page navId="child1">Children</Page>);
+    act(() => {
+      context.chrome.update({
+        kioskMode: KioskMode.Embed,
+      });
+    });
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Open menu' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId('page-children')).toBeInTheDocument();
   });
 });

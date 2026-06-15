@@ -266,11 +266,15 @@ export const DashNav = memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, isFullscreen, hideTimePicker } = props;
+    const { dashboard, isFullscreen, hideTimePicker, kioskMode } = props;
     const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
     const buttons: ReactNode[] = [];
+
+    if (kioskMode === KioskMode.Embed) {
+      return [renderTimeControls()];
+    }
 
     if (isPlaylistRunning()) {
       return [renderPlaylistControls(), renderTimeControls()];

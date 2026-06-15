@@ -16,6 +16,7 @@ import {
   CancelActivationHandler,
 } from '@grafana/scenes';
 import { Box, useStyles2 } from '@grafana/ui';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -148,9 +149,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideDashboardControls,
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel } = dashboard.useState();
+  const { links, editPanel, kioskMode } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = window.location.search.includes('scene-debugger');
+
+  const isKioskEmbed = kioskMode === KioskMode.Embed;
 
   if (!model.hasControls()) {
     // To still have spacing when no controls are rendered
@@ -175,9 +178,9 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlsButton dashboard={dashboard} />
           </div>
         )}
-        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideLinksControls && !isKioskEmbed && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       </div>
-      {!hideVariableControls && (
+      {!hideVariableControls && !isKioskEmbed && (
         <>
           <VariableControls dashboard={dashboard} />
           <DashboardDataLayerControls dashboard={dashboard} />

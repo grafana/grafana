@@ -34,12 +34,48 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.state.kioskMode).toBe(KioskMode.Full);
     });
 
+    it('Should set embed kiosk mode when url has kiosk=embed', () => {
+      const scene = buildTestScene();
+
+      scene.urlSync?.updateFromUrl({ kiosk: 'embed' });
+      expect(scene.state.kioskMode).toBe(KioskMode.Embed);
+    });
+
+    it('Should NOT set kiosk mode for random/invalid values', () => {
+      const scene = buildTestScene();
+
+      scene.urlSync?.updateFromUrl({ kiosk: 'random' });
+      expect(scene.state.kioskMode).toBe(undefined);
+
+      scene.urlSync?.updateFromUrl({ kiosk: 'tv' });
+      expect(scene.state.kioskMode).toBe(undefined);
+
+      scene.urlSync?.updateFromUrl({ kiosk: 'false' });
+      expect(scene.state.kioskMode).toBe(undefined);
+    });
+
     it('Should get the kiosk mode from the scene state', () => {
       const scene = buildTestScene();
 
       expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
       scene.setState({ kioskMode: KioskMode.Full });
       expect(scene.urlSync?.getUrlState().kiosk).toBe('true');
+    });
+
+    it('Should get embed kiosk url state from the scene state', () => {
+      const scene = buildTestScene();
+
+      expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
+      scene.setState({ kioskMode: KioskMode.Embed });
+      expect(scene.urlSync?.getUrlState().kiosk).toBe('embed');
+    });
+
+    it('Should return undefined kiosk url state when no kiosk mode is set', () => {
+      const scene = buildTestScene();
+
+      expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
+      scene.setState({ kioskMode: undefined });
+      expect(scene.urlSync?.getUrlState().kiosk).toBe(undefined);
     });
   });
 

@@ -7,7 +7,7 @@
 - Update of "home" dashboard to remove unwanted panels
 - Addition of link to this fork of Grafana
 - Modification of sharing and linking functionality to work when embedded
-- Removal of kiosk mode
+- Addition of custom `?kiosk=embed` mode that hides navigation, toolbar, variables, links, and panel menus while keeping time picker visible (Escape key does not exit this mode)
 - Removal of plugins list plugin
 - Removal of snapshot functionality
 - Hiding the "General" folder
