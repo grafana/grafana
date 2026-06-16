@@ -108,7 +108,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +142,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		middleware := RequestConfigMiddleware(cfg, license, nil, nil)
 
 		nextCalled := false
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +181,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -233,7 +233,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -279,7 +279,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://base.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -311,7 +311,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:      "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -353,7 +353,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -392,7 +392,7 @@ func TestRequestConfigMiddleware(t *testing.T) {
 			AppURL:   "https://grafana.example.com",
 		}
 
-		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService)
+		middleware := RequestConfigMiddleware(cfg, license, mockSettingsService, nil)
 
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
