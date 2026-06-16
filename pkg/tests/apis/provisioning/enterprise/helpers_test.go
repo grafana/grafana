@@ -8,7 +8,7 @@ import (
 )
 
 var env = common.NewSharedEnv(
-	common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}),
+	common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket", "githubEnterprise"}),
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

@@ -4,9 +4,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/google/go-github/v82/github"
+	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -15,9 +19,52 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
+
+// mockGHEConnectionClient points the shared GitHub connection factory at an
+// in-memory HTTP mock so health checks (Connection.Test) for githubEnterprise
+// connections resolve locally instead of dialing the configured serverUrl.
+// appID must match the connections created in the test so the app-ID check passes.
+func mockGHEConnectionClient(t *testing.T, helper *common.ProvisioningTestHelper, appID int64) {
+	t.Helper()
+
+	perms := &github.InstallationPermissions{
+		Contents:        github.Ptr("write"),
+		Metadata:        github.Ptr("read"),
+		PullRequests:    github.Ptr("write"),
+		RepositoryHooks: github.Ptr("write"),
+	}
+
+	factory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
+	factory.Client = ghmock.NewMockedHTTPClient(
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetApp,
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write(ghmock.MustMarshal(github.App{
+					ID:          github.Ptr(appID),
+					Slug:        github.Ptr("test-app"),
+					Permissions: perms,
+				}))
+			}),
+		),
+		ghmock.WithRequestMatchHandler(
+			ghmock.GetAppInstallationsByInstallationId,
+			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				idInt, _ := strconv.ParseInt(r.URL.Query().Get("installation_id"), 10, 64)
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write(ghmock.MustMarshal(github.Installation{
+					ID:          github.Ptr(idInt),
+					Permissions: perms,
+				}))
+			}),
+		),
+	)
+	helper.SetGithubConnectionFactory(factory)
+}
 
 func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	helper := sharedHelper(t)
@@ -25,6 +72,13 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 
 	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
 	bitbucketNamePrefix := fmt.Sprintf("%s-", provisioning.BitbucketConnectionType)
+	gheNamePrefix := fmt.Sprintf("%s-", provisioning.GithubEnterpriseConnectionType)
+	privateKeyBase64 := common.TestGithubPrivateKeyBase64()
+
+	// The mutation tests create valid githubEnterprise connections which the controller
+	// then reconciles via the shared GitHub Connection.Test(). Mock the factory so the
+	// health check stays in-process and never dials the configured serverUrl.
+	mockGHEConnectionClient(t, helper, 123)
 
 	t.Run("should update gitlab connection name with type prefix", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -231,6 +285,103 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 		})
 	})
+
+	newGHEConnection := func(meta map[string]any, serverURL string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata":   meta,
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  provisioning.GithubEnterpriseConnectionType,
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+					"serverUrl":      serverURL,
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+	}
+
+	t.Run("should update githubEnterprise connection name with type prefix", func(t *testing.T) {
+		connection := newGHEConnection(map[string]any{
+			"namespace": "default",
+		}, "https://ghe.example.com")
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), gheNamePrefix, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		})
+	})
+
+	t.Run("should update githubEnterprise connection name with given prefix", func(t *testing.T) {
+		generateName := "some-name-"
+		connection := newGHEConnection(map[string]any{
+			"namespace":    "default",
+			"generateName": generateName,
+		}, "https://ghe.example.com")
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Contains(t, c.GetName(), generateName, "name should be updated")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		})
+	})
+
+	t.Run("should keep githubEnterprise connection name if name is already given", func(t *testing.T) {
+		name := "some-name"
+		connection := newGHEConnection(map[string]any{
+			"name":      name,
+			"namespace": "default",
+		}, "https://ghe.example.com")
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+		require.Equal(t, name, c.GetName(), "name should be identical")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		})
+	})
+
+	t.Run("should trim trailing slash from githubEnterprise serverUrl", func(t *testing.T) {
+		connection := newGHEConnection(map[string]any{
+			"namespace": "default",
+		}, "https://ghe.example.com/")
+
+		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
+		require.NoError(t, err, "failed to create resource")
+
+		spec := c.Object["spec"].(map[string]any)
+		ghe := spec["githubEnterprise"].(map[string]any)
+		assert.Equal(t, "https://ghe.example.com", ghe["serverUrl"], "trailing slash should be trimmed")
+
+		t.Cleanup(func() {
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
+				require.NoError(collect, err)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+		})
+	})
 }
 
 func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
@@ -383,6 +534,196 @@ func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
 		require.Error(t, err, "failed to create resource")
 		assert.Contains(t, err.Error(), "privateKey is forbidden in Gitlab connection")
 	})
+
+	privateKeyBase64 := common.TestGithubPrivateKeyBase64()
+
+	t.Run("should fail when type is githubEnterprise but 'githubEnterprise' field is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "githubEnterprise info must be specified for githubEnterprise connection")
+	})
+
+	t.Run("should fail when type is githubEnterprise but serverUrl is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "serverUrl must be specified for githubEnterprise connection")
+	})
+
+	t.Run("should fail when type is githubEnterprise but serverUrl has an invalid scheme", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+					"serverUrl":      "ftp://ghe.example.com",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "URL must start with https:// or http://")
+	})
+
+	t.Run("should fail when type is githubEnterprise but private key is not there", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+					"serverUrl":      "https://ghe.example.com",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "privateKey must be specified for GitHub Enterprise connection")
+	})
+
+	t.Run("should fail when type is githubEnterprise but a client secret is specified", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+					"serverUrl":      "https://ghe.example.com",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+				"clientSecret": map[string]any{
+					"create": "someSecret",
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "clientSecret is forbidden in GitHub Enterprise connection")
+	})
+
+	t.Run("should fail when type is githubEnterprise but appID is not numeric", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "not-a-number",
+					"installationID": "456",
+					"serverUrl":      "https://ghe.example.com",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "appID must be a numeric value")
+	})
+
+	t.Run("should fail when type is githubEnterprise but installationID is not numeric", func(t *testing.T) {
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "not-a-number",
+					"serverUrl":      "https://ghe.example.com",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
+		require.Error(t, err, "failed to create resource")
+		assert.Contains(t, err.Error(), "installationID must be a numeric value")
+	})
 }
 
 func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
@@ -534,11 +875,91 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
 	})
 
+	t.Run("GitHub Enterprise connection can be created and reconciled", func(t *testing.T) {
+		privateKeyBase64 := common.TestGithubPrivateKeyBase64()
+
+		// Mock the shared GitHub client so the health check resolves in-process
+		// (the GHE Connection.Test would otherwise dial the configured serverUrl).
+		mockGHEConnectionClient(t, helper, 123)
+
+		connection := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "provisioning.grafana.app/v0alpha1",
+			"kind":       "Connection",
+			"metadata": map[string]any{
+				"name":      "test-ghe-connection",
+				"namespace": "default",
+			},
+			"spec": map[string]any{
+				"title": "Test GitHub Enterprise Connection",
+				"type":  string(provisioning.GithubEnterpriseConnectionType),
+				"githubEnterprise": map[string]any{
+					"appID":          "123",
+					"installationID": "456",
+					"serverUrl":      "https://ghe.example.com",
+				},
+			},
+			"secure": map[string]any{
+				"privateKey": map[string]any{
+					"create": privateKeyBase64,
+				},
+			},
+		}}
+
+		created, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
+		require.NoError(t, err, "failed to create GitHub Enterprise connection")
+		require.NotNil(t, created)
+
+		connectionName := created.GetName()
+		require.NotEmpty(t, connectionName, "connection name should not be empty")
+		t.Cleanup(func() {
+			if err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Errorf("cleanup: failed to delete GitHub Enterprise connection %q: %v", connectionName, err)
+			}
+		})
+
+		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+		require.NoError(t, err, "failed to read back GitHub Enterprise connection")
+		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
+
+		spec := output.Object["spec"].(map[string]any)
+		assert.Equal(t, string(provisioning.GithubEnterpriseConnectionType), spec["type"], "type should be githubEnterprise")
+
+		restConfig := helper.Org1.Admin.NewRestConfig()
+		provClient, err := clientset.NewForConfig(restConfig)
+		require.NoError(t, err, "failed to create provisioning client")
+		connClient := provClient.ProvisioningV0alpha1().Connections("default")
+
+		require.Eventually(t, func() bool {
+			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
+			if err != nil {
+				return false
+			}
+			ready := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
+			return updated.Status.Health.Checked > 0 &&
+				updated.Status.Health.Healthy &&
+				ready != nil && ready.Status == metav1.ConditionTrue
+		}, 15*time.Second, 500*time.Millisecond, "GHE connection should reconcile healthy")
+
+		reconciled, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		assert.True(t, reconciled.Status.Health.Healthy,
+			"connection should be healthy: %v", reconciled.Status.Health.Message)
+
+		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
+		require.NotNil(t, readyCondition, "should have ready condition")
+		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "connection should be ready")
+
+		t.Logf("GitHub Enterprise connection reconciled. Health: %v, Checked: %d",
+			reconciled.Status.Health.Healthy, reconciled.Status.Health.Checked)
+	})
+
 	t.Run("All connection types are supported", func(t *testing.T) {
 		supportedTypes := []provisioning.ConnectionType{
 			provisioning.GithubConnectionType,
 			provisioning.GitlabConnectionType,
 			provisioning.BitbucketConnectionType,
+			provisioning.GithubEnterpriseConnectionType,
 		}
 
 		for _, connType := range supportedTypes {
@@ -729,6 +1150,7 @@ func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
 			provisioning.BitbucketRepositoryType,
 			provisioning.GitRepositoryType,
 			provisioning.LocalRepositoryType,
+			provisioning.GitHubEnterpriseRepositoryType,
 		}
 
 		for _, repoType := range supportedTypes {
