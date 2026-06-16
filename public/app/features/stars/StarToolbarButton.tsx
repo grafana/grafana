@@ -20,9 +20,15 @@ type Props = {
   kind: string;
   id: string;
   onStarChange?: (id: string, isStarred: boolean) => void;
+  /**
+   * When rendered in a list (e.g. one button per row), a spinner on every row while the shared
+   * stars query loads is noisy. Set this to show the unfilled star during load instead; the
+   * button stays disabled until the starred state is known.
+   */
+  hideSpinner?: boolean;
 };
 
-export function StarToolbarButton({ title, group, kind, id, onStarChange }: Props) {
+export function StarToolbarButton({ title, group, kind, id, onStarChange, hideSpinner }: Props) {
   const tooltips = getStarTooltips(title);
 
   const handleItemStar = useStarItem(group, kind);
@@ -45,14 +51,14 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   };
 
   const iconProps = useMemo(() => {
-    if (isLoading) {
+    if (isLoading && !hideSpinner) {
       return { name: 'spinner', type: 'default' } as const;
     }
     if (isStarred) {
       return { name: 'favorite', type: 'mono' } as const;
     }
     return { name: 'star', type: 'default' } as const;
-  }, [isLoading, isStarred]);
+  }, [isLoading, isStarred, hideSpinner]);
 
   const tooltipAndLabel = (() => {
     return isStarred

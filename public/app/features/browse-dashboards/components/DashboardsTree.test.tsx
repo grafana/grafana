@@ -1,14 +1,19 @@
 import { assertIsDefined } from 'test/helpers/asserts';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { sharedWithMeFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 const [_, { folderA: folder, folderB_empty: emptyFolderIndicator, dashbdD: dashboard }] = getFolderFixtures();
 
@@ -214,5 +219,42 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(screen.getByText('No items')).toBeInTheDocument();
+  });
+
+  describe('folder star button', () => {
+    const renderTree = (items: Array<typeof folder>) =>
+      render(
+        <DashboardsTree
+          permissions={mockPermissions}
+          items={items}
+          isSelected={isSelected}
+          width={WIDTH}
+          height={HEIGHT}
+          onFolderClick={noop}
+          onTagClick={noop}
+          onItemSelectionChange={noop}
+          onAllSelectionChange={noop}
+          isItemLoaded={allItemsAreLoaded}
+          requestLoadMore={requestLoadMore}
+        />
+      );
+
+    // Folders use the same star mechanism as dashboards, so the button renders regardless of the toggle
+    it('renders a star button for a folder row', async () => {
+      renderTree([folder]);
+
+      const starButton = await screen.findByTestId(selectors.components.NavToolbar.markAsFavorite);
+      expect(starButton).toBeInTheDocument();
+    });
+
+    it('does not render a star button for a dashboard row', async () => {
+      renderTree([dashboard]);
+
+      // Wait for the tree to have rendered the row before asserting the absence of the star
+      expect(await screen.findByText(dashboard.item.title)).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByTestId(selectors.components.NavToolbar.markAsFavorite)).not.toBeInTheDocument();
+      });
+    });
   });
 });
