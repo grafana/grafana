@@ -669,10 +669,3 @@ func (hs *HTTPServer) publicDashFilterUsedDataSources(c *contextmodel.ReqContext
 
 	return filtered, nil
 }
-
-func getShortCommitHash(commitHash string, maxLength int) string {
-	if len(commitHash) > maxLength {
-		return commitHash[:maxLength]
-	}
-	return commitHash
-}
