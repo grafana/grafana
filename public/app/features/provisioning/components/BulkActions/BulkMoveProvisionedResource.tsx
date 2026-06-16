@@ -13,11 +13,7 @@ import { AffectedFolderContents } from 'app/features/browse-dashboards/component
 import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-} from 'app/features/provisioning/components/defaults';
+import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
@@ -38,6 +34,7 @@ import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
 import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
+  getBulkActionInitialValues,
   getTargetFolderPathInRepo,
   isSameFolderPath,
 } from './utils';
@@ -246,11 +243,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
 
-  const initialValues = {
-    comment: '',
-    ref: getDefaultRef(repository, 'bulk-move'),
-    workflow: getDefaultWorkflow(repository),
-  };
+  const initialValues = getBulkActionInitialValues(repository, 'bulk-move');
 
   return (
     <ProvisionedFormGate

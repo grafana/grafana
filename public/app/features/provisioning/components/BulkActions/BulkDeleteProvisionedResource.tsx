@@ -23,11 +23,10 @@ import { type StatusInfo } from '../../types';
 import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../defaults';
-import { generateTimestamp } from '../utils/timestamp';
+import { getCanPushToConfiguredBranch } from '../defaults';
 
 import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { type BulkActionFormData, type BulkActionProvisionResourceProps } from './utils';
+import { type BulkActionFormData, type BulkActionProvisionResourceProps, getBulkActionInitialValues } from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -176,13 +175,7 @@ export function BulkDeleteProvisionedResource({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
-  const timestamp = generateTimestamp();
-
-  const initialValues = {
-    comment: '',
-    ref: `bulk-delete/${timestamp}`,
-    workflow: getDefaultWorkflow(repository),
-  };
+  const initialValues = getBulkActionInitialValues(repository, 'bulk-delete');
 
   return (
     <ProvisionedFormGate

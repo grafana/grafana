@@ -372,4 +372,35 @@ describe('BulkDeleteProvisionedResource', () => {
       })
     );
   });
+
+  it('does not show a generated branch and targets the configured branch when write is the default workflow', async () => {
+    const writeFirstRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      branch: 'main',
+      workflows: ['write', 'branch'],
+    };
+    const { user, mockCreateBulkJob } = setup(writeFirstRepository);
+
+    // Wait for the real ResourceEditFormSharedFields branch field to render.
+    await screen.findByRole('button', { name: /Delete/i });
+
+    // The pre-filled branch must match the job (configured branch), not a generated bulk-delete branch.
+    expect(screen.queryByText(/bulk-delete\//)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/bulk-delete\//)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      writeFirstRepository,
+      expect.objectContaining({
+        action: 'delete',
+        delete: expect.objectContaining({
+          ref: undefined,
+        }),
+      })
+    );
+  });
 });
