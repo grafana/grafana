@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ErrNotFound is returned by proxy methods when the annotation is not in the new storage
@@ -231,9 +232,16 @@ func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
 		spec.PanelID = &item.PanelID
 	}
 
-	anno := &annotationV0.Annotation{Spec: spec}
-	anno.APIVersion = annotationV0.GroupVersion.String()
-	anno.Kind = "Annotation"
+	anno := &annotationV0.Annotation{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: annotationV0.GroupVersion.String(),
+			Kind:       annotationV0.AnnotationKind().Kind(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "a-",
+		},
+		Spec: spec,
+	}
 	if item.UserID != 0 {
 		anno.SetCreatedBy(fmt.Sprintf("user:%d", item.UserID))
 	}
