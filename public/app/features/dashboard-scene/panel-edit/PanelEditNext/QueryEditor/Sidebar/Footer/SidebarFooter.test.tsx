@@ -102,6 +102,19 @@ describe('SidebarFooter', () => {
       expect(screen.getByRole('button', { name: /select multiple items/i })).toHaveTextContent('Select...');
     });
 
+    it('drops the select button label but keeps its accessible name when the counts row overflows', () => {
+      // jsdom does no layout; drive the overflow measurement via the prototype getters.
+      jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(150);
+      jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(100);
+
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      const selectButton = screen.getByRole('button', { name: /select multiple items/i });
+      expect(selectButton).not.toHaveTextContent('Select...');
+
+      jest.restoreAllMocks();
+    });
+
     it('should enable multi-select mode and track when select is clicked', async () => {
       const setMultiSelectMode = jest.fn();
       const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
