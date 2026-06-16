@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Impossibile avviare l'attività di correzione dei metadati della cartella. Riprova.",
       "error-title": "Errore durante la correzione dei metadati della cartella",
-      "loading": "Caricamento del repository in corso...",
       "read-only-message": "Non è possibile correggere automaticamente i metadati delle cartelle.",
       "submit": "Correggi gli ID delle cartelle",
       "submitting": "Correzione in corso...",

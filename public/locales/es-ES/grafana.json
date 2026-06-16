@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Error al iniciar el trabajo de corrección de metadatos de la carpeta. Vuelve a intentarlo.",
       "error-title": "Error al corregir los metadatos de la carpeta",
-      "loading": "Cargando repositorio...",
       "read-only-message": "Los metadatos de la carpeta no se pueden corregir automáticamente.",
       "submit": "Corregir ID de carpetas",
       "submitting": "Corrigiendo...",

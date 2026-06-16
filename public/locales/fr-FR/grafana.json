@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Échec du démarrage de la tâche de correction des métadonnées du dossier. Veuillez réessayer.",
       "error-title": "Erreur lors de la correction des métadonnées du dossier",
-      "loading": "Chargement du référentiel en cours…",
       "read-only-message": "Les métadonnées du dossier ne peuvent pas être corrigées automatiquement.",
       "submit": "Corriger les ID de dossier",
       "submitting": "Correction en cours…",

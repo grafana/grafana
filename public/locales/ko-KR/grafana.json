@@ -13182,7 +13182,6 @@
       "default-commit-message": "",
       "error-message": "폴더 메타데이터 수정 작업을 시작하지 못했습니다. 다시 시도해 주세요.",
       "error-title": "폴더 메타데이터 수정 중 오류 발생",
-      "loading": "리포지토리 로딩 중...",
       "read-only-message": "폴더 메타데이터는 자동으로 수정할 수 없습니다.",
       "submit": "폴더 ID 수정",
       "submitting": "수정 중...",

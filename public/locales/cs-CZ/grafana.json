@@ -13410,7 +13410,6 @@
       "default-commit-message": "",
       "error-message": "Nepodařilo se spustit úlohu opravy metadat složky. Zkuste to znovu.",
       "error-title": "Chyba při opravě metadat složky",
-      "loading": "Načítání úložiště…",
       "read-only-message": "Metadata složky nelze opravit automaticky.",
       "submit": "Opravit ID složek",
       "submitting": "Probíhá oprava…",

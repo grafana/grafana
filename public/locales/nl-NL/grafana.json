@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Kan de taak voor het herstellen van mapmetadata niet starten. Probeer het opnieuw.",
       "error-title": "Er is een fout opgetreden bij het herstellen van de mapmetadata",
-      "loading": "Repository aan het laden...",
       "read-only-message": "Mapmetadata kunnen niet automatisch worden hersteld.",
       "submit": "Map-ID's herstellen",
       "submitting": "Herstellen...",

@@ -5688,3 +5688,36 @@ func (f *fakePersister) Sync(_ context.Context, _ trace.Span, _ ngmodels.AlertRu
 }
 
 var _ StatePersister = (*fakePersister)(nil)
+
+func TestDatasourceErrorInfo(t *testing.T) {
+	rule := &ngmodels.AlertRule{
+		Data: []ngmodels.AlertQuery{
+			{RefID: "A", DatasourceUID: "ds-uid-1"},
+		},
+	}
+
+	t.Run("extracts refID and datasource UID from a query error", func(t *testing.T) {
+		err := expr.MakeQueryError("A", "ds-uid-1", errors.New("boom"))
+		refID, dsUID := datasourceErrorInfo(err, rule)
+		require.Equal(t, "A", refID)
+		require.Equal(t, "ds-uid-1", dsUID)
+	})
+
+	t.Run("still extracts them when the query error is wrapped as a query-limit error", func(t *testing.T) {
+		// MakeQueryError tags this with the queryLimitError wrapper because the message
+		// carries a Mimir query-limit ID. datasourceErrorInfo must still unwrap through
+		// that wrapper to reach the errutil error and read refId from its public payload.
+		err := expr.MakeQueryError("A", "ds-uid-1", errors.New("the query exceeded the maximum number of chunks (err-mimir-max-chunks-per-query)"))
+		require.True(t, errors.Is(err, expr.ErrQueryLimit), "precondition: error is wrapped by the query-limit helper")
+
+		refID, dsUID := datasourceErrorInfo(err, rule)
+		require.Equal(t, "A", refID, "refID must be extractable through the queryLimitError wrapper")
+		require.Equal(t, "ds-uid-1", dsUID)
+	})
+
+	t.Run("returns empty for a non-query error", func(t *testing.T) {
+		refID, dsUID := datasourceErrorInfo(errors.New("generic"), rule)
+		require.Empty(t, refID)
+		require.Empty(t, dsUID)
+	})
+}

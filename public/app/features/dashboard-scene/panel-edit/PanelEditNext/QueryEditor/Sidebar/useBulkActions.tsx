@@ -68,8 +68,8 @@ export function useBulkQueryActions(): BulkActionGroup {
         ? t('query-editor-next.bulk-actions.show', 'Show')
         : t('query-editor-next.bulk-actions.hide', 'Hide'),
       tooltip: allHidden
-        ? t('query-editor-next.bulk-actions.show-all-tooltip', 'Show all selected')
-        : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide all selected'),
+        ? t('query-editor-next.bulk-actions.show-all-tooltip', 'Show selected')
+        : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide selected'),
       onClick: () => bulkToggleQueriesHide(selectedQueryRefIds, !allHidden),
     },
   ];
@@ -145,11 +145,11 @@ export function useBulkTransformationActions(): BulkActionGroup {
       key: 'toggle-disabled',
       icon: allDisabled ? 'eye-slash' : 'eye',
       label: allDisabled
-        ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
-        : t('query-editor-next.bulk-actions.disable-all', 'Disable all'),
+        ? t('query-editor-next.bulk-actions.enable', 'Enable')
+        : t('query-editor-next.bulk-actions.disable', 'Disable'),
       tooltip: allDisabled
-        ? t('query-editor-next.bulk-actions.enable-all-tooltip', 'Enable all selected')
-        : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable all selected'),
+        ? t('query-editor-next.bulk-actions.enable-all-tooltip', 'Enable selected')
+        : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable selected'),
       onClick: () => bulkToggleTransformationsDisabled(selectedTransformationIds, !allDisabled),
     },
   ];

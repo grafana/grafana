@@ -105,7 +105,7 @@ describe('BulkActionsBar', () => {
       });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable/i })).toBeInTheDocument();
     });
   });
 
@@ -351,8 +351,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        // Transformations are enabled (no disabled flag), so button says "Disable"
+        await user.click(screen.getByRole('button', { name: /disable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
         // Enable/Disable is an in-place toggle — the selection persists.
         expect(setMultiSelectMode).not.toHaveBeenCalled();
@@ -378,8 +378,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        // All selected are disabled — button says "Enable"
+        await user.click(screen.getByRole('button', { name: /enable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
       });
     });
@@ -428,7 +428,7 @@ describe('BulkActionsBar', () => {
       });
 
       expect(screen.getByRole('button', { name: 'Hide' })).not.toHaveTextContent('Hide');
-      expect(screen.getByRole('button', { name: 'Disable all' })).not.toHaveTextContent('Disable all');
+      expect(screen.getByRole('button', { name: 'Disable' })).not.toHaveTextContent('Disable');
     });
 
     it('restores button labels once the container grows past the width the full labels needed', () => {
