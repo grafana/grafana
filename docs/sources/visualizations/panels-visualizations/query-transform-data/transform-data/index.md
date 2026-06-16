@@ -82,7 +82,7 @@ refs:
 
 # Transform data
 
-> **Note:** The screenshots and steps on this page show and describe the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+> **Note:** The screenshots and steps on this page reflect the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
 
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
