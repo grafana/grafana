@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import { Grid, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
@@ -31,8 +31,8 @@ export default function HomePage() {
   const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
 
-  const { components: preComponents } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.HomepagePre,
+  const { components: assistantComponents } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageAssistant,
   });
 
   const { components: extraComponents } = usePluginComponents({
@@ -52,18 +52,22 @@ export default function HomePage() {
       <Page.Contents>
         <Stack direction="column" gap={2}>
           <HomeSection direction="column" display="flex" gap={2}>
+            {/* Assistant injects an Assistant-based prompt input when available */}
             {renderLimitedComponents({
               props: {},
-              components: preComponents,
-              pluginId: SETUPGUIDE_PLUGIN_ID,
+              limit: 1,
+              components: assistantComponents,
+              pluginId: ASSISTANT_PLUGIN_ID,
             })}
             <DashboardTabs />
           </HomeSection>
+
           <Grid gap={2} columns={{ xs: 1, md: 2 }}>
             <FiringAlertsCard />
             <IncidentsCard />
           </Grid>
 
+          {/* SetupGuide injects assorted sections for Cloud users */}
           {renderLimitedComponents({
             props: {},
             components: extraComponents,
