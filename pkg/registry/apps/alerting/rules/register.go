@@ -228,6 +228,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, a)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, a)
+			case search.RouteResource:
+				return search.Authorize(ctx, authz, a)
 			}
 			return authorizer.DecisionNoOpinion, "", nil
 		},
