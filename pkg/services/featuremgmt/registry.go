@@ -2309,14 +2309,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "preventPanelChromeOverflow",
-			Description: "Restrict PanelChrome contents with overflow: hidden;",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "jaegerEnableGrpcEndpoint",
 			Description: "Enable querying trace data through Jaeger's gRPC endpoint (HTTP)",
 			Stage:       FeatureStageExperimental,

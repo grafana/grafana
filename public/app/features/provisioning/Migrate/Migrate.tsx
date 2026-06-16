@@ -1,23 +1,21 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, EmptyState, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { useRepositoryList } from '../hooks/useRepositoryList';
+
+import { MigrateDrawer } from './MigrateDrawer';
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
-import { MigrationGuideNote } from './MigrationGuideNote';
 import { OverviewStatCards } from './OverviewStatCards';
 import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
 
-/**
- * Migrate to GitOps tab. Shows an overview of how much of the instance is
- * already managed and how much progress has been made toward GitOps. The
- * interactive migration workflow (folder leaderboard, quick wins, the migrate
- * drawer) lands in follow-up changes.
- */
 export function Migrate() {
-  const { data, isLoading, isError, error } = useGetResourceStatsQuery();
+  const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery();
+  const [repos] = useRepositoryList({ watch: true });
+  const [showDrawer, setShowDrawer] = useState(false);
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
   const totals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
@@ -49,11 +47,36 @@ export function Migrate() {
     );
   }
 
+  const unmanagedTotal =
+    Math.max(0, totals.instanceTotal - totals.managed) + Math.max(0, folderCounts.total - folderCounts.managed);
+
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} folderCounts={folderCounts} />
-      <MigrationGuideNote />
+
+      {unmanagedTotal > 0 ? (
+        <Stack direction="column" gap={1} alignItems="flex-start">
+          <Button variant="primary" onClick={() => setShowDrawer(true)}>
+            <Trans i18nKey="provisioning.migrate.start-button">Start migration</Trans>
+          </Button>
+          <Text color="secondary" variant="bodySmall">
+            <Trans i18nKey="provisioning.migrate.selective-coming-soon">
+              Migrating only selected dashboards and folders is coming soon.
+            </Trans>
+          </Text>
+        </Stack>
+      ) : (
+        <Text color="secondary">
+          <Trans i18nKey="provisioning.migrate.all-managed">
+            All of your dashboards and folders are already managed in Git.
+          </Trans>
+        </Text>
+      )}
+
+      {showDrawer && (
+        <MigrateDrawer repos={repos ?? []} onDismiss={() => setShowDrawer(false)} onMigrated={() => refetch()} />
+      )}
     </Stack>
   );
 }

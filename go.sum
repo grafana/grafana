@@ -60,8 +60,8 @@ cloud.google.com/go/aiplatform v1.27.0/go.mod h1:Bvxqtl40l0WImSb04d0hXFU7gDOiq9j
 cloud.google.com/go/aiplatform v1.35.0/go.mod h1:7MFT/vCaOyZT/4IIFfxH4ErVg/4ku6lKv3w0+tFTgXQ=
 cloud.google.com/go/aiplatform v1.36.1/go.mod h1:WTm12vJRPARNvJ+v6P52RDHCNe4AhvjcIZ/9/RRHy/k=
 cloud.google.com/go/aiplatform v1.37.0/go.mod h1:IU2Cv29Lv9oCn/9LkFiiuKfwrRTq+QQMbW+hPCxJGZw=
-cloud.google.com/go/aiplatform v1.120.0 h1:jKWTpEs+xoUhDa1FMdSuhMcEQYyUiMdufGyX3zvtLVQ=
-cloud.google.com/go/aiplatform v1.120.0/go.mod h1:6mDthfmy0oS1EQhVFdijoxkVdI2+HIZkpuGTBpedeCg=
+cloud.google.com/go/aiplatform v1.125.0 h1:QUGv+XaHN9wcWdb0/J0NFIcaP/veQSvDcqg4GH6QiP4=
+cloud.google.com/go/aiplatform v1.125.0/go.mod h1:yWTZiCunYDnyxeWWD14tDo6+BMlvAUCC5VxuxhvbrVI=
 cloud.google.com/go/analytics v0.11.0/go.mod h1:DjEWCu41bVbYcKyvlws9Er60YE4a//bK6mnhWvQeFNI=
 cloud.google.com/go/analytics v0.12.0/go.mod h1:gkfj9h6XRf9+TS4bmuhPEShsh3hH8PAZzm/41OOhQd4=
 cloud.google.com/go/analytics v0.17.0/go.mod h1:WXFa3WSym4IZ+JiKmavYdJwGG/CvpqiqczmL59bTD9M=
@@ -1596,8 +1596,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
-github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc h1:MzBWvBFYFp3IgqmflrYvaBxaw/9DBPyhyo8pb5q9Q8E=
-github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc/go.mod h1:soZ8LBBzR3OnWD1vWaCx5PqKJEYavieLEnQFOl1tLIo=
+github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754 h1:+axutRj7KW0aHKkX6Ux15MjO3YA4ZoarE3Up/yDEdQc=
+github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754/go.mod h1:Moux9knxDFfYBpH3WS511X6qNxrJvwUbYIPGR1h7QDo=
 github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a h1:Yz6AtFowxBvJxqbj+/IWM1DOwVnmvm5LLT0irGWMDNU=
 github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a/go.mod h1:AWryAuOp+dICuspMD555qPikxDraraypjMU8/C+yHx0=
 github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a h1:eCs+dKdWRZOLkMTP1ahQ1F58m4KojlBhj1saPZKw6bU=
@@ -1980,8 +1980,8 @@ github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOA
 github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Kysco4FUpU=
 github.com/mattn/go-isatty v0.0.14/go.mod h1:7GGIvUiUoEMVVmxf/4nioHXj79iQHKdU27kJ6hsGG94=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
-github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
-github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/mattn/go-isatty v0.0.22 h1:j8l17JJ9i6VGPUFUYoTUKPSgKe/83EYU2zBC7YNKMw4=
+github.com/mattn/go-isatty v0.0.22/go.mod h1:ZXfXG4SQHsB/w3ZeOYbR0PrPwLy+n6xiMrJlRFqopa4=
 github.com/mattn/go-localereader v0.0.1 h1:ygSAOl7ZXTx4RdPYinUpg6W99U8jWvWi9Ye2JC/oIi4=
 github.com/mattn/go-localereader v0.0.1/go.mod h1:8fBrzywKY7BI3czFoHkuzRoWE9C+EiG4R1k4Cjx5p88=
 github.com/mattn/go-runewidth v0.0.20 h1:WcT52H91ZUAwy8+HUkdM3THM6gXqXuLJi9O3rjcQQaQ=
