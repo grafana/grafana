@@ -7,7 +7,7 @@ replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/codejen v0.0.4-0.20250428224353-8764ced07770
-	github.com/grafana/cog v0.1.12
+	github.com/grafana/cog v0.1.13
 	github.com/grafana/cuetsy v0.1.11
 	github.com/grafana/grafana/pkg/codegen v0.0.0-20250514132646-acbc7b54ed9e
 )
@@ -15,7 +15,7 @@ require (
 require (
 	cuelabs.dev/go/oci/ociregistry v0.0.0-20240906074133-82eb438dd565 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
-	github.com/dave/dst v0.27.3 // indirect
+	github.com/dave/dst v0.27.4 // indirect
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/getkin/kin-openapi v0.138.0 // indirect

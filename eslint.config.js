@@ -411,6 +411,17 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/i18n-plural-defaults',
+    plugins: {
+      '@grafana/i18n': grafanaI18nPlugin,
+    },
+    files: ['**/*.{ts,tsx,js}'],
+    rules: {
+      '@grafana/i18n/t-plural-defaults': 'error',
+      '@grafana/i18n/trans-plural-defaults': 'error',
+    },
+  },
+  {
     // Sections of codebase that have all translation markup issues fixed
     name: 'grafana/i18n-overrides',
     plugins: {

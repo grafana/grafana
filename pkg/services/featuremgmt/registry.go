@@ -281,9 +281,9 @@ var (
 		{
 			Name:        "provisioning.readmes",
 			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAppPlatformSquad,
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 			Generate:    Generate{React: true},
 		},
 		{
@@ -667,6 +667,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "dashboardNotebookLayout",
+			Description: "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardDefaultLayoutSelector",
 			Description: "Enables default layout selector in dashboard settings",
 			Stage:       FeatureStageGeneralAvailability,
@@ -794,6 +802,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
+		},
+		{
+			Name:        "canvasExternalPlugin",
+			Description: "Load Canvas panel from an external plugin instead of the bundled core plugin",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "timeComparison",
@@ -2491,10 +2507,10 @@ var (
 		{
 			Name:        "profilesExemplars",
 			Description: "Enables profiles exemplars support in profiles drilldown",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "pyroscopeUTF8LabelNames",
@@ -2621,13 +2637,12 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingMultiplePolicies",
-			Description:  "Enables the ability to create multiple alerting policies",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "alertingMultiplePolicies",
+			Description: "Enables the ability to create multiple notification policies in alerting",
+			Stage:       FeatureStageGeneralAvailability,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "true",
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "alertingPolicyRoutingSettings",
@@ -3157,6 +3172,15 @@ var (
 			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.visualDesignRefresh",
+			Description:  "Enables the new visual design refresh for the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},

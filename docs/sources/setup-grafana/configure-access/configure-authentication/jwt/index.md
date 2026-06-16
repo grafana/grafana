@@ -77,7 +77,7 @@ JWT structure example.
     "UID": "1234567890",
     "name": "John Doe",
     "username": "johndoe",
-    "emails": ["personal@email.com", "professional@email.com"]
+    "emails": ["personal@example.com", "professional@example.com"]
   }
 }
 ```
@@ -90,7 +90,7 @@ JWT structure example.
 username_attribute_path = user.username # user's login is johndoe
 
 # Specify a nested attribute to use as an email to sign in.
-email_attribute_path = user.emails[1] # user's email is professional@email.com
+email_attribute_path = user.emails[1] # user's email is professional@example.com
 ```
 
 ## Iframe Embedding
@@ -199,6 +199,28 @@ If the JWT token's header specifies a `kid` (Key ID), then the Key ID must be se
 ```ini
 key_id = my-key-id
 ```
+
+### Verify token using an inline key or key set
+
+When you can't place a file on disk, put the key material directly in the configuration. This is useful when you provision configuration to a managed instance. Both options use the same content as their file-based counterparts, base64-encoded so it fits on one line.
+
+Inline a single PEM-encoded public key instead of `key_file`:
+
+```ini
+key_value = <base64-encoded PEM key>
+```
+
+Inline a JWKS document instead of `jwk_set_file`:
+
+```ini
+jwk_set_value = <base64-encoded JWKS JSON>
+```
+
+To generate a value from an existing file, run `base64 < key.pem | tr -d '\n'`. The `key_id` option applies to `key_value` just as it does to `key_file`.
+
+{{< admonition type="note" >}}
+Configure the key set with exactly one of `key_file`, `key_value`, `jwk_set_file`, `jwk_set_value`, or `jwk_set_url`. Setting more than one is an error.
+{{< /admonition >}}
 
 ## Validate claims
 

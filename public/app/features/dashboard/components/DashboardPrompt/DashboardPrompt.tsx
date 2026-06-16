@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = memo(({ dashboard }: Props) => {
+const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;

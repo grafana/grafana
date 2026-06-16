@@ -239,6 +239,10 @@ const (
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
 
+	// FlagCanvasExternalPlugin
+	// Load Canvas panel from an external plugin instead of the bundled core plugin
+	FlagCanvasExternalPlugin = "canvasExternalPlugin"
+
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
 	FlagCloudRBACRoles = "cloudRBACRoles"
@@ -807,7 +811,7 @@ const (
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
 	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple alerting policies
+	// Enables the ability to create multiple notification policies in alerting
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer

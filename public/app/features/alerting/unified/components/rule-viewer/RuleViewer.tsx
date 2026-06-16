@@ -113,7 +113,7 @@ const RuleViewer = () => {
   const grafanaAlertingRuleUid = rulerRuleType.grafana.alertingRule(rulerRule)
     ? rulerRule.grafana_alert.uid
     : undefined;
-  const { hasInhibitedInstances } = useHasInhibitedInstances(grafanaAlertingRuleUid);
+  const { hasInhibitedInstances, isFetching: isInhibitionFetching } = useHasInhibitedInstances(grafanaAlertingRuleUid);
 
   const showError = hasError && !isPaused;
   const ruleOrigin = rulerRule ? getRulePluginOrigin(rulerRule) : getRulePluginOrigin(promRule);
@@ -132,7 +132,7 @@ const RuleViewer = () => {
           isProvisioned={isProvisioned}
           provenance={rulerRuleType.grafana.rule(rulerRule) ? rulerRule.grafana_alert.provenance : undefined}
           state={prometheusRuleType.alertingRule(promRule) ? promRule.state : undefined}
-          isInhibited={hasInhibitedInstances}
+          isInhibited={hasInhibitedInstances && !isInhibitionFetching}
           health={promRule?.health}
           ruleType={promRule?.type}
           ruleOrigin={ruleOrigin}

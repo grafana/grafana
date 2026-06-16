@@ -124,6 +124,22 @@ function renderWithWrapper(dataPane: PanelDataPaneNext) {
   });
 }
 
+// Multi-select can only be entered when there are cards to seed, so tests that exercise it
+// must expose queries through the (otherwise null) query runner.
+function mockQueryRunnerQueries(queries: DataQuery[]) {
+  const { getQueryRunnerFor } = require('../../../utils/utils');
+  getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries }) });
+}
+
+// Restore the defaults (no query runner, no transformations) after every test so cards set by
+// one test can't leak into the next and silently satisfy the "has cards" multi-select guard.
+afterEach(() => {
+  const { getQueryRunnerFor } = require('../../../utils/utils');
+  getQueryRunnerFor.mockReturnValue(null);
+  const { useTransformations } = require('./hooks/useTransformations');
+  useTransformations.mockReturnValue([]);
+});
+
 // ---- Tests ----
 
 describe('QueryEditorContextWrapper - side effect clearing', () => {
@@ -176,6 +192,7 @@ describe('QueryEditorContextWrapper - alert selection', () => {
   });
 
   it('keeps bulk selection when selecting a query card in multi-select mode', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     act(() => result.current.setMultiSelectMode(true));
@@ -189,6 +206,7 @@ describe('QueryEditorContextWrapper - alert selection', () => {
   });
 
   it('exits multi-select mode when an alert is selected', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     act(() => result.current.setMultiSelectMode(true));
@@ -202,6 +220,7 @@ describe('QueryEditorContextWrapper - alert selection', () => {
   });
 
   it('clears bulk query and transformation selection when an alert is selected', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     // Populate bulk arrays via multi-select mode so the assertion is meaningful.
@@ -239,6 +258,7 @@ describe('QueryEditorContextWrapper - clearSelection', () => {
   });
 
   it('exits multi-select mode and empties bulk selection', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     act(() => result.current.setMultiSelectMode(true));
@@ -347,6 +367,7 @@ describe('QueryEditorContextWrapper - selection toggles', () => {
   });
 
   it('clears the bulk selection when multi-select mode is turned off via setMultiSelectMode', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     act(() => result.current.setMultiSelectMode(true));
@@ -357,6 +378,18 @@ describe('QueryEditorContextWrapper - selection toggles', () => {
 
     expect(result.current.multiSelectMode).toBe(false);
     expect(result.current.selectedQueryRefIds).toEqual([]);
+  });
+
+  it('does not enter multi-select mode when there are no queries or transformations', () => {
+    // No query runner queries and no transformations: there is nothing to seed, so a later
+    // added card would arrive unchecked. Entering multi-select must be refused.
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.setMultiSelectMode(true));
+
+    expect(result.current.multiSelectMode).toBe(false);
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+    expect(result.current.selectedTransformationIds).toEqual([]);
   });
 });
 
@@ -466,22 +499,24 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     });
   });
 
-  it('deleteQuery removes the deleted refId from selectedQueryRefIds', () => {
+  it('exits multi-select mode and clears the bulk selection when a query is deleted from its header', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const dataPane = makeMockDataPane();
     const { result } = renderWithBothContexts(dataPane);
 
-    // Populate the bulk array via multi-select; the active path no longer mirrors bulk.
     act(() => result.current.ui.setMultiSelectMode(true));
     act(() => result.current.ui.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.ui.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedQueryRefIds).toEqual(['A', 'B']);
 
     act(() => result.current.actions.deleteQuery('A'));
 
-    expect(result.current.ui.selectedQueryRefIds).toEqual(['B']);
+    expect(result.current.ui.multiSelectMode).toBe(false);
+    expect(result.current.ui.selectedQueryRefIds).toEqual([]);
   });
 
-  it('deleteTransformation removes the deleted id from selectedTransformationIds', () => {
+  it('exits multi-select mode and clears the bulk selection when a transformation is deleted from its header', () => {
     const { useTransformations } = require('./hooks/useTransformations');
     const mockTransformation: Transformation = {
       registryItem: undefined,
@@ -501,10 +536,44 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     act(() => result.current.ui.setMultiSelectMode(true));
     act(() => result.current.ui.toggleTransformationSelection(mockTransformation, { multi: true }));
     act(() => result.current.ui.toggleTransformationSelection(otherTransformation, { multi: true }));
+    expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
 
     act(() => result.current.actions.deleteTransformation('reduce-0'));
 
+    expect(result.current.ui.multiSelectMode).toBe(false);
+    expect(result.current.ui.selectedTransformationIds).toEqual([]);
+  });
+
+  it('seeds the promoted transformation when re-entering multi-select after a header delete', () => {
+    const { useTransformations } = require('./hooks/useTransformations');
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const organize: Transformation = {
+      registryItem: undefined,
+      transformId: 'organize-1',
+      transformConfig: { id: 'organize', options: {} },
+    };
+    useTransformations.mockReturnValue([reduce, organize]);
+
+    const { result } = renderWithBothContexts(makeMockDataPane());
+
+    // Activate a transformation and enter multi-select so it is seeded/checked.
+    act(() => result.current.ui.setSelectedTransformation(reduce));
+    act(() => result.current.ui.setMultiSelectMode(true));
+    expect(result.current.ui.selectedTransformationIds).toEqual(['reduce-0']);
+
+    // Deleting it from the header exits multi-select and promotes the remaining transformation.
+    act(() => result.current.actions.deleteTransformation('reduce-0'));
+    expect(result.current.ui.multiSelectMode).toBe(false);
+
+    // Re-entering multi-select seeds the promoted (active) card, so it is checked rather than
+    // highlighted-but-unchecked.
+    act(() => result.current.ui.setMultiSelectMode(true));
+    expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedTransformationIds).toEqual(['organize-1']);
   });
 });
@@ -530,6 +599,7 @@ describe('QueryEditorContextWrapper - pending picker cancel preserves multi-sele
   });
 
   it('preserves bulk query selection and multi-select mode when cancelling a pending expression', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
     act(() => result.current.setMultiSelectMode(true));

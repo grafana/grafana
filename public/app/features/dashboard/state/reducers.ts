@@ -59,9 +59,9 @@ export const {
   dashboardInitFetching,
   dashboardInitFailed,
   dashboardInitCompleted,
-  dashboardInitServices,
+
   cleanUpDashboard,
-  addPanel,
+
   setInitialDatasource,
 } = dashboardSlice.actions;
 

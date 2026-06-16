@@ -222,6 +222,7 @@ export class GrafanaBootConfig {
   };
   analytics = {
     enabled: true,
+    presenceIndicatorsDisabled: false,
   };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;

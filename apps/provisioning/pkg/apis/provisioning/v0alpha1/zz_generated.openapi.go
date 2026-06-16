@@ -226,8 +226,37 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 					},
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signingMethod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"gpg", "smime", "ssh"},
+						},
+					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
@@ -925,6 +954,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"appID", "installationID"},
 			},
@@ -1044,6 +1080,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -3273,6 +3316,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 					"webhookSecret": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Some webhooks (including github) require a secret key value",
+							Default:     map[string]interface{}{},
+							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+						},
+					},
+					"commitSigningKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
 							Default:     map[string]interface{}{},
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},
