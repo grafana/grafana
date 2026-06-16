@@ -1964,8 +1964,8 @@ type mockAlertmanager struct {
 	mock.Mock
 }
 
-func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.MergeResult, error) {
-	args := m.Called(ctx, org, user, authz, extraConfig, replace, dryRun)
+func (m *mockAlertmanager) SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace, dryRun, promote bool) (merge.MergeResult, error) {
+	args := m.Called(ctx, org, user, authz, extraConfig, replace, dryRun, promote)
 	return args.Get(0).(merge.MergeResult), args.Error(1)
 }
 
@@ -1997,7 +1997,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 			return extraConfig.Identifier == identifier &&
 				len(extraConfig.TemplateFiles) == 1 &&
 				extraConfig.TemplateFiles["test.tmpl"] == "{{ define \"test\" }}Hello{{ end }}"
-		}), false, false).Return(merge.MergeResult{}, nil).Once()
+		}), false, false, false).Return(merge.MergeResult{}, nil).Once()
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
@@ -2030,7 +2030,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), false, false).Return(merge.MergeResult{}, nil)
+		}), false, false, false).Return(merge.MergeResult{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2060,7 +2060,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), true, false).Return(merge.MergeResult{}, nil)
+		}), true, false, false).Return(merge.MergeResult{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2090,7 +2090,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == defaultConfigIdentifier
-		}), false, true).Return(merge.MergeResult{}, nil)
+		}), false, true, false).Return(merge.MergeResult{}, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2137,7 +2137,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier
-		}), false, false).Return(expectedResult, nil)
+		}), false, false, false).Return(expectedResult, nil)
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies, featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
