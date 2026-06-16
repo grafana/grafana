@@ -241,19 +241,22 @@ Resample changes the time stamps in each time series to have a consistent time i
 
 ## Write an expression
 
+{{< admonition type="note" >}}
+Tis page uses images and descriptions of the new query editor experience...etc
+{{< /admonition >}}
+
 If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
 
 For more information about expressions, refer to [About expressions](#about-expressions).
 
 1. Open the panel.
-1. In the sidebar, click the blue plus icon next to **Queries & Expression** and select **Add expression**.
-1. Select the type of expression you want to write.
+1. Below the query, click **Expression**.
+1. In the **Operation** field, select the type of expression you want to write.
 
-   You can change the expression type in the **Operation** drop-down list.
    For more information about expression operations, refer to [About expressions](#about-expressions).
 
 1. Write the expression.
-1. Click **Save** in the top-right corner of the dashboard.
+1. Click **Apply**.
 
 ## Special cases
 

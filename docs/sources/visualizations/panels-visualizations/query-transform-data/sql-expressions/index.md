@@ -28,6 +28,10 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
+{{< admonition type="note" >}}
+Tis page uses images and descriptions of the new query editor experience...etc
+{{< /admonition >}}
+
 ![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)
 
 ## Before you begin
@@ -88,6 +92,10 @@ The following are compatible data sources:
 - BigQuery
 
 ## Create SQL expressions
+
+{{< admonition type="note" >}}
+Tis page uses images and descriptions of the new query editor experience...etc
+{{< /admonition >}}
 
 To create a SQL expression, complete the following steps:
 
