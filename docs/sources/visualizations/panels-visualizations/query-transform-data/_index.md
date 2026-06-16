@@ -41,21 +41,21 @@ image_maps:
       - x_coord: 13
         y_coord: 8
         content: |
-          **Data/Alerts tabs**
+          **Data/Alerts buttons**
 
-          Click the tabs to move between data pipeline and related alerts. In the **Alerts** tab open, you have the option to start creating a alert rule.
+          Click the buttons to move between data pipeline and related alerts. In **Alerts**, you have the option to start creating a alert rule.
       - x_coord: 24
         y_coord: 8
         content: |
           **Stacked view icon**
 
-          The stacked view displays all of your queries, expressions, and transformations in a single list in the editor pane.
+          The [stacked view](#navigate-the-query-editor) displays all of your queries, expressions, and transformations in a single list in the editor pane.
       - x_coord: 1
         y_coord: 1
         content: |
           **Multi-select**
 
-          Click **Select...** in the sidebar footer to enter multi-select mode, then check the items you want to work with so you can take bulk actions. You can also use Shift+Click to select a range.
+          Click **Select...** in the sidebar footer to enter multi-select mode, then check the items you want to work with so you can take bulk actions. You can also press the `Shift` key while you click to select a range. If you select queries that all have the same data source, you can change the data source for all of them at once.
       - x_coord: 3.5
         y_coord: 25
         content: |
@@ -302,9 +302,12 @@ Hover your cursor over a number to display information about the query editor el
 
 Grafana organizes queries, expressions, and transformations into rows, each with its own card and editor pane.
 Queries and expressions are identified with a letter (A, B, C, and so on) by default.
-You can rearrange the order of queries, expressions, and transformations by dragging and dropping them in the sidebar.
 
-To access duplicate, hide, and delete actions for a specific data element, hover your cursor over that card in the sidebar:
+You can also rearrange the order of elements by dragging and dropping the cards in the list.
+
+When you hover your cursor over the cards, a blue plus button appears beside the card.
+You can use that to add queries, expressions, or transformations in that position.
+Hovering your cursor over a card also displays duplicate, hide, and delete actions for a specific data element:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-actions-v13.1.png" max-width="300px" alt="Query card on hover showing available actions." >}}
 
@@ -312,15 +315,22 @@ For pipelines with many queries, expressions, or transformations, you can expand
 
 {{< figure src="expanded-sidebar-temp.png" max-width="750px" alt="Expanded sidebar" >}}
 
+You can also use the stacked view to see all of the data elements at once in the editor pane.
+In this view, when you click a card, it takes you to the corresponding element:
+
+<!-- screenshot here -->
+
 ## Add a query
 
 A query returns data that Grafana visualizes in dashboard panels.
 When you create a panel, Grafana automatically selects the default data source.
 
-To add a query, follow these steps:
+To add a query to a panel, follow these steps:
 
-1. Hover the cursor over any part of the panel to which you're adding a query to display the menu icon in the top-right corner.
-1. Click the menu and select **Edit**.
+1. Hover the cursor over any part of the panel to which you're adding a query and click **Configure visualization**.
+
+   The panel opens in edit mode with a first query card added and selected in the query editor pane.
+
 1. In the editor pane, click the **Data source** drop-down menu and select a data source.
 
    If you're creating a new dashboard, you'll be prompted to select a data source when you add the first panel.
