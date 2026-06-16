@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -314,6 +315,10 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 
 	if hs.AccessControl == nil {
 		hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	}
+
+	if hs.annotationMigrationProxy == nil {
+		hs.annotationMigrationProxy = &annotationsapi.MigrationProxy{}
 	}
 
 	hs.registerRoutes()
