@@ -8,6 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
@@ -28,6 +29,7 @@ type Ingester struct {
 	store   *Store
 	leases  *lease.Manager
 	dropped prometheus.Counter
+	log     log.Logger
 
 	mu  sync.Mutex
 	buf map[objectRef]map[string]int64
@@ -48,6 +50,7 @@ func NewIngester(store *Store, decls *Declarations, leases *lease.Manager, reg p
 		store:   store,
 		leases:  leases,
 		dropped: dropped,
+		log:     log.New("unified-storage.stats"),
 		buf:     map[objectRef]map[string]int64{},
 	}
 }
@@ -136,7 +139,8 @@ func (i *Ingester) Flush(ctx context.Context) error {
 
 	var firstErr error
 	for o, deltas := range pending {
-		if err := i.store.IncrementDaily(ctx, o, day, deltas); err != nil {
+		updated, err := i.store.IncrementDaily(ctx, o, day, deltas)
+		if err != nil {
 			// Re-buffer just this object's deltas.
 			i.restore(map[objectRef]map[string]int64{o: deltas})
 			if firstErr == nil {
@@ -147,6 +151,13 @@ func (i *Ingester) Flush(ctx context.Context) error {
 		// Best-effort aggregates bump so the index sees fresh values before
 		// the next daily recalc; staleness self-heals on recalc.
 		i.bumpAggregates(ctx, o, deltas)
+
+		// Log the new per-day bucket totals so they can be compared against the
+		// legacy dashboard_usage_by_day table (POC).
+		i.log.Info("flushed usage stats",
+			"group", o.Group, "resource", o.Resource,
+			"namespace", o.Namespace, "name", o.Name,
+			"day", day, "daily_totals", updated)
 	}
 	return firstErr
 }
@@ -187,6 +198,38 @@ func (i *Ingester) RunFlushLoop(ctx context.Context, interval time.Duration) {
 			return
 		case <-t.C:
 			_ = i.Flush(ctx)
+		}
+	}
+}
+
+// FlushInterval is how often buffered deltas are written to KV. Short for the
+// POC so totals show up quickly after viewing a dashboard.
+const FlushInterval = 2 * time.Second
+
+// RecalcInterval is how often windows are recomputed and expiring buckets are
+// folded into overflow.
+const RecalcInterval = 1 * time.Hour
+
+// Start launches the background flush and recalc loops. They exit when ctx is
+// cancelled.
+func (i *Ingester) Start(ctx context.Context) {
+	go i.RunFlushLoop(ctx, FlushInterval)
+	go i.runRecalcLoop(ctx, RecalcInterval)
+}
+
+func (i *Ingester) runRecalcLoop(ctx context.Context, interval time.Duration) {
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			now, err := i.store.kv.UnixTimestamp(ctx)
+			if err != nil {
+				continue
+			}
+			_ = i.store.Recalc(ctx, i.decls, now)
 		}
 	}
 }

@@ -45,8 +45,10 @@ func encodeInt64(v int64) []byte {
 // IncrementDaily atomically adds deltas to today's daily buckets for an
 // object (read-add-write per metric, in a single batch). The caller is
 // expected to hold the flush lease so the read-add-write is serialized.
-func (s *Store) IncrementDaily(ctx context.Context, o objectRef, day string, deltas map[string]int64) error {
+// It returns the new cumulative value of each incremented daily bucket.
+func (s *Store) IncrementDaily(ctx context.Context, o objectRef, day string, deltas map[string]int64) (map[string]int64, error) {
 	ops := make([]kv.BatchOp, 0, len(deltas))
+	updated := make(map[string]int64, len(deltas))
 	for metric, delta := range deltas {
 		if delta == 0 {
 			continue
@@ -54,17 +56,21 @@ func (s *Store) IncrementDaily(ctx context.Context, o objectRef, day string, del
 		key := dailyKey(o, day, metric)
 		cur, err := getInt64(ctx, s.kv, dailySection, key)
 		if err != nil {
-			return fmt.Errorf("read daily %s: %w", key, err)
+			return nil, fmt.Errorf("read daily %s: %w", key, err)
 		}
 		ops = append(ops, kv.BatchOp{Mode: kv.BatchOpPut, Key: key, Value: encodeInt64(cur + delta)})
+		updated[metric] = cur + delta
 	}
 	if len(ops) == 0 {
-		return nil
+		return updated, nil
 	}
 	if len(ops) > kv.MaxBatchOps {
-		return fmt.Errorf("too many metrics in one object increment: %d", len(ops))
+		return nil, fmt.Errorf("too many metrics in one object increment: %d", len(ops))
 	}
-	return s.kv.Batch(ctx, dailySection, ops)
+	if err := s.kv.Batch(ctx, dailySection, ops); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 // ReadDailyForObject returns day -> metric -> value for an object.

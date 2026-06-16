@@ -596,6 +596,29 @@ message QuotaUsageRequest {
   ResourceKey key = 1;
 }
 
+// A single usage event recorded against a resource (e.g. a dashboard view).
+message ResourceStatsEvent {
+  // Identifies the object the event is about (group/resource/namespace/name).
+  ResourceKey key = 1;
+  // Metric name, must be declared for the resource (e.g. view/query/error).
+  string metric = 2;
+  // Number of occurrences. 0 is treated as 1.
+  int64 count = 3;
+}
+
+message RecordEventRequest {
+  // Events may target multiple objects/metrics in a single call to reduce
+  // client->storage RPC volume.
+  repeated ResourceStatsEvent events = 1;
+}
+
+message RecordEventResponse {
+  // Error details
+  ErrorResult error = 1;
+  // Number of events that were dropped (untracked resource / invalid metric).
+  int64 dropped = 2;
+}
+
 message QuotaUsageResponse {
   // Error details
   ErrorResult error = 1;
@@ -626,6 +649,11 @@ service ResourceStore {
   // This will perform best-effort filtering to increase performace.
   // NOTE: storage.Interface is ultimatly responsible for the final filtering
   rpc Watch(WatchRequest) returns (stream WatchEvent);
+
+  // Record usage events (views/queries/errors) against resources. Events are
+  // accumulated in memory and flushed to storage asynchronously; this call
+  // does not issue a full object update.
+  rpc RecordEvent(RecordEventRequest) returns (RecordEventResponse);
 }
 
 service BulkStore {
