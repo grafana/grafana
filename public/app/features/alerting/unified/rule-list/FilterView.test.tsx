@@ -7,7 +7,8 @@ import { setupMswServer } from '../mockApi';
 import { grantUserPermissions } from '../mocks';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
-import { type RulesFilter } from '../search/rulesSearchParser';
+import { resetSearchRules, setSearchRules } from '../mocks/server/handlers/k8s/rulesSearch.k8s';
+import { RuleSource, type RulesFilter } from '../search/rulesSearchParser';
 
 import { FilterView } from './FilterView';
 
@@ -38,6 +39,7 @@ const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid:
 beforeEach(() => {
   setPrometheusRules(mimirDs, mimirGroups);
   setPrometheusRules(prometheusDs, prometheusGroups);
+  resetSearchRules();
 });
 
 // The global IntersectionObserver mock in public/test/jest-setup.ts auto-fires
@@ -104,6 +106,25 @@ describe('RuleList - FilterView', () => {
     expect(matchingPrometheusRule).toBeInTheDocument();
 
     expect(await screen.findByText(/No more results/)).toBeInTheDocument();
+  });
+
+  it('should display Grafana-managed rules loaded from the /search endpoint', async () => {
+    setSearchRules([
+      {
+        type: 'alertrule',
+        name: 'grafana-rule-uid-1',
+        title: 'grafana-search-rule',
+        folder: 'folder-uid-1',
+        group: 'grafana-group',
+        labels: { severity: 'critical' },
+      },
+    ]);
+
+    render(<FilterView filterState={getFilter({ ruleSource: RuleSource.Grafana })} />);
+
+    await loadMoreResults();
+
+    expect(await screen.findByRole('treeitem', { name: /grafana-search-rule/ })).toBeInTheDocument();
   });
 
   it('should display empty state when no rules are found', async () => {

@@ -25,13 +25,16 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	reqns "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
+	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -50,6 +53,8 @@ type AppInstaller struct {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	ng *ngalert.AlertNG,
+	unifiedClient unifiedresource.ResourceClient,
+	dual dualwrite.Service,
 	_ resource.ClientGenerator, // retained for Wire compatibility; membership resolution now uses a watch-backed index
 ) (*AppInstaller, error) {
 	if ng.IsDisabled() {
@@ -64,6 +69,15 @@ func RegisterAppInstaller(
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
+	// Search routes through a dual-writer-aware client per kind: the legacy
+	// backend (provisioning service) serves modes 0-2, the unified client 3+.
+	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
+	searchAdapter := dualwrite.NewSearchAdapter(dual)
+	searchHandler := search.NewHandler(
+		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+	)
+
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
 		FolderValidator:               newFolderValidator(ng),
 		BaseEvaluationInterval:        ng.Cfg.UnifiedAlerting.BaseInterval,
@@ -72,6 +86,9 @@ func RegisterAppInstaller(
 		MembershipResolver:            membershipIndex,
 		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
 		WatchNamespace:                watchNamespace(cfg),
+		SearchRulesHandler:            searchHandler.SearchRules,
+		SearchAlertRulesHandler:       searchHandler.SearchAlertRules,
+		SearchRecordingRulesHandler:   searchHandler.SearchRecordingRules,
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)

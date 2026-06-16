@@ -1915,6 +1915,47 @@
       "recommended": "Recommended",
       "validation-failed": "Failed to validate IRM integration name. Is the OnCall API available?"
     },
+    "k8s-folder": {
+      "alerting": "Alerting",
+      "alerting-count_one": "{{count}} alerting",
+      "alerting-count_other": "{{count}} alerting",
+      "end-of-list_one": "End of list — {{count}} rules loaded",
+      "end-of-list_other": "End of list — {{count}} rules loaded",
+      "error": "Failed to load rules for this folder",
+      "hide-recording_one": "Hide {{count}} recording rules",
+      "hide-recording_other": "Hide {{count}} recording rules",
+      "load-more": "Load more",
+      "loaded-count_one": "{{count}} loaded",
+      "loaded-count_other": "{{count}} loaded",
+      "loading": "Loading rules…",
+      "loading-short": "Loading…",
+      "recording": "Recording",
+      "recording-count_one": "{{count}} recording",
+      "recording-count_other": "{{count}} recording",
+      "recording-rules": "Recording rules",
+      "rule-count_one": "{{count}} rules",
+      "rule-count_other": "{{count}} rules",
+      "show-recording_one": "Show {{count}} recording rules",
+      "show-recording_other": "Show {{count}} recording rules"
+    },
+    "k8s-grafana-loader": {
+      "tabbed": {
+        "alerting": "Alerting rules",
+        "recording": "Recording rules"
+      }
+    },
+    "k8s-rule-row": {
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "labels_one": "{{count}} labels",
+      "labels_other": "{{count}} labels",
+      "more": "More",
+      "provisioned": "Provisioned",
+      "recording": "",
+      "recording-glyph": "Recording rule",
+      "silence": "Silence notifications"
+    },
     "key-value-map-input": {
       "name": "Name",
       "value": "Value"
@@ -2687,6 +2728,9 @@
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
       "title-add-namespace-and-group": "Add namespace and group"
+    },
+    "recording-split-mode-selector": {
+      "aria-label-layout": "Recording rules layout"
     },
     "redirect-to-clone-rule": {
       "body-evaluation-group": "You will need to set a new evaluation group for the copied rule because the original one has been provisioned and cannot be used for rules created in the UI.",
