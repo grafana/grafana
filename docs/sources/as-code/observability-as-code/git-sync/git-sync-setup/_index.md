@@ -261,11 +261,14 @@ To enforce signed commits using an SSH key follow these steps:
 
 After completing the key configuration, any commits your users make to the provisioned folder will appear as **Verified**.
 
-## Verify your dashboards in Grafana
+## Check your dashboards in Grafana
 
-To verify that your dashboards are available at the location that you specified, go to **Dashboards**. The name of the dashboard is listed in the **Name** column.
+Make sure that your synced dashboards are available at the location that you specified:
 
-Now that your dashboards have been synced from a repository, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/) for more information.
+1. Go to **Dashboards**.
+1. Look for the name of the dashboard in the **Name** column.
+
+Now that your resources are synced, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/) for more information.
 
 ## Update or delete your synced resources
 
