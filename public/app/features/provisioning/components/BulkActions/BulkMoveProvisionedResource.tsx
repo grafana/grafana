@@ -18,7 +18,10 @@ import {
   getDefaultRef,
   getDefaultWorkflow,
 } from 'app/features/provisioning/components/defaults';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
@@ -26,9 +29,9 @@ import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type StatusInfo } from '../../types';
 import { withSavedByTrailer } from '../../utils/currentUser';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 import { type MoveJobSpec, useBulkActionJob } from './useBulkActionJob';
@@ -236,7 +239,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     resolvedRepoUID.current = selectedItemsRepoUID;
   }
 
-  const { repository, folder, isReadOnlyRepo } = useGetResourceRepositoryView({
+  const { repository, folder, isReadOnlyRepo, isMissingRepo, isLoading, status } = useGetResourceRepositoryView({
     folderName: isRootPage ? resolvedRepoUID.current : folderUid,
   });
 
@@ -249,18 +252,23 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
     workflow: getDefaultWorkflow(repository),
   };
 
-  if (!repository || isReadOnlyRepo) {
-    return <RepoInvalidStateBanner noRepository={!repository} isReadOnlyRepo={isReadOnlyRepo} />;
-  }
-
   return (
-    <FormContent
-      selectedItems={selectedItems}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      folderPath={isRootPage ? '/' : folderPath}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isOrphaned={status === RepoViewStatus.Orphaned}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+    >
+      {repository && (
+        <FormContent
+          selectedItems={selectedItems}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          folderPath={isRootPage ? '/' : folderPath}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

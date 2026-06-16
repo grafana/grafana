@@ -29,7 +29,7 @@
       "add-label": "Přidat oprávnění",
       "loading": "Načítání oprávnění…",
       "no-permissions": "Nejsou k dispozici žádná oprávnění",
-      "permissions-change-warning": "Tímto změníte oprávnění pro tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "permissions-change-warning": "",
       "role": "Role",
       "serviceaccount": "Účet služby",
       "team": "Tým",
@@ -4272,13 +4272,9 @@
       "cancel-button": "Zrušit",
       "confirmation-text": "Odstranit",
       "delete-button": "Odstranit",
-      "delete-modal-invalid-text": "Jedna nebo více složek obsahuje panely knihovny nebo pravidla výstrah. Chcete-li pokračovat, nejprve je odstraňte.",
-      "delete-modal-invalid-title": "Složku nelze odstranit",
       "delete-modal-restore-dashboards-common": "Odstraněné nástěnky budou uloženy v historii po dobu až 12 měsíců. Uživatelé s oprávněním k odstranění mohou obnovit nástěnky, které odstranili, a správci mohou obnovit nástěnky odstraněné kterýmkoli uživatelem. Historie je omezena na 1000 nástěnek – starší mohou být odebrány dříve, pokud bude dosaženo limitu.",
       "delete-modal-restore-dashboards-prefix-folder": "Tato akce okamžitě odstraní vybrané složky.",
       "delete-modal-restore-dashboards-suffix-folder": "Složky nelze obnovit.",
-      "delete-modal-text": "Tato akce odstraní následující obsah:",
-      "delete-modal-text-one-folder": "Tato akce odstraní složku „<1>{{ folderName }}</1>“ a následující obsah:",
       "delete-modal-title": "Odstranit",
       "delete-provisioned-folder": "Odstranit poskytnutou složku",
       "deleting": "Probíhá odstranění…",
@@ -4286,8 +4282,6 @@
       "move-button": "Přesunout",
       "move-modal-alert": "Přesunutí této položky může změnit oprávnění.",
       "move-modal-field-label": "Název složky",
-      "move-modal-text": "Tato akce přesune následující obsah:",
-      "move-modal-text-one-folder": "Tato akce přesune složku „<1>{{ folderName }}</1>“ a následující obsah:",
       "move-modal-title": "Přesunout",
       "move-provisioned-folder": "Přesunout poskytnutou složku",
       "moving": "Probíhá přesouvání…",
@@ -4297,11 +4291,24 @@
       "new-folder-owner-selector-checkbox": "Přiřadit vlastníka ke složce",
       "rename-provisioned-folder": "Přejmenovat poskytnutou složku",
       "selected-mix-resources-modal-text": "Vybrali jste přidělené i nepřidělené zdroje. Tyto zdroje nelze zpracovat společně. Vyberte pouze přidělené nebo nepřidělené zdroje a zkuste to znovu.",
-      "selected-mix-resources-modal-title": "Byly vybrány smíšené typy zdrojů"
+      "selected-mix-resources-modal-title": "Byly vybrány smíšené typy zdrojů",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_few": "",
+      "delete-modal-folder-empty_many": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_few": "",
+      "delete-modal-folder-not-empty_many": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_few": "",
+      "move-modal-folder-not-empty_many": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nedávno odstraněné"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Složka nenalezena",
       "title-ruler-namespace-error": "Nelze načíst pravidla"
@@ -4316,13 +4323,23 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
-      "delete-warning": "Tímto se smažou vybrané složky a všechny jejich podsložky. Celkem to ovlivní:",
-      "error-deleting-resources": "Chyba při odstraňování zdrojů"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Chyba při odstraňování zdrojů",
+      "folder-empty_one": "",
+      "folder-empty_few": "",
+      "folder-empty_many": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Zrušit",
       "button-move": "Přesunout",
       "button-moving": "Probíhá přesouvání…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Pokud máte přímý přístup k cíli, proveďte úpravy přímo v cílovém úložišti.",
         "read-only-saving-message": "Úložiště je jen pro čtení a je zajištěno v git. {{readOnlyMessage}}",
@@ -4333,32 +4350,13 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Chyba při přesouvání zdrojů",
       "error-no-target-folder-path": "Cesta k cílové složce je neplatná nebo prázdná, vyberte ji znovu.",
-      "move-total": "Celkově to ovlivní:",
       "move-warning": "Tímto se přesunou vybrané složky a všechny jejich podsložky. Dostupné cílové složky závisí na vybraných zdrojích.",
       "move-warning-tooltip": "Poskytnuté zdroje můžete přesunout pouze v rámci jejich poskytnuté složky a místní zdroje do místních složek.",
-      "target-folder": "Cílová složka"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} pravidlo výstrahy",
-      "alertRule_few": "{{count}} pravidlo výstrahy",
-      "alertRule_many": "{{count}} pravidlo výstrahy",
-      "alertRule_other": "{{count}} pravidlo výstrahy",
-      "dashboard_one": "{{count}} nástěnka",
-      "dashboard_few": "{{count}} nástěnka",
-      "dashboard_many": "{{count}} nástěnka",
-      "dashboard_other": "{{count}} nástěnka",
-      "folder_one": "{{count}} složka",
-      "folder_few": "{{count}} složka",
-      "folder_many": "{{count}} složka",
-      "folder_other": "{{count}} složka",
-      "libraryPanel_one": "{{count}} panel knihovny",
-      "libraryPanel_few": "{{count}} panel knihovny",
-      "libraryPanel_many": "{{count}} panel knihovny",
-      "libraryPanel_other": "{{count}} panel knihovny",
-      "total_one": "{{count}} položka",
-      "total_few": "{{count}} položka",
-      "total_many": "{{count}} položka",
-      "total_other": "{{count}} položka"
+      "target-folder": "Cílová složka",
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4387,12 +4385,11 @@
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
       "button-deleting": "Probíhá odstraňování…",
-      "delete-warning": "Tímto odstraníte tuto složku a všechny následné složky. Celkově to ovlivní:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Chybějící povinná pole",
       "success-message": "Složka byla úspěšně odstraněna"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Nelze načíst informace o následovníkovi"
     },
     "empty-state": {
       "button-title": "Vytvořit nástěnku",
@@ -5303,10 +5300,6 @@
       },
       "pane-header": "Přidat"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Zavřít widget „Přidat panel“",
-      "tooltip-close-widget": "Zavřít widget"
-    },
     "add-menu": {
       "import": "Importovat z knihovny",
       "paste-panel": "Vložit panel",
@@ -6101,9 +6094,6 @@
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Nezpracovaná data"
-    },
     "panel-links": {
       "aria-label-panel-links": "Propojení panelů"
     },
@@ -6144,18 +6134,6 @@
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
       "confirmText-restore-version": "Ano, obnovit na verzi {{version}}",
       "title-restore-version": "Obnovit verzi"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Možnosti řádku"
-    },
-    "row-options-form": {
-      "cancel": "Zrušit",
-      "label-repeat-for": "Opakovat pro",
-      "label-title": "Název",
-      "update": "Aktualizovat"
-    },
-    "row-options-modal": {
-      "title-row-options": "Možnosti řádku"
     },
     "rows-layout": {
       "cancel": "Zrušit",
@@ -6516,16 +6494,6 @@
       "changes": "Chcete uložit změny?",
       "discard": "Zahodit",
       "title-unsaved-changes": "Neuložené změny"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panely na tomto řádku používají zdroj dat {{SHARED_DASHBOARD_QUERY}}. Tyto panely budou odkazovat na panel na původním řádku, nikoli na panely na opakovaných řádcích."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Odstranit řádek",
-      "learn-more": "Zjistěte víc",
-      "title": {
-        "delete-row": "Odstranit řádek"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",
@@ -9047,6 +9015,11 @@
     },
     "sql-expr": {
       "button-run-query": "Spustit dotaz"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "Chyba",
@@ -12311,8 +12284,10 @@
       "undock": "Odpojit nabídku"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Sbalit sekci: {{sectionName}}",
-      "expand-aria-label": "Rozbalit sekci: {{sectionName}}"
+      "expand-aria-label": "Rozbalit sekci: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Změnit organizaci"
@@ -13230,7 +13205,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Nastavení úložiště bylo uloženo",
@@ -13261,13 +13243,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Moje konfigurace"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Přepíše automaticky zjištěnou adresu URL pro registraci webhooků.",
-      "description-webhook-url-learn-more": "Další informace",
-      "label-git-hub-features": "Funkce GitHubu",
-      "label-webhook-url": "Adresa URL webhooku",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13419,28 +13394,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Přidá náhled obrázku změn nástěnky v pull requestech. Obrázky nástěnek Grafana budou sdíleny ve vašem úložišti Git a uvidí je každý, kdo má přístup k úložišti.",
-      "description-generate-dashboard-previews": "Vytvořte odkazy na náhledy pro žádosti o stažení",
       "description-image-rendering": "Vyžaduje vykreslení obrázků. <2>Nastavit vykreslování obrázků</2>",
-      "description-preview-requirements": "(vyžaduje <2>vykreslování obrázků</2> a povolený veřejný přístup)",
       "description-read-only": "Zdroje nelze upravovat přes Grafanu.",
       "description-sync-interval": "Jak často synchronizovat změny z úložiště",
-      "description-webhook-url": "Přepíše automaticky zjištěnou adresu URL pro registraci webhooků.",
       "error-sync-interval-required": "Je vyžadován interval synchronizace",
       "label-enable-previews": "Povolit náhledy nástěnek v pull requestech",
-      "label-generate-dashboard-previews": "Generovat náhledy nástěnky",
       "label-read-only": "Jen pro čtení",
-      "label-sync-interval": "Interval synchronizace (sekundy)",
-      "label-webhook-url": "Adresa URL webhooku",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Interval synchronizace (sekundy)"
     },
     "fix-folder-metadata": {
       "button": "Opravit ID složek"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Zrušit",
+      "default-commit-message": "",
       "error-message": "Nepodařilo se spustit úlohu opravy metadat složky. Zkuste to znovu.",
       "error-title": "Chyba při opravě metadat složky",
-      "loading": "Načítání úložiště…",
       "read-only-message": "Metadata složky nelze opravit automaticky.",
       "submit": "Opravit ID složek",
       "submitting": "Probíhá oprava…",
@@ -13865,11 +13834,24 @@
     "shared": {
       "branch-description": "Větev, která bude použita pro zajištění",
       "branch-label": "Větev",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Volitelné. Cesta k podadresáři se zdroji, které chcete synchronizovat.",
       "path-label": "Cesta",
       "progress-bar": {
         "aria-label": "Indikátor průběhu"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Uživatelské jméno",
       "url-label": "Adresa URL úložiště",
       "url-pattern": "Musí být platná adresa URL úložiště (https://hostname/owner/repo)"
@@ -13937,6 +13919,13 @@
     "watch-stream": {
       "error-description": "Aktualizace v reálném čase se nepodařilo spustit. Pro zobrazení nejnovějších dat obnovte stránku.",
       "error-title": "Živé aktualizace nejsou k dispozici"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Mějte na paměti následující omezení. Další podrobnosti najdete v <2>dokumentaci k synchronizaci Git</2>.",
@@ -14245,7 +14234,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14254,6 +14242,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
