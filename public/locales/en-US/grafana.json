@@ -10658,10 +10658,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
+      "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
+    },
+    "firing-alerts-card": {
+      "critical-count_one": "{{count}} critical",
+      "critical-count_other": "{{count}} critical",
+      "empty": "You have no firing alerts.",
+      "empty-teams": "No firing alerts for your teams.",
+      "error-title": "Could not load firing alerts",
+      "high-count_one": "{{count}} high",
+      "high-count_other": "{{count}} high",
+      "retry": "Retry",
+      "severity-critical": "Critical",
+      "severity-high": "High",
+      "severity-low": "Low",
+      "severity-minor": "Minor",
+      "severity-unknown": "Unknown severity",
+      "title": "Firing alerts",
+      "view-all": "View all firing alerts"
     },
     "home-page": {
       "edition": {
@@ -10676,6 +10696,11 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "most-used-dashboards-tab": {
+      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
+      "error-title": "Could not load most viewed dashboards",
+      "loading": "Loading most viewed dashboards..."
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10683,15 +10708,13 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading recently viewed dashboards..."
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
-      "loading": "Loading starred dashboards...",
-      "retry": "Retry"
+      "loading": "Loading starred dashboards..."
     }
   },
   "import-overview": {
@@ -13420,9 +13443,16 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "all-resources": "All resources",
+      "dashboards": "Dashboards",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
-      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step."
+      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step.",
+      "loading": "Loading stats...",
+      "n-of-m-managed": "{{managed}} of {{total}} managed"
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
