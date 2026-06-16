@@ -8,13 +8,19 @@ This suite contains Playwright E2E tests for the V2 dashboard layout system. Tes
 
 All page objects live in `page-objects/` and are re-exported from `page-objects/index.ts`. Every page object extends the abstract `PageObject` base class (`PageObject.ts`), which holds the shared `page`, `dashboardPage`, and `selectors` dependencies as `protected` fields.
 
-| Class              | File                   | UI Region                                 | Key Methods / Getters                                     |
-| ------------------ | ---------------------- | ----------------------------------------- | --------------------------------------------------------- |
-| `PageObject`       | `PageObject.ts`        | _(abstract base — not used directly)_     | Shared constructor (`page`, `dashboardPage`, `selectors`) |
-| `Controls`         | `Controls.ts`          | Top nav bar (edit, save, ...)             | `enterEditMode()`                                         |
-| `Toolbar`          | `Toolbar.ts`           | Vertical icon bar (options, outline, add) | `openDashboardOptions()`                                  |
-| `Sidebar`          | `Sidebar.ts`           | Slide-out container                       | `.dashboardOptions` sub-object                            |
-| `DashboardOptions` | `Sidebar.ts` (private) | Dashboard options pane inside sidebar     | `getTitleInput()`, `getDescriptionTextarea()`             |
+| Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                               |
+| ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                           |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`                                                                                                                                                                                                   |
+| `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
+| `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                     |
+| `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                             |
+| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `clickItem(name)`                                                                                                                                                                                                   |
+| `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
+| `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
+| `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
+
+> The show/hide visibility toggle is a **Toolbar** control (`sidebar.toolbar.getVisibilityToggle()`), even though its selector lives under `components.Sidebar.*`. `Toolbar.getButton(name)` resolves buttons by accessible name, scoped to the sidebar container.
 
 > This table grows as specs are migrated — only methods needed by migrated specs exist.
 
@@ -54,7 +60,7 @@ test('example', async ({ gotoDashboardPage, selectors, page }) => {
 ```typescript
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar, Toolbar } from './page-objects';
+import { Controls, Sidebar } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -72,17 +78,16 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: 'dashboard-uid' });
 
       const controls = new Controls(page, dashboardPage, selectors);
-      const toolbar = new Toolbar(page, dashboardPage, selectors);
       const sidebar = new Sidebar(page, dashboardPage, selectors);
 
       await controls.enterEditMode();
-      // ... test body using page objects
+      // ... test body using page objects (the toolbar is reached via sidebar.toolbar)
     });
   }
 );
 ```
 
-3. **Verify locally:**
+1. **Verify locally:**
 
 ```bash
 yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
@@ -92,8 +97,9 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 ### Page objects
 
-- **Locator getters** (e.g. `getTitleInput()`) return a Playwright `Locator`. The test owns the assertion — never the page object.
-- **Action methods** (e.g. `enterEditMode()`) wrap multi-step interactions and use `test.step()` so the HTML report shows named steps.
+- **Locator getters** (e.g. `getTitleInput()`) return a Playwright `Locator` — for elements that specs assert on (or both act on and assert on). The test owns the assertion — never the page object.
+- **Action methods** (e.g. `enterEditMode()`, `clickCloseButton()`) wrap interactions — multi-step flows or single clicks on act-only elements — and use `test.step()` so the HTML report shows named steps.
+- **When a spec needs both**, pair them: the action method delegates to the getter (see `Toolbar.getButton()` / `clickButton()`).
 - **No speculative methods.** Only add methods needed by the spec being migrated.
 - **No waits or retries inside page objects** unless the pre-refactor code had them. Keep `toPass()` retries, drag-and-drop, scroll logic, and `boundingBox()` in the spec or in `utils.ts`.
 
@@ -108,8 +114,8 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 1. Find the raw selector chain in the spec you're migrating.
 2. Copy it into the appropriate page object class — mechanical extraction, no rewrites. New page objects must extend `PageObject` from `PageObject.ts`.
-3. For multi-step interactions, wrap in `test.step('Human-readable name', async () => { ... })`.
-4. For single-element access, return a `Locator` (getter pattern, no `test.step` needed).
+3. For interactions (multi-step flows or single clicks on act-only elements), wrap in `test.step('Human-readable name', async () => { ... })`.
+4. For elements the spec asserts on, return a `Locator` (getter pattern, no `test.step` needed).
 5. Run `--repeat-each=3` on the migrated spec.
 
 ## Canonical Example
@@ -118,7 +124,7 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 ```typescript
 await controls.enterEditMode();
-await toolbar.openDashboardOptions();
+await sidebar.toolbar.clickButton('Options');
 
 const titleInput = sidebar.dashboardOptions.getTitleInput();
 await expect(titleInput).toHaveValue('Annotation filtering');
@@ -130,9 +136,39 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-| Spec                                   | Status      |
-| -------------------------------------- | ----------- |
-| `dashboards-title-description.spec.ts` | Migrated    |
-| 25 remaining specs                     | Not started |
+**8 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+
+| Spec                                                  | Status      | Lines of code | Selectors usage count |
+| ----------------------------------------------------- | ----------- | ------------- | --------------------- |
+| `dashboards-title-description.spec.ts`                | Migrated    | —             | —                     |
+| `dashboards-edit-panel-title-description.spec.ts`     | Migrated    | —             | —                     |
+| `dashboards-edit-panel-transparent-bg.spec.ts`        | Migrated    | —             | —                     |
+| `dashboard-mobile-sidebar.spec.ts`                    | Migrated    | —             | —                     |
+| `dashboard-hide-sidebar.spec.ts`                      | Migrated    | —             | —                     |
+| `dashboards-remove-panel.spec.ts`                     | Migrated    | —             | —                     |
+| `dashboard-duplicate-panel.spec.ts`                   | Migrated    | —             | —                     |
+| `dashboard-sidepane.spec.ts`                          | Migrated    | —             | —                     |
+| `dashboard-group-panels.spec.ts`                      | Not started | 918           | 224                   |
+| `dashboards-repeats-tabs-layout.spec.ts`              | Not started | 482           | 74                    |
+| `dashboards-repeats-custom-grid.spec.ts`              | Not started | 551           | 70                    |
+| `dashboards-panel-layouts.spec.ts`                    | Not started | 425           | 70                    |
+| `dashboards-repeats-auto-grid.spec.ts`                | Not started | 471           | 66                    |
+| `dashboard-repeats-row-layout.spec.ts`                | Not started | 546           | 61                    |
+| `dashboards-conditional-rendering.spec.ts`            | Not started | 308           | 53                    |
+| `dashboards-add-panel.spec.ts`                        | Not started | 134           | 27                    |
+| `dashboards-edit-variables.spec.ts`                   | Not started | 204           | 26                    |
+| `dashboards-edit-custom-variables.spec.ts`            | Not started | 213           | 22                    |
+| `dashboard-outline.spec.ts`                           | Not started | 85            | 17                    |
+| `dashboard-tabs-scroll.spec.ts`                       | Not started | 150           | 12                    |
+| `dashboards-repeats-snapshots.spec.ts`                | Not started | 117           | 11                    |
+| `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
+| `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
+| `dashboards-edit-query-variables.spec.ts`             | Not started | 83            | 6                     |
+| `dashboard-keybindings.spec.ts`                       | Not started | 60            | 6                     |
+| `dashboards-edit-adhoc-variables.spec.ts`             | Not started | 96            | 4                     |
+| `dashboards-edit-group-by-variables.spec.ts`          | Not started | 89            | 4                     |
+| `dashboards-edit-datasource-variables.spec.ts`        | Not started | 62            | 4                     |
+| `dashboard-url-syncing.spec.ts`                       | Not started | 128           | 3                     |
+| `dashboard-tabs-drag-drop.spec.ts`                    | Not started | 75            | 2                     |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.

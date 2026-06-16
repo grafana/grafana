@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -9,15 +10,20 @@ import { type DashboardQueryResult, type LocationInfo } from 'app/features/searc
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { clearHistoryClicked, emptyCtaClicked } from '../analytics/main';
+
+import { DashboardTabError } from './DashboardTabError';
+
 interface Props {
   dashboards: DashboardQueryResult[];
   loading: boolean;
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  onStarChange?: () => void;
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange }: Props) {
   const styles = useStyles2(getStyles);
 
   if (loading) {
@@ -26,14 +32,9 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
 
   if (error) {
     return (
-      <Alert
-        severity="warning"
+      <DashboardTabError
         title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
-        action={
-          <Button onClick={retry} variant="secondary" size="sm">
-            <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
-          </Button>
-        }
+        retry={retry}
       />
     );
   }
@@ -42,37 +43,49 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
     const canCreate = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
     return (
-      <EmptyState
-        hideImage
-        variant="call-to-action"
-        message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
-        button={
-          canCreate ? (
-            <LinkButton icon="plus" href="/dashboard/new">
-              <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
-            </LinkButton>
-          ) : (
-            <LinkButton icon="apps" href="/dashboards" variant="secondary">
-              <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
-            </LinkButton>
-          )
-        }
-      >
-        <Trans i18nKey="home.recent-dashboards-tab.empty-description">
-          After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
-          and tables or create lists, markdowns and other widgets.
-        </Trans>
-      </EmptyState>
+      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
+        <EmptyState
+          hideImage
+          variant="call-to-action"
+          message={t('home.recent-dashboards-tab.empty', "Dashboards you've recently viewed will appear here.")}
+          button={
+            canCreate ? (
+              <LinkButton
+                icon="plus"
+                href="/dashboard/new"
+                onClick={() => emptyCtaClicked({ cta_type: 'create_dashboard' })}
+              >
+                <Trans i18nKey="home.recent-dashboards-tab.create">Create your first dashboard</Trans>
+              </LinkButton>
+            ) : (
+              <LinkButton
+                icon="apps"
+                href="/dashboards"
+                variant="secondary"
+                onClick={() => emptyCtaClicked({ cta_type: 'browse_dashboards' })}
+              >
+                <Trans i18nKey="home.recent-dashboards-tab.browse">Browse dashboards</Trans>
+              </LinkButton>
+            )
+          }
+        >
+          <Trans i18nKey="home.recent-dashboards-tab.empty-description">
+            After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
+            and tables or create lists, markdowns and other widgets.
+          </Trans>
+        </EmptyState>
+      </Stack>
     );
   }
 
   const handleClearHistory = () => {
+    clearHistoryClicked({ dashboard_count: dashboards.length });
     impressionSrv.clearImpressions();
     retry();
   };
 
   return (
-    <div className={styles.wrapper}>
+    <Stack grow={1} direction="column">
       <ul className={styles.list}>
         {dashboards.map((dash) => (
           <li key={dash.uid}>
@@ -83,25 +96,21 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               locationInfo={foldersByUid[dash.location]}
               layoutMode="list"
               source="homepage_recentTab"
+              onStarChange={onStarChange}
             />
           </li>
         ))}
       </ul>
       <div className={styles.clearButton}>
-        <Button icon="times" size="xs" variant="secondary" fill="text" onClick={handleClearHistory}>
+        <Button icon="times" size="sm" variant="secondary" fill="text" onClick={handleClearHistory}>
           <Trans i18nKey="home.recent-dashboards-tab.clear">Clear history</Trans>
         </Button>
       </div>
-    </div>
+    </Stack>
   );
 }
 
-const getStyles = () => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-  }),
+const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
     padding: 0,
@@ -110,7 +119,12 @@ const getStyles = () => ({
   clearButton: css({
     display: 'flex',
     justifyContent: 'flex-end',
-    paddingTop: 4,
+    padding: theme.spacing(1),
     marginTop: 'auto',
+
+    svg: {
+      position: 'relative',
+      top: 0.5,
+    },
   }),
 });

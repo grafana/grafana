@@ -3,8 +3,6 @@ package legacy_storage
 import (
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -294,68 +292,38 @@ receivers:
 
 		result, err := imported.GetInhibitRules()
 		require.NoError(t, err)
-		require.Equal(t, v1.ManagedInhibitionRules{
+		require.Equal(t, map[v1.ResourceUID]v1.InhibitionRule{
 			"test-imported-inhibition-rule-00000000000": {
-				Name:       "test-imported-inhibition-rule-00000000000",
-				Provenance: "converted_prometheus",
-				InhibitRule: config.InhibitRule{
-					SourceMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "SourceAlert",
-						},
-					},
-					TargetMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "alertname",
-							Value: "TargetAlert",
-						},
-					},
-					Equal: []string{"cluster"},
+				ResourceMetadata: v1.ResourceMetadata{
+					UID:        "test-imported-inhibition-rule-00000000000",
+					Provenance: models.ProvenanceConvertedPrometheus,
+					Version:    "8ea121175ec5f716",
 				},
+				SourceMatchers: []v1.Matcher{
+					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
+					v1.NewMatcher(v1.MatcherEqual, "alertname", "SourceAlert"),
+				},
+				TargetMatchers: []v1.Matcher{
+					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
+					v1.NewMatcher(v1.MatcherEqual, "alertname", "TargetAlert"),
+				},
+				Equal: []string{"cluster"},
 			},
 			"test-imported-inhibition-rule-00000000001": {
-				Name:       "test-imported-inhibition-rule-00000000001",
-				Provenance: "converted_prometheus",
-				InhibitRule: config.InhibitRule{
-					SourceMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "critical",
-						},
-					},
-					TargetMatchers: []*labels.Matcher{
-						{
-							Type:  labels.MatchEqual,
-							Name:  "__grafana_managed_route__",
-							Value: "test",
-						},
-						{
-							Type:  labels.MatchEqual,
-							Name:  "severity",
-							Value: "warning",
-						},
-					},
-					Equal: []string{"instance"},
+				ResourceMetadata: v1.ResourceMetadata{
+					UID:        "test-imported-inhibition-rule-00000000001",
+					Provenance: models.ProvenanceConvertedPrometheus,
+					Version:    "74cb0d8b8dcff9f0",
 				},
+				SourceMatchers: []v1.Matcher{
+					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
+					v1.NewMatcher(v1.MatcherEqual, "severity", "critical"),
+				},
+				TargetMatchers: []v1.Matcher{
+					v1.NewMatcher(v1.MatcherEqual, "__grafana_managed_route__", "test"),
+					v1.NewMatcher(v1.MatcherEqual, "severity", "warning"),
+				},
+				Equal: []string{"instance"},
 			},
 		}, result)
 	})

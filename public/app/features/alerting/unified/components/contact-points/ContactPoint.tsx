@@ -111,14 +111,14 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   );
 };
 
-export interface ContactPointReceiverTitleRowProps {
+interface ContactPointReceiverTitleRowProps {
   name: string;
   type: GrafanaNotifierType | string;
   description?: ReactNode;
   pluginMetadata?: ReceiverPluginMetadata;
 }
 
-export function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
+function ContactPointReceiverTitleRow(props: ContactPointReceiverTitleRowProps) {
   const { name, type, description, pluginMetadata } = props;
 
   const iconName = INTEGRATION_ICONS[type];

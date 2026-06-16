@@ -71,8 +71,8 @@ interface ChanceMixins {
 // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 const chance = new Chance() as Chance.Chance & ChanceMixins;
 
-export const SERVICE_LIST = ['serviceA', 'serviceB', 'serviceC', 'serviceD', 'serviceE', 'serviceF'];
-export const OPERATIONS_LIST = [
+const SERVICE_LIST = ['serviceA', 'serviceB', 'serviceC', 'serviceD', 'serviceE', 'serviceF'];
+const OPERATIONS_LIST = [
   'GET',
   'PUT',
   'POST',

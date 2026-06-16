@@ -145,7 +145,10 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     };
     const { data: teamData, error: teamError } = await createTeamTrigger(mutationArg);
 
-    // It shouldn't happen that we have success and no data, but the types are set up that way, so we check it here
+    // TODO: team.uid should be the source of truth for team identity, but teamId is
+    // still required for the team-roles endpoint (PUT /api/access-control/teams/{teamId}/roles),
+    // which only accepts a numeric ID. Drop the teamData.teamId check once that
+    // endpoint resolves UIDs (e.g. via a UID resolver like MiddlewareTeamUIDResolver).
     if (teamError || !teamData?.uid || !teamData?.teamId) {
       localUpdateState({ state: 'error', error: teamError }, 'createTeam');
       return { teamCreationStatus, folderCreationStatus, rolesCreationStatus };

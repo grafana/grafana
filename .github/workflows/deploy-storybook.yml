@@ -28,7 +28,7 @@ jobs:
     # Only run on push to main (not needed for workflow_call releases)
     if: github.repository == 'grafana/grafana' && github.event_name == 'push'
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -46,7 +46,7 @@ jobs:
           self: .github/workflows/deploy-storybook.yml
   deploy-storybook:
     name: Deploy Storybook
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     needs: detect-changes
     # Only run in grafana/grafana
     if: always() && github.repository == 'grafana/grafana' && (needs.detect-changes.outputs.changed-frontend-packages == 'true' || inputs.version != '')

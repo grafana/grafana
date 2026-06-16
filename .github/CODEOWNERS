@@ -54,7 +54,7 @@
 
 
 /docs/sources/visualizations/dashboards/share-dashboards-panels/_index.md                         @imatwawana @jtvdez
-/docs/sources/visualizations/dashboards/share-dashboards-panels/shared-dashboards/index.md        @jtvdez
+/docs/sources/visualizations/dashboards/share-dashboards-panels/shared-dashboards.md              @jtvdez
 /docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md   @imatwawana @baldm0mma
 /docs/sources/visualizations/panels-visualizations/query-transform-data/sql-expressions/index.md  @lwandz13 @irenerl24
 # END Technical documentation
@@ -244,6 +244,7 @@
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
 /devenv/secrets/ @grafana/grafana-operator-experience-squad
 
+/devenv/dev-dashboards/vizlegend @grafana/dataviz-squad
 /devenv/dev-dashboards/annotations @grafana/dataviz-squad
 /devenv/dev-dashboards/migrations @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-barchart @grafana/dataviz-squad
@@ -454,6 +455,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards/V2DashWithRowRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabRepeats.json @grafana/dashboards-squad
 /e2e-playwright/dashboards/V2DashWithTabs.json @grafana/dashboards-squad
+/e2e-playwright/dashboards/V2DashboardWithTabsForSlugTest.json @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/adhoc-filter-from-panel.spec.ts @grafana/datapro
 /e2e-playwright/dashboards-suite/dashboard-browse-nested.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/dashboard-browse.spec.ts @grafana/grafana-frontend-navigation
@@ -543,6 +545,10 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/README.md @grafana/grafana-frontend-platform
 /packages/rollup.config.parts.ts @grafana/frontend-ops
 
+# Vendored
+/packages/get-document/ @grafana/grafana-frontend-platform
+/packages/mapbox-jsonlint-lines-primitives/ @grafana/grafana-frontend-platform
+
 # @grafana/alerting
 /packages/grafana-alerting/ @grafana/alerting-frontend
 
@@ -590,7 +596,6 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/datasource* @grafana/grafana-datasources-core-services
 /packages/grafana-data/src/utils/docs.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/deprecationWarning* @grafana/grafana-frontend-platform
-/packages/grafana-data/src/utils/featureToggles.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/fieldParser.ts @grafana/dataviz-squad
 /packages/grafana-data/src/utils/flotPairs* @grafana/dataviz-squad
 /packages/grafana-data/src/utils/fuzzySearch* @grafana/grafana-frontend-navigation
@@ -614,6 +619,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/throwIfAngular* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/unaryOperators.ts @grafana/datapro
 /packages/grafana-data/src/utils/url* @grafana/grafana-frontend-navigation
+/packages/grafana-data/src/utils/uuid* @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/valueMappings* @grafana/dashboards-squad
 /packages/grafana-data/src/utils/variables.ts @grafana/grafana-frontend-platform
 /packages/grafana-data/src/utils/withLoadingIndicator.ts @grafana/access-squad @grafana/alerting-frontend
@@ -668,6 +674,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/grafana-catalog
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/services/dataSource @grafana/grafana-catalog
 /packages/grafana-runtime/src/services/logging @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/pluginExtensions @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/CorrelationsService.ts @grafana/datapro
@@ -792,6 +799,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.gitignore @grafana/frontend-ops
 /.ignore @grafana/frontend-ops
 /.nvmrc @grafana/frontend-ops
+/mise.toml @grafana/frontend-ops
 /.prettierignore @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
@@ -806,6 +814,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
 /.levignore.js @grafana/grafana-frontend-platform
+knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
@@ -924,10 +933,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/connectWithReduxStore.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
-/public/app/core/utils/deferred.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/docsLinks.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/datapro
 /public/app/core/utils/factors.ts @grafana/dashboards-squad
@@ -970,7 +976,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/scopes/ @grafana/grafana-operator-experience-squad
 /public/app/features/datasources/ @grafana/grafana-catalog
 /public/app/features/dimensions/ @grafana/dataviz-squad
-/public/app/features/dataframe-import/ @grafana/dataviz-squad
 /public/app/features/explore/ @grafana/datapro
 /public/app/features/expressions/ @grafana/datapro
 /public/app/features/folders/ @grafana/grafana-frontend-navigation
@@ -987,6 +992,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/panel/components/VizTypePicker/Visualization*.tsx @grafana/dataviz-squad
 /public/app/features/panel/suggestions/ @grafana/dataviz-squad
+/public/app/features/panel-screenshot/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/grafana-frontend-platform
 /public/app/features/plugins/admin/ @grafana/grafana-catalog
@@ -1007,6 +1013,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/features/users/ @grafana/access-squad
 /public/app/features/variables/ @grafana/dashboards-squad
 /public/app/features/bookmarks/ @grafana/grafana-frontend-navigation
+/public/app/initPreferences* @grafana/grafana-frontend-platform
 /public/app/plugins/panel/* @grafana/dataviz-squad
 /public/app/plugins/panel/alertlist/ @grafana/alerting-frontend
 /public/app/plugins/panel/annolist/ @grafana/dashboards-squad
@@ -1084,7 +1091,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
 scripts/build-msi.sh @grafana/grafana-backend-services-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
-/scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-backend-services-squad
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
@@ -1093,6 +1099,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
 /scripts/check-frontend-dev.sh @grafana/grafana-frontend-platform
+/scripts/check-enterprise-linked.sh @grafana/grafana-frontend-platform
 /scripts/check-codeowner-affected.js @grafana/dataviz-squad
 /scripts/compare-coverage-by-codeowner.js @grafana/dataviz-squad
 /scripts/helpers/ @grafana/grafana-backend-services-squad
@@ -1108,8 +1115,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/trigger_windows_build.sh @grafana/grafana-backend-services-squad
 /scripts/verify-repo-update/ @grafana/grafana-backend-services-squad
 /scripts/generate-alerting-rtk-apis.ts @grafana/alerting-frontend
-/scripts/levitate-parse-json-report.js @grafana/grafana-frontend-platform
-/scripts/levitate-show-affected-plugins.js @grafana/grafana-frontend-platform
 /scripts/codemods/explicit-barrel-imports.cjs @grafana/frontend-ops
 /scripts/view-playwright-ci.sh @grafana/grafana-frontend-platform
 
@@ -1224,6 +1229,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
+/pkg/registry/apis/ofrep @grafana/grafana-backend-services-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/grafana-catalog
 /pkg/registry/apis/dashboard/search.go @grafana/grafana-search-and-storage
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
@@ -1255,6 +1261,7 @@ embed.go @grafana/grafana-as-code
 /.github/actions/report-go-cache-sizes/ @grafana/grafana-backend-group
 /.github/actions/build-go @grafana/grafana-backend-services-squad
 /.github/actions/build-targz @grafana/grafana-backend-services-squad
+/.github/actions/bundle-schema-types @grafana/grafana-frontend-platform
 /.github/actions/change-detection @grafana/grafana-backend-services-squad
 /.github/actions/setup-fpm @grafana/grafana-backend-services-squad
 /.github/actions/setup-node @grafana/grafana-frontend-platform
@@ -1296,6 +1303,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-endpoint-feature-toggle.yml @grafana/alerting-frontend
 /.github/workflows/pr-mt-service-compatibility.yml @evictorero
+/.github/workflows/pr-unified-storage-compatibility.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
@@ -1310,7 +1318,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/pr-digest.mts @grafana/grafana-community-support
 /.github/workflows/scripts/pr-notify.mts @grafana/grafana-community-support
 /.github/workflows/scripts/utils.mts @grafana/grafana-community-support
-/.github/workflows/scripts/json-file-to-job-output.js @grafana/grafana-frontend-platform
+/.github/workflows/scripts/levitate/ @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-backend-services-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-backend-services-squad
@@ -1324,7 +1332,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-verify.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook.yml @grafana/grafana-frontend-platform
 /.github/workflows/deploy-storybook-preview.yml @grafana/grafana-frontend-platform
-/.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/scripts/publish-frontend-metrics.mts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
@@ -1360,9 +1367,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/defaults-ini-docs-reminder.yml @grafana/docs-tooling @jtvdez
 /.github/workflows/pr-build-grafana.yml @grafana/grafana-backend-services-squad
 /.github/workflows/build-docker-variants.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-release-tag.yml @grafana/grafana-backend-services-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature-types.gen.d.ts @grafanabot
+/packages/grafana-runtime/src/internal/openFeature/openfeature.gen.ts @grafanabot
 /docs/sources/setup-grafana/configure-grafana/feature-toggles/index.md @grafanabot
 /pkg/services/featuremgmt/toggles_gen.csv @grafanabot
 /pkg/services/featuremgmt/toggles_gen.go @grafanabot

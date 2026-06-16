@@ -110,10 +110,10 @@ export const folderAPIv1beta1 = generatedAPI
               }
 
               const counts = getParsedCounts(data?.counts ?? []);
-              acc.folders += counts.folders;
-              acc.dashboards += counts.dashboards;
-              acc.alertrules += counts.alertrules;
-              acc.library_elements += counts.library_elements;
+              acc.folders += counts.folders ?? 0;
+              acc.dashboards += counts.dashboards ?? 0;
+              acc.alertrules += counts.alertrules ?? 0;
+              acc.library_elements += counts.library_elements ?? 0;
               return acc;
             }, initialCounts);
 
@@ -134,6 +134,7 @@ export const {
   useUpdateFolderMutation,
   useReplaceFolderMutation,
   useGetAffectedItemsQuery,
+  useGetFolderCountsQuery,
 } = folderAPIv1beta1;
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files

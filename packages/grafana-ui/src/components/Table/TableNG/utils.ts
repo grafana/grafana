@@ -47,8 +47,6 @@ import {
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
-
 /**
  * @internal
  * Returns the default row height based on the theme and cell height setting.
@@ -628,10 +626,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
  * @internal
  * Processes nested table rows
  */
-export const processNestedTableRows = (
-  rows: TableRow[],
-  processParents: (parents: TableRow[]) => TableRow[]
-): TableRow[] => {
+const processNestedTableRows = (rows: TableRow[], processParents: (parents: TableRow[]) => TableRow[]): TableRow[] => {
   // Separate parent and child rows
   // Array for parentRows: enables sorting and maintains order for iteration
   // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
@@ -785,9 +780,10 @@ export function applyFilter(
  * @internal
  */
 export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const hasNestedFrames = (nestedFramesFieldName ?? '').length > 0;
   const fnBody = `
     const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const hasNestedFrames = ${hasNestedFrames};
     const frameLength = frame.length ?? values[0]?.length ?? 0;
     const rows = Array(frameLength);
 

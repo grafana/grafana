@@ -167,6 +167,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.frontend-app.title', 'Frontend');
     case 'plugin-page-grafana-synthetic-monitoring-app':
       return t('nav.synthetics.title', 'Synthetics');
+    case 'plugin-page-grafana-agentictesting-app':
+      return t('nav.agentic-testing.title', 'Agentic testing');
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':

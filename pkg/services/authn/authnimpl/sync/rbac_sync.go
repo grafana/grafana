@@ -104,6 +104,14 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
 	k8s := ident.ClientParams.FetchPermissionsParams.K8s
+	// These identities are token-defined (e.g. Extended JWT access policies / service identities):
+	// their permission set is enumerated in the token by the issuing authz server, so we build it
+	// directly from the token claims and skip GetUserPermissions. This deliberately bypasses the
+	// Zanzana merge for migrated resources: the token is authoritative (including k8s-style grants
+	// via the K8s field), and unioning local Zanzana permissions here could grant access beyond
+	// what the token delegated. If migrated resources for these identities ever need to be sourced
+	// from local Zanzana, the merge would have to happen here and be reconciled against the token's
+	// delegated scope.
 	if len(roles) > 0 || len(actions) > 0 || len(k8s) > 0 {
 		for _, role := range roles {
 			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)

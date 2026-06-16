@@ -1,7 +1,6 @@
 import { produce } from 'immer';
 
 import {
-  type DataSourceInstanceSettings,
   type IntervalValues,
   type RelativeTimeRange,
   type ScopedVars,
@@ -15,7 +14,7 @@ import { type PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
-import { type DataQuery, type DataSourceJsonData, type DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -107,7 +106,7 @@ export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
   throw new Error(`unexpected rule type: ${type}`);
 }
 
-export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
+function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addEmpty: boolean): KVObject[] {
   const list = [...recordToArray(item || {})];
   if (addEmpty) {
     list.push({ key: '', value: '' });
@@ -120,7 +119,9 @@ export function getNotificationSettingsForDTO(
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
-  if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
+  // selectedPolicy is only populated for rules routed via notification_settings.policy so emit it in both toggle states.
+  // Legacy label-routed rules leave selectedPolicy unset and keep routing through the label.
+  if (selectedPolicy && !manualRouting) {
     return { policy: selectedPolicy };
   }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
@@ -182,9 +183,10 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
-  // When the new policy routing is active, the legacy label must not be sent so that both
-  // routing mechanisms never coexist in the same payload.
-  if (config.featureToggles.alertingPolicyRoutingSettings) {
+  // The legacy label must not be sent whenever the policy field is in use, so the two routing
+  // mechanisms never coexist in the same payload: either when the new policy routing is active
+  // (toggle on) or when we are writing a route to notification_settings.policy.
+  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.policy) {
     delete labels[NAMED_ROOT_LABEL_NAME];
   }
 
@@ -617,24 +619,6 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   ];
 };
 
-export const getDefaultRecordingRulesQueries = (
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
-): AlertQuery[] => {
-  const relativeTimeRange = getDefaultRelativeTimeRange();
-
-  return [
-    {
-      refId: 'A',
-      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
-      queryType: '',
-      relativeTimeRange,
-      model: {
-        refId: 'A',
-      },
-    },
-  ];
-};
-
 export const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
@@ -959,7 +943,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
   return formValues;
 };
 
-export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
+function getIntervals(range: TimeRange, lowLimit?: string, resolution?: number): IntervalValues {
   if (!resolution) {
     if (lowLimit && rangeUtil.intervalToMs(lowLimit) > 1000) {
       return {

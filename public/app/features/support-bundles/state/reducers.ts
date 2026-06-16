@@ -2,7 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import { type SupportBundlesState, type SupportBundle, type SupportBundleCollector } from 'app/types/supportBundles';
 
-export const initialState: SupportBundlesState = {
+const initialState: SupportBundlesState = {
   supportBundles: [],
   isLoading: false,
   supportBundleCollectors: [],
@@ -53,7 +53,7 @@ export const {
   setCreateBundleError,
 } = supportBundlesSlice.actions;
 
-export const supportBundlesReducer = supportBundlesSlice.reducer;
+const supportBundlesReducer = supportBundlesSlice.reducer;
 
 export default {
   supportBundles: supportBundlesReducer,

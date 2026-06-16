@@ -24,14 +24,17 @@ type extra struct {
 	decrypter         repository.Decrypter
 	webhookBuilder    WebhookURLBuilder
 	incrementalPolicy repository.IncrementalSyncPolicy
+	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
+	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, incrementalPolicy repository.IncrementalSyncPolicy, allowInsecure bool) repository.Extra {
 	return &extra{
 		decrypter:         decrypter,
 		factory:           factory,
 		webhookBuilder:    webhookBuilder,
 		incrementalPolicy: incrementalPolicy,
+		allowInsecure:     allowInsecure,
 	}
 }
 
@@ -52,11 +55,19 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.CommitSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:    r.Spec.GitHub.URL,
-		Branch: r.Spec.GitHub.Branch,
-		Path:   r.Spec.GitHub.Path,
-		Token:  token,
+		URL:              r.Spec.GitHub.URL,
+		Branch:           r.Spec.GitHub.Branch,
+		Path:             r.Spec.GitHub.Path,
+		Token:            token,
+		CommitSigningKey: signingKey,
+		SigningMethod:    git.SigningMethodFromSpec(r),
+		SMIMECertificate: git.SMIMECertificateFromSpec(r),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
@@ -71,6 +82,13 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return ghRepo, nil
 	}
 
+	// Webhook integration is explicitly disabled for this repository, so polling will be
+	// used instead. Skip registration even if a webhook URL would otherwise be available.
+	if r.Spec.GitHub.WebhookDisabled {
+		logger.Debug("Skipping webhook setup: webhookDisabled is true")
+		return ghRepo, nil
+	}
+
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
 	if len(webhookURL) == 0 {
 		logger.Debug("Skipping webhook setup as no webhooks are not configured")
@@ -82,7 +100,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.incrementalPolicy, e.factory.replayCache), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
@@ -90,5 +108,5 @@ func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
 }
 
 func (e *extra) Validate(ctx context.Context, obj runtime.Object) field.ErrorList {
-	return Validate(ctx, obj)
+	return Validate(ctx, obj, e.allowInsecure)
 }

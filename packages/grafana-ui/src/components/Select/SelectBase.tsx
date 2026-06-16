@@ -377,30 +377,7 @@ export function SelectBase<T, Rest = {}>({
           IndicatorSeparator: IndicatorSeparator,
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator(props: ClearIndicatorProps) {
-            const { clearValue } = props;
-            return (
-              <Icon
-                name="times"
-                role="button"
-                aria-label={t('grafana-ui.select.clear-value', 'Clear value')}
-                className={styles.singleValueRemove}
-                tabIndex={0}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  clearValue();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    clearValue();
-                  }
-                }}
-              />
-            );
-          },
+          ClearIndicator: ClearIndicator,
           LoadingIndicator() {
             // Handled with DropdownIndicator, to avoid resize flickering with auto width
             return null;
@@ -444,6 +421,33 @@ export function SelectBase<T, Rest = {}>({
         {...rest}
       />
     </>
+  );
+}
+
+function ClearIndicator({ clearValue, ...rest }: ClearIndicatorProps) {
+  const theme = useTheme2();
+  const styles = getSelectStyles(theme);
+
+  return (
+    <Icon
+      name="times"
+      role="button"
+      aria-label={t('grafana-ui.select.clear-value', 'Clear value')}
+      className={styles.singleValueRemove}
+      tabIndex={0}
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        clearValue();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          clearValue();
+        }
+      }}
+    />
   );
 }
 

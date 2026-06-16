@@ -10,11 +10,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -845,6 +848,7 @@ func TestValidateUpdate(t *testing.T) {
 					return tt.parents, tt.parentsError
 				},
 				&mockSearchClient{folders: tt.allFolders},
+				nil,
 				maxDepth)
 
 			if tt.expectedErr == "" {
@@ -928,7 +932,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -948,7 +952,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -1026,7 +1030,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
 					},
@@ -1068,7 +1072,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    10, // now validated
 					},
@@ -1385,6 +1389,231 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		resp.TotalHits = total
 	}
 	return resp, nil
+}
+
+// allow is a single (group, resource, verb, name, folder) tuple the mock
+// authlib client treats as Allowed; everything else is denied.
+type allow struct{ group, resource, verb, name, folder string }
+
+func TestCheckMoveAccess(t *testing.T) {
+	const (
+		namespace    = "default"
+		orgID        = int64(1)
+		sourceUID    = "source"
+		oldParentUID = "oldParent"
+		newParentUID = "newParent"
+	)
+
+	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+	allowFolder := func(verb, name, folderUID string) allow {
+		return allow{group: folderGVR.Group, resource: folderGVR.Resource, verb: verb, name: name, folder: folderUID}
+	}
+
+	// Common allows: user can update source under its current parent (so the
+	// escalation check passes for "update" when present), and can create
+	// folders in the new parent (so destination-write passes). Tests override
+	// these via additionalAllows / nilClient / no destination-write entry.
+	canCreateFolderInNew := allowFolder(utils.VerbCreate, "", newParentUID)
+	canUpdateOnSourceUnderOld := allowFolder(utils.VerbUpdate, sourceUID, oldParentUID)
+	canUpdateOnSourceUnderNew := allowFolder(utils.VerbUpdate, sourceUID, newParentUID)
+
+	tests := []struct {
+		name        string
+		newParent   string
+		oldParent   string
+		nilClient   bool
+		allows      []allow
+		expectedErr string
+	}{
+		{
+			name:      "nil accessClient is a no-op",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			nilClient: true,
+		},
+		{
+			name:      "no create on new parent denies the move",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			// no canCreateFolderInNew → destination-write fails
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			name:      "create on new parent and no extra capabilities is allowed",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateFolderInNew},
+		},
+		{
+			name:        "folder verb allowed on source only under new parent is escalation",
+			newParent:   newParentUID,
+			oldParent:   oldParentUID,
+			allows:      []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:      "folder verb allowed on source under both parents is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew, canUpdateOnSourceUnderOld},
+		},
+		{
+			name:      "move to root requires create at root",
+			newParent: folder.GeneralFolderUID,
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			name:        "move to root denied without create at root",
+			newParent:   folder.GeneralFolderUID,
+			oldParent:   oldParentUID,
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			// Tier model: gaining a *different* verb at the same tier is not
+			// escalation. Old=update (Editor), new=delete (Editor) → no jump.
+			name:      "same-tier verb swap (update→delete) is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbUpdate, sourceUID, oldParentUID),
+				allowFolder(utils.VerbDelete, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: losing capability at the destination is never
+			// escalation. Old=Admin (setperms), new=Editor (update only).
+			name:      "tier downgrade Admin→Editor is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, oldParentUID),
+				allowFolder(utils.VerbUpdate, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: gaining Admin (setperms) where the user only had
+			// Editor (update) before is a tier jump → escalation.
+			name:      "tier upgrade Editor→Admin on folder is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				canUpdateOnSourceUnderOld,
+				canUpdateOnSourceUnderNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Tier model: gaining View (None → Viewer) is a tier jump on its
+			// own → escalation. Catches read-only access gained by the move.
+			name:      "tier upgrade None→Viewer is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbGet, sourceUID, newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+				UserID: 1,
+				OrgID:  orgID,
+			})
+
+			var client authlib.AccessClient
+			var mock *mockAccessClient
+			if !tt.nilClient {
+				mock = newMockAccessClient(tt.allows)
+				client = mock
+			}
+
+			err := checkMoveAccess(ctx, namespace, sourceUID, tt.oldParent, tt.newParent, client)
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
+			}
+
+			// All access checks must be batched into one BatchCheck round-trip.
+			if mock != nil {
+				require.Equal(t, 1, mock.batchCheckCall, "expected exactly one BatchCheck call")
+			}
+		})
+	}
+
+	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient(nil)
+		mock.batchCheckErr = fmt.Errorf("boom")
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "boom")
+		require.Equal(t, 1, mock.batchCheckCall)
+	})
+
+	t.Run("fails closed when BatchCheck omits the write-destination result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "writeDest"
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for destination write")
+	})
+
+	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "newFolder|" + utils.VerbGet
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for verb")
+	})
+}
+
+type mockAccessClient struct {
+	allowed        map[allow]struct{}
+	batchCheckCall int
+	batchCheckErr  error
+	dropResultFor  string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+}
+
+func newMockAccessClient(allows []allow) *mockAccessClient {
+	m := &mockAccessClient{allowed: make(map[allow]struct{}, len(allows))}
+	for _, a := range allows {
+		m.allowed[a] = struct{}{}
+	}
+	return m
+}
+
+func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	_, ok := m.allowed[allow{group: req.Group, resource: req.Resource, verb: req.Verb, name: req.Name, folder: folder}]
+	return authlib.CheckResponse{Allowed: ok, Zookie: authlib.NoopZookie{}}, nil
+}
+
+func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	m.batchCheckCall++
+	if m.batchCheckErr != nil {
+		return authlib.BatchCheckResponse{}, m.batchCheckErr
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		if c.CorrelationID == m.dropResultFor {
+			continue
+		}
+		_, ok := m.allowed[allow{group: c.Group, resource: c.Resource, verb: c.Verb, name: c.Name, folder: c.Folder}]
+		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: ok}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return false }, authlib.NoopZookie{}, nil
 }
 
 // RebuildIndexes implements resourcepb.ResourceIndexClient.

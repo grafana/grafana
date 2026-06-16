@@ -379,7 +379,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 	initialConfig := func() *v1.AMConfigV1 {
 		return &v1.AMConfigV1{
-			TemplateFiles: nil,
+			Templates: nil,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					MuteTimeIntervals: []v1.MuteTimeInterval{
@@ -559,7 +559,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 	originalVersion := calculateMuteTimeIntervalFingerprint(original)
 	initialConfig := func() *v1.AMConfigV1 {
 		return &v1.AMConfigV1{
-			TemplateFiles: nil,
+			Templates: nil,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					MuteTimeIntervals: []v1.MuteTimeInterval{
@@ -1092,7 +1092,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 	usedActiveTiming := "used-active-timing"
 	initialConfig := func() *v1.AMConfigV1 {
 		return &v1.AMConfigV1{
-			TemplateFiles: nil,
+			Templates: nil,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
 					Route: &v1.Route{

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -1487,6 +1489,53 @@ func TestResults_HasNonRetryableErrors(t *testing.T) {
 	}
 }
 
+func TestIsNonRetryableError(t *testing.T) {
+	tc := []struct {
+		name     string
+		err      error
+		expected bool
+	}{
+		{name: "nil error", err: nil, expected: false},
+		{name: "generic error is retryable", err: errors.New("some weird error"), expected: false},
+		{
+			name:     "invalid eval result format is non-retryable",
+			err:      &invalidEvalResultFormatError{refID: "A", reason: "unable to get frame row length", err: errors.New("weird error")},
+			expected: true,
+		},
+		{
+			name:     "series must be wide is non-retryable",
+			err:      fmt.Errorf("%w but got type long", expr.ErrSeriesMustBeWide),
+			expected: true,
+		},
+		{
+			name:     "query-limit rejection is non-retryable (through pipeline wrap)",
+			err:      fmt.Errorf("server side expressions pipeline returned an error: %w", expr.MakeQueryError("A", "uid", errors.New("the query exceeded the maximum number of chunks (err-mimir-max-chunks-per-query)"))),
+			expected: true,
+		},
+		{
+			name:     "other query error stays retryable",
+			err:      expr.MakeQueryError("A", "uid", errors.New("connection refused")),
+			expected: false,
+		},
+		{
+			name:     "non-retryable write rejection is non-retryable (through remote-write wrap)",
+			err:      fmt.Errorf("remote write failed: %w", fmt.Errorf("%w: payload too large", writer.ErrNonRetryableWrite)),
+			expected: true,
+		},
+		{
+			name:     "plain rejected write stays retryable",
+			err:      fmt.Errorf("remote write failed: %w", fmt.Errorf("%w: invalid series", writer.ErrRejectedWrite)),
+			expected: false,
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, IsNonRetryableError(tt.err))
+		})
+	}
+}
+
 func TestResults_Error(t *testing.T) {
 	tc := []struct {
 		name     string
@@ -1613,4 +1662,59 @@ func (f fakeNode) SetInputTo(a string) {
 
 func (f fakeNode) DisabledErr() error {
 	return nil
+}
+
+func TestSanitizeHeaderValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "plain value passes through unchanged",
+			input:    "hello-world",
+			expected: "hello-world",
+		},
+		{
+			name:     "CR is stripped",
+			input:    "foo\rbar",
+			expected: "foobar",
+		},
+		{
+			name:     "LF is stripped",
+			input:    "foo\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "CRLF sequence is stripped",
+			input:    "foo\r\nbar",
+			expected: "foobar",
+		},
+		{
+			name:     "other ASCII control characters are stripped",
+			input:    "foo\x00\x01\x1f\x7fbar",
+			expected: "foobar",
+		},
+		{
+			name:     "value exactly 128 bytes is not truncated",
+			input:    strings.Repeat("a", 128),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "value longer than 128 bytes is truncated",
+			input:    strings.Repeat("a", 200),
+			expected: strings.Repeat("a", 128),
+		},
+		{
+			name:     "control chars removed before truncation check",
+			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
+			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, sanitizeHeaderValue(tt.input))
+		})
+	}
 }

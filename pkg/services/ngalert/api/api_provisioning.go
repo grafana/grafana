@@ -20,6 +20,7 @@ import (
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -48,10 +49,10 @@ type ContactPointService interface {
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
-	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
+	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance alerting_models.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -226,7 +227,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusOK, templates)
+	return response.JSON(http.StatusOK, ModelToNotificationTemplates(templates))
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
@@ -234,26 +235,29 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrU
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, ModelToNotificationTemplate(template))
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
-	tmpl := definitions.NotificationTemplate{
-		Name:            name,
-		Template:        body.Template,
-		Provenance:      determineProvenance(c),
-		ResourceVersion: body.ResourceVersion,
+	tmpl := v1.TemplateGroup{
+		Title:   name,
+		Content: body.Template,
+		Kind:    v1.TemplateKindGrafana,
+		ResourceMetadata: v1.ResourceMetadata{
+			Provenance: alerting_models.Provenance(determineProvenance(c)),
+			Version:    body.ResourceVersion,
+		},
 	}
 	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.GetOrgID(), tmpl)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusAccepted, modified)
+	return response.JSON(http.StatusAccepted, ModelToNotificationTemplate(modified))
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
 	version := c.Query("version")
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, determineProvenance(c), version)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, alerting_models.Provenance(determineProvenance(c)), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}

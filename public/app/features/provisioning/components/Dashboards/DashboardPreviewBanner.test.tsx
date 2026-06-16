@@ -52,7 +52,7 @@ interface PullRequestParamReturn {
   prURL?: string;
   newPrURL?: string;
   repoURL?: string;
-  repoType?: string;
+  repoType?: 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | 'local';
 }
 
 interface FileQueryData {
@@ -121,6 +121,7 @@ function setup(props: Partial<DashboardPreviewBannerProps> = {}, overrides: Setu
     isLoading: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
+    isMissingRepo: false,
   });
 
   mockUseGetRepositoryFilesWithPathQuery.mockReturnValue({

@@ -14,7 +14,6 @@ import {
   type MapLayerOptions,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FrameGeometrySourceMode } from '@grafana/schema';
 import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
@@ -39,18 +38,7 @@ const defaultOptions: PhotoConfig = {
   color: 'rgb(200, 200, 200)',
 };
 
-export const PHOTOS_LAYER_ID = 'photos';
-
-// Used by default when nothing is configured
-export const defaultPhotosConfig: MapLayerOptions<PhotoConfig> = {
-  type: PHOTOS_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultOptions,
-  location: {
-    mode: FrameGeometrySourceMode.Auto,
-  },
-  tooltip: true,
-};
+const PHOTOS_LAYER_ID = 'photos';
 
 // TODO Find a way to use SVG scaled to behave like a png, currently using base64 conversion
 //const unknownImageSVG = '../../../../../public/img/icons/unicons/question-circle.svg';

@@ -85,7 +85,7 @@ export function getFieldDisplayName(
 /**
  * Get an appropriate display name. If the 'displayName' field config is set, use that.
  */
-export function calculateFieldDisplayName(
+function calculateFieldDisplayName(
   field: Field,
   frame?: DataFrame,
   allFrames?: DataFrame[],

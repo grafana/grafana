@@ -81,8 +81,8 @@ test.describe('Query Editor Next: Layout & Navigation', { tag: ['@panels', '@que
     await expect(page.getByRole('tab', { name: /Queries/i })).toHaveCount(0);
     await expect(page.getByRole('tab', { name: /Transformations/i })).toHaveCount(0);
 
-    await expect(page.getByText('Queries & Expressions')).toBeVisible();
-    await expect(page.getByText('Transformations')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Queries & Expressions' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Transformations' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Query Options/i })).toBeVisible();
   });
 

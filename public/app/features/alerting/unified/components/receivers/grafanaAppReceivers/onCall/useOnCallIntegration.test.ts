@@ -1,5 +1,6 @@
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
@@ -8,7 +9,6 @@ import {
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { option } from 'app/features/alerting/unified/utils/notifier-types';
-import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 
 import { ReceiverTypes } from './onCall';
 import { OnCallIntegrationSetting, OnCallIntegrationType, useOnCallIntegration } from './useOnCallIntegration';
@@ -28,7 +28,7 @@ describe('useOnCallIntegration', () => {
     ]);
   });
   afterEach(() => {
-    clearPluginSettingsCache();
+    invalidateCachedPromisesCache();
   });
 
   describe('When OnCall Alerting V2 integration enabled', () => {

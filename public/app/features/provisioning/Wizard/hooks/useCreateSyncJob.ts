@@ -4,6 +4,7 @@ import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
+import { withSavedByTrailer } from '../../utils/currentUser';
 import { type StepStatusInfo } from '../types';
 
 export interface UseCreateSyncJobParams {
@@ -36,10 +37,17 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
         const jobSpec = requiresMigration
           ? {
               action: 'migrate' as const,
+              // The Grafana-saved-by trailer rides through the top-level
+              // JobSpec.Message to the resulting git commit.
+              message: withSavedByTrailer(
+                t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
+              ),
               migrate: {},
             }
           : {
               action: 'pull' as const,
+              // A pull replicates the remote branch locally and produces no
+              // git commit, so there's no commit message to tag.
               pull: {
                 incremental: false,
               },
