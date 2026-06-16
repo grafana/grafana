@@ -7,6 +7,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
+  Alert,
   Box,
   Button,
   Divider,
@@ -44,7 +45,6 @@ import {
 } from '../../utils/rules';
 import { parsePrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
-import { MetaText } from '../MetaText';
 import { ProvisioningBadge } from '../Provisioning';
 
 import { DurationQuickPick } from './DurationQuickPick';
@@ -290,12 +290,17 @@ export function GrafanaEvaluationBehaviorStep({
           </Field>
         )}
         {v2Enabled && wasGroupedRule && evaluationMode === 'rule-based' && (
-          <MetaText icon="exclamation-triangle" color="warning">
+          <Alert
+            severity="warning"
+            title={t(
+              'alerting.rule-form.evaluation.ungroup-warning-title',
+              'This will remove the alert rule from its group'
+            )}
+          >
             <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
-              Removing this rule from its group is irreversible. After you save, you will not be able to add it back to
-              a group.
+              This action is irreversible. After you save, you will not be able to add it back to a group.
             </Trans>
-          </MetaText>
+          </Alert>
         )}
         {showGroupSelection ? (
           <Stack alignItems="end" gap={1}>

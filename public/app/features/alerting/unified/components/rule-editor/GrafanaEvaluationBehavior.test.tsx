@@ -175,7 +175,7 @@ function EvaluationBehaviorWrapper({
   );
 }
 
-const ungroupWarning = /Removing this rule from its group is irreversible/i;
+const ungroupWarning = /This will remove the alert rule from its group/i;
 
 describe('GrafanaEvaluationBehaviorStep — ungroup warning (rulesAPIV2)', () => {
   testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
