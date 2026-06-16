@@ -20,8 +20,6 @@ import (
 func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dtos.FrontendSettingsDTO, error) {
 	defaultDS := "-- Grafana --"
 
-	// hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-
 	trustedTypesDefaultPolicyEnabled := (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := cfg.CloudMigration.Enabled && cfg.CloudMigration.IsTarget
 

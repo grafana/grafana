@@ -211,8 +211,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		buildstamp = 0
 	}
 
-	hs.managedPluginsService.ManagedPlugins(c.Req.Context())
-
 	frontendSettings.BuildInfo = dtos.FrontendSettingsBuildInfoDTO{
 		HideVersion:   hideVersion,
 		Version:       version,
