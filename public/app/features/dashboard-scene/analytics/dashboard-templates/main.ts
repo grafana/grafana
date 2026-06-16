@@ -16,7 +16,7 @@ import {
   type SaveTemplateInfoCompletedProperties,
   type SaveTemplateInfoFailedProperties,
   type DeleteCompletedProperties,
-  SaveTemplateInfoConflictShownProperties,
+  type SaveTemplateInfoConflictShownProperties,
 } from './types';
 
 const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboard_template');
