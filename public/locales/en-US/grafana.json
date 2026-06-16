@@ -14110,6 +14110,7 @@
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
       "disable": "Disable",
       "disable-all-tooltip": "Disable selected",
+      "empty-hint": "Select items to apply actions",
       "enable": "Enable",
       "enable-all-tooltip": "Enable selected",
       "exit-multi-select": "Exit multi-select",
