@@ -112,7 +112,7 @@ describe('useCorrelationsK8s', () => {
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined, timeRange: undefined },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: false,
@@ -139,7 +139,7 @@ describe('useCorrelationsK8s', () => {
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined, timeRange: undefined },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: true,
@@ -173,7 +173,7 @@ describe('useCorrelationsK8s', () => {
       });
 
       expect(correlation).toStrictEqual({
-        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined, timeRange: undefined },
         description: 'testDesc',
         label: 'testLabel',
         provisioned: false,
