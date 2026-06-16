@@ -33,6 +33,12 @@ const (
 	ManagerKindPlugin    ManagerKind = "plugin"
 	ManagerKindGrafana   ManagerKind = "grafana"
 
+	// ManagerKindFileProvisioning marks resources applied from Kubernetes-style manifests
+	// mounted on disk and applied at startup (app-platform provisioning bootstrap). It is
+	// distinct from ManagerKindClassicFP, which is the legacy datasource/dashboard file
+	// provisioning shim.
+	ManagerKindFileProvisioning ManagerKind = "file-provisioning"
+
 	// Deprecated: this is used as a shim/migration path for legacy file provisioning
 	// Previously this was a "file:" prefix
 	ManagerKindClassicFP ManagerKind = "classic-file-provisioning"
@@ -53,6 +59,8 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindPlugin
 	case string(ManagerKindGrafana):
 		return ManagerKindGrafana
+	case string(ManagerKindFileProvisioning):
+		return ManagerKindFileProvisioning
 	case string(ManagerKindClassicFP): // nolint:staticcheck
 		return ManagerKindClassicFP // nolint:staticcheck
 	default:

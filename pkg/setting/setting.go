@@ -155,6 +155,11 @@ type Cfg struct {
 	PermittedProvisioningPaths []string
 	// Grafana API Server
 	DisableControllers bool
+	// ProvisioningBootstrapManifestsEnabled turns on applying provisioning CRD manifests
+	// (Repository/Connection) from disk at startup.
+	ProvisioningBootstrapManifestsEnabled bool
+	// ProvisioningBootstrapManifestsPath is the directory scanned for Kubernetes-style manifests to apply at startup.
+	ProvisioningBootstrapManifestsPath string
 	// Provisioning config
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
@@ -2522,6 +2527,14 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+
+	// Startup manifest bootstrap: apply app-platform CRD manifests (Repository/Connection) from disk at startup.
+	cfg.ProvisioningBootstrapManifestsEnabled = iniFile.Section("provisioning").Key("bootstrap_manifests_enabled").MustBool(false)
+	bootstrapManifestsPath := valueAsString(iniFile.Section("provisioning"), "bootstrap_manifests_path", "")
+	if bootstrapManifestsPath == "" {
+		bootstrapManifestsPath = filepath.Join(cfg.ProvisioningPath, "manifests")
+	}
+	cfg.ProvisioningBootstrapManifestsPath = makeAbsolute(bootstrapManifestsPath, cfg.HomePath)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
