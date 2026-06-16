@@ -6,8 +6,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, Pagination, useStyles2 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 
-import { getInternalRadius } from '../../../../../../packages/grafana-ui/src/themes/mixins';
 import { usePagination } from '../hooks/usePagination';
 import { getPaginationStyles } from '../styles/pagination';
 
@@ -213,7 +213,7 @@ const getStyles = <T extends unknown>(
       gridTemplateColumns: sizes.join(' '),
       gridTemplateRows: '1fr auto',
 
-      '&:nth-child(2n + 1)': {
+      '&:first-child': {
         backgroundColor: theme.colors.background.secondary,
         borderTopLeftRadius: getInternalRadius(theme, 0, {
           parentBorderRadius: containerBorderRadius,
@@ -223,7 +223,7 @@ const getStyles = <T extends unknown>(
         }),
       },
 
-      '&:nth-child(2n)': {
+      '&:last-child': {
         backgroundColor: theme.colors.background.primary,
         borderBottomLeftRadius: getInternalRadius(theme, 0, {
           parentBorderRadius: containerBorderRadius,
