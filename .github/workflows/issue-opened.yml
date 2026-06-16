@@ -66,17 +66,13 @@ jobs:
           repo_secrets: |
             AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
             AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
-            GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
-            GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem
 
       - name: Generate token
         id: generate_token
-        uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
-          permission-members: read
-          permission-issues: write
+          github_app: grafana-pr-automation
+          permission_set: auto-triage
       - name: Check if member of grafana org
         id: check-if-grafana-org-member
         continue-on-error: true
