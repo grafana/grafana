@@ -970,6 +970,9 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// Capabilities check
 	if req.ParentFolder == "" {
 		ctxLogger.Debug("folderAuthz: no parent folder provided, capabilities check")
+		if req.Name != "" {
+			return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
+		}
 		return true, nil
 	}
 
@@ -994,6 +997,11 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// without walking the tree.
 	if folderScopeMap["*"] {
 		return true, nil
+	}
+
+	// Global access check failed, return early
+	if req.ParentFolder == "*" {
+		return false, nil
 	}
 
 	ctxLogger.Debug("folderAuthz: walking folder inheritance",
