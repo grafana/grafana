@@ -474,7 +474,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	_, err := moa.SaveAndApplyExtraConfiguration(seedCtx, 1, seedUser, syncBypassAuthz{}, v1.ExtraConfiguration{
 		Identifier:         "existing-uid",
 		AlertmanagerConfig: amConfig,
-	}, false, false)
+	}, false, false, false)
 	require.NoError(t, err)
 	rowsBefore := len(cs.historicConfigs[1])
 
@@ -493,7 +493,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 // rejectingValidator is a DataSourceRequestValidator that always errors.
 type rejectingValidator struct{ err error }
 
-func (r *rejectingValidator) Validate(string, *simplejson.Json, *http.Request) error {
+func (r *rejectingValidator) Validate(string, map[string]any, *http.Request) error {
 	return r.err
 }
 
@@ -514,6 +514,42 @@ func TestSyncExternalAMs_RejectedByValidator(t *testing.T) {
 	// Validator rejection short-circuits before the HTTP round-trip and before any save.
 	assertNoExtraConfigSaved(t, cs, 1)
 	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "mimir_fetch")))
+}
+
+func TestSyncExternalAMs_InvalidConfigClassifiedOnMetric(t *testing.T) {
+	// Upstream config references a filesystem path (auth_password_file) that Grafana
+	// cannot represent. It fetches and parses fine but fails validation, so the sync
+	// must reject it before saving rather than silently dropping the field.
+	const amConfig = `global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'alerts@example.com'
+route:
+  receiver: a
+receivers:
+  - name: a
+    email_configs:
+      - to: someone@example.com
+        auth_password_file: /etc/smtp-password
+`
+	mimirSrv := startMimirServer(t, amConfig)
+
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := &mockAdminConfigStore{}
+	adminCfg.On("GetAdminConfiguration", int64(1)).Return(&ngmodels.AdminConfiguration{OrgID: 1, ExternalAlertmanagerUID: ptrTo("mimir-uid")}, nil)
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	// Invalid config must not be persisted.
+	assertNoExtraConfigSaved(t, cs, 1)
+
+	// Failure metric tagged with the dedicated validate reason so operators can alert
+	// on it separately from generic save errors.
+	assert.Equal(t, float64(1), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "validate")))
+	assert.Equal(t, float64(0), testutil.ToFloat64(moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues("1", "save")))
 }
 
 func TestBuildMimirConfigURL(t *testing.T) {

@@ -32,6 +32,10 @@ import { isConstant } from '../../../variables/guard';
 // E.g. if a dashboard has two datasources with the same type, the export label will be used to distinguish them.
 export const ExportLabel = 'grafana.app/export-label';
 
+// This label is used to store the original datasource display name when exporting a V2 dashboard.
+// The importer surfaces it in the datasource picker so users can tell which original datasource each input refers to.
+export const ExportDatasourceName = 'grafana.app/export-datasource-name';
+
 export interface InputUsage {
   libraryPanels?: LibraryPanelRef[];
 }
@@ -435,9 +439,12 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       return;
     }
 
+    const datasourceName = getDatasourceDisplayName(datasourceUid);
+
     dataQueryKind.labels = {
       ...(dataQueryKind.labels ?? {}),
       [ExportLabel]: getLabel(dataQueryKind.group, datasourceUid),
+      ...(datasourceName ? { [ExportDatasourceName]: datasourceName } : {}),
     };
 
     dataQueryKind.datasource = undefined;
@@ -454,9 +461,12 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
       return;
     }
 
+    const datasourceName = getDatasourceDisplayName(datasourceUid);
+
     variable.labels = {
       ...(variable.labels ?? {}),
       [ExportLabel]: getLabel(variable.group, datasourceUid),
+      ...(datasourceName ? { [ExportDatasourceName]: datasourceName } : {}),
     };
     variable.datasource = undefined;
   };
@@ -472,6 +482,14 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     }
 
     return false;
+  };
+
+  const getDatasourceDisplayName = (datasourceUid: string): string | undefined => {
+    const settings = getDataSourceSrv().getInstanceSettings(datasourceUid);
+    if (!settings || settings.meta?.builtIn) {
+      return undefined;
+    }
+    return settings.name;
   };
 
   const getLabel = (datasourceGroup: string, datasourceUid: string) => {

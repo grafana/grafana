@@ -13,6 +13,8 @@ const (
 	USER_LOGIN        = "login"
 	USER_LAST_SEEN_AT = "lastSeenAt"
 	USER_ROLE         = "role"
+	USER_DISABLED     = "disabled"
+	USER_CREATED      = "createdAt"
 )
 
 // UserSortableExtraFields are the additional fields that can be used for sorting user search results.
@@ -58,6 +60,19 @@ var UserTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefin
 			Filterable: true,
 		},
 	},
+	USER_DISABLED: {
+		Name:        USER_DISABLED,
+		Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
+		Description: "Whether the user is disabled",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
+		},
+	},
+	USER_CREATED: {
+		Name:        USER_CREATED,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+		Description: "The creation timestamp of the user, in epoch milliseconds",
+	},
 }
 
 func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
@@ -92,6 +107,8 @@ func (u *userDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 	}
 	doc.Fields[USER_LAST_SEEN_AT] = user.Status.LastSeenAt
 	doc.Fields[USER_ROLE] = user.Spec.Role
+	doc.Fields[USER_DISABLED] = user.Spec.Disabled
+	doc.Fields[USER_CREATED] = doc.Created
 
 	return doc, nil
 }

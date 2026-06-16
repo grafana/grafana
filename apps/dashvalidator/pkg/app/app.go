@@ -201,7 +201,11 @@ func handleCheckRoute(
 			Datasources:   make([]validator.Datasource, 0, len(req.DatasourceMappings)),
 		}
 
-		logger.Info("Processing request", "dashboardTitle", req.DashboardJSON["title"], "numMappings", len(req.DatasourceMappings))
+		logger.Info("Processing request",
+			"numMappings", len(req.DatasourceMappings),
+			"datasourceUID", req.DatasourceMappings[0].UID,
+			"datasourceType", req.DatasourceMappings[0].Type,
+		)
 
 		// Get namespace from request (needed for datasource lookup)
 		// Namespace format is typically "org-{orgID}"

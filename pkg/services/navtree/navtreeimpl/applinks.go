@@ -73,7 +73,33 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		treeRoot.AddSection(appLink)
 	}
 
+	s.nestMaintenanceWindowsUnderSLO(treeRoot)
+
 	return nil
+}
+
+func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
+	const sloPluginID = "grafana-slo-app"
+	const mwPluginID = "grafana-maintenancewindows-app"
+
+	sloNode := treeRoot.FindById("plugin-page-" + sloPluginID)
+	mwNode := treeRoot.FindById("plugin-page-" + mwPluginID)
+	if sloNode == nil || mwNode == nil {
+		return
+	}
+
+	treeRoot.RemoveSectionByID(mwNode.Id)
+
+	mwNode.Id = "standalone-plugin-page-" + mwPluginID
+	mwNode.IsNew = true
+	// Reset the standalone app's plugin SortWeight so it falls back to its
+	// appended position and sorts last among SLO's child pages.
+	mwNode.SortWeight = 0
+	sloNode.Children = append(sloNode.Children, mwNode)
+
+	if appsNode := treeRoot.FindById(navtree.NavIDApps); appsNode != nil && len(appsNode.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDApps)
+	}
 }
 
 // shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app

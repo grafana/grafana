@@ -29,7 +29,7 @@
       "add-label": "Add a permission",
       "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants.",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
@@ -857,11 +857,6 @@
     "clone-rule-button": {
       "title-copy": "Copy"
     },
-    "clone-rule-editor": {
-      "text-loading-the-rule": "Loading the rule...",
-      "title-cannot-exist": "Cannot copy the rule. The rule does not exist",
-      "title-error": "Error"
-    },
     "cloud-alert-preview": {
       "alerts-preview": "Alerts preview",
       "info": "Info",
@@ -1108,9 +1103,6 @@
       },
       "unknown": "Unknown"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "You do not appear to have any compatible datasources."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -1188,12 +1180,6 @@
       "label-metric": "Metric",
       "label-pending-period": "Pending period"
     },
-    "evaluation-group": {
-      "label-delete": "Delete",
-      "label-export": "Export",
-      "label-reorder-rules": "Re-order rules",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "A group evaluates all its rules over the same evaluation interval.",
       "description-often-rules-group-evaluated": "How often all rules in the group are evaluated.",
@@ -1202,13 +1188,6 @@
       },
       "placeholder-enter-a-name": "Enter a name",
       "title-new-evaluation-group": "New evaluation group"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Something went wrong when trying to fetch group details"
-    },
-    "evaluation-interval-limit-exceeded": {
-      "body-minimum-interval": "A minimum evaluation interval of <strong>{{minInterval}}</strong> has been configured in Grafana.<br/>Please contact the administrator to configure a lower interval.",
-      "title-global-evaluation-interval-limit-exceeded": "Global evaluation interval limit exceeded"
     },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
@@ -1479,9 +1458,6 @@
     "grafana-folder-and-labels-step": {
       "title-add-folder-and-labels": "Add folder and labels"
     },
-    "grafana-managed-rule-type": {
-      "description": "Supports multiple data sources of any kind.<br/>Transform data with expressions."
-    },
     "grafana-modify-export": {
       "body-invalid-rule-id": "The rule UID in the page URL is invalid. Please check the URL and try again.",
       "title-invalid-rule-id": "Invalid rule ID"
@@ -1601,9 +1577,6 @@
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}",
       "no-rules": "No rules found in this group"
-    },
-    "group-status": {
-      "content-the-group-is-being-deleted": "The group is being deleted"
     },
     "group-wrapper": {
       "toggle": "Toggle group"
@@ -1985,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "This data source has no rules configured",
         "new-alert-rule": "New alert rule",
-        "new-ds-managed-alerting-rule": "New data source-managed alerting rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
         "new-grafana-alerting-rule": "New alert rule",
         "new-grafana-recording-rule": "New recording rule",
@@ -2033,14 +2004,6 @@
         "normal": "Normal",
         "pending": "Pending",
         "recovering": "Recovering"
-      }
-    },
-    "loki-apidatasource": {
-      "message": {
-        "data-source-is-working": "Data source is working"
-      },
-      "title": {
-        "success": "Success"
       }
     },
     "loki-state-history": {
@@ -2111,9 +2074,6 @@
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
-    },
-    "mimir-flavored-type": {
-      "description": "Use a Mimir, Loki or Cortex datasource.<br/>Expressions are not supported."
     },
     "min-interval-option": {
       "label-interval": "Interval",
@@ -2258,7 +2218,6 @@
       "common-annotations": "Annotations",
       "common-labels": "Labels",
       "current": "Current",
-      "debug-details-heading": "Debug details",
       "error-title": "Error loading notification",
       "error-title-banner": "Delivery error",
       "error-unknown": "Unknown error",
@@ -2266,7 +2225,6 @@
       "field-integration-index": "Integration index",
       "field-pipeline-time": "Pipeline time",
       "field-retry": "Retry",
-      "field-timestamp": "Timestamp",
       "field-uuid": "UUID",
       "info-group-labels": "Group labels",
       "loading": "Loading notification...",
@@ -2323,9 +2281,6 @@
     },
     "notification-policy-drawer": {
       "view-notification-policy-tree": "View notification policy tree"
-    },
-    "notification-policy-matchers": {
-      "no-matchers": "No matchers"
     },
     "notification-preview": {
       "alertmanager": "Alertmanager:",
@@ -2574,22 +2529,9 @@
         "aria-label": "add policy",
         "text": "New notification policy"
       },
-      "delete-reasons": {
-        "no-permissions": "You do not have the required permission to delete this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be deleted via the UI"
-      },
-      "delete-text": "Notification policy cannot be deleted for the following reasons:",
-      "empty-state": {
-        "message": "No policies found"
-      },
       "fetch": {
         "error": "Failed to fetch policies"
       },
-      "reset-reasons": {
-        "no-permissions": "You do not have the required permission to reset this notification policy",
-        "provisioned": "Notification policy is provisioned and cannot be reset via the UI"
-      },
-      "reset-text": "Notification policy cannot be reset for the following reasons:",
       "text-loading": "Loading...."
     },
     "policies-tree-wrapper": {
@@ -2731,20 +2673,11 @@
         }
       }
     },
-    "receivers-section": {
-      "button-more": "More",
-      "new-menu": {
-        "label-export-all": "Export all"
-      }
-    },
     "recording-rule": {
       "term": "Recording rule"
     },
     "recording-rule-editor": {
       "error-no-query-editor": "Could not load query editor due to: {{errorMessage}}"
-    },
-    "recording-rule-type": {
-      "description": "Precompute expressions.<br/>Should be combined with an alert rule."
     },
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
@@ -2808,16 +2741,6 @@
       "label-override-timings": "Override timings",
       "repeat-interval": "Repeat interval: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "clear",
-      "aria-label-search-routing-trees": "search routing trees",
-      "clear": "Clear",
-      "label-search-by-name-or-receiver": "Search by policy name or contact point",
-      "placeholder-search": "Search"
-    },
-    "routing-tree-header": {
-      "reset": "Reset"
-    },
     "rule-actions-buttons": {
       "title-edit": "Edit",
       "title-view": "View"
@@ -2846,9 +2769,6 @@
     },
     "rule-details-expression": {
       "label-expression": "Expression"
-    },
-    "rule-details-federated-sources": {
-      "label-tenant-sources": "Tenant sources"
     },
     "rule-details-matching-instances": {
       "button-show-all": "Show all",
@@ -3006,6 +2926,9 @@
         "results-loading": "Searching – found {{numberOfRules}} rules",
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules"
       },
+      "import-disabled-tooltip": {
+        "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
+      },
       "import-to-gma": {
         "new-badge": "New!",
         "text": "Import to Grafana-managed rules"
@@ -3023,7 +2946,6 @@
       "return-button": {
         "title": "Alert rules"
       },
-      "rulerrule-loading-error": "Failed to load the rule",
       "toggle": {
         "use-new-experience": "Use new experience",
         "view-previous-experience": "Revert to previous experience"
@@ -3082,9 +3004,6 @@
     "rule-time-range-label": {
       "relative": "<0>{{from}}</0> to now",
       "relative-with-to": "<0>{{from}}</0> to <2>{{to}}</2>"
-    },
-    "rule-type-picker": {
-      "grafana-managed": "Select “Grafana managed” unless you have a Mimir, Loki or Cortex data source with the Ruler API enabled."
     },
     "rule-view": {
       "query": {
@@ -3260,6 +3179,30 @@
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
     "settings": {
+      "auto-sync": {
+        "action-disable": "Disable sync",
+        "add-datasource-link": "Add Mimir datasource",
+        "badge-active": "Active",
+        "badge-not-configured": "Not configured",
+        "badge-operator-managed": "Managed by operator",
+        "description": "Continuously sync alert configuration from a Mimir or Cortex Alertmanager datasource into Grafana.",
+        "disable-confirm-action": "Disable sync",
+        "disable-confirm-body": "Disabling will stop continuous sync from datasource {{uid}}. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-body-generic": "Disabling will stop continuous sync. You can re-enable it later by selecting a datasource again.",
+        "disable-confirm-title": "Disable Mimir Alertmanager auto-sync?",
+        "disable-success": "Mimir Alertmanager auto-sync disabled",
+        "operator-managed-info": "This value is set by the <1>[unified_alerting] external_alertmanager_uid</1> key in grafana.ini and cannot be changed from the UI. Edit the configuration file and restart Grafana, or remove the key to manage sync from here.",
+        "operator-managed-title": "Managed by operator",
+        "orphan-warning": "The configured datasource UID {{uid}} is not available. Disable sync or restore the datasource to continue.",
+        "orphan-warning-title": "Configured datasource not found",
+        "picker-empty": "No Mimir or Cortex datasources available",
+        "picker-label": "Datasource",
+        "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
+        "save-error": "Failed to save Mimir Alertmanager auto-sync",
+        "save-success": "Mimir Alertmanager auto-sync enabled",
+        "title": "Auto-sync configuration"
+      },
       "tabs": {
         "alert-managers": "Alert managers"
       }
@@ -3311,6 +3254,10 @@
         "search-by-matchers": "Search by matchers",
         "tooltip-description": "Find silences by matcher. Matches label name, value, and operator exactly.",
         "tooltip-example": "Example: <1>env=~\"prod.*\"</1> finds silences with an <4>env=~\"prod.*\"</4> matcher."
+      },
+      "missing-alert-rule-warning": {
+        "text": "Alert rule unavailable",
+        "tooltip": "This alert rule may have been deleted, or you may not have permission to view it. Alert rule UID: {{ruleUid}}"
       },
       "only-firing-instances": "Only alert instances in the firing state are displayed.",
       "operator": {
@@ -3595,9 +3542,6 @@
       "collapse": "Collapse",
       "collapse-all": "Collapse all",
       "collapse-sidebar": "Collapse sidebar",
-      "compact-firing": "firing",
-      "compact-pending": "pending",
-      "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
       "expand": "Expand",
       "expand-all": "Expand all",
@@ -4280,13 +4224,13 @@
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
-      "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-folder-empty_one": "Selected folder is empty",
+      "delete-modal-folder-empty_other": "Selected folders are empty",
+      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
       "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
-      "delete-modal-text": "This action will delete the following content:",
-      "delete-modal-text-one-folder": "This action will delete the folder \"<1>{{ folderName }}</1>\" and the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
@@ -4294,8 +4238,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-text": "This action will move the following content:",
-      "move-modal-text-one-folder": "This action will move the folder \"<1>{{ folderName }}</1>\" and the following content:",
+      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4310,6 +4254,7 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "affected-folder-contents-error": "We couldn't get information about folder contents.",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
@@ -4324,13 +4269,19 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-deleting-resources": "Error deleting resources"
+      "default-commit-message": "Delete resources",
+      "delete-warning": "This will delete selected folders and their descendants.",
+      "error-deleting-resources": "Error deleting resources",
+      "folder-empty_one": "Selected folder is empty",
+      "folder-empty_other": "Selected folders are empty",
+      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain other resources that will be deleted"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
+      "default-commit-message": "Move resources",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -4341,22 +4292,11 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-total": "In total, this will affect:",
+      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
       "target-folder": "Target Folder"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
-      "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
-      "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4385,12 +4325,11 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "delete-warning": "This will delete this folder and all its descendants.",
+      "folder-empty": "Selected folder is empty",
+      "folder-not-empty": "Selected folder contains other resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -4962,9 +4901,6 @@
       "light-theme": "Light",
       "scopes": "Scopes"
     },
-    "badge": {
-      "provisioned": "Provisioned"
-    },
     "empty-state": {
       "button-title": "Search with Grafana Assistant",
       "message": "No results found"
@@ -5136,10 +5072,6 @@
       "item-3": "Share Grafana access more freely, knowing that users will not unwittingly see sensitive data",
       "title": "Secure access to data with data source permissions in Grafana Cloud"
     },
-    "search": {
-      "aria-label-search-all": "Search all",
-      "placeholder": "Search all"
-    },
     "use-data-source-settings-nav": {
       "node": {
         "subTitle": {
@@ -5302,10 +5234,6 @@
       },
       "pane-header": "Add"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Close 'Add Panel' widget",
-      "tooltip-close-widget": "Close widget"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -5398,6 +5326,8 @@
     },
     "code-pane": {
       "collapse": "Collapse editor",
+      "copy-as-resource": "Copy as resource",
+      "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
       "expand": "Expand editor",
       "header": "Edit as code",
       "modal-title": "Edit dashboard as code"
@@ -5697,8 +5627,7 @@
           "apply": "Apply",
           "change-value": "Change variable value",
           "discard": "Discard",
-          "modal-title": "Custom options",
-          "values": "Values separated by comma"
+          "modal-title": "Custom options"
         },
         "datasource-options": {
           "name-filter": "Name filter",
@@ -5770,11 +5699,6 @@
         "label": "Export dashboard menu"
       }
     },
-    "fetch-dashboard": {
-      "message": {
-        "failed-to-fetch-dashboard": "Failed to fetch dashboard"
-      }
-    },
     "filters-overview": {
       "apply": "Apply",
       "apply-close": "Apply and close",
@@ -5826,11 +5750,6 @@
     "get-debug-dashboard": {
       "title": {
         "annotations": "Annotations"
-      }
-    },
-    "get-errors": {
-      "message": {
-        "error-loading-data": "Error loading data"
       }
     },
     "get-field-override-categories": {
@@ -5931,20 +5850,12 @@
       "title-get-help-with-this-panel": "Get help with this panel",
       "troubleshooting-docs": "Troubleshooting docs"
     },
-    "init-dashboard": {
-      "message": {
-        "failed-create-dashboard-model": "Failed create dashboard model"
-      }
-    },
     "inspect": {
       "data-tab": "Data",
-      "error-tab": "Error",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
-      "stats-tab": "Stats",
-      "subtitle": "{{queryCount}} queries with total query time of {{formatted}}",
-      "title": "Inspect: {{panelTitle}}"
+      "stats-tab": "Stats"
     },
     "inspect-data": {
       "data-options": "Data options",
@@ -5977,9 +5888,6 @@
       "panel-spec-label": "Panel Spec",
       "select-source": "Select source",
       "unknown": "Unknown Object: {{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "No Metadata Inspector"
     },
     "inspect-stats": {
       "data-title": "Data source stats",
@@ -6025,13 +5933,6 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
-    "legacy-dashboard-api": {
-      "fetch-error": {
-        "message": {
-          "dashboard-not-found": "Dashboard not found"
-        }
-      }
-    },
     "make-editable": {
       "dashboard-not-editable": "Dashboard not editable",
       "make-editable": "Make editable"
@@ -6065,13 +5966,6 @@
       "new-row": {
         "title": {
           "row-title": "Row title"
-        }
-      }
-    },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget title"
         }
       }
     },
@@ -6132,24 +6026,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-editor-unconnected": {
-      "editor-actions": {
-        "apply": "Apply",
-        "discard": "Discard",
-        "save": "Save",
-        "save-library-panel": "Save library panel",
-        "title-apply-changes-and-save-dashboard": "Apply changes and save dashboard",
-        "title-apply-changes-and-save-library-panel": "Apply changes and save library panel",
-        "title-apply-changes-dashboard": "Apply changes and go back to dashboard",
-        "title-undo-all-changes": "Undo all changes"
-      },
-      "table-view-label-table-view": "Table view",
-      "title-unlink": "Disconnects this panel from the library panel so that you can edit it regularly.",
-      "unlink": "Unlink"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
     },
@@ -6190,18 +6066,6 @@
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Row options"
-    },
-    "row-options-form": {
-      "cancel": "Cancel",
-      "label-repeat-for": "Repeat for",
-      "label-title": "Title",
-      "update": "Update"
-    },
-    "row-options-modal": {
-      "title-row-options": "Row options"
     },
     "rows-layout": {
       "cancel": "Cancel",
@@ -6350,16 +6214,9 @@
       },
       "undo": "Undo"
     },
-    "solo-panel": {
-      "loading-initializing-dashboard": "Loading & initializing dashboard",
-      "title-not-found": "Panel with id {{panelId}} not found"
-    },
     "source-link": {
       "title": "Source ({{provider}})",
       "tooltip": "View source file in repository"
-    },
-    "sub-menu-un-connected": {
-      "aria-label-template-variables": "Template variables"
     },
     "support-snapshot-service": {
       "description": {
@@ -6448,15 +6305,9 @@
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
-        "dashboard-settings": {
-          "tooltip": "Dashboard settings"
-        },
         "discard-library-panel-changes": "Discard library panel changes",
         "discard-panel": "Discard panel changes",
         "discard-panel-new": "Discard panel",
-        "edit-dashboard-v2-schema": {
-          "tooltip": "Edit dashboard v2 schema"
-        },
         "enter-edit-mode": {
           "label": "Make editable",
           "tooltip": "This dashboard was marked as read only"
@@ -6495,7 +6346,6 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
-      "read-only": "Read only",
       "refresh": "Refresh dashboard",
       "save": "Save dashboard",
       "save-as-template": {
@@ -6543,14 +6393,6 @@
       },
       "title-delete": "Delete {{name}}?"
     },
-    "transformation-picker": {
-      "info": "Transformations allow you to join, calculate, re-order, hide, and rename your query results before they are visualized.",
-      "info-graph-not-suitable": "Many transforms are not suitable if you're using the Graph visualization, as it currently only supports time series data.",
-      "info-switch-to-table": "It can help to switch to the Table visualization to understand what a transformation is doing. ",
-      "placeholder-search-for-transformation": "Search for transformation",
-      "read-more": "Read more",
-      "title-transformations": "Transformations"
-    },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
       "no-transformations-found": "No transformations found",
@@ -6585,16 +6427,6 @@
       "discard": "Discard",
       "title-unsaved-changes": "Unsaved changes"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in this row use the {{SHARED_DASHBOARD_QUERY}} data source. These panels will reference the panel in the original row, not the ones in the repeated rows."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Delete row",
-      "learn-more": "Learn more",
-      "title": {
-        "delete-row": "Delete row"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
@@ -6623,8 +6455,8 @@
     "version-history-comparison": {
       "button-restore": "Restore to version {{version}}",
       "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
@@ -6640,28 +6472,6 @@
     },
     "view-panel": {
       "not-found": "Panel not found"
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Change visualization",
-      "aria-label-close": "Close options pane",
-      "aria-label-show": "Show options pane",
-      "tooltip-click-to-change-visualization": "Click to change visualization",
-      "tooltip-close": "Close options pane",
-      "tooltip-show": "Show options pane"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Search for...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Reusable panels you can share between multiple dashboards."
-        },
-        "label": {
-          "library-panels": "Library panels",
-          "suggestions": "Suggestions",
-          "visualizations": "Visualizations"
-        }
-      },
-      "title-close": "Close"
     },
     "viz-panel": {
       "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
@@ -7332,12 +7142,6 @@
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
     },
-    "managed-badge": {
-      "kubectl": "Managed by: Kubectl",
-      "plugin": "Managed by: Plugin {{id}}",
-      "provisioned": "Provisioned",
-      "terraform": "Managed by: Terraform"
-    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -7866,8 +7670,8 @@
     },
     "version-history-comparison": {
       "label-view-json-diff": "View JSON diff",
-      "new-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}",
-      "old-version-updated": "<0>Version {{version}}</0> updated by {{editor}} {{timeAgo}}"
+      "new-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
+      "old-version-updated": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
     },
     "version-history-header": {
       "compare-versions": "Comparing {{baseVersion}} <3></3> {{newVersion}}",
@@ -8129,7 +7933,9 @@
     },
     "data-source-load-error": {
       "back": "Back",
+      "check-updates": "An unknown error occurred while loading the plugin. Please check for updates.",
       "delete": "Delete",
+      "load-error-title": "Error loading plugin",
       "not-found": "Data source not found"
     },
     "data-source-missing-rights-message": {
@@ -8158,14 +7964,19 @@
     "data-sources-list-card": {
       "explore": "Explore"
     },
+    "default-button": {
+      "active": "This data source is currently set as the default.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "error": "Failed to update default data source",
+      "make": "Make default",
+      "make-confirm": "Are you sure you want to set this data source as the default for all users?",
+      "remove": "Remove default",
+      "remove-confirm": "Are you sure you want to remove the default status from this data source for all users?",
+      "tooltip": "The default data source is preselected in new panels."
+    },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "default-active": "This data source is currently set as the default.",
-      "default-error": "Failed to update default data source",
-      "default-label": "Default",
-      "default-make-button": "Make default",
-      "default-remove-button": "Remove default",
-      "default-tooltip": "The default data source is preselected in new panels.",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -8547,15 +8358,6 @@
       "error-with-stack": "Failed to get panel plugin",
       "title-find-plugin": "Failed to find plugin"
     },
-    "draggable-manager-demo": {
-      "click-and-drag-gray-divider": "Click and drag the gray divider in the colored area, below.",
-      "click-horizontally-somewhere-colored-below": "Click and drag horizontally somewhere in the colored area, below.",
-      "drag-value": "Value: {{dragValue}}",
-      "draggable-manager-demo": "DraggableManager demo",
-      "dragging-a-divider": "Dragging a divider",
-      "dragging-a-sub-region": "Dragging a sub-region",
-      "value": "Value: {{ dividerPos }}"
-    },
     "drop-down-menu": {
       "aria-label-links": "Links",
       "links": "Links"
@@ -8654,12 +8456,10 @@
         "much-data": "The query is trying to access too much data. Try one or more of the following:"
       },
       "maximum-pinned-logs": "Maximum of {{PINNED_LOGS_LIMIT}} pinned logs reached. Unpin a log to add another.",
+      "missing-time-field-message": "The Logs visualization requires a time field. Add a time-typed column to your query.",
       "no-logs-found": "No logs found.",
       "scan-for-older-logs": "Scan for older logs",
       "stop-scan": "Stop scan"
-    },
-    "logs-column-search": {
-      "placeholder-search-fields-by-name": "Search fields by name"
     },
     "logs-container": {
       "label-logs": "Logs"
@@ -8902,19 +8702,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": "Recovered by Adaptive Traces."
     },
-    "span-bar-section": {
-      "description-link": "Add additional info next to the service and operation on a span bar row in the trace view.",
-      "title-span-bar": "Span bar"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Select label name",
-      "label-label": "Label",
-      "label-tag-key": "Tag key",
-      "placeholder-duration": "Duration",
-      "placeholder-enter-tag-key": "Enter tag key",
-      "tooltip-default-duration": "Default: duration",
-      "tooltip-tag-key": "Tag key which will be used to get the tag value. A span's attributes and resources will be searched for the tag key"
-    },
     "span-detail": {
       "label": {
         "kind": "Kind:",
@@ -9127,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Run query"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": "SQL expression editor"
+      }
+    },
     "sql-schema": {
       "error-title": "Error",
       "loading": "Loading schema information...",
@@ -9144,10 +8936,6 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
-  "folder-repo": {
-    "read-only-badge": "Read only",
-    "repository-not-found-tooltip": "Repository not found"
-  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -9155,13 +8943,6 @@
       "folder-deleted-success": "Folder deleted",
       "folder-move-error-provisioned": "Cannot move provisioned folder. To move it, move it in the repository and synchronise to apply the changes.",
       "folder-moved-success": "Folder moved"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Loading"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -10226,7 +10007,7 @@
     },
     "data-source-http-settings": {
       "access-help": "Help <1></1>",
-      "access-help-details": "Access mode controls how requests to the data source will be handled.<1><i>Server</i></1> should be the preferred way if nothing else is stated.",
+      "access-help-details": "Access mode controls how requests to the data source will be handled.<strong><i>Server</i></strong> should be the preferred way if nothing else is stated.",
       "access-help-title": "Access help",
       "access-label": "Access",
       "allowed-cookies": "Allowed cookies",
@@ -10877,10 +10658,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
+      "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
+    },
+    "firing-alerts-card": {
+      "critical-count_one": "{{count}} critical",
+      "critical-count_other": "{{count}} critical",
+      "empty": "You have no firing alerts.",
+      "empty-teams": "No firing alerts for your teams.",
+      "error-title": "Could not load firing alerts",
+      "high-count_one": "{{count}} high",
+      "high-count_other": "{{count}} high",
+      "retry": "Retry",
+      "severity-critical": "Critical",
+      "severity-high": "High",
+      "severity-low": "Low",
+      "severity-minor": "Minor",
+      "severity-unknown": "Unknown severity",
+      "title": "Firing alerts",
+      "view-all": "View all firing alerts"
     },
     "home-page": {
       "edition": {
@@ -10895,6 +10696,11 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "most-used-dashboards-tab": {
+      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
+      "error-title": "Could not load most viewed dashboards",
+      "loading": "Loading most viewed dashboards..."
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10902,16 +10708,18 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading recently viewed dashboards..."
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
-      "loading": "Loading starred dashboards...",
-      "retry": "Retry"
+      "loading": "Loading starred dashboards..."
     }
+  },
+  "import-overview": {
+    "error-provisioning-status": "Could not check whether the target folder is managed by a repository. Please try again or contact an administrator.",
+    "error-provisioning-status-title": "Unable to determine provisioning status"
   },
   "inspector": {
     "inspect-data-tab": {
@@ -11121,6 +10929,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "Series color",
       "show-all-series": "...show all {{total}} items"
     }
   },
@@ -11142,10 +10951,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Create library panel"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Change",
-      "confirmText-replace": "Replace"
     },
     "confirm": {
       "delete-panel": "Do you want to delete this panel?"
@@ -11186,9 +10991,6 @@
       "select-no-options-message": "No dashboards found",
       "select-placeholder": "Start typing to search for dashboard",
       "title": "View panel in dashboard"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Create new library panel"
     },
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
@@ -11541,6 +11343,9 @@
         "oldest-first": "Oldest logs first",
         "show-search": "Search logs"
       },
+      "level": {
+        "unspecified": "Unspecified"
+      },
       "line-wrapping": {
         "enable": "Enable line wrapping",
         "enable-prettify": "Enable line wrapping and prettify JSON",
@@ -11740,11 +11545,6 @@
     "noOptionsMessage-no-options-found": "No options found"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "This tool can migrate some resources from this installation to your cloud stack. To get started, you'll need to create a snapshot of this installation. Creating a snapshot typically takes less than two minutes. The snapshot is stored alongside this Grafana installation.",
-      "title": "No snapshot exists",
-      "when-complete": "Once the snapshot is complete, you will be able to upload it to your cloud stack."
-    },
     "building-snapshot": {
       "description": "We're gathering your resources for migration to Grafana Cloud. This should only take a moment.",
       "description-eta": "Creating a snapshot typically takes less than two minutes.",
@@ -11800,14 +11600,6 @@
       "error-title": "Error deleting token",
       "title": "Delete migration token"
     },
-    "disconnect-modal": {
-      "body": "This will remove the migration token from this installation. If you wish to upload more resources in the future, you will need to enter a new migration token.",
-      "cancel": "Cancel",
-      "disconnect": "Disconnect",
-      "disconnecting": "Disconnecting...",
-      "error": "There was an error disconnecting",
-      "title": "Disconnect from cloud stack"
-    },
     "folder-info": {
       "folder": "Folder {{folderUid}}",
       "unable-to-load-folder": "Unable to load folder"
@@ -11836,11 +11628,6 @@
     },
     "migration-token": {
       "delete-button": "Delete token",
-      "delete-modal-body": "If you've already used this token with a self-managed installation, that installation will no longer be able to upload content.",
-      "delete-modal-cancel": "Cancel",
-      "delete-modal-confirm": "Delete",
-      "delete-modal-deleting": "Deleting...",
-      "delete-modal-title": "Delete migration token",
       "error-body": "Unable to generate a migration token. Please try again later.",
       "error-title": "Something went wrong",
       "generate-button": "Generate a migration token",
@@ -12382,8 +12169,10 @@
       "undock": "Undock menu"
     },
     "megamenu-item": {
+      "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -12614,13 +12403,6 @@
       "recently-viewed-dashboards": "Recently viewed dashboards",
       "search": "Search",
       "starred-dashboards": "Starred dashboards"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Calculation name"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13086,9 +12868,6 @@
       "label-author": "By {{author}}",
       "title-icon-plugin-type": "{{pluginType}} plugin"
     },
-    "plugin-signature-details-badge": {
-      "signed-by": "Signed by: {{signatureOrg}}"
-    },
     "plugin-update-available-badge": {
       "update-available": "Update available!"
     },
@@ -13194,8 +12973,8 @@
       "label-branch": "Branch",
       "label-comment": "Comment",
       "label-filename": "Filename",
-      "label-folder": "Folder",
       "label-path": "Path",
+      "label-repository-folder": "Repository folder",
       "path-exists": "A file with this name already exists at this path",
       "placeholder-branch": "Select or enter branch name",
       "placeholder-folder": "Select or enter folder path",
@@ -13269,6 +13048,14 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "branch-options": {
+      "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
+      "description-name-template": "Template for the branch created by the branch (pull request) workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}, {{randomVar}} (a short random token to avoid collisions). The result is sanitised into a valid Git branch name. Leave empty to use the auto-generated name.",
+      "label-branch-options": "Branch options",
+      "label-enforce-template": "Enforce branch name template",
+      "label-name-template": "Branch name template",
+      "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
       "title": "You can also use Git Sync on Grafana Cloud"
@@ -13288,12 +13075,24 @@
       "folder-rename-default": "Rename folder: {{title}}",
       "folder-update-default": "Save folder: {{title}}"
     },
+    "commit-options": {
+      "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
+      "label-commit-options": "Commit options",
+      "label-enforce-template": "Enforce commit message template",
+      "signer-required": "Required when commit signing is enabled.",
+      "signing-key-required": "Signing key is required",
+      "smime-certificate-configured": "Configured",
+      "smime-certificate-required": "Certificate is required"
+    },
+    "commit-signing-info": {
+      "description": "To enable verified commits, <2>set up commit signing</2> for your account."
+    },
     "config-form": {
       "alert-repository-settings-saved": "Repository settings saved",
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. A \"Grafana-saved-by: <name> (<login>)\" trailer is appended automatically. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13312,17 +13111,11 @@
       "label-target": "Target",
       "label-title": "Title",
       "option-entire-instance": "Entire instance",
+      "option-folderless": "Folderless",
       "option-managed-folder": "Managed folder",
       "placeholder-commit-message-template": "feat(dashboards): {{actionVar}} {{titleVar}}",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "My config"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
-      "description-webhook-url-learn-more": "Learn more",
-      "label-git-hub-features": "GitHub features",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13472,28 +13265,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Adds an image preview of dashboard changes in pull requests. Images of your Grafana dashboards will be shared in your Git repository and visible to anyone with repository access.",
-      "description-generate-dashboard-previews": "Create preview links for pull requests",
       "description-image-rendering": "Requires image rendering. <2>Set up image rendering</2>",
-      "description-preview-requirements": "(requires <2>image rendering</2> and public access enabled)",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-sync-interval": "How often to sync changes from the repository",
-      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
       "error-sync-interval-required": "Sync interval is required",
       "label-enable-previews": "Enable dashboard previews in pull requests",
-      "label-generate-dashboard-previews": "Generate Dashboard Previews",
       "label-read-only": "Read only",
-      "label-sync-interval": "Sync Interval (seconds)",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Sync Interval (seconds)"
     },
     "fix-folder-metadata": {
       "button": "Fix folder IDs"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Cancel",
+      "default-commit-message": "Fix folder metadata",
       "error-message": "Failed to start folder metadata fix job. Please try again.",
       "error-title": "Error fixing folder metadata",
-      "loading": "Loading repository...",
       "read-only-message": "Folder metadata cannot be fixed automatically.",
       "submit": "Fix folder IDs",
       "submitting": "Fixing...",
@@ -13588,6 +13375,8 @@
       "tab-connections-title": "List of connections",
       "tab-getting-started": "Get started",
       "tab-getting-started-title": "Get started",
+      "tab-migrate": "Migrate to GitOps",
+      "tab-migrate-title": "Migrate to GitOps",
       "tab-repositories": "Repositories",
       "tab-repositories-title": "List of repositories",
       "title-delete-all-configured-repositories": "Delete all configured repositories"
@@ -13599,7 +13388,19 @@
       "resource-not-found": "Resource not found. Please check the URL or repository."
     },
     "import": {
-      "error": "An error occurred while importing the dashboard."
+      "cancel": "Cancel",
+      "constant-required": "{{label}} needs a value",
+      "datasource-required": "Please select a data source",
+      "error": "An error occurred while importing the dashboard.",
+      "float-grid-items-body": "The dashboard contains grid items with floating positions. This is not supported by Grafana and the numbers will be truncated to integers.",
+      "float-grid-items-title": "Floating grid items",
+      "import": "Import",
+      "importing": "Importing...",
+      "label-folder": "Folder",
+      "label-name": "Name",
+      "library-panels-blocked-body": "This dashboard contains library panels that cannot be created through a provisioned import. Import into a non-provisioned folder instead, or remove the library panel references first.",
+      "library-panels-blocked-title": "Library panels not supported",
+      "name-required": "Name is required"
     },
     "instance-sync-deprecation": {
       "message": "Instance sync is currently not fully supported and breaks library panels and alerts. To use library panels and alerts, disconnect your repository and reconnect it using folder sync instead.",
@@ -13627,12 +13428,41 @@
       "path-label": "Repository Path",
       "path-required": "Repository path is required"
     },
+    "managed-badge": {
+      "classic-file-provisioning": "Managed by: File provisioning",
+      "kubectl": "Managed by: Kubectl",
+      "plugin": "Managed by: Plugin {{id}}",
+      "provisioned": "Provisioned",
+      "terraform": "Managed by: Terraform"
+    },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",
     "message": {
       "show-less": "show less",
       "show-more": "show more",
       "truncated": "Message truncated"
+    },
+    "migrate": {
+      "all-managed": "All of your dashboards and folders are already managed in Git.",
+      "all-resources": "All resources",
+      "dashboards": "Dashboards",
+      "drawer-cancel": "Cancel",
+      "drawer-description": "All dashboards and folders will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-title": "Migrate to GitOps",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "header-title": "Migrate to GitOps",
+      "loading": "Loading stats...",
+      "migrate-button": "Migrate everything",
+      "migrate-button-disabled-tooltip": "Select a target repository first",
+      "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "repo-description": "The repository your dashboards and folders will be migrated into.",
+      "repo-label": "Target repository",
+      "repo-placeholder": "Select a repository",
+      "selective-coming-soon": "Migrating only selected dashboards and folders is coming soon.",
+      "start-button": "Start migration"
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -13652,6 +13482,11 @@
         "description": "After setup, a new Grafana folder will be created and synced with external storage. If any resources are present in external storage, they will be provisioned to this new folder. All new resources created in this folder will be stored and versioned in external storage.",
         "label": "Sync external storage to a new Grafana folder",
         "subtitle": "Use this option to sync external resources into a new folder without affecting the rest of your instance."
+      },
+      "folderless": {
+        "description": "After setup, resources from external storage are provisioned at the top level without creating a wrapper folder. Subdirectories in external storage become top-level folders. Other repositories and resources that are not managed by this repository are left untouched.",
+        "label": "Sync external storage directly at root level without a containing folder",
+        "subtitle": "Use this option to sync external resources to the top level, with no wrapper folder, while still supporting subfolders and coexisting with other content."
       },
       "instance": {
         "description": "Resources will be synced with external storage and provisioned into this instance. Existing Grafana resources will be migrated and merged if needed. After setup, all new resources and changes will be saved to external storage and automatically provisioned back into the instance.",
@@ -13693,6 +13528,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "Pre-fill the pull request title in save dialogs from the template above and make it read-only.",
+      "description-title-template": "Template for the pull request title opened by the branch workflow. Available placeholders: {{actionVar}}, {{kindVar}}, {{titleVar}}, {{userLoginVar}}. Leave empty to use the first line of the commit message.",
+      "label-enforce-template": "Enforce pull request title template",
+      "label-pull-request-options": "Pull request options",
+      "label-title-template": "Pull request title template",
+      "placeholder-title-template": "{{actionVar}}: {{titleVar}}"
+    },
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
@@ -13715,6 +13558,9 @@
       "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
+    "read-only-badge": {
+      "text": "Read only"
+    },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "recent-jobs": {
@@ -13735,7 +13581,6 @@
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
-      "read-only-badge": "Read only",
       "settings": "Settings",
       "view": "View"
     },
@@ -13857,11 +13702,24 @@
     "shared": {
       "branch-description": "The branch to use for provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "Must match the signing key identity.",
+      "commit-signer-email-label": "Signer email",
+      "commit-signer-email-placeholder": "noreply@grafana.com",
+      "commit-signer-name-description": "Name of the commit signer.",
+      "commit-signer-name-label": "Signer name",
+      "commit-signer-name-placeholder": "Grafana",
       "path-description": "Optional. Path to the subdirectory with the resources you want to sync.",
       "path-label": "Path",
       "progress-bar": {
         "aria-label": "Progress Bar"
       },
+      "signing-key-description": "Private key used to sign commits. No passphrase.",
+      "signing-key-label": "Signing key",
+      "signing-method-description": "Sign commits so their author can be cryptographically verified.",
+      "signing-method-label": "Commit signing",
+      "signing-method-none": "None",
+      "smime-certificate-description": "X.509 certificate paired with the signing key.",
+      "smime-certificate-label": "S/MIME certificate",
       "token-user-label": "Username",
       "url-label": "Repository URL",
       "url-pattern": "Must be a valid repository URL (https://hostname/owner/repo)"
@@ -13929,6 +13787,13 @@
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
       "error-title": "Live updates unavailable"
+    },
+    "webhook-section": {
+      "description-webhook-url": "Overrides the auto-detected URL for registering webhooks.",
+      "description-webhook-url-learn-more": "Learn more",
+      "label-webhook": "Webhook options",
+      "label-webhook-url": "Webhook URL",
+      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "wizard": {
       "alert-intro": "Please be aware of the following limitations. For more details, see the <2>Git Sync documentation</2>.",
@@ -14235,7 +14100,6 @@
     },
     "bulk-actions": {
       "change-datasource": "Change data source for selected queries",
-      "clear-selection": "Clear selection",
       "datasource": "Data source",
       "delete": "Delete",
       "delete-confirm-body": "This action cannot be undone.",
@@ -14244,14 +14108,15 @@
       "delete-tooltip": "Delete selected",
       "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
-      "disable-all": "Disable all",
-      "disable-all-tooltip": "Disable all selected",
-      "enable-all": "Enable all",
-      "enable-all-tooltip": "Enable all selected",
+      "disable": "Disable",
+      "disable-all-tooltip": "Disable selected",
+      "enable": "Enable",
+      "enable-all-tooltip": "Enable selected",
+      "exit-multi-select": "Exit multi-select",
       "hide": "Hide",
-      "hide-all-tooltip": "Hide all selected",
+      "hide-all-tooltip": "Hide selected",
       "show": "Show",
-      "show-all-tooltip": "Show all selected",
+      "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
@@ -14299,14 +14164,14 @@
         "no-limit": "No limit"
       },
       "query-inspector": "Query inspector",
-      "query-options": "Query Options"
+      "query-options": "Query options"
     },
     "header": {
       "alert": "Alert",
       "expression": "Expression",
-      "pending-expression": "Select an Expression",
+      "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
-      "pending-transformation": "Select a Transformation",
+      "pending-transformation": "Select a transformation",
       "pending-transformation-cancel": "Cancel",
       "transformation": "Transformation"
     },
@@ -14315,10 +14180,14 @@
       "close-aria": "Close help panel"
     },
     "labels": {
-      "alert": "Alert",
-      "expression": "Expression",
-      "query": "Query",
-      "transformation": "Transformation"
+      "alert": "alert",
+      "expression": "expression",
+      "query": "query",
+      "transformation": "transformation"
+    },
+    "queries-empty-state": {
+      "add-query": "Add query",
+      "message": "Add a query, expression, or transformation to get started"
     },
     "sidebar": {
       "add-below": "Add below {{id}}",
@@ -14333,7 +14202,10 @@
       "alerts_other": "Alerts ({{count}})",
       "alerts-loading": "Alerts",
       "card-click": "Select card {{id}}",
+      "card-multi-select": "Include card {{id}} in bulk selection",
       "data": "Data",
+      "enter-stacked-view": "Enter stacked view",
+      "exit-stacked-view": "Exit stacked view",
       "footer-items_one": "{{count}} items",
       "footer-items_other": "{{count}} items",
       "footer-items-alert_one": "{{count}} alerts",
@@ -14341,10 +14213,21 @@
       "footer-select": "Select...",
       "footer-select-label": "Select multiple items",
       "new-type": "New {{type}}",
+      "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
+      "transformations-empty": "No transformations",
       "view-toggle": "View"
+    },
+    "stacked": {
+      "exit": "Exit stacked view",
+      "exit-aria-label": "Exit stacked view",
+      "hidden-aria-label": "Hidden",
+      "scroll-area-aria-label": "Stacked editor items",
+      "showing-items_one": "Showing {{count}} items",
+      "showing-items_other": "Showing {{count}} items",
+      "transformation": "Transformation"
     },
     "transformation-debug": {
       "input-data": "Input data",
@@ -14641,15 +14524,6 @@
     },
     "get-role-cell": {
       "aria-label-role": "Role"
-    },
-    "service-account-list-item": {
-      "add-token": "Add token",
-      "aria-label-role": "Role",
-      "disable": "Disable",
-      "enable": "Enable",
-      "title-tokens": "Tokens",
-      "tooltip-delete-button": "Delete service account {{serviceAccountName}}",
-      "tooltip-managed-service-account-cannot-modified": "This is a managed service account and cannot be modified"
     },
     "service-account-page-unconnected": {
       "add-service-account-token": "Add service account token",
@@ -16609,7 +16483,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
-      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
+      "auto-revoked": "Your session token was automatically revoked because you have reached <strong>the maximum number of {{numSessions}} concurrent sessions</strong> for your account.",
       "resume-message": "<strong>To resume your session, sign in again.</strong>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"
@@ -16705,9 +16579,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "No renamed or missing variables found."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Couldn't load variable"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "When to update the values of this variable",

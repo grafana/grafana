@@ -13,11 +13,16 @@ permissions: {}
 jobs:
   bundle-schema-types:
     runs-on: ubuntu-arm64-small
-    # These permissions are needed to assume roles from Github's OIDC.
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v5
 
-      - uses: grafana/plugin-actions/bundle-schema-types@main
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
+
+      - uses: ./.github/actions/bundle-schema-types

@@ -13,7 +13,7 @@ import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';
 
-export function deepEqual(a: string | string[], b: string | string[]) {
+function deepEqual(a: string | string[], b: string | string[]) {
   return (
     typeof a === typeof b &&
     ((typeof a === 'string' && a === b) ||
@@ -21,7 +21,7 @@ export function deepEqual(a: string | string[], b: string | string[]) {
   );
 }
 
-export function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
+function isEqual(a: VariableOption | undefined, b: VariableOption | undefined) {
   return a === b || (a && b && a.selected === b.selected && deepEqual(a.text, b.text) && deepEqual(a.value, b.value));
 }
 
@@ -127,10 +127,7 @@ interface DefaultPersistedTimeValue {
   from?: string;
   to?: string;
 }
-export function getHasTimeChanged(
-  newRange: DefaultPersistedTimeValue = {},
-  previousRange: DefaultPersistedTimeValue = {}
-) {
+function getHasTimeChanged(newRange: DefaultPersistedTimeValue = {}, previousRange: DefaultPersistedTimeValue = {}) {
   return newRange.from !== previousRange.from || newRange.to !== previousRange.to;
 }
 
@@ -159,7 +156,7 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
   return true;
 }
 
-export function applyVariableChangesV2(
+function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
   saveVariables?: boolean
@@ -262,7 +259,7 @@ function applyVariableKindListChanges(
  * Recursively walk RowsLayout / TabsLayout and apply variable merge/detection
  * for section variables embedded under row.spec.variables / tab.spec.variables.
  */
-export function applySectionVariableChangesV2(
+function applySectionVariableChangesV2(
   changedLayout: DashboardV2Spec['layout'] | undefined,
   originalLayout: DashboardV2Spec['layout'] | undefined,
   saveVariables?: boolean
@@ -300,7 +297,7 @@ export function applySectionVariableChangesV2(
   return hasChanges;
 }
 
-export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
+function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard, saveVariables?: boolean) {
   const originalVariables = originalSaveModel.templating?.list ?? [];
   const variablesToSave = saveModel.templating?.list ?? [];
   let hasVariableValueChanges = false;

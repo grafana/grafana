@@ -59,7 +59,7 @@ interface State {
 
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
-export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const { pluginId: pluginIdParam = '' } = useParams();
   pluginId = pluginId || pluginIdParam;
   const addedLinksRegistry = useAddedLinksRegistry();
@@ -253,7 +253,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
   }
 }
 
-export function getAppPluginPageError(meta: AppPluginMeta) {
+function getAppPluginPageError(meta: AppPluginMeta) {
   if (!meta) {
     return 'Unknown Plugin';
   }

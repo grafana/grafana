@@ -7,12 +7,7 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
 import { isRootFolderUID } from '../constants';
-import {
-  type DashboardSearchHit,
-  DashboardSearchItemType,
-  type DashboardViewItem,
-  type DashboardViewItemKind,
-} from '../types';
+import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 import { type SearchHit } from './unified';
@@ -196,26 +191,6 @@ export function resourceToSearchResult(
     };
 
     return hit;
-  });
-}
-
-export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
-  return searchHits.map((hit) => {
-    const dashboardHit: DashboardSearchHit = {
-      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-      title: hit.title,
-      uid: hit.name, // k8s name is the uid
-      url: hit.url,
-      tags: hit.tags || [],
-      isDeleted: true, // All results from trash are deleted
-      sortMeta: 0, // Default value for deleted items
-    };
-
-    if (!isRootFolderUID(hit.folder)) {
-      dashboardHit.folderUid = hit.folder;
-    }
-
-    return dashboardHit;
   });
 }
 

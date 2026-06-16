@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
+import { resolvePaletteRefs } from './palette_new';
 import { type DeepRequired, type ThemeRichColor, ThemeRichColorInputSchema } from './types';
 
 const ThemeColorsModeSchema = z.enum(['light', 'dark']);
@@ -122,9 +123,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.12)`,
-    medium: `rgba(${this.whiteBase}, 0.2)`,
-    strong: `rgba(${this.whiteBase}, 0.30)`,
+    weak: `rgb(54, 57, 64)`,
+    medium: `rgb(68, 70, 78)`,
+    strong: `rgb(85, 87, 96)`,
   };
 
   text = {
@@ -222,9 +223,9 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   border = {
-    weak: `rgba(${this.blackBase}, 0.12)`,
-    medium: `rgba(${this.blackBase}, 0.3)`,
-    strong: `rgba(${this.blackBase}, 0.4)`,
+    weak: `rgb(229, 229, 230)`,
+    medium: `rgb(189, 191, 192)`,
+    strong: `rgb(167, 169, 171)`,
   };
 
   secondary = {
@@ -293,6 +294,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 }
 
 export function createColors(colors: ThemeColorsInput): ThemeColors {
+  colors = resolvePaletteRefs(colors);
   const dark = new DarkColors();
   const light = new LightColors();
   const base = (colors.mode ?? 'dark') === 'dark' ? dark : light;

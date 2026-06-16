@@ -48,6 +48,7 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 		query.HeaderPanelPluginId,
 		query.HeaderDashboardTitle,
 		query.HeaderPanelTitle,
+		query.HeaderCallerID,
 	}
 
 	for _, headerName := range headersList {
@@ -72,6 +73,9 @@ func (m *TracingHeaderMiddleware) QueryData(ctx context.Context, req *backend.Qu
 }
 
 func (m *TracingHeaderMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if req != nil {
+		m.applyHeaders(ctx, req)
+	}
 	return m.BaseHandler.CallResource(ctx, req, sender)
 }
 

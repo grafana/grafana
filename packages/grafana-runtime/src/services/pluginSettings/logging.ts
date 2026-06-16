@@ -9,3 +9,7 @@ export function logPluginSettingsWarning(message: string, context: LogContext): 
 export function logPluginSettingsError(message: string, error: unknown, context?: LogContext): void {
   getLogger('grafana/runtime.plugins.settings').logError(new Error(message, { cause: error }), context);
 }
+
+export function logPluginSettingsDebug(message: string, context: LogContext): void {
+  getLogger('grafana/runtime.plugins.settings').logDebug(message, context);
+}
