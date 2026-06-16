@@ -56,9 +56,10 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
     }
   };
 
+  // Start a fresh job and let it replace the current one once created. We avoid
+  // clearing `job` first so the drawer doesn't flash back to the setup form.
   const retryMigration = () => {
     migratedRef.current = false;
-    setJob(undefined);
     void startMigration();
   };
 
