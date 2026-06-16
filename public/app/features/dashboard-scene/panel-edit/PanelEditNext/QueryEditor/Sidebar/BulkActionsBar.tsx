@@ -55,6 +55,25 @@ function BulkActionButtons({
   );
 }
 
+interface DeleteConfirmDescriptionProps {
+  items: Array<{ id: string; label: string }>;
+}
+
+function DeleteConfirmDescription({ items }: DeleteConfirmDescriptionProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Stack direction="column" gap={1}>
+      <ul className={styles.itemList}>
+        {items.map(({ id, label }) => (
+          <li key={id}>{label}</li>
+        ))}
+      </ul>
+      <span>{t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}</span>
+    </Stack>
+  );
+}
+
 interface BulkQueryActionsProps {
   barWidth: number;
 }
@@ -135,7 +154,9 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
           defaultValue_other: 'Delete {{count}} items?',
         })}
         body={undefined}
-        description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+        description={
+          <DeleteConfirmDescription items={selectedQueries.map(({ refId }) => ({ id: refId, label: refId }))} />
+        }
         confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
         onConfirm={handleConfirmedDelete}
         onDismiss={() => setShowDeleteConfirm(false)}
@@ -195,7 +216,14 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
           defaultValue_other: 'Delete {{count}} transformations?',
         })}
         body={undefined}
-        description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+        description={
+          <DeleteConfirmDescription
+            items={selectedTransformations.map((transformation) => ({
+              id: transformation.transformId,
+              label: transformation.registryItem?.name || transformation.transformConfig.id,
+            }))}
+          />
+        }
         confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
         onConfirm={handleConfirmedDelete}
         onDismiss={() => setShowDeleteConfirm(false)}
@@ -312,5 +340,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
+  }),
+  itemList: css({
+    margin: 0,
+    paddingLeft: theme.spacing(2.5),
+    maxHeight: 200,
+    overflowY: 'auto',
   }),
 });
