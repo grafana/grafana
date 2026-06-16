@@ -3,7 +3,7 @@ import { render, screen, waitFor, act } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import { FOLDER_BY_NAME_URL, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -32,8 +32,6 @@ jest.mock('react-router-dom-v5-compat', () => ({
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
 }));
-
-const FOLDER_BY_NAME = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid';
 
 // Default movable-file response (the provisioning files GET defaults to 404).
 function fileResponse(sourcePath = 'folder1/dashboard.json') {
@@ -134,7 +132,7 @@ describe('MoveProvisionedDashboardForm', () => {
     // tests render with the move button enabled and the "already in target" guard clear.
     server.use(
       http.get(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(fileResponse())),
-      http.get(FOLDER_BY_NAME, () => HttpResponse.json(folderResponse('target-folder')))
+      http.get(FOLDER_BY_NAME_URL, () => HttpResponse.json(folderResponse('target-folder')))
     );
   });
 
@@ -152,9 +150,7 @@ describe('MoveProvisionedDashboardForm', () => {
 
     // Form should still render, but move button should be disabled
     expect(screen.getByText('Move Provisioned Dashboard')).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /move dashboard/i })).toBeDisabled();
-    });
+    expect(await screen.findByRole('button', { name: /move dashboard/i })).toBeDisabled();
   });
 
   it('should show loading spinner when file data is loading', async () => {
@@ -209,11 +205,9 @@ describe('MoveProvisionedDashboardForm', () => {
 
     await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
 
-    await waitFor(() => {
-      const moveButton = screen.getByRole('button', { name: /moving/i });
-      expect(moveButton).toBeDisabled();
-      expect(moveButton).toHaveTextContent('Moving...');
-    });
+    const moveButton = await screen.findByRole('button', { name: /moving/i });
+    expect(moveButton).toBeDisabled();
+    expect(moveButton).toHaveTextContent('Moving...');
   });
 
   it('should show move dashboard button when not loading', async () => {
@@ -235,7 +229,7 @@ describe('MoveProvisionedDashboardForm', () => {
     let jobPosted = false;
     // Target folder resolves to the same folder the dashboard already lives in.
     server.use(
-      http.get(FOLDER_BY_NAME, () => HttpResponse.json(folderResponse('folder1'))),
+      http.get(FOLDER_BY_NAME_URL, () => HttpResponse.json(folderResponse('folder1'))),
       http.post(`${BASE}/repositories/:name/jobs`, () => {
         jobPosted = true;
         return HttpResponse.json(createJob({ status: { state: 'pending' } }));
