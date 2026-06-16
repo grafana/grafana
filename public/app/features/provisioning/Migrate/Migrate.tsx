@@ -12,14 +12,6 @@ import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
 import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
 
-/**
- * Migrate to GitOps tab. Shows an overview of how much of the instance is
- * already managed and, when there are still unmanaged dashboards or folders,
- * lets the user run a migration. The migration itself happens in a drawer
- * (consistent with other provisioning jobs) where the target repository is
- * selected and the job's progress and result are shown. Per-resource selection
- * lands in a follow-up.
- */
 export function Migrate() {
   const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery();
   const [repos] = useRepositoryList({ watch: true });
