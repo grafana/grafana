@@ -205,7 +205,7 @@ func buildRESTConfig(url, token, tokenExchangeURL string, allowInsecure bool) (*
 	if allowInsecure {
 		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(
 			&http.Client{Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true, MinVersion: tls.VersionTLS12}, //nolint:gosec
 			}},
 		))
 	}
