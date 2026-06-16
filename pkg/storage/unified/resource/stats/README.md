@@ -37,10 +37,14 @@ orphan GC.
 
 ## Wiring the search read path
 
-`ProvideDashboardStats(store, enabled)` returns either the KV-backed reader or a
-no-op (legacy behaviour) based on a feature flag. To finish the cutover, swap
-`search/builders.ProvideDashboardStats` to delegate here once `*Store` and the
-flag are available in the search DI graph.
+Gated by the `[unified_storage] usage_stats_enabled` config
+(`cfg.EnableUnifiedStorageUsageStats`). When it is set and the storage backend
+is KV-backed, `search.MaybeUseUnifiedStorageStats` swaps the search document
+builders' dashboard stats source to this package's `KVDashboardStats` (reading
+unified storage KV); otherwise the legacy source is used (enterprise sprinkles /
+OSS no-op). This only affects the unified storage server's document builders, so
+in the separated cloud topology the flag lives entirely on the unified storage
+side. The cutover is reversible by toggling the config.
 
 ## Not yet wired (follow-ups)
 

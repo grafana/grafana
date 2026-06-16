@@ -254,6 +254,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// enable per-resource leases in the KV backend; only effective when the
 	// SQL RV manager is not in use.
 	cfg.EnableKVLeases = section.Key("enable_kv_leases").MustBool(false)
+	// read dashboard usage stats from unified storage KV (the usage-stats
+	// read path) instead of the legacy sprinkles/no-op source.
+	cfg.EnableUnifiedStorageUsageStats = section.Key("usage_stats_enabled").MustBool(false)
 
 	cfg.MaxFileIndexAge = section.Key("max_file_index_age").MustDuration(0)
 	cfg.MinFileIndexBuildVersion = section.Key("min_file_index_build_version").MustString("")

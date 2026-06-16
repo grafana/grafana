@@ -761,6 +761,10 @@ type Cfg struct {
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
 	EnableKVLeases                    bool
+	// EnableUnifiedStorageUsageStats makes the search document builders read
+	// dashboard usage stats (views/queries/errors) from unified storage KV
+	// instead of the legacy source (enterprise sprinkles / OSS no-op).
+	EnableUnifiedStorageUsageStats bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
