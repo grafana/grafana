@@ -139,10 +139,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		PluginAdminEnabled:               cfg.PluginAdminEnabled,
 		PluginAdminExternalManageEnabled: cfg.PluginAdminEnabled && cfg.PluginAdminExternalManageEnabled,
 		PluginCatalogHiddenPlugins:       cfg.PluginCatalogHiddenPlugins,
-
-		// [TODO] ?? what's this, how to do for frontend service?
-		// PluginCatalogManagedPlugins:         hs.managedPluginsService.ManagedPlugins(c.Req.Context()),
-		PluginCatalogManagedPlugins: []string{},
+		PluginCatalogManagedPlugins:      []string{},
 
 		PluginCatalogPreinstalledPlugins:    append(cfg.PreinstallPluginsAsync, cfg.PreinstallPluginsSync...),
 		PluginCatalogPreinstalledAutoUpdate: cfg.PreinstallAutoUpdate,
@@ -216,8 +213,6 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 	if cfg.UnifiedAlerting.Enabled != nil {
 		frontendSettings.UnifiedAlertingEnabled = *cfg.UnifiedAlerting.Enabled
 	}
-
-	// [TODO] Restore PluginsCDNBaseURL back here, or in frontend service
 
 	if cfg.GeomapDefaultBaseLayerConfig != nil {
 		frontendSettings.GeomapDefaultBaseLayerConfig = &cfg.GeomapDefaultBaseLayerConfig
