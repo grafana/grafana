@@ -79,6 +79,12 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
+	// WebhookDisabled disables webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from GitHub and will poll
+	// the repository on an interval instead. Use this when Grafana is not reachable
+	// from the public internet.
+	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
+
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -326,8 +332,7 @@ type CommitOptions struct {
 	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
 
 	// When true, the Comment field in Save drawers is pre-filled from
-	// SingleResourceMessageTemplate and rendered read-only. The
-	// Grafana-saved-by trailer is always appended regardless of this setting.
+	// SingleResourceMessageTemplate and rendered read-only.
 	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
 	// Name used as the commit signer. Required for the signing key's identity
 	// to match the commit, which providers need to mark commits as Verified. When

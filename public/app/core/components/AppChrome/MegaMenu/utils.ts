@@ -132,7 +132,7 @@ export const getActiveItem = (
   return undefined;
 };
 
-export function getEditionAndUpdateLinks(): NavModelItem[] {
+function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];

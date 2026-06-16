@@ -1,11 +1,19 @@
 import { screen, within } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import { renderWithQueryEditorProvider } from '../testUtils';
 import { type Transformation } from '../types';
 
 import { BulkActionsBar } from './BulkActionsBar';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+const mockReportInteraction = jest.mocked(reportInteraction);
 
 // Replace DataSourceModal with a minimal test double to avoid loading its full dep tree.
 jest.mock('app/features/datasources/components/picker/DataSourceModal', () => ({
@@ -48,6 +56,10 @@ function renderBar(overrides: Parameters<typeof renderWithQueryEditorProvider>[1
 }
 
 describe('BulkActionsBar', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('visibility', () => {
     it('renders nothing when multi-select mode is off', () => {
       // Bulk arrays may linger; the bar is gated on the explicit multi-select mode.
@@ -95,9 +107,25 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(false);
+    });
+
+    it('tracks an interaction when the clear button is clicked', async () => {
+      const { user } = renderBar({
+        uiStateOverrides: {
+          multiSelectMode: true,
+          selectedQueryRefIds: ['A', 'B'],
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
+
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
+        action: 'toggle_multi_select',
+        direction: 'exit',
+      });
     });
   });
 

@@ -457,6 +457,7 @@ github.com/aws/aws-sdk-go-v2 v1.30.4/go.mod h1:CT+ZPWXbYrci8chcARI3OmI/qgd+f6Wtu
 github.com/aws/aws-sdk-go-v2 v1.41.1/go.mod h1:MayyLB8y+buD9hZqkCW3kX1AKq07Y5pXxtgB+rRFhz0=
 github.com/aws/aws-sdk-go-v2 v1.41.4/go.mod h1:mwsPRE8ceUUpiTgF7QmQIJ7lgsKUPQOUl3o72QBrE1o=
 github.com/aws/aws-sdk-go-v2 v1.41.5/go.mod h1:mwsPRE8ceUUpiTgF7QmQIJ7lgsKUPQOUl3o72QBrE1o=
+github.com/aws/aws-sdk-go-v2 v1.41.7/go.mod h1:4LAfZOPHNVNQEckOACQx60Y8pSRjIkNZQz1w92xpMJc=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.3/go.mod h1:xdCzcZEtnSTKVDOmUZs4l/j3pSV6rpo1WXl5ugNsL8Y=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.4/go.mod h1:IOAPF6oT9KCsceNTvvYMNHy0+kMF8akOjeDvPENWxp4=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.7/go.mod h1:lyw7GFp3qENLh7kwzf7iMzAxDn+NzjXEAGjKS2UOKqI=
@@ -482,10 +483,12 @@ github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.16/go.mod h1:2DwJF39FlN
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.17/go.mod h1:5M5CI3D12dNOtH3/mk6minaRwI2/37ifCURZISxA/IQ=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.20/go.mod h1:oydPDJKcfMhgfcgBUZaG+toBbwy8yPWubJXBVERtI4o=
 github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.21/go.mod h1:A/kJFst/nm//cyqonihbdpQZwiUhhzpqTsdbhDdRF9c=
+github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.23/go.mod h1:xYWD6BS9ywC5bS3sz9Xh04whO/hzK2plt2Zkyrp4JuA=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.16/go.mod h1:7ZfEPZxkW42Afq4uQB8H2E2e6ebh6mXTueEpYzjCzcs=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.17/go.mod h1:EhG22vHRrvF8oXSTYStZhJc1aUgKtnJe+aOiFEV90cM=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.20/go.mod h1:YJ898MhD067hSHA6xYCx5ts/jEd8BSOLtQDL3iZsvbc=
 github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.21/go.mod h1:p+hz+PRAYlY3zcpJhPwXlLC4C+kqn70WIHwnzAfs6ps=
+github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.23/go.mod h1:15DfR2nw+CRHIk0tqNyifu3G1YdAOy68RftkhMDDwYk=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.1/go.mod h1:FbtygfRFze9usAadmnGJNc8KsP346kEe+y2/oyhGAGc=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4/go.mod h1:ZWy7j6v1vWGmPReu0iSGvRiise4YI5SkR3OHKTZ6Wuc=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6 h1:qYQ4pzQ2Oz6WpQ8T3HvGHnZydA72MnLuFK9tJwmrbHw=
@@ -543,6 +546,7 @@ github.com/aws/aws-sdk-go-v2/service/sts v1.41.9/go.mod h1:LrlIndBDdjA/EeXeyNBle
 github.com/aws/smithy-go v1.20.4/go.mod h1:irrKGvNn1InZwb2d7fkIRNucdfwR8R+Ts3wxYa/cJHg=
 github.com/aws/smithy-go v1.24.0/go.mod h1:LEj2LM3rBRQJxPZTB4KuzZkaZYnZPnvgIhb4pu07mx0=
 github.com/aws/smithy-go v1.24.2/go.mod h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=
+github.com/aws/smithy-go v1.25.1/go.mod h1:YE2RhdIuDbA5E5bTdciG9KrW3+TiEONeUWCqxX9i1Fc=
 github.com/awslabs/aws-lambda-go-api-proxy v0.16.2 h1:CJyGEyO1CIwOnXTU40urf0mchf6t3voxpvUDikOU9LY=
 github.com/awslabs/aws-lambda-go-api-proxy v0.16.2/go.mod h1:vxxjwBHe/KbgFeNlAP/Tvp4SsVRL3WQamcWRxqVh0z0=
 github.com/axiomhq/hyperloglog v0.2.6 h1:sRhvvF3RIXWQgAXaTphLp4yJiX4S0IN3MWTaAgZoRJw=
@@ -993,12 +997,16 @@ github.com/grafana/dskit v0.0.0-20260209132809-8d1c6d34bb5a/go.mod h1:M2NzmN1SL1
 github.com/grafana/e2e v0.1.1/go.mod h1:RpNLgae5VT+BUHvPE+/zSypmOXKwEu4t+tnEMS1ATaE=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
+github.com/grafana/go-mysql-server v0.20.2-grafana-3 h1:d9t/ZbwjchVL/VLJ+W51h6z9JaSzQ84xG1hTZBU5oWY=
+github.com/grafana/go-mysql-server v0.20.2-grafana-3/go.mod h1:Oy0XD/nfIkwVBMud5aY8Rvqw8Rbi+2yCxW84a9391+A=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d h1:oXRJlb9UjVsl6LhqBdbyAQ9YFhExwsj4bjh5vwMNRZY=
 github.com/grafana/gomemcache v0.0.0-20250318131618-74242eea118d/go.mod h1:j/s0jkda4UXTemDs7Pgw/vMT06alWc42CHisvYac0qw=
 github.com/grafana/grafana-app-sdk v0.53.1/go.mod h1:wR7nY/6FbkSjLgSyzE4buEy4JF0poSG6HCZ4MRQrFb4=
 github.com/grafana/grafana-app-sdk v0.55.0/go.mod h1:JV9ExtfujB3Wz832J3MOZQDdmxelAPXg+f+FmYoRDSQ=
 github.com/grafana/grafana-app-sdk/logging v0.53.2/go.mod h1:f0r/XriExa4jpUMHnI9aTRYzbbMHiDV+MXSpaSRGqIE=
 github.com/grafana/grafana-app-sdk/logging v0.54.1/go.mod h1:t0rXNkTz3R6PLpjxk4BIl2erHYkMBX+rd+UHSL0k5nw=
+github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 h1:DoOpV1o0lqv3y1sw3GhHPFNPACssM0rdcRls5HGnT6w=
+github.com/grafana/grafana-cloud-migration-snapshot v1.11.0/go.mod h1:rJnPqLwstVQ1g/1BFoy83vo4yBX4LDRKwWZzfikHruY=
 github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.10/go.mod h1:S6d7Ck6J8UDOkQj9xfTp8pM9uAmslU5PXr+/h7ixYfY=
 github.com/grafana/loki/pkg/push v0.0.0-20250630054201-94c0ba7b0952/go.mod h1:ny/0bFitf8KNZkZfweaI4hmwb5XPhaFD2d0kVcyKmjo=
 github.com/grafana/loki/v3 v3.5.11/go.mod h1:vT/ZnjX2++rBwKSdsjzNELU+66PWkop5KetzeALZH5Y=
@@ -1011,6 +1019,8 @@ github.com/grafana/schemads v0.0.11/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZ
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec/go.mod h1:j1IY7J2rUz7TcTjFVVx6HCpyTlYOJPtXuGRZ7sI+vSo=
+github.com/grafana/vitess v0.0.0-grafana-2 h1:acOPRrYMU8ZhDUC99WAxiB8fIZtgQ4/JjcaY6YIjQcE=
+github.com/grafana/vitess v0.0.0-grafana-2/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1/go.mod h1:lXGCsh6c22WGtjr+qGHj1otzZpV/1kwTMAqkwZsnWRU=
 github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.1.0/go.mod h1:XKMd7iuf/RGPSMJ/U4HP0zS2Z9Fh8Ps9a+6X26m/tmI=
 github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 h1:Ovs26xHkKqVztRpIrF/92BcuyuQ/YW4NSIpoGtfXNho=

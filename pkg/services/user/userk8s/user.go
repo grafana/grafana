@@ -427,6 +427,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if cmd.IsProvisioned != nil {
 		existing.Spec.Provisioned = *cmd.IsProvisioned
 	}
+	if cmd.OrgRole != nil {
+		existing.Spec.Role = *cmd.OrgRole
+	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
 	if err != nil {
@@ -591,6 +594,9 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	if cmd.Query != "" {
 		req = req.Param("query", cmd.Query)
 	}
+	if cmd.IncludeAccessControl {
+		req = req.Param("accesscontrol", "true")
+	}
 	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
 		req = req.Param("sort", sortParam)
 	}
@@ -614,12 +620,17 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	users := make([]*user.UserSearchHitDTO, 0, len(searchResp.Hits))
 	for _, hit := range searchResp.Hits {
 		users = append(users, &user.UserSearchHitDTO{
+			ID:            hit.InternalId,
 			UID:           hit.Name,
 			Name:          hit.Title,
 			Login:         hit.Login,
 			Email:         hit.Email,
+			Role:          hit.Role,
+			AccessControl: hit.AccessControl,
 			LastSeenAt:    time.Unix(hit.LastSeenAt, 0),
 			LastSeenAtAge: hit.LastSeenAtAge,
+			Created:       time.UnixMilli(hit.Created),
+			IsDisabled:    hit.Disabled,
 			IsProvisioned: hit.Provisioned,
 		})
 	}
@@ -798,6 +809,7 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsDisabled:    u.Spec.Disabled,
 		EmailVerified: u.Spec.EmailVerified,
 		IsProvisioned: u.Spec.Provisioned,
+		OrgRole:       u.Spec.Role,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
 		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
