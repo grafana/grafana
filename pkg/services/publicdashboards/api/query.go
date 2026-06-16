@@ -57,6 +57,13 @@ func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Respon
 		return response.Err(ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
 	}
 
+	_, err := api.PublicDashboardService.FindByAccessToken(c.Req.Context(), accessToken)
+	if err != nil {
+		return response.Err(err)
+	}
+
+	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxQueryBodySize)
+
 	panelId, err := strconv.ParseInt(web.Params(c.Req)[":panelId"], 10, 64)
 	if err != nil {
 		return response.Err(ErrInvalidPanelId.Errorf("QueryPublicDashboard: error parsing panelId %v", err))

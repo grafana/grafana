@@ -40,6 +40,7 @@ import (
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -1392,9 +1393,9 @@ func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *Fi
 }
 
 // Post sends a POST request to the given path with no body.
-func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
+func (c *FilesClient) Post(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()
-	return c.Do(t, http.MethodPost, filePath, nil)
+	return c.Do(t, http.MethodPost, filePath, body)
 }
 
 // Put sends a PUT request to the given path with a JSON body.
@@ -1788,6 +1789,24 @@ func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient
 		}
 		assert.Len(c, list.Items, expected, "unexpected dashboard count")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireRepoManagedDashboard waits until the dashboard with the given uid is
+// available in unified storage and is annotated as managed by the named repo
+// at the given source path. Polls until the assertions hold or the default
+// wait timeout elapses.
+func RequireRepoManagedDashboard(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, repoName, sourcePath string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		dash, err := dashboardClient.Resource.Get(ctx, uid, metav1.GetOptions{})
+		if !assert.NoError(c, err) {
+			return
+		}
+		annotations := dash.GetAnnotations()
+		assert.Equal(c, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(c, repoName, annotations[utils.AnnoKeyManagerIdentity])
+		assert.Equal(c, sourcePath, annotations[utils.AnnoKeySourcePath])
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should be managed by repo %q at %q", uid, repoName, sourcePath)
 }
 
 // RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
@@ -2187,6 +2206,37 @@ func DashboardJSON(uid, title string, version int) []byte {
 	return data
 }
 
+// NewManagedDashboard builds an unstructured Dashboard with the manager
+// annotations required to route a Dashboard API write through the
+// provisioning files endpoint (handleManagedResourceRouting). If message is
+// empty, the grafana.app/message annotation is omitted so callers can
+// exercise the action-specific fallback ("Create <name>" / "Update <name>"
+// / "Delete <name>").
+func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string) *unstructured.Unstructured {
+	annotations := map[string]interface{}{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+		utils.AnnoKeyManagerIdentity: repoName,
+		utils.AnnoKeySourcePath:      sourcePath,
+	}
+	if message != "" {
+		annotations[utils.AnnoKeyMessage] = message
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":        name,
+				"annotations": annotations,
+			},
+			"spec": map[string]interface{}{
+				"title":         name,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
 type exportRepoInfo struct {
 	user   *gittest.User
 	remote *gittest.RemoteRepository
@@ -2337,17 +2387,27 @@ func (h *GitTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 // CreateGitRepo creates a git repository with sync target "instance" and registers
 // it with Grafana provisioning. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "instance", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "instance", false, initialFiles, workflows...)
 }
 
 // CreateFolderTargetGitRepo creates a git repository with sync target "folder" and
 // registers it with Grafana provisioning. Unlike "instance" repos, multiple "folder"
 // repos can coexist on the same Grafana server. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
-	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
+	return h.createGitRepo(t, repoName, "folder", false, initialFiles, workflows...)
 }
 
-func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+// CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
+// and sync.enabled=true. Sync must be on for the provisioning files endpoint to
+// dual-write into unified storage — without it, callers that write a new
+// repo-managed resource via the Dashboard API would fail at the post-write Get
+// inside handleManagedResourceRouting with KeyNotFound.
+// workflows is optional; defaults to ["write"].
+func (h *GitTestHelper) CreateSyncEnabledGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createGitRepo(t, repoName, "instance", true, initialFiles, workflows...)
+}
+
+func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, syncEnabled bool, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -2405,7 +2465,7 @@ func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget 
 				"tokenUser": user.Username,
 			},
 			"sync": map[string]interface{}{
-				"enabled":         false,
+				"enabled":         syncEnabled,
 				"target":          syncTarget,
 				"intervalSeconds": 60,
 			},

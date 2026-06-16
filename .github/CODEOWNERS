@@ -54,7 +54,7 @@
 
 
 /docs/sources/visualizations/dashboards/share-dashboards-panels/_index.md                         @imatwawana @jtvdez
-/docs/sources/visualizations/dashboards/share-dashboards-panels/shared-dashboards/index.md        @jtvdez
+/docs/sources/visualizations/dashboards/share-dashboards-panels/shared-dashboards.md              @jtvdez
 /docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md   @imatwawana @baldm0mma
 /docs/sources/visualizations/panels-visualizations/query-transform-data/sql-expressions/index.md  @lwandz13 @irenerl24
 # END Technical documentation
@@ -71,6 +71,7 @@
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
 /scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
+/scripts/ci/generate-enterprise-imports @grafana/grafana-operator-experience-squad
 /scripts/catalog-plugins-defaults @grafana/grafana-datasources-core-services @kminehart
 /scripts/download-catalog-plugins.sh @grafana/grafana-datasources-core-services @kminehart
 /hack/ @grafana/grafana-app-platform-squad
@@ -1072,6 +1073,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /scripts/build-deb.sh @grafana/grafana-backend-services-squad
 /scripts/build-rpm.sh @grafana/grafana-backend-services-squad
 /scripts/build-targz.sh @grafana/grafana-backend-services-squad
+scripts/build-msi.sh @grafana/grafana-backend-services-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/check-breaking-changes.sh @grafana/grafana-frontend-platform
 /scripts/ci-* @grafana/grafana-developer-enablement-squad

@@ -20,22 +20,15 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
-      - uses: grafana/shared-workflows/actions/get-vault-secrets@main
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
-          repositories: '["grafana"]'
-          permissions: '{"contents": "write", "pull_requests": "write", "workflows": "write"}'
+          github_app: grafana-delivery-bot
       - name: Checkout Grafana
         uses: actions/checkout@v5
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ steps.get-github-app-token.outputs.token }}
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
@@ -47,7 +40,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           REF_NAME: ${{ github.ref_name }}
           RUN_ID: ${{ github.run_id }}
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
         run: |
           git config --local user.name "grafana-delivery-bot[bot]"
           git config --local user.email "grafana-delivery-bot[bot]@users.noreply.github.com"

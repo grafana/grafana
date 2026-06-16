@@ -17,96 +17,115 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// TestAuthorizeResource_SecurityFix tests the critical security fix where authorization
-// checks the actual resource's folder, not the folder claimed in the file.
-func TestAuthorizeResource_SecurityFix(t *testing.T) {
-	tests := []struct {
-		name           string
-		fileFolderID   string
-		existingFolder string
-		hasExisting    bool
-		verb           string
-		expectedFolder string
-		description    string
-	}{
-		{
-			name:           "new resource - uses folder from file metadata",
-			fileFolderID:   "file-claimed-folder",
-			hasExisting:    false,
-			verb:           utils.VerbCreate,
-			expectedFolder: "file-claimed-folder",
-			description:    "For new resources, should use folder from file metadata",
+func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder string, hasExisting bool) *ParsedResource {
+	mockMeta := utils.NewMockGrafanaMetaAccessor(t)
+	mockMeta.On("GetFolder").Return(fileFolderID)
+
+	parsed := &ParsedResource{
+		Obj: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard",
+				},
+			},
 		},
-		{
-			name:           "existing resource - SECURITY FIX: uses folder from actual resource, not file",
-			fileFolderID:   "malicious-claimed-folder", // Attacker claims different folder
-			existingFolder: "actual-resource-folder",   // Actual folder
-			hasExisting:    true,
-			verb:           utils.VerbUpdate,
-			expectedFolder: "actual-resource-folder",
-			description:    "SECURITY FIX: For existing resources, should use folder from actual resource to prevent permission bypass",
+		Meta: mockMeta,
+		GVR: schema.GroupVersionResource{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockAccess := auth.NewMockAccessChecker(t)
-			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-			}
-
-			// Create mock metadata for file
-			mockMeta := utils.NewMockGrafanaMetaAccessor(t)
-			mockMeta.On("GetFolder").Return(tt.fileFolderID)
-
-			// Create parsed resource with file metadata
-			parsed := &ParsedResource{
-				Obj: &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name": "test-dashboard",
-						},
+	if hasExisting {
+		parsed.Existing = &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-dashboard",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": existingFolder,
 					},
 				},
-				Meta: mockMeta,
-				GVR: schema.GroupVersionResource{
-					Group:    "dashboard.grafana.app",
-					Resource: "dashboards",
-				},
-			}
-
-			// Add existing resource if needed with folder annotation
-			if tt.hasExisting {
-				parsed.Existing = &unstructured.Unstructured{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name": "test-dashboard",
-							"annotations": map[string]interface{}{
-								"grafana.app/folder": tt.existingFolder,
-							},
-						},
-					},
-				}
-			}
-
-			// Set up expectation for the Check call
-			mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
-				// Verify the request has correct verb and resource
-				return req.Verb == tt.verb &&
-					req.Group == parsed.GVR.Group &&
-					req.Resource == parsed.GVR.Resource
-			}), tt.expectedFolder).Return(nil).Once()
-
-			authorizer := NewAuthorizer(repo, nil, mockAccess, false)
-			err := authorizer.AuthorizeResource(context.Background(), parsed, tt.verb)
-
-			assert.NoError(t, err, tt.description)
-			mockAccess.AssertExpectations(t)
-			mockMeta.AssertExpectations(t)
-		})
+			},
+		}
 	}
+
+	return parsed
+}
+
+// TestAuthorizeResource tests authorization checks for resource operations.
+func TestAuthorizeResource(t *testing.T) {
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+
+	t.Run("new resource uses destination folder only", func(t *testing.T) {
+		parsed := makeAuthorizeResourceParsed(t, "dest-folder", "", false)
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), "dest-folder").Return(nil).Once()
+
+		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbCreate)
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("same-folder update runs single check", func(t *testing.T) {
+		parsed := makeAuthorizeResourceParsed(t, "folder-a", "folder-a", true)
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "folder-a").Return(nil).Once()
+
+		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("cross-folder move checks both source and destination", func(t *testing.T) {
+		parsed := makeAuthorizeResourceParsed(t, "folder-b", "folder-a", true)
+		mockAccess := auth.NewMockAccessChecker(t)
+		// source check
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "folder-a").Return(nil).Once()
+		// destination check
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "folder-b").Return(nil).Once()
+
+		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("cross-folder move denied when destination is inaccessible", func(t *testing.T) {
+		parsed := makeAuthorizeResourceParsed(t, "restricted-folder", "allowed-folder", true)
+		mockAccess := auth.NewMockAccessChecker(t)
+		// source check passes
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "allowed-folder").Return(nil).Once()
+		// destination check fails
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "restricted-folder").Return(assert.AnError).Once()
+
+		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		assert.Error(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("cross-folder move denied when source is inaccessible", func(t *testing.T) {
+		parsed := makeAuthorizeResourceParsed(t, "dest-folder", "restricted-folder", true)
+		mockAccess := auth.NewMockAccessChecker(t)
+		// source check fails — destination check never runs
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbUpdate
+		}), "restricted-folder").Return(assert.AnError).Once()
+
+		err := NewAuthorizer(repo, nil, mockAccess, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		assert.Error(t, err)
+		mockAccess.AssertExpectations(t)
+	})
 }
 
 // TestAuthorizeCreateFolder tests authorization checks for folder creation.

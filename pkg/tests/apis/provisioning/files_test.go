@@ -1073,3 +1073,141 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 			Do(ctx)
 	})
 }
+
+// TestIntegrationProvisioning_RefValidation exercises ref-parameter validation
+// on both the files and history endpoints. Invalid refs must be rejected at
+// the connector layer with HTTP 400 before any backend (local or git) is
+// asked to resolve them. This prevents arbitrary strings from being forwarded
+// to e.g. the GitHub REST API.
+func TestIntegrationProvisioning_RefValidation(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	const repo = "ref-validation-repo"
+	helper.CreateRepo(t, common.TestRepo{
+		Name:               repo,
+		Target:             "instance",
+		ExpectedDashboards: 0,
+		ExpectedFolders:    0,
+	})
+
+	invalidRefs := []struct {
+		name string
+		ref  string
+	}{
+		{"shell injection semicolon", "main; rm -rf /"},
+		{"shell injection backtick", "main`whoami`"},
+		{"shell injection dollar", "main$(whoami)"},
+		{"path traversal double dots", "feature/..bad"},
+		{"contains space", "main branch"},
+		{"contains colon", "main:foo"},
+		{"contains question mark", "main?"},
+		{"contains asterisk", "main*"},
+		{"contains tilde", "main~1"},
+		{"leading slash", "/main"},
+		{"trailing slash", "main/"},
+		{"trailing dot", "main."},
+		{"double slashes", "feature//bad"},
+		{"trailing .lock", "feature.lock"},
+	}
+
+	validRefs := []struct {
+		name string
+		ref  string
+	}{
+		{"valid branch", "main"},
+		{"valid branch with slash", "feature/my-branch"},
+		{"valid short SHA", "abc1234"},
+		{"valid full SHA", "abcdef0123456789abcdef0123456789abcdef01"},
+	}
+
+	t.Run("files GET", func(t *testing.T) {
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(ctx).StatusCode(&statusCode)
+
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
+			})
+		}
+
+		for _, tc := range validRefs {
+			t.Run("valid ref accepted (not BadRequest): "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(ctx).StatusCode(&statusCode)
+
+				// The file/branch may not exist (NotFound) or the backend may not
+				// support the ref, but the response must not be BadRequest from
+				// ref validation. We accept any non-400 status, plus 400 errors
+				// whose message is not the ref-invalid one.
+				if result.Error() != nil && apierrors.IsBadRequest(result.Error()) {
+					require.NotContains(t, result.Error().Error(), "invalid ref",
+						"valid ref %q must not be rejected as invalid", tc.ref)
+				}
+			})
+		}
+	})
+
+	t.Run("files DELETE", func(t *testing.T) {
+		// DELETE is admin-only and exercises a write path. Invalid refs must
+		// be rejected before the connector ever asks the backend to delete.
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Delete().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("files", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(ctx).StatusCode(&statusCode)
+
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
+			})
+		}
+	})
+
+	t.Run("history endpoint", func(t *testing.T) {
+		// Local repositories don't implement Versioned, but ref validation
+		// runs *before* that check, so invalid refs must still return 400.
+		for _, tc := range invalidRefs {
+			t.Run("invalid ref rejected: "+tc.name, func(t *testing.T) {
+				var statusCode int
+				result := helper.AdminREST.Get().
+					Namespace("default").
+					Resource("repositories").
+					Name(repo).
+					SubResource("history", "dashboard.json").
+					Param("ref", tc.ref).
+					Do(ctx).StatusCode(&statusCode)
+
+				require.Error(t, result.Error(), "invalid ref %q should be rejected", tc.ref)
+				require.True(t, apierrors.IsBadRequest(result.Error()) || statusCode == http.StatusBadRequest,
+					"invalid ref %q should return BadRequest, got status=%d err=%v", tc.ref, statusCode, result.Error())
+				if result.Error() != nil {
+					// The error must come from ref validation, not from the
+					// "does not support history" branch, which would mask the
+					// real check.
+					require.Contains(t, result.Error().Error(), "invalid ref",
+						"invalid ref %q should fail ref validation, not history-not-supported", tc.ref)
+				}
+			})
+		}
+	})
+}

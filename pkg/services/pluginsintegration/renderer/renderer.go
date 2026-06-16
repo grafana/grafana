@@ -6,13 +6,13 @@ import (
 
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
@@ -85,12 +85,7 @@ func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {
 		return m.renderer, true
 	}
 
-	srcs, err := sources.DirAsLocalSources(m.cfg, m.cfg.PluginsPaths, plugins.ClassExternal)
-	if err != nil {
-		m.log.Error("Failed to get renderer plugin sources", "error", err)
-		return nil, false
-	}
-
+	srcs := sources.DirAsLocalSources(m.cfg, m.cfg.PluginsPaths, plugins.ClassExternal, m.log)
 	for _, src := range srcs {
 		ps, err := m.loader.Load(ctx, src)
 		if err != nil {

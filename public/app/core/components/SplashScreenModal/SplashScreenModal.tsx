@@ -26,7 +26,7 @@ export function SplashScreenModal() {
   const [activeIndex, setActiveIndex] = useState(0);
   const styles = useStyles2(getStyles);
   const config = getSplashScreenConfig();
-  const { shouldShow, dismiss } = useShouldShowSplash(config.version);
+  const { shouldShow, dismiss, markEngaged } = useShouldShowSplash(config.version);
 
   const total = config.features.length;
   const goToPrev = useCallback(() => setActiveIndex((i) => (i - 1 + total) % total), [total]);
@@ -69,6 +69,7 @@ export function SplashScreenModal() {
           variant="secondary"
           fill="outline"
           size="md"
+          onClick={markEngaged}
         >
           {cta.text}
         </LinkButton>

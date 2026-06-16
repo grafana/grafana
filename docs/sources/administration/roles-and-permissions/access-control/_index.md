@@ -24,6 +24,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/
+  rbac-role-definitions-permissions-associated-to-basic-roles:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#permissions-associated-to-basic-roles
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#permissions-associated-to-basic-roles
   rbac-role-definitions-basic-role-assignments:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#basic-role-assignments
@@ -155,7 +160,7 @@ Each basic role is comprised of a number of _permissions_. For example, the view
 - `Action: orgs:read`: Enables the viewer to see their organization details
 - `Action: annotations:read, Scope: annotations:*`: Enables the viewer to see annotations that other users have added to a dashboard.
 
-For a comprehensive list of the basic role permissions refer to [Permissions associated to basic roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definition#permissions-associated-to-basic-roles).
+For a comprehensive list of the basic role permissions refer to [Permissions associated to basic roles](ref:rbac-role-definitions-permissions-associated-to-basic-roles).
 
 #### Modify basic roles
 

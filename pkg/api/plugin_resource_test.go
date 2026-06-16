@@ -213,4 +213,37 @@ func TestIntegrationCallResource(t *testing.T) {
 		require.NoError(t, resp.Body.Close())
 		require.Equal(t, 500, resp.StatusCode)
 	})
+
+	t.Run("Test oversized request body returns 413", func(t *testing.T) {
+		// Send a body that exceeds the limit by 1 byte.
+		oversizedBody := io.LimitReader(zeroReader{}, maxResourceBodySize+1)
+		req := srv.NewPostRequest("/api/plugins/grafana-testdata-datasource/resources/test", oversizedBody)
+		webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: accesscontrol.GroupScopesByActionContext(context.Background(), []accesscontrol.Permission{
+				{Action: pluginaccesscontrol.ActionAppAccess, Scope: pluginaccesscontrol.ScopeProvider.GetResourceAllScope()},
+			}),
+		}})
+		resp, err := srv.SendJSON(req)
+		require.NoError(t, err)
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var responseBody struct {
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(bodyBytes, &responseBody)
+		require.NoError(t, err)
+		require.Equal(t, "Request body too large", responseBody.Message)
+		require.NoError(t, resp.Body.Close())
+		require.Equal(t, 413, resp.StatusCode)
+	})
+}
+
+// zeroReader is an io.Reader that returns an endless stream of zero bytes.
+type zeroReader struct{}
+
+func (zeroReader) Read(p []byte) (int, error) {
+	clear(p)
+	return len(p), nil
 }

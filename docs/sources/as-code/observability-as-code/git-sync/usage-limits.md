@@ -39,18 +39,20 @@ aliases:
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
-## Usage tiers
+## Usage tiers and limits
 
 The following Git Sync per-tier limits apply:
 
 | Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
-| Amount of synced resources per repository | 20               | 1,000             | No limit        | No limit               |
+| Amount of synced resources per repository | 20               | 1,000             | 1,000           | 1,000                  |
+
+**Currently Git Sync doesn't allow to sync more than 1,000 resources per connection.** For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits).
 
 ### Modify your usage limits
 
-Before changing your usage limits, study your specific use case. Define the governance you'd like to set when you design the repository structure and how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
+Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
 
 If you're a Cloud user, contact Support to modify the amount of repositories you can sync.
 
@@ -58,7 +60,10 @@ If you're an on-prem user, you can customize your limits via configuration setti
 
 - Use `max_repositories` to set the amount of repositories you can sync. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
 - Use `max_resources_per_repository` to set the amount of resources per repository to sync. Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
-  > > > > > > > c2f0b685470 (Docs: Updates to Git Sync limits (#123460))
+
+### Nested folders
+
+Git Sync supports up to four nested folders within a repository.
 
 ## Compatible Git providers
 

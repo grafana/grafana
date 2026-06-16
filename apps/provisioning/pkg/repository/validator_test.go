@@ -624,6 +624,87 @@ func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	assert.Equal(t, "old-secret", newRepo.Secure.WebhookSecret.Name)
 }
 
+func TestAdmissionValidator_RequiresNewTokenWhenURLChanges(t *testing.T) {
+	tests := []struct {
+		name            string
+		oldURL          string
+		newURL          string
+		newToken        common.InlineSecureValue
+		wantErr         bool
+		wantErrContains string
+	}{
+		{
+			name:            "rejects url change without new token",
+			oldURL:          "https://github.com/grafana/old",
+			newURL:          "https://github.com/grafana/new",
+			wantErr:         true,
+			wantErrContains: "secure.token",
+		},
+		{
+			name:     "allows url change with new token",
+			oldURL:   "https://github.com/grafana/old",
+			newURL:   "https://github.com/grafana/new",
+			newToken: common.InlineSecureValue{Create: "new-token"},
+			wantErr:  false,
+		},
+		{
+			name:    "allows unchanged url without new token",
+			oldURL:  "https://github.com/grafana/repo",
+			newURL:  "https://github.com/grafana/repo",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockFactory := NewMockFactory(t)
+			mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
+
+			validator := NewValidator(false, mockFactory)
+			admissionValidator := NewAdmissionValidator(
+				[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+				validator,
+			)
+
+			oldRepo := newGitHubRepositoryForURLChangeTest(tt.oldURL)
+			oldRepo.Secure.Token = common.InlineSecureValue{Name: "old-token"}
+
+			newRepo := newGitHubRepositoryForURLChangeTest(tt.newURL)
+			newRepo.Secure.Token = tt.newToken
+
+			attr := newAdmissionValidatorTestAttributes(newRepo, oldRepo, admission.Update)
+
+			err := admissionValidator.Validate(context.Background(), attr, nil)
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErrContains)
+				assert.True(t, newRepo.Secure.Token.IsZero(), "old token should not be copied after rejection")
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
+
+func newGitHubRepositoryForURLChangeTest(url string) *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{
+			Title: "Test Repo",
+			Type:  provisioning.GitHubRepositoryType,
+			GitHub: &provisioning.GitHubRepositoryConfig{
+				URL:    url,
+				Branch: "main",
+			},
+			Sync: provisioning.SyncOptions{IntervalSeconds: 60},
+		},
+	}
+}
+
 // mockValidator implements Validator for testing
 type mockValidator struct {
 	called bool

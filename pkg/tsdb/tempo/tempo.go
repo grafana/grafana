@@ -288,6 +288,14 @@ func (s *Service) handleTagValues(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	for _, segment := range strings.Split(tag, "/") {
+		if segment == "." || segment == ".." {
+			s.logger.Error("Invalid tag parameter", "tag", tag)
+			http.Error(rw, "Invalid 'tag' parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
 	tempoPath := fmt.Sprintf("api/v2/search/tag/%s/values", tag)
 	s.proxyToTempo(rw, req, tempoPath)
 }

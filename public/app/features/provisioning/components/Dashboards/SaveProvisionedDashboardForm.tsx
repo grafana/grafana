@@ -30,6 +30,7 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 import { getProvisionedMeta } from '../utils/getProvisionedMeta';
+import { joinPath, slugifyForFilename, splitPath } from '../utils/path';
 
 import { type SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 
@@ -65,17 +66,36 @@ export function SaveProvisionedDashboardForm({
     control,
     reset,
     register,
+    setValue,
+    getValues,
     formState: { dirtyFields },
   } = methods;
   // button enabled if form comment is dirty or dashboard state is dirty or raw JSON was provided from editor
   const rawDashboardJSON = dashboard.getRawJsonFromEditor();
   const isDirtyState = Boolean(dirtyFields.comment) || isDirty || Boolean(rawDashboardJSON);
   const [workflow, ref, path] = watch(['workflow', 'ref', 'path']);
+  const title = watch('title');
 
   // Update the form if default values change
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  // Sync filename from title for new dashboards.
+  // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
+  // and becomes true when the user manually types in the filename input (Controller onChange marks it dirty).
+  // This lets us stop auto-syncing once the user has intentionally customised the filename.
+  useEffect(() => {
+    if (!isNew || dirtyFields.path) {
+      return;
+    }
+    const slugified = slugifyForFilename(title);
+    if (slugified) {
+      const currentPath = getValues('path');
+      const { directory } = splitPath(currentPath);
+      setValue('path', joinPath(directory, `${slugified}.json`));
+    }
+  }, [title, isNew, dirtyFields.path, setValue, getValues]);
 
   const showError = (error: unknown) => {
     setError(
