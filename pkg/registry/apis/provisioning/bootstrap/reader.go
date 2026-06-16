@@ -9,6 +9,7 @@ package bootstrap
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -69,7 +70,7 @@ func decodeManifests(data []byte) ([]*unstructured.Unstructured, error) {
 	for {
 		var raw map[string]any
 		if err := decoder.Decode(&raw); err != nil {
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 			return nil, err
