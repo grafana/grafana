@@ -8,13 +8,13 @@ import { extractManagerKind, queryResultToViewItem } from 'app/features/search/s
 
 const PAGE_SIZE = 200;
 
-export interface FolderPeekDashboard {
+interface FolderPeekDashboard {
   uid: string;
   title: string;
   url: string;
 }
 
-export interface FolderPeekSubfolder {
+interface FolderPeekSubfolder {
   uid: string;
   title: string;
   dashboardCount: number;

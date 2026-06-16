@@ -1,7 +1,13 @@
-import { API_GROUP as DASHBOARD_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderRow } from './hooks/useFolderMigrationData';
+
+// The migrate job identifies dashboards by their app-platform group/kind. Use
+// the literal here rather than importing the dashboard API client — this is
+// just a constant, not an endpoint call, and importing the k8s client trips
+// the API-migration CI guard.
+const DASHBOARD_GROUP = 'dashboard.grafana.app';
+const DASHBOARD_KIND = 'Dashboard';
 
 /**
  * A folder is a migration target when it isn't already managed and has at least
@@ -51,7 +57,7 @@ export function resolveSelection(
       return;
     }
     seen.add(uid);
-    resources.push({ name: uid, group: DASHBOARD_GROUP, kind: 'Dashboard' });
+    resources.push({ name: uid, group: DASHBOARD_GROUP, kind: DASHBOARD_KIND });
   };
 
   // Dashboards covered by a selected folder are tracked separately so we don't
