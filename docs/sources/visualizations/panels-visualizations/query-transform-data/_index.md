@@ -221,7 +221,7 @@ From here, you can:
 
 You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
-To access your saved queries, click the blue plus icon in the sidebar and select **Add saved query** or click **Replace** in the editor pane:
+To access your saved queries, click the blue plus sign in the sidebar and select **Add saved query** or click **Replace** in the editor pane:
 
 {{< figure src="add-save-reuse-query-temp.png" max-width="750px" alt="Access saved queries" >}}
 
@@ -305,7 +305,7 @@ Queries and expressions are identified with a letter (A, B, C, and so on) by def
 
 You can also rearrange the order of elements by dragging and dropping the cards in the list.
 
-When you hover your cursor over the cards, a blue plus button appears beside the card.
+When you hover your cursor over the cards, a blue plus sign appears beside the card.
 You can use that to add queries, expressions, or transformations in that position.
 Hovering your cursor over a card also displays duplicate, hide, and delete actions for a specific data element:
 
@@ -350,7 +350,7 @@ To add a query to a panel, follow these steps:
    {{< /admonition >}}
 
 1. (Optional) To [save the query](#save-a-query) for reuse, click the **Save** in the editor pane.
-1. (Optional) In the sidebar, click the blue plus icon net to **Queries & Expressions** and select **Add query** or **Add saved query** to add more queries as needed.
+1. (Optional) In the sidebar, click the blue plus sign next to **Queries & Expressions** and select **Add query** or **Add saved query** to add more queries as needed.
 
 1. Click **Run queries** in the editor pane.
 
