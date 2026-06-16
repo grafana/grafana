@@ -51,6 +51,8 @@ To enable SCIM provisioning in Grafana, create a service account and generate an
 
 ### Create a service account
 
+If using the Grafana User Interface:
+
 1. Navigate to **Administration > Users and access > Service accounts**
 1. Click **Add service account**
 1. Create the service account with a name (for example, "SCIM provisioning").
@@ -58,6 +60,22 @@ To enable SCIM provisioning in Grafana, create a service account and generate an
    - **User administration** — required for user sync (`User administration:Reader (organizational)`, `User administration:Writer (organizational)`)
    - **Teams** — required for group sync (`Teams:Creator`, `Teams:Writer`, `Teams:Reader`, `Teams:Permission reader`, `Teams:Permission writer`)
 1. Create a new token for the service account and save it securely. This token will be used in the Okta configuration.
+
+If using the Grafana Terraform Provider:
+
+1. Configure the [grafana_role_assignment](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment) as follows
+
+```yaml
+scim_sa_roles = [
+    "fixed:org.users:reader",         # ┐ "User administration" (user sync)
+    "fixed:org.users:writer",         # ┘
+    "fixed:teams:creator",            # ┐
+    "fixed:teams:read",               # │
+    "fixed:teams:writer",             # ├ "Teams" (group sync)
+    "fixed:teams.permissions:reader", # │
+    "fixed:teams.permissions:writer", # ┘
+  ]
+```
 
 ## Configure SCIM in Okta
 
