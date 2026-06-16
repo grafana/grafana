@@ -37,11 +37,17 @@ var TeamBindingTableColumnDefinitions = map[string]*resourcepb.ResourceTableColu
 // TeamBindingSearchFields declares paths and types for each team binding
 // search field. The standard document builder uses these to extract values
 // from the raw JSON, avoiding a custom builder.
+//
+// external sets EmitZeroIfAbsent so the field is always indexed, matching
+// the old custom builder which set doc.Fields[external] unconditionally.
+// The generated TeamBindingSpec uses json:"external" without omitempty,
+// so today the JSON always carries the value; the flag preserves intent
+// against a future schema change that adds omitempty.
 var TeamBindingSearchFields = []resource.SearchFieldDefinition{
 	{Name: TEAM_BINDING_SUBJECT, Path: "spec.subject.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	{Name: TEAM_BINDING_TEAM, Path: "spec.teamRef.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
 	{Name: TEAM_BINDING_PERMISSION, Path: "spec.permission", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
-	{Name: TEAM_BINDING_EXTERNAL, Path: "spec.external", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
+	{Name: TEAM_BINDING_EXTERNAL, Path: "spec.external", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
 }
 
 func GetTeamBindingBuilder() (resource.DocumentBuilderInfo, error) {
