@@ -124,7 +124,7 @@ receivers:
         smarthost: 'smtp.gmail.com:587'
         auth_username: 'grafana@example.com'
         auth_password: 'another-secret-password'`,
-	}, false, false)
+	}, false, false, false)
 	require.NoError(t, err)
 
 	savedConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(context.Background(), am.(*alertmanager).Base.TenantID())
@@ -252,12 +252,8 @@ receivers:
 				return
 			}
 			require.NoError(t, err)
-			templateDefs := tc.config.SortedTemplates(true)
-			expectedTemplateCount := len(tc.config.Templates)
-			if len(tc.config.ExtraConfigs) > 0 {
-				expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
-			}
-			require.Len(t, templateDefs, expectedTemplateCount)
+			templateDefs := tc.config.SortedTemplates()
+			require.Len(t, templateDefs, len(tc.config.Templates))
 		})
 	}
 }

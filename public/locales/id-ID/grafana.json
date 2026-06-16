@@ -13182,7 +13182,6 @@
       "default-commit-message": "",
       "error-message": "Gagal memulai pekerjaan perbaikan metadata folder. Silakan coba lagi.",
       "error-title": "Terjadi kesalahan saat memperbaiki metadata folder",
-      "loading": "Memuat repositori...",
       "read-only-message": "Metadata folder tidak dapat diperbaiki secara otomatis.",
       "submit": "Perbaiki ID folder",
       "submitting": "Memperbaiki...",

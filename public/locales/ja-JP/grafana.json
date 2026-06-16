@@ -13182,7 +13182,6 @@
       "default-commit-message": "",
       "error-message": "フォルダのメタデータ修正ジョブを開始できませんでした。再度お試しください。",
       "error-title": "フォルダのメタデータ修正時のエラー",
-      "loading": "リポジトリを読み込み中...",
       "read-only-message": "フォルダのメタデータは自動的に修正できません。",
       "submit": "フォルダIDを修正",
       "submitting": "修正中…",

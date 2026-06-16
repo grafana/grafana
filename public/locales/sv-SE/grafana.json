@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Det gick inte att starta korrigeringsjobbet för mappmetadata. Försök igen.",
       "error-title": "Fel vid korrigering av mappmetadata",
-      "loading": "Läser in lagringsplats …",
       "read-only-message": "Mappmetadata kan inte korrigeras automatiskt.",
       "submit": "Åtgärda mapp-ID:n",
       "submitting": "Korrigerar …",

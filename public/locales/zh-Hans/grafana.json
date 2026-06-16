@@ -13182,7 +13182,6 @@
       "default-commit-message": "",
       "error-message": "启动文件夹元数据修复作业失败。请再试一次。",
       "error-title": "修复文件夹元数据时出错",
-      "loading": "正在加载存储库...",
       "read-only-message": "文件夹元数据无法自动修复。",
       "submit": "修复文件夹 ID",
       "submitting": "正在修复…",
