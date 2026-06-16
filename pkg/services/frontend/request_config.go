@@ -88,7 +88,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 
 	if fullFrontendSettingsEnabled {
 		reqCtx := contexthandler.FromContext(ctx)
-		fullFrontendSettings, err := frontendsettings.GetBaseFrontendSettings(reqCtx, cfg, license)
+		fullFrontendSettings, err := frontendsettings.GetBaseFrontendSettings(reqCtx, cfg, license, nil)
 
 		if err != nil {
 			return FSRequestConfig{}, err

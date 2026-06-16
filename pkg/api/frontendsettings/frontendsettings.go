@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -19,7 +20,7 @@ import (
 
 // GetBaseFrontendSettings returns the JSON object with all the settings needed for
 // front end initialisation.
-func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, license licensing.Licensing) (*dtos.FrontendSettingsDTO, error) {
+func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service) (*dtos.FrontendSettingsDTO, error) {
 	defaultDS := "-- Grafana --"
 
 	trustedTypesDefaultPolicyEnabled := (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
@@ -220,6 +221,14 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 
 	if !cfg.GeomapEnableCustomBaseLayers {
 		frontendSettings.GeomapDisableCustomBaseLayer = true
+	}
+
+	if pluginsCDN != nil && pluginsCDN.IsEnabled() {
+		cdnBaseURL, err := pluginsCDN.BaseURL()
+		if err != nil {
+			return nil, fmt.Errorf("plugins cdn base url: %w", err)
+		}
+		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
 	// Set the kubernetes namespace
