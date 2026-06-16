@@ -4608,6 +4608,10 @@
             "description": "GitHub App installation ID",
             "type": "string",
             "default": ""
+          },
+          "webhookDisabled": {
+            "description": "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+            "type": "boolean"
           }
         }
       },
@@ -4680,6 +4684,10 @@
           },
           "generateDashboardPreviews": {
             "description": "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+            "type": "boolean"
+          },
+          "webhookDisabled": {
+            "description": "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
             "type": "boolean"
           },
           "path": {

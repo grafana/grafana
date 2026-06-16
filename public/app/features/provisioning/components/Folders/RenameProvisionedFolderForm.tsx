@@ -17,7 +17,7 @@ import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../
 import { type BaseProvisionedFormData } from '../../types/form';
 import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 interface FormProps extends RenameProvisionedFolderFormProps {
@@ -191,32 +191,32 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 }
 
 export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisionedFolderFormProps) {
-  const { repository, initialValues, isReadOnlyRepo, canPushToConfiguredBranch } = useProvisionedFolderFormData({
-    folderUid: folder.uid,
-    title: folder.title,
-    branchPrefix: 'folder-rename',
-  });
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.rename-folder.read-only-message',
-          'To rename this folder, please update the folder in your repository directly.'
-        )}
-      />
-    );
-  }
+  const { repository, initialValues, isReadOnlyRepo, isMissingRepo, canPushToConfiguredBranch, isLoading } =
+    useProvisionedFolderFormData({
+      folderUid: folder.uid,
+      title: folder.title,
+      branchPrefix: 'folder-rename',
+    });
 
   return (
-    <FormContent
-      folder={folder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.rename-folder.read-only-message',
+        'To rename this folder, please update the folder in your repository directly.'
+      )}
+    >
+      {initialValues && (
+        <FormContent
+          folder={folder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

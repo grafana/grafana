@@ -92,7 +92,7 @@ describe('BulkActionsBar', () => {
       });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable/i })).toBeInTheDocument();
     });
   });
 
@@ -107,7 +107,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(false);
     });
@@ -120,7 +120,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
         action: 'toggle_multi_select',
@@ -338,8 +338,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        // Transformations are enabled (no disabled flag), so button says "Disable"
+        await user.click(screen.getByRole('button', { name: /disable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
         // Enable/Disable is an in-place toggle — the selection persists.
         expect(setMultiSelectMode).not.toHaveBeenCalled();
@@ -365,8 +365,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        // All selected are disabled — button says "Enable"
+        await user.click(screen.getByRole('button', { name: /enable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
       });
     });

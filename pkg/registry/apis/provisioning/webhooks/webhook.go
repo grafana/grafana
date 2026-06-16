@@ -151,6 +151,11 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		hooks, ok := repo.(WebhookRepository)
 		if !ok {
+			cfg := repo.Config()
+			if cfg.Spec.GitHub != nil && cfg.Spec.GitHub.WebhookDisabled {
+				responder.Error(errors.NewBadRequest("webhook integration is disabled for this repository"))
+				return
+			}
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return
 		}

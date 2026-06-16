@@ -1981,14 +1981,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "createdByMeSearchFilter",
-			Description: "Enables the created by me search filter on the browse dashboards page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -2307,14 +2299,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preventPanelChromeOverflow",
-			Description: "Restrict PanelChrome contents with overflow: hidden;",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "jaegerEnableGrpcEndpoint",
@@ -3172,6 +3156,15 @@ var (
 			Description:  "Enables firing an event for PanelEditNext feedback that triggers an in-house survey",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataProSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.visualDesignRefresh",
+			Description:  "Enables the new visual design refresh for the Grafana UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},

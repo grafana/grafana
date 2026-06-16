@@ -2,6 +2,9 @@ package jwt
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -207,6 +210,51 @@ func TestIntegrationKeySetConfigurationIsExclusive(t *testing.T) {
 	t.Run("should fail to start when both key_file and key_value are set", func(t *testing.T) {
 		_, err := initAuthService(t, configurePKIXPublicKeyFile, configurePKIXPublicKeyValue)
 		require.ErrorIs(t, err, ErrKeySetConfigurationAmbiguous)
+	})
+}
+
+func TestParsePEMPublicKey(t *testing.T) {
+	ecKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	pemBytes := func(t *testing.T, typ string, b []byte) []byte {
+		t.Helper()
+		return pem.EncodeToMemory(&pem.Block{Type: typ, Bytes: b})
+	}
+
+	t.Run("accepts a PKIX public key", func(t *testing.T) {
+		der, err := x509.MarshalPKIXPublicKey(rsaKeys[0].Public())
+		require.NoError(t, err)
+		ks, err := parsePEMPublicKey(pemBytes(t, "PUBLIC KEY", der), "")
+		require.NoError(t, err)
+		require.Len(t, ks.Keys, 1)
+	})
+
+	t.Run("accepts a PKCS#1 RSA public key", func(t *testing.T) {
+		der := x509.MarshalPKCS1PublicKey(&rsaKeys[0].PublicKey)
+		ks, err := parsePEMPublicKey(pemBytes(t, "RSA PUBLIC KEY", der), "")
+		require.NoError(t, err)
+		require.Len(t, ks.Keys, 1)
+	})
+
+	t.Run("rejects a PKCS#8 private key", func(t *testing.T) {
+		der, err := x509.MarshalPKCS8PrivateKey(rsaKeys[0])
+		require.NoError(t, err)
+		_, err = parsePEMPublicKey(pemBytes(t, "PRIVATE KEY", der), "")
+		require.ErrorIs(t, err, ErrPrivateKeyNotSupported)
+	})
+
+	t.Run("rejects a PKCS#1 RSA private key", func(t *testing.T) {
+		der := x509.MarshalPKCS1PrivateKey(rsaKeys[0])
+		_, err := parsePEMPublicKey(pemBytes(t, "RSA PRIVATE KEY", der), "")
+		require.ErrorIs(t, err, ErrPrivateKeyNotSupported)
+	})
+
+	t.Run("rejects an EC private key", func(t *testing.T) {
+		der, err := x509.MarshalECPrivateKey(ecKey)
+		require.NoError(t, err)
+		_, err = parsePEMPublicKey(pemBytes(t, "EC PRIVATE KEY", der), "")
+		require.ErrorIs(t, err, ErrPrivateKeyNotSupported)
 	})
 }
 
