@@ -1,15 +1,14 @@
 import { memo, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
+import { Checkbox, Field, Input, Stack } from '@grafana/ui';
 
 import { BranchOptionsSection } from '../Config/BranchOptionsSection';
 import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
-import { checkImageRenderer, checkImageRenderingAllowed, checkPublicAccess } from '../GettingStarted/features';
+import { WebhookSection } from '../Config/WebhookSection';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
@@ -25,15 +24,11 @@ export const FinishStep = memo(function FinishStep() {
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-  const settings = useGetFrontendSettingsQuery();
 
   const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
-  const isPublic = checkPublicAccess();
-  const hasImageRenderer = checkImageRenderer();
-  const imageRenderingAllowed = checkImageRenderingAllowed(settings.data);
 
   // Set sync enabled by default
   useEffect(() => {
@@ -144,57 +139,14 @@ export const FinishStep = memo(function FinishStep() {
               register={register}
               titleTemplateName="repository.pullRequest.titleTemplate"
               enforceTemplateName="repository.pullRequest.enforceTemplate"
+              repoType={type}
+              dashboardPreviewName="repository.generateDashboardPreviews"
             />
           )}
         </>
       )}
 
-      {isGithub && imageRenderingAllowed && (
-        <Field noMargin>
-          <Checkbox
-            {...register('repository.generateDashboardPreviews')}
-            label={t('provisioning.finish-step.label-generate-dashboard-previews', 'Generate Dashboard Previews')}
-            description={
-              <>
-                <Trans i18nKey="provisioning.finish-step.description-generate-dashboard-previews">
-                  Create preview links for pull requests
-                </Trans>
-                {(!isPublic || !hasImageRenderer) && (
-                  <>
-                    {' '}
-                    <Text color="secondary">
-                      <Trans i18nKey="provisioning.finish-step.description-preview-requirements">
-                        (requires{' '}
-                        <TextLink href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/">
-                          image rendering
-                        </TextLink>{' '}
-                        and public access enabled)
-                      </Trans>
-                    </Text>
-                  </>
-                )}
-              </>
-            }
-            disabled={!isPublic || !hasImageRenderer}
-          />
-        </Field>
-      )}
-
-      {isGithub && (
-        <Field
-          noMargin
-          label={t('provisioning.finish-step.label-webhook-url', 'Webhook URL')}
-          description={t(
-            'provisioning.finish-step.description-webhook-url',
-            'Overrides the auto-detected URL for registering webhooks.'
-          )}
-        >
-          <Input
-            {...register('repository.webhook.baseUrl')}
-            placeholder={t('provisioning.finish-step.placeholder-webhook-url', 'https://grafana.example.com')}
-          />
-        </Field>
-      )}
+      {isGithub && <WebhookSection<WizardFormData> register={register} name="repository.webhook.baseUrl" />}
     </Stack>
   );
 });

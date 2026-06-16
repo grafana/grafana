@@ -97,7 +97,9 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   },
   initialValues: mockFormData,
   isReadOnlyRepo: false,
+  isMissingRepo: false,
   canPushToConfiguredBranch: true,
+  isLoading: false,
 };
 
 function setup(props: Partial<Parameters<typeof RenameProvisionedFolderForm>[0]> = {}, hookData = defaultHookData) {
@@ -146,8 +148,8 @@ describe('RenameProvisionedFolderForm', () => {
       expect(screen.queryByRole('button', { name: /^rename$/i })).not.toBeInTheDocument();
     });
 
-    it('should show banner when initialValues is null', () => {
-      setup({}, { ...defaultHookData, initialValues: undefined });
+    it('should show banner when the repository is missing', () => {
+      setup({}, { ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
 
       expect(screen.queryByRole('button', { name: /^rename$/i })).not.toBeInTheDocument();
     });

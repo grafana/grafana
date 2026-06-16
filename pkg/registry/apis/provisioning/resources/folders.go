@@ -244,13 +244,25 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
 	if err == nil {
 		current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+		// takeover is set when the folder exists but is unmanaged and the
+		// migration allowlist permits claiming it. In that case we stamp repo
+		// ownership and force an update so the previously unmanaged folder
+		// becomes managed by this repository.
+		takeover := false
 		if !ok {
-			return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
-				Kind:     utils.ManagerKindRepo,
-				Identity: cfg.Name,
-			})
-		}
-		if current != cfg.Name {
+			// EnsureFolderExists is the ownership gate for folders, so it must
+			// honour the same takeover allowlist as CheckResourceOwnership does
+			// for other resources. Without this, a selective migrate of a
+			// resource living under a pre-existing unmanaged folder can never
+			// create its parent.
+			if !folderTakeoverAllowed(ctx, folder.ID) {
+				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.Name,
+				})
+			}
+			takeover = true
+		} else if current != cfg.Name {
 			return NewFolderManagedByOtherError(folder.ID, current)
 		}
 
@@ -268,7 +280,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			ParentID:     meta.GetFolder(),
 		}
 
-		if !folder.Equal(existing) {
+		if takeover || !folder.Equal(existing) {
 			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
 				return fmt.Errorf("set folder title: %w", err)
 			}
@@ -277,32 +289,18 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				Checksum: folder.MetadataHash,
 			})
 			meta.SetFolder(folder.ParentID)
+			if takeover {
+				meta.SetManagerProperties(utils.ManagerProperties{
+					Kind:     utils.ManagerKindRepo,
+					Identity: cfg.GetName(),
+				})
+			}
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				// A managed folder being moved into a path that exceeds the
-				// folder API's max depth is the same user-side problem as a
-				// fresh create: surface it as a typed warning so the sync is
-				// not retried in a loop.
-				if IsFolderDepthExceededAPIError(err) {
-					return NewFolderDepthExceededError(folder.Path, err)
-				}
-				// A managed folder ending up with a UID longer than 40 chars
-				// (typically via _folder.json metadata) cannot be repaired by
-				// a retry; surface it as a typed warning instead.
-				if IsFolderUIDTooLongAPIError(err) {
-					return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
-				}
-				// Catch-all for any other folder-API validation 4xx
-				// (illegal-uid-chars, reserved-uid, etc.). The repository
-				// owner must fix the offending input; retrying produces
-				// the same rejection.
-				if IsFolderValidationAPIError(err) {
-					return NewFolderValidationError(folder.Path, err)
-				}
-				return fmt.Errorf("update folder: %w", err)
+				return mapFolderWriteError(folder, err, "update folder")
 			}
 		}
 
@@ -367,10 +365,17 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 			current, ok := obj.GetAnnotations()[utils.AnnoKeyManagerIdentity]
 			if !ok {
-				return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: cfg.Name,
-				})
+				// Another sync raced us to create the folder, but it landed
+				// unmanaged. Honour the migration allowlist here too, mirroring
+				// the primary path above, otherwise a concurrent migrate could
+				// still reject a folder we are allowed to take over.
+				if !folderTakeoverAllowed(ctx, folder.ID) {
+					return NewResourceUnmanagedConflictError(folder.ID, utils.ManagerProperties{
+						Kind:     utils.ManagerKindRepo,
+						Identity: cfg.Name,
+					})
+				}
+				return fm.claimUnmanagedFolder(ctx, obj, folder)
 			}
 			if current != cfg.Name {
 				return NewFolderManagedByOtherError(folder.ID, current)
@@ -379,33 +384,75 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return nil
 		}
 
-		// The folder API enforces a global maximum folder depth that
-		// provisioning cannot influence. Repositories containing paths
-		// deeper than this limit will fail forever, so surface it as a
-		// typed warning instead of a retryable error and let the sync
-		// keep going for the rest of the tree.
-		if IsFolderDepthExceededAPIError(err) {
-			return NewFolderDepthExceededError(folder.Path, err)
-		}
-		// Same reasoning as depth above: a UID longer than the folder
-		// API's 40-character limit is a permanent rejection. Path-derived
-		// UIDs are always truncated to <=40 by appendHashSuffix, so this
-		// only fires for user-supplied UIDs (typically a _folder.json
-		// stable UID, but also any future caller-provided UID source).
-		// Surface it as a typed warning so the sync moves on.
-		if IsFolderUIDTooLongAPIError(err) {
-			return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
-		}
-		// Catch-all for any other folder-API validation 4xx the more
-		// specific matchers above did not claim (illegal-uid-chars,
-		// reserved-uid, future folder validations). The repository owner
-		// must fix the offending input; retrying produces the same
-		// rejection.
-		if IsFolderValidationAPIError(err) {
-			return NewFolderValidationError(folder.Path, err)
-		}
+		return mapFolderWriteError(folder, err, "failed to create folder")
+	}
+	return nil
+}
 
-		return fmt.Errorf("failed to create folder: %w", err)
+// mapFolderWriteError converts a folder create/update API error into a typed
+// provisioning warning when it represents a permanent, user-side rejection that
+// a retry cannot fix (path depth exceeded, UID too long, or any other folder-API
+// validation such as illegal-uid-chars or reserved-uid). Surfacing these as
+// warnings keeps the sync from retrying in a loop. Any other error is wrapped
+// with the supplied context message.
+func mapFolderWriteError(folder Folder, err error, wrap string) error {
+	switch {
+	case IsFolderDepthExceededAPIError(err):
+		return NewFolderDepthExceededError(folder.Path, err)
+	case IsFolderUIDTooLongAPIError(err):
+		return NewFolderUIDTooLongError(folder.Path, folder.ID, err)
+	case IsFolderValidationAPIError(err):
+		return NewFolderValidationError(folder.Path, err)
+	default:
+		return fmt.Errorf("%s: %w", wrap, err)
+	}
+}
+
+// folderTakeoverAllowed reports whether the migration takeover allowlist stored
+// in ctx permits claiming the given unmanaged folder. It mirrors the allowlist
+// gate in CheckResourceOwnership so folders and other resources share the same
+// takeover semantics during migration.
+func folderTakeoverAllowed(ctx context.Context, folderID string) bool {
+	allowlist := TakeoverAllowlistFromContext(ctx)
+	if allowlist == nil {
+		return false
+	}
+	return allowlist.Contains(ResourceIdentifier{
+		Name:  folderID,
+		Group: FolderResource.Group,
+		Kind:  FolderKind.Kind,
+	})
+}
+
+// claimUnmanagedFolder stamps repo ownership and the metadata-backed properties
+// onto an existing unmanaged folder and writes the update. It is only called
+// once folderTakeoverAllowed has confirmed the takeover is permitted.
+func (fm *FolderManager) claimUnmanagedFolder(ctx context.Context, obj *unstructured.Unstructured, folder Folder) error {
+	cfg := fm.repo.Config()
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return fmt.Errorf("create meta accessor: %w", err)
+	}
+
+	if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+		return fmt.Errorf("set folder title: %w", err)
+	}
+	meta.SetSourceProperties(utils.SourceProperties{
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
+	})
+	meta.SetFolder(folder.ParentID)
+	meta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	})
+
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+	if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
+		return mapFolderWriteError(folder, err, fmt.Sprintf("claim unmanaged folder %s", folder.ID))
 	}
 	return nil
 }

@@ -12,7 +12,6 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "createdBy",
             "type": "text",
             "analyzer": "keyword",
             "store": true,
@@ -26,8 +25,8 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "description",
             "type": "text",
+            "analyzer": "standard",
             "store": true,
             "index": true,
             "skip_freq_norm": true
@@ -43,12 +42,10 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "folder",
             "type": "text",
             "analyzer": "keyword",
             "store": true,
             "index": true,
-            "include_in_all": true,
             "docvalues": true,
             "skip_freq_norm": true
           }
@@ -63,7 +60,6 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "managedBy",
             "type": "text",
             "analyzer": "keyword",
             "index": true,
@@ -80,7 +76,6 @@
             "dynamic": true,
             "fields": [
               {
-                "name": "id",
                 "type": "text",
                 "analyzer": "keyword",
                 "store": true,
@@ -94,7 +89,6 @@
             "dynamic": true,
             "fields": [
               {
-                "name": "kind",
                 "type": "text",
                 "analyzer": "keyword",
                 "store": true,
@@ -122,7 +116,6 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "ownerReferences",
             "type": "text",
             "analyzer": "keyword",
             "store": true,
@@ -149,7 +142,6 @@
             "dynamic": true,
             "fields": [
               {
-                "name": "checksum",
                 "type": "text",
                 "analyzer": "keyword",
                 "store": true,
@@ -163,7 +155,6 @@
             "dynamic": true,
             "fields": [
               {
-                "name": "path",
                 "type": "text",
                 "analyzer": "keyword",
                 "store": true,
@@ -192,7 +183,6 @@
         "dynamic": true,
         "fields": [
           {
-            "name": "tags",
             "type": "text",
             "analyzer": "keyword",
             "store": true,
@@ -209,8 +199,7 @@
             "type": "text",
             "analyzer": "standard",
             "store": true,
-            "index": true,
-            "include_in_all": true
+            "index": true
           }
         ]
       },
@@ -221,8 +210,7 @@
           {
             "type": "text",
             "analyzer": "title_analyzer",
-            "index": true,
-            "include_in_all": true
+            "index": true
           }
         ]
       },
@@ -234,7 +222,6 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
-            "include_in_all": true,
             "docvalues": true,
             "skip_freq_norm": true
           }

@@ -40,9 +40,9 @@ import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
-import { ConfigFormGithubCollapse } from './ConfigFormGithubCollapse';
 import { EnablePushToConfiguredBranchOption } from './EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from './PullRequestOptionsSection';
+import { WebhookSection } from './WebhookSection';
 import { getDefaultValues } from './defaults';
 
 // This needs to be a function for translations to work
@@ -409,11 +409,13 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 register={register}
                 titleTemplateName="pullRequest.titleTemplate"
                 enforceTemplateName="pullRequest.enforceTemplate"
+                repoType={type}
+                dashboardPreviewName="generateDashboardPreviews"
               />
             )}
           </>
         )}
-        {type === 'github' && <ConfigFormGithubCollapse register={register} />}
+        {type === 'github' && <WebhookSection<RepositoryFormData> register={register} name="webhook.baseUrl" />}
 
         {isGitBased && (
           <ControlledCollapse
