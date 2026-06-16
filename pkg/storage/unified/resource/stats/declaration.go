@@ -40,8 +40,11 @@ func (d StatsDeclaration) HasMetric(name string) bool {
 var dashboardsDeclaration = StatsDeclaration{
 	Group:    "dashboard.grafana.app",
 	Resource: "dashboards",
-	Metrics:  []string{"view", "query", "error"},
-	Windows:  []int{1, 7, 30},
+	// Metric names match the legacy dashboard_usage_* schema (and the search
+	// index field prefixes), so aggregate fields come out as views_total,
+	// views_last_7_days, etc. — a near drop-in for the sprinkles read path.
+	Metrics: []string{"views", "queries", "errors"},
+	Windows: []int{1, 7, 30},
 }
 
 // Declarations is the in-process registry of tracked resources, keyed by
@@ -72,14 +75,14 @@ func (d *Declarations) Lookup(group, resource string) (StatsDeclaration, bool) {
 const MaxWindow = 30
 
 // aggregateField returns the aggregates-cache field name for a metric/window,
-// e.g. ("view", 7) -> "view_last_7_days". The legacy schema uses
+// e.g. ("views", 7) -> "views_last_7_days". The legacy schema uses
 // "_last_1_days" rather than "_today", so last_1 is identical to today.
 func aggregateField(metric string, window int) string {
 	return fmt.Sprintf("%s_last_%d_days", metric, window)
 }
 
 // totalField returns the cumulative field name for a metric, e.g.
-// ("view") -> "view_total". total = overflow + sum(daily buckets), so it is
+// ("views") -> "views_total". total = overflow + sum(daily buckets), so it is
 // fully reconcilable.
 func totalField(metric string) string {
 	return metric + "_total"

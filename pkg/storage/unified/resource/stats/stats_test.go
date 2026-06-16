@@ -32,14 +32,14 @@ func TestRecordEventValidation(t *testing.T) {
 	ing := newTestIngester(t, store)
 
 	// Untracked resource: silently dropped, no error.
-	require.NoError(t, ing.RecordEvent("other.grafana.app", "things", "default", "x", "view", 1))
+	require.NoError(t, ing.RecordEvent("other.grafana.app", "things", "default", "x", "views", 1))
 
 	// Invalid metric on a tracked resource.
 	err := ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "x", "bogus", 1)
 	require.ErrorIs(t, err, ErrInvalidMetric)
 
 	// Valid.
-	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "x", "view", 1))
+	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "x", "views", 1))
 }
 
 func TestIngestFlushAndRead(t *testing.T) {
@@ -48,10 +48,10 @@ func TestIngestFlushAndRead(t *testing.T) {
 	ing := newTestIngester(t, store)
 
 	for i := 0; i < 5; i++ {
-		require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-a", "view", 1))
+		require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-a", "views", 1))
 	}
-	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-a", "query", 2))
-	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-b", "view", 3))
+	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-a", "queries", 2))
+	require.NoError(t, ing.RecordEvent(dashboardsGroup, dashboardsResource, "default", "dash-b", "views", 3))
 
 	require.NoError(t, ing.Flush(ctx))
 
@@ -59,16 +59,16 @@ func TestIngestFlushAndRead(t *testing.T) {
 	now, _ := store.kv.UnixTimestamp(ctx)
 	daily, err := store.ReadDailyForObject(ctx, o)
 	require.NoError(t, err)
-	require.Equal(t, int64(5), daily[dayString(now)]["view"])
-	require.Equal(t, int64(2), daily[dayString(now)]["query"])
+	require.Equal(t, int64(5), daily[dayString(now)]["views"])
+	require.Equal(t, int64(2), daily[dayString(now)]["queries"])
 
 	// Best-effort aggregates were bumped on flush.
 	dashStats := NewKVDashboardStats(store)
 	all, err := dashStats.GetStats(ctx, "default")
 	require.NoError(t, err)
-	require.Equal(t, int64(5), all["dash-a"]["view_last_7_days"])
-	require.Equal(t, int64(5), all["dash-a"]["view_total"])
-	require.Equal(t, int64(3), all["dash-b"]["view_last_1_days"])
+	require.Equal(t, int64(5), all["dash-a"]["views_last_7_days"])
+	require.Equal(t, int64(5), all["dash-a"]["views_total"])
+	require.Equal(t, int64(3), all["dash-b"]["views_last_1_days"])
 }
 
 func TestRecalcWindowsAndOverflow(t *testing.T) {
@@ -81,10 +81,10 @@ func TestRecalcWindowsAndOverflow(t *testing.T) {
 
 	o := objectRef{Group: dashboardsGroup, Resource: dashboardsResource, Namespace: "default", Name: "dash"}
 	// today: 10, 3 days ago: 5, 10 days ago: 7, 40 days ago: 100 (should fold to overflow)
-	require.NoError(t, store.SetDaily(ctx, o, today.Format(dayLayout), "view", 10))
-	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -3).Format(dayLayout), "view", 5))
-	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -10).Format(dayLayout), "view", 7))
-	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -40).Format(dayLayout), "view", 100))
+	require.NoError(t, store.SetDaily(ctx, o, today.Format(dayLayout), "views", 10))
+	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -3).Format(dayLayout), "views", 5))
+	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -10).Format(dayLayout), "views", 7))
+	require.NoError(t, store.SetDaily(ctx, o, today.AddDate(0, 0, -40).Format(dayLayout), "views", 100))
 
 	require.NoError(t, store.Recalc(ctx, decls, now))
 
@@ -92,15 +92,15 @@ func TestRecalcWindowsAndOverflow(t *testing.T) {
 	all, err := dashStats.GetStats(ctx, "default")
 	require.NoError(t, err)
 	st := all["dash"]
-	require.Equal(t, int64(10), st["view_last_1_days"])  // today only
-	require.Equal(t, int64(15), st["view_last_7_days"])  // today + 3 days ago
-	require.Equal(t, int64(22), st["view_last_30_days"]) // + 10 days ago
-	require.Equal(t, int64(122), st["view_total"])       // + overflow (40 days ago)
+	require.Equal(t, int64(10), st["views_last_1_days"])  // today only
+	require.Equal(t, int64(15), st["views_last_7_days"])  // today + 3 days ago
+	require.Equal(t, int64(22), st["views_last_30_days"]) // + 10 days ago
+	require.Equal(t, int64(122), st["views_total"])       // + overflow (40 days ago)
 
 	// The expired bucket was folded into overflow and dropped.
 	daily, err := store.ReadDailyForObject(ctx, o)
 	require.NoError(t, err)
-	require.Equal(t, int64(100), daily[overflowBucket]["view"])
+	require.Equal(t, int64(100), daily[overflowBucket]["views"])
 	_, exists := daily[today.AddDate(0, 0, -40).Format(dayLayout)]
 	require.False(t, exists)
 }

@@ -1,13 +1,18 @@
 package search
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/stats"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+var statsLog = log.New("unified-storage.stats.read")
 
 // StandardDocumentBuilders provides the default list of document builders for open source Grafana.
 // It combines the standard document builder with external builders for dashboards and users.
@@ -31,8 +36,10 @@ func MaybeUseUnifiedStorageStats(cfg *setting.Cfg, docs resource.DocumentBuilder
 	}
 	sdb, ok := docs.(*StandardDocumentBuilders)
 	if !ok {
+		statsLog.Warn("usage_stats_enabled set but document builder is not StandardDocumentBuilders; using legacy stats", "type", fmt.Sprintf("%T", docs))
 		return docs
 	}
+	statsLog.Info("reading dashboard usage stats from unified storage KV")
 	// Copy the supplier, replacing only the stats source with the KV reader.
 	return &StandardDocumentBuilders{
 		sql:       sdb.sql,

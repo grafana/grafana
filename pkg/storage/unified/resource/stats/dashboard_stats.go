@@ -1,6 +1,12 @@
 package stats
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+)
+
+var readLog = log.New("unified-storage.stats.read")
 
 // KVDashboardStats reads dashboard usage aggregates from unified-storage KV
 // instead of the enterprise sprinkles server. It satisfies the search
@@ -21,9 +27,11 @@ const (
 )
 
 // GetStats returns dashboardUID -> field -> value for all dashboards in a
-// namespace (field e.g. "view_last_7_days", "view_total").
+// namespace (field e.g. "views_last_7_days", "views_total").
 func (s *KVDashboardStats) GetStats(ctx context.Context, namespace string) (map[string]map[string]int64, error) {
-	return s.store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, namespace)
+	out, err := s.store.ScanAggregates(ctx, dashboardsGroup, dashboardsResource, namespace)
+	readLog.Info("GetStats from unified storage KV", "namespace", namespace, "dashboards", len(out), "err", err)
+	return out, err
 }
 
 // GetDashboardStats returns field -> value for a single dashboard.
