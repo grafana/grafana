@@ -600,10 +600,19 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: `{{ define "my-template" }}test{{ end }}`}
 		})
-		_, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
-		assert.Equal(t, []string{templateName}, result.AddedTemplates)
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, templateName, result.AddedTemplates[0])
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == templateName {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "template %q should be present in merged config", templateName)
 	})
 
 	t.Run("should return empty stats when no extra configs", func(t *testing.T) {
@@ -666,15 +675,22 @@ func TestMergeExtraConfig(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
 			e.TemplateFiles = map[string]string{templateName: templateContent}
 		})
-		config, _, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		config, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.NoError(t, err)
 
-		expectedUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
-		require.Contains(t, config.Templates, expectedUID)
-		assert.Equal(t, templateName, config.Templates[expectedUID].Title)
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, templateName, result.AddedTemplates[0])
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == templateName && tmpl.Content == templateContent {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "template %q should be present in merged config", templateName)
 	})
 
-	t.Run("should fail on duplicate template", func(t *testing.T) {
+	t.Run("should rename incoming template when same Mimir name already exists", func(t *testing.T) {
 		templateName := "my-template"
 		templateContent := `{{ define "my-template" }}test{{ end }}`
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
@@ -682,10 +698,23 @@ func TestMergeExtraConfig(t *testing.T) {
 		})
 		existingUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
 		input.Templates = map[v1.ResourceUID]v1.TemplateGroup{
-			existingUID: v1.NewTemplateGroup("", templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
+			existingUID: v1.NewTemplateGroup(existingUID, templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
 		}
-		_, _, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
-		require.ErrorContains(t, err, templateName)
+		config, result, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
+		require.NoError(t, err)
+
+		renamedName := templateName + identifier
+		require.Len(t, result.AddedTemplates, 1)
+		assert.Equal(t, renamedName, result.AddedTemplates[0])
+		assert.Equal(t, map[string]string{templateName: renamedName}, result.Templates)
+		require.Contains(t, config.Templates, existingUID, "original template should be preserved")
+		found := false
+		for _, tmpl := range config.Templates {
+			if tmpl.Title == renamedName {
+				found = true
+			}
+		}
+		assert.True(t, found, "renamed template %q should be present", renamedName)
 	})
 }
 
@@ -798,5 +827,96 @@ func TestMergeInhibitionRules(t *testing.T) {
 		_, added2, err := MergeInhibitionRules(nil, incoming, "id")
 		require.NoError(t, err)
 		assert.Equal(t, added1, added2)
+	})
+}
+
+func TestMergeTemplates(t *testing.T) {
+	t.Run("nil existing and nil incoming returns empty maps", func(t *testing.T) {
+		result, renames, added, err := MergeTemplates(nil, nil, "id")
+		require.NoError(t, err)
+		assert.Empty(t, result)
+		assert.Empty(t, renames)
+		assert.Empty(t, added)
+	})
+
+	t.Run("existing templates are preserved unchanged", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "tmpl1", "{{ define \"tmpl1\" }}hello{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI),
+		}
+		result, renames, added, err := MergeTemplates(existing, nil, "id")
+		require.NoError(t, err)
+		assert.Equal(t, existing, result)
+		assert.Empty(t, renames)
+		assert.Empty(t, added)
+	})
+
+	t.Run("incoming templates added with Mimir kind and ProvenanceNone", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "tmpl1", "{{ define \"tmpl1\" }}hello{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"tmpl2": "{{ define \"tmpl2\" }}world{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "id")
+		require.NoError(t, err)
+		assert.Contains(t, result, v1.ResourceUID("uid1"))
+		assert.Len(t, result, 2)
+		assert.Empty(t, renames)
+		require.Len(t, added, 1)
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "tmpl2", tmpl.Title)
+		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
+		assert.Equal(t, models.ProvenanceNone, tmpl.Provenance)
+	})
+
+	t.Run("UID is deterministic for same name, content, identifier", func(t *testing.T) {
+		incoming := map[string]string{"tmpl": "{{ define \"tmpl\" }}body{{ end }}"}
+		_, _, added1, err := MergeTemplates(nil, incoming, "id")
+		require.NoError(t, err)
+		_, _, added2, err := MergeTemplates(nil, incoming, "id")
+		require.NoError(t, err)
+		assert.Equal(t, added1, added2)
+	})
+
+	t.Run("different identifier produces different UID for the same template", func(t *testing.T) {
+		incoming := map[string]string{"tmpl": "{{ define \"tmpl\" }}body{{ end }}"}
+		_, _, added1, err := MergeTemplates(nil, incoming, "id-a")
+		require.NoError(t, err)
+		_, _, added2, err := MergeTemplates(nil, incoming, "id-b")
+		require.NoError(t, err)
+		assert.NotEqual(t, added1[0], added2[0])
+	})
+
+	t.Run("incoming Mimir name conflicting with existing Mimir is renamed", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "foo", "{{ define \"foo\" }}v1{{ end }}", v1.TemplateKindMimir, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"foo": "{{ define \"foo\" }}v2{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "suffix")
+		require.NoError(t, err)
+		require.Equal(t, map[string]string{"foo": "foosuffix"}, renames)
+		require.Len(t, added, 1)
+		assert.Contains(t, result, v1.ResourceUID("uid1"), "original template should be preserved")
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "foosuffix", tmpl.Title)
+		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
+	})
+
+	t.Run("incoming Mimir name conflicting with existing Grafana is NOT renamed", func(t *testing.T) {
+		existing := map[v1.ResourceUID]v1.TemplateGroup{
+			"uid1": v1.NewTemplateGroup("uid1", "foo", "{{ define \"foo\" }}grafana{{ end }}", v1.TemplateKindGrafana, models.ProvenanceNone),
+		}
+		incoming := map[string]string{"foo": "{{ define \"foo\" }}mimir{{ end }}"}
+
+		result, renames, added, err := MergeTemplates(existing, incoming, "suffix")
+		require.NoError(t, err)
+		assert.Empty(t, renames)
+		require.Len(t, added, 1)
+		tmpl, ok := result[added[0]]
+		require.True(t, ok)
+		assert.Equal(t, "foo", tmpl.Title)
+		assert.Len(t, result, 2)
 	})
 }
