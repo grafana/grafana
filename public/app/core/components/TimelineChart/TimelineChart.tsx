@@ -46,9 +46,11 @@ export const TimelineChart = (props: TimelineProps) => {
       const field = frames[frameIdx]?.fields[fieldIdx];
 
       if (field?.display) {
-        const disp = field.display(value); // will apply color modes
-        if (disp.color) {
-          return disp.color;
+        // color-only: skip the formatted text we'd otherwise discard. Falls back to
+        // the full processor for inline displays that don't provide .color.
+        const color = field.display.color?.(value) ?? field.display(value).color;
+        if (color) {
+          return color;
         }
       }
 
