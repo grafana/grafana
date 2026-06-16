@@ -13410,7 +13410,6 @@
       "default-commit-message": "",
       "error-message": "Nie udało się uruchomić zadania naprawy metadanych folderów. Spróbuj ponownie.",
       "error-title": "Błąd podczas naprawiania metadanych folderów",
-      "loading": "Ładowanie repozytorium…",
       "read-only-message": "Metadanych folderów nie można naprawić automatycznie.",
       "submit": "Napraw identyfikatory folderów",
       "submitting": "Trwa naprawianie…",

@@ -13182,7 +13182,6 @@
       "default-commit-message": "",
       "error-message": "無法啟動資料夾中繼資料修復作業，請再試一次。",
       "error-title": "修復資料夾中繼資料時發生錯誤",
-      "loading": "正在載入儲存庫…",
       "read-only-message": "資料夾中繼資料無法自動修正。",
       "submit": "修正資料夾 ID",
       "submitting": "正在修復…",
