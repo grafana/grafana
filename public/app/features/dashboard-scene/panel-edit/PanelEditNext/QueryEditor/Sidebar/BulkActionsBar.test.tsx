@@ -120,7 +120,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(false);
     });
@@ -133,7 +133,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
         action: 'toggle_multi_select',
