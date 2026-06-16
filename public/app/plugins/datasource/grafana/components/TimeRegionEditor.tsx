@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import moment, { Moment } from 'moment/moment';
-import { ChangeEvent, useState } from 'react';
+import moment, { type Moment } from 'moment/moment';
+import { type ChangeEvent, useState } from 'react';
 
-import { dateTimeAsMoment, getTimeZoneInfo, GrafanaTheme2, isDateTime, SelectableValue } from '@grafana/data';
+import { dateTimeAsMoment, getTimeZoneInfo, type GrafanaTheme2, isDateTime, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   Button,
@@ -16,8 +16,8 @@ import {
   TimeZonePicker,
   useStyles2,
 } from '@grafana/ui';
-import { TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
-import { TimeRegionConfig, TimeRegionMode } from 'app/core/utils/timeRegions';
+import { getTimeZoneTitle, TimeZoneOffset, TimeZoneTitle } from '@grafana/ui/internal';
+import { type TimeRegionConfig, type TimeRegionMode } from 'app/core/utils/timeRegions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 interface Props {
@@ -73,7 +73,7 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const renderTimezonePicker = () => {
     const timezone = (
       <>
-        <TimeZoneTitle title={timezoneInfo?.name} />
+        <TimeZoneTitle title={timezoneInfo ? getTimeZoneTitle(timezoneInfo) : ''} />
         <TimeZoneOffset timeZone={value.timezone} timestamp={timestamp} />
       </>
     );

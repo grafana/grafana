@@ -1,6 +1,7 @@
 package v0alpha1
 
 import (
+	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -33,6 +34,11 @@ type SecureValues struct {
 
 	// Some webhooks (including github) require a secret key value
 	WebhookSecret common.InlineSecureValue `json:"webhookSecret,omitzero,omitempty"`
+
+	// Private key used to sign commits the repository writes back. The format
+	// is selected by spec.commit.signingMethod. When unset, commits are
+	// unsigned.
+	CommitSigningKey common.InlineSecureValue `json:"commitSigningKey,omitzero,omitempty"`
 }
 
 func (SecureValues) OpenAPIModelName() string {
@@ -40,7 +46,7 @@ func (SecureValues) OpenAPIModelName() string {
 }
 
 func (v SecureValues) IsZero() bool {
-	return v.Token.IsZero() && v.WebhookSecret.IsZero()
+	return v.Token.IsZero() && v.WebhookSecret.IsZero() && v.CommitSigningKey.IsZero()
 }
 
 type LocalRepositoryConfig struct {
@@ -73,6 +79,12 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
+	// WebhookDisabled disables webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from GitHub and will poll
+	// the repository on an interval instead. Use this when Grafana is not reachable
+	// from the public internet.
+	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
+
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -85,8 +97,31 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubRepositoryConfig"
 }
 
+// GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
+// GitHub Enterprise Server (GHES) instance.
+type GitHubEnterpriseRepositoryConfig struct {
+	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
+	ServerURL string `json:"serverUrl,omitempty"`
+
+	// The repository URL on the GHES server (e.g. `https://ghes.example.com/example/test`).
+	URL string `json:"url,omitempty"`
+
+	// The branch to use in the repository.
+	Branch string `json:"branch"`
+
+	// Whether we should show dashboard previews for pull requests.
+	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
+
+	// Path is the subdirectory for the Grafana data inside the repository.
+	Path string `json:"path,omitempty"`
+}
+
+func (GitHubEnterpriseRepositoryConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitHubEnterpriseRepositoryConfig"
+}
+
 type GitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -148,18 +183,23 @@ func (RepositoryType) OpenAPIModelName() string {
 	return OpenAPIPrefix + "RepositoryType"
 }
 
+func (r RepositoryType) String() string {
+	return string(r)
+}
+
 // RepositoryType values
 const (
-	LocalRepositoryType     RepositoryType = "local"
-	GitHubRepositoryType    RepositoryType = "github"
-	GitRepositoryType       RepositoryType = "git"
-	BitbucketRepositoryType RepositoryType = "bitbucket"
-	GitLabRepositoryType    RepositoryType = "gitlab"
+	LocalRepositoryType            RepositoryType = "local"
+	GitHubRepositoryType           RepositoryType = "github"
+	GitHubEnterpriseRepositoryType RepositoryType = "githubEnterprise"
+	GitRepositoryType              RepositoryType = "git"
+	BitbucketRepositoryType        RepositoryType = "bitbucket"
+	GitLabRepositoryType           RepositoryType = "gitlab"
 )
 
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
-	return r == GitRepositoryType || r == GitHubRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
 }
 
 // Branch returns the branch for git-based repositories
@@ -173,6 +213,10 @@ func (r *Repository) Branch() string {
 	case GitHubRepositoryType:
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Branch
+		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.Branch
 		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
@@ -205,6 +249,10 @@ func (r *Repository) URL() string {
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.URL
 		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.URL
+		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
 			return r.Spec.Git.URL
@@ -230,6 +278,10 @@ func (r *Repository) Path() string {
 		if r.Spec.GitHub != nil {
 			return r.Spec.GitHub.Path
 		}
+	case GitHubEnterpriseRepositoryType:
+		if r.Spec.GitHubEnterprise != nil {
+			return r.Spec.GitHubEnterprise.Path
+		}
 	case GitRepositoryType:
 		if r.Spec.Git != nil {
 			return r.Spec.Git.Path
@@ -253,6 +305,15 @@ func (r *Repository) Path() string {
 	return ""
 }
 
+// ConnectionName returns the name of the connection referenced by this repository,
+// or an empty string if the repository does not use a connection.
+func (r *Repository) ConnectionName() string {
+	if r.Spec.Connection != nil {
+		return r.Spec.Connection.Name
+	}
+	return ""
+}
+
 type ConnectionInfo struct {
 	Name string `json:"name"`
 }
@@ -261,12 +322,101 @@ func (ConnectionInfo) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ConnectionInfo"
 }
 
+type CommitOptions struct {
+	// Template for commit messages produced by single-resource UI operations
+	// (dashboard save/delete/move, folder create/rename/delete).
+	// Bulk operations and sync jobs are out of scope and build their own messages.
+	// Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}},
+	// {{userName}}, {{userLogin}}, {{userEmail}}.
+	// When empty, a built-in default is used (e.g. "Save dashboard: <title>").
+	SingleResourceMessageTemplate string `json:"singleResourceMessageTemplate,omitempty"`
+
+	// When true, the Comment field in Save drawers is pre-filled from
+	// SingleResourceMessageTemplate and rendered read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+	// Name used as the commit signer. Required for the signing key's identity
+	// to match the commit, which providers need to mark commits as Verified. When
+	// empty, defaults to "Grafana".
+	SignerName string `json:"signerName,omitempty"`
+
+	// Email used as the commit signer. Must match the signing key's identity
+	// and a verified email on the account where the matching public key is
+	// registered. When empty, defaults to "noreply@grafana.com".
+	SignerEmail string `json:"signerEmail,omitempty"`
+
+	// Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime".
+	// When empty, commits are not signed.
+	SigningMethod SigningMethod `json:"signingMethod,omitempty"`
+
+	// PEM-encoded X.509 certificate paired with secure.commitSigningKey when
+	// signingMethod is "smime". This is public (not a secret) and is embedded
+	// in the commit signature. Unused for the gpg and ssh formats.
+	SMIMECertificate string `json:"smimeCertificate,omitempty"`
+}
+
+// SigningMethod selects how commits are signed.
+// +enum
+type SigningMethod string
+
+const (
+	GPGSigningMethod   SigningMethod = "gpg"
+	SSHSigningMethod   SigningMethod = "ssh"
+	SMIMESigningMethod SigningMethod = "smime"
+)
+
+func (CommitOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "CommitOptions"
+}
+
+type BranchOptions struct {
+	// Template for the branch name created in branch workflow.
+	// Supports variables: {{action}}, {{resourceKind}}, {{title}},
+	// {{userLogin}}, {{random}}.
+	// {{random}} is a 6-character alphanumeric token generated at render
+	// time to avoid collisions. The result is sanitised to a valid git ref
+	// (lowercase, alphanumeric + dashes, max 100 chars).
+	// When empty, the current auto-generated name is preserved.
+	NameTemplate string `json:"nameTemplate,omitempty"`
+
+	// When true, the branch name field in Save drawers is read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+}
+
+func (BranchOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "BranchOptions"
+}
+
+type PullRequestOptions struct {
+	// Template for pull request titles.
+	// Supports the same variables as BranchOptions.NameTemplate
+	// ({{random}} is available but rarely useful here).
+	// When empty, the first line of the commit message is used.
+	TitleTemplate string `json:"titleTemplate,omitempty"`
+
+	// When true, the PR title field in Save drawers is read-only.
+	EnforceTemplate bool `json:"enforceTemplate,omitempty"`
+}
+
+func (PullRequestOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "PullRequestOptions"
+}
+
 type RepositorySpec struct {
 	// The repository display name (shown in the UI)
 	Title string `json:"title"`
 
 	// Repository description
 	Description string `json:"description,omitempty"`
+
+	// Commit message options. Currently only contains the template used by
+	// single-resource UI operations; future siblings (bulk, sync) can live here.
+	Commit *CommitOptions `json:"commit,omitempty"`
+
+	// Branch naming options. Only meaningful when Workflows includes "branch".
+	Branch *BranchOptions `json:"branch,omitempty"`
+
+	// Pull request options. Only meaningful when Workflows includes "branch".
+	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
 
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
@@ -279,6 +429,11 @@ type RepositorySpec struct {
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfig `json:"webhook,omitempty"`
+
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
@@ -286,6 +441,10 @@ type RepositorySpec struct {
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfig `json:"github,omitempty"`
+
+	// The repository on a self-managed GitHub Enterprise Server (GHES).
+	// Mutually exclusive with local | github | git.
+	GitHubEnterprise *GitHubEnterpriseRepositoryConfig `json:"githubEnterprise,omitempty"`
 
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
@@ -324,6 +483,15 @@ const (
 	// It will contain a copy of everything from the remote
 	// The folder k8s name will be the same as the repository k8s name
 	SyncTargetTypeFolder SyncTargetType = "folder"
+
+	// Resources are saved at the top level without a wrapper folder.
+	// Like `folder`, multiple `folderless` repositories may coexist with each
+	// other, with `folder` repositories, and with unprovisioned resources.
+	// Unlike `folder`, no repo-named container folder is created: files at the
+	// repository path root become top-level resources and subdirectories become
+	// top-level folders. Ownership is tracked per-resource via manager
+	// annotations rather than by folder containment.
+	SyncTargetTypeFolderless SyncTargetType = "folderless"
 )
 
 type SyncOptions struct {
@@ -345,6 +513,19 @@ type SyncOptions struct {
 
 func (SyncOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncOptions"
+}
+
+type WebhookConfig struct {
+	// Base URL of the Grafana instance used to construct the webhook endpoint
+	// registered with the external Git provider. Only the base URL should be
+	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
+	// and resource name are appended automatically. Trailing slashes are stripped.
+	// Must be a valid HTTP or HTTPS URL.
+	BaseURL string `json:"baseUrl,omitempty"`
+}
+
+func (WebhookConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "WebhookConfig"
 }
 
 // The status of a Repository.
@@ -429,6 +610,7 @@ type WebhookStatus struct {
 	URL              string   `json:"url,omitempty"`
 	SubscribedEvents []string `json:"subscribedEvents,omitempty"`
 	LastEvent        int64    `json:"lastEvent,omitempty"`
+	LastRotated      int64    `json:"lastRotated,omitempty"`
 }
 
 func (WebhookStatus) OpenAPIModelName() string {
@@ -734,6 +916,7 @@ func (TestResults) OpenAPIModelName() string {
 // does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to
 // communicate validation or external reference errors that users can resolve by editing spec fields.
 // TODO: Rename this type to FieldError for consistency with Kubernetes conventions and to more clearly indicate that it represents field-level validation errors, not arbitrary error details.
+// +k8s:deepcopy-gen=false
 type ErrorDetails struct {
 	// Type is a machine-readable description of the cause of the error.
 	// This is intended for programmatic handling and matches Kubernetes' CauseType values.
@@ -755,8 +938,24 @@ type ErrorDetails struct {
 
 	// BadValue is the value of the field that was determined to be invalid, if applicable.
 	// This can be any type. This field is optional and may be omitted if not relevant.
-	// FIXME: DeepCopyInto and DeepCopy are not generated for interface{} or any
-	// BadValue interface{} `json:"badValue,omitempty"`
+	BadValue any `json:"badValue,omitempty"`
+}
+
+// DeepCopy copies the receiver, creating a new ErrorDetails.
+func (in *ErrorDetails) DeepCopy() *ErrorDetails {
+	if in == nil {
+		return nil
+	}
+
+	out := new(ErrorDetails)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyInto copies the receiver, writing into out.
+func (in *ErrorDetails) DeepCopyInto(out *ErrorDetails) {
+	//nolint:errcheck,gosec // this format is taken from the other generated DeepCopyInto functions.
+	resource.CopyObjectInto(out, in)
 }
 
 func (ErrorDetails) OpenAPIModelName() string {
@@ -819,6 +1018,8 @@ type RefItem struct {
 	Hash string `json:"hash,omitempty"`
 	// The URL to the reference (branch or tag)
 	RefURL string `json:"refURL,omitempty"`
+	// Whether this ref is protected (e.g. branch protection rules)
+	Protected bool `json:"protected,omitempty"`
 }
 
 func (RefItem) OpenAPIModelName() string {

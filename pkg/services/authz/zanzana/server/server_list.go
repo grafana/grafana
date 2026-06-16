@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,17 +16,34 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	release, err := s.acquireSlot("List", r.GetNamespace())
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+
 	ctx, span := s.tracer.Start(ctx, "server.List")
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", r.GetNamespace(),
+		"group", r.GetGroup(),
+		"resource", r.GetResource(),
+		"subresource", r.GetSubresource(),
+		"verb", r.GetVerb(),
+	)
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
+		ctxLogger.Debug("List execution time", "duration", time.Since(t).Milliseconds())
 	}(time.Now())
 
 	res, err := s.list(ctx, r)
@@ -49,7 +67,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject(), r.GetTeams())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -73,7 +91,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
 }
 
-func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listTyped(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listTyped")
 	defer span.End()
 
@@ -99,11 +117,10 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 resource.Type(),
-			Relation:             subresourceRelation,
+			Relation:             common.SubresourcePermissionRelation(subresourceRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -119,8 +136,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 		Type:                 resource.Type(),
 		Relation:             listRelation,
 		User:                 subject,
-		ContextualTuples:     contextuals,
-	})
+	}, contextuals)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +147,7 @@ func (s *Server) listTyped(ctx context.Context, subject, relation string, resour
 	}, nil
 }
 
-func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *storeInfo) (*authzv1.ListResponse, error) {
+func (s *Server) listGeneric(ctx context.Context, subject, relation string, resource common.ResourceInfo, contextuals *openfgav1.ContextualTupleKeys, store *zanzana.StoreInfo) (*authzv1.ListResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.listGeneric")
 	defer span.End()
 
@@ -148,11 +164,10 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
-			Relation:             folderRelation,
+			Relation:             common.SubresourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -170,8 +185,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             folderListRelation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 
 		if err != nil {
 			return nil, err
@@ -190,8 +204,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			Relation:             relation,
 			User:                 subject,
 			Context:              resourceCtx,
-			ContextualTuples:     contextuals,
-		})
+		}, contextuals)
 		if err != nil {
 			return nil, err
 		}
@@ -205,11 +218,48 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 	}, nil
 }
 
-func (s *Server) listObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
-	fn := s.openFGAClient.ListObjects
-	if s.cfg.UseStreamedListObjects {
-		fn = s.streamedListObjects
+func (s *Server) listObjects(
+	ctx context.Context,
+	req *openfgav1.ListObjectsRequest,
+	contextuals *openfgav1.ContextualTupleKeys,
+) (*openfgav1.ListObjectsResponse, error) {
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, nil))
 	}
+	if len(chunks) == 1 {
+		return s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunks[0]))
+	}
+
+	seen := make(map[string]struct{})
+	var objects []string
+	for _, chunk := range chunks {
+		res, err := s.doOpenFGAListObjects(ctx, cloneListObjectsRequestWithContextualTuples(req, chunk))
+		if err != nil {
+			return nil, err
+		}
+		for _, object := range res.GetObjects() {
+			if _, ok := seen[object]; ok {
+				continue
+			}
+			seen[object] = struct{}{}
+			objects = append(objects, object)
+		}
+	}
+	sort.Strings(objects)
+	return &openfgav1.ListObjectsResponse{Objects: objects}, nil
+}
+
+func cloneListObjectsRequestWithContextualTuples(req *openfgav1.ListObjectsRequest, contextuals *openfgav1.ContextualTupleKeys) *openfgav1.ListObjectsRequest {
+	out := proto.Clone(req).(*openfgav1.ListObjectsRequest)
+	out.ContextualTuples = contextuals
+	return out
+}
+
+// doOpenFGAListObjects resolves ListObjects via OpenFGA's StreamedListObjects RPC (see streamedListObjects),
+// aggregating all streamed objects. That avoids unary ListObjects max-result truncation for large sets.
+func (s *Server) doOpenFGAListObjects(ctx context.Context, req *openfgav1.ListObjectsRequest) (*openfgav1.ListObjectsResponse, error) {
+	fn := s.streamedListObjects
 
 	if s.cfg.CacheSettings.CheckQueryCacheEnabled {
 		return s.listObjectCached(ctx, req, fn)
@@ -252,6 +302,9 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 	ctx, span := s.tracer.Start(ctx, "server.streamedListObjects")
 	defer span.End()
 
+	ctx, cancel := s.withListObjectsClientDeadline(ctx)
+	defer cancel()
+
 	r := &openfgav1.StreamedListObjectsRequest{
 		StoreId:              req.GetStoreId(),
 		AuthorizationModelId: req.GetAuthorizationModelId(),
@@ -279,9 +332,37 @@ func (s *Server) streamedListObjects(ctx context.Context, req *openfgav1.ListObj
 		objects = append(objects, res.GetObject())
 	}
 
+	if ctx.Err() != nil {
+		return nil, fmt.Errorf("streamed list objects interrupted: %w", ctx.Err())
+	}
+
 	return &openfgav1.ListObjectsResponse{
 		Objects: objects,
 	}, nil
+}
+
+// withListObjectsClientDeadline returns a context that expires slightly before cfg.ListObjectsDeadline
+// (the OpenFGA server-side stream deadline). That lets the client cancel first and avoids racing the
+// server/stream deadline. For server deadlines under 1s, uses a small margin instead of deadline-1s.
+func (s *Server) withListObjectsClientDeadline(ctx context.Context) (context.Context, context.CancelFunc) {
+	deadline := s.cfg.ListObjectsDeadline
+	if deadline <= 0 {
+		deadline = 3 * time.Second
+	}
+	client := deadline - time.Second
+	if client > 0 {
+		return context.WithTimeout(ctx, client)
+	}
+	// deadline <= 1s: leave a margin under the server deadline without extending the budget.
+	if deadline > time.Millisecond {
+		client = deadline - time.Millisecond
+	} else {
+		client = deadline / 2
+	}
+	if client <= 0 {
+		client = deadline
+	}
+	return context.WithTimeout(ctx, client)
 }
 
 func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
@@ -296,23 +377,26 @@ func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
 
 func typedObjects(typ string, objects []string) []string {
 	prefix := typ + ":"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func genericObjects(gr string, objects []string) []string {
 	prefix := common.TypeResourcePrefix + gr + "/"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func folderObject(objects []string) []string {
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
+		out[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
 	}
-	return objects
+	return out
 }

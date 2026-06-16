@@ -2,15 +2,16 @@ import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { CombinedRuleGroup, CombinedRuleNamespace, Rule } from 'app/types/unified-alerting';
-import { PromRuleType, RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
+import { PromRuleType, type RulerGrafanaRuleDTO, isPromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
 import {
   RuleSource,
-  RulesFilter,
+  type RulesFilter,
   applySearchFilterToQuery,
   getSearchFilterFromQuery,
 } from '../search/rulesSearchParser';
@@ -19,7 +20,14 @@ import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
 import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
-import { getRuleHealth, isPluginProvidedRule, isPromRuleType, prometheusRuleType, rulerRuleType } from '../utils/rules';
+import {
+  getRuleHealth,
+  isPluginProvidedRule,
+  isPromRuleType,
+  prometheusRuleType,
+  ruleUsesDefaultPolicy,
+  rulerRuleType,
+} from '../utils/rules';
 
 import { calculateGroupTotals, calculateRuleFilteredTotals, calculateRuleTotals } from './useCombinedRuleNamespaces';
 import { useURLSearchParams } from './useURLSearchParams';
@@ -216,6 +224,7 @@ const reduceGroups = (filterState: RulesFilter) => {
           'plugins',
           'contactPoint',
           'ruleSource',
+          'policy',
         ])
         .omitBy(isEmpty)
         .mapValues(() => false)
@@ -237,6 +246,21 @@ const reduceGroups = (filterState: RulesFilter) => {
 
         if (hasContactPoint) {
           matchesFilterFor.contactPoint = true;
+        }
+      }
+
+      if ('policy' in matchesFilterFor) {
+        const policy = filterState.policy;
+        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+          const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
+
+          if (isDefaultPolicyFilter) {
+            if (ruleUsesDefaultPolicy(rule.rulerRule.grafana_alert.notification_settings)) {
+              matchesFilterFor.policy = true;
+            }
+          } else if (rule.rulerRule.grafana_alert.notification_settings?.policy === policy) {
+            matchesFilterFor.policy = true;
+          }
         }
       }
 
@@ -348,6 +372,7 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'plugins',
   'contactPoint',
   'ruleSource',
+  'policy',
 ]);
 
 const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);

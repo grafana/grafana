@@ -1,36 +1,6 @@
 import { omit } from 'lodash';
 
-import { FieldConfigSource, PanelPlugin } from '@grafana/data';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
-
-import { PanelModel } from '../../state/PanelModel';
-
-import { DisplayMode } from './types';
-
-export function calculatePanelSize(mode: DisplayMode, width: number, height: number, panel: PanelModel) {
-  if (mode === DisplayMode.Fill) {
-    return { width, height };
-  }
-  const panelPadding = 8 * 6;
-  const sidebarWidth = 60;
-
-  const colWidth = (window.innerWidth - sidebarWidth - GRID_CELL_VMARGIN * 4) / GRID_COLUMN_COUNT;
-  const pWidth = colWidth * panel.gridPos.w;
-  const pHeight = GRID_CELL_HEIGHT * panel.gridPos.h + panelPadding;
-  const scale = Math.min(width / pWidth, height / pHeight);
-
-  if (pWidth <= width && pHeight <= height) {
-    return {
-      width: pWidth,
-      height: pHeight,
-    };
-  }
-
-  return {
-    width: pWidth * scale,
-    height: pHeight * scale,
-  };
-}
+import { type FieldConfigSource, type PanelPlugin } from '@grafana/data';
 
 export function supportsDataQuery(plugin: PanelPlugin | undefined | null): boolean {
   return plugin?.meta.skipDataQuery === false;

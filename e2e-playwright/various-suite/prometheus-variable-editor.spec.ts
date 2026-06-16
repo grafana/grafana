@@ -1,6 +1,6 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
-import { test, expect, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type Components, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { addDashboard } from '../utils/dashboard-helpers';
 import { getResources } from '../utils/prometheus-helpers';
@@ -36,7 +36,8 @@ test.describe(
       page: Page,
       selectors: E2ESelectorGroups,
       datasourceName: string,
-      variableName: string
+      variableName: string,
+      components: Components
     ) {
       const addVariableButton = page.getByTestId(selectors.pages.Dashboard.Settings.Variables.List.addVariableCTAV2);
       await addVariableButton.click();
@@ -45,14 +46,7 @@ test.describe(
       await nameInput.clear();
       await nameInput.fill(variableName);
 
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByText(datasourceName);
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(datasourceName);
 
       await getResources(page);
     }
@@ -65,11 +59,12 @@ test.describe(
       selectors: E2ESelectorGroups,
       datasourceName: string,
       variableName: string,
-      queryType: string
+      queryType: string,
+      components: Components
     ) {
       await addDashboard(page);
       await navigateToVariables(page, selectors);
-      await addPrometheusQueryVariable(page, selectors, datasourceName, variableName);
+      await addPrometheusQueryVariable(page, selectors, datasourceName, variableName, components);
 
       // Select query type
       const queryTypeSelect = page.getByTestId(
@@ -99,10 +94,7 @@ test.describe(
       await closeButton.click({ force: true });
 
       // Select prom data source from the data source list
-      const dataSourcePickerInput = page.getByTestId(selectors.components.DataSourcePicker.inputV2);
-      await dataSourcePickerInput.click();
-      await dataSourcePickerInput.fill(datasourceName);
-      await page.keyboard.press('Enter');
+      await components.dataSourcePicker.set(datasourceName);
 
       // Confirm the variable exists in the correct input
       switch (queryType) {
@@ -141,12 +133,13 @@ test.describe(
       createDataSource,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
       await createDataSource({ type: 'prometheus', name: DATASOURCE_NAME });
       await addDashboard(page);
       await navigateToVariables(page, selectors);
-      await addPrometheusQueryVariable(page, selectors, DATASOURCE_NAME, 'labelsVariable');
+      await addPrometheusQueryVariable(page, selectors, DATASOURCE_NAME, 'labelsVariable', components);
 
       // Select query type
       const queryTypeSelect = page.getByTestId(
@@ -160,30 +153,33 @@ test.describe(
       createDataSource,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
       await createDataSource({ type: 'prometheus', name: DATASOURCE_NAME });
-      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'labelnames', 'Label names');
+      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'labelnames', 'Label names', components);
     });
 
     test('should create a label values variable that is selectable in the label values select in query builder', async ({
       createDataSource,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
       await createDataSource({ type: 'prometheus', name: DATASOURCE_NAME });
-      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'labelvalues', 'Label values');
+      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'labelvalues', 'Label values', components);
     });
 
     test('should create a metric names variable that is selectable in the metric select in query builder', async ({
       createDataSource,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `${DATASOURCE_PREFIX}_${Date.now()}`;
       await createDataSource({ type: 'prometheus', name: DATASOURCE_NAME });
-      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'metrics', 'Metrics');
+      await variableFlowToQueryEditor(page, selectors, DATASOURCE_NAME, 'metrics', 'Metrics', components);
     });
   }
 );

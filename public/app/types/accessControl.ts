@@ -1,4 +1,4 @@
-import { RoleDto } from 'app/api/clients/legacy';
+import { type RoleDto } from 'app/api/clients/legacy';
 
 /**
  * UserPermission is a map storing permissions in a form of
@@ -90,6 +90,9 @@ export enum AccessControlAction {
   FoldersPermissionsRead = 'folders.permissions:read',
   FoldersPermissionsWrite = 'folders.permissions:write',
 
+  PlaylistsRead = 'playlists:read',
+  PlaylistsWrite = 'playlists:write',
+
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',
@@ -143,15 +146,26 @@ export enum AccessControlAction {
   AlertingReceiversCreate = 'alert.notifications.receivers:create',
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
+  AlertingReceiversDelete = 'alert.notifications.receivers:delete',
+  /** @deprecated Use AlertingReceiversTestCreate instead */
+  AlertingReceiversTest = 'alert.notifications.receivers:test',
+  AlertingReceiversTestCreate = 'alert.notifications.receivers.test:create',
   AlertingReceiversUpdateProtected = 'alert.notifications.receivers.protected:write',
 
-  // Alerting routes actions
+  // Legacy Alerting routes actions
   AlertingRoutesRead = 'alert.notifications.routes:read',
   AlertingRoutesWrite = 'alert.notifications.routes:write',
+
+  // Alerting managed routes actions (new, scoped per-resource)
+  ActionAlertingManagedRoutesRead = 'notifications.alerting.grafana.app/routingtrees:get',
+  ActionAlertingManagedRoutesWrite = 'notifications.alerting.grafana.app/routingtrees:update',
+  ActionAlertingManagedRoutesCreate = 'notifications.alerting.grafana.app/routingtrees:create',
+  ActionAlertingManagedRoutesDelete = 'notifications.alerting.grafana.app/routingtrees:delete',
 
   // Alerting time intervals actions
   AlertingTimeIntervalsRead = 'alert.notifications.time-intervals:read',
   AlertingTimeIntervalsWrite = 'alert.notifications.time-intervals:write',
+  AlertingTimeIntervalsDelete = 'alert.notifications.time-intervals:delete',
 
   // Alerting templates actions
   AlertingTemplatesRead = 'alert.notifications.templates:read',

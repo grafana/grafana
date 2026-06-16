@@ -2,20 +2,17 @@ import { Navigate } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
 import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
-import { GrafanaRouteComponent, RouteDescriptor } from 'app/core/navigation/types';
+import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navigation/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PERMISSIONS_CONTACT_POINTS } from './unified/components/contact-points/permissions';
+import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { PERMISSIONS_CONTACT_POINTS } from './unified/hooks/abilities/alertmanager/useContactPointAbility';
+import { PERMISSIONS_NOTIFICATION_POLICIES } from './unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { PERMISSIONS_TEMPLATES } from './unified/hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from './unified/components/mute-timings/permissions';
-import {
-  PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
-  PERMISSIONS_NOTIFICATION_POLICIES_READ,
-} from './unified/components/notification-policies/permissions';
-import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+} from './unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { evaluateAccess } from './unified/utils/access-control';
 
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
@@ -44,8 +41,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       roles: evaluateAccess([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
-        ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
-        ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
+        ...PERMISSIONS_NOTIFICATION_POLICIES,
         ...PERMISSIONS_TIME_INTERVALS_READ,
         ...PERMISSIONS_TIME_INTERVALS_MODIFY,
       ]),
@@ -102,11 +98,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/routes/policy/:name/edit',
-      roles: evaluateAccess([
-        AccessControlAction.AlertingNotificationsRead,
-        ...PERMISSIONS_NOTIFICATION_POLICIES_READ,
-        ...PERMISSIONS_NOTIFICATION_POLICIES_MODIFY,
-      ]),
+      roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
       component: config.featureToggles.alertingMultiplePolicies
         ? importAlertingComponent(
             () =>
@@ -148,6 +140,20 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         () =>
           import(
             /* webpackChunkName: "ExistingSilenceEditorPage" */ 'app/features/alerting/unified/components/silences/SilencesEditor'
+          )
+      ),
+    },
+    {
+      path: '/alerting/silence/:id/view',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingInstanceRead,
+        AccessControlAction.AlertingInstancesExternalRead,
+        AccessControlAction.AlertingSilenceRead,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "SilenceViewPage" */ 'app/features/alerting/unified/components/silences/SilenceViewPage'
           )
       ),
     },
@@ -260,12 +266,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/notifications-history/',
-      component: cfg.featureToggles.alertingNotificationHistoryGlobal
+      path: '/alerting/notifications-history',
+      component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
+    },
+    {
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
         ? importAlertingComponent(
             () =>
               import(
-                /* webpackChunkName: "NotificationsPage" */ 'app/features/alerting/unified/notifications/NotificationsPage'
+                /* webpackChunkName: "NotificationDetailPage" */ 'app/features/alerting/unified/notifications/NotificationDetailPage'
               )
           )
         : () => <Navigate replace to="/alerting" />,
@@ -378,7 +388,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/:dataSourceUid/namespaces/:namespaceId/groups/:groupName/edit',
       pageClass: 'page-alerting',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead]),
+      roles: evaluateAccess([AccessControlAction.AlertingRuleUpdate, AccessControlAction.AlertingRuleExternalWrite]),
       component: importAlertingComponent(
         () =>
           import(
@@ -417,7 +427,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
 }
 
 // this function will always load the "feature disabled" component for all alerting routes
-function importAlertingComponent(loader: () => any): GrafanaRouteComponent {
+function importAlertingComponent(loader: () => Promise<unknown>): GrafanaRouteComponent {
   const featureDisabledPageLoader = () =>
     import(/* webpackChunkName: "AlertingDisabled" */ 'app/features/alerting/unified/AlertingNotEnabled');
   return SafeDynamicImport(config.unifiedAlertingEnabled ? loader : featureDisabledPageLoader);

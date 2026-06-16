@@ -8,10 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/component-base/tracing"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -43,7 +44,7 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 	ruleKey := ngmodels.AlertRuleKeyWithGroup{}
 
 	transitionToKey := map[ngmodels.AlertInstanceKey]StateTransition{}
-	transitions := make([]StateTransition, 0)
+	transitions := make([]StateTransition, 0, len(allStates)*len(allStates))
 	for _, fromState := range allStates {
 		for i, toState := range allStates {
 			tr := StateTransition{
@@ -148,8 +149,8 @@ func TestSyncPersister_saveAlertStates(t *testing.T) {
 			},
 			StartsAt:             time.Now().Add(4 * time.Minute),
 			EndsAt:               time.Now().Add(5 * time.Minute),
-			ResolvedAt:           util.Pointer(time.Now().Add(6 * time.Minute)),
-			LastSentAt:           util.Pointer(time.Now().Add(7 * time.Minute)),
+			ResolvedAt:           new(time.Now().Add(6 * time.Minute)),
+			LastSentAt:           new(time.Now().Add(7 * time.Minute)),
 			LastEvaluationString: util.GenerateShortUID(),
 			LastEvaluationTime:   time.Now().Add(8 * time.Minute),
 			EvaluationDuration:   time.Duration(rand.Intn(100)+1) * time.Second,

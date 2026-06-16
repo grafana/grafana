@@ -12,13 +12,12 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/v9"
+
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	dstls "github.com/grafana/dskit/crypto/tls"
-	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/redis/go-redis/v9"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -459,7 +458,7 @@ func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	close(p.readyc)
 }
 
-func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
+func (p *redisPeer) AddState(key string, state alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
 	p.statesMtx.Lock()
 	defer p.statesMtx.Unlock()
 	p.states[key] = state
@@ -469,7 +468,8 @@ func (p *redisPeer) AddState(key string, state alertingCluster.State, _ promethe
 	p.subsMtx.Lock()
 	p.subs[key] = sub
 	p.subsMtx.Unlock()
-	return newRedisChannel(p, key, p.withPrefix(key), update)
+	resolved := alertingCluster.ResolveOptions(opts...)
+	return newRedisChannel(p, key, p.withPrefix(key), update, resolved.QueueSize)
 }
 
 func (p *redisPeer) receiveLoop(channel *redis.PubSub) {

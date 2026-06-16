@@ -45,6 +45,11 @@ func New(cfg app.Config) (app.App, error) {
 					Path:       "/notification/query",
 					Method:     "POST",
 				}: notificationHandler.QueryHandler,
+				{
+					Namespaced: true,
+					Path:       "/notifications/queryalerts",
+					Method:     "POST",
+				}: notificationHandler.QueryAlertsHandler,
 			},
 		},
 		// TODO: Remove when SDK is fixed.

@@ -1,10 +1,10 @@
-import { DataFrame } from '../../types/dataFrame';
-import { DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
+import { type DataFrame } from '../../types/dataFrame';
+import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
 
 import { filterFieldsByNameTransformer } from './filterByName';
 import { DataTransformerID } from './ids';
-import { orderFieldsTransformer, OrderFieldsTransformerOptions } from './order';
-import { renameFieldsTransformer, RenameFieldsTransformerOptions } from './rename';
+import { orderFieldsTransformer, type OrderFieldsTransformerOptions } from './order';
+import { renameFieldsTransformer, type RenameFieldsTransformerOptions } from './rename';
 
 export interface OrganizeFieldsTransformerOptions
   extends OrderFieldsTransformerOptions,

@@ -6,6 +6,54 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
+func TestRepository_ConnectionName(t *testing.T) {
+	tests := []struct {
+		name string
+		repo v0alpha1.Repository
+		want string
+	}{
+		{
+			name: "no connection",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubRepositoryType,
+				},
+			},
+			want: "",
+		},
+		{
+			name: "with connection",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.GitHubRepositoryType,
+					Connection: &v0alpha1.ConnectionInfo{
+						Name: "my-github-connection",
+					},
+				},
+			},
+			want: "my-github-connection",
+		},
+		{
+			name: "local repository without connection",
+			repo: v0alpha1.Repository{
+				Spec: v0alpha1.RepositorySpec{
+					Type: v0alpha1.LocalRepositoryType,
+				},
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.repo.ConnectionName()
+			if got != tt.want {
+				t.Errorf("ConnectionName() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestRepositoryType_IsGit(t *testing.T) {
 	tests := []struct {
 		name     string

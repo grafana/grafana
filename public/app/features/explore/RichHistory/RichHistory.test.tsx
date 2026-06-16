@@ -5,7 +5,7 @@ import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
 import { Tabs } from '../QueriesDrawer/QueriesDrawerContext';
 
-import { RichHistory, RichHistoryProps } from './RichHistory';
+import { RichHistory, type RichHistoryProps } from './RichHistory';
 
 jest.mock('../state/selectors', () => ({ selectExploreDSMaps: jest.fn().mockReturnValue({ dsToExplore: [] }) }));
 

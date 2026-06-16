@@ -1,12 +1,10 @@
 import Feature from 'ol/Feature';
-import { Geometry } from 'ol/geom';
+import { type Geometry } from 'ol/geom';
 import VectorSource from 'ol/source/Vector';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { getGeometryField, LocationFieldMatchers } from './location';
-
-export interface FrameVectorSourceOptions {}
+import { getGeometryField, type LocationFieldMatchers } from './location';
 
 // Helper function to create properly typed Features
 function createFeature<T extends Geometry>(properties: {

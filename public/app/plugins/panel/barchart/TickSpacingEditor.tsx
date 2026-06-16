@@ -1,4 +1,4 @@
-import { SelectableValue, StandardEditorProps } from '@grafana/data';
+import { type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Stack, RadioButtonGroup, Tooltip } from '@grafana/ui';
 

@@ -1,19 +1,25 @@
-import { useEffect, useRef } from 'react';
+import { createElement, useEffect, useRef } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 import {
-  DeleteRepositoryFilesWithPathApiResponse,
-  GetRepositoryFilesWithPathApiResponse,
-  RepositoryView,
+  type DeleteRepositoryFilesWithPathApiResponse,
+  type GetRepositoryFilesWithPathApiResponse,
+  type RepositoryView,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { Resource } from 'app/features/apiserver/types';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
+import { type Resource } from 'app/features/apiserver/types';
+import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { refetchChildren } from 'app/features/browse-dashboards/state/actions';
-import { RepoType } from 'app/features/provisioning/Wizard/types';
+import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { useDispatch } from 'app/types/store';
 
+import { ensureFolderPathTrailingSlash } from '../components/utils/path';
+import { getRepoFileUrl } from '../utils/git';
+
+import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
 type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
@@ -42,12 +48,6 @@ interface ProvisionedRequest {
   isLoading?: boolean;
   error?: unknown;
   data?: DeleteRepositoryFilesWithPathApiResponse | GetRepositoryFilesWithPathApiResponse;
-}
-
-// Resource-specific configuration for different resource types
-interface ResourceConfig {
-  defaultSuccessMessage: string;
-  supportedWorkflows: string[];
 }
 
 interface Props<T> {
@@ -119,11 +119,31 @@ export function useProvisionedRequestHandler<T>({
       // Only show success alert for write workflow (not branch workflow,
       // which navigates to a preview page with its own PR banner)
       if (workflow !== 'branch') {
-        const message = successMessage || getContextualSuccessMessage(info);
-        getAppEvents().publish({
-          type: AppEvents.alertSuccess.name,
-          payload: [message],
-        });
+        const branch = ref || selectedBranch || repository?.branch;
+        // Link to the configured path (e.g. /tree/main/dashboards) so users
+        // land where their resources live, not the repo root.
+        const repoFileUrl = repository?.path
+          ? getRepoFileUrl({
+              repoType: repository.type,
+              url: repository.url,
+              branch,
+              filePath: ensureFolderPathTrailingSlash(repository.path),
+            })
+          : undefined;
+        const linkUrl = repoFileUrl || urls?.repositoryURL || repository?.url;
+
+        if (branch) {
+          // Uses dispatch(notifyApp(...)) instead of getAppEvents().publish() because AlertPayload only accepts strings
+          // and notifyApp supports a React component for rendering the branch name as a clickable link.
+          const component = createElement(PushSuccessMessage, { branch, url: linkUrl });
+          dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
+        } else {
+          const message = successMessage || t('provisioned-request.saved-success', 'Changes saved successfully');
+          getAppEvents().publish({
+            type: AppEvents.alertSuccess.name,
+            payload: [message],
+          });
+        }
       }
 
       // Branch workflow
@@ -157,17 +177,4 @@ export function useProvisionedRequestHandler<T>({
   ]);
 }
 
-function getContextualSuccessMessage(info: ProvisionedOperationInfo): string {
-  const { resourceType } = info;
-
-  switch (resourceType) {
-    case 'dashboard':
-      return t('provisioned-resource-request-handler-dashboard', 'Dashboard saved successfully');
-    case 'folder':
-      return t('provisioned-resource-request-handler-folder', 'Folder created successfully');
-    default:
-      return t('provisioned-resource-request-handler', 'Resource saved successfully');
-  }
-}
-
-export type { ResourceType, ProvisionedOperationInfo, RequestHandlers, ResourceConfig };
+export type { ProvisionedOperationInfo, RequestHandlers };

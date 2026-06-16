@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react';
+import { Preview } from '@storybook/react-webpack5';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
@@ -33,7 +33,7 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const allowedExtraThemes: string[] = [];
+const allowedExtraThemes: string[] = ['deut_prot_dark', 'deut_prot_light', 'tritanopia_dark', 'tritanopia_light'];
 
 if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('debug');
@@ -63,6 +63,7 @@ const preview: Preview = {
     actions: { argTypesRegex: '^on[A-Z].*' },
     docs: {
       container: ThemedDocsContainer,
+      codePanel: true,
     },
     a11y: {
       test: 'error',
@@ -154,12 +155,12 @@ const preview: Preview = {
         }
 
         //
-        // If sorting different components, sort alphabetically
-        if (aComponent !== bComponent) {
+        // If sorting different components, sort alphabetically unless we're in docs
+        if (aComponent !== bComponent && a.type !== 'docs') {
           return aComponent.localeCompare(bComponent, undefined, { numeric: true });
         }
 
-        // Otherwise, sort stories within componmments according to source order
+        // Otherwise, sort stories within components according to source order
         return 0;
       },
     },

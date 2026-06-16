@@ -1,47 +1,83 @@
-import { useCallback, useMemo, useState } from 'react';
+import { css } from '@emotion/css';
+import { useCallback, useMemo } from 'react';
 
-import { AlertState, IconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, ConfirmModal, Stack, Tooltip } from '@grafana/ui';
+import { Button, Icon, Stack, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from './constants';
+import { ConfirmationStyle, DeleteConfirm } from './DeleteConfirm';
+import { useQueryEditorTypeConfig, useQueryEditorUIContext } from './QueryEditor/QueryEditorContext';
+import { type ActionItem, getActionItemKey } from './actionItem';
+import { QueryEditorType } from './constants';
+import { trackCardAction, type CardActionSource } from './tracking';
 
-export interface ActionItem {
-  name: string;
-  type: QueryEditorType;
-  isHidden: boolean;
-  /** Alert state for dynamic styling (only used when type is Alert) */
-  alertState?: AlertState | null;
-}
-
-interface ActionsProps {
-  contentHeader?: boolean;
-  handleResetFocus?: () => void;
-  item: ActionItem;
-  onDelete?: () => void;
-  onDuplicate?: () => void;
-  onToggleHide?: () => void;
+enum ActionButtonId {
+  duplicate = 'duplicate',
+  delete = 'delete',
+  hide = 'hide',
 }
 
 interface ActionButtonConfig {
-  id: string;
+  id: ActionButtonId;
   icon: IconName;
   label: string;
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
+interface ActionsProps {
+  contentHeader?: boolean;
+  confirmStyle?: ConfirmationStyle;
+  handleResetFocus?: () => void;
+  item: ActionItem;
+  onDelete?: () => void;
+  onDuplicate?: () => void;
+  onToggleHide?: () => void;
+  order?: {
+    delete: number;
+    duplicate: number;
+    hide: number;
+  };
+}
+
+const getToggleLabel = (item: ActionItem, labels: Record<string, string>) => {
+  const isTransformation = item.type === QueryEditorType.Transformation;
+  const isHidden = item.isHidden;
+
+  if (isTransformation) {
+    return isHidden ? labels.enable : labels.disable;
+  }
+  return isHidden ? labels.show : labels.hide;
+};
+
+const getDeleteConfirmationDescription = (item: ActionItem): string | undefined => {
+  if (item.type === QueryEditorType.Transformation) {
+    return t('query-editor-next.delete-modal.body-transformation', 'Removing one transformation may break others.');
+  }
+
+  return undefined;
+};
+
 export function Actions({
   contentHeader = false,
+  confirmStyle = ConfirmationStyle.compact,
   handleResetFocus,
   item,
   onDelete,
   onDuplicate,
   onToggleHide,
+  order,
 }: ActionsProps) {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const config = QUERY_EDITOR_TYPE_CONFIG[item.type];
-  const typeLabel = config.getLabel();
-  const requiresDeleteConfirmation = config.deleteConfirmation;
+  const theme = useTheme2();
+  const typeConfig = useQueryEditorTypeConfig();
+  const styles = useStyles2(getStyles);
+  const { confirmingDeleteActionKey, setConfirmingDeleteActionKey } = useQueryEditorUIContext();
+  const typeLabel = typeConfig[item.type].getLabel();
+  const requiresDeleteConfirmation = typeConfig[item.type].deleteConfirmation;
+  const cardActionSource: CardActionSource = contentHeader ? 'content_header' : 'sidebar_card';
+  const itemKey = getActionItemKey(item);
+  const confirmationKey = `${cardActionSource}:${itemKey}`;
+  const showDeleteConfirmation = confirmingDeleteActionKey === confirmationKey;
+  const deleteConfirmationDescription = getDeleteConfirmationDescription(item);
 
   const labels = useMemo(
     () => ({
@@ -49,25 +85,37 @@ export function Actions({
       remove: t('query-editor-next.action.remove', 'Remove {{type}}', { type: typeLabel }),
       show: t('query-editor-next.action.show', 'Show {{type}}', { type: typeLabel }),
       hide: t('query-editor-next.action.hide', 'Hide {{type}}', { type: typeLabel }),
+      enable: t('query-editor-next.action.enable', 'Enable {{type}}', { type: typeLabel }),
+      disable: t('query-editor-next.action.disable', 'Disable {{type}}', { type: typeLabel }),
     }),
     [typeLabel]
   );
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+
       if (!onDelete) {
         return;
       }
 
-      handleResetFocus?.();
-
       if (requiresDeleteConfirmation) {
-        setShowDeleteConfirmation(true);
+        setConfirmingDeleteActionKey(confirmationKey);
       } else {
+        trackCardAction('delete', item.type, cardActionSource);
         onDelete();
+        handleResetFocus?.();
       }
     },
-    [requiresDeleteConfirmation, onDelete, handleResetFocus]
+    [
+      requiresDeleteConfirmation,
+      onDelete,
+      handleResetFocus,
+      confirmationKey,
+      item.type,
+      cardActionSource,
+      setConfirmingDeleteActionKey,
+    ]
   );
 
   const handleConfirmDelete = useCallback(() => {
@@ -75,82 +123,98 @@ export function Actions({
       return;
     }
 
+    trackCardAction('delete', item.type, cardActionSource);
     onDelete();
-    setShowDeleteConfirmation(false);
+    setConfirmingDeleteActionKey(null);
     handleResetFocus?.();
-  }, [onDelete, handleResetFocus]);
+  }, [onDelete, handleResetFocus, item.type, cardActionSource, setConfirmingDeleteActionKey]);
 
-  const handleDismissModal = useCallback(() => {
-    setShowDeleteConfirmation(false);
+  const handleCancelDelete = useCallback(() => {
+    setConfirmingDeleteActionKey(null);
     handleResetFocus?.();
-  }, [handleResetFocus]);
+  }, [handleResetFocus, setConfirmingDeleteActionKey]);
 
-  const actionButtons = useMemo<ActionButtonConfig[]>(
-    () =>
-      [
-        onDuplicate && {
-          id: 'duplicate',
-          icon: 'copy',
-          label: labels.duplicate,
-          onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            onDuplicate();
-          },
+  const actionButtons = useMemo<ActionButtonConfig[]>(() => {
+    const orderMap: Record<ActionButtonId, number> = {
+      [ActionButtonId.duplicate]: order?.duplicate ?? 0,
+      [ActionButtonId.delete]: order?.delete ?? 1,
+      [ActionButtonId.hide]: order?.hide ?? 2,
+    };
+
+    return [
+      onDuplicate && {
+        id: ActionButtonId.duplicate,
+        icon: 'copy',
+        label: labels.duplicate,
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          trackCardAction('duplicate', item.type, cardActionSource);
+          onDuplicate();
         },
-        onToggleHide && {
-          id: 'toggle-hide',
-          icon: item.isHidden ? 'eye-slash' : 'eye',
-          label: item.isHidden ? labels.show : labels.hide,
-          onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
-            e.stopPropagation();
-            onToggleHide();
-          },
+      },
+      onDelete && {
+        id: ActionButtonId.delete,
+        icon: 'trash-alt',
+        label: labels.remove,
+        onClick: handleDelete,
+      },
+      onToggleHide && {
+        id: ActionButtonId.hide,
+        icon: item.isHidden ? 'eye-slash' : 'eye',
+        label: getToggleLabel(item, labels),
+        onClick: (e: React.MouseEvent<HTMLButtonElement>) => {
+          e.stopPropagation();
+          trackCardAction('toggle_hide', item.type, cardActionSource);
+          onToggleHide();
         },
-        onDelete && {
-          id: 'delete',
-          icon: 'trash-alt',
-          label: labels.remove,
-          onClick: handleDelete,
-        },
-      ].filter((btn): btn is ActionButtonConfig => Boolean(btn)),
-    [
-      onDuplicate,
-      labels.duplicate,
-      labels.show,
-      labels.hide,
-      labels.remove,
-      onToggleHide,
-      item.isHidden,
-      onDelete,
-      handleDelete,
+      },
     ]
-  );
+      .filter((btn): btn is ActionButtonConfig => Boolean(btn))
+      .sort((a, b) => orderMap[a.id] - orderMap[b.id]);
+  }, [order, onDuplicate, labels, onDelete, handleDelete, onToggleHide, item, cardActionSource]);
 
   return (
-    <>
-      <Stack direction="row" gap={contentHeader ? 1 : 0}>
-        {actionButtons.map(({ label, id, icon, onClick }) => (
+    <Stack direction="row" gap={contentHeader ? 1 : 0} alignItems="center">
+      {actionButtons.map(({ label, id, icon, onClick }) => {
+        if (id === ActionButtonId.delete && showDeleteConfirmation) {
+          return (
+            <DeleteConfirm
+              key="delete-confirm"
+              confirmStyle={confirmStyle}
+              description={deleteConfirmationDescription}
+              onConfirm={handleConfirmDelete}
+              onCancel={handleCancelDelete}
+            />
+          );
+        }
+        // Compact mode hides sibling actions while confirming so the row stays focused on the choice.
+        if (id !== ActionButtonId.delete && showDeleteConfirmation && confirmStyle === ConfirmationStyle.compact) {
+          return null;
+        }
+
+        return (
           <Tooltip content={label} key={id}>
             <Button size="sm" fill="text" icon={icon} variant="secondary" aria-label={label} onClick={onClick} />
           </Tooltip>
-        ))}
-      </Stack>
-
-      {showDeleteConfirmation && (
-        <ConfirmModal
-          isOpen={showDeleteConfirmation}
-          title={t('query-editor-next.delete-modal.title', 'Delete {{name}}?', { name: item.name })}
-          body={null}
-          description={
-            item.type === QueryEditorType.Transformation
-              ? t('query-editor-next.delete-modal.body-transformation', 'Removing one transformation may break others.')
-              : t('query-editor-next.delete-modal.body-query', 'Are you sure you want to delete this query?')
-          }
-          confirmText={t('query-editor-next.delete-modal.confirm', 'Delete')}
-          onConfirm={handleConfirmDelete}
-          onDismiss={handleDismissModal}
-        />
+        );
+      })}
+      {!!item.error && (
+        <Tooltip theme="error" content={item.error}>
+          <Icon
+            size="sm"
+            name="exclamation-triangle"
+            aria-label={t('query-editor-next.action.error', 'Error')}
+            className={styles.errorIcon}
+            color={theme.colors.error.text}
+          />
+        </Tooltip>
       )}
-    </>
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  errorIcon: css({
+    margin: theme.spacing(0, 0.5, 0, 0.5),
+  }),
+});

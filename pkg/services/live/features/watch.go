@@ -50,9 +50,11 @@ func (b *WatchRunner) GetHandlerForPath(_ string) (model.ChannelHandler, error) 
 // * v0alpha1/dashboards/u12345
 // * v0alpha1/dashboards=ABCD/u12345
 func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	// To make sure we do not share resources across users, in clude the UID in the path
+	// To make sure we do not share resources across users, include the UID in the path
 	userID := u.GetIdentifier()
-	if userID == "" {
+	if u.GetIdentityType() == types.TypeAnonymous {
+		userID = "anonymous"
+	} else if userID == "" {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied, fmt.Errorf("missing user identity")
 	}
 	if !strings.HasSuffix(e.Path, userID) {

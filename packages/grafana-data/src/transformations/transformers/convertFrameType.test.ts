@@ -1,11 +1,11 @@
-import { DataTransformerConfig } from '@grafana/schema';
+import { type DataTransformerConfig } from '@grafana/schema';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { mockTransformationsRegistry } from '../../internal';
 import { FieldType } from '../../types/dataFrame';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
 
-import { convertFrameTypeTransformer, ConvertFrameTypeTransformerOptions, FrameType } from './convertFrameType';
+import { convertFrameTypeTransformer, type ConvertFrameTypeTransformerOptions, FrameType } from './convertFrameType';
 import { DataTransformerID } from './ids';
 
 describe('convert frame type', () => {

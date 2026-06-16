@@ -1,31 +1,51 @@
 import {
   AppEvents,
-  DataFrame,
+  type DataFrame,
   FieldType,
   getDefaultTimeRange,
   getPanelDataSummary,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   PluginType,
   toDataFrame,
   VisualizationSuggestionScore,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getListedPanelPluginMetas, type PanelPluginMetas, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   BarGaugeDisplayMode,
   BigValueColorMode,
-  GraphFieldConfig,
-  ReduceDataOptions,
+  type GraphFieldConfig,
+  type ReduceDataOptions,
   StackingMode,
   VizOrientation,
 } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { clearPanelPluginCache, getPanelPluginMeta } from 'app/features/plugins/importPanelPlugin';
+import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
-import { panelsToCheckFirst } from './consts';
 import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
+
+const PANELS_TO_TEST = [
+  'timeseries',
+  'barchart',
+  'gauge',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
+  'heatmap',
+  'histogram',
+  'text',
+] as const;
+const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -34,14 +54,17 @@ jest.mock('app/core/app_events', () => ({
   },
 }));
 
-config.featureToggles.externalVizSuggestions = true;
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getListedPanelPluginMetas: jest.fn(),
+}));
+
+const getListedPanelPluginMetasMock = jest.mocked(getListedPanelPluginMetas);
 
 let idx = 0;
-for (const pluginId of panelsToCheckFirst) {
-  if (pluginId === 'geomap') {
-    continue;
-  }
-  config.panels[pluginId] = {
+
+function getPanelPluginMeta(pluginId: string) {
+  return {
     id: pluginId,
     module: `core:plugin/${pluginId}`,
     sort: idx++,
@@ -63,15 +86,13 @@ for (const pluginId of panelsToCheckFirst) {
   };
 }
 
-jest.mock('../state/util', () => {
-  const originalModule = jest.requireActual('../state/util');
-  return {
-    ...originalModule,
-    getAllPanelPluginMeta: jest.fn().mockImplementation(() => [...Object.values(config.panels)]),
-  };
-});
-
-const SCALAR_PLUGINS = ['gauge', 'stat', 'bargauge', 'piechart'];
+function getPanelPlugins() {
+  const plugins = [];
+  for (const pluginId of PANELS_TO_TEST) {
+    plugins.push(getPanelPluginMeta(pluginId));
+  }
+  return plugins;
+}
 
 class ScenarioContext {
   data: DataFrame[] = [];
@@ -81,6 +102,9 @@ class ScenarioContext {
     this.data = scenarioData;
 
     beforeAll(async () => {
+      const metas = getPanelPlugins().reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {} as PanelPluginMetas);
+      setPanelPluginMetas(metas);
+      getListedPanelPluginMetasMock.mockResolvedValue(getPanelPlugins());
       await this.run();
     });
   }
@@ -112,10 +136,7 @@ scenario('No series', (ctx) => {
   ctx.setData([]);
 
   it('should return correct suggestions', () => {
-    expect(ctx.suggestions).toEqual([
-      expect.objectContaining({ pluginId: 'table' }),
-      expect.objectContaining({ pluginId: 'text' }),
-    ]);
+    expect(ctx.suggestions).toEqual([expect.objectContaining({ pluginId: 'table' })]);
   });
 });
 
@@ -147,7 +168,6 @@ scenario('Single frame with time and number field', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart' }),
       expect.objectContaining({ pluginId: 'gauge' }),
@@ -204,7 +224,6 @@ scenario('Single frame with time 2 number fields', (ctx) => {
   it('should return correct suggestions', () => {
     expect(ctx.suggestions).toEqual([
       expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart' }),
-      expect.objectContaining({ pluginId: 'timeseries', name: 'Line chart - smooth' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Area chart - stacked by percentage' }),
       expect.objectContaining({ pluginId: 'timeseries', name: 'Bar chart - stacked' }),
@@ -509,7 +528,7 @@ scenario('Given a preferredVisualisationType with multiple entries', (ctx) => {
 });
 
 describe('sortSuggestions', () => {
-  it('should sort suggestions correctly by score', () => {
+  it('should sort suggestions correctly by score', async () => {
     const suggestions = [
       { pluginId: 'timeseries', name: 'Time series', hash: 'b', score: VisualizationSuggestionScore.OK },
       { pluginId: 'table', name: 'Table', hash: 'a', score: VisualizationSuggestionScore.OK },
@@ -526,14 +545,14 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');
     expect(suggestions[2].pluginId).toBe('table');
   });
 
-  it('should sort suggestions based on core module', () => {
+  it('should sort suggestions based on core module', async () => {
     const suggestions = [
       {
         pluginId: 'fake-external-panel',
@@ -561,7 +580,7 @@ describe('sortSuggestions', () => {
       }),
     ]);
 
-    sortSuggestions(suggestions, dataSummary);
+    await sortSuggestions(suggestions, dataSummary);
 
     expect(suggestions[0].pluginId).toBe('stat');
     expect(suggestions[1].pluginId).toBe('timeseries');

@@ -1,6 +1,6 @@
-import { Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
 
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import { flows } from './utils';
 
@@ -9,6 +9,7 @@ test.use({
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
     groupByVariable: true,
+    multiPropsVariables: false,
   },
 });
 
@@ -164,6 +165,7 @@ test.describe(
 
       // check that variable deletion works
       await dashboardPage.getByGrafanaSelector(selectors.components.EditPaneHeader.deleteButton).click();
+      await dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete).click();
       await expect(variableLabel).toBeHidden();
     });
 
@@ -200,7 +202,7 @@ test.describe(
       // Open the modal editor in the side pane
       await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('foo')).click();
+      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Foo')).click();
       await openModal(dashboardPage, selectors);
 
       // Check the items

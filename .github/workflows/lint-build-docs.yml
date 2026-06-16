@@ -23,7 +23,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Build & Verify Docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64
 
     permissions:
       contents: read
@@ -35,13 +35,10 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'yarn'
+        uses: ./.github/actions/setup-node
 
-      - name: Install dependencies
-        run: yarn install --immutable
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
 
       - name: Lint docs
         run: yarn run prettier:checkDocs

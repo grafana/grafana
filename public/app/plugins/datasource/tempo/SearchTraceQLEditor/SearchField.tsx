@@ -3,13 +3,13 @@ import { uniq } from 'lodash';
 import { useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { SelectableValue, TimeRange } from '@grafana/data';
+import { type SelectableValue, type TimeRange } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
-import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, Stack, useStyles2, InputActionMeta } from '@grafana/ui';
+import { type FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
+import { Select, Stack, useStyles2, type InputActionMeta } from '@grafana/ui';
 
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
 import { OPTIONS_LIMIT } from '../language_provider';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
 
@@ -287,7 +287,7 @@ export default SearchField;
  * @param options a list of options
  * @returns the list of given options plus the template variables
  */
-export const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
+const withTemplateVariableOptions = (options: SelectableValue[] | undefined) => {
   const templateVariables = getTemplateSrv().getVariables();
   return [...(options || []), ...templateVariables.map((v) => ({ label: `$${v.name}`, value: `$${v.name}` }))];
 };

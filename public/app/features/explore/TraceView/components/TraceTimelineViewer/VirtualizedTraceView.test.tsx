@@ -15,11 +15,11 @@ import { render, screen } from '@testing-library/react';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
-import { Trace } from '../types/trace';
+import { type Trace } from '../types/trace';
 import { formatDuration } from '../utils/date';
 
 import SpanTreeOffset from './SpanTreeOffset';
-import VirtualizedTraceView, { VirtualizedTraceViewProps } from './VirtualizedTraceView';
+import VirtualizedTraceView, { type VirtualizedTraceViewProps } from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
 

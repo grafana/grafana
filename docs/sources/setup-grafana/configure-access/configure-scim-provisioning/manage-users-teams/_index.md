@@ -48,7 +48,7 @@ After a user is provisioned through SCIM, they cannot be deleted from Grafana - 
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### How SCIM identifies users
@@ -227,7 +227,7 @@ Teams provisioned through SCIM cannot be deleted manually from Grafana - they ca
 
 For detailed configuration steps specific to the identity provider, see:
 
-- [Configure SCIM with Entra ID](../configure-scim-with-azuread/)
+- [Configure SCIM with Entra ID](../configure-scim-with-entraid/)
 - [Configure SCIM with Okta](../configure-scim-with-okta/)
 
 ### SCIM vs Team Sync

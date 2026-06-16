@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -198,7 +197,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 									}`),
 							},
 						},
-						IsPaused: util.Pointer(true),
+						IsPaused: new(true),
 					},
 				},
 			},
@@ -538,7 +537,7 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Should only return group-2 (team=frontend, 3 rules)
-		foundGroups := []string{}
+		foundGroups := make([]string, 0, len(result.Data.RuleGroups))
 		total := 0
 		for _, group := range result.Data.RuleGroups {
 			foundGroups = append(foundGroups, group.Name)
@@ -566,7 +565,7 @@ func TestIntegrationPrometheusRulesPagination(t *testing.T) {
 		require.Equal(t, http.StatusOK, resp.StatusCode)
 
 		// Should only return group-3 (team=platform matches plat.*)
-		foundGroups := []string{}
+		foundGroups := make([]string, 0, len(result.Data.RuleGroups))
 		total := 0
 		for _, group := range result.Data.RuleGroups {
 			foundGroups = append(foundGroups, group.Name)

@@ -573,12 +573,6 @@
     "title": "Value Mapping and Overrides Test",
     "weekStart": ""
   },
-  "status": {
-    "conversion": {
-      "failed": false,
-      "storedVersion": "v0alpha1"
-    }
-  },
   "access": {
     "slug": "value-mapping-test",
     "url": "/d/value-mapping-test/value-mapping-and-overrides-test",

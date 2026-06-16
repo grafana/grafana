@@ -1,22 +1,22 @@
-import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { PluginDashboard } from 'app/types/plugins';
+import { type DashboardJson } from 'app/features/manage-dashboards/types';
+import { type PluginDashboard } from 'app/types/plugins';
 
 export interface Link {
   rel: string;
   href: string;
 }
 
-export interface Screenshot {
+interface Screenshot {
   links: Link[];
 }
 
-export interface LogoImage {
+interface LogoImage {
   content: string;
   filename: string;
   type: string;
 }
 
-export interface Logo {
+interface Logo {
   small?: LogoImage;
   large?: LogoImage;
 }

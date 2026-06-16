@@ -1,8 +1,8 @@
 import { BehaviorSubject } from 'rxjs';
 
-import { dateMath, dateTime, TimeRange } from '@grafana/data';
+import { dateMath, dateTime, type TimeRange } from '@grafana/data';
 
-import { PanelStateWrapper } from './PanelStateWrapper';
+import { type PanelStateWrapper } from './PanelStateWrapper';
 
 // target is 20hz (50ms), but we poll at 100ms to smooth out jitter
 const interval = 100;
@@ -109,7 +109,7 @@ class LiveTimer {
 
 const FIVE_MINS = 5 * 60 * 1000;
 
-export function getLiveTimerInterval(delta: number, width: number): number {
+function getLiveTimerInterval(delta: number, width: number): number {
   const millisPerPixel = Math.ceil(delta / width / 100) * 100;
   if (millisPerPixel > FIVE_MINS) {
     return FIVE_MINS;

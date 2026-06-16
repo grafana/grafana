@@ -1,4 +1,4 @@
-import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
+import { isNearMembraneProxy, type ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
@@ -155,29 +155,8 @@ export function isLiveTarget(el: ProxyTarget) {
  * - is inside a div[data-plugin-sandbox]
  *
  */
-export function isDomElementInsideSandbox(el: Element, pluginId: string): boolean {
+function isDomElementInsideSandbox(el: Element, pluginId: string): boolean {
   return !document.contains(el) || el.closest(`[data-plugin-sandbox=${pluginId}]`) !== null;
-}
-
-let sandboxBody: HTMLDivElement;
-
-export function getSandboxMockBody(): Element {
-  if (!sandboxBody) {
-    sandboxBody = document.createElement('div');
-    sandboxBody.setAttribute('id', 'grafana-plugin-sandbox-body');
-
-    // the following dataset redundancy is intentional
-    sandboxBody.setAttribute('data-plugin-sandbox', 'true');
-    sandboxBody.dataset.pluginSandbox = 'sandboxed-plugin';
-
-    sandboxBody.style.width = '100%';
-    sandboxBody.style.height = '0%';
-    sandboxBody.style.overflow = 'hidden';
-    sandboxBody.style.top = '0';
-    sandboxBody.style.left = '0';
-    document.body.appendChild(sandboxBody);
-  }
-  return sandboxBody;
 }
 
 let nativeAPIsPatched = false;

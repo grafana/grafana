@@ -1,14 +1,25 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -171,6 +182,31 @@ func TestIntegrationServerList(t *testing.T) {
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
 	})
+
+	t.Run("user should list dashboard access through teams from request", func(t *testing.T) {
+		req := newList("user:contextual", dashboardGroup, dashboardResource, "")
+		req.Teams = []string{"ctx-list"}
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-list-dashboard")
+		assert.NotContains(t, res.GetItems(), "ctx-check-dashboard")
+		assert.False(t, res.GetAll())
+	})
+
+	t.Run("user should list dashboard access with one thousand request teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		req := newList("user:contextual-1000", dashboardGroup, dashboardResource, "")
+		req.Teams = groups
+		res, err := server.List(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.Contains(t, res.GetItems(), "ctx-1000-dashboard")
+		assert.False(t, res.GetAll())
+	})
 }
 
 func TestIntegrationServerListStreaming(t *testing.T) {
@@ -178,11 +214,6 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 
 	server := setupOpenFGAServer(t)
 	setup(t, server)
-	server.cfg.UseStreamedListObjects = true
-
-	t.Cleanup(func() {
-		server.cfg.UseStreamedListObjects = false
-	})
 
 	newList := func(subject, group, resource, subresource string) *authzv1.ListRequest {
 		return &authzv1.ListRequest{
@@ -338,4 +369,134 @@ func TestIntegrationServerListStreaming(t *testing.T) {
 		assert.Contains(t, res.GetFolders(), "5")
 		assert.Contains(t, res.GetFolders(), "6")
 	})
+}
+
+func TestIntegrationServerListCanceledContext(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+
+	newList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("canceled context returns an error instead of partial results", func(t *testing.T) {
+		ctx := newContextWithNamespace()
+		ctx, cancel := context.WithCancel(ctx)
+		cancel()
+
+		_, err := server.List(ctx, newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
+	})
+
+	t.Run("expired deadline returns an error instead of partial results", func(t *testing.T) {
+		ctx := newContextWithNamespace()
+		ctx, cancel := context.WithDeadline(ctx, time.Now().Add(-time.Second))
+		defer cancel()
+
+		_, err := server.List(ctx, newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
+	})
+}
+
+func TestIntegrationServerListStreamDeadline(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	cfg.ZanzanaServer.ListObjectsDeadline = 1 * time.Nanosecond
+
+	testStore := sqlstore.NewTestStore(t, sqlstore.WithCfg(cfg))
+
+	if testStore.GetDialect().DriverName() == migrator.MySQL {
+		if supported, err := testStore.RecursiveQueriesAreSupported(); !supported || err != nil {
+			t.Skip("skipping integration test")
+		}
+	}
+
+	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
+	require.NoError(t, err)
+
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
+	require.NoError(t, err)
+	t.Cleanup(func() { srv.Close() })
+
+	setup(t, srv)
+
+	newList := func(subject, group, resource string) *authzv1.ListRequest {
+		return &authzv1.ListRequest{
+			Namespace: namespace,
+			Verb:      utils.VerbList,
+			Subject:   subject,
+			Group:     group,
+			Resource:  resource,
+		}
+	}
+
+	t.Run("stream deadline exceeded returns an error instead of partial results", func(t *testing.T) {
+		_, err := srv.List(newContextWithNamespace(), newList("user:1", dashboardGroup, dashboardResource))
+		require.Error(t, err)
+	})
+}
+
+// TestStripHelpersDoNotMutateInput guards the root cause of a cache-poisoning bug: the List
+// response strip helpers must return a new slice and never mutate their input, which may be the
+// *openfgav1.ListObjectsResponse.Objects slice owned by the query cache. Mutating it in place
+// corrupted the cached full object idents that BatchCheck relies on.
+func TestStripHelpersDoNotMutateInput(t *testing.T) {
+	t.Run("typedObjects", func(t *testing.T) {
+		in := []string{"folder:abc", "folder:def"}
+		out := typedObjects("folder", in)
+		require.Equal(t, []string{"folder:abc", "folder:def"}, in, "input must not be mutated")
+		require.Equal(t, []string{"abc", "def"}, out)
+	})
+	t.Run("genericObjects", func(t *testing.T) {
+		in := []string{"resource:dashboard.grafana.app/dashboards/x"}
+		out := genericObjects("dashboard.grafana.app/dashboards", in)
+		require.Equal(t, []string{"resource:dashboard.grafana.app/dashboards/x"}, in, "input must not be mutated")
+		require.Equal(t, []string{"x"}, out)
+	})
+	t.Run("folderObject", func(t *testing.T) {
+		in := []string{"folder:abc", "folder:def"}
+		out := folderObject(in)
+		require.Equal(t, []string{"folder:abc", "folder:def"}, in, "input must not be mutated")
+		require.Equal(t, []string{"abc", "def"}, out)
+	})
+}
+
+// TestIntegrationListDoesNotPoisonBatchCheckCache reproduces the end-to-end bug: with the query
+// cache enabled, a List call must not corrupt the cached ListObjects response that a subsequent
+// BatchCheck (identical request) reads, so a directly-granted resource stays authorized.
+func TestIntegrationListDoesNotPoisonBatchCheckCache(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	server := setupOpenFGAServer(t)
+	setup(t, server)
+	server.cfg.CacheSettings.CheckQueryCacheEnabled = true
+
+	ctx := newContextWithNamespace()
+
+	// 1. List populates the ListObjects query cache and strips idents for its own response.
+	_, err := server.List(ctx, &authzv1.ListRequest{
+		Namespace: namespace, Verb: utils.VerbList, Subject: "user:1",
+		Group: dashboardGroup, Resource: dashboardResource,
+	})
+	require.NoError(t, err)
+
+	// 2. BatchCheck issues the identical ListObjects request (cache hit) and must still resolve
+	//    user:1's direct grant on dashboard "1".
+	res, err := server.BatchCheck(ctx, &authzv1.BatchCheckRequest{
+		Namespace: namespace, Subject: "user:1",
+		Checks: []*authzv1.BatchCheckItem{
+			{CorrelationId: "c", Verb: utils.VerbGet, Group: dashboardGroup, Resource: dashboardResource, Name: "1", Folder: ""},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, res.GetResults()["c"].GetAllowed(), "directly-granted dashboard must stay authorized after a prior List")
 }

@@ -1,17 +1,11 @@
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { sceneGraph, VizPanel } from '@grafana/scenes';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 
-import { getDatasourceFromQueryRunner, getQueryRunnerFor } from './utils';
-
-export function getViewPanelUrl(vizPanel: VizPanel) {
-  return locationUtil.getUrlForPartial(locationService.getLocation(), {
-    viewPanel: vizPanel.getPathId(),
-    editPanel: undefined,
-  });
-}
+import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
+import { getQueryRunnerFor } from './utils';
 
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });

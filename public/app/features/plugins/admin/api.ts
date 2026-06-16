@@ -1,19 +1,20 @@
-import { PluginError, PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { isVersionGtOrEq } from 'app/core/utils/version';
 
 import { API_ROOT, GCOM_API_ROOT, INSTANCE_API_ROOT } from './constants';
 import { isLocalPluginVisibleByConfig, isRemotePluginVisibleByConfig } from './helpers';
 import {
-  LocalPlugin,
-  RemotePlugin,
-  CatalogPluginDetails,
-  CatalogPluginInsights,
-  Version,
-  PluginVersion,
-  InstancePlugin,
-  ProvisionedPlugin,
+  type LocalPlugin,
+  type RemotePlugin,
+  type CatalogPluginDetails,
+  type CatalogPluginInsights,
+  type Version,
+  type PluginVersion,
+  type InstancePlugin,
+  type ProvisionedPlugin,
 } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
@@ -119,7 +120,7 @@ async function getRemotePlugin(id: string): Promise<RemotePlugin | undefined> {
   }
 }
 
-async function getPluginVersion(id: string, version: string): Promise<Version> {
+async function getPluginVersion(id: string, version: string): Promise<Version | null> {
   try {
     const v: PluginVersion = await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/versions/${version}`);
 
@@ -137,7 +138,7 @@ async function getPluginVersion(id: string, version: string): Promise<Version> {
       // It can happen that GCOM is not available, in that case we show a limited set of information to the user.
       error.isHandled = true;
     }
-    throw error;
+    return null;
   }
 }
 
@@ -197,7 +198,7 @@ async function getLocalPluginChangelog(id: string): Promise<string> {
 export async function getLocalPlugins(): Promise<LocalPlugin[]> {
   const localPlugins: LocalPlugin[] = await getBackendSrv().get(
     `${API_ROOT}`,
-    accessControlQueryParam({ embedded: 0 })
+    accessControlQueryParam({ embedded: 'include-datasource' })
   );
 
   return localPlugins.filter(isLocalPluginVisibleByConfig);
@@ -220,8 +221,20 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // This will install the latest compatible version based on the logic
-  // on the backend.
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
+  // We call both this and the legacy path because the K8s settings API doesn't cover all
+  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
+  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
+  try {
+    await installPluginMeta(id, version ?? '');
+  } catch (error: unknown) {
+    logPluginMetaError(`installPluginMeta: Failed to install plugin`, error, {
+      pluginId: id,
+      pluginVersion: version ?? '',
+    });
+  }
+
+  // Legacy install path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(
     `${API_ROOT}/${id}/install`,
     { version },
@@ -233,17 +246,36 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
+  // We call both this and the legacy path because the K8s settings API doesn't cover all
+  // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
+  // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
+  try {
+    await uninstallPluginMeta(id);
+  } catch (error: unknown) {
+    logPluginMetaError(`uninstallPluginMeta: Failed to uninstall plugin`, error, {
+      pluginId: id,
+    });
+  }
+
+  // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
 }
 
-export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${id}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
+export async function getPluginEntitlement(id: string): Promise<boolean> {
+  try {
+    await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
+    return true;
+  } catch (error) {
+    if (isFetchError(error)) {
+      error.isHandled = true;
+      if (error.status === 401 || error.status === 403 || error.status === 404) {
+        return false;
+      }
+      console.warn(`Failed to fetch entitlement for plugin "${id}" (status ${error.status})`);
+    } else {
+      console.warn(`Failed to fetch entitlement for plugin "${id}": unexpected error`);
+    }
+    return false;
+  }
 }
-
-export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

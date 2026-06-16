@@ -1,13 +1,16 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +21,7 @@ import (
 	"github.com/grafana/nanogit"
 	"github.com/grafana/nanogit/mocks"
 	"github.com/grafana/nanogit/protocol"
+	"github.com/grafana/nanogit/protocol/client"
 	"github.com/grafana/nanogit/protocol/hash"
 )
 
@@ -248,6 +252,7 @@ func TestGitRepository_Test(t *testing.T) {
 		name        string
 		setupMock   func(*mocks.FakeClient)
 		gitConfig   RepositoryConfig
+		workflows   []provisioning.Workflow
 		wantResults *provisioning.TestResults
 		wantError   error
 	}{
@@ -381,11 +386,14 @@ func TestGitRepository_Test(t *testing.T) {
 			wantError: nil,
 		},
 		{
-			name: "failure - branch not found",
+			name: "failure - branch not found (other branches exist)",
 			setupMock: func(mockClient *mocks.FakeClient) {
 				mockClient.IsAuthorizedReturns(true, nil)
 				mockClient.RepoExistsReturns(true, nil)
 				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				mockClient.ListRefsReturns([]nanogit.Ref{
+					{Name: "refs/heads/main", Hash: hash.MustFromHex("a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2")},
+				}, nil)
 			},
 			gitConfig: RepositoryConfig{
 				Branch: "nonexistent",
@@ -396,7 +404,31 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("spec", "test_type", "branch").String(),
-						Detail: "branch not found",
+						Detail: `branch "nonexistent" not found`,
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - branch not found (empty repository)",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, nanogit.ErrObjectNotFound)
+				mockClient.ListRefsReturns([]nanogit.Ref{}, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
 					},
 				},
 				Code: http.StatusBadRequest,
@@ -490,8 +522,18 @@ func TestGitRepository_Test(t *testing.T) {
 			gitConfig: RepositoryConfig{
 				Branch: "", // Empty branch should trigger GetDefaultBranch
 			},
-			wantResults: nil,
-			wantError:   errors.New("no branches found in repository"),
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "repository has no branches; push at least one commit before configuring sync",
+					},
+				},
+				Code: http.StatusBadRequest,
+			},
+			wantError: nil,
 		},
 		{
 			name: "failure - empty branch and GetDefaultBranch fails (list refs error)",
@@ -505,6 +547,290 @@ func TestGitRepository_Test(t *testing.T) {
 			wantResults: nil,
 			wantError:   errors.New("list refs: network error"),
 		},
+		{
+			name: "failure - unauthorized (HTTP 401) from IsAuthorized",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(false, client.NewUnauthorizedError("GET", "/info/refs", nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "authentication failed",
+					},
+				},
+				Code: http.StatusUnauthorized,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - permission denied (HTTP 403) from RepoExists",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(false, client.NewPermissionDeniedError("POST", "/git-receive-pack", nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "permission denied",
+					},
+				},
+				Code: http.StatusForbidden,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - server unavailable (HTTP 503) from GetRef",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, client.NewServerUnavailableError("GET", 503, nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "branch").String(),
+						Detail: "server unavailable: server unavailable",
+					},
+				},
+				Code: http.StatusServiceUnavailable,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - unauthorized (HTTP 401) from GetRef",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, client.NewUnauthorizedError("GET", "/info/refs?service=git-upload-pack", nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "authentication failed",
+					},
+				},
+				Code: http.StatusUnauthorized,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - permission denied (HTTP 403) from GetRef",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{}, client.NewPermissionDeniedError("GET", "/info/refs", nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "permission denied",
+					},
+				},
+				Code: http.StatusForbidden,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - server unavailable (HTTP 503) from RepoExists",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(false, client.NewServerUnavailableError("GET", 502, errors.New("bad gateway")))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "url").String(),
+						Detail: "server unavailable: server unavailable",
+					},
+				},
+				Code: http.StatusServiceUnavailable,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - write permission check passes when workflows are configured",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				mockClient.CanWriteReturns(true, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - write permission denied when workflows are configured",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				mockClient.CanWriteReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "write permission denied",
+					},
+				},
+				Code: http.StatusForbidden,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - write permission check error when workflows are configured",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				mockClient.CanWriteReturns(false, errors.New("write check failed"))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "failed to check write permission: write check failed",
+					},
+				},
+				Code: http.StatusForbidden,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - permission denied (HTTP 403) from CanWrite",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				mockClient.CanWriteReturns(false, client.NewPermissionDeniedError("POST", "/git-receive-pack", nil))
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("secure", "token").String(),
+						Detail: "permission denied",
+					},
+				},
+				Code: http.StatusForbidden,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - read-only repository skips write permission check",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				// CanWrite should NOT be called for read-only repositories
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: nil, // Read-only repository (no workflows configured)
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
+		{
+			name: "success - empty workflows array skips write permission check",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.IsAuthorizedReturns(true, nil)
+				mockClient.RepoExistsReturns(true, nil)
+				mockClient.GetRefReturns(nanogit.Ref{
+					Name: "refs/heads/main",
+					Hash: hash.Hash{},
+				}, nil)
+				// CanWrite should NOT be called for repositories with empty workflows
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			workflows: []provisioning.Workflow{}, // Empty workflows array (read-only)
+			wantResults: &provisioning.TestResults{
+				Success: true,
+				Errors:  nil,
+				Code:    http.StatusOK,
+			},
+			wantError: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -517,7 +843,8 @@ func TestGitRepository_Test(t *testing.T) {
 				gitConfig: tt.gitConfig,
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
-						Type: "test_type",
+						Type:      "test_type",
+						Workflows: tt.workflows,
 					},
 				},
 			}
@@ -532,8 +859,11 @@ func TestGitRepository_Test(t *testing.T) {
 				require.NoError(t, err, "Test method should not return an error")
 				require.Equal(t, tt.wantResults, results, "Test results mismatch")
 
-				// Verify the mock calls only when no error
-				require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				// Verify mock calls only when the flow reaches those steps.
+				// Cases that fail early (e.g., no branches from GetDefaultBranch) never call IsAuthorized.
+				if mockClient.IsAuthorizedCallCount() > 0 {
+					require.Equal(t, 1, mockClient.IsAuthorizedCallCount(), "IsAuthorized should be called exactly once")
+				}
 
 				if mockClient.RepoExistsCallCount() > 0 {
 					require.Equal(t, 1, mockClient.RepoExistsCallCount(), "RepoExists should be called at most once")
@@ -553,6 +883,141 @@ func TestGitRepository_Test(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGitRepository_Test_CanWriteValidation(t *testing.T) {
+	t.Run("verifies CanWrite is called for repositories with write workflows", func(t *testing.T) {
+		mockClient := &mocks.FakeClient{}
+		mockClient.IsAuthorizedReturns(true, nil)
+		mockClient.RepoExistsReturns(true, nil)
+		mockClient.GetRefReturns(nanogit.Ref{
+			Name: "refs/heads/main",
+			Hash: hash.Hash{},
+		}, nil)
+		mockClient.CanWriteReturns(true, nil)
+
+		gitRepo := &gitRepository{
+			client: mockClient,
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
+			},
+		}
+
+		results, err := gitRepo.Test(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.True(t, results.Success)
+		require.Equal(t, http.StatusOK, results.Code)
+
+		// Verify CanWrite was called exactly once
+		require.Equal(t, 1, mockClient.CanWriteCallCount(), "CanWrite should be called for write workflows")
+	})
+
+	t.Run("verifies CanWrite is NOT called for read-only repositories", func(t *testing.T) {
+		mockClient := &mocks.FakeClient{}
+		mockClient.IsAuthorizedReturns(true, nil)
+		mockClient.RepoExistsReturns(true, nil)
+		mockClient.GetRefReturns(nanogit.Ref{
+			Name: "refs/heads/main",
+			Hash: hash.Hash{},
+		}, nil)
+
+		gitRepo := &gitRepository{
+			client: mockClient,
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: nil, // No workflows = read-only
+				},
+			},
+		}
+
+		results, err := gitRepo.Test(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.True(t, results.Success)
+		require.Equal(t, http.StatusOK, results.Code)
+
+		// Verify CanWrite was NOT called for read-only repositories
+		require.Equal(t, 0, mockClient.CanWriteCallCount(), "CanWrite should NOT be called for read-only repositories")
+	})
+
+	t.Run("verifies CanWrite is called for branch workflow", func(t *testing.T) {
+		mockClient := &mocks.FakeClient{}
+		mockClient.IsAuthorizedReturns(true, nil)
+		mockClient.RepoExistsReturns(true, nil)
+		mockClient.GetRefReturns(nanogit.Ref{
+			Name: "refs/heads/main",
+			Hash: hash.Hash{},
+		}, nil)
+		mockClient.CanWriteReturns(true, nil)
+
+		gitRepo := &gitRepository{
+			client: mockClient,
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+				},
+			},
+		}
+
+		results, err := gitRepo.Test(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.True(t, results.Success)
+		require.Equal(t, http.StatusOK, results.Code)
+
+		// Verify CanWrite was called for branch workflow
+		require.Equal(t, 1, mockClient.CanWriteCallCount(), "CanWrite should be called for branch workflow")
+	})
+
+	t.Run("verifies Test fails when CanWrite denies access", func(t *testing.T) {
+		mockClient := &mocks.FakeClient{}
+		mockClient.IsAuthorizedReturns(true, nil)
+		mockClient.RepoExistsReturns(true, nil)
+		mockClient.GetRefReturns(nanogit.Ref{
+			Name: "refs/heads/main",
+			Hash: hash.Hash{},
+		}, nil)
+		mockClient.CanWriteReturns(false, nil) // Write access denied
+
+		gitRepo := &gitRepository{
+			client: mockClient,
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:      provisioning.GitRepositoryType,
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+				},
+			},
+		}
+
+		results, err := gitRepo.Test(context.Background())
+		require.NoError(t, err)
+		require.NotNil(t, results)
+		require.False(t, results.Success)
+		require.Equal(t, http.StatusForbidden, results.Code)
+		require.Len(t, results.Errors, 1)
+		require.Equal(t, "write permission denied", results.Errors[0].Detail)
+
+		// Verify CanWrite was called
+		require.Equal(t, 1, mockClient.CanWriteCallCount(), "CanWrite should be called")
+	})
 }
 
 func TestGitRepository_Read(t *testing.T) {
@@ -1698,8 +2163,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.False(t, author.Time.IsZero())
 
 		require.Equal(t, "Grafana", committer.Name)
-		require.Equal(t, sig.Email, author.Email)
-		require.False(t, author.Time.IsZero())
+		require.Equal(t, sig.Email, committer.Email)
+		require.False(t, committer.Time.IsZero())
 	})
 
 	t.Run("should use current time when signature time is zero", func(t *testing.T) {
@@ -1724,14 +2189,78 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.True(t, committer.Time.After(before.Add(-time.Second)))
 		require.True(t, committer.Time.Before(after.Add(time.Second)))
 	})
+
+	t.Run("should set committer from spec while author stays default", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
+
+	t.Run("should default committer email when only signer name is set", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{SignerName: "Bot Signer"},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+	})
+
+	t.Run("should keep committer independent from a context author override", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
 }
 
 func TestNewGitRepository(t *testing.T) {
 	tests := []struct {
-		name      string
-		gitConfig RepositoryConfig
-		wantError bool
-		expectURL string
+		name          string
+		gitConfig     RepositoryConfig
+		wantError     bool
+		expectURL     string
+		expectSigning bool
 	}{
 		{
 			name: "success - with token",
@@ -1743,6 +2272,30 @@ func TestNewGitRepository(t *testing.T) {
 			},
 			wantError: false,
 			expectURL: "https://git.example.com/owner/repo.git",
+		},
+		{
+			name: "success - with commit signing",
+			gitConfig: RepositoryConfig{
+				URL:              "https://git.example.com/owner/repo.git",
+				Branch:           "main",
+				Token:            "plain-token",
+				SigningMethod:    provisioning.SSHSigningMethod,
+				CommitSigningKey: "ssh-key",
+			},
+			wantError:     false,
+			expectURL:     "https://git.example.com/owner/repo.git",
+			expectSigning: true,
+		},
+		{
+			name: "error - smime signing without certificate",
+			gitConfig: RepositoryConfig{
+				URL:              "https://git.example.com/owner/repo.git",
+				Branch:           "main",
+				Token:            "plain-token",
+				SigningMethod:    provisioning.SMIMESigningMethod,
+				CommitSigningKey: "smime-key",
+			},
+			wantError: true,
 		},
 	}
 
@@ -1767,6 +2320,11 @@ func TestNewGitRepository(t *testing.T) {
 				require.Equal(t, tt.expectURL, gitRepo.URL())
 				require.Equal(t, tt.gitConfig.Branch, gitRepo.Branch())
 				require.Equal(t, config, gitRepo.Config())
+				if tt.expectSigning {
+					require.Len(t, gitRepo.(*gitRepository).writerOptions, 1)
+				} else {
+					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
+				}
 			}
 		})
 	}
@@ -3015,9 +3573,349 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
-	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
+	_, baseHash, refHash, _ := mockClient.CompareCommitsArgsForCall(0)
 	require.Equal(t, hash.Zero, baseHash) // Empty base should be zero hash
 	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
+}
+
+func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
+	tests := []struct {
+		name        string
+		files       []nanogit.CommitFile
+		gitPath     string
+		wantChanges []repository.VersionedFileChange
+	}{
+		{
+			name: "rename within configured path",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "configs/new-name.yaml",
+					OldPath: "configs/old-name.yaml",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionRenamed,
+					Path:         "new-name.yaml",
+					PreviousPath: "old-name.yaml",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+		{
+			name: "rename from outside to inside configured path",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "configs/moved-in.yaml",
+					OldPath: "other/old-location.yaml",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "moved-in.yaml",
+					Ref:    "feature",
+				},
+			},
+		},
+		{
+			name: "rename from inside to outside configured path",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/moved-out.yaml",
+					OldPath: "configs/was-here.yaml",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionDeleted,
+					Path:         "was-here.yaml",
+					PreviousPath: "was-here.yaml",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+		{
+			name: "rename both outside configured path is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/new.yaml",
+					OldPath: "other/old.yaml",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o100644,
+				},
+			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
+		},
+		{
+			name: "tree entry rename emits FileActionRenamed with trailing slashes",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "configs/new-dir",
+					OldPath: "configs/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionRenamed,
+					Path:         "new-dir/",
+					PreviousPath: "old-dir/",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+		{
+			name: "tree entry rename from outside to inside emits only create with trailing slash",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "configs/new-dir",
+					OldPath: "other/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new-dir/",
+					Ref:    "feature",
+				},
+			},
+		},
+		{
+			name: "tree entry rename from inside to outside emits only delete with trailing slash",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/new-dir",
+					OldPath: "configs/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionDeleted,
+					Path:         "old-dir/",
+					PreviousPath: "old-dir/",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+		{
+			name: "tree entry rename both outside is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/new-dir",
+					OldPath: "other/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
+				},
+			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
+		},
+		{
+			name: "rename with no configured path",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "new-name.yaml",
+					OldPath: "old-name.yaml",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o100644,
+				},
+			},
+			gitPath: "",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionRenamed,
+					Path:         "new-name.yaml",
+					PreviousPath: "old-name.yaml",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+			}, nil)
+			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+				Name: "refs/heads/feature",
+				Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+			}, nil)
+			mockClient.CompareCommitsReturns(tt.files, nil)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   tt.gitPath,
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), "main", "feature")
+
+			require.NoError(t, err)
+			require.NotNil(t, changes)
+			require.Equal(t, tt.wantChanges, changes)
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_Modified_PreviousRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		files       []nanogit.CommitFile
+		gitPath     string
+		wantChanges []repository.VersionedFileChange
+	}{
+		{
+			name: "modified file has PreviousRef set to base",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "modified file outside configured path is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "other/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
+		},
+		{
+			name: "modified file with no configured path has PreviousRef set",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "mix of added and modified: only modified has PreviousRef",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/new.json",
+					Status: protocol.FileStatusAdded,
+					Mode:   0o100644,
+				},
+				{
+					Path:   "configs/existing.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new.json",
+					Ref:    "feature",
+				},
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "existing.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+			}, nil)
+			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+				Name: "refs/heads/feature",
+				Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+			}, nil)
+			mockClient.CompareCommitsReturns(tt.files, nil)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   tt.gitPath,
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), "main", "feature")
+
+			require.NoError(t, err)
+			require.NotNil(t, changes)
+			require.Equal(t, tt.wantChanges, changes)
+		})
+	}
 }
 
 func TestGitRepository_EmptyRefHandling(t *testing.T) {
@@ -3446,6 +4344,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 		{"FileStatusModified outside path", protocol.FileStatusModified},
 		{"FileStatusDeleted outside path", protocol.FileStatusDeleted},
 		{"FileStatusTypeChanged outside path", protocol.FileStatusTypeChanged},
+		// FileStatusRenamed not tested - will be implemented in follow-up PR
 	}
 
 	for _, tt := range tests {
@@ -3493,6 +4392,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			require.Equal(t, "feature", changes[0].Ref)
 
 			// Verify the action based on status
+			//nolint:exhaustive // FileStatusRenamed not tested - will be added when rename handling is implemented
 			switch tt.status {
 			case protocol.FileStatusAdded:
 				require.Equal(t, repository.FileActionCreated, changes[0].Action)
@@ -4182,4 +5082,76 @@ func TestGitRepository_GetCurrentBranch(t *testing.T) {
 			require.Equal(t, tt.expectedBranch, branch)
 		})
 	}
+}
+
+func TestWithGitContext_AuditFields(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-repo",
+				Namespace: "test-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, enrichedLogger := gitRepo.withGitContext(ctx, "main")
+	enrichedLogger.Info("test log")
+
+	output := buf.String()
+	require.Contains(t, output, `"namespace":"test-ns"`)
+	require.Contains(t, output, `"repository_name":"test-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+	require.Contains(t, output, `"ref":"main"`)
+}
+
+func TestGitRepository_AuditLog(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	mockClient := &mocks.FakeClient{}
+	mockClient.ListRefsReturns([]nanogit.Ref{
+		{Name: "refs/heads/main", Hash: hash.Hash{}},
+	}, nil)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-repo",
+				Namespace: "my-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, err := gitRepo.ListRefs(ctx)
+	require.NoError(t, err)
+
+	output := buf.String()
+	require.Contains(t, output, `"msg":"list refs"`)
+	require.Contains(t, output, `"namespace":"my-ns"`)
+	require.Contains(t, output, `"repository_name":"my-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }

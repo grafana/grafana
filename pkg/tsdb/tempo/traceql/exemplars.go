@@ -12,11 +12,12 @@ func transformExemplarToFrame(name string, series *tempopb.TimeSeries) *data.Fra
 	exemplars := series.Exemplars
 
 	// Setup fields for basic data
-	fields := []*data.Field{
+	fields := make([]*data.Field, 0, 3+len(series.Labels))
+	fields = append(fields,
 		data.NewField("Time", nil, []time.Time{}),
 		data.NewField("Value", nil, []float64{}),
 		data.NewField("traceId", nil, []string{}),
-	}
+	)
 
 	fields[2].Config = &data.FieldConfig{
 		DisplayName: "Trace ID",

@@ -1,7 +1,14 @@
-import { AsyncThunk, Draft, PayloadAction, SerializedError, createSlice, isAsyncThunkAction } from '@reduxjs/toolkit';
+import {
+  type AsyncThunk,
+  type Draft,
+  type PayloadAction,
+  type SerializedError,
+  createSlice,
+  isAsyncThunkAction,
+} from '@reduxjs/toolkit';
 
 import { AppEvents } from '@grafana/data';
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 
 import { LogMessages, logInfo } from '../Analytics';
@@ -173,15 +180,11 @@ export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>)
   return Object.values(slice).every(isAsyncRequestStateSettled);
 }
 
-export function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
   return state.dispatched && !state.loading;
 }
 
-export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
-  return Object.values(slice).every(isAsyncRequestStateFulfilled);
-}
-
-export function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
+function isAsyncRequestStateFulfilled<T>(state: AsyncRequestState<T>): boolean {
   return state.dispatched && !state.loading && !state.error;
 }
 

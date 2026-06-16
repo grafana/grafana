@@ -1,4 +1,4 @@
-import { CoreApp, LogRowModel } from '@grafana/data';
+import { type CoreApp, type LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { identifyOTelLanguages } from '../otel/formats';

@@ -1,31 +1,12 @@
 /**
  * Dashboard Mutation API - Core Types
  *
- * Shared framework types used across the mutation system.
+ * Response types use v2beta1 schema types.
  * Command-specific payload types are defined in their respective command files
  * and inferred from Zod schemas.
- *
- * These types are internal to grafana core. Plugin consumers get minimal
- * interfaces via RestrictedGrafanaApis in @grafana/data.
  */
 
-import type { SceneObject, SceneObjectState } from '@grafana/scenes';
-
-/**
- * Minimal subset of DashboardSceneState that the mutation system needs.
- */
-export interface MutableDashboardSceneState extends SceneObjectState {
-  isEditing?: boolean;
-}
-
-/**
- * Minimal subset of DashboardScene that the mutation system needs.
- * DashboardScene satisfies this interface via structural typing.
- */
-export interface MutableDashboardScene extends SceneObject<MutableDashboardSceneState> {
-  canEditDashboard(): boolean;
-  onEnterEditMode(): void;
-}
+import type { AutoGridLayoutItemKind, Element, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 export interface MutationRequest {
   type: string;
@@ -40,7 +21,7 @@ export interface MutationResult {
   data?: unknown;
 }
 
-export interface MutationChange {
+interface MutationChange {
   path: string;
   previousValue: unknown;
   newValue: unknown;
@@ -48,8 +29,16 @@ export interface MutationChange {
 
 export interface MutationClient {
   execute(mutation: MutationRequest): Promise<MutationResult>;
+  getAvailableCommands(): string[];
 }
 
-export interface ListVariablesData {
-  variables: Array<{ kind: string; spec: { name: string; [key: string]: unknown } }>;
+type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
+
+export interface PanelElementEntry {
+  element: Element;
+  layoutItem: LayoutItemKind;
+}
+
+export interface PanelElementsData {
+  elements: PanelElementEntry[];
 }

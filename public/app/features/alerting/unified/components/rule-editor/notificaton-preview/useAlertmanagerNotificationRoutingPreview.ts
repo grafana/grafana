@@ -6,18 +6,26 @@ import {
   useNotificationPolicyRoute,
 } from 'app/features/alerting/unified/components/notification-policies/useNotificationPolicyRoute';
 
-import { Labels } from '../../../../../../types/unified-alerting-dto';
+import { type Labels } from '../../../../../../types/unified-alerting-dto';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { normalizeRoute } from '../../../utils/notification-policies';
 
-export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, instances: Labels[]) => {
-  // if a NAMED_ROOT_LABEL_NAME label exists, then we only match to that route.
+export const useAlertmanagerNotificationRoutingPreview = (
+  alertmanager: string,
+  instances: Labels[],
+  policyName?: string
+) => {
+  // if a policyName is provided (new named-policy routing), use it directly;
+  // otherwise fall back to extracting NAMED_ROOT_LABEL_NAME from instance labels (legacy path).
   const routeName = useMemo(() => {
+    if (policyName) {
+      return policyName;
+    }
     const routeNameLabel = instances.find((instance) => instance[NAMED_ROOT_LABEL_NAME]);
     return routeNameLabel?.[NAMED_ROOT_LABEL_NAME];
-  }, [instances]);
+  }, [policyName, instances]);
 
   const {
     data: defaultPolicy,
@@ -32,8 +40,16 @@ export const useAlertmanagerNotificationRoutingPreview = (alertmanager: string, 
     if (!defaultPolicy) {
       return;
     }
-    return normalizeRoute(addUniqueIdentifierToRoute(defaultPolicy));
-  }, [defaultPolicy]);
+    const normalized = normalizeRoute(addUniqueIdentifierToRoute(defaultPolicy));
+    // k8sRouteToRoute adds a synthetic root matcher (__grafana_managed_route__ = <name>)
+    // to tell apart different routing trees. But once we know which tree we want
+    // (policyName is set), that matcher just gets in the way — real Alertmanager
+    // doesn't know about it. Strip it so instances can actually flow into the sub-routes.
+    if (policyName) {
+      return { ...normalized, object_matchers: [] };
+    }
+    return normalized;
+  }, [defaultPolicy, policyName]);
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {

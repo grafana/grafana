@@ -1,7 +1,8 @@
-import { PluginMeta } from '@grafana/data';
+import { OrgRole, type PluginMeta } from '@grafana/data';
+import { usePluginSettings } from '@grafana/runtime/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
-import { PluginID } from '../components/PluginBridge';
+import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 
 interface PluginBridgeHookResponse {
@@ -12,21 +13,21 @@ interface PluginBridgeHookResponse {
 }
 
 export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
-  const { data, isLoading, error } = useGetPluginSettingsQuery(plugin);
+  const { value, loading, error } = usePluginSettings(plugin);
 
-  if (isLoading) {
+  if (loading) {
     return { loading: true };
   }
 
   if (error) {
-    return { loading: isLoading, error: error instanceof Error ? error : new Error(String(error)) };
+    return { loading: false, error: error instanceof Error ? error : new Error(String(error)) };
   }
 
-  if (data) {
-    return { loading: isLoading, installed: data.enabled ?? false, settings: data };
+  if (value) {
+    return { loading: false, installed: value.enabled ?? false, settings: value };
   }
 
-  return { loading: isLoading, installed: false };
+  return { loading: false, installed: false };
 }
 
 type FallbackPlugin = SupportedPlugin.OnCall | SupportedPlugin.Incident;
@@ -39,6 +40,35 @@ export interface PluginBridgeResult {
   error?: Error;
   settings?: PluginMeta<{}>;
 }
+
+/**
+ * Checks access to a specific plugin page path using the same include role/action
+ * semantics as the core app plugin route guard.
+ */
+export function canAccessPluginPage(settings: PluginMeta<{}>, pluginPagePath: string): boolean {
+  const requestedPath = pluginPagePath.split('?')[0];
+  const pluginInclude = settings.includes?.find((include) => include.path === requestedPath);
+
+  if (!pluginInclude) {
+    return true;
+  }
+
+  if (pluginInclude.action) {
+    return contextSrv.hasPermission(pluginInclude.action);
+  }
+
+  if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+    return true;
+  }
+
+  const includeRole = pluginInclude.role ?? '';
+  if (!includeRole || (contextSrv.isEditor && includeRole === OrgRole.Viewer)) {
+    return true;
+  }
+
+  return contextSrv.hasRole(includeRole);
+}
+
 /**
  * Hook that checks for IRM plugin first, falls back to specified plugin.
  * IRM replaced both OnCall and Incident - this provides backward compatibility.

@@ -52,9 +52,9 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		return nil, resource.GetError(objects.Error)
 	}
 
-	list := &provisioning.ResourceList{}
+	items := make([]provisioning.ResourceListItem, 0, len(objects.Items))
 	for _, v := range objects.Items {
-		list.Items = append(list.Items, provisioning.ResourceListItem{
+		items = append(items, provisioning.ResourceListItem{
 			Path:     v.Path,
 			Group:    v.Object.Group,
 			Resource: v.Object.Resource,
@@ -65,7 +65,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 			Folder:   v.Folder,
 		})
 	}
-	return list, nil
+	return &provisioning.ResourceList{Items: items}, nil
 }
 
 // Stats implements ResourceLister.

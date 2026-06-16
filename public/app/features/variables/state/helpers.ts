@@ -1,25 +1,25 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import {
-  TypedVariableModel,
-  DashboardVariableModel,
-  OrgVariableModel,
-  UserVariableModel,
+  type TypedVariableModel,
+  type DashboardVariableModel,
+  type OrgVariableModel,
+  type UserVariableModel,
   VariableHide,
 } from '@grafana/data';
 import { VariableRefresh } from '@grafana/schema';
 import { dashboardReducer } from 'app/features/dashboard/state/reducers';
-import { DashboardState } from 'app/types/dashboard';
-import { StoreState } from 'app/types/store';
+import { type DashboardState } from 'app/types/dashboard';
+import { type StoreState } from 'app/types/store';
 
-import { VariableAdapter } from '../adapters';
+import { type VariableAdapter } from '../adapters';
 import { NEW_VARIABLE_ID } from '../constants';
 import { initialVariableModelState } from '../types';
 
 import { createQueryVariable } from './__tests__/fixtures';
-import { keyedVariablesReducer, KeyedVariablesState } from './keyedVariablesReducer';
-import { getInitialTemplatingState, TemplatingState } from './reducers';
-import { VariablesState } from './types';
+import { keyedVariablesReducer, type KeyedVariablesState } from './keyedVariablesReducer';
+import { getInitialTemplatingState, type TemplatingState } from './reducers';
+import { type VariablesState } from './types';
 
 export const getVariableState = (
   noOfVariables: number,

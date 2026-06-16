@@ -1,10 +1,10 @@
 import Feature from 'ol/Feature';
-import OpenLayersMap from 'ol/Map';
+import type OpenLayersMap from 'ol/Map';
 import * as layer from 'ol/layer';
 import * as source from 'ol/source';
 import * as style from 'ol/style';
 
-import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, PluginState, EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, PluginState, type EventBus } from '@grafana/data';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 export interface LastPointConfig {

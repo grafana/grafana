@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
-	dstls "github.com/grafana/dskit/crypto/tls"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"gopkg.in/ini.v1"
 
+	dstls "github.com/grafana/dskit/crypto/tls"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	alertingCluster "github.com/grafana/alerting/cluster"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers/schema"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -22,6 +25,7 @@ const (
 	alertmanagerDefaultReconnectTimeout   = alertingCluster.DefaultReconnectTimeout
 	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
+	AlertBroadcastDefaultQueueSize        = 200
 	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
@@ -73,46 +77,48 @@ var (
 )
 
 type UnifiedAlertingSettings struct {
-	AdminConfigPollInterval         time.Duration
-	AlertmanagerConfigPollInterval  time.Duration
-	AlertmanagerMaxSilenceSizeBytes int
-	AlertmanagerMaxSilencesCount    int
-	HAListenAddr                    string
-	HAAdvertiseAddr                 string
-	HAPeers                         []string
-	HAPeerTimeout                   time.Duration
-	HAGossipInterval                time.Duration
-	HAReconnectTimeout              time.Duration
-	HAPushPullInterval              time.Duration
-	HALabel                         string
-	HARedisClusterModeEnabled       bool
-	HARedisSentinelModeEnabled      bool
-	HARedisSentinelMasterName       string
-	HARedisSentinelUsername         string
-	HARedisSentinelPassword         string
-	HARedisAddr                     string
-	HARedisPeerName                 string
-	HARedisPrefix                   string
-	HARedisUsername                 string
-	HARedisPassword                 string
-	HARedisDB                       int
-	HARedisMaxConns                 int
-	HARedisTLSEnabled               bool
-	HARedisTLSConfig                dstls.ClientConfig
-	HASingleNodeEvaluation          bool
-	InitializationTimeout           time.Duration
-	MaxAttempts                     int64
-	InitialRetryDelay               time.Duration
-	MaxRetryDelay                   time.Duration
-	RandomizationFactor             float64
-	MinInterval                     time.Duration
-	EvaluationTimeout               time.Duration
-	EvaluationResultLimit           int
-	DisableJitter                   bool
-	ExecuteAlerts                   bool
-	DefaultConfiguration            string
-	Enabled                         *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
-	DisabledOrgs                    map[int64]struct{}
+	AdminConfigPollInterval                   time.Duration
+	AlertmanagerConfigPollInterval            time.Duration
+	AlertmanagerMaxSilenceSizeBytes           int
+	AlertmanagerMaxSilencesCount              int
+	HAListenAddr                              string
+	HAAdvertiseAddr                           string
+	HAPeers                                   []string
+	HAPeerTimeout                             time.Duration
+	HAGossipInterval                          time.Duration
+	HAReconnectTimeout                        time.Duration
+	HAPushPullInterval                        time.Duration
+	HALabel                                   string
+	HARedisClusterModeEnabled                 bool
+	HARedisSentinelModeEnabled                bool
+	HARedisSentinelMasterName                 string
+	HARedisSentinelUsername                   string
+	HARedisSentinelPassword                   string
+	HARedisAddr                               string
+	HARedisPeerName                           string
+	HARedisPrefix                             string
+	HARedisUsername                           string
+	HARedisPassword                           string
+	HARedisDB                                 int
+	HARedisMaxConns                           int
+	HARedisTLSEnabled                         bool
+	HARedisTLSConfig                          dstls.ClientConfig
+	HASingleNodeEvaluation                    bool
+	HASingleEvaluationAlertBroadcastQueueSize int
+	InitializationTimeout                     time.Duration
+	MaxAttempts                               int64
+	InitialRetryDelay                         time.Duration
+	MaxRetryDelay                             time.Duration
+	RandomizationFactor                       float64
+	MinInterval                               time.Duration
+	EvaluationTimeout                         time.Duration
+	EvaluationResultLimit                     int
+	DisableJitter                             bool
+	ExecuteAlerts                             bool
+	DefaultConfiguration                      string
+	Enabled                                   *bool                               // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
+	AllowedIntegrations                       map[schema.IntegrationType]struct{} // nil means all allowed
+	DisabledOrgs                              map[int64]struct{}
 	// BaseInterval interval of time the scheduler updates the rules and evaluates rules.
 	// Only for internal use and not user configuration.
 	BaseInterval time.Duration
@@ -153,6 +159,17 @@ type UnifiedAlertingSettings struct {
 	BacktestingMaxEvaluations int
 
 	IgnorePendingForNoDataAndError bool
+
+	// LimitEmailToOrgMembers restricts email contact point recipients to users that belong to the organization (including disabled users).
+	// Applied only during contact point configuration (Create/Update), not at notification send time.
+	LimitEmailToOrgMembers bool
+
+	// ExternalAlertmanagerUID is the operator-level override for the Mimir/Cortex Alertmanager
+	// datasource UID to sync into Grafana. When non-empty, it applies to all orgs and
+	// overrides any per-org value stored in the database.
+	// Configured via the [unified_alerting] ini key "external_alertmanager_uid" or the
+	// GF_UNIFIED_ALERTING_EXTERNAL_ALERTMANAGER_UID environment variable.
+	ExternalAlertmanagerUID string
 }
 
 type RecordingRuleSettings struct {
@@ -243,7 +260,7 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	// spelling mistake in the string "false" could enable unified alerting rather
 	// than disable it. This issue can be found here
 	if section.Key("enabled").Value() == "" {
-		return util.Pointer(true), nil
+		return new(true), nil
 	}
 	unifiedAlerting, err := section.Key("enabled").Bool()
 	if err != nil {
@@ -263,6 +280,18 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.Enabled, err = cfg.readUnifiedAlertingEnabledSetting(ua)
 	if err != nil {
 		return fmt.Errorf("failed to read unified alerting enabled setting: %w", err)
+	}
+
+	integrationsStr := valueAsString(ua, "allowed_integrations", "")
+	if integrationsStr != "" {
+		uaCfg.AllowedIntegrations = make(map[schema.IntegrationType]struct{})
+		for _, integration := range util.SplitString(integrationsStr) {
+			iType, err := alertingNotify.IntegrationTypeFromString(integration)
+			if err != nil {
+				return err
+			}
+			uaCfg.AllowedIntegrations[iType] = struct{}{}
+		}
 	}
 
 	uaCfg.DisabledOrgs = make(map[int64]struct{})
@@ -344,6 +373,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.HARedisTLSConfig.CipherSuites = ua.Key("ha_redis_tls_cipher_suites").MustString("")
 	uaCfg.HARedisTLSConfig.MinVersion = ua.Key("ha_redis_tls_min_version").MustString("")
 	uaCfg.HASingleNodeEvaluation = ua.Key("ha_single_node_evaluation").MustBool(false)
+	uaCfg.HASingleEvaluationAlertBroadcastQueueSize = ua.Key("ha_single_evaluation_alert_broadcast_queue_size").MustInt(AlertBroadcastDefaultQueueSize)
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
@@ -596,6 +626,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaCfg.BacktestingMaxEvaluations < 0 {
 		uaCfg.BacktestingMaxEvaluations = 100
 	}
+
+	uaCfg.LimitEmailToOrgMembers = ua.Key("limit_email_to_org_members").MustBool(false)
+	uaCfg.ExternalAlertmanagerUID = ua.Key("external_alertmanager_uid").MustString("")
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

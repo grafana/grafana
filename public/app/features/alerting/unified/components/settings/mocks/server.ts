@@ -1,12 +1,12 @@
 import { HttpResponse, delay, http } from 'msw';
-import { SetupServerApi } from 'msw/node';
+import { type SetupServerApi } from 'msw/node';
 
 import {
-  AlertManagerCortexConfig,
-  AlertManagerDataSourceJsonData,
+  type AlertManagerCortexConfig,
+  type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
-  AlertmanagerReceiver,
-  Receiver,
+  type AlertmanagerReceiver,
+  type Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource } from '../../../mocks';

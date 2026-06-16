@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -403,7 +403,7 @@ func TestCountPanelsV2(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			count := countPanelsV2(tt.elements)
+			count := countPanelsV2alpha1(tt.elements)
 			assert.Equal(t, tt.expected, count)
 		})
 	}
@@ -1466,15 +1466,14 @@ func TestDataLossDetectionOnAllInputFiles(t *testing.T) {
 			manifest := apis.LocalManifest()
 
 			// Get all Dashboard versions from the manifest
-			for _, kind := range manifest.ManifestData.Kinds() {
-				if kind.Kind == "Dashboard" {
-					for _, version := range kind.Versions {
-						// Skip converting to the same version
-						if version.VersionName == gv.Version {
-							continue
-						}
-
-						targetVersion := version.VersionName
+			for _, version := range manifest.ManifestData.Versions {
+				// Skip converting to the same version
+				if version.Name == gv.Version {
+					continue
+				}
+				targetVersion := version.Name
+				for _, kind := range version.Kinds {
+					if kind.Kind == "Dashboard" {
 						t.Run(fmt.Sprintf("to_%s", targetVersion), func(t *testing.T) {
 							// Create target object
 							var target runtime.Object
@@ -2509,7 +2508,7 @@ func createV2DashboardWithRowsExpanded() *dashv2alpha1.Dashboard {
 
 func createV0V1FlatPanels(numPanels, queriesPerPanel int) map[string]interface{} {
 	panels := make([]interface{}, numPanels)
-	for i := 0; i < numPanels; i++ {
+	for i := range numPanels {
 		targets := make([]interface{}, queriesPerPanel)
 		for q := 0; q < queriesPerPanel; q++ {
 			targets[q] = map[string]interface{}{"refId": fmt.Sprintf("%c", 'A'+q)}

@@ -5,10 +5,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pref "github.com/grafana/grafana/pkg/services/preference"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,13 +20,17 @@ type TeamAPI struct {
 	teamService            team.Service
 	ac                     accesscontrol.Service
 	teamPermissionsService accesscontrol.TeamPermissionsService
-	userService            user.Service
-	license                licensing.Licensing
-	cfg                    *setting.Cfg
-	preferenceService      pref.Service
-	ds                     dashboards.DashboardService
-	logger                 log.Logger
-	features               featuremgmt.FeatureToggles
+	// FIXME: it's a legacy functionality and we should move to api calls in the future.
+	// https://github.com/grafana/identity-access-team/issues/1922
+	userService          user.Service
+	license              licensing.Licensing
+	cfg                  *setting.Cfg
+	preferenceService    pref.Service
+	preferenceK8sHandler *prefapi.K8sHandler
+	ds                   dashboards.DashboardService
+	logger               log.Logger
+	features             featuremgmt.FeatureToggles
+	teamClientFactory    teamClientFactory
 }
 
 func ProvideTeamAPI(
@@ -37,8 +43,10 @@ func ProvideTeamAPI(
 	license licensing.Licensing,
 	cfg *setting.Cfg,
 	preferenceService pref.Service,
+	preferenceK8sHandler *prefapi.K8sHandler,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
+	clientConfigProvider apiserver.DirectRestConfigProvider,
 ) *TeamAPI {
 	tapi := &TeamAPI{
 		teamService:            teamService,
@@ -48,9 +56,11 @@ func ProvideTeamAPI(
 		license:                license,
 		cfg:                    cfg,
 		preferenceService:      preferenceService,
+		preferenceK8sHandler:   preferenceK8sHandler,
 		ds:                     ds,
 		logger:                 log.New("team-api"),
 		features:               features,
+		teamClientFactory:      &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)

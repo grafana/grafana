@@ -18,7 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/hcl"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,7 +31,6 @@ const disableProvenanceHeaderName = "X-Disable-Provenance"
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
-	routeService        routeService
 	contactPointService ContactPointService
 	templates           TemplateService
 	muteTimings         MuteTimingService
@@ -43,25 +44,22 @@ type ProvisioningSrv struct {
 type ContactPointService interface {
 	GetContactPoints(ctx context.Context, q provisioning.ContactPointQuery, user identity.Requester) ([]definitions.EmbeddedContactPoint, error)
 	CreateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) (definitions.EmbeddedContactPoint, error)
-	UpdateContactPoint(ctx context.Context, orgID int64, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
-	DeleteContactPoint(ctx context.Context, orgID int64, uid string) error
+	UpdateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint definitions.EmbeddedContactPoint, p alerting_models.Provenance) error
+	DeleteContactPoint(ctx context.Context, orgID int64, user identity.Requester, uid string) error
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) ([]definitions.NotificationTemplate, error)
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (definitions.NotificationTemplate, error)
-	UpsertTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance definitions.Provenance, version string) error
+	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
+	UpsertTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance alerting_models.Provenance, version string) error
 }
 
 type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
-}
-
-type routeService interface {
-	GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error)
+	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
 }
 
 type MuteTimingService interface {
@@ -118,12 +116,13 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return exportResponse(c, e)
 	}
 
-	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName)
+	managedRoute, err := srv.policies.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 	}
 
-	e, err := AlertingFileExportFromRoute(c.GetOrgID(), legacy_storage.ManagedRouteToRoute(&managedRoute))
+	route := legacy_storage.ManagedRouteToRoute(&managedRoute)
+	e, err := AlertingFileExportFromRoute(c.GetOrgID(), *notifier.RouteToAPI(&route))
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to create alerting file export")
 	}
@@ -202,7 +201,7 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
 	cp.UID = UID
 	provenance := determineProvenance(c)
-	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.GetOrgID(), cp, alerting_models.Provenance(provenance))
+	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, cp, alerting_models.Provenance(provenance))
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -210,13 +209,13 @@ func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp 
 		return ErrResp(http.StatusNotFound, err, "")
 	}
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "")
+		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "contactpoint updated"})
 }
 
 func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, UID string) response.Response {
-	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.GetOrgID(), UID)
+	err := srv.contactPointService.DeleteContactPoint(c.Req.Context(), c.GetOrgID(), c.SignedInUser, UID)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete contact point", err)
 	}
@@ -228,7 +227,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusOK, templates)
+	return response.JSON(http.StatusOK, ModelToNotificationTemplates(templates))
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
@@ -236,26 +235,29 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrU
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusOK, template)
+	return response.JSON(http.StatusOK, ModelToNotificationTemplate(template))
 }
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
-	tmpl := definitions.NotificationTemplate{
-		Name:            name,
-		Template:        body.Template,
-		Provenance:      determineProvenance(c),
-		ResourceVersion: body.ResourceVersion,
+	tmpl := v1.TemplateGroup{
+		Title:   name,
+		Content: body.Template,
+		Kind:    v1.TemplateKindGrafana,
+		ResourceMetadata: v1.ResourceMetadata{
+			Provenance: alerting_models.Provenance(determineProvenance(c)),
+			Version:    body.ResourceVersion,
+		},
 	}
 	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.GetOrgID(), tmpl)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
-	return response.JSON(http.StatusAccepted, modified)
+	return response.JSON(http.StatusAccepted, ModelToNotificationTemplate(modified))
 }
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
 	version := c.Query("version")
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, determineProvenance(c), version)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, alerting_models.Provenance(determineProvenance(c)), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}

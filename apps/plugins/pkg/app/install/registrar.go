@@ -21,9 +21,8 @@ const (
 type Source = string
 
 const (
-	SourceUnknown               Source = "unknown"
-	SourcePluginStore           Source = "plugin-store"
-	SourceChildPluginReconciler Source = "child-plugin-reconciler"
+	SourceUnknown     Source = "unknown"
+	SourcePluginStore Source = "plugin-store"
 )
 
 // Registrar is an interface for registering plugin installations.
@@ -167,6 +166,11 @@ func (r *InstallRegistrar) Register(ctx context.Context, namespace string, insta
 
 	_, err = client.Create(ctx, install.ToPluginInstallV0Alpha1(namespace), resource.CreateOptions{})
 	if err != nil {
+		if errorsK8s.IsAlreadyExists(err) {
+			// Another replica created it concurrently — desired state is achieved
+			metrics.RegistrationOperationsTotal.WithLabelValues("register", "conflict").Inc()
+			return nil
+		}
 		logger.Error("Failed to create plugin", "error", err)
 		metrics.RegistrationOperationsTotal.WithLabelValues("register", "error").Inc()
 		return err

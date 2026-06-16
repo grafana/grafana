@@ -1,6 +1,6 @@
-import { DashboardViewItem } from 'app/features/search/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardViewItemCollection } from '../types';
+import { type DashboardViewItemCollection } from '../types';
 
 export function fullyLoadedViewItemCollection(items: DashboardViewItem[]): DashboardViewItemCollection {
   const lastKind = items.at(-1)?.kind ?? 'folder';

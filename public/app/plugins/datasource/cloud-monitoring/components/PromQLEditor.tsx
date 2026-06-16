@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/plugin-ui';
 import { TextArea, Input } from '@grafana/ui';
 
-import { PromQLQuery } from '../dataquery.gen';
-import CloudMonitoringDatasource from '../datasource';
+import { type PromQLQuery } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
 import { selectors } from '../e2e/selectors';
 
 import { Project } from './Project';
@@ -18,12 +18,6 @@ export interface Props {
   query: PromQLQuery;
   datasource: CloudMonitoringDatasource;
 }
-
-export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
-  projectName: dataSource.getDefaultProject(),
-  expr: '',
-  step: '10s',
-});
 
 export function PromQLQueryEditor({
   refId,

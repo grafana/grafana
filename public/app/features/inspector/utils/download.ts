@@ -1,19 +1,20 @@
 import saveAs from 'file-saver';
 
 import {
-  CSVConfig,
-  DataFrame,
+  type CSVConfig,
+  type DataFrame,
   DataTransformerID,
   dateTime,
   dateTimeFormat,
-  LogsModel,
+  type LogsModel,
   MutableDataFrame,
   toCSV,
 } from '@grafana/data';
 import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
+
+import { transformToZipkin } from './transformToZipkin';
 
 /**
  * Downloads a DataFrame as a TXT file.

@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext } from 'react';
+import { type MouseEvent, createContext, useCallback, useContext } from 'react';
 
 export interface ElementSelectionOnSelectOptions {
   /** If specified, this will ignore the shift key press */
@@ -29,7 +29,7 @@ export const ElementSelectionContext = createContext<ElementSelectionContextStat
 export interface UseElementSelectionResult {
   isSelected?: boolean;
   isSelectable?: boolean;
-  onSelect?: (evt: React.MouseEvent, options?: ElementSelectionOnSelectOptions) => void;
+  onSelect?: (evt: MouseEvent, options?: ElementSelectionOnSelectOptions) => void;
   onClear?: () => void;
 }
 
@@ -45,7 +45,7 @@ export function useElementSelection(id: string | undefined): UseElementSelection
 
   const isSelected = context.selected.some((item) => item.id === id);
   const onSelect = useCallback(
-    (evt: React.MouseEvent, options: ElementSelectionOnSelectOptions = {}) => {
+    (evt: MouseEvent, options: ElementSelectionOnSelectOptions = {}) => {
       if (!context.enabled) {
         return;
       }

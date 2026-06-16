@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { selectors } from '../../e2e/selectors';
 import { createMockInstanceSetttings } from '../../mocks/instanceSettings';
 
-import { DefaultSubscription, Props } from './DefaultSubscription';
+import { DefaultSubscription, type Props } from './DefaultSubscription';
 
 const mockInstanceSettings = createMockInstanceSetttings();
 

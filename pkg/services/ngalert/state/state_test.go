@@ -13,14 +13,16 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
@@ -46,7 +48,7 @@ func TestSetAlerting(t *testing.T) {
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			FiredAt:     util.Pointer(mock.Now()),
+			FiredAt:     new(mock.Now()),
 		},
 	}, {
 		name: "previous state is removed",
@@ -61,7 +63,7 @@ func TestSetAlerting(t *testing.T) {
 			State:    eval.Alerting,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			FiredAt:  util.Pointer(mock.Now()),
+			FiredAt:  new(mock.Now()),
 		},
 	}}
 
@@ -369,7 +371,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-2 * time.Minute)),
 			},
 		},
 		{
@@ -379,7 +381,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime),
+				LastSentAt:         new(evaluationTime),
 			},
 		},
 		{
@@ -389,7 +391,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -407,7 +409,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Alerting,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime),
+				LastSentAt:         new(evaluationTime),
 			},
 		},
 		{
@@ -416,9 +418,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime),
+				ResolvedAt:         new(evaluationTime),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -428,9 +430,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          true,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -440,9 +442,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-2 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-2 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -452,9 +454,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:          false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(evaluationTime.Add(-16 * time.Minute)),
+				ResolvedAt:         new(evaluationTime.Add(-16 * time.Minute)),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -463,9 +465,9 @@ func TestNeedsSending(t *testing.T) {
 			expected:    false,
 			testState: &State{
 				State:              eval.Normal,
-				ResolvedAt:         util.Pointer(time.Time{}),
+				ResolvedAt:         new(time.Time{}),
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -475,7 +477,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -485,7 +487,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.NoData,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
+				LastSentAt:         new(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 		{
@@ -495,7 +497,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-1 * time.Minute)),
+				LastSentAt:         new(evaluationTime.Add(-1 * time.Minute)),
 			},
 		},
 		{
@@ -505,7 +507,7 @@ func TestNeedsSending(t *testing.T) {
 			testState: &State{
 				State:              eval.Error,
 				LastEvaluationTime: evaluationTime,
-				LastSentAt:         util.Pointer(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
+				LastSentAt:         new(evaluationTime.Add(-time.Duration(rand.Int63n(59)+1) * time.Second)),
 			},
 		},
 	}
@@ -513,6 +515,88 @@ func TestNeedsSending(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, tc.testState.NeedsSending(evaluationTime, tc.resendDelay, tc.resolvedRetention))
+		})
+	}
+}
+
+func TestTransitionSetsResolvedAt(t *testing.T) {
+	evaluatedAt := time.Now()
+	logger := log.NewNopLogger()
+	noImage := func(string) *ngmodels.Image { return nil }
+
+	baseRule := &ngmodels.AlertRule{
+		IntervalSeconds: 60,
+		ExecErrState:    ngmodels.ErrorErrState,
+		NoDataState:     ngmodels.NoData,
+	}
+
+	tests := []struct {
+		name           string
+		initialState   eval.State
+		resultState    eval.State
+		expectResolved bool
+	}{
+		{
+			name:           "Alerting -> Normal sets ResolvedAt",
+			initialState:   eval.Alerting,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Error -> Normal sets ResolvedAt",
+			initialState:   eval.Error,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "NoData -> Normal sets ResolvedAt",
+			initialState:   eval.NoData,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Recovering -> Normal sets ResolvedAt",
+			initialState:   eval.Recovering,
+			resultState:    eval.Normal,
+			expectResolved: true,
+		},
+		{
+			name:           "Normal -> Normal does not set ResolvedAt",
+			initialState:   eval.Normal,
+			resultState:    eval.Normal,
+			expectResolved: false,
+		},
+		{
+			name:           "Pending -> Normal does not set ResolvedAt",
+			initialState:   eval.Pending,
+			resultState:    eval.Normal,
+			expectResolved: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			state := &State{
+				State:       tc.initialState,
+				StartsAt:    evaluatedAt.Add(-time.Minute),
+				EndsAt:      evaluatedAt.Add(time.Minute),
+				Annotations: make(data.Labels),
+			}
+
+			result := eval.Result{
+				State:       tc.resultState,
+				EvaluatedAt: evaluatedAt,
+			}
+
+			transition := state.transition(baseRule, result, nil, logger, noImage, false)
+
+			if tc.expectResolved {
+				require.NotNil(t, state.ResolvedAt, "ResolvedAt should be set for %s -> %s", tc.initialState, tc.resultState)
+				assert.Equal(t, evaluatedAt, *state.ResolvedAt)
+				assert.Equal(t, tc.initialState, transition.PreviousState)
+			} else {
+				assert.Nil(t, state.ResolvedAt, "ResolvedAt should not be set for %s -> %s", tc.initialState, tc.resultState)
+			}
 		})
 	}
 }
@@ -646,7 +730,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo")}
+		r := ngmodels.AlertRule{DashboardUID: new("foo")}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
@@ -660,7 +744,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
@@ -674,7 +758,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
@@ -688,7 +772,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
+		r := ngmodels.AlertRule{DashboardUID: new("foo"), PanelID: new(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)
@@ -737,17 +821,16 @@ func TestGetRuleExtraLabels(t *testing.T) {
 	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
 	folderTitle := uuid.NewString()
 
-	ns := ngmodels.NotificationSettings{
-		ContactPointRouting: &ngmodels.ContactPointRouting{
-			Receiver:  "Test",
-			GroupBy:   []string{"alertname"},
-			GroupWait: util.Pointer(model.Duration(1 * time.Second)),
-		},
+	cpr := ngmodels.ContactPointRouting{
+		Receiver:  "Test",
+		GroupBy:   []string{"alertname"},
+		GroupWait: new(model.Duration(1 * time.Second)),
 	}
 
 	testCases := map[string]struct {
 		rule          *ngmodels.AlertRule
 		includeFolder bool
+		features      featuremgmt.FeatureToggles
 		expected      map[string]string
 	}{
 		"no_folder_no_notification": {
@@ -769,26 +852,73 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				models.FolderTitleLabel:  folderTitle,
 			},
 		},
-		"with_notification": {
-			rule: func() *ngmodels.AlertRule {
-				r := ngmodels.CopyRule(rule)
-				r.NotificationSettings = util.Pointer(ngmodels.CopyNotificationSettings(ns))
-				return r
-			}(),
+		"with_contact_point_routing": {
+			rule: ngmodels.CopyRule(rule, ngmodels.RuleGen.WithContactPointRouting(ngmodels.CopyContactPointRouting(cpr))),
 			expected: map[string]string{
 				models.NamespaceUIDLabel:                     rule.NamespaceUID,
 				model.AlertNameLabel:                         rule.Title,
 				models.RuleUIDLabel:                          rule.UID,
 				ngmodels.AutogeneratedRouteLabel:             "true",
-				ngmodels.AutogeneratedRouteReceiverNameLabel: ns.ContactPointRouting.Receiver,
-				ngmodels.AutogeneratedRouteSettingsHashLabel: ns.ContactPointRouting.Fingerprint(nil).String(),
+				ngmodels.AutogeneratedRouteReceiverNameLabel: cpr.Receiver,
+				ngmodels.AutogeneratedRouteSettingsHashLabel: cpr.Fingerprint(featuremgmt.WithFeatures()).String(),
+			},
+		},
+		"with_policy_routing": {
+			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			expected: map[string]string{
+				models.NamespaceUIDLabel: rule.NamespaceUID,
+				model.AlertNameLabel:     rule.Title,
+				models.RuleUIDLabel:      rule.UID,
+				ngmodels.NamedRouteLabel: "policy-a",
+			},
+		},
+		"with_policy_routing_no_ff": {
+			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
+			features: featuremgmt.WithFeatures(),
+			expected: map[string]string{ // Doesn't add ngmodels.NamedRouteLabel when FF is disabled.
+				models.NamespaceUIDLabel: rule.NamespaceUID,
+				model.AlertNameLabel:     rule.Title,
+				models.RuleUIDLabel:      rule.UID,
+			},
+		},
+		"with_both_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
+			rule: func() *ngmodels.AlertRule {
+				r := ngmodels.CopyRule(rule, ngmodels.RuleGen.WithContactPointRouting(ngmodels.CopyContactPointRouting(cpr)))
+				r.NotificationSettings.PolicyRouting = new(ngmodels.PolicyRouting{Policy: "policy-a"})
+				return r
+			}(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			expected: map[string]string{ // Fallback to using contact point routing.
+				models.NamespaceUIDLabel:                     rule.NamespaceUID,
+				model.AlertNameLabel:                         rule.Title,
+				models.RuleUIDLabel:                          rule.UID,
+				ngmodels.AutogeneratedRouteLabel:             "true",
+				ngmodels.AutogeneratedRouteReceiverNameLabel: cpr.Receiver,
+				ngmodels.AutogeneratedRouteSettingsHashLabel: cpr.Fingerprint(featuremgmt.WithFeatures()).String(),
+			},
+		},
+		"with_empty_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
+			rule: func() *ngmodels.AlertRule {
+				r := ngmodels.CopyRule(rule)
+				r.NotificationSettings = &ngmodels.NotificationSettings{}
+				return r
+			}(),
+			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			expected: map[string]string{ // Fallback to using no special routing.
+				models.NamespaceUIDLabel: rule.NamespaceUID,
+				model.AlertNameLabel:     rule.Title,
+				models.RuleUIDLabel:      rule.UID,
 			},
 		},
 	}
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			result := GetRuleExtraLabels(logger, tc.rule, folderTitle, tc.includeFolder, nil)
+			if tc.features == nil {
+				tc.features = featuremgmt.WithFeatures()
+			}
+			result := GetRuleExtraLabels(logger, tc.rule, folderTitle, tc.includeFolder, tc.features)
 			require.Equal(t, tc.expected, result)
 		})
 	}
@@ -1013,7 +1143,7 @@ func TestPatch(t *testing.T) {
 		orig := state.Copy()
 		current := randomState(key)
 
-		patch(&state, &current, result)
+		patch(state, current, result)
 
 		// Fields that should not change
 		assert.Equal(t, orig.OrgID, state.OrgID)
@@ -1054,7 +1184,7 @@ func TestPatch(t *testing.T) {
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
 
-		patch(&state, &current, result)
+		patch(state, current, result)
 
 		assert.EqualValues(t, expectedAnnotations, state.Annotations)
 		assert.Equal(t, current.State, state.State)

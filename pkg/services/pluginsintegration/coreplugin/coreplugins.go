@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -35,14 +34,12 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
 const (
 	CloudWatch      = "cloudwatch"
 	CloudMonitoring = "stackdriver"
 	AzureMonitor    = "grafana-azure-monitor-datasource"
-	Elasticsearch   = "elasticsearch"
 	Graphite        = "graphite"
 	InfluxDB        = "influxdb"
 	Loki            = "loki"
@@ -57,7 +54,6 @@ const (
 	Grafana         = "grafana"
 	Pyroscope       = "grafana-pyroscope-datasource"
 	Parca           = "parca"
-	Zipkin          = "zipkin"
 	Jaeger          = "jaeger"
 )
 
@@ -99,9 +95,9 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 }
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
-	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
+	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
 	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
+	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -109,7 +105,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
-		Elasticsearch:   asBackendPlugin(es),
 		Graphite:        asBackendPlugin(grap),
 		InfluxDB:        asBackendPlugin(idb),
 		Loki:            asBackendPlugin(lk),
@@ -123,7 +118,6 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		Grafana:         asBackendPlugin(graf),
 		Pyroscope:       asBackendPlugin(pyroscope),
 		Parca:           asBackendPlugin(parca),
-		Zipkin:          asBackendPlugin(zipkin),
 		Jaeger:          asBackendPlugin(jaeger),
 	})
 }
@@ -147,6 +141,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 	if queryHandler, ok := svc.(backend.QueryDataHandler); ok {
 		opts.QueryDataHandler = queryHandler
 	}
+	if handler, ok := svc.(backend.QueryChunkedDataHandler); ok {
+		opts.QueryChunkedDataHandler = handler
+	}
 	if resourceHandler, ok := svc.(backend.CallResourceHandler); ok {
 		opts.CallResourceHandler = resourceHandler
 	}
@@ -160,8 +157,9 @@ func asBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
 		opts.AdmissionHandler = storageHandler
 	}
 
-	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
-		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {
+	if opts.QueryDataHandler != nil || opts.QueryChunkedDataHandler != nil ||
+		opts.CheckHealthHandler != nil || opts.StreamHandler != nil ||
+		opts.CallResourceHandler != nil {
 		return coreplugin.New(opts)
 	}
 
@@ -226,8 +224,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = cloudmonitoring.ProvideService(httpClientProvider)
 	case AzureMonitor:
 		svc = azuremonitor.ProvideService(httpClientProvider)
-	case Elasticsearch:
-		svc = elasticsearch.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
@@ -250,8 +246,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = pyroscope.ProvideService(httpClientProvider)
 	case Parca:
 		svc = parca.ProvideService(httpClientProvider)
-	case Zipkin:
-		svc = zipkin.ProvideService(httpClientProvider)
 	case Jaeger:
 		svc = jaeger.ProvideService(httpClientProvider)
 	default:

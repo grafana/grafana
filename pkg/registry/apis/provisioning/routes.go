@@ -53,7 +53,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceStats"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -101,7 +101,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 														MediaTypeProps: spec3.MediaTypeProps{
 															Schema: &spec.Schema{
 																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryViewList"),
+																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
 																},
 															},
 														},
@@ -164,12 +164,28 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	quotaStatus, err := b.quotaGetter.GetQuotaStatus(ctx, ns)
+	if err != nil {
+		errhttp.Write(ctx, fmt.Errorf("failed to get quota status: %w", err), w)
+		return
+	}
+
+	availableResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
+	for _, r := range b.supportedResources {
+		availableResources = append(availableResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+
 	settings := provisioning.RepositoryViewList{
 		Items:                    make([]provisioning.RepositoryView, len(all)),
 		AllowedTargets:           b.allowedTargets,
 		AvailableRepositoryTypes: b.repoFactory.Types(),
+		AvailableResources:       availableResources,
 		AllowImageRendering:      b.allowImageRendering,
-		MaxRepositories:          b.quotaLimits.MaxRepositories,
+		MaxRepositories:          quotaStatus.MaxRepositories,
 	}
 
 	for i, val := range all {
@@ -186,6 +202,7 @@ func (b *APIBuilder) handleSettings(w http.ResponseWriter, r *http.Request) {
 			URL:       url,
 			Path:      path,
 			Workflows: val.Spec.Workflows,
+			Commit:    val.Spec.Commit,
 		}
 	}
 	w.Header().Set("Content-Type", "application/json")

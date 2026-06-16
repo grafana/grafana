@@ -16,6 +16,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -37,7 +38,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
+var (
+	_ builder.APIGroupBuilder      = (*QueryAPIBuilder)(nil)
+	_ builder.OpenAPIPostProcessor = (*QueryAPIBuilder)(nil)
+)
 
 type QueryAPIBuilder struct {
 	log                  log.Logger
@@ -72,7 +76,7 @@ func NewQueryAPIBuilder(
 	// Include well typed query definitions
 	var queryTypes *datasourceV0.QueryTypeDefinitionList
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryTypes) {
+	if features.IsEnabledGlobally(featuremgmt.FlagDatasourcesQueryTypes) {
 		// Read the expression query definitions
 		raw, err := expr.QueryTypeDefinitionListJSON()
 		if err != nil {
@@ -168,7 +172,8 @@ func RegisterAPIService(
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
-	return datasourceV0.SchemeGroupVersion
+	// TODO, finish rename return datasourceV0.SchemeGroupVersion
+	return schema.GroupVersion{Group: "query.grafana.app", Version: datasourceV0.VERSION}
 }
 
 func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
@@ -185,9 +190,10 @@ func addKnownTypes(scheme *apiruntime.Scheme, gv schema.GroupVersion) {
 }
 
 func (b *QueryAPIBuilder) InstallSchema(scheme *apiruntime.Scheme) error {
-	addKnownTypes(scheme, datasourceV0.SchemeGroupVersion)
-	metav1.AddToGroupVersion(scheme, datasourceV0.SchemeGroupVersion)
-	return scheme.SetVersionPriority(datasourceV0.SchemeGroupVersion)
+	gv := b.GetGroupVersion()
+	addKnownTypes(scheme, gv)
+	metav1.AddToGroupVersion(scheme, gv)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *QueryAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -199,8 +205,9 @@ func (b *QueryAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	storage := map[string]rest.Storage{}
 
-	// The query endpoint -- NOTE, this uses a rewrite hack to allow requests without a name parameter
-	storage["query"] = newQueryREST(b)
+	// k8s needs a real storage registered -- we add this, but hide it for now
+	// because connections and queries are handled directly
+	storage["noop"] = &noopREST{}
 
 	// Register the expressions query schemas
 	err := queryschema.RegisterQueryTypes(b.queryTypes, storage)
@@ -232,7 +239,7 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		},
 		QueryTypes:       b.queryTypes,
 		Root:             root,
-		QueryPath:        "namespaces/{namespace}/query/{name}",
+		QueryPath:        "namespaces/{namespace}/query",
 		QueryDescription: "Query any datasources (with expressions)",
 
 		// An explicit set of examples (otherwise we iterate the query type examples)
@@ -304,15 +311,24 @@ func (b *QueryAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	if !ok || query.Post == nil || query.Post.RequestBody == nil {
 		return nil, fmt.Errorf("could not find query path")
 	}
-	if len(query.Parameters) != 2 && query.Parameters[0].Name != "name" {
-		return nil, fmt.Errorf("expected name parameter in query service")
-	}
-	query.Parameters = []*spec3.Parameter{query.Parameters[1]}
+	query.Post.OperationId = "queryDatasources"
+	query.Post.Tags = []string{"Query"}
 
 	sqlschemas, ok := oas.Paths.Paths[root+"namespaces/{namespace}/sqlschemas"]
 	if ok && sqlschemas.Post != nil {
 		sqlschemas.Post.RequestBody = query.Post.RequestBody
 	}
+
+	// Add the core definitions
+	for k, v := range b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} }) {
+		switch k {
+		case "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse":
+			oas.Components.Schemas[k] = &v.Schema
+		}
+	}
+
+	// Remove the noop path -- it was only required to make k8s behave normally
+	delete(oas.Paths.Paths, root+"noop/{name}")
 
 	return oas, nil
 }

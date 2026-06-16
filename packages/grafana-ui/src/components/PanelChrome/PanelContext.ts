@@ -1,19 +1,18 @@
 import { createContext, useContext } from 'react';
 
 import {
+  type AnnotationEventUIModel,
+  type CoreApp,
+  type DashboardCursorSync,
+  type DataFrame,
+  type DataLinkPostProcessor,
+  type EventBus,
   EventBusSrv,
-  EventBus,
-  DashboardCursorSync,
-  AnnotationEventUIModel,
-  ThresholdsConfig,
-  CoreApp,
-  DataFrame,
-  DataLinkPostProcessor,
 } from '@grafana/data';
 
-import { AdHocFilterItem } from '../Table/types';
+import { type AdHocFilterItem } from '../Table/types';
 
-import { OnSelectRangeCallback, SeriesVisibilityChangeMode } from './types';
+import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
 export interface PanelContext {
@@ -34,7 +33,7 @@ export interface PanelContext {
    */
   onSeriesColorChange?: (label: string, color: string) => void;
 
-  onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
+  onToggleSeriesVisibility?: (label: string | string[] | null, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
   canEditAnnotations?: (dashboardUID?: string) => boolean;
@@ -64,26 +63,6 @@ export interface PanelContext {
    * Used to apply multiple filters at once
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
-  /**
-   * Enables modifying thresholds directly from the panel
-   *
-   * @alpha -- experimental
-   */
-  canEditThresholds?: boolean;
-
-  /**
-   * Shows threshold indicators on the right-hand side of the panel
-   *
-   * @alpha -- experimental
-   */
-  showThresholds?: boolean;
-
-  /**
-   * Called when a panel wants to change default thresholds configuration
-   *
-   * @alpha -- experimental
-   */
-  onThresholdsChange?: (thresholds: ThresholdsConfig) => void;
 
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;

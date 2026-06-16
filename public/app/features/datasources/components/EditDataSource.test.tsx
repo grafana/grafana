@@ -2,7 +2,7 @@ import { screen, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataSourceJsonData, PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
+import { type DataSourceJsonData, type PluginExtensionDataSourceConfigContext, PluginState } from '@grafana/data';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { configureStore } from 'app/store/configureStore';
@@ -11,7 +11,7 @@ import { getMockDataSource, getMockDataSourceMeta, getMockDataSourceSettingsStat
 
 import { missingRightsMessage } from './DataSourceMissingRightsMessage';
 import { readOnlyMessage } from './DataSourceReadOnlyMessage';
-import { EditDataSourceView, ViewProps } from './EditDataSource';
+import { EditDataSourceView, type ViewProps } from './EditDataSource';
 
 const onOptionsChange = jest.fn();
 
@@ -41,8 +41,6 @@ const setup = (props?: Partial<ViewProps>) => {
         dataSourceRights={{ readOnly: false, hasWriteRights: true, hasDeleteRights: true }}
         exploreUrl={'/explore'}
         onDelete={jest.fn()}
-        onDefaultChange={jest.fn()}
-        onNameChange={jest.fn()}
         onOptionsChange={onOptionsChange}
         onTest={jest.fn()}
         onUpdate={jest.fn()}

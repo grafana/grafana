@@ -1,4 +1,4 @@
-import { DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
+import { type DataSourceApi, PluginType, VariableSupportType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from './buildNewDashboardSaveModel';
@@ -34,6 +34,7 @@ const fakeDsMock: DataSourceApi = {
     toDataQuery: (q) => ({ ...q, refId: 'FakeDataSource-refId' }),
   },
   getTagKeys: jest.fn(),
+  getGroupByKeys: jest.fn(),
   uid: 'fake-std',
 };
 

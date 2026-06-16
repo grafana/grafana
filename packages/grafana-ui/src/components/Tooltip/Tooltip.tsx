@@ -12,7 +12,7 @@ import {
 } from '@floating-ui/react';
 import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -20,7 +20,7 @@ import { getPositioningMiddleware } from '../../utils/floating';
 import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { Portal } from '../Portal/Portal';
 
-import { PopoverContent, TooltipPlacement } from './types';
+import { type PopoverContent, type TooltipPlacement } from './types';
 
 export interface TooltipProps {
   theme?: 'info' | 'error' | 'info-alt';
@@ -127,7 +127,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
 Tooltip.displayName = 'Tooltip';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,

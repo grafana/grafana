@@ -8,14 +8,14 @@ import { Components } from '@grafana/e2e-selectors';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 
-import { TemplatePreviewResponse } from '../../api/templateApi';
+import { type TemplatePreviewResponse } from '../../api/templateApi';
 import {
   REJECTED_PREVIEW_RESPONSE,
   mockPreviewTemplateResponse,
   mockPreviewTemplateResponseRejected,
 } from '../../mocks/templatesApi';
 
-import { TemplateFormValues, defaults } from './TemplateForm';
+import { type TemplateFormValues, defaults } from './TemplateForm';
 import { TemplatePreview } from './TemplatePreview';
 
 jest.mock('@grafana/ui', () => ({

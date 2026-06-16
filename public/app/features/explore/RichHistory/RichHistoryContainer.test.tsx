@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 
-import { RichHistoryContainer, Props } from './RichHistoryContainer';
+import { RichHistoryContainer, type Props } from './RichHistoryContainer';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

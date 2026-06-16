@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -15,8 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -37,6 +34,27 @@ type ParserFactory interface {
 	GetParser(ctx context.Context, repo repository.Reader) (Parser, error)
 }
 
+// strictValidationExemptions lists the GroupVersionResources that receive
+// FieldValidation=Ignore on apiserver writes instead of the default Strict.
+//
+// The exemption is version-specific on purpose: only the legacy v1 dashboard is
+// exempt. Newer dashboard versions (v2*) must keep strict validation so their
+// CUE schema is enforced by apiserver admission.
+//
+// FIXME: the dashboard exemption is temporary while we improve validation.
+// New resources must be added here deliberately rather than relying on a
+// hardcoded equality check.
+var strictValidationExemptions = map[schema.GroupVersionResource]struct{}{
+	DashboardResource: {},
+}
+
+// skipsStrictValidation reports whether the given GroupVersionResource is exempt
+// from strict field validation and should be written with FieldValidation=Ignore.
+func skipsStrictValidation(gvr schema.GroupVersionResource) bool {
+	_, ok := strictValidationExemptions[gvr]
+	return ok
+}
+
 // Parser is a parser for a given repository
 //
 //go:generate mockery --name Parser --structname MockParser --inpackage --filename parser_mock.go --with-expecter
@@ -45,11 +63,12 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory ClientFactory
+	ClientFactory         ClientFactory
+	folderMetadataEnabled bool
 }
 
-func NewParserFactory(clientFactory ClientFactory) ParserFactory {
-	return &parserFactory{clientFactory}
+func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
+	return &parserFactory{clientFactory, folderMetadataEnabled}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -68,15 +87,20 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		urls:    urls,
-		clients: clients,
-		config:  config,
+		reader:                repo,
+		urls:                  urls,
+		clients:               clients,
+		config:                config,
+		folderMetadataEnabled: f.folderMetadataEnabled,
 	}, nil
 }
 
 type parser struct {
 	// The target repository
 	repo provisioning.ResourceRepositoryInfo
+
+	// reader allows reading files from the repository (e.g. _folder.json for parent UID lookup)
+	reader repository.Reader
 
 	// for repositories that have URL support
 	urls repository.RepositoryWithURLs
@@ -85,6 +109,8 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
+
+	folderMetadataEnabled bool
 }
 
 type ParsedResource struct {
@@ -119,6 +145,13 @@ type ParsedResource struct {
 	// Create or Update
 	Action provisioning.ResourceAction
 
+	// SkipStrictValidation requests FieldValidation=Ignore on the apiserver
+	// write. Used by in-place renames so that a path/folder change cannot be
+	// blocked by strict schema validation of an unchanged spec — a dashboard
+	// that already lives in the cluster (e.g. saved before stricter CUE
+	// schemas were enforced) must remain renameable.
+	SkipStrictValidation bool
+
 	// The results from dry run
 	DryRunResponse *unstructured.Unstructured
 
@@ -130,7 +163,6 @@ type ParsedResource struct {
 }
 
 func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *ParsedResource, err error) {
-	logger := logging.FromContext(ctx).With("path", info.Path)
 	parsed = &ParsedResource{
 		Info: info,
 		Repo: r.repo,
@@ -141,13 +173,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	var gvk *schema.GroupVersionKind
-	parsed.Obj, gvk, err = DecodeYAMLObject(bytes.NewBuffer(info.Data))
-	if err != nil || gvk == nil {
-		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
-		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
-		if err != nil || gvk == nil {
-			return nil, NewResourceValidationError(err)
-		}
+	parsed.Obj, gvk, parsed.Classic, err = ParseFileResource(ctx, info)
+	if err != nil {
+		return nil, err
 	}
 
 	parsed.GVK = *gvk
@@ -160,7 +188,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	}
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
-		return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
+		// _folder.json is a system-managed folder manifest written by the provisioning
+		// layer when the provisioningFolderMetadata flag is on. It is the only folder-typed
+		// file allowed through the files endpoint (e.g. for GET requests).
+		if !r.folderMetadataEnabled || !IsFolderMetadataFile(info.Path) {
+			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
+		}
 	}
 
 	// Remove the internal dashboard UID,version and id if they exist
@@ -199,15 +232,6 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
-	// Calculate folder identifier from the file path
-	if info.Path != "" {
-		dirPath := safepath.Dir(info.Path)
-		if dirPath != "" {
-			parsed.Meta.SetFolder(ParseFolder(dirPath, r.repo.Name).ID)
-		} else {
-			parsed.Meta.SetFolder(RootFolder(r.config))
-		}
-	}
 	obj.SetUID("")             // clear identifiers
 	obj.SetResourceVersion("") // clear identifiers
 
@@ -222,7 +246,70 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		return nil, NewResourceValidationError(fmt.Errorf("get client for kind: %w", err))
 	}
 
+	// Calculate the folder identifier from the file path, but only for resources that
+	// are contained in folders. Org-scoped resources (those not folder-scoped in the
+	// configured supported set) must not have a folder annotation stamped onto them:
+	// it would be meaningless and possibly dangling.
+	if info.Path != "" && supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK) {
+		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
+	}
+
 	return parsed, nil
+}
+
+// resolveFolderID derives the folder annotation value for a folder-contained
+// resource from its file path. When folder metadata is enabled and the parent
+// directory has a _folder.json, its stable UID is preferred over the
+// hash-derived ID.
+func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo) string {
+	dirPath := safepath.Dir(info.Path)
+	// _folder.json represents the directory it lives in, so its parent is one level above.
+	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+		dirPath = safepath.Dir(dirPath)
+	}
+	if dirPath == "" {
+		return RootFolder(r.config)
+	}
+
+	folderID := ParseFolder(dirPath, r.repo.Name).ID
+	// When folder metadata is enabled and the parent folder has a _folder.json,
+	// use the stable UID from that file instead of the hash-derived one.
+	if r.folderMetadataEnabled && r.reader != nil {
+		if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
+			folderID = meta.Name
+		} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
+			// Target branch doesn't exist yet (e.g. new PR branch). Fall back to
+			// the configured branch where _folder.json is already committed.
+			if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+				folderID = meta.Name
+			}
+		}
+	}
+	return folderID
+}
+
+// SameIdentity reports whether f and other refer to the same Kubernetes
+// resource: same metadata.name, API group, and kind.
+func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
+	return f.Obj.GetName() == other.Obj.GetName() &&
+		f.GVK.Group == other.GVK.Group &&
+		f.GVK.Kind == other.GVK.Kind
+}
+
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(f.Existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
@@ -242,8 +329,8 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR) {
+		fieldValidation = "Ignore"
 	}
 
 	// Handle deletion action separately
@@ -263,7 +350,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 			Kind:     utils.ManagerKindRepo,
 			Identity: f.Repo.Name,
 		}
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			return err
 		}
 
@@ -284,7 +371,7 @@ func (f *ParsedResource) DryRun(ctx context.Context) error {
 	}
 
 	// Check for ownership conflicts after fetching existing resource
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -324,8 +411,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	identitySpan.End()
 
 	fieldValidation := "Strict"
-	if f.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	if f.SkipStrictValidation || skipsStrictValidation(f.GVR) {
+		fieldValidation = "Ignore"
 	}
 
 	// Check for ownership conflicts
@@ -358,7 +445,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		}
 
 		// Check ownership with the existing resource
-		if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+		if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 			deleteSpan.RecordError(err)
 			deleteSpan.End()
 			return err
@@ -388,7 +475,7 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	}
 
 	// Check ownership with the existing resource (if any)
-	if err := CheckResourceOwnership(f.Existing, f.Obj.GetName(), requestingManager); err != nil {
+	if err := CheckResourceOwnership(ctx, f.Existing, f.Obj.GetName(), requestingManager); err != nil {
 		return err
 	}
 
@@ -407,6 +494,12 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 		if err == nil {
 			return nil // it worked, return
+		}
+		// Only fall through to Update when the resource was already created.
+		// For validation, permission, or any other non-conflict errors, return immediately.
+		// Retrying with a different HTTP method won't help.
+		if !apierrors.IsAlreadyExists(err) {
+			return err
 		}
 	}
 

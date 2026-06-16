@@ -1,21 +1,21 @@
-import { FormEvent, PureComponent } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { type FormEvent, PureComponent } from 'react';
+import { connect, type ConnectedProps } from 'react-redux';
 
 import {
-  DataSourceInstanceSettings,
+  type DataSourceInstanceSettings,
   getDataSourceRef,
-  QueryVariableModel,
-  SelectableValue,
-  VariableRefresh,
-  VariableSort,
+  type QueryVariableModel,
+  type SelectableValue,
+  type VariableRefresh,
+  type VariableSort,
 } from '@grafana/data';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
-import { StoreState } from 'app/types/store';
+import { type StoreState } from 'app/types/store';
 
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { initialVariableEditorState } from '../editor/reducer';
 import { getQueryVariableEditorState } from '../editor/selectors';
-import { VariableEditorProps } from '../editor/types';
+import { type VariableEditorProps } from '../editor/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getVariablesState } from '../state/selectors';
 import { toKeyedVariableIdentifier } from '../utils';

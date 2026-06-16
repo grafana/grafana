@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -127,6 +126,34 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 	require.EqualError(t, err, "target path must be a directory (should end with '/')")
 }
 
+func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
+	job := provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:  provisioning.JobActionMove,
+			Message: "custom move message",
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"test/path"},
+				TargetPath: "new/location/",
+			},
+		},
+	}
+
+	mockRepo := repository.NewMockRepository(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.CommitOnlyOnceMessage == "custom move message"
+	}), mock.Anything).Return(errors.New("expected stop"))
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.EqualError(t, err, "move files in repository: expected stop")
+}
+
 func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -229,6 +256,44 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err)
+}
+
+func TestMoveWorker_ProcessMoveFilesSkipsSameSourceAndTarget(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"test/dashboard.json"},
+				TargetPath: "test/",
+				Ref:        "main",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Skipping test/dashboard.json because it is already in test/").Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
+
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "test/dashboard.json" && result.Action() == repository.FileActionIgnored && result.Error() == nil
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+	mockRepo.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
@@ -414,8 +479,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 
 			for i, path := range tt.paths {
 				if i < len(tt.moveResults) {
-					// Use the same logic as constructTargetPath to build expected target
-					expectedTarget := "new/location/" + filepath.Base(path)
+					expectedTarget := safepath.Join("new/location", safepath.Base(path))
 					if safepath.IsDir(path) {
 						expectedTarget += "/"
 					}
@@ -446,6 +510,32 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestMoveWorker_moveFilesToRoot(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := provisioning.MoveJobOptions{
+		TargetPath: "/",
+		Ref:        "main",
+	}
+
+	mockRepo.On("Move", mock.Anything, "nested/dashboard.json", "dashboard.json", "main", "Move nested/dashboard.json to dashboard.json").Return(nil)
+	mockProgress.On("SetMessage", mock.Anything, "Moving nested/dashboard.json to dashboard.json").Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "nested/dashboard.json" && result.Action() == repository.FileActionRenamed && result.Error() == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
 }
 
 func TestMoveWorker_constructTargetPath(t *testing.T) {
@@ -484,6 +574,24 @@ func TestMoveWorker_constructTargetPath(t *testing.T) {
 			jobTargetPath:  "archive/",
 			sourcePath:     "deep/nested/folder/",
 			expectedTarget: "archive/folder/",
+		},
+		{
+			name:           "file to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/dashboard.json",
+			expectedTarget: "dashboard.json",
+		},
+		{
+			name:           "folder to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/folder/",
+			expectedTarget: "folder/",
+		},
+		{
+			name:           "root-level file to root path is no-op path",
+			jobTargetPath:  "/",
+			sourcePath:     "dashboard.json",
+			expectedTarget: "dashboard.json",
 		},
 	}
 

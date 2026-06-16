@@ -1,11 +1,13 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { getMockDataSources } from '../mocks/dataSourcesMocks';
 
-import { DataSourcesListView, ViewProps } from './DataSourcesList';
+import { DataSourcesListView, type ViewProps } from './DataSourcesList';
 
 // Mock the useFavoriteDatasources hook
 const mockIsFavoriteDatasource = jest.fn();
@@ -60,6 +62,10 @@ const setup = (overrides: Partial<ViewProps> = {}) => {
 };
 
 describe('<DataSourcesList>', () => {
+  beforeAll(() => {
+    mockBoundingClientRect({ height: 500, width: 800 });
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseQueryParams.mockReturnValue([{ starred: undefined }, mockUpdateQueryParams]);
@@ -76,16 +82,56 @@ describe('<DataSourcesList>', () => {
     setup();
 
     expect(await screen.findAllByRole('listitem')).toHaveLength(3);
-    expect(await screen.findAllByRole('heading')).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: /dataSource-/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
     expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
   });
 
-  it('should render all elements in the list item', async () => {
+  it('should virtualize long datasource lists', async () => {
+    setup({
+      dataSources: getMockDataSources(200),
+      dataSourcesCount: 200,
+    });
+
+    const listItems = await screen.findAllByRole('listitem');
+    expect(listItems.length).toBeGreaterThan(0);
+    expect(listItems.length).toBeLessThan(200);
+    expect(screen.queryByRole('link', { name: 'dataSource-199' })).not.toBeInTheDocument();
+  });
+
+  it('should increase overscan during keyboard navigation', async () => {
+    setup({
+      dataSources: getMockDataSources(200),
+      dataSourcesCount: 200,
+    });
+
+    const initialItems = await screen.findAllByRole('listitem');
+    expect(initialItems.length).toBeLessThan(200);
+
+    const user = userEvent.setup();
+    await user.tab();
+
+    // After Tab, more items should be rendered due to increased overscan,
+    // but not necessarily all of them (overscan is capped)
+    await waitFor(() => expect(screen.getAllByRole('listitem').length).toBeGreaterThan(initialItems.length));
+    const itemsAfterTab = screen.getAllByRole('listitem');
+    expect(itemsAfterTab.length).toBeGreaterThan(initialItems.length);
+  });
+
+  it('should render loading skeletons when loading', async () => {
+    setup({ isLoading: true, dataSourcesCount: 10 });
+
+    const list = await screen.findByRole('list');
+    expect(list).toBeInTheDocument();
+    // LOADING_SKELETON_COUNT = 20
+    await waitFor(() => expect(list.children).toHaveLength(20));
+  });
+
+  it('should have aria-label on list elements', async () => {
     setup();
 
-    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
+    const list = await screen.findByRole('list');
+    expect(list).toHaveAttribute('aria-label', 'Data sources');
   });
 
   describe('Favorites functionality', () => {
@@ -134,9 +180,9 @@ describe('<DataSourcesList>', () => {
       expect(listItems).toHaveLength(2);
 
       // Verify the correct datasources are shown
-      expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'dataSource-2' })).toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: 'dataSource-1' })).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'dataSource-2' })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: 'dataSource-1' })).not.toBeInTheDocument();
     });
   });
 });

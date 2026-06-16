@@ -2,7 +2,7 @@ import { Icon, Stack } from '@grafana/ui';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 
-import { RepoType, Target } from './types';
+import { type RepoType, type Target } from './types';
 
 export function BootstrapStepCardIcons({ target, repoType }: { target: Target; repoType: RepoType }) {
   if (target === 'instance') {
@@ -19,6 +19,16 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
     return (
       <Stack>
         <Icon name="folder" size="xxl" />
+        <Icon name="arrow-left" size="xxl" />
+        <RepoIcon type={repoType} />
+      </Stack>
+    );
+  }
+
+  if (target === 'folderless') {
+    return (
+      <Stack>
+        <Icon name="apps" size="xxl" />
         <Icon name="arrow-left" size="xxl" />
         <RepoIcon type={repoType} />
       </Stack>

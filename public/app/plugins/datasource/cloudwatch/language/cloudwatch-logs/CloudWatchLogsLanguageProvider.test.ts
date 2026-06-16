@@ -1,12 +1,12 @@
-import Prism, { Token } from 'prismjs';
-import { Value } from 'slate';
+import Prism, { type Token } from 'prismjs';
+import { type Value } from 'slate';
 
-import { TypeaheadOutput } from '@grafana/ui';
+import { type TypeaheadOutput } from '@grafana/ui';
 
-import { CloudWatchDatasource } from '../../datasource';
+import { type CloudWatchDatasource } from '../../datasource';
 import { setupMockedTemplateService } from '../../mocks/CloudWatchDataSource';
-import { ResourceResponse } from '../../resources/types';
-import { LogGroupField } from '../../types';
+import { type ResourceResponse } from '../../resources/types';
+import { type LogGroupField } from '../../types';
 
 import { CloudWatchLogsLanguageProvider } from './CloudWatchLogsLanguageProvider';
 import {

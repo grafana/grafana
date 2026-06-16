@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
 
-import { RepoType } from '../Wizard/types';
+import { type RepoType } from '../Wizard/types';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 
 export function RepoIcon({ type }: { type: RepoType | undefined }) {

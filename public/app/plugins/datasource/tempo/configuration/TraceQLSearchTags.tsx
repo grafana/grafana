@@ -1,14 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 
 import TagsInput from '../SearchTraceQLEditor/TagsInput';
 import { replaceAt } from '../SearchTraceQLEditor/utils';
-import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { TempoDatasource } from '../datasource';
-import { TempoJsonData } from '../types';
+import { type TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { type TempoDatasource } from '../datasource';
+import { type TempoJsonData } from '../types';
 import { getErrorMessage } from '../utils';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {

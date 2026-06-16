@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 
@@ -19,6 +20,8 @@ import (
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	"github.com/grafana/pyroscope/api/gen/proto/go/querier/v1/querierv1connect"
 )
+
+const utf8LabelNamesFeatureToggle = "pyroscopeUTF8LabelNames"
 
 type ProfileType struct {
 	ID    string `json:"id"`
@@ -55,9 +58,11 @@ type Point struct {
 }
 
 type Exemplar struct {
-	Id        string
-	Value     uint64
+	ProfileId string
+	SpanId    string
+	Value     int64
 	Timestamp int64
+	Labels    []*LabelPair
 }
 
 type ProfileResponse struct {
@@ -69,6 +74,23 @@ type SeriesResponse struct {
 	Series []*Series
 	Units  string
 	Label  string
+}
+
+type HeatmapPoint struct {
+	Timestamp int64
+	YMin      []float64
+	Counts    []int64
+	Exemplars []*Exemplar
+}
+
+type HeatmapSeries struct {
+	Labels []*LabelPair
+	Points []*HeatmapPoint
+}
+
+type HeatmapResponse struct {
+	Series []*HeatmapSeries
+	Units  string
 }
 
 type PyroscopeClient struct {
@@ -121,6 +143,9 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 		Limit:         limit,
 		ExemplarType:  exemplarType,
 	})
+	if config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
 
 	resp, err := c.connectClient.SelectSeries(ctx, req)
 	if err != nil {
@@ -150,10 +175,20 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 			if len(p.Exemplars) > 0 {
 				points[i].Exemplars = make([]*Exemplar, len(p.Exemplars))
 				for j, e := range p.Exemplars {
+					// Convert API labels to our LabelPair type
+					exemplarLabels := make([]*LabelPair, len(e.Labels))
+					for k, l := range e.Labels {
+						exemplarLabels[k] = &LabelPair{
+							Name:  l.Name,
+							Value: l.Value,
+						}
+					}
 					points[i].Exemplars[j] = &Exemplar{
-						Id:        e.ProfileId,
+						ProfileId: e.ProfileId,
+						SpanId:    e.SpanId,
 						Value:     e.Value,
 						Timestamp: e.Timestamp,
+						Labels:    exemplarLabels,
 					}
 				}
 			}
@@ -174,16 +209,111 @@ func (c *PyroscopeClient) GetSeries(ctx context.Context, profileTypeID string, l
 	}, nil
 }
 
-func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+func (c *PyroscopeClient) GetHeatmap(ctx context.Context, profileTypeID string, labelSelector string, start int64, end int64, groupBy []string, step float64, queryType querierv1.HeatmapQueryType, limit *int64, includeExemplars bool) (*HeatmapResponse, error) {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetHeatmap", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
+	defer span.End()
+
+	// Determine exemplar type based on includeExemplars flag and query type
+	exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
+	if includeExemplars {
+		switch queryType {
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN:
+			exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_SPAN
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL:
+			exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
+		case querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_UNSPECIFIED:
+			// default to no exemplars for unspecified query type
+		}
+	}
+
+	req := connect.NewRequest(&querierv1.SelectHeatmapRequest{
+		ProfileTypeID: profileTypeID,
+		LabelSelector: labelSelector,
+		Start:         start,
+		End:           end,
+		Step:          step,
+		GroupBy:       groupBy,
+		QueryType:     queryType,
+		Limit:         limit,
+		ExemplarType:  exemplarType,
+	})
+
+	resp, err := c.connectClient.SelectHeatmap(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, backend.DownstreamErrorf("received error from client while getting heatmap: %w", err)
+	}
+
+	series := make([]*HeatmapSeries, len(resp.Msg.Series))
+	for i, s := range resp.Msg.Series {
+		labels := make([]*LabelPair, len(s.Labels))
+		for j, l := range s.Labels {
+			labels[j] = &LabelPair{
+				Name:  l.Name,
+				Value: l.Value,
+			}
+		}
+
+		points := make([]*HeatmapPoint, len(s.Slots))
+		for j, slot := range s.Slots {
+			// Convert []int32 to []int64
+			counts := make([]int64, len(slot.Counts))
+			for k, c := range slot.Counts {
+				counts[k] = int64(c)
+			}
+
+			// Process exemplars if present
+			exemplars := make([]*Exemplar, len(slot.Exemplars))
+			for k, e := range slot.Exemplars {
+				// Convert API labels to our LabelPair type
+				exemplarLabels := make([]*LabelPair, len(e.Labels))
+				for i, l := range e.Labels {
+					exemplarLabels[i] = &LabelPair{
+						Name:  l.Name,
+						Value: l.Value,
+					}
+				}
+				exemplars[k] = &Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     e.Value,
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				}
+			}
+
+			points[j] = &HeatmapPoint{
+				Timestamp: slot.Timestamp,
+				YMin:      slot.YMin,
+				Counts:    counts,
+				Exemplars: exemplars,
+			}
+		}
+
+		series[i] = &HeatmapSeries{
+			Labels: labels,
+			Points: points,
+		}
+	}
+
+	return &HeatmapResponse{
+		Series: series,
+		Units:  getUnits(profileTypeID),
+	}, nil
+}
+
+func (c *PyroscopeClient) GetProfile(ctx context.Context, profileTypeID, labelSelector string, start, end int64, maxNodes *int64, profileIdSelector []string) (*ProfileResponse, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.GetProfile", trace.WithAttributes(attribute.String("profileTypeID", profileTypeID), attribute.String("labelSelector", labelSelector)))
 	defer span.End()
 	req := &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: profileTypeID,
-			LabelSelector: labelSelector,
-			Start:         start,
-			End:           end,
-			MaxNodes:      maxNodes,
+			ProfileTypeID:     profileTypeID,
+			LabelSelector:     labelSelector,
+			Start:             start,
+			End:               end,
+			MaxNodes:          maxNodes,
+			ProfileIdSelector: profileIdSelector,
 		},
 	}
 
@@ -265,11 +395,15 @@ func getUnits(profileTypeID string) string {
 func (c *PyroscopeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.pyroscope.LabelNames")
 	defer span.End()
-	resp, err := c.connectClient.LabelNames(ctx, connect.NewRequest(&typesv1.LabelNamesRequest{
+	req := connect.NewRequest(&typesv1.LabelNamesRequest{
 		Matchers: []string{labelSelector},
 		Start:    start,
 		End:      end,
-	}))
+	})
+	if config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(utf8LabelNamesFeatureToggle) {
+		setUTF8AcceptHeader(req.Header())
+	}
+	resp, err := c.connectClient.LabelNames(ctx, req)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -312,4 +446,16 @@ func (c *PyroscopeClient) LabelValues(ctx context.Context, label string, labelSe
 
 func isPrivateLabel(label string) bool {
 	return strings.HasPrefix(label, "__")
+}
+
+// setUTF8AcceptHeader appends "; allow-utf8-labelnames=true" to the Accept header,
+// signalling to the Pyroscope API that UTF-8 label names are supported.
+// If no Accept header is present, it sets "*/*; allow-utf8-labelnames=true".
+func setUTF8AcceptHeader(h http.Header) {
+	existing := h.Get("Accept")
+	if existing != "" {
+		h.Set("Accept", existing+"; allow-utf8-labelnames=true")
+	} else {
+		h.Set("Accept", "*/*; allow-utf8-labelnames=true")
+	}
 }

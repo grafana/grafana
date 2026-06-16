@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
 func (s *Server) Query(ctx context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
@@ -53,7 +54,7 @@ func (s *Server) query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 	}
 }
 
-func (s *Server) queryFolderParents(ctx context.Context, store *storeInfo, req *authzextv1.GetFolderParentsQuery) (*authzextv1.QueryResponse, error) {
+func (s *Server) queryFolderParents(ctx context.Context, store *zanzana.StoreInfo, req *authzextv1.GetFolderParentsQuery) (*authzextv1.QueryResponse, error) {
 	ctx, span := s.tracer.Start(ctx, "server.queryFolderParents")
 	defer span.End()
 

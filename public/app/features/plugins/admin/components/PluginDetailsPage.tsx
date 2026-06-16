@@ -3,7 +3,7 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
-import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -57,7 +57,10 @@ export function PluginDetailsPage({
   const { isLoading: isFetchDetailsLoading } = useFetchDetailsStatus();
   const styles = useStyles2(getStyles);
 
-  if (isFetchLoading || isFetchDetailsLoading) {
+  // Gate on `!plugin?.details` so post-action refetches (e.g. fetchDetails after install) keep
+  // the page mounted — otherwise the "Refresh the page" notice in PluginActions is lost. Initial
+  // fetches still hit the loader because tabs read from plugin.details and would flash empty.
+  if (isFetchLoading || (isFetchDetailsLoading && !plugin?.details)) {
     return (
       <Page
         navId={navId}
@@ -102,7 +105,7 @@ export function PluginDetailsPage({
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     alert: css({
       marginBottom: theme.spacing(2),

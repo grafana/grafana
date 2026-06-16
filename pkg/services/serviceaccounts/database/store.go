@@ -139,7 +139,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 }
 
 func ServiceAccountDeletions(dialect migrator.Dialect) []string {
-	deletes := []string{
+	deletes := []string{ //nolint:prealloc
 		"DELETE FROM api_key WHERE service_account_id = ?",
 	}
 	deletes = append(deletes, serviceAccountDeletions(dialect)...)

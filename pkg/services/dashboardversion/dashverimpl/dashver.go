@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/errgroup"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -35,14 +33,8 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/dashboardversion/dashverimpl")
 
-const (
-	maxVersionsToDeletePerBatch = 100
-	maxVersionDeletionBatches   = 50
-)
-
 type Service struct {
 	cfg       *setting.Cfg
-	store     store
 	dashSvc   dashboards.DashboardService
 	k8sclient dashboardclient.K8sHandlerWithFallback
 	features  featuremgmt.FeatureToggles
@@ -57,11 +49,7 @@ func ProvideService(
 	clientWithFallback dashboardclient.K8sHandlerWithFallback,
 ) dashver.Service {
 	return &Service{
-		cfg: cfg,
-		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-		},
+		cfg:       cfg,
 		features:  features,
 		k8sclient: clientWithFallback,
 		dashSvc:   dashboardService,
@@ -86,37 +74,6 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 	return s.transformUnstructuredToLegacyDTO(ctx, versionObj)
 }
 
-func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
-	versionsToKeep := s.cfg.DashboardVersionsToKeep
-	if versionsToKeep < 1 {
-		versionsToKeep = 1
-	}
-
-	for batch := 0; batch < maxVersionDeletionBatches; batch++ {
-		versionIdsToDelete, batchErr := s.store.GetBatch(ctx, cmd, maxVersionsToDeletePerBatch, versionsToKeep)
-		if batchErr != nil {
-			return batchErr
-		}
-
-		if len(versionIdsToDelete) < 1 {
-			return nil
-		}
-
-		deleted, err := s.store.DeleteBatch(ctx, cmd, versionIdsToDelete)
-		if err != nil {
-			return err
-		}
-
-		cmd.DeletedRows += deleted
-
-		if deleted < int64(maxVersionsToDeletePerBatch) {
-			break
-		}
-	}
-
-	return nil
-}
-
 // List all dashboard versions for the given dashboard ID.
 func (s *Service) List(
 	ctx context.Context, query *dashver.ListDashboardVersionsQuery,
@@ -138,6 +95,7 @@ func (s *Service) List(
 		query.OrgID,
 		query.DashboardUID,
 		int64(query.Limit),
+		int64(query.Start),
 		query.ContinueToken,
 	)
 	if err != nil {
@@ -169,23 +127,11 @@ func (s *Service) RestoreVersion(ctx context.Context, cmd *dashver.RestoreVersio
 		}
 		cmd.DashboardUID = u
 	}
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabled(ctx, featuremgmt.FlagKubernetesDashboards) ||
-		s.features.IsEnabled(ctx, featuremgmt.FlagDashboardNewLayouts) {
-		s.log.Debug("restoring dashboard version through k8s")
-		res, err := s.restoreVersionThroughK8s(ctx, cmd)
-		if err != nil {
-			s.log.Debug("error restoring dashboard version through k8s", "error", err)
-			return nil, tracing.Error(span, err)
-		}
 
-		return res, nil
-	}
-
-	s.log.Debug("restoring dashboard version through legacy")
-	res, err := s.restoreVersionLegacy(ctx, cmd)
+	s.log.Debug("restoring dashboard version through k8s")
+	res, err := s.restoreVersionThroughK8s(ctx, cmd)
 	if err != nil {
-		s.log.Debug("error restoring dashboard version through legacy", "error", err)
+		s.log.Debug("error restoring dashboard version through k8s", "error", err)
 		return nil, tracing.Error(span, err)
 	}
 
@@ -237,14 +183,26 @@ func (s *Service) getDashboardVersionThroughK8s(
 }
 
 func (s *Service) listDashboardVersionsThroughK8s(
-	ctx context.Context, orgID int64, dashboardUID string, limit int64, continueToken string,
+	ctx context.Context, orgID int64, dashboardUID string, limit int64, start int64, continueToken string,
 ) (*unstructured.UnstructuredList, error) {
 	labelSelector := utils.LabelKeyGetHistory + "=true"
 	fieldSelector := "metadata.name=" + dashboardUID
+
+	// We need to fetch (start + limit) items to be able to skip the first 'start' items
+	// and return 'limit' items after that offset.
+	//
+	// Note: This implementation fetches items in memory and then slices them, which works well
+	// for typical use cases (small offsets, < 100 versions per dashboard), but may be inefficient
+	// for dashboards with many versions (>1000) and large offset values.
+	// K8s doesn't support native offset pagination - it only supports token-based pagination
+	// (Limit + Continue). An alternative would be to skip pages using Continue tokens, but this
+	// adds complexity for minimal practical benefit given typical dashboard version counts.
+	totalToFetch := start + limit
+
 	out, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 		LabelSelector: labelSelector,
 		FieldSelector: fieldSelector,
-		Limit:         limit,
+		Limit:         totalToFetch,
 		Continue:      continueToken,
 	})
 	if err != nil {
@@ -258,20 +216,33 @@ func (s *Service) listDashboardVersionsThroughK8s(
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
-	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the limit or there are no more pages
+	// if k8s returns a continue token, we need to fetch the next page(s) until we either reach the total or there are no more pages
 	continueToken = out.GetContinue()
-	for (len(out.Items) < int(limit)) && (continueToken != "") {
+	for (len(out.Items) < int(totalToFetch)) && (continueToken != "") {
 		tempOut, err := s.k8sclient.List(ctx, orgID, v1.ListOptions{
 			LabelSelector: labelSelector,
 			FieldSelector: fieldSelector,
 			Continue:      continueToken,
-			Limit:         limit - int64(len(out.Items)),
+			Limit:         totalToFetch - int64(len(out.Items)),
 		})
 		if err != nil {
 			return nil, err
 		}
 		out.Items = append(out.Items, tempOut.Items...)
 		continueToken = tempOut.GetContinue()
+	}
+
+	// Apply the offset (start) by skipping the first 'start' items
+	if start > 0 && len(out.Items) > int(start) {
+		out.Items = out.Items[start:]
+	} else if start > 0 {
+		// If start is greater than or equal to the number of items, return empty list
+		out.Items = []unstructured.Unstructured{}
+	}
+
+	// Ensure we don't return more than 'limit' items after applying the offset
+	if int64(len(out.Items)) > limit {
+		out.Items = out.Items[:limit]
 	}
 
 	// Update the continue token on the response to reflect the actual position after all fetched items.
@@ -358,92 +329,6 @@ func (s *Service) restoreVersionThroughK8s(
 	res, err := s.dashSvc.UnstructuredToLegacyDashboard(ctx, updatedObj, cmd.Requester.GetOrgID())
 	if err != nil {
 		s.log.Debug("error converting dashboard to legacy dashboard", "error", err)
-		return nil, tracing.Error(span, err)
-	}
-
-	return res, nil
-}
-
-func (s *Service) restoreVersionLegacy(
-	ctx context.Context, cmd *dashver.RestoreVersionCommand,
-) (*dashboards.Dashboard, error) {
-	ctx, span := tracer.Start(ctx, "Service.restoreVersionLegacy")
-	defer span.End()
-
-	// We must use separate gctx context here, because it will be canceled, once the group is done.
-	// If we use the same ctx after the call to g.Wait, it will already be canceled at that point,
-	// causing all subsequent context-using operations to immediately return with "context canceled" error.
-	g, gctx := errgroup.WithContext(ctx)
-
-	var currentDash *dashboards.Dashboard
-	g.Go(func() error {
-		var err error
-		currentDash, err = s.dashSvc.GetDashboard(gctx, &dashboards.GetDashboardQuery{
-			UID:   cmd.DashboardUID,
-			OrgID: cmd.Requester.GetOrgID(),
-		})
-		if err != nil {
-			s.log.Debug("error getting dashboard", "error", err)
-		}
-		return err
-	})
-
-	var versionData *dashver.DashboardVersionDTO
-	g.Go(func() error {
-		versionObj, err := s.getDashboardVersionThroughK8s(gctx, cmd.Requester.GetOrgID(), cmd.DashboardUID, cmd.Version)
-		if err != nil {
-			s.log.Debug("error getting dashboard version", "error", err)
-			return err
-		}
-
-		versionData, err = s.transformUnstructuredToLegacyDTO(gctx, versionObj)
-		if err != nil {
-			s.log.Debug("error transforming dashboard version to DTO", "error", err)
-			return err
-		}
-
-		return nil
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, tracing.Error(span, err)
-	}
-
-	if compareDashboardData(versionData.Data.MustMap(), currentDash.Data.MustMap(), true) {
-		return nil, dashboards.ErrDashboardRestoreIdenticalVersion
-	}
-
-	userID, err := identity.UserIdentifier(cmd.Requester.GetID())
-	if err != nil {
-		s.log.Debug("error getting user identifier", "error", err)
-		return nil, tracing.Error(span, err)
-	}
-
-	// This logic has been copied from the API handler unmodified for the most part.
-	// There is some strange back-and-forth conversions between the two commands,
-	// that should ideally be cleaned up.
-	saveCmd := dashboards.SaveDashboardCommand{
-		RestoredFrom: versionData.Version,
-		OrgID:        cmd.Requester.GetOrgID(),
-		UserID:       userID,
-		Dashboard:    versionData.Data,
-		FolderUID:    currentDash.FolderUID,
-	}
-	saveCmd.Dashboard.Set("version", currentDash.Version)
-	saveCmd.Dashboard.Set("uid", currentDash.UID)
-	dash := saveCmd.GetDashboardModel()
-	dashItem := &dashboards.SaveDashboardDTO{
-		User:      cmd.Requester,
-		OrgID:     cmd.Requester.GetOrgID(),
-		UpdatedAt: time.Now(),
-		Message:   dashboardRestoreMessage(versionData.Version),
-		Overwrite: false,
-		Dashboard: dash,
-	}
-
-	res, err := s.dashSvc.SaveDashboard(ctx, dashItem, true)
-	if err != nil {
-		s.log.Debug("error saving dashboard", "error", err)
 		return nil, tracing.Error(span, err)
 	}
 

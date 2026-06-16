@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 )
@@ -23,6 +24,8 @@ func NewMemoryStore() Store {
 	}
 }
 
+func (m *memoryStore) Close() error { return nil }
+
 func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -30,7 +33,7 @@ func (m *memoryStore) Get(ctx context.Context, namespace, name string) (*annotat
 	key := namespace + "/" + name
 	anno, ok := m.data[key]
 	if !ok {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	return anno.DeepCopy(), nil
@@ -64,6 +67,28 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 			continue
 		}
 
+		if len(opts.Tags) > 0 {
+			if !matchTags(anno.Spec.Tags, opts.Tags, opts.TagsMatchAny) {
+				continue
+			}
+		}
+
+		if len(opts.Scopes) > 0 {
+			if !matchScopes(anno.Spec.Scopes, opts.Scopes, opts.ScopesMatchAny) {
+				continue
+			}
+		}
+
+		if opts.CreatedBy != "" && anno.GetCreatedBy() != opts.CreatedBy {
+			continue
+		}
+
+		if opts.LegacyID > 0 {
+			if getLegacyID(anno) != opts.LegacyID {
+				continue
+			}
+		}
+
 		result = append(result, *anno.DeepCopy())
 
 		if opts.Limit > 0 && int64(len(result)) >= opts.Limit {
@@ -72,6 +97,60 @@ func (m *memoryStore) List(ctx context.Context, namespace string, opts ListOptio
 	}
 
 	return &AnnotationList{Items: result}, nil
+}
+
+func matchTags(annoTags []string, filterTags []string, matchAny bool) bool {
+	if matchAny {
+		for _, filterTag := range filterTags {
+			for _, annoTag := range annoTags {
+				if annoTag == filterTag {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	for _, filterTag := range filterTags {
+		found := false
+		for _, annoTag := range annoTags {
+			if annoTag == filterTag {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func matchScopes(annoScopes []string, filterScopes []string, matchAny bool) bool {
+	if matchAny {
+		for _, filterScope := range filterScopes {
+			for _, annoScope := range annoScopes {
+				if annoScope == filterScope {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	for _, filterScope := range filterScopes {
+		found := false
+		for _, annoScope := range annoScopes {
+			if annoScope == filterScope {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
 }
 
 func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
@@ -85,10 +164,13 @@ func (m *memoryStore) Create(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; exists {
-		return nil, fmt.Errorf("annotation already exists")
+		return nil, fmt.Errorf("%w: %s", ErrAlreadyExists, key)
 	}
 
 	created := anno.DeepCopy()
+	if created.UID == "" {
+		created.UID = types.UID(created.Name)
+	}
 	if created.CreationTimestamp.IsZero() {
 		created.CreationTimestamp = metav1.Now()
 	}
@@ -105,7 +187,7 @@ func (m *memoryStore) Update(ctx context.Context, anno *annotationV0.Annotation)
 	key := anno.Namespace + "/" + anno.Name
 
 	if _, exists := m.data[key]; !exists {
-		return nil, fmt.Errorf("annotation not found")
+		return nil, ErrNotFound
 	}
 
 	updated := anno.DeepCopy()
@@ -121,7 +203,7 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 	key := namespace + "/" + name
 
 	if _, exists := m.data[key]; !exists {
-		return fmt.Errorf("annotation not found")
+		return ErrNotFound
 	}
 
 	delete(m.data, key)

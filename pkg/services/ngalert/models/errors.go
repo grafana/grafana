@@ -49,6 +49,14 @@ var (
 	ErrReceiverTestingInvalidIntegrationBase = errutil.BadRequest("alerting.notifications.receivers.testing.invalid").MustTemplate(
 		"Invalid request to test integration: {{ .Public.Reason }}",
 		errutil.WithPublic("Invalid request to test integration: {{ .Public.Reason }}"))
+
+	ErrInhibitionRuleExists   = errutil.BadRequest("alerting.notifications.inhibition-rules.nameExists", errutil.WithPublicMessage("Inhibition rule already exists."))
+	ErrInhibitionRuleInvalid  = errutil.BadRequest("alerting.notifications.inhibition-rules.invalidFormat").MustTemplate("Invalid format of the submitted inhibition rule", errutil.WithPublic("Inhibition rule is in invalid format. Correct the payload and try again."))
+	ErrInhibitionRuleNotFound = errutil.NotFound("alerting.notifications.inhibition-rules.notFound")
+	ErrInhibitionRuleOrigin   = errutil.BadRequest("alerting.notifications.inhibition-rules.originInvalid").MustTemplate(
+		"Inhibition Rule '{{ .Public.UID }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration.",
+		errutil.WithPublic("Inhibition Rule '{{ .Public.UID }}' cannot be {{ .Public.Action }}d because it belongs to an imported configuration. Finish the import of the configuration first."),
+	)
 )
 
 // Route errors.
@@ -58,10 +66,6 @@ var (
 	ErrRouteInvalidFormat = errutil.BadRequest("alerting.notifications.routes.invalidFormat").MustTemplate(
 		"Invalid format of the submitted route: {{.Public.Error}}.",
 		errutil.WithPublic("Invalid format of the submitted route: {{.Public.Error}}. Correct the payload and try again."),
-	)
-
-	ErrRouteConflictingMatchers = errutil.BadRequest("alerting.notifications.routes.conflictingMatchers").MustTemplate("Routing tree conflicts with the external configuration",
-		errutil.WithPublic("Cannot add\\update route: matchers conflict with an external routing tree merging matchers {{ .Public.Matchers }}, making the added\\updated route unreachable."),
 	)
 
 	ErrMultipleRoutesNotSupported = errutil.NotImplemented("alerting.notifications.routes.multipleNotSupported", errutil.WithPublicMessage(fmt.Sprintf("Multiple routes are not supported, see feature toggle %q", featuremgmt.FlagAlertingMultiplePolicies)))
@@ -118,14 +122,6 @@ func MakeErrRouteInvalidFormat(err error) error {
 	})
 }
 
-func MakeErrRouteConflictingMatchers(matchers string) error {
-	return ErrRouteConflictingMatchers.Build(errutil.TemplateData{
-		Public: map[string]any{
-			"Matchers": matchers,
-		},
-	})
-}
-
 func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) error {
 	data := errutil.TemplateData{
 		Public: map[string]interface{}{
@@ -139,4 +135,22 @@ func MakeErrRouteVersionConflict(name, currentVersion, desiredVersion string) er
 
 func MakeErrRouteOrigin(routeName, action string) error {
 	return ErrRouteOrigin.Build(errutil.TemplateData{Public: map[string]interface{}{"Action": action, "Name": routeName}})
+}
+
+// MakeErrInhibitionRuleInvalid creates an error with the ErrInhibitionRuleInvalid template
+func MakeErrInhibitionRuleInvalid(err error) error {
+	data := errutil.TemplateData{
+		Public: map[string]interface{}{
+			"Error": err.Error(),
+		},
+		Error: err,
+	}
+
+	return ErrInhibitionRuleInvalid.Build(data)
+}
+
+func MakeErrInhibitionRuleOrigin(uid, action string) error {
+	return ErrInhibitionRuleOrigin.Build(errutil.TemplateData{
+		Public: map[string]interface{}{"Action": action, "UID": uid},
+	})
 }

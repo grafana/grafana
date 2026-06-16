@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
-import { addMinutes, subDays, subHours } from 'date-fns';
-import { Location } from 'history';
+import { addMinutes } from 'date-fns/addMinutes';
+import { subDays } from 'date-fns/subDays';
+import { subHours } from 'date-fns/subHours';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
@@ -26,12 +27,13 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { contextSrv } from 'app/core/services/context_srv';
 import { ActiveTab as ContactPointsActiveTabs } from 'app/features/alerting/unified/components/contact-points/ContactPoints';
-import { TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
-import { AccessControlAction } from 'app/types/accessControl';
+import { type TestTemplateAlert } from 'app/plugins/datasource/alertmanager/types';
 
 import { AITemplateButtonComponent } from '../../enterprise-components/AI/AIGenTemplateButton/addAITemplateButton';
+import { isGranted } from '../../hooks/abilities/abilityUtils';
+import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
+import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
@@ -42,12 +44,13 @@ import { EditorColumnHeader } from '../EditorColumnHeader';
 import { ImportedResourceAlert, ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 import { Spacer } from '../Spacer';
 import {
-  NotificationTemplate,
+  type NotificationTemplate,
   useCreateNotificationTemplate,
   useNotificationTemplateMetadata,
   useUpdateNotificationTemplate,
   useValidateNotificationTemplate,
 } from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
 
 import { PayloadEditor } from './PayloadEditor';
 import { TemplateDataDocs } from './TemplateDataDocs';
@@ -71,8 +74,6 @@ interface Props {
   prefill?: TemplateFormValues;
   alertmanager: string;
 }
-
-export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
 /**
  * We're going for this type of layout, but with the ability to resize the columns.
@@ -106,10 +107,10 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const formRef = useRef<HTMLFormElement>(null);
   const isGrafanaAlertManager = alertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  // Check if user has permission to test templates
-  const canTestTemplates =
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsTemplatesTest) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingNotificationsWrite);
+  // Check if user has permission to test templates.
+  const canTestTemplates = isGranted(
+    useNotificationTemplateAbility({ action: NotificationTemplateAction.Test, context: originalTemplate })
+  );
 
   // Only show preview and payload panels if both conditions are met:
   // 1. It's a Grafana Alertmanager
@@ -129,6 +130,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
   const { provenance } = useNotificationTemplateMetadata(originalTemplate);
   const isProvisioned = isProvisionedResource(provenance);
   const isImported = provenance === KnownProvenance.ConvertedPrometheus;
+  const isLegacy = originalTemplate ? isLegacyTemplate(originalTemplate) : false;
   const originalTemplatePrefill: TemplateFormValues | undefined = originalTemplate
     ? { title: originalTemplate.title, content: originalTemplate.content }
     : undefined;
@@ -222,6 +224,18 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
           {isProvisioned && !isImported && (
             <Box grow={0}>
               <ProvisioningAlert resource={ProvisionedResource.Template} />
+            </Box>
+          )}
+          {isLegacy && (
+            <Box grow={0}>
+              <Alert
+                title={t('alerting.template-form.title-legacy', 'This template uses a legacy format')}
+                severity="warning"
+              >
+                <Trans i18nKey="alerting.template-form.body-legacy">
+                  This template was imported from a Mimir Alertmanager and uses a legacy format.
+                </Trans>
+              </Alert>
             </Box>
           )}
 
@@ -459,7 +473,7 @@ function TemplatingCheatSheet() {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const narrowScreenQuery = theme.breakpoints.down('md');
 
   return {

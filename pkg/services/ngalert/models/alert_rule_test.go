@@ -1,10 +1,13 @@
 package models
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -16,12 +19,46 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
+
+func TestGroupCursorEncodeDecode(t *testing.T) {
+	t.Run("encodes and decodes fullpath cursor", func(t *testing.T) {
+		in := GroupCursor{
+			FolderFullpath: "parent/child",
+			NamespaceUID:   "namespace-1",
+			RuleGroup:      "group-a",
+		}
+
+		token := EncodeGroupCursor(in)
+		out, err := DecodeGroupCursor(token)
+		require.NoError(t, err)
+		require.Equal(t, in, out)
+	})
+
+	t.Run("decodes legacy cursor format without fullpath", func(t *testing.T) {
+		legacy := struct {
+			NamespaceUID string `json:"n"`
+			RuleGroup    string `json:"g"`
+		}{
+			NamespaceUID: "namespace-legacy",
+			RuleGroup:    "group-legacy",
+		}
+
+		payload, err := json.Marshal(legacy)
+		require.NoError(t, err)
+		token := base64.URLEncoding.EncodeToString(payload)
+
+		decoded, err := DecodeGroupCursor(token)
+		require.NoError(t, err)
+		require.Equal(t, "", decoded.FolderFullpath)
+		require.Equal(t, legacy.NamespaceUID, decoded.NamespaceUID)
+		require.Equal(t, legacy.RuleGroup, decoded.RuleGroup)
+	})
+}
 
 func TestSortAlertRulesByGroupKeyAndIndex(t *testing.T) {
 	tc := []struct {
@@ -1041,9 +1078,10 @@ func TestAlertRuleCopy(t *testing.T) {
 // This test makes sure the default generator
 func TestGeneratorFillsAllFields(t *testing.T) {
 	ignoredFields := map[string]struct{}{
-		"ID":       {},
-		"IsPaused": {},
-		"Record":   {},
+		"ID":             {},
+		"IsPaused":       {},
+		"Record":         {},
+		"FolderFullpath": {},
 	}
 
 	tpe := reflect.TypeOf(AlertRule{})
@@ -1062,7 +1100,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1072,7 +1110,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
@@ -1086,6 +1124,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		"MissingSeriesEvalsToResolve": {},
 		"For":                         {},
 		"NotificationSettings":        {},
+		"FolderFullpath":              {},
 	}
 
 	tpe := reflect.TypeOf(AlertRule{})
@@ -1104,7 +1143,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1114,7 +1153,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		}
 	}
 
-	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", maps.Keys(fields))
+	require.FailNow(t, "AlertRule generator does not populate fields", "skipped fields: %v", slices.Collect(maps.Keys(fields)))
 }
 
 func TestValidateAlertRule(t *testing.T) {
@@ -1172,17 +1211,17 @@ func TestValidateAlertRule(t *testing.T) {
 			},
 			{
 				name:                        "should reject negative value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](-1),
+				missingSeriesEvalsToResolve: new(int64(-1)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should reject 0",
-				missingSeriesEvalsToResolve: util.Pointer[int64](0),
+				missingSeriesEvalsToResolve: new(int64(0)),
 				expectedErrorContains:       "field `missing_series_evals_to_resolve` must be greater than 0",
 			},
 			{
 				name:                        "should accept positive value",
-				missingSeriesEvalsToResolve: util.Pointer[int64](2),
+				missingSeriesEvalsToResolve: new(int64(2)),
 			},
 		}
 
@@ -1446,6 +1485,74 @@ func TestWithoutPrivateLabels(t *testing.T) {
 
 			require.Equal(t, tt.expected, result)
 			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
+		})
+	}
+}
+
+func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
+	const sloOrigin = PluginGrafanaSLOOrigin
+	const otherOrigin = "plugin/grafana-other-app"
+
+	tests := []struct {
+		name           string
+		labels         map[string]string
+		expectedOrigin string // empty means key should be absent
+	}{
+		{
+			name:           "no origin label",
+			labels:         map[string]string{},
+			expectedOrigin: "",
+		},
+		{
+			name:           "origin only",
+			labels:         map[string]string{PluginGrafanaOriginLabel: otherOrigin},
+			expectedOrigin: otherOrigin,
+		},
+		{
+			name: "origin with generic uid label",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    otherOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+			},
+			expectedOrigin: otherOrigin + "|generic-uid",
+		},
+		{
+			name: "SLO origin with slo uuid fallback",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  sloOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|slo-uuid-123",
+		},
+		{
+			name: "SLO origin with both labels — generic takes precedence",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    sloOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+				PluginGrafanaSLOUUIDLabel:   "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|generic-uid",
+		},
+		{
+			name: "non-SLO origin with slo uuid label — fallback not triggered",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  otherOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: otherOrigin,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := RuleGen.With(RuleMuts.WithLabels(tt.labels)).Generate()
+			condition := rule.GetEvalCondition()
+
+			if tt.expectedOrigin == "" {
+				require.NotContains(t, condition.Metadata, "Origin")
+			} else {
+				require.Equal(t, tt.expectedOrigin, condition.Metadata["Origin"])
+			}
 		})
 	}
 }

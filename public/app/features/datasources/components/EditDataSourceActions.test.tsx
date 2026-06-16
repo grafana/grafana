@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { PluginExtensionTypes, IconName } from '@grafana/data';
+import { PluginExtensionTypes, type IconName } from '@grafana/data';
 import { setPluginLinksHook, config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -34,6 +34,13 @@ jest.mock('./picker/DataSourcePicker', () => ({
   INTERACTION_ITEM: {
     TOGGLE_FAVORITE: 'toggle_favorite',
   },
+}));
+
+// Mock BuildDashboardButton to avoid needing a Redux Provider
+jest.mock('./BuildDashboardButton', () => ({
+  BuildDashboardButton: ({ dataSource }: { dataSource: { uid: string } }) => (
+    <a href={`dashboard/new-with-ds/${dataSource.uid}`}>Build a dashboard</a>
+  ),
 }));
 
 // Set default plugin links hook
@@ -98,8 +105,10 @@ const mockDataSource = getMockDataSource({
 
 // Mock useDataSource hook
 jest.mock('../state/hooks', () => ({
-  useDataSource: (uid: string) => (uid === 'not-found' ? {} : mockDataSource),
+  useDataSource: jest.fn((uid: string) => (uid === 'not-found' ? {} : mockDataSource)),
 }));
+
+const mockUseDataSource = jest.mocked(require('../state/hooks').useDataSource);
 
 describe('EditDataSourceActions', () => {
   beforeEach(() => {
@@ -126,6 +135,9 @@ describe('EditDataSourceActions', () => {
     // Default: feature toggle disabled, so no favorite hook
     mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
     config.featureToggles.favoriteDatasources = false;
+
+    // Reset default hook mocks
+    mockUseDataSource.mockImplementation((uid: string) => (uid === 'not-found' ? {} : mockDataSource));
   });
 
   describe('Core Actions', () => {

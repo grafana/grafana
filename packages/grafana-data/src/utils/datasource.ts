@@ -1,15 +1,15 @@
 import { isString } from 'lodash';
 
-import { DataSourceRef } from '@grafana/schema';
+import { type DataSourceRef } from '@grafana/schema';
 
-import { KeyValue } from '../types/data';
+import { type KeyValue } from '../types/data';
 import {
-  DataSourceInstanceSettings,
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
+  type DataSourceInstanceSettings,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type DataSourceSettings,
 } from '../types/datasource';
-import { SelectableValue } from '../types/select';
+import { type SelectableValue } from '../types/select';
 
 /**
  * Convert instance settings to a reference

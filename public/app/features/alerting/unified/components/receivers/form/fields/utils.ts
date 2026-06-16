@@ -15,7 +15,7 @@
  * "{{ define "templateName" }}" and "{{ end }}" delimiters.But it may also contain nested templates.
  */
 
-import { Template } from './TemplateSelector';
+import { type Template } from './TemplateSelector';
 
 export function parseTemplates(templatesString: string): Template[] {
   const templates: Record<string, Template> = {};

@@ -1,14 +1,14 @@
-import { from, Observable, of } from 'rxjs';
+import { from, type Observable, of } from 'rxjs';
 
 import {
-  AnnotationQuery,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  TestDataSourceResponse,
+  type AnnotationQuery,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type TestDataSourceResponse,
   DataSourceApi,
-  DataSourceJsonData,
-  DataSourcePluginMeta,
+  type DataSourceJsonData,
+  type DataSourcePluginMeta,
   toDataFrame,
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
@@ -16,7 +16,7 @@ import { GRAFANA_DATASOURCE_NAME } from 'app/features/alerting/unified/utils/dat
 
 import { GrafanaQueryType } from '../../../../plugins/datasource/grafana/types';
 
-export const PUBLIC_DATASOURCE = '-- Public --';
+const PUBLIC_DATASOURCE = '-- Public --';
 
 export class PublicAnnotationsDataSource extends DataSourceApi<DataQuery, DataSourceJsonData, {}> {
   constructor() {

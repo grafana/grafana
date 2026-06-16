@@ -8,7 +8,7 @@
 package v0alpha1
 
 import (
-	datav0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	datasourcev0alpha1 "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	commonv0alpha1 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -33,7 +33,6 @@ func (in *AnnotationActions) DeepCopy() *AnnotationActions {
 func (in *AnnotationPermission) DeepCopyInto(out *AnnotationPermission) {
 	*out = *in
 	out.Dashboard = in.Dashboard
-	out.Organization = in.Organization
 	return
 }
 
@@ -238,7 +237,7 @@ func (in *LibraryPanelSpec) DeepCopyInto(out *LibraryPanelSpec) {
 	in.FieldConfig.DeepCopyInto(&out.FieldConfig)
 	if in.Datasource != nil {
 		in, out := &in.Datasource, &out.Datasource
-		*out = new(datav0alpha1.DataSourceRef)
+		*out = new(datasourcev0alpha1.DataSourceRef)
 		**out = **in
 	}
 	out.GridPos = in.GridPos
@@ -251,7 +250,7 @@ func (in *LibraryPanelSpec) DeepCopyInto(out *LibraryPanelSpec) {
 	}
 	if in.Targets != nil {
 		in, out := &in.Targets, &out.Targets
-		*out = make([]datav0alpha1.DataQuery, len(*in))
+		*out = make([]datasourcev0alpha1.DataQuery, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

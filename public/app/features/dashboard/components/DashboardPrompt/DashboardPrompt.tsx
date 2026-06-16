@@ -1,15 +1,15 @@
-import * as H from 'history';
+import type * as H from 'history';
 import { find } from 'lodash';
 import { memo, useContext, useEffect, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
+import { type Dashboard } from '@grafana/schema';
 import { ModalsContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Prompt } from 'app/core/components/FormPrompt/Prompt';
 import { contextSrv } from 'app/core/services/context_srv';
 import { SaveLibraryPanelModal } from 'app/features/library-panels/components/SaveLibraryPanelModal/SaveLibraryPanelModal';
-import { PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
+import { type PanelModelWithLibraryPanel } from 'app/features/library-panels/types';
 import { DashboardSavedEvent } from 'app/types/events';
 import { useDispatch } from 'app/types/store';
 
@@ -17,7 +17,7 @@ import { DashboardModel } from '../../state/DashboardModel';
 import { discardPanelChanges, exitPanelEditor } from '../PanelEditor/state/actions';
 import { UnsavedChangesModal } from '../SaveDashboard/UnsavedChangesModal';
 
-export interface Props {
+interface Props {
   dashboard: DashboardModel;
 }
 
@@ -26,7 +26,7 @@ interface State {
   originalPath?: string;
 }
 
-export const DashboardPrompt = memo(({ dashboard }: Props) => {
+const DashboardPrompt = memo(({ dashboard }: Props) => {
   const [state, setState] = useState<State>({ original: null });
   const dispatch = useDispatch();
   const { original, originalPath } = state;

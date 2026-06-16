@@ -1,19 +1,20 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
 
 import {
-  DataFrame,
+  type DataFrame,
   EventBusSrv,
-  ExplorePanelsState,
+  type ExplorePanelsState,
+  FieldType,
   LoadingState,
   LogLevel,
-  LogRowModel,
+  type LogRowModel,
   toUtc,
   createDataFrame,
-  ExploreLogsPanelState,
-  DataQuery,
+  type ExploreLogsPanelState,
+  type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
@@ -41,6 +42,19 @@ jest.mock('app/core/utils/shortLinks', () => ({
   createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
 }));
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
@@ -65,6 +79,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false, logsPanelControls: false });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
@@ -181,6 +196,18 @@ describe('Logs', () => {
     ).toBeInTheDocument();
   });
 
+  it('should render an actionable message when frames have rows but no time field', () => {
+    const frameWithoutTime = createDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['log message 1', 'log message 2'] }],
+    });
+    setup({}, frameWithoutTime, []);
+
+    expect(
+      screen.getByText('The Logs visualization requires a time field. Add a time-typed column to your query.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no logs found\./i)).not.toBeInTheDocument();
+  });
+
   it('should render a load more button', () => {
     const scanningStarted = jest.fn();
     const store = configureStore({
@@ -191,6 +218,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -239,6 +267,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -289,6 +318,7 @@ describe('Logs', () => {
     render(
       <Provider store={store}>
         <Logs
+          logsFrames={undefined}
           exploreId={'left'}
           splitOpen={() => undefined}
           logsVolumeEnabled={true}
@@ -332,8 +362,9 @@ describe('Logs', () => {
 
   it('should flip the order', async () => {
     setup();
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    // Sort toggle is an IconButton; aria-label comes from the tooltip (newest-first → click for oldest-first).
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
     expect(logRows.length).toBe(3);
@@ -345,8 +376,8 @@ describe('Logs', () => {
   it('should sync the query direction when changing the order of loki queries', async () => {
     const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).toHaveBeenCalledWith({
       exploreId: 'left',
       queries: [{ ...query, direction: LokiQueryDirection.Forward }],
@@ -358,8 +389,8 @@ describe('Logs', () => {
     fakeChangeQueries.mockClear();
     const query = { refId: 'B' };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 
@@ -464,26 +495,21 @@ describe('Logs', () => {
   });
 
   describe('with table visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-      config.featureToggles.logsExploreTableVisualisation = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+      });
     });
 
     it('should show visualisation type radio group', () => {
       setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       expect(logsSection).toBeInTheDocument();
     });
 
     it('should change visualisation to table on toggle (loki)', async () => {
       setup({});
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');
@@ -506,11 +532,95 @@ describe('Logs', () => {
 
     it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');
       expect(table).toBeInTheDocument();
+    });
+  });
+  describe('with table panel visualisation', () => {
+    let origResizeObserver = global.ResizeObserver;
+    let originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
+
+    beforeEach(() => {
+      origResizeObserver = global.ResizeObserver;
+      originalLogsTablePanelNG = config.featureToggles.logsTablePanelNG;
+      config.featureToggles.logsTablePanelNG = false;
+      // Mock ResizeObserver
+      global.ResizeObserver = class ResizeObserver {
+        constructor(callback: unknown) {
+          // Store the callback
+          this.callback = callback;
+        }
+        callback: unknown;
+        observe() {
+          // Do nothing
+        }
+        unobserve() {
+          // Do nothing
+        }
+        disconnect() {
+          // Do nothing
+        }
+      };
+    });
+
+    afterEach(() => {
+      config.featureToggles.logsTablePanelNG = originalLogsTablePanelNG;
+      global.ResizeObserver = origResizeObserver;
+    });
+
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+        logsPanelControls: true,
+        logsTablePanelNG: false,
+      });
+    });
+
+    it('should show table', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'table',
+          },
+        },
+      });
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
+    });
+
+    it('should show logs', async () => {
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
+    });
+
+    it('should show logs when logsPanelControls is enabled and logsTablePanelNG is true', async () => {
+      config.featureToggles.logsTablePanelNG = true;
+
+      setup({
+        panelState: {
+          logs: {
+            visualisationType: 'logs',
+          },
+        },
+      });
+
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
+      const logs = await screen.findByTestId('logRows');
+      expect(logs).toBeInTheDocument();
+      expect(screen.getByText('log message 3')).toBeVisible();
     });
   });
 });

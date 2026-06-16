@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 )
 
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	opts           definition.MergeOpts
-	importedConfig *definition.PostableApiAlertingConfig
+	importedConfig *v1.PostableApiAlertingConfig
 }
 
 func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
@@ -27,20 +25,11 @@ func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
 	// support only one config for now
 	mimirCfg := rev.Config.ExtraConfigs[0]
 	result.identifier = mimirCfg.Identifier
-	opts := definition.MergeOpts{
-		DedupSuffix:     mimirCfg.Identifier,
-		SubtreeMatchers: mimirCfg.MergeMatchers,
-	}
-	if err := opts.Validate(); err != nil {
-		return result, fmt.Errorf("invalid merge options: %w", err)
-	}
-
 	mcfg, err := mimirCfg.GetAlertmanagerConfig()
 	if err != nil {
 		return result, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 	result.importedConfig = &mcfg
-	result.opts = opts
 	return result, nil
 }
 
@@ -49,7 +38,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 		return nil, nil
 	}
 	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _ := definition.MergeReceivers(original, e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	merged, _, _ := merge.Receivers(original, e.importedConfig.GetReceivers(), e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
@@ -71,7 +60,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
@@ -89,18 +78,18 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
 
 	// Merge to get the renames map (only renamed if name collision occurs)
-	_, renames := definition.MergeTimeIntervals(
+	_, renames, _ := merge.TimeIntervals(
 		grafanaMute,
 		grafanaTime,
 		importedMute,
 		importedTime,
-		e.opts.DedupSuffix,
+		e.identifier,
 	)
 
 	// Apply renames to imported intervals
-	result := make([]definitions.AmMuteTimeInterval, 0, len(importedTime)+len(importedMute))
+	result := make([]v1.MuteTimeInterval, 0, len(importedTime)+len(importedMute))
 
-	pushRenamed := func(mt definitions.AmMuteTimeInterval) {
+	pushRenamed := func(mt v1.MuteTimeInterval) {
 		if newName, renamed := renames[mt.Name]; renamed {
 			mt.Name = newName
 		}
@@ -108,7 +97,7 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]definitions.AmMuteTime
 	}
 
 	for _, ti := range importedTime {
-		pushRenamed(definitions.AmMuteTimeInterval(ti))
+		pushRenamed(v1.MuteTimeInterval(ti))
 	}
 
 	for _, mti := range importedMute {
@@ -124,8 +113,8 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		return nil
 	}
 	m := make(map[string]int)
-	receiverUseCounts([]*definitions.Route{e.importedConfig.Route}, m)
-	_, renames := definition.MergeReceivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.opts.DedupSuffix)
+	receiverUseCounts([]*v1.Route{e.importedConfig.Route}, m)
+	_, renames, _ := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -140,15 +129,39 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 		return nil, nil
 	}
 
-	renamed, err := definition.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.opts)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deduplicate imported config resources: %w", err)
-	}
+	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
 
-	definition.RenameResourceUsagesInRoutes([]*definition.Route{e.importedConfig.Route}, renamed)
+	merge.RenameResourceUsagesInRoutes([]*v1.Route{e.importedConfig.Route}, renamed)
 
 	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
+}
+
+func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.InhibitionRule, error) {
+	if e.importedConfig == nil {
+		return nil, nil
+	}
+
+	importedRules := e.importedConfig.InhibitRules
+	if len(importedRules) == 0 {
+		return nil, nil
+	}
+
+	// provide the existing inhibition rules from the config so the merged resources names are stable
+	merged, addedUIOs, err := merge.MergeInhibitionRules(e.rev.Config.InhibitionRules, importedRules, e.identifier)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[v1.ResourceUID]v1.InhibitionRule, len(addedUIOs))
+	for _, uio := range addedUIOs {
+		m, ok := merged[v1.ResourceUID(uio)]
+		if !ok {
+			continue
+		}
+		m.Provenance = models.ProvenanceConvertedPrometheus
+		result[v1.ResourceUID(uio)] = m
+	}
+	return result, nil
 }

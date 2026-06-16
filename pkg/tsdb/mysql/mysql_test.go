@@ -11,11 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/mysql/sqleng"
 )
 
@@ -75,7 +76,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		},
 	}
 
-	cfg := backend.NewGrafanaCfg(map[string]string{
+	cfg := config.NewGrafanaCfg(map[string]string{
 		backend.SQLMaxOpenConnsDefault:           "0",
 		backend.SQLMaxIdleConnsDefault:           "2",
 		backend.SQLMaxConnLifetimeSecondsDefault: "14400",
@@ -83,7 +84,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		backend.UserFacingDefaultError:           "",
 	})
 
-	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+	ctx := config.WithGrafanaConfig(context.Background(), cfg)
 
 	exe := &Service{
 		im:     datasource.NewInstanceManager(NewInstanceSettings(logger)),
@@ -177,7 +178,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			frameOne := frames[0]
 			require.Len(t, frames[0].Fields, 31)
 			require.Equal(t, int64(1), *(frameOne.Fields[0].At(0).(*int64)))
-			require.Equal(t, "abc", *frameOne.Fields[1].At(0).(*string))
+			require.Equal(t, "abc", frameOne.Fields[1].At(0).(string))
 			require.Equal(t, "def", *frameOne.Fields[2].At(0).(*string))
 			require.Equal(t, int32(1), frameOne.Fields[3].At(0).(int32))
 			require.Equal(t, int64(10), *(frameOne.Fields[4].At(0).(*int64)))
@@ -188,7 +189,7 @@ func TestIntegrationMySQL(t *testing.T) {
 			require.Equal(t, float64(3.33), *(frameOne.Fields[9].At(0).(*float64)))
 			require.WithinDuration(t, time.Now().UTC(), *frameOne.Fields[10].At(0).(*time.Time), 10*time.Second)
 			require.WithinDuration(t, time.Now(), *frameOne.Fields[11].At(0).(*time.Time), 10*time.Second)
-			require.Equal(t, "11:11:11", *frameOne.Fields[12].At(0).(*string))
+			require.Equal(t, "11:11:11", frameOne.Fields[12].At(0).(string))
 			require.Equal(t, int64(2018), *frameOne.Fields[13].At(0).(*int64))
 			require.Equal(t, string([]byte{1}), *frameOne.Fields[14].At(0).(*string))
 			require.Equal(t, "tinytext", *frameOne.Fields[15].At(0).(*string))
@@ -222,9 +223,9 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS metric (time DATETIME NULL, value BIGINT(20) NULL)")
 		require.NoError(t, err)
 
-		series := []*metric{}
 		firstRange := genTimeRangeByInterval(fromStart, 10*time.Minute, 10*time.Second)
 		secondRange := genTimeRangeByInterval(fromStart.Add(20*time.Minute), 10*time.Minute, 10*time.Second)
+		series := make([]*metric, 0, len(firstRange)+len(secondRange))
 
 		for _, t := range firstRange {
 			series = append(series, &metric{
@@ -488,7 +489,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 		var tInitial time.Time
 
-		series := []*metric_values{}
+		series := []*metric_values{} //nolint:prealloc
 		for i, t := range genTimeRangeByInterval(fromStart.Add(-30*time.Minute), 90*time.Minute, 5*time.Minute) {
 			if i == 0 {
 				tInitial = t
@@ -948,7 +949,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		_, err = db.Exec("CREATE TABLE IF NOT EXISTS event (time_sec BIGINT(20) NULL, description VARCHAR(255) NULL, tags VARCHAR(255) NULL)")
 		require.NoError(t, err)
 
-		events := []*event{}
+		events := []*event{} //nolint:prealloc
 		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),

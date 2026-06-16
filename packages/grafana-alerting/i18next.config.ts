@@ -8,5 +8,6 @@ export default defineConfig({
     defaultNS: 'grafana-alerting',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    warnOnConflicts: 'error',
   },
 });

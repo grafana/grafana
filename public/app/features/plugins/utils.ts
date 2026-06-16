@@ -1,9 +1,7 @@
-import { GrafanaPlugin, NavModel, NavModelItem, PanelPluginMeta, PluginType } from '@grafana/data';
-import { createMonitoringLogger } from '@grafana/runtime';
+import { type GrafanaPlugin, type NavModel, type NavModelItem, type PanelPluginMeta, PluginType } from '@grafana/data';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 
-import { importPanelPluginFromMeta } from './importPanelPlugin';
 import { pluginImporter } from './importer/pluginImporter';
-import { getPluginSettings } from './pluginSettings';
 
 export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
   const info = await getPluginSettings(pluginId);
@@ -16,7 +14,7 @@ export async function loadPlugin(pluginId: string): Promise<GrafanaPlugin> {
     result = await pluginImporter.importDataSource(info);
   }
   if (info.type === PluginType.panel) {
-    const panelPlugin = await importPanelPluginFromMeta(info as PanelPluginMeta);
+    const panelPlugin = await pluginImporter.importPanel(info as PanelPluginMeta);
     result = panelPlugin as unknown as GrafanaPlugin;
   }
   if (info.type === PluginType.renderer) {
@@ -83,5 +81,3 @@ export function buildPluginSectionNav(currentUrl: string, pluginNavSection?: Nav
 
   return { main: copiedPluginNavSection, node: activePage ?? copiedPluginNavSection };
 }
-
-export const pluginsLogger = createMonitoringLogger('features.plugins');

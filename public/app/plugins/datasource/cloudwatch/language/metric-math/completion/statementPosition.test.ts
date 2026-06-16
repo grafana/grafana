@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 import { afterFunctionQuery } from '../../../mocks/metric-math-test-data/afterFunctionQuery';
 import { secondArgAfterSearchQuery } from '../../../mocks/metric-math-test-data/secondArgAfterSearchQuery';

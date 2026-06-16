@@ -2,10 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -89,6 +92,13 @@ func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 		hs.log.Error("Failed to update short URL last seen at", "error", err)
 	}
 
+	// Safety net: validate stored path before redirecting to prevent open redirects
+	if err := shorturls.ValidateRelativePath(shortURL.Path); err != nil {
+		hs.log.Error("Short URL has invalid path, refusing to redirect", "path", shortURL.Path, "err", err)
+		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
+		return
+	}
+
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
 	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
 }
@@ -106,6 +116,7 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
 		}
+		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
 	}
 
 	return response.JSON(http.StatusOK, shortURL)
@@ -153,13 +164,14 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	uid := web.Params(c.Req)[":uid"]
 	if !util.IsValidShortUID(uid) {
 		c.Logger.Warn("Invalid short URL UID format", "uid", uid)
-		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
 		return
 	}
 
 	client, err := kubernetes.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
-		c.JsonApiErr(500, "client", err)
+		c.Logger.Error("Short URL redirection error: failed to create kubernetes client", "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -173,23 +185,65 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 		Do(c.Req.Context())
 
 	if err = result.Error(); err != nil {
-		c.JsonApiErr(500, "goto", err)
+		// Only emit a 308 when the 404 is from our API group. errors.IsNotFound
+		// matches any 404 from the apiserver, including infrastructure problems
+		// (CRD not registered, wrong API path) — those surface with
+		// Details.Group="meta.k8s.io" and must not be cached as a permanent
+		// redirect, or a client would keep bypassing a working link after the
+		// backend issue is fixed.
+		var statusErr *k8serrors.StatusError
+		if errors.As(err, &statusErr) && k8serrors.IsNotFound(err) &&
+			statusErr.ErrStatus.Details != nil &&
+			statusErr.ErrStatus.Details.Group == v1beta1.APIGroup {
+			c.Logger.Debug("Not redirecting short URL since not found", "uid", uid)
+			c.Redirect(sk8s.cfg.AppURL, http.StatusPermanentRedirect)
+			return
+		}
+		c.Logger.Error("Short URL redirection error: goto subresource call failed", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	body, err := result.Raw()
 	if err != nil {
-		c.JsonApiErr(500, "body", err)
+		c.Logger.Error("Short URL redirection error: failed to read response body", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 
 	value := &v1beta1.GetGotoResponse{}
 	if err = json.Unmarshal(body, value); err != nil {
-		c.JsonApiErr(500, "unmarshal", err)
+		c.Logger.Error("Short URL redirection error: failed to unmarshal response", "uid", uid, "err", err)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
 		return
 	}
 	if value.Url == "" {
-		c.JsonApiErr(500, "invalid", fmt.Errorf("expected url"))
+		c.Logger.Error("Short URL redirection error: empty url in response", "uid", uid)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+
+	// Safety net: validate the redirect URL is not an open redirect.
+	// The URL from the goto subresource is already an absolute URL (appURL + path),
+	// so we parse it and validate the path component.
+	parsedURL, parseErr := url.Parse(value.Url)
+	if parseErr != nil {
+		c.Logger.Error("Short URL redirection error: invalid redirect URL", "uid", uid, "url", value.Url, "err", parseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+	// Ensure the redirect URL is relative to this server by checking it has no scheme
+	// or its host matches what we expect. Since the goto handler constructs the URL
+	// as appURL + "/" + path, we just need to verify it's not pointing externally.
+	appParsed, appParseErr := url.Parse(sk8s.cfg.AppURL)
+	if appParseErr != nil || appParsed.Host == "" {
+		c.Logger.Error("Short URL redirection error: invalid app URL configuration", "err", appParseErr)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusTemporaryRedirect)
+		return
+	}
+	if parsedURL.Host != "" && !strings.EqualFold(parsedURL.Host, appParsed.Host) {
+		c.Logger.Error("Short URL redirect points to external host, refusing", "url", value.Url)
+		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return
 	}
 
@@ -230,6 +284,7 @@ func (sk8s *shortURLK8sHandler) createKubernetesShortURLsHandler(c *contextmodel
 //-----------------------------------------------------------------------------------------
 
 func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.ResourceInterface, bool) {
+	// NOTE! if you are copying this, consider using the hs.clientGenerator to get a typed client!
 	dyn, err := dynamic.NewForConfig(sk8s.clientConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		c.JsonApiErr(500, "client", err)
@@ -240,7 +295,7 @@ func (sk8s *shortURLK8sHandler) getClient(c *contextmodel.ReqContext) (dynamic.R
 
 func (sk8s *shortURLK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
 	//nolint:errorlint
-	statusError, ok := err.(*errors.StatusError)
+	statusError, ok := err.(*k8serrors.StatusError)
 	if ok {
 		c.JsonApiErr(int(statusError.Status().Code), statusError.Status().Message, err)
 		return

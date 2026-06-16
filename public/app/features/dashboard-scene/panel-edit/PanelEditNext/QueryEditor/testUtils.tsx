@@ -1,32 +1,29 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ReactElement } from 'react';
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { QueryGroupOptions } from 'app/types/query';
+import { type DataQuery } from '@grafana/schema';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { type QueryGroupOptions } from 'app/types/query';
 
 import { QueryEditorType } from '../constants';
 
 import {
-  DatasourceState,
-  PanelState,
-  QueryEditorActions,
-  QueryEditorUIState,
-  QueryOptionsState,
-  QueryRunnerState,
+  type AlertingState,
+  type DatasourceState,
+  type PanelState,
+  type QueryEditorActions,
   QueryEditorProvider,
-  AlertingState,
+  type QueryEditorTypeConfigState,
+  type QueryEditorUIState,
+  type QueryOptionsState,
+  type QueryRunnerState,
+  type StackedEditorState,
 } from './QueryEditorContext';
-import { Transformation } from './types';
-
-export function setup(jsx: React.ReactElement) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
+import { type Transformation } from './types';
 
 export const ds1SettingsMock: DataSourceInstanceSettings = {
   id: 1,
@@ -54,6 +51,32 @@ export const ds1SettingsMock: DataSourceInstanceSettings = {
   jsonData: {},
 };
 
+export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
+  id: 99,
+  uid: '-- Dashboard --',
+  name: '-- Dashboard --',
+  type: 'datasource',
+  meta: {
+    id: 'dashboard',
+    name: '-- Dashboard --',
+    type: PluginType.datasource,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  access: 'proxy',
+  readOnly: false,
+  jsonData: {},
+};
+
 export const mockActions: QueryEditorActions = {
   updateQueries: jest.fn(),
   updateSelectedQuery: jest.fn(),
@@ -69,6 +92,11 @@ export const mockActions: QueryEditorActions = {
   toggleTransformationDisabled: jest.fn(),
   updateTransformation: jest.fn(),
   reorderTransformations: jest.fn(),
+  bulkDeleteQueries: jest.fn(),
+  bulkToggleQueriesHide: jest.fn(),
+  bulkDeleteTransformations: jest.fn(),
+  bulkToggleTransformationsDisabled: jest.fn(),
+  bulkChangeDataSource: jest.fn(),
 };
 
 export const mockOptions: QueryGroupOptions = {
@@ -91,6 +119,21 @@ export const mockQueryOptionsState: QueryOptionsState = {
   focusedField: null,
 };
 
+/**
+ * Builds a fresh `StackedEditorState` for tests. Defaults to the natural "off" state; callers
+ * pass overrides for the fields they care about (e.g. `{ enabled: true, enter: jest.fn() }`).
+ * Each call returns new `jest.fn()` mocks so assertions don't leak between tests.
+ */
+export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): StackedEditorState {
+  return {
+    enabled: false,
+    enter: jest.fn(),
+    exit: jest.fn(),
+    syncActiveItem: jest.fn(),
+    ...overrides,
+  };
+}
+
 export const mockUIStateBase = {
   selectedQueryDsData: null,
   selectedQueryDsLoading: false,
@@ -104,6 +147,16 @@ export const mockUIStateBase = {
   pendingTransformation: null,
   setPendingTransformation: jest.fn(),
   finalizePendingTransformation: jest.fn(),
+  selectedQueryRefIds: [] satisfies readonly string[],
+  selectedTransformationIds: [] satisfies readonly string[],
+  multiSelectMode: false,
+  toggleQuerySelection: jest.fn(),
+  toggleTransformationSelection: jest.fn(),
+  clearSelection: jest.fn(),
+  setMultiSelectMode: jest.fn(),
+  stackedMode: makeStackedMode(),
+  confirmingDeleteActionKey: null,
+  setConfirmingDeleteActionKey: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -111,6 +164,36 @@ export const mockTransformToggles = {
   toggleHelp: jest.fn(),
   showDebug: false,
   toggleDebug: jest.fn(),
+};
+
+/**
+ * Mock typeConfig for tests - uses placeholder colors since tests don't need real theme values
+ */
+export const mockTypeConfig: QueryEditorTypeConfigState = {
+  [QueryEditorType.Query]: {
+    icon: 'database',
+    color: '#ff9800',
+    getLabel: () => 'Query',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Expression]: {
+    icon: 'calculator-alt',
+    color: '#9c27b0',
+    getLabel: () => 'Expression',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Transformation]: {
+    icon: 'process',
+    color: '#4caf50',
+    getLabel: () => 'Transformation',
+    deleteConfirmation: true,
+  },
+  [QueryEditorType.Alert]: {
+    icon: 'bell',
+    color: '#666',
+    getLabel: () => 'Alert',
+    deleteConfirmation: false,
+  },
 };
 
 interface CreateQueryEditorProviderOptions {
@@ -124,6 +207,36 @@ interface CreateQueryEditorProviderOptions {
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
   alertingState?: Partial<AlertingState>;
+}
+
+/**
+ * Wires the inline-delete confirmation state with real React state so tests exercise the same
+ * flow as production. Tests can still override `confirmingDeleteActionKey` / `setConfirmingDeleteActionKey`
+ * via `uiStateOverrides` for edge cases.
+ */
+function StatefulConfirmationProvider({
+  uiState,
+  children,
+  render,
+}: {
+  uiState: QueryEditorUIState;
+  children: ReactNode;
+  render: (uiState: QueryEditorUIState, children: ReactNode) => ReactElement;
+}) {
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(
+    uiState.confirmingDeleteActionKey ?? null
+  );
+
+  const wiredUiState = useMemo<QueryEditorUIState>(
+    () => ({
+      ...uiState,
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
+    }),
+    [uiState, confirmingDeleteActionKey]
+  );
+
+  return render(wiredUiState, children);
 }
 
 /**
@@ -159,8 +272,11 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
 
   const defaultQrState: QueryRunnerState = {
     queries,
-    data: undefined,
-    isLoading: false,
+    data: {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    },
     queryError: undefined,
     ...qrState,
   };
@@ -174,8 +290,15 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
+    selectedQueryRefIds: [],
+    selectedTransformationIds: [],
+    multiSelectMode: false,
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
+    setMultiSelectMode: jest.fn(),
+    toggleQuerySelection: jest.fn(),
+    toggleTransformationSelection: jest.fn(),
+    clearSelection: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,
@@ -189,8 +312,14 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingTransformation: null,
     setPendingTransformation: jest.fn(),
     finalizePendingTransformation: jest.fn(),
+    stackedMode: makeStackedMode(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
+    pendingSavedQuery: null,
+    setPendingSavedQuery: jest.fn(),
+    showVersionBanner: false,
+    confirmingDeleteActionKey: null,
+    setConfirmingDeleteActionKey: jest.fn(),
     ...uiStateOverrides,
   };
 
@@ -209,16 +338,26 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   return {
     user: userEvent.setup({ pointerEventsCheck: 0 }),
     ...render(
-      <QueryEditorProvider
-        dsState={defaultDsState}
-        qrState={defaultQrState}
-        panelState={defaultPanelState}
-        uiState={defaultUiState}
-        actions={defaultActions}
-        alertingState={defaultAlertingState}
-      >
-        {children}
-      </QueryEditorProvider>
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <StatefulConfirmationProvider
+          uiState={defaultUiState}
+          render={(wiredUiState, wiredChildren) => (
+            <QueryEditorProvider
+              dsState={defaultDsState}
+              qrState={defaultQrState}
+              panelState={defaultPanelState}
+              uiState={wiredUiState}
+              actions={defaultActions}
+              alertingState={defaultAlertingState}
+              typeConfig={mockTypeConfig}
+            >
+              {wiredChildren}
+            </QueryEditorProvider>
+          )}
+        >
+          {children}
+        </StatefulConfirmationProvider>
+      </OpenFeatureProvider>
     ),
   };
 }

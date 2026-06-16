@@ -1,8 +1,8 @@
-import { PluginExtension } from '@grafana/data';
+import { type PluginExtension } from '@grafana/data';
 
-import { AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
-import { RegistryType } from './registry/Registry';
+import { type AddedComponentRegistryItem } from './registry/AddedComponentsRegistry';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type RegistryType } from './registry/Registry';
 
 export type GetExtensionsOptions = {
   context?: object | Record<string | symbol, unknown>;
@@ -13,10 +13,3 @@ export type GetExtensionsOptions = {
 };
 
 export type GetExtensions = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };
-
-export type GetPluginExtensions<T = PluginExtension> = (options: {
-  extensionPointId: string;
-  // Make sure this object is properly memoized and not mutated.
-  context?: object | Record<string | symbol, unknown>;
-  limitPerPlugin?: number;
-}) => { extensions: T[] };

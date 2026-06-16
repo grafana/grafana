@@ -2,23 +2,23 @@ import { isNumber } from 'lodash';
 import { PureComponent, type JSX } from 'react';
 
 import {
-  DisplayProcessor,
-  DisplayValue,
-  DisplayValueAlignmentFactors,
-  FieldConfig,
-  FieldDisplay,
+  type DisplayProcessor,
+  type DisplayValue,
+  type DisplayValueAlignmentFactors,
+  type FieldConfig,
+  type FieldDisplay,
   getDisplayValueAlignmentFactors,
   getFieldDisplayValues,
-  PanelProps,
+  type PanelProps,
   VizOrientation,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { BarGaugeSizing } from '@grafana/schema';
-import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
-import { DataLinksContextMenuApi } from '@grafana/ui/internal';
+import { BarGauge, DataLinksContextMenu, VizLayout, VizRepeater, type VizRepeaterRenderValueProps } from '@grafana/ui';
+import { type DataLinksContextMenuApi } from '@grafana/ui/internal';
 
 import { BarGaugeLegend } from './BarGaugeLegend';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultOptions, type Options } from './panelcfg.gen';
 
 export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
   renderComponent = (
@@ -170,7 +170,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
 }
 export type BarGaugePanelProps = PanelProps<Options>;
 
-export function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
+function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
   if (count === 1 && !field.displayName) {
     return {
       ...display,

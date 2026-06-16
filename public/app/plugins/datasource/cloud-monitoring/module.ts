@@ -11,7 +11,7 @@ import { QueryType } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackCloudMonitoringDashboardLoaded } from './tracking';
-import { CloudMonitoringQuery } from './types/query';
+import { type CloudMonitoringQuery } from './types/query';
 
 export const plugin = new DataSourcePlugin<CloudMonitoringDatasource, CloudMonitoringQuery>(CloudMonitoringDatasource)
   .setQueryEditorHelp(CloudMonitoringCheatSheet)

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -7,10 +7,14 @@ import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui'
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';
-import { GrafanaRuleDefinition, RulerGrafanaRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  type GrafanaRuleDefinition,
+  type RulerGrafanaRuleDTO,
+  type RulerRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { useAddRuleToRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
-import { RuleFormValues } from '../../../types/rule-form';
+import { type RuleFormValues } from '../../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { grafanaRuleDtoToFormValues } from '../../../utils/rule-form';
@@ -70,7 +74,7 @@ export const ConfirmRestoreDeletedRuleModal = ({
       title={title}
       confirmText={confirmText}
       modalClass={styles.modal}
-      confirmButtonVariant={!error ? 'destructive' : 'primary'}
+      confirmVariant={!error ? 'destructive' : 'primary'}
       body={
         <Stack direction="column" gap={2}>
           <Trans i18nKey="alerting.deleted-rules.restore-modal.body">
@@ -128,7 +132,7 @@ const getStyles = () => ({
   }),
 });
 
-export function useRestoreDeletedRule() {
+function useRestoreDeletedRule() {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
 
   return useAsync(async (deletedRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {

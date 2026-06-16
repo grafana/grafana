@@ -1,12 +1,20 @@
-import { LogRowModel } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { type LogRowModel } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
+import { SceneTimeRange } from '@grafana/scenes';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
-import { ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
+import { type ShortURL } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/shorturl_object_gen';
 import { defaultSpec } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.spec.gen';
 import { defaultStatus } from '../../../../apps/shorturl/plugin/src/generated/shorturl/v1beta1/types.status.gen';
 
-import { createShortLink, createAndCopyShortLink, getLogsPermalinkRange, buildShortUrl } from './shortLinks';
+import {
+  createShortLink,
+  createAndCopyShortLink,
+  createDashboardShareUrl,
+  getLogsPermalinkRange,
+  buildShortUrl,
+} from './shortLinks';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -75,6 +83,37 @@ describe('createShortLink using k8s API', () => {
     config.featureToggles.useKubernetesShortURLsAPI = true;
     const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
     expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
+  });
+});
+
+describe('createShortLink retries after failure', () => {
+  it('retries after k8s API failure instead of returning cached rejection', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+
+    config.featureToggles.useKubernetesShortURLsAPI = true;
+
+    const mockLocation = { protocol: 'https:', host: 'www.test.grafana.com' };
+    Object.defineProperty(window, 'location', { value: mockLocation, writable: true });
+
+    const { dispatch } = require('app/store/store');
+    // dispatch is called for: 1) initiate (fail), 2) notifyApp (error), 3) initiate (success)
+    dispatch
+      .mockResolvedValueOnce({ error: { status: 504, data: { message: 'gateway timeout' } } })
+      .mockReturnValueOnce(undefined) // notifyApp error notification
+      .mockResolvedValueOnce({
+        data: {
+          metadata: { name: 'retried123', namespace: '1' },
+        },
+      });
+
+    const path = 'd/test/dashboard?orgId=1';
+
+    // First call should fail
+    await expect(createShortLink(path)).rejects.toThrow();
+
+    // Second call with same path should retry, not return cached rejection
+    const result = await createShortLink(path);
+    expect(result).toBe('https://www.test.grafana.com/goto/retried123?orgId=1');
   });
 });
 
@@ -158,6 +197,67 @@ describe('buildShortUrl', () => {
 
     const result = buildShortUrl(shortUrl);
     expect(result).toBe('https://grafana.example.com/grafana/goto/xyz789?orgId=org-1');
+  });
+});
+
+describe('createDashboardShareUrl', () => {
+  const opts = { useAbsoluteTimeRange: false, theme: 'current', useShortUrl: true };
+
+  it('uses snapshotKey as the URL identifier for snapshot dashboards', () => {
+    locationService.push('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true, snapshotKey: 'the-real-snapshot-key' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toContain('/dashboard/snapshot/the-real-snapshot-key');
+    expect(url).not.toContain('original-dashboard-uid');
+  });
+
+  it('does not append slug to snapshot URLs', () => {
+    locationService.push('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true, snapshotKey: 'the-real-snapshot-key', slug: 'some-slug' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/dashboard/snapshot/the-real-snapshot-key?orgId=1');
+  });
+
+  it('falls back to uid if snapshotKey is missing', () => {
+    locationService.push('/dashboard/snapshot/some-key?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: true },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/dashboard/snapshot/original-dashboard-uid?orgId=1');
+  });
+
+  it('uses uid and slug for regular dashboards', () => {
+    locationService.push('/d/original-dashboard-uid/my-dashboard?orgId=1');
+
+    const dashboard = new DashboardScene({
+      uid: 'original-dashboard-uid',
+      meta: { isSnapshot: false, slug: 'my-dashboard' },
+      $timeRange: new SceneTimeRange({}),
+    });
+
+    const url = createDashboardShareUrl(dashboard, opts);
+
+    expect(url).toBe('/d/original-dashboard-uid/my-dashboard?orgId=1');
   });
 });
 

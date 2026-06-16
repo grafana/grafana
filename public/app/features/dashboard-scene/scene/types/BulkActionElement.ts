@@ -1,4 +1,6 @@
-export interface BulkActionElement {
+import { type EditableDashboardElement } from './EditableDashboardElement';
+
+export interface BulkActionElement extends EditableDashboardElement {
   /**
    * Called when the element should be deleted
    */

@@ -1,13 +1,12 @@
-import { toLower, isEmpty, isString } from 'lodash';
 import { useMemo, useCallback } from 'react';
 
 import {
-  SelectableValue,
+  type SelectableValue,
   getTimeZoneInfo,
-  TimeZoneInfo,
+  type TimeZoneInfo,
   getTimeZoneGroups,
-  GroupedTimeZones,
-  TimeZone,
+  type GroupedTimeZones,
+  type TimeZone,
   InternalTimeZones,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -16,7 +15,8 @@ import { Select } from '../Select/Select';
 
 import { TimeZoneGroup } from './TimeZonePicker/TimeZoneGroup';
 import { formatUtcOffset } from './TimeZonePicker/TimeZoneOffset';
-import { CompactTimeZoneOption, WideTimeZoneOption, SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import { CompactTimeZoneOption, WideTimeZoneOption, type SelectableZone } from './TimeZonePicker/TimeZoneOption';
+import { getTimeZoneTitle } from './TimeZonePicker/TimeZoneTitle';
 
 export interface Props {
   onChange: (timeZone?: TimeZone) => void;
@@ -45,7 +45,7 @@ export const TimeZonePicker = (props: Props) => {
     disabled = false,
     inputId,
     menuShouldPortal = true,
-    openMenuOnFocus = true,
+    openMenuOnFocus = false,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);
   const selected = useSelectedTimeZone(groupedTimeZones, value);
@@ -54,7 +54,7 @@ export const TimeZonePicker = (props: Props) => {
 
   const onChangeTz = useCallback(
     (selectable: SelectableValue<string>) => {
-      if (!selectable || !isString(selectable.value)) {
+      if (!selectable || typeof selectable.value !== 'string') {
         return onChange(value);
       }
       onChange(selectable.value);
@@ -98,7 +98,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
           return options;
         }
 
-        const name = info.name.replace(/_/g, ' ');
+        const name = getTimeZoneTitle(info);
 
         options.push({
           label: name,
@@ -128,20 +128,20 @@ const useSelectedTimeZone = (
       return undefined;
     }
 
-    const tz = toLower(timeZone);
+    const tz = timeZone?.toLowerCase() ?? '';
 
     const group = groups.find((group) => {
       if (!group.label) {
         return isInternal(tz);
       }
-      return tz.startsWith(toLower(group.label));
+      return tz.startsWith(group.label.toLowerCase());
     });
 
     return group?.options.find((option) => {
-      if (isEmpty(tz)) {
+      if (tz === '') {
         return option.value === InternalTimeZones.default;
       }
-      return toLower(option.value) === tz;
+      return option.value?.toLowerCase() === tz;
     });
   }, [groups, timeZone]);
 };
@@ -163,24 +163,24 @@ const useFilterBySearchIndex = () => {
     if (!searchQuery || !option.data || !option.data.searchIndex) {
       return true;
     }
-    return option.data.searchIndex.indexOf(toLower(searchQuery)) > -1;
+    return option.data.searchIndex.indexOf(searchQuery.toLowerCase()) > -1;
   }, []);
 };
 
 const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): string => {
   const parts: string[] = [
-    toLower(info.zone),
-    toLower(info.abbreviation),
-    toLower(formatUtcOffset(timestamp, info.zone)),
+    info.zone.toLowerCase(),
+    info.abbreviation.toLowerCase(),
+    formatUtcOffset(timestamp, info.zone).toLowerCase(),
   ];
 
   if (label !== info.zone) {
-    parts.push(toLower(label));
+    parts.push(label.toLowerCase());
   }
 
   for (const country of info.countries) {
-    parts.push(toLower(country.name));
-    parts.push(toLower(country.code));
+    parts.push(country.name.toLowerCase());
+    parts.push(country.code.toLowerCase());
   }
 
   return parts.join('|');

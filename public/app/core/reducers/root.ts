@@ -1,8 +1,11 @@
-import { ReducersMapObject } from '@reduxjs/toolkit';
-import { AnyAction, combineReducers } from 'redux';
+import { type ReducersMapObject } from '@reduxjs/toolkit';
+import { type AnyAction, combineReducers } from 'redux';
 
+import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
+import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
+import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
+import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
-import { generatedAPI as legacyAPI } from '@grafana/api-clients/rtkq/legacy';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
@@ -16,7 +19,6 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
 import invitesReducers from 'app/features/invites/state/reducers';
-import importDashboardReducers from 'app/features/manage-dashboards/import/legacy/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
@@ -42,13 +44,15 @@ const rootReducers = {
   ...organizationReducers,
   ...browseDashboardsReducers,
   ...ldapReducers,
-  ...importDashboardReducers,
   ...panelEditorReducers,
   ...panelsReducers,
   ...templatingReducers,
   ...supportBundlesReducer,
   ...authConfigReducers,
   [legacyAPI.reducerPath]: legacyAPI.reducer,
+  [migrateToCloudAPI.reducerPath]: migrateToCloudAPI.reducer,
+  [preferencesUserAPI.reducerPath]: preferencesUserAPI.reducer,
+  [legacyUserAPI.reducerPath]: legacyUserAPI.reducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,

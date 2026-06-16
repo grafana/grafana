@@ -4,305 +4,231 @@ import userEvent from '@testing-library/user-event';
 import {
   applyFieldOverrides,
   createTheme,
-  DataFrame,
-  DataLink,
-  EventBus,
+  type DataFrame,
+  type DataLink,
+  type EventBus,
   FieldType,
-  LinkModel,
+  type LinkModel,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
-import { PanelContext, PanelContextProvider } from '../../PanelChrome';
+import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
 
-// Create a basic data frame for testing
-const createBasicDataFrame = (): DataFrame => {
-  const frame = toDataFrame({
-    name: 'TestData',
-    length: 3,
-    fields: [
-      {
-        name: 'Column A',
-        type: FieldType.string,
-        values: ['A1', 'A2', 'A3'],
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
-        },
-        // Add display function
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        // Add state and getLinks
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Column B',
-        type: FieldType.number,
-        values: [1, 2, 3],
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
-        },
-        // Add display function
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        // Add state and getLinks
-        state: {},
-        getLinks: () => [],
-      },
-    ],
-  });
-
-  // The applyFieldOverrides should add display processors, but we'll keep our explicit ones too
-  return applyFieldOverrides({
+// Shared helpers for test data frame construction
+const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
+  applyFieldOverrides({
     data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
+    fieldConfig: { defaults: {}, overrides: [] },
     replaceVariables: (value) => value,
     timeZone: 'utc',
     theme: createTheme(),
   })[0];
+
+const stdCellConfig = { custom: { width: 150, cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false } } };
+
+const makeDisplay = (toNumeric: (v: unknown) => number) => (value: unknown) => ({
+  text: String(value),
+  numeric: toNumeric(value),
+  color: undefined,
+  prefix: undefined,
+  suffix: undefined,
+});
+
+const displayString = makeDisplay(() => 0);
+const displayNumber = makeDisplay((v) => Number(v));
+const stdField = { state: {}, getLinks: () => [] };
+
+const createBasicDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createEmptyDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'EmptyData',
+      length: 0,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: [],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedData',
+      fields: [
+        {
+          name: 'Nested hidden',
+          type: FieldType.string,
+          values: ['secret1', 'secret2'],
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        { name: 'Nested A', type: FieldType.string, values: ['N1', 'N2'], config: { custom: {} } },
+        { name: 'Nested B', type: FieldType.number, values: [10, 20], config: { custom: {} } },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 2,
+      meta,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
+        { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
+        { name: '__depth', type: FieldType.number, values: [0, 0], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [0, 1], config: { custom: { hideFrom: { viz: true } } } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame], [processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
 };
 
-// Create a nested data frame for testing expandable rows
-const createNestedDataFrame = (): DataFrame => {
-  const nestedFrame = toDataFrame({
-    name: 'NestedData',
-    fields: [
-      {
-        name: 'Nested hidden',
-        type: FieldType.string,
-        values: ['secret1', 'secret2'],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: 'Nested A',
-        type: FieldType.string,
-        values: ['N1', 'N2'],
-        config: { custom: {} },
-      },
-      {
-        name: 'Nested B',
-        type: FieldType.number,
-        values: [10, 20],
-        config: { custom: {} },
-      },
-    ],
-  });
+/**
+ * Outer table has NO footer reducers; nested frame fields DO have footer reducers.
+ * Used to verify that the nested table shows its own footer independent of the outer table.
+ */
+const createNestedDataFrameWithFooter = (): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedWithFooter',
+      fields: [
+        {
+          name: 'Nested A',
+          type: FieldType.string,
+          values: ['N1', 'N2'],
+          config: { custom: { footer: { reducers: ['count'] } } },
+        },
+        {
+          name: 'Nested B',
+          type: FieldType.number,
+          values: [10, 20],
+          config: { custom: { footer: { reducers: ['sum'] } } },
+        },
+      ],
+    })
+  );
 
-  const processedNestedFrame = applyFieldOverrides({
-    data: [nestedFrame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-
-  const frame = toDataFrame({
-    name: 'TestData',
-    length: 2,
-    fields: [
-      {
-        name: 'Column A',
-        type: FieldType.string,
-        values: ['A1', 'A2'],
-        config: { custom: {} },
-      },
-      {
-        name: 'Column B',
-        type: FieldType.number,
-        values: [1, 2],
-        config: { custom: {} },
-      },
-      // Add special fields for nested table functionality
-      {
-        name: '__depth',
-        type: FieldType.number,
-        values: [0, 0],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: '__index',
-        type: FieldType.number,
-        values: [0, 1],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: '__nestedFrames',
-        type: FieldType.nestedFrames,
-        values: [[processedNestedFrame], [processedNestedFrame]],
-        config: { custom: {} },
-      },
-    ],
-  });
-
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 1,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1'], config: { custom: {} } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
 };
 
-// Create a data frame specifically for testing multi-column sorting
-const createSortingTestDataFrame = (length = 5): DataFrame => {
-  const frame = toDataFrame({
-    name: 'SortingTestData',
-    length: length,
-    fields: [
-      {
-        name: 'Category',
-        type: FieldType.string,
-        values: ['A', 'B', 'A', 'B', 'A', 'C'].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+const createSortingTestDataFrame = (length = 5): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'SortingTestData',
+      length,
+      fields: [
+        {
+          name: 'Category',
+          type: FieldType.string,
+          values: ['A', 'B', 'A', 'B', 'A', 'C'].slice(0, length),
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Value',
-        type: FieldType.number,
-        values: [5, 3, 1, 4, 2, 3].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [5, 3, 1, 4, 2, 3].slice(0, length),
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Name',
-        type: FieldType.string,
-        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].slice(0, length),
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-    ],
-  });
+      ],
+    })
+  );
 
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-};
-
-const createTimeDataFrame = (): DataFrame => {
-  const frame = toDataFrame({
-    name: 'TimeTestData',
-    length: 3,
-    fields: [
-      {
-        name: 'Time',
-        type: FieldType.time,
-        values: [
-          new Date('2024-03-20T10:00:00Z').getTime(),
-          new Date('2024-03-20T10:01:00Z').getTime(),
-          new Date('2024-03-20T10:02:00Z').getTime(),
-        ],
-        config: { custom: {} },
-      },
-      {
-        name: 'Value',
-        type: FieldType.number,
-        values: [1, 2, 3],
-        config: { custom: {} },
-      },
-    ],
-  });
-
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-};
+const createTimeDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TimeTestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [
+            new Date('2024-03-20T10:00:00Z').getTime(),
+            new Date('2024-03-20T10:01:00Z').getTime(),
+            new Date('2024-03-20T10:02:00Z').getTime(),
+          ],
+          config: { custom: {} },
+        },
+        { name: 'Value', type: FieldType.number, values: [1, 2, 3], config: { custom: {} } },
+      ],
+    })
+  );
 
 describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -605,6 +531,220 @@ describe('TableNG', () => {
         expect(expandedRow).toBeInTheDocument();
       }
     });
+
+    it('auto-expands all rows when expandAllRows is set in frame meta', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createNestedDataFrame({ custom: { expandAllRows: true } })}
+          width={800}
+          height={600}
+        />
+      );
+
+      const expandedRows = container.querySelectorAll('[aria-expanded="true"]');
+      expect(expandedRows.length).toBeGreaterThan(0);
+
+      ['N1', 'N2'].forEach((text) => {
+        expect(screen.getAllByText(text)).toHaveLength(2);
+      });
+    });
+  });
+
+  describe('Nested table footer', () => {
+    it('shows the nested footer when nested fields have footer reducers, even when the top-level table has no footer', async () => {
+      // The outer table has no footer reducers. The nested frame fields do.
+      // Before the fix, bottomSummaryRows was driven by the top-level hasFooter, so the nested
+      // footer never rendered. After the fix, each table controls its own footer independently.
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      // Before expansion: no footer row should be visible at all
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+
+      // After expansion: the nested DataGrid should show its own footer row
+      const footerRow = container.querySelector('.rdg-summary-row');
+      expect(footerRow).toBeInTheDocument();
+    });
+
+    it('nested footer displays values computed from the nested fields (sum of Nested B = 30)', async () => {
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // The nested Nested B column has values [10, 20]; sum = 30
+      expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    it('does not show a footer row in the nested table when nested fields have no footer reducers', async () => {
+      // Uses the plain nested frame (no footer reducers on nested fields)
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // No summary row should appear — nested fields have no footer reducers
+      expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
+    });
+
+    it('shows independent footer rows for both top-level and nested tables when both have footer reducers', async () => {
+      // Add footer reducers to the top-level fields as well
+      const baseFrame = createNestedDataFrameWithFooter();
+      const frameWithTopLevelFooter = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: { ...field.config.custom, footer: { reducers: ['count'] } },
+          },
+        })),
+      };
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={frameWithTopLevelFooter} width={800} height={600} />
+      );
+
+      // Top-level footer is visible before expansion
+      expect(container.querySelector('.rdg-summary-row')).toBeInTheDocument();
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // Both the top-level and nested summary rows should be present
+      const footerRows = container.querySelectorAll('.rdg-summary-row');
+      expect(footerRows.length).toBeGreaterThanOrEqual(2);
+
+      // The nested footer value (sum of Nested B = 30) must be visible
+      expect(screen.getByText('30')).toBeInTheDocument();
+    });
+
+    it('preserves expanded state by stable key when row order changes on re-render', async () => {
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { stableRowKey: 'key-A', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { stableRowKey: 'key-B', noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { 'key-A': nestedA, 'key-B': nestedB };
+        const labels = { 'key-A': 'Row A', 'key-B': 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'StableTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
+      );
+
+      // Expand the first row (key-A is at index 0)
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Re-render with reversed row order: key-B is now at index 0, key-A at index 1
+      rerender(
+        <TableNG enableVirtualization={false} data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />
+      );
+
+      // key-A is now at index 1 but should still be expanded via its stable key
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      // key-B moved to index 0 but was never expanded, so its content should not appear
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+    });
+
+    it('falls back to row index for expansion state when stableRowKey is unset', async () => {
+      // Nested subframes carry no meta.custom.stableRowKey, so getStableRowKey returns String(rowIdx).
+      // Expansion is therefore keyed by position: when rows are reordered, the expanded slot
+      // stays at the same index and ends up showing whichever row data now sits there.
+      const makeIndexedFrame = (order: Array<'A' | 'B'>): DataFrame => {
+        const nestedA = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-A'], config: {} }],
+        };
+        const nestedB = {
+          meta: { custom: { noHeader: true } },
+          length: 1,
+          fields: [{ name: 'Info', type: FieldType.string, values: ['nested-B'], config: {} }],
+        };
+        const nested = { A: nestedA, B: nestedB };
+        const labels = { A: 'Row A', B: 'Row B' };
+
+        return withFieldOverrides(
+          toDataFrame({
+            name: 'IndexedTest',
+            length: 2,
+            fields: [
+              {
+                name: 'Label',
+                type: FieldType.string,
+                values: order.map((k) => labels[k]),
+                config: {},
+              },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: order.map((k) => [nested[k]]),
+                config: {},
+              },
+            ],
+          })
+        );
+      };
+
+      const { rerender, container } = render(
+        <TableNG enableVirtualization={false} data={makeIndexedFrame(['A', 'B'])} width={800} height={600} />
+      );
+
+      // Expand the row at index 0 (A's subframe).
+      const expandButton = container.querySelector('[aria-label="Expand row"]');
+      expect(expandButton).toBeInTheDocument();
+      await user.click(expandButton!);
+      expect(screen.getByText('nested-A')).toBeInTheDocument();
+      expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
+
+      // Reverse the row order. Without a stable key, expansion sticks to index 0,
+      // which now holds B's subframe.
+      rerender(<TableNG enableVirtualization={false} data={makeIndexedFrame(['B', 'A'])} width={800} height={600} />);
+
+      expect(screen.getByText('nested-B')).toBeInTheDocument();
+      expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+    });
   });
 
   describe('Header options', () => {
@@ -828,6 +968,59 @@ describe('TableNG', () => {
           expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
+    });
+
+    it('does not show pagination when there are no rows even if pagination is enabled', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={300}
+          enablePagination={true}
+        />
+      );
+
+      expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Empty state', () => {
+    it('displays the default no rows message when there are no rows', () => {
+      render(<TableNG enableVirtualization={false} data={createEmptyDataFrame()} width={800} height={600} />);
+
+      expect(screen.getByText('No rows')).toBeInTheDocument();
+    });
+
+    it('displays the custom noValue message when provided', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.getByText('Custom empty table message')).toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+    });
+
+    it('does not display the noValue message when there is at least one row', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.queryByText('Custom empty table message')).not.toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+      expect(screen.getByText('A1')).toBeInTheDocument();
     });
   });
 
@@ -1378,6 +1571,148 @@ describe('TableNG', () => {
       expect(filteredFooterTexts[1]).toBe('1');
     });
 
+    it('cross-filter: second filter popup shows only values reachable after first filter is applied', async () => {
+      // Category A rows have Status=up; Category B rows have Status=down.
+      // Once we filter to Category=A, the Status filter popup should only offer "up".
+      const crossFilterFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'CrossFilterData',
+          length: 4,
+          fields: [
+            {
+              name: 'Category',
+              type: FieldType.string,
+              values: ['A', 'A', 'B', 'B'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Status',
+              type: FieldType.string,
+              values: ['up', 'up', 'down', 'down'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
+      );
+
+      render(<TableNG enableVirtualization={false} data={crossFilterFrame} width={800} height={600} />);
+
+      // Two filter buttons: [0]=Category, [1]=Status
+      const filterButtons = screen.getAllByTestId(
+        selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton
+      );
+      expect(filterButtons).toHaveLength(2);
+
+      // --- Apply Category = A ---
+      await user.click(filterButtons[0]);
+      const popup1 = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container);
+      expect(popup1).toBeInTheDocument();
+
+      // Select "A": click the checkbox (not the wrapper div) so onChange fires
+      await user.click(screen.getByRole('checkbox', { name: 'A' }));
+      await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+      // Category filter is now active; only rows with Category=A are visible
+      const rowsAfterCategoryFilter = screen.getAllByRole('row');
+      // header row + 2 data rows
+      expect(rowsAfterCategoryFilter).toHaveLength(3);
+
+      // --- Open Status filter popup ---
+      await user.click(filterButtons[1]);
+      expect(
+        screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)
+      ).toBeInTheDocument();
+
+      // Cross-filter: rows passed to this popup are the 2 category-A rows (both Status=up).
+      // "up" must be an option; "down" must NOT be present.
+      expect(screen.getByTitle('up')).toBeInTheDocument();
+      expect(screen.queryByTitle('down')).not.toBeInTheDocument();
+    });
+
+    it('cross-filter: top-level filter does not affect nested table filter options', async () => {
+      // Nested tables use their own parentIndex-scoped cross-filter chain, independent of
+      // top-level filters. A top-level filter on Column A should not restrict nested options.
+      const nestedCrossFilterFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedCrossFilter',
+          length: 2,
+          fields: [
+            {
+              name: 'Column A',
+              type: FieldType.string,
+              values: ['A1', 'A2'],
+              config: {
+                custom: { filterable: true, cellOptions: { type: TableCellDisplayMode.Auto } },
+              },
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [
+                [
+                  withFieldOverrides(
+                    toDataFrame({
+                      fields: [
+                        {
+                          name: 'Nested Col',
+                          type: FieldType.string,
+                          values: ['X', 'Y'],
+                          config: { custom: { filterable: true } },
+                          display: displayString,
+                          ...stdField,
+                        },
+                      ],
+                    })
+                  ),
+                ],
+                [
+                  withFieldOverrides(
+                    toDataFrame({
+                      fields: [
+                        {
+                          name: 'Nested Col',
+                          type: FieldType.string,
+                          values: ['X', 'Z'],
+                          config: { custom: { filterable: true } },
+                          display: displayString,
+                          ...stdField,
+                        },
+                      ],
+                    })
+                  ),
+                ],
+              ],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      render(<TableNG enableVirtualization={false} data={nestedCrossFilterFrame} width={800} height={600} />);
+
+      // Apply top-level Column A filter to keep only row A1
+      const filterButtons = screen.getAllByTestId(
+        selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton
+      );
+      await user.click(filterButtons[0]);
+      await user.click(screen.getByRole('checkbox', { name: 'A1' }));
+      await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+      // Only A1 row is visible at the top level
+      expect(screen.getByText('A1')).toBeInTheDocument();
+      expect(screen.queryByText('A2')).not.toBeInTheDocument();
+    });
+
     it('filters rows with case-insensitive text matching', () => {
       // Create a case-insensitive filtered frame (filtering for 'a1' should match 'A1')
       const baseFrame = createBasicDataFrame();
@@ -1666,9 +2001,6 @@ describe('TableNG', () => {
       onAnnotationDelete: jest.fn(),
       onSelectRange: jest.fn(),
       onAddAdHocFilter: jest.fn(),
-      canEditThresholds: false,
-      showThresholds: false,
-      onThresholdsChange: jest.fn(),
       instanceState: {},
       onInstanceStateChange: jest.fn(),
       onToggleLegendSort: jest.fn(),
@@ -1826,6 +2158,86 @@ describe('TableNG', () => {
       await userEvent.click(cell.parentElement!);
 
       expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
+    });
+
+    it('uses the correct row nested frame fields for data links', async () => {
+      // Each outer row has a different nested frame with a different State value and different link titles.
+      // The bug caused all nested sub-tables to use the first outer row's field (and its getLinks), so
+      // clicking any nested cell always showed links from row 0 regardless of which row was expanded.
+      const nestedFrameRow0 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow0',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Down'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Down&link=1', title: 'Down Link 1' },
+                  { url: 'http://example.com/?state=Down&link=2', title: 'Down Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const nestedFrameRow1 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow1',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Up'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Up&link=1', title: 'Up Link 1' },
+                  { url: 'http://example.com/?state=Up&link=2', title: 'Up Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const outerFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'TestData',
+          fields: [
+            { name: 'Name', type: FieldType.string, values: ['A', 'B'], config: { custom: {} } },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrameRow0], [nestedFrameRow1]],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      const { container } = render(<TableNG enableVirtualization={false} data={outerFrame} width={800} height={600} />);
+
+      // Expand the second outer row (index 1), which has State='Up'
+      const expandButtons = container.querySelectorAll('[aria-label="Expand row"]');
+      expect(expandButtons).toHaveLength(2);
+      await user.click(expandButtons[1]);
+
+      // Click the 'Up' state cell in the expanded nested sub-table
+      const upCell = screen.getByText('Up');
+      await user.click(upCell);
+
+      // Should show links from row 1's nested frame ('Up Link *')
+      // Before the fix this showed row 0's links ('Down Link *') because nestedColumnsMatrix
+      // used nestedVisibleFields (from the first row) for all rows' columns.
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText('Up Link 1')).toBeInTheDocument();
+      expect(screen.getByText('Up Link 2')).toBeInTheDocument();
+      expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
     });
   });
 });

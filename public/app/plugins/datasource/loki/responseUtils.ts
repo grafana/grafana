@@ -1,4 +1,4 @@
-import { DataFrame, DataQueryResponse, FieldType, isValidGoDuration, Labels } from '@grafana/data';
+import { type DataFrame, type DataQueryResponse, FieldType, isValidGoDuration, type Labels } from '@grafana/data';
 
 import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
@@ -7,7 +7,7 @@ import { LabelType } from './types';
 export const LOKI_MAX_QUERY_BYTES_READ_ERROR_MSG_PREFIX = 'the query would read too many bytes';
 export const LOKI_TIMEOUT_ERROR_MSG =
   'request timed out, decrease the duration of the request or add more label matchers (prefer exact match over regex match) to reduce the amount of data processed';
-export const LOKI_TIMEOUT_ERROR_REGEX = /timeout|timed out/;
+const LOKI_TIMEOUT_ERROR_REGEX = /timeout|timed out/;
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
   const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];

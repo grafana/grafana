@@ -1,12 +1,13 @@
-import { Page } from 'playwright-core';
+import { type Page } from 'playwright-core';
 
 import {
   test,
   expect,
-  E2ESelectorGroups,
-  CreateDataSourceArgs,
-  DataSourceSettings,
-  DataSourceConfigPage,
+  type Components,
+  type E2ESelectorGroups,
+  type CreateDataSourceArgs,
+  type DataSourceSettings,
+  type DataSourceConfigPage,
 } from '@grafana/plugin-e2e';
 
 import { getResources } from '../utils/prometheus-helpers';
@@ -17,8 +18,6 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    const DATASOURCE_ID = 'Prometheus';
-
     type EditorType = 'Code' | 'Builder';
 
     /**
@@ -30,7 +29,8 @@ test.describe(
       createDataSource: (args: CreateDataSourceArgs) => Promise<DataSourceSettings>,
       editorType: EditorType,
       name: string,
-      gotoDataSourceConfigPage: (uid: string) => Promise<DataSourceConfigPage>
+      gotoDataSourceConfigPage: (uid: string) => Promise<DataSourceConfigPage>,
+      components: Components
     ) {
       const { uid } = await createDataSource({
         type: 'prometheus',
@@ -64,14 +64,7 @@ test.describe(
       await page.goto('/explore');
 
       // Choose the right DS
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByRole('button', { name: `${name} ${DATASOURCE_ID}`, exact: true });
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(name);
     }
 
     test('should have a kickstart component', async ({
@@ -79,9 +72,18 @@ test.describe(
       page,
       selectors,
       gotoDataSourceConfigPage,
+      components,
     }) => {
       const DATASOURCE_NAME = `prometheus_${Date.now()}`;
-      await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+      await navigateToEditor(
+        page,
+        selectors,
+        createDataSource,
+        'Code',
+        DATASOURCE_NAME,
+        gotoDataSourceConfigPage,
+        components
+      );
 
       const queryPatterns = page.getByTestId(selectors.components.QueryBuilder.queryPatterns);
       await queryPatterns.scrollIntoViewIfNeeded();
@@ -93,9 +95,18 @@ test.describe(
       gotoDataSourceConfigPage,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `prometheus_${Date.now()}`;
-      await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+      await navigateToEditor(
+        page,
+        selectors,
+        createDataSource,
+        'Code',
+        DATASOURCE_NAME,
+        gotoDataSourceConfigPage,
+        components
+      );
 
       const explain = page.getByTestId(selectors.components.DataSource.Prometheus.queryEditor.explain);
       await explain.scrollIntoViewIfNeeded();
@@ -107,9 +118,18 @@ test.describe(
       gotoDataSourceConfigPage,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `prometheus_${Date.now()}`;
-      await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+      await navigateToEditor(
+        page,
+        selectors,
+        createDataSource,
+        'Code',
+        DATASOURCE_NAME,
+        gotoDataSourceConfigPage,
+        components
+      );
 
       const editorToggle = page.getByTestId(selectors.components.DataSource.Prometheus.queryEditor.editorToggle);
       await editorToggle.scrollIntoViewIfNeeded();
@@ -121,9 +141,18 @@ test.describe(
       gotoDataSourceConfigPage,
       page,
       selectors,
+      components,
     }) => {
       const DATASOURCE_NAME = `prometheus_${Date.now()}`;
-      await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+      await navigateToEditor(
+        page,
+        selectors,
+        createDataSource,
+        'Code',
+        DATASOURCE_NAME,
+        gotoDataSourceConfigPage,
+        components
+      );
 
       // Open options
       const options = page.getByTestId(selectors.components.DataSource.Prometheus.queryEditor.options);
@@ -154,9 +183,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusCode_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Code',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
       });
 
       test('navigates to the code editor and opens the metrics browser with metric search, labels, label values, and all components', async ({
@@ -164,9 +202,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusCode_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Code',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
 
         await getResources(page);
 
@@ -219,9 +266,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusCode_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Code', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Code',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
 
         await getResources(page);
 
@@ -263,9 +319,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusBuilder_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Builder', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Builder',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
       });
 
       test('the query builder contains metric select, label filters and operations', async ({
@@ -273,9 +338,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusBuilder_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Builder', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Builder',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
 
         await getResources(page);
 
@@ -300,9 +374,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusBuilder_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Builder', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Builder',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
 
         await getResources(page);
 
@@ -323,9 +406,18 @@ test.describe(
         gotoDataSourceConfigPage,
         page,
         selectors,
+        components,
       }) => {
         const DATASOURCE_NAME = `prometheusBuilder_${Date.now()}`;
-        await navigateToEditor(page, selectors, createDataSource, 'Builder', DATASOURCE_NAME, gotoDataSourceConfigPage);
+        await navigateToEditor(
+          page,
+          selectors,
+          createDataSource,
+          'Builder',
+          DATASOURCE_NAME,
+          gotoDataSourceConfigPage,
+          components
+        );
 
         await getResources(page);
 

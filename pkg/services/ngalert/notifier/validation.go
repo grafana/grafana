@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
@@ -22,6 +22,9 @@ type ErrorReceiverDoesNotExist struct {
 type ErrorTimeIntervalDoesNotExist struct {
 	ErrorReferenceInvalid
 }
+type ErrorRouteDoesNotExist struct {
+	ErrorReferenceInvalid
+}
 
 func (e ErrorReceiverDoesNotExist) Error() string {
 	return fmt.Sprintf("receiver %s does not exist", e.Reference)
@@ -29,6 +32,10 @@ func (e ErrorReceiverDoesNotExist) Error() string {
 
 func (e ErrorTimeIntervalDoesNotExist) Error() string {
 	return fmt.Sprintf("time interval %s does not exist", e.Reference)
+}
+
+func (e ErrorRouteDoesNotExist) Error() string {
+	return fmt.Sprintf("notification policy %s does not exist", e.Reference)
 }
 
 // ContactPointRoutingValidator validates ContactPointRouting against the current Alertmanager configuration
@@ -43,7 +50,10 @@ type NotificationSettingsValidator interface {
 
 // staticNotificationSettingsValidator is a NotificationSettingsValidator that uses static pre-fetched values to validate
 // models.NotificationSettings.
-type staticNotificationSettingsValidator staticContactPointValidator
+type staticNotificationSettingsValidator struct {
+	*staticContactPointValidator
+	availableRoutes map[string]struct{}
+}
 
 // staticContactPointValidator is a ContactPointRoutingValidator that uses static pre-fetched values to validate
 // models.ContactPointRouting.
@@ -52,19 +62,7 @@ type staticContactPointValidator struct {
 	availableTimeIntervals map[string]struct{}
 }
 
-// apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
-type apiAlertingConfig[R receiver] interface {
-	GetReceivers() []R
-	GetMuteTimeIntervals() []definitions.AmMuteTimeInterval
-	GetTimeIntervals() []definitions.TimeInterval
-	GetRoute() *definitions.Route
-}
-
-type receiver interface {
-	GetName() string
-}
-
-func newStaticContactPointValidator[R receiver](am apiAlertingConfig[R]) staticContactPointValidator {
+func newStaticContactPointValidator(am *v1.PostableApiAlertingConfig) staticContactPointValidator {
 	availableReceivers := make(map[string]struct{})
 	for _, receiver := range am.GetReceivers() {
 		availableReceivers[receiver.GetName()] = struct{}{}
@@ -86,13 +84,27 @@ func newStaticContactPointValidator[R receiver](am apiAlertingConfig[R]) staticC
 
 // NewContactPointRoutingValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig that
 // only validates ContactPointRouting.
-func NewContactPointRoutingValidator[R receiver](am apiAlertingConfig[R]) ContactPointRoutingValidator {
+func NewContactPointRoutingValidator(am *v1.PostableApiAlertingConfig) ContactPointRoutingValidator {
 	return newStaticContactPointValidator(am)
 }
 
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
-func NewNotificationSettingsValidator(cfg *definitions.PostableUserConfig) NotificationSettingsValidator {
-	return staticNotificationSettingsValidator(newStaticContactPointValidator(&cfg.AlertmanagerConfig))
+func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsValidator {
+	validator := newStaticContactPointValidator(&cfg.AlertmanagerConfig)
+
+	availableRoutes := make(map[string]struct{}, len(cfg.ManagedRoutes)+1)
+	for routeName := range cfg.ManagedRoutes {
+		availableRoutes[routeName] = struct{}{}
+	}
+	availableRoutes[models.DefaultRoutingTreeName] = struct{}{}
+	if len(cfg.ExtraConfigs) > 0 {
+		availableRoutes[cfg.ExtraConfigs[0].Identifier] = struct{}{}
+	}
+
+	return staticNotificationSettingsValidator{
+		staticContactPointValidator: &validator,
+		availableRoutes:             availableRoutes,
+	}
 }
 
 // Validate checks that models.ContactPointRouting is valid and that references exist.
@@ -124,7 +136,12 @@ func (n staticNotificationSettingsValidator) Validate(settings models.Notificati
 	}
 
 	if settings.ContactPointRouting != nil {
-		return staticContactPointValidator(n).Validate(*settings.ContactPointRouting)
+		return n.staticContactPointValidator.Validate(*settings.ContactPointRouting)
+	}
+	if settings.PolicyRouting != nil {
+		if _, ok := n.availableRoutes[settings.PolicyRouting.Policy]; !ok {
+			return ErrorRouteDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.PolicyRouting.Policy}}
+		}
 	}
 	return nil
 }

@@ -1,11 +1,11 @@
 import { memo, useMemo } from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { DataFrame, SplitOpen } from '@grafana/data';
-import { TimeZone } from '@grafana/schema';
-import { AdHocFilterItem } from '@grafana/ui';
-import { ExploreItemState } from 'app/types/explore';
-import { StoreState } from 'app/types/store';
+import { type DataFrame, type SplitOpen } from '@grafana/data';
+import { type TimeZone } from '@grafana/schema';
+import { type AdHocFilterItem } from '@grafana/ui';
+import { type ExploreItemState } from 'app/types/explore';
+import { type StoreState } from 'app/types/store';
 
 import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
@@ -76,8 +76,5 @@ const ExploreRawPrometheusContainer = memo(
 );
 
 ExploreRawPrometheusContainer.displayName = 'ExploreRawPrometheusContainer';
-
-// Keep the old export name for backwards compatibility
-export const RawPrometheusContainer = ExploreRawPrometheusContainer;
 
 export default connector(ExploreRawPrometheusContainer);

@@ -105,39 +105,45 @@ func TestResourceRequest(t *testing.T) {
 		},
 		{
 			desc:         "root resource path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources",
 			expectedPath: "",
 			expectedURL:  "",
 		},
 		{
 			desc:         "root resource path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/",
 			expectedPath: "",
 			expectedURL:  "",
 		},
 		{
 			desc:         "resource sub path",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/test",
 			expectedPath: "test",
 			expectedURL:  "test",
 		},
 		{
 			desc:         "resource sub path with colon",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test-*,*:test-*/_mapping",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/test-*,*:test-*/_mapping",
 			expectedPath: "test-*,*:test-*/_mapping",
 			expectedURL:  "./test-%2A,%2A:test-%2A/_mapping",
 		},
 		{
 			desc:         "resource sub path with query params",
-			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resource/test?k1=v1&k2=v2",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/test?k1=v1&k2=v2",
 			expectedPath: "test",
 			expectedURL:  "test?k1=v1&k2=v2",
+		},
+		{
+			desc:         "forwarded sub path itself contains /resources",
+			url:          "http://localhost:6443/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/resources/list",
+			expectedPath: "api/resources/list",
+			expectedURL:  "api/resources/list",
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, tc.url, nil)
-			clonedReq, err := resourceRequest(req)
+			clonedReq, err := resourceRequest(req, "abc")
 
 			if tc.error {
 				require.Error(t, err)
@@ -240,7 +246,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		require.NotNil(t, handler)
 
 		reqBody := []byte(`{"test": "data"}`)
-		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-ds/resource/some/path?key=value", bytes.NewReader(reqBody))
+		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-ds/resources/some/path?key=value", bytes.NewReader(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("X-Custom-Header", "custom-value")
 
@@ -300,7 +306,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 				handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 				require.NoError(t, err)
 
-				req := httptest.NewRequest(method, "http://localhost/apis/test/resource/path", nil)
+				req := httptest.NewRequest(method, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 				recorder := httptest.NewRecorder()
 				handler.ServeHTTP(recorder, req)
 
@@ -333,7 +339,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, responder)
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resource/path", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 
@@ -371,7 +377,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		require.NoError(t, err)
 
 		requestBody := `{"key": "value", "nested": {"foo": "bar"}}`
-		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test/resource/path", bytes.NewBufferString(requestBody))
+		req := httptest.NewRequest(http.MethodPost, "http://localhost/apis/test/datasources/test-ds/resources/path", bytes.NewBufferString(requestBody))
 
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
@@ -407,7 +413,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resource/path", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/path", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 
@@ -444,7 +450,7 @@ func TestSubResourceREST_Connect(t *testing.T) {
 		handler, err := r.Connect(context.Background(), "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 
-		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/resource/api/endpoint?foo=bar&baz=qux", nil)
+		req := httptest.NewRequest(http.MethodGet, "http://localhost/apis/test/datasources/test-ds/resources/api/endpoint?foo=bar&baz=qux", nil)
 		recorder := httptest.NewRecorder()
 		handler.ServeHTTP(recorder, req)
 

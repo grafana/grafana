@@ -4,7 +4,7 @@ import {
   histogramFieldsToFrame,
   joinHistograms,
   DataFrameType,
-  PanelProps,
+  type PanelProps,
   buildHistogram,
   cacheFieldDisplayNames,
   getHistogramFields,
@@ -15,7 +15,7 @@ import { TooltipHoverMode } from '@grafana/ui/internal';
 
 import { Histogram, getBucketSize } from './Histogram';
 import { HistogramTooltip } from './HistogramTooltip';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 type Props = PanelProps<Options>;
 

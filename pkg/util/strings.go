@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -142,8 +143,8 @@ func RemainingDaysUntil(expiration time.Time) string {
 
 // ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.
 func ToCamelCase(str string) string {
-	var finalParts []string
 	parts := strings.Split(str, "_")
+	finalParts := make([]string, 0, len(parts))
 
 	for _, part := range parts {
 		finalParts = append(finalParts, strings.Split(part, "-")...)
@@ -216,5 +217,71 @@ func StripBOMFromInterface(v any) any {
 		return result
 	default:
 		return v
+	}
+}
+
+// StripBOMFromStruct recursively strips BOM from all string fields in a struct using reflection.
+// This is more efficient than JSON marshal/unmarshal for typed structs.
+// The input must be a pointer to a struct.
+func StripBOMFromStruct(v any) {
+	stripBOMReflect(reflect.ValueOf(v))
+}
+
+// stripBOMReflect recursively strips BOM from string fields using reflection.
+func stripBOMReflect(v reflect.Value) {
+	if !v.IsValid() {
+		return
+	}
+
+	// Handle pointers by dereferencing
+	if v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return
+		}
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.String:
+		// Can't set unexported fields or non-addressable values
+		if v.CanSet() {
+			v.SetString(StripBOM(v.String()))
+		}
+
+	case reflect.Struct:
+		// Recurse into all struct fields
+		for i := 0; i < v.NumField(); i++ {
+			field := v.Field(i)
+			if field.CanInterface() {
+				stripBOMReflect(field)
+			}
+		}
+
+	case reflect.Slice, reflect.Array:
+		// Recurse into all slice/array elements
+		for i := 0; i < v.Len(); i++ {
+			stripBOMReflect(v.Index(i))
+		}
+
+	case reflect.Map:
+		// Recurse into all map values
+		iter := v.MapRange()
+		for iter.Next() {
+			val := iter.Value()
+			// For maps, we need to handle the key-value pair
+			if val.Kind() == reflect.String && val.CanInterface() {
+				// Map string values must be replaced (not addressable)
+				cleanedVal := reflect.ValueOf(StripBOM(val.String()))
+				v.SetMapIndex(iter.Key(), cleanedVal)
+			} else {
+				// For nested structures (structs, slices in map values),
+				// recurse to update their string fields in place
+				stripBOMReflect(val)
+			}
+		}
+
+	default:
+		// Other types (Int, Float, Bool, etc.) don't contain strings, so no action needed
+		return
 	}
 }

@@ -140,7 +140,7 @@ func (rr *RouteRegisterImpl) Register(router Router, namedMiddlewares ...Registe
 }
 
 func (rr *RouteRegisterImpl) route(pattern, method string, handlers ...web.Handler) {
-	h := make([]web.Handler, 0)
+	h := make([]web.Handler, 0, len(rr.namedMiddlewares)+len(rr.subfixHandlers)+len(handlers))
 	fullPattern := rr.prefix + pattern
 
 	for _, fn := range rr.namedMiddlewares {

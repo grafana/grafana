@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import {
-  GridLayoutItemKind,
-  PanelKind,
-  QueryGroupKind,
-  VizConfigKind,
-  PanelQueryKind,
-  TransformationKind,
+  type GridLayoutItemKind,
+  type PanelKind,
+  type QueryGroupKind,
+  type VizConfigKind,
+  type PanelQueryKind,
+  type TransformationKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -131,12 +131,6 @@ export function isPanelKindV2(value: unknown): value is PanelKind {
     return false;
   }
   return true;
-}
-
-export function validatePanelKindV2(value: unknown): asserts value is PanelKind {
-  if (!isPanelKindV2(value)) {
-    throw new Error('Provided JSON is not a valid v2 Panel spec');
-  }
 }
 
 const ElementReferenceSchema = z.object({

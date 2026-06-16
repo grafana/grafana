@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
 
-import { Step } from '../Stepper';
-import { WizardStep } from '../types';
+import { type Step } from '../Stepper';
+import { type WizardStep } from '../types';
 
-import { useWizardButtons, UseWizardButtonsParams } from './useWizardButtons';
+import { useWizardButtons, type UseWizardButtonsParams } from './useWizardButtons';
 
 jest.mock('@grafana/i18n', () => ({
   t: jest.fn((key: string, defaultValue: string) => defaultValue),

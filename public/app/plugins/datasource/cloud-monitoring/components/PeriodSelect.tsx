@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { periodOption } from '../constants';
+import { type periodOption } from '../constants';
 
 export interface Props {
   inputId: string;

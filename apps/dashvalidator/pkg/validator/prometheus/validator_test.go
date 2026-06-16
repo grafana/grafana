@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -41,12 +42,12 @@ type mockProvider struct {
 	metricsToReturn []string
 	ttl             time.Duration
 	errorToReturn   error
-	callCount       int
+	callCount       atomic.Int32
 }
 
 func (m *mockProvider) GetMetrics(ctx context.Context, datasourceUID, datasourceURL string,
 	client *http.Client) (*cache.MetricsResult, error) {
-	m.callCount++
+	m.callCount.Add(1)
 	if m.errorToReturn != nil {
 		return nil, m.errorToReturn
 	}
@@ -116,7 +117,7 @@ func TestValidateQueries_SingleQuerySingleMetric_AllFound(t *testing.T) {
 	require.Empty(t, result.MissingMetrics)
 	require.InDelta(t, 1.0, result.CompatibilityScore, 0.001)
 	require.Len(t, result.QueryBreakdown, 1)
-	require.Equal(t, 1, mockProv.callCount)
+	require.Equal(t, int32(1), mockProv.callCount.Load())
 
 	// Verify query breakdown
 	qr := result.QueryBreakdown[0]
@@ -974,12 +975,12 @@ func TestValidateQueries_CacheHit_NoProviderCallOnSecondValidation(t *testing.T)
 	// First validation - cache miss
 	_, err := v.ValidateQueries(context.Background(), queries, datasource)
 	require.NoError(t, err)
-	require.Equal(t, 1, mockProv.callCount) // Provider called once
+	require.Equal(t, int32(1), mockProv.callCount.Load()) // Provider called once
 
 	// Second validation - cache hit
 	_, err = v.ValidateQueries(context.Background(), queries, datasource)
 	require.NoError(t, err)
-	require.Equal(t, 1, mockProv.callCount) // Provider NOT called again
+	require.Equal(t, int32(1), mockProv.callCount.Load()) // Provider NOT called again
 }
 
 // ============================================================================

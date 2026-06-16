@@ -1,24 +1,9 @@
 import { useEffect, useRef } from 'react';
 
-import { SceneObject } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
-
-export function findParentLayout(sceneObject: SceneObject): DashboardLayoutManager | null {
-  let parent = sceneObject.parent;
-
-  while (parent) {
-    if (isDashboardLayoutManager(parent)) {
-      return parent;
-    }
-
-    parent = parent.parent;
-  }
-
-  return null;
-}
 
 export interface EditPaneInputAutoFocusProps {
   autoFocus?: boolean;

@@ -1,27 +1,26 @@
-import { ComponentType } from 'react';
-import { Observable } from 'rxjs';
+import { type ComponentType } from 'react';
+import { type Observable } from 'rxjs';
 
 import {
-  AdHocVariableModel,
-  ConstantVariableModel,
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceApi,
-  DataSourceJsonData,
-  DataSourceRef,
-  LegacyMetricFindQueryOptions,
-  MetricFindValue,
-  QueryVariableModel,
-  StandardVariableQuery,
-  VariableModel,
+  type AdHocVariableModel,
+  type ConstantVariableModel,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceApi,
+  type DataSourceJsonData,
+  type LegacyMetricFindQueryOptions,
+  type MetricFindValue,
+  type QueryVariableModel,
+  type StandardVariableQuery,
+  type VariableModel,
   VariableSupportType,
-  VariableWithMultiSupport,
-  VariableWithOptions,
+  type VariableWithMultiSupport,
+  type VariableWithOptions,
 } from '@grafana/data';
 
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
-import { VariableQueryEditorType, VariableQueryEditorProps } from './types';
+import { type VariableQueryEditorType, type VariableQueryEditorProps } from './types';
 
 /** @deprecated use a if (model.type === "query") type narrowing check instead */
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
@@ -49,14 +48,6 @@ export const hasOptions = (model: VariableModel): model is VariableWithOptions =
 export const hasCurrent = (model: VariableModel): model is VariableWithOptions => {
   return 'current' in model;
 };
-
-export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
-  if (datasource === null) {
-    return false;
-  }
-
-  return typeof datasource === 'string';
-}
 
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,

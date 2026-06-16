@@ -1,7 +1,6 @@
-import { OrgRole } from '@grafana/data';
-import { OrgUser } from 'app/types/user';
+import { type OrgUser } from 'app/types/user';
 
-import { UsersFetchResult, initialState } from '../state/reducers';
+import { type UsersFetchResult, initialState } from '../state/reducers';
 
 export const getFetchUsersMock = (amount: number): UsersFetchResult => {
   const users = getMockUsers(amount);
@@ -35,20 +34,6 @@ export const getMockUsers = (amount: number): OrgUser[] => {
   }
 
   return users as OrgUser[];
-};
-
-export const getMockUser = () => {
-  return {
-    avatarUrl: 'url/to/avatar',
-    email: `user@test.com`,
-    name: 'user test',
-    lastSeenAt: '2018-10-01',
-    lastSeenAtAge: '',
-    login: `user`,
-    orgId: 1,
-    role: 'Admin' as OrgRole,
-    userId: 2,
-  } as OrgUser;
 };
 
 export const getMockInvitees = (amount: number) => {

@@ -24,11 +24,13 @@ import (
 
 	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval/eval_mocks"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
@@ -808,7 +810,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 		factory := ruleFactoryFromScheduler(sch)
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
@@ -890,7 +892,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 
 		// Add state to verify it's not cleared
 		states := []*state.State{
@@ -936,7 +938,7 @@ func TestRuleRoutine(t *testing.T) {
 
 			sch2, ruleStore2, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 			ruleStore2.PutRule(context.Background(), rule)
-			sch2.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+			sch2.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 			sch2.stateManager.Put(states)
 
 			factory := ruleFactoryFromScheduler(sch2)
@@ -974,7 +976,7 @@ func TestRuleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle}, nil)
 
 		states := []*state.State{
 			{
@@ -1063,13 +1065,19 @@ func TestRuleRoutine(t *testing.T) {
 			rule:        rule,
 		})
 
-		// Because we are using a mock clock, first we need to wait until the rule evaluation
-		// reaches the point where it sleeps for the duration of the retry interval.
-		time.Sleep(200 * time.Millisecond)
-		// Then advance the mock clock to trigger the retry.
-		clk.Add(2 * time.Second)
-
-		waitForTimeChannel(t, evalAppliedChan)
+		// Advance the mock clock to trigger retries. We poll WaitForAllTimers
+		// which advances the clock just enough to fire each registered timer.
+		// This avoids the race of a fixed time.Sleep before clk.Add, where the
+		// goroutine may not have registered its timer yet.
+		require.Eventually(t, func() bool {
+			clk.WaitForAllTimers()
+			select {
+			case <-evalAppliedChan:
+				return true
+			default:
+				return false
+			}
+		}, 10*time.Second, 10*time.Millisecond)
 
 		t.Run("it should increase failure counter by 1 and attempt failure counter by 3", func(t *testing.T) {
 			// duration metric has 0 values because of mocked clock that do not advance
@@ -1394,7 +1402,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	t.Run("first attempt", func(t *testing.T) {
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 1)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("second attempt", func(t *testing.T) {
@@ -1402,7 +1410,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 2)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("third attempt", func(t *testing.T) {
@@ -1410,7 +1418,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("no fourth attempt", func(t *testing.T) {
@@ -1418,7 +1426,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration * 10)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 }
 
@@ -1470,4 +1478,86 @@ func stateForRule(rule *models.AlertRule, ts time.Time, evalState eval.State) *s
 	s.CacheID = id
 
 	return s
+}
+
+func TestAlertRuleNoRetryOnNonRetryableError(t *testing.T) {
+	gen := models.RuleGen.With(models.RuleGen.WithOrgID(123), withQueryForState(t, eval.Error))
+	rule := gen.GenerateRef()
+	rule.ExecErrState = models.ErrorErrState
+
+	// The evaluator returns a deterministic, non-retryable error as the top-level
+	// pipeline error, mirroring a Mimir query-limit rejection on an alert rule.
+	nonRetryable := fmt.Errorf("server side expressions pipeline returned an error: %w",
+		expr.MakeQueryError("A", "uid", errors.New("the query exceeded the maximum number of chunks (err-mimir-max-chunks-per-query)")))
+
+	condMock := &eval_mocks.ConditionEvaluatorMock{}
+	condMock.EXPECT().Evaluate(mock.Anything, mock.Anything).Return(nil, nonRetryable)
+
+	evalAppliedChan := make(chan time.Time)
+	sender := NewSyncAlertsSenderMock()
+	sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
+
+	ruleStore := newFakeRulesStore()
+	reg := prometheus.NewPedanticRegistry()
+	clk := clock.NewMock()
+	sch := setupScheduler(t, ruleStore, &state.FakeInstanceStore{}, reg, sender, eval_mocks.NewEvaluatorFactory(condMock), nil, withSchedulerClock(clk))
+	// MaxAttempts: 3 means that, without fail-fast classification, this rule would
+	// be attempted 3 times. We assert it is attempted exactly once.
+	sch.retryConfig = RetryConfig{
+		MaxAttempts:         3,
+		InitialRetryDelay:   1 * time.Second,
+		MaxRetryDelay:       1 * time.Second,
+		RandomizationFactor: 0,
+	}
+	sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
+		evalAppliedChan <- t
+	}
+	ruleStore.PutRule(context.Background(), rule)
+
+	factory := newRuleFactory(
+		sch.appURL,
+		sch.disableGrafanaFolder,
+		sch.retryConfig,
+		sch.alertsSender,
+		sch.stateManager,
+		sch.evaluatorFactory,
+		sch.clock,
+		sch.rrCfg,
+		sch.metrics,
+		sch.log,
+		sch.tracer,
+		sch.featureToggles,
+		sch.recordingWriter,
+		sch.evalAppliedFunc,
+		sch.stopAppliedFunc,
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	ruleInfo := factory.new(ctx, ruleWithFolder{rule: rule, folderTitle: ""})
+
+	go func() {
+		_ = ruleInfo.Run()
+	}()
+
+	ruleInfo.Eval(&Evaluation{
+		scheduledAt: sch.clock.Now(),
+		rule:        rule,
+	})
+
+	waitForTimeChannel(t, evalAppliedChan)
+
+	orgID := fmt.Sprint(rule.OrgID)
+	require.Equal(t, float64(1), testutil.ToFloat64(sch.metrics.EvalAttemptTotal.WithLabelValues(orgID)),
+		"a non-retryable error must be attempted exactly once, not retried")
+	require.Equal(t, float64(1), testutil.ToFloat64(sch.metrics.EvalAttemptFailures.WithLabelValues(orgID)))
+	require.Equal(t, float64(1), testutil.ToFloat64(sch.metrics.EvalFailures.WithLabelValues(orgID)),
+		"the rule-level failure must be counted once even though retries stopped early")
+
+	condMock.AssertNumberOfCalls(t, "Evaluate", 1)
+
+	status := ruleInfo.Status()
+	require.Equal(t, "error", status.Health)
+	require.NotNil(t, status.LastError)
+	require.Contains(t, status.LastError.Error(), "err-mimir-max-chunks-per-query")
 }

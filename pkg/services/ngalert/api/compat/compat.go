@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // AlertRuleFromProvisionedAlertRule converts definitions.ProvisionedAlertRule to models.AlertRule
@@ -236,12 +235,12 @@ func populateAlertingRuleExportFields(rule models.AlertRule, result *definitions
 
 	result.For = model.Duration(rule.For)
 	if rule.For > 0 {
-		result.ForString = util.Pointer(model.Duration(rule.For).String())
+		result.ForString = new(model.Duration(rule.For).String())
 	}
 
 	result.KeepFiringFor = model.Duration(rule.KeepFiringFor)
 	if rule.KeepFiringFor > 0 {
-		result.KeepFiringForString = util.Pointer(model.Duration(rule.KeepFiringFor).String())
+		result.KeepFiringForString = new(model.Duration(rule.KeepFiringFor).String())
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
@@ -369,15 +368,15 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 
 	export := definitions.RouteExport{
 		Receiver:            route.Receiver,
-		GroupByStr:          NilIfEmpty(util.Pointer(route.GroupByStr)),
+		GroupByStr:          NilIfEmpty(new(route.GroupByStr)),
 		Match:               route.Match,
 		MatchRE:             route.MatchRE,
 		Matchers:            route.Matchers,
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
-		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
-		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
-		Continue:            OmitDefault(util.Pointer(route.Continue)),
+		MuteTimeIntervals:   NilIfEmpty(new(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(new(route.ActiveTimeIntervals)),
+		Continue:            OmitDefault(new(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(route.RepeatInterval),
@@ -463,19 +462,23 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns *models.Notificati
 	if ns == nil {
 		return nil
 	}
-	m := ns.ContactPointRouting
-	if m == nil {
-		return nil
+	// Should convert faithfully and not worry about validity.
+	res := definitions.AlertRuleNotificationSettings{}
+	if m := ns.ContactPointRouting; m != nil {
+		res = definitions.AlertRuleNotificationSettings{
+			Receiver:            m.Receiver,
+			GroupBy:             m.GroupBy,
+			GroupWait:           m.GroupWait,
+			GroupInterval:       m.GroupInterval,
+			RepeatInterval:      m.RepeatInterval,
+			MuteTimeIntervals:   m.MuteTimeIntervals,
+			ActiveTimeIntervals: m.ActiveTimeIntervals,
+		}
 	}
-	return &definitions.AlertRuleNotificationSettings{
-		Receiver:            m.Receiver,
-		GroupBy:             m.GroupBy,
-		GroupWait:           m.GroupWait,
-		GroupInterval:       m.GroupInterval,
-		RepeatInterval:      m.RepeatInterval,
-		MuteTimeIntervals:   m.MuteTimeIntervals,
-		ActiveTimeIntervals: m.ActiveTimeIntervals,
+	if m := ns.PolicyRouting; m != nil {
+		res.Policy = &m.Policy
 	}
+	return &res
 }
 
 // AlertRuleNotificationSettingsFromNotificationSettings converts models.NotificationSettings to definitions.AlertRuleNotificationSettingsExport
@@ -498,31 +501,48 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns *models.Noti
 
 	return &definitions.AlertRuleNotificationSettingsExport{
 		Receiver:            m.Receiver,
-		GroupBy:             NilIfEmpty(util.Pointer(m.GroupBy)),
+		GroupBy:             NilIfEmpty(new(m.GroupBy)),
 		GroupWait:           toStringIfNotNil(m.GroupWait),
 		GroupInterval:       toStringIfNotNil(m.GroupInterval),
 		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals:   NilIfEmpty(util.Pointer(m.MuteTimeIntervals)),
-		ActiveTimeIntervals: NilIfEmpty(util.Pointer(m.ActiveTimeIntervals)),
+		MuteTimeIntervals:   NilIfEmpty(new(m.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(new(m.ActiveTimeIntervals)),
 	}
 }
 
-// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to []models.NotificationSettings
+// NotificationSettingsFromAlertRuleNotificationSettings converts definitions.AlertRuleNotificationSettings to models.NotificationSettings
 func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.AlertRuleNotificationSettings) *models.NotificationSettings {
 	if ns == nil {
 		return nil
 	}
-	return util.Pointer(models.NotificationSettingsFromContact(
-		models.ContactPointRouting{
-			Receiver:            ns.Receiver,
-			GroupBy:             ns.GroupBy,
-			GroupWait:           ns.GroupWait,
-			GroupInterval:       ns.GroupInterval,
-			RepeatInterval:      ns.RepeatInterval,
-			MuteTimeIntervals:   ns.MuteTimeIntervals,
-			ActiveTimeIntervals: ns.ActiveTimeIntervals,
-		},
-	))
+
+	// Validation is defined on the model and is not currently the responsibility of this method to enforce. That means
+	// the output of this compat can be an invalid NotificationSettings. Specifically, two such cases are important to
+	// consider here:
+	// 1. Both ContactPoint and Policy routing are specified: should return a NotificationSettings with both routing strategies.
+	// 2. Neither ContactPoint nor Policy routing are specified: should return an empty NotificationSettings, not nil.
+	res := models.NotificationSettings{}
+
+	cpr := models.ContactPointRouting{
+		Receiver:            ns.Receiver,
+		GroupBy:             ns.GroupBy,
+		GroupWait:           ns.GroupWait,
+		GroupInterval:       ns.GroupInterval,
+		RepeatInterval:      ns.RepeatInterval,
+		MuteTimeIntervals:   ns.MuteTimeIntervals,
+		ActiveTimeIntervals: ns.ActiveTimeIntervals,
+	}
+	if !cpr.IsEmpty() {
+		// If any field related to contact point routing is specified, we create an instance of ContactPointRouting so
+		// that it is eventually validated.
+		res.ContactPointRouting = &cpr
+	}
+
+	if ns.Policy != nil {
+		res.PolicyRouting = &models.PolicyRouting{Policy: *ns.Policy}
+	}
+
+	return &res
 }
 
 func pointerOmitEmpty(s string) *string {

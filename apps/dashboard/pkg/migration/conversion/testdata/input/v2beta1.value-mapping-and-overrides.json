@@ -854,11 +854,5 @@
       },
       "title": "Value Mapping and Overrides Test",
       "variables": []
-    },
-    "status": {
-      "conversion": {
-        "failed": false,
-        "storedVersion": "v1beta1"
-      }
     }
   }

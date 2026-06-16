@@ -4,7 +4,7 @@ import {
   isNotificationOutcome,
   isNotificationStatus,
   matcherToAPIFormat,
-  notificationsToDataFrame,
+  rangeCountsToDataFrame,
 } from './NotificationsRuntimeDataSource';
 
 describe('isNotificationStatus', () => {
@@ -57,9 +57,9 @@ describe('matcherToAPIFormat', () => {
   });
 });
 
-describe('notificationsToDataFrame', () => {
-  it('should return empty DataFrame when no entries', () => {
-    const result = notificationsToDataFrame({ entries: [] });
+describe('rangeCountsToDataFrame', () => {
+  it('should return empty DataFrame when no range counts', () => {
+    const result = rangeCountsToDataFrame([]);
 
     expect(result.length).toBe(0);
     expect(result.fields).toHaveLength(2);
@@ -71,82 +71,45 @@ describe('notificationsToDataFrame', () => {
     expect(result.fields[1].values).toEqual([]);
   });
 
-  it('should group entries by 10-second intervals', () => {
-    const entries = [
-      makeEntry('2025-01-01T00:00:01Z'), // interval 0
-      makeEntry('2025-01-01T00:00:05Z'), // interval 0 (same 10s bucket)
-      makeEntry('2025-01-01T00:00:15Z'), // interval 10000
-      makeEntry('2025-01-01T00:00:35Z'), // interval 30000
-      makeEntry('2025-01-01T00:00:37Z'), // interval 30000 (same 10s bucket)
+  it('should convert range count timestamps from seconds to milliseconds', () => {
+    const rangeCounts = [
+      {
+        count: 0,
+        values: [
+          { timestamp: 1735689600, count: 5 }, // 2025-01-01T00:00:00Z in seconds
+          { timestamp: 1735689660, count: 3 }, // +60s
+          { timestamp: 1735689720, count: 8 }, // +120s
+        ],
+      },
     ];
 
-    const result = notificationsToDataFrame({ entries });
+    const result = rangeCountsToDataFrame(rangeCounts);
 
-    expect(result.fields[0].name).toBe('time');
-    expect(result.fields[1].name).toBe('value');
-
-    // Should have 3 time buckets
     expect(result.length).toBe(3);
-
-    // Bucket at 0s: 2 entries
-    const bucket0 = Math.floor(new Date('2025-01-01T00:00:01Z').getTime() / 10000) * 10000;
-    const bucket10 = Math.floor(new Date('2025-01-01T00:00:15Z').getTime() / 10000) * 10000;
-    const bucket30 = Math.floor(new Date('2025-01-01T00:00:35Z').getTime() / 10000) * 10000;
-
-    expect(result.fields[0].values).toEqual([bucket0, bucket10, bucket30]);
-    expect(result.fields[1].values).toEqual([2, 1, 2]);
+    expect(result.fields[0].values).toEqual([1735689600 * 1000, 1735689660 * 1000, 1735689720 * 1000]);
+    expect(result.fields[1].values).toEqual([5, 3, 8]);
   });
 
-  it('should handle a single entry', () => {
-    const entries = [makeEntry('2025-01-01T12:00:00Z')];
+  it('should use the first series when multiple range counts are returned', () => {
+    const rangeCounts = [
+      { count: 0, values: [{ timestamp: 1000, count: 10 }] },
+      { count: 0, values: [{ timestamp: 2000, count: 20 }] },
+    ];
 
-    const result = notificationsToDataFrame({ entries });
+    const result = rangeCountsToDataFrame(rangeCounts);
 
     expect(result.length).toBe(1);
-    expect(result.fields[1].values).toEqual([1]);
+    expect(result.fields[0].values).toEqual([1000 * 1000]);
+    expect(result.fields[1].values).toEqual([10]);
   });
 
-  it('should handle undefined entries gracefully', () => {
-    const result = notificationsToDataFrame({ entries: undefined as unknown as [] });
+  it('should handle a range count series with no values', () => {
+    const rangeCounts = [{ count: 0, values: [] }];
+
+    const result = rangeCountsToDataFrame(rangeCounts);
 
     expect(result.length).toBe(0);
-    expect(result.fields).toHaveLength(2);
     expect(result.fields[0].values).toEqual([]);
     expect(result.fields[1].values).toEqual([]);
   });
-
-  it('should produce one bucket per entry when timestamps are in different intervals', () => {
-    const entries = [
-      makeEntry('2025-01-01T00:01:00Z'),
-      makeEntry('2025-01-01T00:00:05Z'),
-      makeEntry('2025-01-01T00:00:30Z'),
-    ];
-
-    const result = notificationsToDataFrame({ entries });
-
-    // 3 entries in 3 different 10s buckets → 3 buckets each with count 1
-    expect(result.length).toBe(3);
-    expect(result.fields[1].values).toEqual([1, 1, 1]);
-
-    // Buckets follow insertion order (order entries appear)
-    const bucket60 = Math.floor(new Date('2025-01-01T00:01:00Z').getTime() / 10000) * 10000;
-    const bucket0 = Math.floor(new Date('2025-01-01T00:00:05Z').getTime() / 10000) * 10000;
-    const bucket30 = Math.floor(new Date('2025-01-01T00:00:30Z').getTime() / 10000) * 10000;
-    expect(result.fields[0].values).toEqual([bucket60, bucket0, bucket30]);
-  });
 });
-
-function makeEntry(timestamp: string) {
-  return {
-    timestamp,
-    receiver: 'slack',
-    status: 'firing' as const,
-    outcome: 'success' as const,
-    groupLabels: { alertname: 'test' },
-    alerts: [],
-    retry: false,
-    duration: 100,
-    pipelineTime: timestamp,
-    groupKey: 'test-group',
-  };
-}

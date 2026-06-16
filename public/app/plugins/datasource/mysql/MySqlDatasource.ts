@@ -1,13 +1,11 @@
-import { v4 as uuidv4 } from 'uuid';
-
-import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
-import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/plugin-ui';
+import { type DataSourceInstanceSettings, type TimeRange, generateUUID } from '@grafana/data';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import {
   COMMON_FNS,
-  DB,
-  FuncParameter,
+  type DB,
+  type FuncParameter,
   MACRO_FUNCTIONS,
-  SQLQuery,
+  type SQLQuery,
   SQLVariableSupport,
   SqlDatasource,
   formatSQL,
@@ -17,12 +15,12 @@ import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
 import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
-import { MySQLOptions } from './types';
+import { type MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+  constructor(instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
     super(instanceSettings);
     this.variables = new SQLVariableSupport(this);
   }
@@ -64,7 +62,7 @@ export class MySqlDatasource extends SqlDatasource {
       return [];
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
-    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${uuidv4()}` });
+    const frame = await this.runSql<string[]>(queryString, { refId: `fields-${generateUUID()}` });
     const fields = frame.map((f) => ({
       name: f[0],
       text: f[0],

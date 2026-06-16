@@ -122,6 +122,10 @@ Use these options to refine the visualization.
 
 {{< docs/shared lookup="visualizations/tooltip-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
+### Annotation options
+
+{{< docs/shared lookup="visualizations/annotations/options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
 ### Axis options
 
 {{< docs/shared lookup="visualizations/axis-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}

@@ -13,6 +13,99 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
+// stripSQLComments removes SQL line comments (--) and block comments (/* */)
+// from the query string. It is quote-aware: comment sequences inside single-quoted
+// string literals, double-quoted identifiers, and T-SQL bracket-quoted identifiers
+// are preserved verbatim.
+func stripSQLComments(sql string) string {
+	var out strings.Builder
+	out.Grow(len(sql))
+	i := 0
+	n := len(sql)
+	for i < n {
+		switch {
+		case sql[i] == '\'':
+			// Single-quoted string literal. Pass verbatim; '' is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '\'' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '\'' {
+						// Doubled-quote escape: '' inside a string literal.
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case sql[i] == '"':
+			// Double-quoted identifier. Pass verbatim; "" is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == '"' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == '"' {
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case sql[i] == '[':
+			// T-SQL bracket-quoted identifier. Pass verbatim; ]] is the escape sequence.
+			out.WriteByte(sql[i])
+			i++
+			for i < n {
+				if sql[i] == ']' {
+					out.WriteByte(sql[i])
+					i++
+					if i < n && sql[i] == ']' {
+						// Doubled-bracket escape: ]] inside a bracket identifier.
+						out.WriteByte(sql[i])
+						i++
+					} else {
+						break
+					}
+				} else {
+					out.WriteByte(sql[i])
+					i++
+				}
+			}
+		case i+1 < n && sql[i] == '/' && sql[i+1] == '*':
+			// Block comment: skip to closing */.
+			i += 2
+			for i+1 < n {
+				if sql[i] == '*' && sql[i+1] == '/' {
+					i += 2
+					break
+				}
+				i++
+			}
+		case i+1 < n && sql[i] == '-' && sql[i+1] == '-':
+			// Line comment: skip to end of line (newline is preserved).
+			for i < n && sql[i] != '\n' {
+				i++
+			}
+		default:
+			out.WriteByte(sql[i])
+			i++
+		}
+	}
+	return out.String()
+}
+
 type msSQLMacroEngine struct {
 	*SQLMacroEngineBase
 }
@@ -23,6 +116,10 @@ func newMssqlMacroEngine() SQLMacroEngine {
 
 func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange,
 	sql string) (string, error) {
+	// Strip SQL comments before macro interpolation so that only macros present
+	// in executable SQL are evaluated.
+	sql = stripSQLComments(sql)
+
 	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
@@ -47,6 +144,7 @@ func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	return sql, nil
 }
 
+//nolint:gocyclo // The complexity was added in a patch. We do not want to modify the patch right now.
 func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
@@ -76,6 +174,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'"`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])
@@ -111,6 +212,9 @@ func (m *msSQLMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *bac
 		interval, err := gtime.ParseInterval(strings.Trim(args[1], `'`))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if interval <= 0 {
+			return "", fmt.Errorf("interval must be positive, got %v", args[1])
 		}
 		if len(args) == 3 {
 			err := SetupFillmode(query, interval, args[2])

@@ -4,15 +4,21 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetSearchUsersUserHit struct {
-	Name          string  `json:"name"`
-	Title         string  `json:"title"`
-	Login         string  `json:"login"`
-	Email         string  `json:"email"`
-	Role          string  `json:"role"`
-	LastSeenAt    int64   `json:"lastSeenAt"`
-	LastSeenAtAge string  `json:"lastSeenAtAge"`
-	Provisioned   bool    `json:"provisioned"`
-	Score         float64 `json:"score"`
+	Name          string `json:"name"`
+	Title         string `json:"title"`
+	Login         string `json:"login"`
+	Email         string `json:"email"`
+	Role          string `json:"role"`
+	LastSeenAt    int64  `json:"lastSeenAt"`
+	LastSeenAtAge string `json:"lastSeenAtAge"`
+	Provisioned   bool   `json:"provisioned"`
+	Disabled      bool   `json:"disabled"`
+	// Deprecated internal (legacy SQL) id of the user.
+	InternalId int64 `json:"internalId"`
+	// Creation timestamp, in epoch milliseconds.
+	Created       int64           `json:"created"`
+	Score         float64         `json:"score"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
 }
 
 // NewGetSearchUsersUserHit creates a new GetSearchUsersUserHit object.

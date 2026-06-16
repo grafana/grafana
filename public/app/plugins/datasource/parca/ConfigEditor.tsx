@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
+import { type DataSourcePluginOptionsEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import {
   AdvancedHttpSettings,
   Auth,
@@ -12,7 +12,7 @@ import {
 import { config } from '@grafana/runtime';
 import { Divider, SecureSocksProxySettings, Stack, useStyles2 } from '@grafana/ui';
 
-import { ParcaDataSourceOptions } from './types';
+import { type ParcaDataSourceOptions } from './types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<ParcaDataSourceOptions> {}
 

@@ -20,6 +20,7 @@ import (
 
 	alertingCluster "github.com/grafana/alerting/cluster"
 	alertingImages "github.com/grafana/alerting/images"
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -98,6 +100,13 @@ func NewFakeConfigStore(t *testing.T, configs map[int64]*models.AlertConfigurati
 	}
 }
 
+func NewFakeNotificationStore(t *testing.T, notificationSettings map[int64]map[models.AlertRuleKey]models.ContactPointRouting) *fakeConfigStore {
+	t.Helper()
+	return &fakeConfigStore{
+		notificationSettings: notificationSettings,
+	}
+}
+
 func (f *fakeConfigStore) GetAllLatestAlertmanagerConfiguration(context.Context) ([]*models.AlertConfiguration, error) {
 	result := make([]*models.AlertConfiguration, 0, len(f.configs))
 	for _, configuration := range f.configs {
@@ -115,7 +124,7 @@ func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
-	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
+	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func(models.AlertConfiguration) error { return nil })
 }
 
 func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
@@ -134,7 +143,7 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 		f.historicConfigs[cmd.OrgID] = append(f.historicConfigs[cmd.OrgID], &historicConfig)
 	}
 
-	if err := callback(); err != nil {
+	if err := callback(cfg); err != nil {
 		return err
 	}
 
@@ -467,6 +476,9 @@ func withPeer(peer alertingNotify.ClusterPeer) Option {
 	}
 }
 
+// ReliableDelivery implements alertingCluster.ClusterChannel.
+func (m *MockBroadcastChannel) ReliableDelivery([]byte) bool { return true }
+
 // Broadcast implements alertingCluster.ClusterChannel.
 func (m *MockBroadcastChannel) Broadcast(b []byte) {
 	m.broadcasts = append(m.broadcasts, b)
@@ -479,7 +491,8 @@ func (m *MockBroadcastChannel) Broadcasts() [][]byte {
 
 // MockClusterPeer implements alertingNotify.ClusterPeer for testing.
 type MockClusterPeer struct {
-	Channel *MockBroadcastChannel
+	Channel     *MockBroadcastChannel
+	LastOptions []alertingCluster.ChannelOption
 }
 
 // Position implements alertingNotify.ClusterPeer.
@@ -493,7 +506,8 @@ func (m *MockClusterPeer) WaitReady(context.Context) error {
 }
 
 // AddState implements alertingNotify.ClusterPeer.
-func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer) alertingCluster.ClusterChannel {
+func (m *MockClusterPeer) AddState(_ string, _ alertingCluster.State, _ prometheus.Registerer, opts ...alertingCluster.ChannelOption) alertingCluster.ClusterChannel {
+	m.LastOptions = opts
 	return m.Channel
 }
 
@@ -504,6 +518,10 @@ type TestMultiOrgAlertmanagerOptions struct {
 	featureToggles featuremgmt.FeatureToggles
 	peer           alertingNotify.ClusterPeer
 	waitReady      bool
+	secretService  *secretsManager.SecretsService //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	alertmanagers  map[int64]Alertmanager
+	cfgStore       AlertingStore
+	skipLoad       bool
 }
 
 type TestMultiOrgAlertmanagerOption func(*TestMultiOrgAlertmanagerOptions)
@@ -544,6 +562,32 @@ func WithWaitReady() TestMultiOrgAlertmanagerOption {
 	}
 }
 
+func WithSecretService(
+	secretService *secretsManager.SecretsService, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.secretService = secretService
+	}
+}
+
+func WithAlertmanagers(alertmanagers map[int64]Alertmanager) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.alertmanagers = alertmanagers
+	}
+}
+
+func WithConfigStore(cfgStore AlertingStore) TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.cfgStore = cfgStore
+	}
+}
+
+func WithSkipLoad() TestMultiOrgAlertmanagerOption {
+	return func(opts *TestMultiOrgAlertmanagerOptions) {
+		opts.skipLoad = true
+	}
+}
+
 func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerOption) *MultiOrgAlertmanager {
 	t.Helper()
 
@@ -560,11 +604,19 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 
 	tmpDir := t.TempDir()
 	orgStore := NewFakeOrgStore(t, options.orgs)
-	cfgStore := NewFakeConfigStore(t, options.configs)
+	var cfgStore AlertingStore
+	if options.cfgStore != nil {
+		cfgStore = options.cfgStore
+	} else {
+		cfgStore = NewFakeConfigStore(t, options.configs)
+	}
 	kvStore := fakes.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	secretsService := options.secretService
+	if secretsService == nil {
+		secretsService = secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
+	}
 	decryptFn := secretsService.GetDecryptedValue
 
 	cfg := &setting.Cfg{
@@ -591,14 +643,29 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		fakes.NewFakeReceiverPermissionsService(),
+		fakes.NewFakeRoutePermissionsService(),
 		log.New("testlogger"),
 		secretsService,
 		options.featureToggles,
 		nil,
+		false,
+		nil, // adminConfigStore - not needed when datasource sync feature flag is off
+		nil, // datasourceService - not needed when datasource sync feature flag is off
+		nil, // httpClientProvider - not needed when datasource sync feature flag is off
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed when datasource sync feature flag is off
 		moaOpts...,
 	)
 	require.NoError(t, err)
-	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+
+	if options.alertmanagers != nil {
+		for orgID, am := range options.alertmanagers {
+			moa.alertmanagers[orgID] = am
+		}
+	}
+
+	if !options.skipLoad {
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
+	}
 
 	if options.waitReady {
 		require.Eventually(t, func() bool {
@@ -639,6 +706,37 @@ type FakeReceiverService struct {
 		GetReceiver []GetReceiverCall
 	}
 	GetReceiverFunc func(ctx context.Context, uid string, decrypt bool, user identity.Requester) (*models.Receiver, error)
+}
+
+type FakeEmailValidator struct {
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
+}
+
+func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
+	t.Helper()
+	return &FakeEmailValidator{
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+			return err
+		},
+		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+			return err
+		},
+	}
+}
+
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+	if f.ValidateIntegrationFunc != nil {
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
+	}
+	return nil
+}
+
+func (f *FakeEmailValidator) ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
+	if f.ValidateIntegrationConfigFunc != nil {
+		return f.ValidateIntegrationConfigFunc(ctx, orgID, integration, logger)
+	}
+	return nil
 }
 
 type GetReceiverCall struct {

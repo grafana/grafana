@@ -2,11 +2,14 @@ package pyroscope
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	googlev1 "github.com/grafana/pyroscope/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
@@ -40,7 +43,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 		series := &SeriesResponse{
 			Series: []*Series{
-				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{Id: "id1", Value: 3, Timestamp: 1000}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{Id: "id2", Value: 1, Timestamp: 2000}}}}},
+				{Labels: []*LabelPair{{Name: "foo", Value: "bar"}}, Points: []*Point{{Timestamp: int64(1000), Value: 30, Exemplars: []*Exemplar{{ProfileId: "id1", SpanId: "", Value: 3, Timestamp: 1000, Labels: []*LabelPair{}}}}, {Timestamp: int64(2000), Value: 10, Exemplars: []*Exemplar{{ProfileId: "id2", SpanId: "", Value: 1, Timestamp: 2000, Labels: []*LabelPair{}}}}}},
 			},
 			Units: "short",
 			Label: "alloc_objects",
@@ -50,7 +53,7 @@ func Test_PyroscopeClient(t *testing.T) {
 
 	t.Run("GetProfile", func(t *testing.T) {
 		maxNodes := int64(-1)
-		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes, nil)
 		require.Nil(t, err)
 
 		series := &ProfileResponse{
@@ -72,11 +75,60 @@ func Test_PyroscopeClient(t *testing.T) {
 	t.Run("GetProfile with empty response", func(t *testing.T) {
 		connectClient.SendEmptyProfileResponse = true
 		maxNodes := int64(-1)
-		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes)
+		resp, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes, nil)
 		require.Nil(t, err)
 		// Mainly ensuring this does not panic like before
 		require.Nil(t, resp)
 		connectClient.SendEmptyProfileResponse = false
+	})
+
+	t.Run("GetProfile passes profileIdSelector to request", func(t *testing.T) {
+		maxNodes := int64(-1)
+		selector := []string{"id1", "id2"}
+		_, err := client.GetProfile(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, &maxNodes, selector)
+		require.Nil(t, err)
+
+		req, ok := connectClient.Req.(*connect.Request[querierv1.SelectMergeStacktracesRequest])
+		require.True(t, ok)
+		require.Equal(t, selector, req.Msg.ProfileIdSelector)
+	})
+
+	ctxWithToggle := config.WithGrafanaConfig(context.Background(), config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: utf8LabelNamesFeatureToggle,
+	}))
+
+	t.Run("LabelNames sets UTF-8 Accept header when toggle enabled", func(t *testing.T) {
+		_, err := client.LabelNames(ctxWithToggle, "{}", 0, 100)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[typesv1.LabelNamesRequest])
+		require.True(t, ok)
+		require.Equal(t, "*/*; allow-utf8-labelnames=true", req.Header().Get("Accept"))
+	})
+
+	t.Run("LabelNames does not set UTF-8 Accept header when toggle disabled", func(t *testing.T) {
+		_, err := client.LabelNames(context.Background(), "{}", 0, 100)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[typesv1.LabelNamesRequest])
+		require.True(t, ok)
+		require.Empty(t, req.Header().Get("Accept"))
+	})
+
+	t.Run("GetSeries sets UTF-8 Accept header when toggle enabled", func(t *testing.T) {
+		limit := int64(10)
+		_, err := client.GetSeries(ctxWithToggle, "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15, typesv1.ExemplarType_EXEMPLAR_TYPE_NONE)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[querierv1.SelectSeriesRequest])
+		require.True(t, ok)
+		require.Equal(t, "*/*; allow-utf8-labelnames=true", req.Header().Get("Accept"))
+	})
+
+	t.Run("GetSeries does not set UTF-8 Accept header when toggle disabled", func(t *testing.T) {
+		limit := int64(10)
+		_, err := client.GetSeries(context.Background(), "memory:alloc_objects:count:space:bytes", "{}", 0, 100, []string{}, &limit, 15, typesv1.ExemplarType_EXEMPLAR_TYPE_NONE)
+		require.NoError(t, err)
+		req, ok := connectClient.Req.(*connect.Request[querierv1.SelectSeriesRequest])
+		require.True(t, ok)
+		require.Empty(t, req.Header().Get("Accept"))
 	})
 }
 
@@ -91,8 +143,8 @@ func (f *FakePyroscopeConnectClient) LabelValues(ctx context.Context, c *connect
 }
 
 func (f *FakePyroscopeConnectClient) LabelNames(ctx context.Context, c *connect.Request[typesv1.LabelNamesRequest]) (*connect.Response[typesv1.LabelNamesResponse], error) {
-	//TODO implement me
-	panic("implement me")
+	f.Req = c
+	return &connect.Response[typesv1.LabelNamesResponse]{Msg: &typesv1.LabelNamesResponse{}}, nil
 }
 
 func (f *FakePyroscopeConnectClient) Diff(ctx context.Context, c *connect.Request[querierv1.DiffRequest]) (*connect.Response[querierv1.DiffResponse], error) {
@@ -158,6 +210,22 @@ func (f *FakePyroscopeConnectClient) SelectSeries(ctx context.Context, req *conn
 	}, nil
 }
 
+func (f *FakePyroscopeConnectClient) SelectHeatmap(ctx context.Context, req *connect.Request[querierv1.SelectHeatmapRequest]) (*connect.Response[querierv1.SelectHeatmapResponse], error) {
+	f.Req = req
+	return &connect.Response[querierv1.SelectHeatmapResponse]{
+		Msg: &querierv1.SelectHeatmapResponse{
+			Series: []*typesv1.HeatmapSeries{
+				{
+					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
+					Slots: []*typesv1.HeatmapSlot{
+						{Timestamp: int64(1000), YMin: []float64{0, 100, 200}, Counts: []int32{5, 10, 3}},
+					},
+				},
+			},
+		},
+	}, nil
+}
+
 func (f *FakePyroscopeConnectClient) SelectMergeProfile(ctx context.Context, c *connect.Request[querierv1.SelectMergeProfileRequest]) (*connect.Response[googlev1.Profile], error) {
 	panic("implement me")
 }
@@ -172,4 +240,34 @@ func (f *FakePyroscopeConnectClient) AnalyzeQuery(ctx context.Context, c *connec
 
 func (f *FakePyroscopeConnectClient) GetProfileStats(ctx context.Context, c *connect.Request[typesv1.GetProfileStatsRequest]) (*connect.Response[typesv1.GetProfileStatsResponse], error) {
 	panic("implement me")
+}
+
+func Test_setUTF8AcceptHeader(t *testing.T) {
+	tests := []struct {
+		description    string
+		existingAccept string
+		expectedAccept string
+	}{
+		{
+			description:    "no existing Accept header",
+			existingAccept: "",
+			expectedAccept: "*/*; allow-utf8-labelnames=true",
+		},
+		{
+			description:    "existing Accept header",
+			existingAccept: "application/json",
+			expectedAccept: "application/json; allow-utf8-labelnames=true",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			h := http.Header{}
+			if tt.existingAccept != "" {
+				h.Set("Accept", tt.existingAccept)
+			}
+			setUTF8AcceptHeader(h)
+			require.Equal(t, tt.expectedAccept, h.Get("Accept"))
+		})
+	}
 }

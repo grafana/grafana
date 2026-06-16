@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'fs';
 import path from 'path';
 
 import { variableAdapters } from 'app/features/variables/adapters';
@@ -66,6 +66,15 @@ describe('Dev Dashboard Backend / Frontend result comparison', () => {
 
   const devDashboardInputDir = '../../../../../devenv/dev-dashboards';
   const devDashboardOutputDir = '../../../../../apps/dashboard/pkg/migration/testdata/dev-dashboards-output';
+
+  beforeAll(() => {
+    const outputDirAbsolute = path.join(__dirname, devDashboardOutputDir);
+    if (!existsSync(outputDirAbsolute)) {
+      throw new Error(
+        `Golden files not found at ${outputDirAbsolute}. Run "make generate-golden-files" from apps/dashboard/ to generate them.`
+      );
+    }
+  });
 
   // Find all JSON files in dev-dashboards directory
   const devDashboardFiles = findJSONFiles(path.join(__dirname, devDashboardInputDir));

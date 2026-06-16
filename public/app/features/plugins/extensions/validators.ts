@@ -8,13 +8,13 @@ import {
   type PluginExtensionAddedFunctionConfig,
   PluginExtensionPoints,
   PluginExtensionPointPatterns,
-  AppPluginConfig,
+  type AppPluginConfig,
 } from '@grafana/data';
-import { PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
+import { type PluginAddedLinksConfigureFunc } from '@grafana/data/internal';
 import { isPluginExtensionLink } from '@grafana/runtime';
 
 import * as errors from './errors';
-import { ExtensionsLog } from './logs/log';
+import { type ExtensionsLog } from './logs/log';
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined,

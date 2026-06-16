@@ -34,7 +34,7 @@ func (f FakeSecretsStore) GetCurrentDataKey(_ context.Context, label string) (*s
 }
 
 func (f FakeSecretsStore) GetAllDataKeys(_ context.Context) ([]*secrets.DataKey, error) {
-	result := make([]*secrets.DataKey, 0)
+	result := make([]*secrets.DataKey, 0, len(f.store))
 	for _, key := range f.store {
 		result = append(result, key)
 	}
@@ -58,6 +58,6 @@ func (f FakeSecretsStore) DeleteDataKey(_ context.Context, id string) error {
 	return nil
 }
 
-func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[secrets.ProviderID]secrets.Provider, _ secrets.ProviderID) error {
+func (f FakeSecretsStore) ReEncryptDataKeys(_ context.Context, _ map[secrets.ProviderID]secrets.Provider, _ secrets.ProviderID) error { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return nil
 }

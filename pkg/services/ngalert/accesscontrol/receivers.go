@@ -8,10 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-const (
-	NewReceiverType = "new"
-)
-
 var (
 	// Asserts pre-conditions for read access to redacted receivers. If this evaluates to false, the user cannot read any redacted receivers.
 	readRedactedReceiversPreConditionsEval = ac.EvalAny(
@@ -75,6 +71,12 @@ var (
 	createReceiversEval = ac.EvalAny(
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite), // Global action for all AM config. Org scope.
 		ac.EvalPermission(ac.ActionAlertingReceiversCreate),    // Action for receivers. Org scope.
+	)
+
+	// Extra permissions that give write access to all receivers when called from provisioning api.
+	provisioningExtraWritePermissions = ac.EvalAny(
+		ac.EvalPermission(ac.ActionAlertingProvisioningWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite),
 	)
 
 	// Update
@@ -201,7 +203,7 @@ var (
 		ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
 		ac.EvalAll(
 			ac.EvalPermission(ac.ActionAlertingReceiversCreate), // Action for receivers. Org scope.
-			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetResourceScopeType(NewReceiverType)),
+			ac.EvalPermission(ac.ActionAlertingReceiversTestCreate, models.ScopeReceiversProvider.GetNewResourceScope()),
 		),
 	)
 )
@@ -335,12 +337,43 @@ func NewReceiverAccess[T models.Identified](a ac.AccessControl, includeProvision
 				return provisioningExtraReadDecryptedPermissions
 			},
 		})
+		extendAccessControl(&rcvAccess.create, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraWritePermissions,
+			authorizeAll:  provisioningExtraWritePermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraWritePermissions
+			},
+		})
+		extendAccessControl(&rcvAccess.update, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraWritePermissions,
+			authorizeAll:  provisioningExtraWritePermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraWritePermissions
+			},
+		})
+		extendAccessControl(&rcvAccess.updateProtected, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraWritePermissions,
+			authorizeAll:  provisioningExtraWritePermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraWritePermissions
+			},
+		})
+		extendAccessControl(&rcvAccess.delete, ac.EvalAny, actionAccess[T]{
+			authorizeSome: provisioningExtraWritePermissions,
+			authorizeAll:  provisioningExtraWritePermissions,
+			authorizeOne: func(receiver models.Identified) ac.Evaluator {
+				return provisioningExtraWritePermissions
+			},
+		})
 	}
 
 	// Write, delete, and permissions management should require read permissions.
 	extendAccessControl(&rcvAccess.update, ac.EvalAll, rcvAccess.read)
 	extendAccessControl(&rcvAccess.delete, ac.EvalAll, rcvAccess.read)
 	extendAccessControl(&rcvAccess.permissions, ac.EvalAll, rcvAccess.read)
+
+	// Modify protected should require both read and update permissions.
+	extendAccessControl(&rcvAccess.updateProtected, ac.EvalAll, rcvAccess.update)
 
 	return rcvAccess
 }

@@ -645,10 +645,11 @@ service ManagedObjectIndex {
   rpc ListManagedObjects(ListManagedObjectsRequest) returns (ListManagedObjectsResponse);
 }
 
-// Clients can use this service directly
-// NOTE: This is read only, and no read afer write guarantees
+// Deprecated: Use the standard gRPC health checking protocol (grpc.health.v1.Health)
+// instead.
+// This service will be removed in a future release.
 service Diagnostics {
-  // Check if the service is healthy
+  // Deprecated: Use grpc.health.v1.Health/Check instead.
   rpc IsHealthy(HealthCheckRequest) returns (HealthCheckResponse);
 }
 

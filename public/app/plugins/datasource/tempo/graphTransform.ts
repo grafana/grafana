@@ -1,17 +1,17 @@
 import {
-  DataFrame,
+  type DataFrame,
   DataFrameView,
-  DataQueryResponse,
+  type DataQueryResponse,
   FieldColorModeId,
-  FieldDTO,
+  type FieldDTO,
   MutableDataFrame,
   NodeGraphDataFrameFieldNames as Fields,
-  TimeRange,
+  type TimeRange,
   FieldType,
   toDataFrame,
 } from '@grafana/data';
 
-export const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
+const secondsMetric = 'traces_service_graph_request_server_seconds_sum';
 export const totalsMetric = 'traces_service_graph_request_total';
 export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';

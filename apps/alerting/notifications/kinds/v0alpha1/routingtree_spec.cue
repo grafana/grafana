@@ -13,12 +13,6 @@ RouteTreeSpec: {
 	repeat_interval?: string
 }
 
-#Matcher: {
-	type:  "=" | "!=" | "=~" | "!~" @cog(kind="enum",memberNames="Equal|NotEqual|EqualRegex|NotEqualRegex")
-	label: string
-	value: string
-}
-
 #Route: {
 	receiver?: string
 	matchers?: [...#Matcher]

@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
+import { getWrapper } from 'test/test-utils';
 
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
@@ -7,7 +8,7 @@ import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageSt
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { SoloPanelRenderer } from './SoloPanelPage';
+import { SoloPanelPage, SoloPanelRenderer, type Props } from './SoloPanelPage';
 
 // Mock dependencies
 jest.mock('react-router-dom-v5-compat', () => ({
@@ -82,6 +83,69 @@ describe('SoloPanelPage', () => {
     jest.clearAllMocks();
     (getDashboardScenePageStateManager as jest.Mock).mockReturnValue(mockStateManager);
     (useParams as jest.Mock).mockReturnValue({ uid: 'test-uid', type: undefined, slug: undefined });
+  });
+
+  const Providers = getWrapper({});
+
+  describe('reload behavior', () => {
+    function renderSoloPanelPage(queryParams: Props['queryParams']) {
+      // SoloPanelPage only destructures queryParams from props; route and location are unused
+      return render(
+        <Providers>
+          <SoloPanelPage queryParams={queryParams} route={{} as Props['route']} location={{} as Props['location']} />
+        </Providers>
+      );
+    }
+
+    it('should not re-call loadDashboard when queryParams change', () => {
+      const { rerender, unmount } = renderSoloPanelPage({ panelId: '1' });
+
+      expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <Providers>
+          <SoloPanelPage
+            // @ts-ignore
+            queryParams={{ panelId: '1', 'var-foo': 'bar' }}
+            route={{} as Props['route']}
+            location={{} as Props['location']}
+          />
+        </Providers>
+      );
+      expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(1);
+      expect(mockStateManager.clearState).not.toHaveBeenCalled();
+
+      unmount();
+      expect(mockStateManager.clearState).toHaveBeenCalledTimes(1);
+    });
+
+    it('should re-call loadDashboard when uid changes', () => {
+      const { rerender, unmount } = renderSoloPanelPage({ panelId: '1' });
+      expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(1);
+
+      (useParams as jest.Mock).mockReturnValue({ uid: 'other-uid', type: undefined, slug: undefined });
+      rerender(
+        <Providers>
+          <SoloPanelPage
+            queryParams={{ panelId: '1' }}
+            route={{} as Props['route']}
+            location={{} as Props['location']}
+          />
+        </Providers>
+      );
+
+      expect(mockStateManager.clearState).toHaveBeenCalledTimes(1);
+      expect(mockStateManager.loadDashboard).toHaveBeenCalledTimes(2);
+      expect(mockStateManager.loadDashboard).toHaveBeenNthCalledWith(2, {
+        uid: 'other-uid',
+        type: undefined,
+        slug: undefined,
+        route: 'embedded-dashboard',
+      });
+
+      unmount();
+      expect(mockStateManager.clearState).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('SoloPanelRenderer', () => {

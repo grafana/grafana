@@ -1,7 +1,7 @@
 // Code was originally generated from cue
 // It must now be updated manually
 
-import * as common from '@grafana/schema';
+import type * as common from '@grafana/schema';
 
 export enum TestDataQueryType {
   Annotations = 'annotations',
@@ -79,11 +79,6 @@ export interface USAQuery {
   states?: string[];
 }
 
-export const defaultUSAQuery: Partial<USAQuery> = {
-  fields: [],
-  states: [],
-};
-
 export interface CSVWave {
   labels?: string;
   name?: string;
@@ -130,9 +125,3 @@ export interface TestDataDataQuery extends common.DataQuery {
   usa?: USAQuery;
   errorSource?: 'plugin' | 'downstream';
 }
-
-export const defaultTestDataDataQuery: Partial<TestDataDataQuery> = {
-  csvWave: [],
-  points: [],
-  scenarioId: TestDataQueryType.RandomWalk,
-};

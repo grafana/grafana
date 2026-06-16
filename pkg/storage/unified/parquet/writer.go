@@ -104,11 +104,16 @@ func (w *parquetWriter) CloseWithResults() (*resourcepb.BulkResponse, error) {
 }
 
 func (w *parquetWriter) Close() error {
+	if w.writer == nil {
+		return nil
+	}
 	if w.rv.Len() > 0 {
 		_ = w.flush()
 	}
 	w.logger.Info("close")
-	return w.writer.Close()
+	err := w.writer.Close()
+	w.writer = nil
+	return err
 }
 
 // writes the current buffer to parquet and re-inits the arrow buffer
@@ -116,9 +121,9 @@ func (w *parquetWriter) flush() error {
 	w.logger.Info("flush", "count", w.rv.Len())
 	rec := array.NewRecordBatch(w.schema, []arrow.Array{
 		w.rv.NewArray(),
-		w.namespace.NewArray(),
 		w.group.NewArray(),
 		w.resource.NewArray(),
+		w.namespace.NewArray(),
 		w.name.NewArray(),
 		w.folder.NewArray(),
 		w.action.NewArray(),

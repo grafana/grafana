@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject } from 'lodash';
+import { cloneDeep, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -10,17 +10,17 @@ import {
   isDateTime,
   dateTime,
   PluginContextProvider,
-  type PluginExtensionLink,
-  type PanelMenuItem,
   type PluginExtensionAddedLinkConfig,
+  type PluginExtensionLink,
+  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { isRecord } from 'app/core/utils/isRecord';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
   OpenExtensionSidebarEvent,
@@ -39,8 +39,8 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
-import { ExtensionsLog, log as baseLog } from './logs/log';
-import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
+import { type ExtensionsLog, log as baseLog } from './logs/log';
+import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -88,11 +88,7 @@ export const wrapWithPluginContext = <T,>({
   log: ExtensionsLog;
 }) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const {
-      error,
-      loading,
-      value: pluginMeta,
-    } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { error, loading, value: pluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;
@@ -213,13 +209,6 @@ export function generateExtensionId(pluginId: string, extensionPointId: string, 
 
 const _isReadOnlyProxy = Symbol('isReadOnlyProxy');
 const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
-
-export class ReadOnlyProxyError extends Error {
-  constructor(message?: string) {
-    super(message ?? 'Mutating a read-only proxy object');
-    this.name = 'ReadOnlyProxyError';
-  }
-}
 
 /**
  * Returns a proxy that wraps the given object in a way that makes it read only.
@@ -412,61 +401,6 @@ export function truncateTitle(title: string, length: number): string {
   return `${part.trimEnd()}...`;
 }
 
-export function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
-  const categorized: Record<string, PanelMenuItem[]> = {};
-  const uncategorized: PanelMenuItem[] = [];
-
-  for (const extension of extensions) {
-    const category = extension.category;
-
-    if (!category) {
-      uncategorized.push({
-        text: truncateTitle(extension.title, 25),
-        href: extension.path,
-        onClick: extension.onClick,
-        iconClassName: extension.icon,
-        target: extension.openInNewTab ? '_blank' : undefined,
-      });
-      continue;
-    }
-
-    if (!Array.isArray(categorized[category])) {
-      categorized[category] = [];
-    }
-
-    categorized[category].push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-      onClick: extension.onClick,
-      iconClassName: extension.icon,
-      target: extension.openInNewTab ? '_blank' : undefined,
-    });
-  }
-
-  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
-    subMenu.push({
-      text: truncateTitle(category, 25),
-      type: 'group',
-      subMenu: categorized[category],
-    });
-    return subMenu;
-  }, []);
-
-  if (uncategorized.length > 0) {
-    if (subMenu.length > 0) {
-      subMenu.push({
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        text: 'divider',
-        type: 'divider',
-      });
-    }
-
-    Array.prototype.push.apply(subMenu, uncategorized);
-  }
-
-  return subMenu;
-}
-
 export function getLinkExtensionOverrides(
   pluginId: string,
   config: AddedLinkRegistryItem,
@@ -488,6 +422,7 @@ export function getLinkExtensionOverrides(
       path = config.path,
       icon = config.icon,
       category = config.category,
+      group = config.group,
       openInNewTab = config.openInNewTab,
       ...rest
     } = overrides;
@@ -513,6 +448,7 @@ export function getLinkExtensionOverrides(
       path,
       icon,
       category,
+      group,
       openInNewTab,
     };
   } catch (error) {
@@ -529,7 +465,7 @@ export function getLinkExtensionOverrides(
   }
 }
 
-export function getLinkExtensionOnClick(
+function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
@@ -602,7 +538,7 @@ export function getLinkExtensionOnClick(
   };
 }
 
-export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({
@@ -610,6 +546,38 @@ export function getLinkExtensionPathWithTracking(pluginId: string, path: string,
       uel_epid: extensionPointId,
     })
   );
+}
+
+export type LinkExtensionOverrides = ReturnType<typeof getLinkExtensionOverrides>;
+
+/**
+ * Builds a PluginExtensionLink from an added link config and optional configure() overrides.
+ * Shared by getPluginExtensions and usePluginLinks.
+ */
+export function addedLinkToExtensionLink(
+  pluginId: string,
+  extensionPointId: string,
+  addedLink: AddedLinkRegistryItem,
+  overrides: LinkExtensionOverrides,
+  linkLog: ExtensionsLog,
+  frozenContext: object
+): PluginExtensionLink {
+  const path = overrides?.path ?? addedLink.path;
+  const group = overrides?.group ?? addedLink.group;
+  const category = overrides?.category ?? addedLink.category;
+  return {
+    id: generateExtensionId(pluginId, extensionPointId, addedLink.title),
+    type: PluginExtensionTypes.link,
+    pluginId,
+    onClick: getLinkExtensionOnClick(pluginId, extensionPointId, addedLink, linkLog, frozenContext),
+    icon: overrides?.icon ?? addedLink.icon,
+    title: overrides?.title ?? addedLink.title,
+    description: overrides?.description ?? addedLink.description ?? '',
+    path: isString(path) ? getLinkExtensionPathWithTracking(pluginId, path, extensionPointId) : undefined,
+    category,
+    group,
+    openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
+  };
 }
 
 // Comes from the `app_mode` setting in the Grafana config (defaults to "development")

@@ -11,13 +11,4 @@
 
 /* eslint-disable no-barrel-files/no-barrel-files */
 
-export type { MutationRequest, MutationResult, MutationChange, MutationClient, ListVariablesData } from './types';
-
-export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
-
-export type { MutationCommand } from './commands/types';
-
-/**
- * @internal Not part of the public API surface.
- */
-export { MutationExecutor } from './MutationExecutor';
+export { ALL_COMMANDS } from './commands/registry';

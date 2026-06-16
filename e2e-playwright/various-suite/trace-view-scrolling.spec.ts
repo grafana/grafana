@@ -8,7 +8,7 @@ test.describe(
     tag: ['@various'],
   },
   () => {
-    test('Can lazy load big traces', async ({ page, selectors }) => {
+    test('Can lazy load big traces', async ({ page, selectors, components }) => {
       // Mock the API response
       await page.route('**/api/ds/query?ds_type=jaeger*', async (route) => {
         await route.fulfill({
@@ -22,13 +22,12 @@ test.describe(
       await page.goto(selectors.pages.Explore.url);
 
       // Select the Jaeger data source
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await dataSourcePicker.click();
-      const datasourceList = page.getByTestId(selectors.components.DataSourcePicker.dataSourceList);
-      await datasourceList.getByText('gdev-jaeger').click();
+      await components.dataSourcePicker.set('gdev-jaeger');
 
       // Check that gdev-jaeger is visible in the query editor
-      await expect(page.getByTestId('query-editor-row').getByText('(gdev-jaeger)')).toBeVisible();
+      await expect(
+        page.getByTestId(selectors.components.QueryEditorRows.rows).getByText('(gdev-jaeger)')
+      ).toBeVisible();
 
       // Type the query
       const queryField = page

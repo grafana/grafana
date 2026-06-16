@@ -1,7 +1,12 @@
 import { config, locationService } from '@grafana/runtime';
-import { CustomVariable, UrlSyncManager } from '@grafana/scenes';
-import { DashboardDataDTO } from 'app/types/dashboard';
+import { CustomVariable, SceneTimeRange, SceneVariableSet, UrlSyncManager } from '@grafana/scenes';
+import { type DashboardDataDTO } from 'app/types/dashboard';
 
+import { DashboardScene } from '../scene/DashboardScene';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
 import {
@@ -19,7 +24,10 @@ describe('dashboardSessionState', () => {
     config.featureToggles.preserveDashboardStateWhenNavigating = false;
   });
 
-  beforeEach(() => {});
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    locationService.replace({ search: '' });
+  });
 
   describe('behavior', () => {
     it('should do nothing if no uid', () => {
@@ -113,6 +121,25 @@ describe('dashboardSessionState', () => {
       expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-5m&to=now&timezone=browser');
     });
 
+    it('should preserve valid suffixed variable keys for duplicate names and remove unknown ones', () => {
+      window.sessionStorage.setItem(
+        PRESERVED_SCENE_STATE_KEY,
+        '?var-custom0=dashboardValue&var-custom0-2=rowValue&var-custom0-3=invalidValue&from=now-5m&to=now&timezone=browser'
+      );
+
+      const scene = buildDuplicateVariableNameScene();
+      restoreDashboardStateFromLocalStorage(scene);
+
+      const restored = new URLSearchParams(locationService.getLocation().search);
+
+      expect(restored.get('var-custom0')).toBe('dashboardValue');
+      expect(restored.get('var-custom0-2')).toBe('rowValue');
+      expect(restored.has('var-custom0-3')).toBe(false);
+      expect(restored.get('from')).toBe('now-5m');
+      expect(restored.get('to')).toBe('now');
+      expect(restored.get('timezone')).toBe('browser');
+    });
+
     // handles case when user navigates back to a dashboard with the same state, i.e. using back button
     it('should remove duplicate query params', () => {
       locationService.replace({ search: 'var-customVar=b&from=now-6h&to=now&timezone=browser' });
@@ -167,4 +194,22 @@ function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
   scene.setState({ $data: undefined });
 
   return scene;
+}
+
+function buildDuplicateVariableNameScene() {
+  const rowScopedVariable = new CustomVariable({ name: 'custom0', query: 'x,y', value: 'x', text: 'x' });
+  const row = new RowItem({
+    key: 'row-1',
+    title: 'row',
+    $variables: new SceneVariableSet({ variables: [rowScopedVariable] }),
+    layout: new AutoGridLayoutManager({ layout: new AutoGridLayout({ children: [] }) }),
+  });
+
+  return new DashboardScene({
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({
+      variables: [new CustomVariable({ name: 'custom0', query: 'a,b', value: 'a', text: 'a' })],
+    }),
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
 }

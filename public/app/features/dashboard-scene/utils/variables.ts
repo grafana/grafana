@@ -1,4 +1,4 @@
-import { AdHocVariableFilter, TypedVariableModel } from '@grafana/data';
+import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
@@ -8,22 +8,43 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneVariable,
+  sceneGraph,
+  type SceneObject,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
+import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
 
-export function createVariablesForDashboard(oldModel: DashboardModel) {
-  const variableObjects = oldModel.templating.list
+export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
+
+/**
+ * Excludes internal system variables (e.g. ScopesVariable)
+ */
+export function getUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  return sceneGraph.getVariables(model).state.variables.filter(keepOnlyUserDefinedVariables);
+}
+
+export function useUserDefinedVariables(model: SceneObject): SceneVariable[] {
+  const { variables } = sceneGraph.getVariables(model).useState();
+  return variables.filter(keepOnlyUserDefinedVariables);
+}
+
+export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
+  const variables = migrateGroupByVariablesV1(oldModel.templating.list);
+  const variableObjects = variables
     .map((v) => {
       try {
         return createSceneVariableFromVariableModel(v);
@@ -36,13 +57,24 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
+  const defaultVariableObjects = defaultVariables
+    .map((v) => {
+      try {
+        return createSceneVariableFromVariableModelV2(v);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    .filter((v): v is SceneVariable => Boolean(v));
+
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...defaultVariableObjects, ...variableObjects],
   });
 }
 
@@ -65,10 +97,12 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -88,7 +122,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModel): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.type === 'interval') {
@@ -143,6 +177,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    origin: variable.origin,
   };
   if (variable.type === 'adhoc') {
     const originFilters: AdHocVariableFilter[] = [];
@@ -162,12 +197,17 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
-      layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
-      collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+        ? (variable.enableGroupBy ?? false)
+        : false,
+      $behaviors: [new ReportInteractionBehavior({})],
     });
   }
   // Custom variable
@@ -291,12 +331,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       text: variable.current?.text || [],
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
-      drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
+      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+      drilldownRecommendationsEnabled:
+        config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

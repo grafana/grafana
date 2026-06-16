@@ -8,5 +8,6 @@ export default defineConfig({
     defaultNS: 'mssql',
     functions: ['t', '*.t'],
     transComponents: ['Trans'],
+    warnOnConflicts: 'error',
   },
 });

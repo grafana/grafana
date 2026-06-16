@@ -1,14 +1,14 @@
-import uPlot, { Axis } from 'uplot';
+import { type default as uPlot, type Axis } from 'uplot';
 
 import {
   dateTimeFormat,
-  DecimalCount,
-  GrafanaTheme2,
+  type DecimalCount,
+  type GrafanaTheme2,
   guessDecimals,
   isBooleanUnit,
   roundDecimals,
   systemDateFormats,
-  TimeZone,
+  type TimeZone,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 
@@ -196,13 +196,7 @@ export const timeUnitSize = {
 };
 
 /** Format time axis ticks */
-export function formatTime(
-  self: uPlot,
-  splits: number[],
-  axisIdx: number,
-  foundSpace: number,
-  foundIncr: number
-): string[] {
+function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const axis = self.axes[axisIdx];
   const timeZone = 'timeZone' in axis && typeof axis.timeZone === 'string' ? axis.timeZone : undefined;
   const scale = self.scales.x;
@@ -289,7 +283,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   return Math.ceil(axisSize);
 }
 
-export function getUPlotSideFromAxis(axis: AxisPlacement) {
+function getUPlotSideFromAxis(axis: AxisPlacement) {
   switch (axis) {
     case AxisPlacement.Top:
       return 0;

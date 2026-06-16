@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -229,5 +230,39 @@ func TestIntegrationServerCheck(t *testing.T) {
 		res, err := server.Check(newContextWithNamespace(), newReq("user:18", utils.VerbCreate, dashboardGroup, dashboardResource, "", "", ""))
 		require.NoError(t, err)
 		assert.Equal(t, true, res.GetAllowed())
+	})
+
+	t.Run("user should check dashboard access through teams from request", func(t *testing.T) {
+		req := newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard")
+		req.Teams = []string{"ctx-check"}
+		res, err := server.Check(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+
+		res, err = server.Check(newContextWithNamespace(), newReq("user:contextual", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-check-dashboard"))
+		require.NoError(t, err)
+		assert.False(t, res.GetAllowed())
+	})
+
+	t.Run("user should check dashboard access with one thousand request teams", func(t *testing.T) {
+		groups := make([]string, 1000)
+		for i := range groups {
+			groups[i] = fmt.Sprintf("irrelevant-%04d", i)
+		}
+		groups[999] = "ctx-1000"
+
+		req := newReq("user:contextual-1000", utils.VerbGet, dashboardGroup, dashboardResource, "", "", "ctx-1000-dashboard")
+		req.Teams = groups
+		res, err := server.Check(newContextWithNamespace(), req)
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
+	})
+
+	t.Run("wildcard name for typed resource should be allowed when subject has group_resource get_permissions and returns no error", func(t *testing.T) {
+		// user:19 has get_permissions on the group_resource for users — they can manage
+		// permissions for all users. A check with name="*" must succeed via group_resource only.
+		res, err := server.Check(newContextWithNamespace(), newReq("user:19", utils.VerbGetPermissions, userGroup, userResource, "", "", "*"))
+		require.NoError(t, err)
+		assert.True(t, res.GetAllowed())
 	})
 }

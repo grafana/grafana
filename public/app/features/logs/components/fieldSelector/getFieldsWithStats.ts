@@ -1,8 +1,8 @@
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
 import { parseLogsFrame } from '../../logsFrame';
 
-import { FieldWithStats } from './FieldSelector';
+import { type FieldWithStats } from './FieldSelector';
 
 export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
   const cardinality = new Map<string, number>();
@@ -19,14 +19,30 @@ export function getFieldsWithStats(dataFrames: DataFrame[]): FieldWithStats[] {
         return keys;
       }) ?? [];
 
+    const uniqueLabels = [...new Set(labels)];
+
     const fields = (logsFrame?.extraFields ?? [])
       .filter((field) => !field?.config?.custom?.hidden)
       .map((field) => {
-        cardinality.set(field.name, field.values.filter((value) => value !== null && value !== undefined).length);
+        // The field is already present as a label, skip
+        if (uniqueLabels.some((label) => label === field.name)) {
+          return null;
+        }
+        const count = field.values.filter((value) => value !== null && value !== undefined).length;
+        cardinality.set(field.name, (cardinality.get(field.name) ?? 0) + count);
         return field.name;
-      });
+      })
+      .filter((field) => field !== null);
 
-    return [...labels, ...fields];
+    // Include severity field (level/detected_level) - it's excluded from extraFields but should be selectable
+    const severityFieldNames: string[] = [];
+    if (logsFrame?.severityField && !logsFrame.severityField.config?.custom?.hidden) {
+      const count = logsFrame.severityField.values.filter((value) => value !== null && value !== undefined).length;
+      cardinality.set(logsFrame.severityField.name, (cardinality.get(logsFrame.severityField.name) ?? 0) + count);
+      severityFieldNames.push(logsFrame.severityField.name);
+    }
+
+    return [...uniqueLabels, ...fields, ...severityFieldNames];
   });
 
   const labels = [...new Set(allFields)];

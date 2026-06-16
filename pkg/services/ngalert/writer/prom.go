@@ -124,6 +124,13 @@ var (
 		PrometheusDuplicateTimestampError,
 	}
 
+	// NonRetryableWriteErrors is the deterministic subset of ExpectedErrors: retrying the
+	// same payload in-cycle fails identically. The rest stay retryable (may clear over time).
+	NonRetryableWriteErrors = []string{
+		MimirDistributorMaxWriteMessageSizeError,
+		MimirDistributorMaxWriteRequestDataItemSizeError,
+	}
+
 	// ExpectedErrors are user-level write errors like trying to write an invalid series.
 	ExpectedErrors = []string{
 		MimirDistributorMaxWriteMessageSizeError,
@@ -303,7 +310,7 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 // Write writes the given frames to the Prometheus remote write endpoint.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), string(w.backendType)}
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
@@ -355,6 +362,17 @@ func promremoteLabelsFromPoint(point Point) []promremote.Label {
 	return labels
 }
 
+// ErrNonRetryableWrite is an internal marker (matched via errors.Is, never rendered) for a
+// deterministic write rejection that fails identically on every in-cycle retry.
+var ErrNonRetryableWrite = errors.New("write rejected (non-retryable)")
+
+// nonRetryableWrite tags a rejected write as non-retryable without changing its message;
+// errors.Is matches both ErrNonRetryableWrite and the wrapped ErrRejectedWrite.
+type nonRetryableWrite struct{ error }
+
+func (nonRetryableWrite) Is(target error) bool { return target == ErrNonRetryableWrite }
+func (e nonRetryableWrite) Unwrap() error      { return e.error }
+
 func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	if writeErr == nil {
 		return nil, false
@@ -386,6 +404,15 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 		for _, e := range IgnoredErrors {
 			if strings.Contains(msg, e) {
 				return nil, true
+			}
+		}
+
+		// Check for deterministic, non-retryable rejections first (a subset of
+		// ExpectedErrors). These fail identically on every in-cycle retry.
+		for _, e := range NonRetryableWriteErrors {
+			if strings.Contains(msg, e) {
+				actual := extractActualError(writeErr)
+				return nonRetryableWrite{fmt.Errorf("%w: %s", ErrRejectedWrite, actual)}, false
 			}
 		}
 

@@ -1,11 +1,11 @@
-import { QueryVariableModel, VariableSort, VariableRefresh } from '@grafana/data';
+import { type QueryVariableModel, VariableSort, VariableRefresh } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../../adapters';
 import { createQueryVariableAdapter } from '../../query/adapter';
 import { queryBuilder } from '../../shared/testing/builders';
-import { getPreloadedState, getRootReducer, RootReducerType } from '../../state/helpers';
+import { getPreloadedState, getRootReducer, type RootReducerType } from '../../state/helpers';
 import { toKeyedAction } from '../../state/keyedVariablesReducer';
 import { addVariable, changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { initialVariableModelState } from '../../types';

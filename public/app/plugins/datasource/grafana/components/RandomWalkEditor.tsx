@@ -1,8 +1,8 @@
-import { FormEvent } from 'react';
+import { type FormEvent } from 'react';
 
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
-import { GrafanaQuery } from '../types';
+import { type GrafanaQuery } from '../types';
 
 interface RandomWalkEditorProps {
   query: GrafanaQuery;

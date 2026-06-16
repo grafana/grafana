@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { defaultSpec, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Form } from 'app/core/components/Form/Form';
 
-import { DashboardInputs, InputType, ImportFormDataV2 } from '../../types';
+import { type DashboardInputs, InputType, type ImportFormDataV2 } from '../../types';
 
 import { ImportDashboardFormV2 } from './ImportDashboardFormV2';
 
@@ -35,6 +36,7 @@ const mockInputs: DashboardInputs = {
 
 jest.mock('../utils/validation', () => ({
   validateTitle: jest.fn().mockResolvedValue(true),
+  validateUid: jest.fn().mockResolvedValue(true),
 }));
 
 jest.mock('app/core/components/Select/FolderPicker', () => ({
@@ -70,13 +72,23 @@ jest.mock('app/features/datasources/components/picker/DataSourcePicker', () => (
 describe('ImportDashboardFormV2', () => {
   const mockOnCancel = jest.fn();
   const mockOnSubmit = jest.fn();
+  const mockOnFolderChange = jest.fn();
 
-  function renderForm(hasFloatGridItems = false, inputs: DashboardInputs = mockInputs) {
+  function renderForm(
+    hasFloatGridItems = false,
+    inputs: DashboardInputs = mockInputs,
+    dashboardUid?: string,
+    onFolderChange?: (uid: string) => void
+  ) {
     const defaultDashboard: DashboardV2Spec = defaultSpec();
     return render(
       <Form<ImportFormDataV2>
         onSubmit={mockOnSubmit}
-        defaultValues={{ dashboard: defaultDashboard, folderUid: 'test-folder' }}
+        defaultValues={{
+          dashboard: defaultDashboard,
+          folderUid: 'test-folder',
+          ...(dashboardUid !== undefined ? { k8s: { name: dashboardUid } } : {}),
+        }}
       >
         {({ register, errors, control, watch, getValues }) => (
           <ImportDashboardFormV2
@@ -89,6 +101,7 @@ describe('ImportDashboardFormV2', () => {
             onSubmit={mockOnSubmit}
             watch={watch}
             hasFloatGridItems={hasFloatGridItems}
+            onFolderChange={onFolderChange}
           />
         )}
       </Form>
@@ -109,5 +122,118 @@ describe('ImportDashboardFormV2', () => {
     expect(
       screen.queryByTestId(selectors.components.ImportDashboardForm.floatGridItemsWarning)
     ).not.toBeInTheDocument();
+  });
+
+  it('renders the original datasource name on the field label when label and name differ', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+        {
+          name: 'mysql-2',
+          label: 'mysql-2 (Reports MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Reports MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    expect(screen.getByText('mysql-1 (Production MySQL)')).toBeInTheDocument();
+    expect(screen.getByText('mysql-2 (Reports MySQL)')).toBeInTheDocument();
+  });
+
+  it('pre-selects the datasource picker when a matching datasource exists on the instance', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+          matchedDatasource: { uid: 'ds-prod', name: 'Production MySQL', type: 'mysql' },
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('ds-prod');
+  });
+
+  it('leaves the datasource picker empty when no matching datasource exists', () => {
+    const inputs: DashboardInputs = {
+      ...mockInputs,
+      dataSources: [
+        {
+          name: 'mysql-1',
+          label: 'mysql-1 (Production MySQL)',
+          pluginId: 'mysql',
+          type: InputType.DataSource,
+          description: 'mysql data source — originally "Production MySQL"',
+          info: 'Select a mysql data source',
+          value: '',
+        },
+      ],
+    };
+
+    renderForm(false, inputs);
+
+    const picker = screen.getByTestId('datasource-picker-mysql') as HTMLInputElement;
+    expect(picker.value).toBe('');
+  });
+
+  it('renders UID field as read-only first and enables editing after clicking change uid', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, 'existing-uid');
+
+    const uidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+    expect(uidField).toHaveValue('existing-uid');
+    expect(uidField).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: /change uid/i }));
+
+    const editableUidField = document.querySelector('input[name="k8s.name"]') as HTMLInputElement;
+    expect(editableUidField).toBeEnabled();
+  });
+
+  it('calls onFolderChange when folder picker value changes', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, undefined, mockOnFolderChange);
+
+    const folderPicker = screen.getByTestId('folder-picker');
+    await user.clear(folderPicker);
+    await user.type(folderPicker, 'new-folder');
+
+    expect(mockOnFolderChange).toHaveBeenCalledWith('new-folder');
+  });
+
+  it('works without onFolderChange callback (optional prop)', async () => {
+    const user = userEvent.setup();
+    renderForm(false, mockInputs, undefined, undefined);
+
+    const folderPicker = screen.getByTestId('folder-picker');
+    // Should not throw when changing folder without callback
+    await user.clear(folderPicker);
+    await user.type(folderPicker, 'some-folder');
+
+    expect(folderPicker).toHaveValue('some-folder');
   });
 });

@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
 
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 type Props = {
   className?: string;

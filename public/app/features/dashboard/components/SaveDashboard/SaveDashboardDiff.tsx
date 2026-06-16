@@ -1,12 +1,12 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
-import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
+import LazyDiffViewer from 'app/features/dashboard-scene/settings/version-history/LazyDiffViewer';
+import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';
-import { DiffViewer } from '../../../dashboard-scene/settings/version-history/DiffViewer';
 
 interface SaveDashboardDiffProps {
   oldValue?: unknown;
@@ -56,7 +56,7 @@ export const SaveDashboardDiff = ({
       diffs,
       count,
       showDiffs: count < 15, // overwhelming if too many changes
-      jsonView: <DiffViewer oldValue={oldJSON} newValue={newJSON} />,
+      jsonView: <LazyDiffViewer oldValue={oldJSON} newValue={newJSON} />,
     };
   }, [diff, oldValue, newValue]);
 

@@ -3,17 +3,17 @@ import { useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, ButtonVariant } from '../Button/Button';
+import { Button, type ButtonVariant } from '../Button/Button';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 import { Stack } from '../Layout/Stack/Stack';
-import { JustifyContent } from '../Layout/types';
-import { ResponsiveProp } from '../Layout/utils/responsiveness';
+import { type JustifyContent } from '../Layout/types';
+import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 
 export interface ConfirmContentProps {
   /** Modal content */
@@ -91,11 +91,18 @@ export const ConfirmContent = ({
   };
 
   const { handleSubmit } = useForm();
+  const stopPropagation = (callback: (event: React.FormEvent) => void) => {
+    return (event: React.FormEvent) => {
+      event.stopPropagation();
+      callback(event);
+    };
+  };
+
   const placeholder = t('grafana-ui.confirm-content.placeholder', 'Type "{{confirmPromptText}}" to confirm', {
     confirmPromptText,
   });
   return (
-    <form onSubmit={handleSubmit(onConfirmClick)}>
+    <form onSubmit={stopPropagation(handleSubmit(onConfirmClick))}>
       <div className={styles.text}>
         {body}
         {description ? <div className={styles.description}>{description}</div> : null}

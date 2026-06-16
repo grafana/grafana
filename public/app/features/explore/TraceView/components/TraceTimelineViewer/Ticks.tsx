@@ -16,11 +16,11 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import TNil from '../types/TNil';
+import type TNil from '../types/TNil';
 import { formatDuration } from '../utils/date';
 
 const getStyles = (theme: GrafanaTheme2) => ({

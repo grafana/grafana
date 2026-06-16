@@ -1,11 +1,13 @@
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Icon, IconButton, Stack, Text, Tooltip } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
+import { DashboardInteractions } from '../../utils/interactions';
+import { type GroupConditionConditionType } from '../group/types';
 
-import { ConditionalRenderingConditions } from './types';
+import { type ConditionalRenderingConditions } from './types';
 import { getConditionIndex, removeCondition, undoRemoveCondition } from './utils';
 
 interface Props {
@@ -14,9 +16,31 @@ interface Props {
   isObjectSupported: boolean;
   model: ConditionalRenderingConditions;
   title: string;
+  ruleId: GroupConditionConditionType;
 }
 
-export function ConditionalRenderingConditionWrapper({ children, info, isObjectSupported, model, title }: Props) {
+export function ConditionalRenderingConditionWrapper({
+  children,
+  info,
+  isObjectSupported,
+  model,
+  title,
+  ruleId,
+}: Props) {
+  const onDeleteconditionalRenderingRule = () => {
+    const index = getConditionIndex(model);
+    DashboardInteractions.clickRemoveConditionalRuleButton({ ruleId });
+    dashboardEditActions.edit({
+      description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
+      source: model,
+      perform: () => removeCondition(model),
+      undo: () => {
+        if (index > -1) {
+          undoRemoveCondition(model, index);
+        }
+      },
+    });
+  };
   return (
     <Stack direction="column" key={model.state.key!}>
       <Stack direction="row" gap={1}>
@@ -43,20 +67,7 @@ export function ConditionalRenderingConditionWrapper({ children, info, isObjectS
         <IconButton
           aria-label={t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition')}
           name="trash-alt"
-          onClick={() => {
-            const index = getConditionIndex(model);
-
-            dashboardEditActions.edit({
-              description: t('dashboard.conditional-rendering.conditions.wrapper.delete-condition', 'Delete Condition'),
-              source: model,
-              perform: () => removeCondition(model),
-              undo: () => {
-                if (index > -1) {
-                  undoRemoveCondition(model, index);
-                }
-              },
-            });
-          }}
+          onClick={onDeleteconditionalRenderingRule}
         />
       </Stack>
     </Stack>

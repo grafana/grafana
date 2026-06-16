@@ -20,11 +20,12 @@ func TestRepositorySecureValues(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		config  *provisioning.Repository
-		decrypt decryptFn
-		token   expectedDecryptedResult
-		webhook expectedDecryptedResult
+		name       string
+		config     *provisioning.Repository
+		decrypt    decryptFn
+		token      expectedDecryptedResult
+		webhook    expectedDecryptedResult
+		signingKey expectedDecryptedResult
 	}{
 		{
 			name: "referenced by name",
@@ -124,10 +125,63 @@ func TestRepositorySecureValues(t *testing.T) {
 				error: "failed to call decrypt service",
 			},
 		},
+		{
+			name: "commit signing key referenced by name",
+			config: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					CommitSigningKey: v0alpha1.InlineSecureValue{
+						Name: "secret",
+					},
+				},
+			},
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
+				require.Equal(t, []string{"secret"}, names)
+				val := secretv1beta1.NewExposedSecureValue(names[0])
+				return map[string]decrypt.DecryptResult{
+					names[0]: decrypt.NewDecryptResultValue(&val),
+				}, nil
+			},
+			signingKey: expectedDecryptedResult{
+				value: "secret",
+			},
+		},
+		{
+			name: "commit signing key with create set",
+			config: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					CommitSigningKey: v0alpha1.InlineSecureValue{
+						Create: "secret",
+					},
+				},
+			},
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
+				t.Fatal("decrypt should not be called when Create is set")
+				return nil, nil
+			},
+			signingKey: expectedDecryptedResult{
+				value: "secret",
+			},
+		},
+		{
+			name: "commit signing key decrypt service error",
+			config: &provisioning.Repository{
+				Secure: provisioning.SecureValues{
+					CommitSigningKey: v0alpha1.InlineSecureValue{
+						Name: "secret",
+					},
+				},
+			},
+			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
+				return nil, fmt.Errorf("explode")
+			},
+			signingKey: expectedDecryptedResult{
+				error: "failed to call decrypt service",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: tt.decrypt})
+			decrypter := ProvideDecrypter(&dummyDecryptService{t: t, fn: tt.decrypt}, nil)
 			decrypted := decrypter(tt.config)
 
 			token, err := decrypted.Token(context.Background())
@@ -144,6 +198,14 @@ func TestRepositorySecureValues(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.webhook.value, string(webhook))
+			}
+
+			signingKey, err := decrypted.CommitSigningKey(context.Background())
+			if tt.signingKey.error != "" {
+				require.ErrorContains(t, err, tt.signingKey.error)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.signingKey.value, string(signingKey))
 			}
 		})
 	}

@@ -1,6 +1,13 @@
 import { t } from '@grafana/i18n';
-import { SceneVariable, SceneVariableState } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import {
+  LocalValueVariable,
+  type SceneObject,
+  type SceneVariable,
+  SceneVariableSet,
+  type SceneVariableState,
+  type SceneVariables,
+} from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { isRecord } from 'app/core/utils/isRecord';
 import type { GraphEdge, GraphNode } from 'app/features/variables/inspect/types';
@@ -253,3 +260,30 @@ export const variableRegexExec = (variableString: string) => {
   variableRegex.lastIndex = 0;
   return variableRegex.exec(variableString);
 };
+
+export function getSectionBaseVariables(section: SceneObject): SceneVariableSet | undefined {
+  const variableSet = section.state.$variables;
+  if (!variableSet || !(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  const baseVariables = filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet);
+  if (baseVariables.length === 0) {
+    return undefined;
+  }
+
+  return new SceneVariableSet({ variables: baseVariables.map((variable) => variable.clone()) });
+}
+
+export function filterSectionRepeatLocalVariables<T extends SceneVariable>(
+  variables: T[],
+  variableSet: SceneVariables
+): T[] {
+  const isSectionVariableSet = variableSet.parent?.state && 'repeatByVariable' in variableSet.parent.state;
+
+  if (!isSectionVariableSet) {
+    return variables;
+  }
+
+  return variables.filter((variable) => !(variable instanceof LocalValueVariable));
+}

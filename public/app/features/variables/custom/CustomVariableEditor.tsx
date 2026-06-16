@@ -1,67 +1,39 @@
-import { FormEvent, PureComponent } from 'react';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { type FormEvent, memo } from 'react';
 
-import { CustomVariableModel, VariableWithMultiSupport } from '@grafana/data';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
+import { type CustomVariableModel, type VariableWithMultiSupport } from '@grafana/data';
 import { CustomVariableForm } from 'app/features/dashboard-scene/settings/variables/components/CustomVariableForm';
-import { StoreState } from 'app/types/store';
 
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { changeVariableMultiValue } from '../state/actions';
+import { type OnPropChangeArguments, type VariableEditorProps } from '../editor/types';
 
-interface OwnProps extends VariableEditorProps<CustomVariableModel> {}
+interface Props extends VariableEditorProps<CustomVariableModel> {}
 
-interface ConnectedProps {}
-
-interface DispatchProps {
-  changeVariableMultiValue: typeof changeVariableMultiValue;
-}
-
-export type Props = OwnProps & ConnectedProps & DispatchProps;
-
-class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onSelectionOptionsChange = async ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
-    this.props.onPropChange({ propName, propValue, updateOptions: true });
+export const CustomVariableEditor = memo(function CustomVariableEditor({ variable, onPropChange }: Props) {
+  const onSelectionOptionsChange = ({ propName, propValue }: OnPropChangeArguments<VariableWithMultiSupport>) => {
+    onPropChange({ propName, propValue, updateOptions: true });
   };
 
-  onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
-    this.props.onPropChange({
+  const onQueryChange = (event: FormEvent<HTMLTextAreaElement>) => {
+    onPropChange({
       propName: 'query',
       propValue: event.currentTarget.value,
       updateOptions: true,
     });
   };
 
-  render() {
-    return (
-      <CustomVariableForm
-        query={this.props.variable.query}
-        multi={this.props.variable.multi}
-        allValue={this.props.variable.allValue}
-        includeAll={this.props.variable.includeAll}
-        onQueryChange={this.onQueryChange}
-        onMultiChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })
-        }
-        onIncludeAllChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
-        }
-        onAllValueChange={(event) =>
-          this.onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
-        }
-      />
-    );
-  }
-}
-
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  changeVariableMultiValue,
-};
-
-export const CustomVariableEditor = connectWithStore(
-  CustomVariableEditorUnconnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+  return (
+    <CustomVariableForm
+      query={variable.query}
+      multi={variable.multi}
+      allValue={variable.allValue}
+      includeAll={variable.includeAll}
+      onQueryChange={onQueryChange}
+      onMultiChange={(event) => onSelectionOptionsChange({ propName: 'multi', propValue: event.currentTarget.checked })}
+      onIncludeAllChange={(event) =>
+        onSelectionOptionsChange({ propName: 'includeAll', propValue: event.currentTarget.checked })
+      }
+      onAllValueChange={(event) =>
+        onSelectionOptionsChange({ propName: 'allValue', propValue: event.currentTarget.value })
+      }
+    />
+  );
+});

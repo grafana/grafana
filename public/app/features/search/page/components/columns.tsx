@@ -1,10 +1,10 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {
-  DisplayProcessor,
-  Field,
+  type DisplayProcessor,
+  type Field,
   FieldType,
   formattedValueToString,
   getDisplayProcessor,
@@ -12,22 +12,24 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
+import { type PanelPluginMetas } from '@grafana/runtime/internal';
+import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { QueryResponse, SearchResultMeta } from '../../service/types';
-import { getIconForKind } from '../../service/utils';
-import { SelectionChecker, SelectionToggle } from '../selection';
+import { type QueryResponse, type SearchResultMeta } from '../../service/types';
+import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
+import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
-import { TableColumn } from './SearchResultsTable';
+import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DURATION_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
+const DELETED_BY_COLUMN_WIDTH = 200;
 
 export const generateColumns = (
   response: QueryResponse,
@@ -38,7 +40,8 @@ export const generateColumns = (
   styles: { [key: string]: string },
   onTagSelected: (tag: string) => void,
   onDatasourceChange?: (datasource?: string) => void,
-  showingEverything?: boolean
+  showingEverything?: boolean,
+  panelPluginMetas: PanelPluginMetas = {}
 ): TableColumn[] => {
   const columns: TableColumn[] = [];
   const access = response.view.fields;
@@ -154,7 +157,47 @@ export const generateColumns = (
     availableWidth -= width;
   } else {
     width = TYPE_COLUMN_WIDTH;
-    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
+    columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles, panelPluginMetas));
+    availableWidth -= width;
+  }
+
+  const deletedByField = access.deletedBy;
+  if (deletedByField && hasValue(deletedByField)) {
+    width = DELETED_BY_COLUMN_WIDTH;
+    columns.push({
+      id: `column-deleted-by`,
+      field: deletedByField,
+      Header: t('search.results-table.deleted-by-header', 'Deleted by'),
+      width,
+      Cell: (p) => {
+        const rawValue = deletedByField.values[p.row.index];
+        const { key, ...cellProps } = p.cellProps;
+        return (
+          <div key={key} {...cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : rawValue === DELETED_BY_UNKNOWN ? (
+              <Tooltip
+                content={t(
+                  'search.results-table.deleted-by-unknown-tooltip',
+                  'Failed to look up the account that deleted this dashboard'
+                )}
+              >
+                <Text variant="body" truncate>
+                  <Trans i18nKey="search.results-table.deleted-by-unknown-short">
+                    <Icon name="exclamation-triangle" /> Unknown
+                  </Trans>
+                </Text>
+              </Tooltip>
+            ) : (
+              <Text variant="body" truncate>
+                {formatDeletedByDisplayValue(rawValue, t)}
+              </Text>
+            )}
+          </div>
+        );
+      },
+    });
     availableWidth -= width;
   }
 
@@ -418,7 +461,8 @@ function makeTypeColumn(
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
-  styles: Record<string, string>
+  styles: Record<string, string>,
+  panelPluginMetas: PanelPluginMetas
 ): TableColumn {
   return {
     id: `column-type`,
@@ -446,7 +490,7 @@ function makeTypeColumn(
             const type = typeField.values[i];
             if (type) {
               txt = type;
-              const info = config.panels[txt];
+              const info = panelPluginMetas[txt];
               if (info?.name) {
                 txt = info.name;
               } else {

@@ -113,6 +113,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 	r.OrgID = orgID
+	ctx = identity.WithOrgID(ctx, orgID)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -168,12 +169,20 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
+	if len(identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions", identity.ClientParams.FetchPermissionsParams.K8sRestrictedActions))
+	}
+
 	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
 	}
 
 	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
+	}
+
+	if len(identity.ClientParams.FetchPermissionsParams.K8s) > 0 {
+		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.K8sAllowedActions", identity.ClientParams.FetchPermissionsParams.K8s))
 	}
 
 	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
@@ -228,7 +237,7 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	c, ok := s.clients[client]
 	if !ok {
-		s.metrics.failedLogin.WithLabelValues(client).Inc()
+		s.metrics.failedLogin.WithLabelValues("unknown").Inc()
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 

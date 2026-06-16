@@ -81,6 +81,12 @@ export const alertingAlertRuleFormSchema = z.object({
   evaluateFor: z.string().optional().describe('Evaluation duration'),
   keepFiringFor: z.string().optional().describe('Keep firing duration'),
   isPaused: z.boolean().optional().default(false).describe('Whether the rule is paused'),
+  missingSeriesEvalsToResolve: z
+    .number()
+    .optional()
+    .describe(
+      'Number of consecutive evaluation intervals a dimension must be missing before the alert instance is resolved'
+    ),
 
   // Manual routing and contact points
   manualRouting: z
@@ -136,10 +142,6 @@ export const alertingAlertRuleFormSchema = z.object({
   // Navigation
   returnTo: z.string().optional().describe('Optional URL to return to after creating the alert'),
 });
-
-// Export types for use in plugins
-export type AlertingAlertRuleFormSchemaType = z.infer<typeof alertingAlertRuleFormSchema>;
-export type AlertingModelSchemaType = z.infer<typeof alertingModelSchema>;
 
 // Simple API that only exposes the navigate to alert rule form schema
 export const alertingAlertRuleFormSchemaApi = {

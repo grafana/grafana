@@ -1,7 +1,7 @@
-import { SyntaxNode } from '@lezer/common';
+import { type SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest } from '@grafana/data';
+import { type DataQueryRequest } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -27,12 +27,12 @@ import {
   VectorOp,
   BinOpExpr,
 } from '@grafana/lezer-logql';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { addDropToQuery, addLabelToQuery, getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { ErrorId } from './querybuilder/parsingUtils';
-import { LabelType, LokiQuery } from './types';
+import { LabelType, type LokiQuery } from './types';
 
 /**
  * Returns search terms from a LogQL query.
@@ -85,7 +85,7 @@ export function getExpressionFromExecutedQuery(executedQueryString: string) {
   return executedQueryString.replace('Expr: ', '');
 }
 
-export function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
+function getStringsFromLineFilter(filter: SyntaxNode): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   let node: SyntaxNode | null = filter;
   do {
@@ -161,7 +161,7 @@ export function parseToNodeNamesArray(query: string): string[] {
   return queryParts;
 }
 
-export function isQueryWithNode(query: string, nodeType: number): boolean {
+function isQueryWithNode(query: string, nodeType: number): boolean {
   let isQueryWithNode = false;
   const tree = parser.parse(query);
   tree.iterate({
@@ -201,7 +201,7 @@ export function getNodePositionsFromQuery(query: string, nodeTypes?: number[]): 
   return positions;
 }
 
-export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
+function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
   const nodes = getNodesFromQuery(query, [nodeType]);
   return nodes.length > 0 ? nodes[0] : undefined;
 }

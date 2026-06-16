@@ -1,20 +1,9 @@
-import { memo, ChangeEvent } from 'react';
+import { memo, type ChangeEvent } from 'react';
 
-import {
-  DataTransformerID,
-  SelectableValue,
-  standardTransformers,
-  TransformerRegistryItem,
-  TransformerUIProps,
-  TransformerCategory,
-} from '@grafana/data';
-import { ConcatenateFrameNameMode, ConcatenateTransformerOptions } from '@grafana/data/internal';
+import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
+import { ConcatenateFrameNameMode, type ConcatenateTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { InlineField, Input, Select } from '@grafana/ui';
-
-import { getTransformationContent } from '../docs/getTransformationContent';
-import darkImage from '../images/dark/concatenate.svg';
-import lightImage from '../images/light/concatenate.svg';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
 
@@ -84,20 +73,3 @@ export const ConcatenateTransformerEditor = memo(({ options, onChange }: Concate
   );
 });
 ConcatenateTransformerEditor.displayName = 'ConcatenateTransformerEditor';
-
-export const getConcatenateTransformRegistryItem: () => TransformerRegistryItem<ConcatenateTransformerOptions> =
-  () => ({
-    id: DataTransformerID.concatenate,
-    editor: ConcatenateTransformerEditor,
-    transformation: standardTransformers.concatenateTransformer,
-    name: t('transformers.editors.concatenate-transformer-editor.name.concatenate-fields', 'Concatenate fields'),
-    description: t(
-      'transformers.editors.concatenate-transformer-editor.description.combine-all-fields',
-      'Combine all fields into a single frame.'
-    ),
-    categories: new Set([TransformerCategory.Combine]),
-    help: getTransformationContent(DataTransformerID.concatenate).helperDocs,
-    tags: new Set([t('transformers.editors.concatenate-transformer-editor.tags.combine', 'Combine')]),
-    imageDark: darkImage,
-    imageLight: lightImage,
-  });

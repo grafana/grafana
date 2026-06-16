@@ -3,6 +3,7 @@ package legacy_storage
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/grafana/alerting/definition"
@@ -14,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestPostableMimirReceiverToIntegrations(t *testing.T) {
@@ -24,14 +25,14 @@ func TestPostableMimirReceiverToIntegrations(t *testing.T) {
 			expectedType, err := notify.IntegrationTypeFromMimirTypeReflect(configType)
 			assert.NoError(t, err)
 			expectedVersion := schema.V0mimir1
-			if configType.Name() == "MSTeamsConfig" {
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir1") {
 				expectedType = teams.Type
 			}
-			if configType.Name() == "MSTeamsV2Config" {
+			if strings.Contains(configType.PkgPath(), "/teams/v0mimir2") {
 				expectedType = teams.Type
 				expectedVersion = schema.V0mimir2
 			}
-			t.Run(fmt.Sprintf("%s as %s %s", configType.Name(), expectedType, expectedVersion), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s as %s %s", configType.PkgPath(), expectedType, expectedVersion), func(t *testing.T) {
 				integrations, err := PostableMimirReceiverToIntegrations(receiver)
 				require.NoError(t, err)
 				require.Len(t, integrations, 1)
@@ -74,7 +75,7 @@ func TestManagedRouteToRoute(t *testing.T) {
 		GroupWait:      &gw,
 		GroupInterval:  &gi,
 		RepeatInterval: &ri,
-		Routes:         []*definition.Route{{Receiver: "child"}},
+		Routes:         []*v1.Route{{Receiver: "child"}},
 		Provenance:     models.Provenance("test"),
 	}
 
@@ -86,5 +87,5 @@ func TestManagedRouteToRoute(t *testing.T) {
 	assert.Equal(t, &gi, route.GroupInterval)
 	assert.Equal(t, &ri, route.RepeatInterval)
 	assert.Len(t, route.Routes, 1)
-	assert.EqualValues(t, definitions.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
 }

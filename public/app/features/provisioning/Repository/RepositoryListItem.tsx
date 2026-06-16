@@ -1,13 +1,15 @@
-import { ReactNode } from 'react';
+import { css } from '@emotion/css';
+import { type ReactNode } from 'react';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
@@ -22,26 +24,26 @@ export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
+  const styles = useStyles2(getStyles);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
 
-    if (spec?.type === 'github') {
-      const { url = '', branch } = spec.github ?? {};
-      const branchUrl = branch ? `${url}/tree/${branch}` : url;
-      const href = getRepoHrefForProvider(spec) || branchUrl;
-
-      meta.push(
-        <TextLink key="link" external href={href}>
-          {formatRepoUrl(href)}
-        </TextLink>
-      );
-    } else if (spec?.type === 'local') {
+    if (spec?.type === 'local') {
       meta.push(
         <Text variant="bodySmall" key="path">
           {spec.local?.path ?? ''}
         </Text>
       );
+    } else {
+      const href = getRepoHrefForProvider(spec);
+      if (href) {
+        meta.push(
+          <TextLink key="link" external href={href}>
+            {formatRepoUrl(href)}
+          </TextLink>
+        );
+      }
     }
 
     if (status?.sync?.finished) {
@@ -58,17 +60,15 @@ export function RepositoryListItem({ repository }: Props) {
   };
 
   return (
-    <Card noMargin key={name}>
-      <Card.Figure>
+    <Card noMargin key={name} className={styles.card}>
+      <Card.Figure className={styles.figure}>
         <RepoIcon type={spec?.type} />
       </Card.Figure>
       <Card.Heading>
-        <Stack gap={2} direction="row" alignItems="center">
+        <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && (
-            <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
-          )}
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
         </Stack>
       </Card.Heading>
 
@@ -93,7 +93,7 @@ export function RepositoryListItem({ repository }: Props) {
         </Stack>
       </Card.Description>
 
-      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
+      <Card.Meta className={styles.meta}>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">
@@ -131,3 +131,30 @@ function getListURL(repo: Repository, stats: ResourceCount): string {
   }
   return '/dashboards';
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        gridTemplate: `
+          "Figure"
+          "Heading"
+          "Meta"
+          "Description" 1fr
+          "Actions" / 1fr
+        `,
+      },
+    },
+  }),
+  figure: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        marginRight: 0,
+        marginBottom: theme.spacing(1),
+      },
+    },
+  }),
+  meta: css({
+    flexWrap: 'wrap',
+  }),
+});

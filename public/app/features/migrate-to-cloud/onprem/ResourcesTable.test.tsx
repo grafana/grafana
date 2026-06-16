@@ -12,7 +12,7 @@ import {
 import { registerMockAPI } from '../fixtures/mswAPI';
 import { wellFormedDatasource } from '../fixtures/others';
 
-import { ResourcesTable, ResourcesTableProps } from './ResourcesTable';
+import { ResourcesTable, type ResourcesTableProps } from './ResourcesTable';
 
 setBackendSrv(backendSrv);
 

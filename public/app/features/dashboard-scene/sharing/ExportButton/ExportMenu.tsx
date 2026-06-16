@@ -2,11 +2,11 @@ import { useCallback, useContext, useMemo } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
-import { IconName, Menu, ModalsContext } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { type IconName, Menu, ModalsContext } from '@grafana/ui';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
-import { DashboardScene } from '../../scene/DashboardScene';
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { SaveBeforeShareModal } from '../SaveBeforeShareModal';
 
@@ -40,15 +40,11 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
-    const label = config.featureToggles.kubernetesDashboards
-      ? t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code')
-      : t('share-dashboard.menu.export-json-title', 'Export as JSON');
-
     menuItems.push({
       shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
-      label,
+      label: t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code'),
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.export),
     });
@@ -82,6 +78,10 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       }
 
       continueAction();
+
+      reportInteraction('grafana_dashboards_export_dashboard_button_clicked', {
+        item: item.shareId,
+      });
     },
     [dashboard, hideModal, showModal]
   );

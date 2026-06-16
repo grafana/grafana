@@ -11,59 +11,51 @@ on:
       - '**/go.mod'
       - '**/go.sum'
       - '**.go'
-permissions:
-  contents: write
-  id-token: write
+permissions: {}
 jobs:
   update:
-    runs-on: "ubuntu-latest"
+    runs-on: ubuntu-arm64
+    permissions:
+      # Pushes use the app token explicitly in the git push URL; GITHUB_TOKEN needs only OIDC for Vault.
+      contents: read
+      id-token: write
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository }}
     continue-on-error: true
     steps:
-    - name: Retrieve GitHub App secrets
-      id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
       with:
-        repo_secrets: |
-          APP_ID=grafana-go-workspace-bot:app-id
-          APP_INSTALLATION_ID=grafana-go-workspace-bot:app-installation-id
-          PRIVATE_KEY=grafana-go-workspace-bot:private-key
-
-    - name: Generate GitHub App token
-      id: generate_token
-      uses: actions/create-github-app-token@v1
-      with:
-        app-id: ${{ env.APP_ID }}
-        private-key: ${{ env.PRIVATE_KEY }}
+        github_app: grafana-go-workspace-bot
 
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.ref }}
-        token: ${{ steps.generate_token.outputs.token }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
 
-    - name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+    - name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        go-version-file: go.mod
+        cache-build: 'false'
 
     - name: Configure Git
       run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git config --local --add --bool push.autoSetupRemote true
 
     - name: Update workspace
       run: make update-workspace
 
     - name: Commit and push workspace changes
       env:
-        BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+        BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+        GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
       run: |
         if ! git diff --exit-code --quiet; then
           echo "Committing and pushing workspace changes"
           git commit -a -m "update workspace"
-          git push origin "$BRANCH_NAME"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana.git" "HEAD:${BRANCH_NAME}"
         fi

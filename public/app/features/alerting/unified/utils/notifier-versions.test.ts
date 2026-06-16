@@ -1,6 +1,6 @@
-import { GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
+import { type GrafanaManagedContactPoint } from 'app/plugins/datasource/alertmanager/types';
 
-import { NotificationChannelOption, NotifierDTO, NotifierVersion } from '../types/alerting';
+import { type NotificationChannelOption, type NotifierDTO, type NotifierVersion } from '../types/alerting';
 
 import {
   canCreateNotifier,

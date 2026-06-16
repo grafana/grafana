@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import { memo, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
@@ -13,16 +13,16 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
-import { Config, defaultConfig, useLayout, LayoutCache } from './layout';
-import { LayoutAlgorithm } from './panelcfg.gen';
-import { EdgeDatumLayout, NodeDatum, NodesMarker, ZoomMode } from './types';
+import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
+import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
+import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { useContextMenu } from './useContextMenu';
 import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
+import { processNodes, type Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
@@ -348,7 +348,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
           style={{ top: panelId ? '0px' : '40px' }} // panelId is undefined in Explore
           aria-label={t('nodeGraph.node-graph.aria-label-nodes-hidden-warning', 'Nodes hidden warning')}
         >
-          <Trans i18nKey="nodeGraph.node-graph.hidden-nodes" count={hiddenNodesCount}>
+          <Trans
+            i18nKey="nodeGraph.node-graph.hidden-nodes"
+            count={hiddenNodesCount}
+            tOptions={{
+              defaultValue_one: '<0></0> {{count}} nodes are hidden for performance reasons.',
+              defaultValue_other: '<0></0> {{count}} nodes are hidden for performance reasons.',
+            }}
+          >
             <Icon size="sm" name={'info-circle'} /> {'{{count}}'} nodes are hidden for performance reasons.
           </Trans>
         </div>
@@ -363,7 +370,14 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
             'Layered layout performance warning'
           )}
         >
-          <Trans i18nKey="nodeGraph.node-graph.processed-nodes" count={processed.nodes.length}>
+          <Trans
+            i18nKey="nodeGraph.node-graph.processed-nodes"
+            count={processed.nodes.length}
+            tOptions={{
+              defaultValue_one: '<0></0> Layered layout may be slow with {{count}} nodes.',
+              defaultValue_other: '<0></0> Layered layout may be slow with {{count}} nodes.',
+            }}
+          >
             <Icon size="sm" name={'exclamation-triangle'} /> Layered layout may be slow with {'{{count}}'} nodes.
           </Trans>
         </div>

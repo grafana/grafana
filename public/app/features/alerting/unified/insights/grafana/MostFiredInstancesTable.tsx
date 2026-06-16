@@ -1,15 +1,15 @@
-import { Observable, map } from 'rxjs';
+import { type Observable, map } from 'rxjs';
 
-import { DataFrame, Field } from '@grafana/data';
+import { type DataFrame, type Field } from '@grafana/data';
 import {
-  CustomTransformOperator,
+  type CustomTransformOperator,
   PanelBuilders,
   SceneDataTransformer,
   SceneFlexItem,
   SceneQueryRunner,
 } from '@grafana/scenes';
-import { DataSourceRef, TableCellDisplayMode } from '@grafana/schema';
-import { CustomCellRendererProps, TextLink } from '@grafana/ui';
+import { type DataSourceRef, TableCellDisplayMode } from '@grafana/schema';
+import { type CustomCellRendererProps, TextLink } from '@grafana/ui';
 
 import { PANEL_STYLES } from '../../home/Insights';
 import { createRelativeUrl } from '../../utils/url';
@@ -120,7 +120,7 @@ export function getMostFiredInstancesScene(datasource: DataSourceRef, panelTitle
   });
 }
 
-export function RuleLink({ value, frame, rowIndex }: CustomCellRendererProps) {
+function RuleLink({ value, frame, rowIndex }: CustomCellRendererProps) {
   const ruleUIDs = frame.fields.find((field) => field.name === RULE_UID_FIELD_NAME);
   const ruleUID = ruleUIDs?.values[rowIndex];
 

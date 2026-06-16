@@ -2,9 +2,9 @@ import { Fragment } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { ScrollContainer, Text } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
-import { Settings } from './AdminSettings';
+import { type Settings } from './AdminSettings';
 
 interface Props {
   settings: Settings;

@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
-import { RuleFormValues } from '../../types/rule-form';
+import { type RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
+import { type RuleFormValues } from '../../types/rule-form';
 import { EXTERNAL_URL_PROMETHEUS_ALERTING_RULES } from '../../utils/docs';
 import {
   alertingRulerRuleToRuleForm,
@@ -154,7 +154,7 @@ function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormVal
   return {};
 }
 
-export const yamlTabStyle = (theme: GrafanaTheme2) => ({
+const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css({
     flexGrow: 1,
     height: '100%',
@@ -171,7 +171,7 @@ export const yamlTabStyle = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const drawerStyles = () => ({
+const drawerStyles = () => ({
   subtitle: css({
     display: 'flex',
     alignItems: 'center',

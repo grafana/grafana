@@ -348,16 +348,17 @@ func processSpanKind(kind int64) string {
 // This is to help ensure backwards compatibility with the current non OTLP based Jager trace format
 // a few fields are different between TraceLogs and GrpcSpanEvents
 func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
-	logs := []types.TraceLog{}
+	logs := make([]types.TraceLog, 0, len(events))
 
 	for _, event := range events {
-		timestamp, err := strconv.Atoi(event.TimeUnixNano)
+		timestampNano, err := strconv.Atoi(event.TimeUnixNano)
+		var timestampMs float64
 		if err == nil {
-			timestamp = timestamp / 1000 // converting from nanoseconds to milliseconds
+			timestampMs = float64(timestampNano) / 1000000.0 // converting from nanoseconds to milliseconds
 		}
 		log := types.TraceLog{
 			Name:      event.Name,
-			Timestamp: int64(timestamp),
+			Timestamp: timestampMs,
 			Fields:    processAttributes(event.Attributes),
 		}
 		logs = append(logs, log)
@@ -369,7 +370,7 @@ func convertGrpcEventsToLogs(events []types.GrpcSpanEvent) []types.TraceLog {
 // this is to help ensure backwards compatibility between references and links with the current non OTLP based Jaeger trace format
 // There is no concept of RefType in the new OTLP based SpanLink, so we are only converting the SpanID and TraceID
 func convertGrpcLinkToReference(links []types.GrpcSpanLink) []types.TraceSpanReference {
-	references := []types.TraceSpanReference{}
+	references := make([]types.TraceSpanReference, 0, len(links))
 
 	for _, ref := range links {
 		references = append(references, types.TraceSpanReference{

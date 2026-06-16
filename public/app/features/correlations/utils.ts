@@ -1,26 +1,24 @@
+import { isEqual } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { generatedAPI as correlationsAPIv0alpha1 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 import {
-  config,
-  CorrelationData,
-  CorrelationsData,
-  createMonitoringLogger,
-  getBackendSrv,
-  getDataSourceSrv,
-} from '@grafana/runtime';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+  generatedAPI as correlationsAPIv0alpha1,
+  type CorrelationSpec,
+} from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
+import { config, type CorrelationData, type CorrelationsData, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExploreItemState } from 'app/types/explore';
-import { ThunkDispatch } from 'app/types/store';
+import { type ExploreItemState } from 'app/types/explore';
+import { type ThunkDispatch } from 'app/types/store';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 import { getDatasourceUIDs } from '../explore/state/utils';
 import { parseLogsFrame } from '../logs/logsFrame';
 
-import { CreateCorrelationParams, CreateCorrelationResponse } from './types';
-import { CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
+import { type EditFormDTO, type FormDTO } from './Forms/types';
+import { type Correlation, type CreateCorrelationParams, type CreateCorrelationResponse } from './types';
+import { type CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
 import { toEnrichedCorrelationDataK8s } from './useCorrelationsK8s';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
@@ -150,7 +148,60 @@ export const generateDefaultLabel = async (sourcePane: ExploreItemState, targetP
   });
 };
 
-export const correlationsLogger = createMonitoringLogger('features.correlations');
+export const generatePartialEditSpec = (data: EditFormDTO, correlation: Correlation): Partial<CorrelationSpec> => {
+  let partialSpec: Partial<CorrelationSpec> = {};
+
+  // we will want to clear any target data if the correlation is being updated to external
+  // null sent in a PATCH will delete the property
+  if (data.type === 'external') {
+    partialSpec.target = null;
+  }
+
+  if (data.label !== correlation.label) {
+    partialSpec.label = data.label;
+  }
+  if (data.description !== correlation.description) {
+    partialSpec.description = data.description;
+  }
+  if (data.type !== correlation.type) {
+    partialSpec.type = data.type;
+  }
+
+  // target is only loosely defined as an object, so always copy it
+  partialSpec.config = { field: data.config.field, target: data.config.target };
+
+  if (
+    data.config.transformations !== undefined &&
+    !isEqual(data.config.transformations, correlation.config.transformations)
+  ) {
+    partialSpec.config.transformations = data.config.transformations.map((t) => {
+      return { expression: t.expression, field: t.field, mapValue: t.mapValue, type: t.type };
+    });
+  }
+  return partialSpec;
+};
+
+export const generateAddSpec = async (data: FormDTO): Promise<CorrelationSpec> => {
+  const dsSrv = getDataSourceSrv();
+  const sourceDs = await dsSrv.get(data.sourceUID);
+  let targetDs;
+  if ('targetUID' in data && data.targetUID !== undefined) {
+    targetDs = await dsSrv.get(data.targetUID!);
+  }
+
+  return {
+    label: data.label,
+    description: data.description,
+    source: { group: sourceDs.type, name: sourceDs.uid },
+    target: targetDs?.uid !== undefined ? { group: targetDs.type, name: targetDs?.uid } : undefined,
+    type: data.type,
+    config: {
+      field: data.config.field,
+      target: { ...data.config.target },
+      transformations: data.config.transformations,
+    },
+  };
+};
 
 // legacy just needs uid for lookup, remote storage needs name/group
 export const getCorrelationsFromStorage = async (
@@ -194,10 +245,16 @@ export const getCorrelationsFromStorage = async (
         labelSelector: labelSelectString,
       })
     );
+    // this is just for retrieving in explore, so pagination features are not needed
     const enrichedCorr = (data?.items ?? [])
       .map((item) => toEnrichedCorrelationDataK8s(item))
       .filter((i) => i !== undefined);
-    correlations = { correlations: enrichedCorr, page: 0, limit: 1000, totalCount: enrichedCorr.length };
+    correlations = {
+      correlations: enrichedCorr,
+      page: 0,
+      limit: 1000,
+      totalCount: enrichedCorr.length,
+    };
   } else {
     const datasourceUIDs = getDatasourceUIDs(instanceUid, queries);
     correlations = await getCorrelationsBySourceUIDs(datasourceUIDs);

@@ -3,11 +3,13 @@ package frontend
 import (
 	"net/http"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,21 +37,39 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			// This is the default configuration that will be used for all requests
 			requestConfig := NewFSRequestConfig(cfg, license)
 
-			// Fetch tenant-specific configuration if namespace is present
-			if namespace, ok := request.NamespaceFrom(ctx); ok {
-				if namespace != "" && settingsService != nil {
+			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
+			ofClient := openfeature.NewDefaultClient()
+			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
+
+			if settingsService != nil && settingsEnabled {
+				namespace, ok := request.NamespaceFrom(ctx)
+
+				if ok && namespace != "" {
 					// Fetch tenant overrides for relevant sections only
+					sourceFilterEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceSettingsSourceFilter, false, openfeature.TransactionContext(ctx))
+
+					var sourceExpression metav1.LabelSelectorRequirement
+					if sourceFilterEnabled {
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"us"},
+						}
+					} else {
+						// don't return values from defaults.ini as they conflict with the service's own defaults
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpNotIn,
+							Values:   []string{"defaults"},
+						}
+					}
+
 					selector := metav1.LabelSelector{
 						MatchExpressions: []metav1.LabelSelectorRequirement{{
 							Key:      "section",
 							Operator: metav1.LabelSelectorOpIn,
 							Values:   []string{"security", "analytics"},
-						}, {
-							// don't return values from defaults.ini as they conflict with the services's own defaults
-							Key:      "source",
-							Operator: metav1.LabelSelectorOpNotIn,
-							Values:   []string{"defaults"},
-						}},
+						}, sourceExpression},
 					}
 
 					settings, err := settingsService.ListAsIni(ctx, selector)

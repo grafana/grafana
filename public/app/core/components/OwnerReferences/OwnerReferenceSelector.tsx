@@ -1,15 +1,13 @@
+import { QueryStatus } from '@reduxjs/toolkit/query';
 import { useEffect, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Box, Combobox, ComboboxOption, Label } from '@grafana/ui';
-import { OwnerReference } from 'app/api/clients/folder/v1beta1';
-import {
-  API_GROUP as IAM_API_GROUP,
-  API_VERSION as IAM_API_VERSION,
-  useLazyGetTeamQuery,
-  useLazyGetSearchTeamsQuery,
-} from 'app/api/clients/iam/v0alpha1';
+import { isFetchError } from '@grafana/runtime';
+import { Alert, Box, Combobox, type ComboboxOption, Label } from '@grafana/ui';
+import { type OwnerReference } from 'app/api/clients/folder/v1beta1';
+import { API_GROUP as IAM_API_GROUP, API_VERSION as IAM_API_VERSION } from 'app/api/clients/iam/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
+import { useLazyGetTeamByUidQuery, useLazySearchTeamsQuery } from 'app/features/teams/hooks';
 
 const OWNER_REFERENCE_API_VERSION = `${IAM_API_GROUP}/${IAM_API_VERSION}` as const;
 const OWNER_REFERENCE_KIND = 'Team' as const;
@@ -27,45 +25,57 @@ export const OwnerReferenceSelector = ({
   defaultTeamUid?: string;
 }) => {
   const [selectedTeam, setSelectedTeam] = useState<ComboboxOption<string> | string | null>(defaultTeamUid || null);
-  const [searchTeams, { isLoading }] = useLazyGetSearchTeamsQuery();
-  const [getTeam, { isLoading: isSelectedTeamLoading, error: selectedTeamError }] = useLazyGetTeamQuery();
+  const [searchTeams, { isLoading }] = useLazySearchTeamsQuery();
+  const [getTeam, { isLoading: isSelectedTeamLoading, error: selectedTeamError }] = useLazyGetTeamByUidQuery();
 
   useEffect(() => {
     if (defaultTeamUid) {
-      getTeam({ name: defaultTeamUid }, true)
-        .unwrap()
-        .then((team) => {
+      getTeam({ name: defaultTeamUid }, true).then(({ data, status }) => {
+        if (status === QueryStatus.fulfilled && data) {
           setSelectedTeam({
-            label: team.spec.title,
-            value: team.metadata.name!,
+            label: data.spec.title,
+            value: data.metadata.name!,
           });
-        });
+        }
+        if (status === QueryStatus.rejected) {
+          setSelectedTeam({
+            label: t('manage-owner-references.team-not-found', '[Unknown team]'),
+            value: defaultTeamUid,
+          });
+        }
+        // We ignore errors here as we handle them with the useLazyGetTeamQuery call
+      });
     }
   }, [defaultTeamUid, getTeam]);
 
   const loadOptions = async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
-    const result = await searchTeams({ query: inputValue }, true).unwrap();
+    const { data } = await searchTeams({ query: inputValue }, true);
 
-    const mappedResults = result.hits.map((team: { title: string; name: string }) => ({
+    return (data?.hits ?? []).map((team: { title: string; name: string }) => ({
       label: team.title,
       value: team.name,
     }));
-
-    return mappedResults;
   };
-  if (Boolean(selectedTeamError)) {
-    return (
-      <Alert
-        severity="error"
-        title={t('manage-owner-references.error-load-team-details', 'Could not load team details')}
-      >
-        {extractErrorMessage(selectedTeamError)}
-      </Alert>
-    );
-  }
 
+  const teamIsMissingOrForbidden = isFetchError(selectedTeamError) && [404, 403].includes(selectedTeamError.status);
+  const errorLevel = teamIsMissingOrForbidden ? 'warning' : 'error';
+  const teamErrorMessage = teamIsMissingOrForbidden ? (
+    <Trans i18nKey="manage-owner-references.selected-team-not-found">
+      Selected team not found, or you do not have the necessary permissions to view it.
+    </Trans>
+  ) : (
+    extractErrorMessage(selectedTeamError)
+  );
   return (
     <Box>
+      {Boolean(selectedTeamError) && (
+        <Alert
+          severity={errorLevel}
+          title={t('manage-owner-references.error-load-team-details', 'Could not load team details')}
+        >
+          {teamErrorMessage}
+        </Alert>
+      )}
       <Label htmlFor="owner-reference-selector">
         <Trans i18nKey="browse-dashboards.action.new-folder-as-team-folder-label">Team</Trans>
       </Label>

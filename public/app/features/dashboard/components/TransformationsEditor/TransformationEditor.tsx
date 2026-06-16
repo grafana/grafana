@@ -1,12 +1,17 @@
 import { css } from '@emotion/css';
-import { createElement, useMemo } from 'react';
+import { Suspense, createElement, useMemo } from 'react';
 
-import { DataFrame, DataTransformerConfig, GrafanaTheme2, TransformerRegistryItem } from '@grafana/data';
+import {
+  type DataFrame,
+  type DataTransformerConfig,
+  type GrafanaTheme2,
+  type TransformerRegistryItem,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, JSONFormatter, useStyles2, Drawer } from '@grafana/ui';
+import { Icon, JSONFormatter, LoadingPlaceholder, useStyles2, Drawer } from '@grafana/ui';
 
-import { TransformationsEditorTransformation } from './types';
+import { type TransformationsEditorTransformation } from './types';
 
 interface TransformationEditorProps {
   input: DataFrame[];
@@ -35,7 +40,7 @@ export const TransformationEditor = ({
   const editor = useMemo(
     () =>
       createElement(uiConfig.editor, {
-        options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
+        options: { ...uiConfig.defaultOptions, ...config.transformation.options },
         input,
         onChange: (opts) => {
           onChange(index, {
@@ -44,12 +49,16 @@ export const TransformationEditor = ({
           });
         },
       }),
-    [uiConfig.editor, uiConfig.transformation.defaultOptions, config.transformation, input, onChange, index]
+    [uiConfig.editor, uiConfig.defaultOptions, config.transformation, input, onChange, index]
   );
 
   return (
     <div data-testid={selectors.components.TransformTab.transformationEditor(uiConfig.name)}>
-      {editor}
+      <Suspense
+        fallback={<LoadingPlaceholder text={t('dashboard.transformation-editor.loading', 'Loading editor...')} />}
+      >
+        {editor}
+      </Suspense>
       {debugMode && (
         <Drawer
           title={t('dashboard.transformation-editor.title-debug-transformation', 'Debug transformation')}

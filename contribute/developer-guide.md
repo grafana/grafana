@@ -9,7 +9,7 @@ Make sure you have the following dependencies installed before setting up your d
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
-- [GCC](https://gcc.gnu.org/) (required for Cgo] dependencies)
+- [GCC](https://gcc.gnu.org/) (optional, not recommded; enables CGO for smaller, dynamically linked binaries)
 
 ### macOS
 
@@ -63,6 +63,20 @@ make lefthook-uninstall
 
 > We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
+### Knip
+
+We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
+
+```sh
+yarn knip
+```
+
+In some cases, fixes can be automatically applied:
+
+```sh
+yarn knip:fix
+```
+
 ## Build Grafana
 
 When building Grafana, be aware that it consists of two components:
@@ -105,7 +119,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - mysql
 - parca
 - tempo
-- zipkin
 - loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
@@ -154,6 +167,22 @@ Log in using the default credentials:
 
 When you log in for the first time, Grafana asks you to change your password.
 
+#### CGO and static builds
+
+By default, `make build-go` (and `make run`) does **not** set `CGO_ENABLED`. Go's default behavior is to enable CGO when a C compiler (GCC) is detected on the system, and disable it otherwise. For local development this is fine — CGO gives you a working SQLite driver for the embedded database.
+
+In **production**, Grafana is built with `CGO_ENABLED=0` to produce a fully static, pure Go binary. This is important because the build environment and the runtime environment are often different (for example, building on Debian but running on Alpine or a scratch container).
+
+You can control both `CGO_ENABLED` and `LDFLAGS` when invoking Make:
+
+```sh
+# Static build without CGO (production-style)
+CGO_ENABLED=0 make build-go
+
+# Build with Go defaults
+unset CGO_ENABLED && make build-go
+```
+
 #### Build on Windows
 
 The Grafana backend includes SQLite, a database which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC with binutils version 2.37 or later.
@@ -172,12 +201,12 @@ You can build the back-end as follows:
 3. Build the Grafana binaries:
 
 ```
-go run build.go build
+make build
 ```
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
 
-Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 
@@ -201,11 +230,7 @@ go test -v ./pkg/...
 
 #### On Windows
 
-Running the backend tests on Windows currently needs some tweaking, so use the `build.go` script:
-
-```
-go run build.go test
-```
+Running the backend tests on Windows currently needs some tweaking; use `make test-go-unit` or the test commands in the Makefile.
 
 ### Run SQLite, PostgreSQL and MySQL integration tests
 
@@ -242,6 +267,8 @@ make test-go-integration-postgres
   - Download the _playwright-html-<number>_ artifact.
   - Unzip.
   - Run `yarn playwright show-report <reportLocation>`
+
+- There are also a set of acceptance tests that can be run with `yarn e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
 
 If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
@@ -327,7 +354,7 @@ The number of files needed may be different on your environment. To determine th
 find ./conf ./pkg ./public/views | wc -l
 ```
 
-Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.bra.toml` file in the root directory.
+Another alternative is to limit the files being watched. The directories that are watched for changes are listed in the `.air.toml` file in the root directory.
 
 You can retain your `ulimit` configuration, that is, save it so it will be remembered for future sessions. To do this, commit it to your command line shell initialization file. Which file this is depends on the shell you are using. For example:
 

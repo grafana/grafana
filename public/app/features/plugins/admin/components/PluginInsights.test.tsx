@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { CatalogPluginInsights, InsightLevel, SCORE_LEVELS } from '../types';
+import { type CatalogPluginInsights, type InsightLevel, SCORE_LEVELS } from '../types';
 
 import { PluginInsights } from './PluginInsights';
 

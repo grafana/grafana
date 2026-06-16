@@ -3,17 +3,89 @@ package legacy
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+type GetTeamUIDByIDQuery struct {
+	OrgID int64
+	ID    int64
+}
+
+type GetTeamUIDByIDResult struct {
+	UID string
+}
+
+var sqlQueryTeamUIDByIDTemplate = mustTemplate("team_uid_by_id.sql")
+
+func newGetTeamUIDByID(sqlHelper *legacysql.LegacyDatabaseHelper, q *GetTeamUIDByIDQuery) getTeamUIDByIDQuery {
+	return getTeamUIDByIDQuery{
+		SQLTemplate: sqltemplate.New(sqlHelper.DialectForDriver()),
+		TeamTable:   sqlHelper.Table("team"),
+		Query:       q,
+	}
+}
+
+type getTeamUIDByIDQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	Query     *GetTeamUIDByIDQuery
+}
+
+func (r getTeamUIDByIDQuery) Validate() error { return nil }
+
+func (s *legacySQLStore) GetTeamUIDByID(
+	ctx context.Context,
+	ns claims.NamespaceInfo,
+	query GetTeamUIDByIDQuery,
+) (*GetTeamUIDByIDResult, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sqlConn, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetTeamUIDByID(sqlConn, &query)
+	q, err := sqltemplate.Execute(sqlQueryTeamUIDByIDTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryTeamUIDByIDTemplate.Name(), err)
+	}
+
+	rows, err := sqlConn.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	defer func() {
+		if rows != nil {
+			_ = rows.Close()
+		}
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	if !rows.Next() {
+		return nil, team.ErrTeamNotFound
+	}
+
+	var uid string
+	if err := rows.Scan(&uid); err != nil {
+		return nil, err
+	}
+
+	return &GetTeamUIDByIDResult{UID: uid}, nil
+}
 
 type GetTeamInternalIDQuery struct {
 	OrgID int64
@@ -52,7 +124,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +147,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 	}
 
 	if !rows.Next() {
-		return nil, errors.New("team not found")
+		return nil, fmt.Errorf("team by uid %q: %w", query.UID, team.ErrTeamNotFound)
 	}
 
 	var id int64
@@ -91,6 +163,7 @@ func (s *legacySQLStore) GetTeamInternalID(
 type ListTeamQuery struct {
 	OrgID int64
 	UID   string
+	ID    int64
 
 	Pagination common.Pagination
 }
@@ -123,6 +196,9 @@ func (r listTeamsQuery) Validate() error {
 
 // ListTeams implements LegacyIdentityStore.
 func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo, query ListTeamQuery) (*ListTeamResult, error) {
+	if query.Pagination.Limit < 1 {
+		query.Pagination.Limit = common.DefaultListLimit
+	}
 	// for continue
 	query.Pagination.Limit += 1
 	query.OrgID = ns.OrgID
@@ -130,7 +206,7 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sqlConn, err := s.sql(ctx)
+	sqlConn, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -157,10 +233,15 @@ func (s *legacySQLStore) ListTeams(ctx context.Context, ns claims.NamespaceInfo,
 	for rows.Next() {
 		t := team.Team{}
 		var externalUID sql.NullString
+		var email sql.NullString
 		var isProvisioned sql.NullBool
-		err = rows.Scan(&t.ID, &t.UID, &t.Name, &t.Email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
+		err = rows.Scan(&t.ID, &t.UID, &t.Name, &email, &externalUID, &isProvisioned, &t.Created, &t.Updated)
 		if err != nil {
 			return res, err
+		}
+
+		if email.Valid {
+			t.Email = email.String
 		}
 
 		if externalUID.Valid {
@@ -197,6 +278,17 @@ type CreateTeamCommand struct {
 	ExternalID    string
 	IsProvisioned bool
 	ExternalUID   string
+
+	// MemberCreates optionally seeds members alongside the team in the same
+	// SQL transaction as the team row insert. Only UserID needs to be
+	// pre-resolved by the caller; TeamID, TeamUID, OrgID and timestamps are
+	// populated here from the team row that was just inserted, so if the
+	// team insert rolls back the member inserts roll back with it.
+	MemberCreates []CreateTeamMemberCommand
+
+	// Reconciled in the same tx as the team row insert.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
 }
 
 type CreateTeamResult struct {
@@ -234,7 +326,7 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +342,38 @@ func (s *legacySQLStore) CreateTeam(ctx context.Context, ns claims.NamespaceInfo
 
 		teamID, err := st.ExecWithReturningId(ctx, teamQuery, req.GetArgs()...)
 		if err != nil {
+			if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+				return apierrors.NewAlreadyExists(iamv0.TeamResourceInfo.GroupResource(), cmd.UID)
+			}
 			return fmt.Errorf("failed to create team: %w", err)
+		}
+
+		if len(cmd.MemberCreates) > 0 {
+			for i := range cmd.MemberCreates {
+				cmd.MemberCreates[i].TeamID = teamID
+				cmd.MemberCreates[i].TeamUID = cmd.UID
+				cmd.MemberCreates[i].OrgID = ns.OrgID
+				cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
+			}
+			bulk := CreateTeamMembersBulkCommand{Members: cmd.MemberCreates}
+			breq := newCreateTeamMembersBulk(sql, &bulk)
+			bq, err := sqltemplate.Execute(sqlCreateTeamMembersBulkQuery, breq)
+			if err != nil {
+				return fmt.Errorf("failed to execute bulk create team members template: %w", err)
+			}
+			if _, err := st.Exec(ctx, bq, breq.GetArgs()...); err != nil {
+				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+					return team.ErrTeamMemberAlreadyAdded
+				}
+				return fmt.Errorf("failed to create team members: %w", err)
+			}
+		}
+
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
+			}
 		}
 
 		createdTeam = team.Team{
@@ -283,6 +406,30 @@ type UpdateTeamCommand struct {
 	ExternalID    string
 	IsProvisioned bool
 	ExternalUID   string
+
+	// PreviousUpdated is the team row's `updated` value the caller observed
+	// when it built this Update. When set, the SQL UPDATE is gated on
+	// `updated = ?`; a stale match returns ErrTeamUpdateConflict. Zero
+	// means no gating (legacy callers).
+	PreviousUpdated legacysql.DBTime
+
+	// MemberDeletes / MemberUpdates / MemberCreates reconcile the team's
+	// members in the same SQL transaction as the team row update. Callers
+	// must pre-resolve both TeamID and UserID on MemberCreates entries;
+	// OrgID and timestamps are filled in here.
+	MemberDeletes []DeleteTeamMemberCommand
+	MemberUpdates []UpdateTeamMemberCommand
+	MemberCreates []CreateTeamMemberCommand
+
+	// Reconciled in the same tx as the team row update.
+	ExternalGroupReconciler ExternalGroupReconciler
+	DesiredExternalGroups   []string
+}
+
+// HasPreviousUpdated drives the conditional `AND updated = ?` clause in
+// update_team.sql.
+func (c UpdateTeamCommand) HasPreviousUpdated() bool {
+	return !c.PreviousUpdated.IsZero()
 }
 
 type UpdateTeamResult struct {
@@ -309,36 +456,106 @@ func (r updateTeamQuery) Validate() error {
 	return nil
 }
 
+// UpdateTeam updates a team and, when the command carries member changes,
+// also reconciles those members (deletes, permission updates, additions) in
+// the same SQL transaction.
 func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamCommand) (*UpdateTeamResult, error) {
 	now := time.Now().UTC()
-
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	req := newUpdateTeam(sql, &cmd)
+	// Resolve the team's internal ID before opening the write transaction. Doing
+	// the read inside WithTransaction would acquire a second DB connection while
+	// the tx holds the write lock, which deadlocks on SQLite.
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{OrgID: ns.OrgID, UID: cmd.UID})
+	if err != nil {
+		return nil, fmt.Errorf("team not found: %w", err)
+	}
+	teamID := existing.ID
 
+	teamReq := newUpdateTeam(sql, &cmd)
 	var updatedTeam team.Team
-	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   cmd.UID,
-		})
-		if err != nil {
-			return fmt.Errorf("team not found: %w", err)
-		}
 
-		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, req)
+	err = sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		teamQuery, err := sqltemplate.Execute(sqlUpdateTeamTemplate, teamReq)
 		if err != nil {
 			return fmt.Errorf("failed to execute team update template %q: %w", sqlUpdateTeamTemplate.Name(), err)
 		}
-
-		_, err = st.Exec(ctx, teamQuery, req.GetArgs()...)
+		res, err := st.Exec(ctx, teamQuery, teamReq.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to update team: %w", err)
+		}
+		// 0 rows = stale RV (when gated) or the team was deleted between the
+		// GetTeamInternalID pre-flight and this tx. Surface as conflict so
+		// the reconciler below doesn't INSERT orphan team_group rows.
+		n, rowsErr := res.RowsAffected()
+		if rowsErr != nil {
+			return fmt.Errorf("rows affected: %w", rowsErr)
+		}
+		if n == 0 {
+			return team.ErrTeamUpdateConflict
+		}
+
+		if len(cmd.MemberDeletes) > 0 {
+			uids := make([]string, len(cmd.MemberDeletes))
+			for i, d := range cmd.MemberDeletes {
+				uids[i] = d.UID
+			}
+			bulk := DeleteTeamMembersBulkCommand{OrgID: ns.OrgID, UIDs: uids}
+			dreq := newDeleteTeamMembersBulk(sql, &bulk)
+			dq, err := sqltemplate.Execute(sqlDeleteTeamMembersBulkQuery, dreq)
+			if err != nil {
+				return fmt.Errorf("failed to execute bulk delete team members template: %w", err)
+			}
+			if _, err := st.Exec(ctx, dq, dreq.GetArgs()...); err != nil {
+				return fmt.Errorf("failed to delete team members: %w", err)
+			}
+		}
+
+		// Permission updates stay as one statement per row: each row changes to
+		// a different target value, so a single bulk UPDATE would need CASE
+		// WHEN scaffolding that's not worth the complexity until a profile
+		// shows it.
+		for i := range cmd.MemberUpdates {
+			cmd.MemberUpdates[i].Updated = legacysql.NewDBTime(now)
+			ureq := newUpdateTeamMember(sql, &cmd.MemberUpdates[i])
+			uq, err := sqltemplate.Execute(sqlUpdateTeamMemberQuery, ureq)
+			if err != nil {
+				return fmt.Errorf("failed to execute update team member template: %w", err)
+			}
+			if _, err := st.Exec(ctx, uq, ureq.GetArgs()...); err != nil {
+				return fmt.Errorf("failed to update team member: %w", err)
+			}
+		}
+
+		if len(cmd.MemberCreates) > 0 {
+			for i := range cmd.MemberCreates {
+				cmd.MemberCreates[i].Created = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].Updated = legacysql.NewDBTime(now)
+				cmd.MemberCreates[i].OrgID = ns.OrgID
+			}
+			bulk := CreateTeamMembersBulkCommand{Members: cmd.MemberCreates}
+			creq := newCreateTeamMembersBulk(sql, &bulk)
+			cq, err := sqltemplate.Execute(sqlCreateTeamMembersBulkQuery, creq)
+			if err != nil {
+				return fmt.Errorf("failed to execute bulk create team members template: %w", err)
+			}
+			if _, err := st.Exec(ctx, cq, creq.GetArgs()...); err != nil {
+				if sql.DB.GetDialect().IsUniqueConstraintViolation(err) {
+					return team.ErrTeamMemberAlreadyAdded
+				}
+				return fmt.Errorf("failed to create team members: %w", err)
+			}
+		}
+
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.Reconcile(ctx, st, ns.OrgID, teamID, cmd.DesiredExternalGroups); err != nil {
+				return fmt.Errorf("failed to reconcile team external groups: %w", err)
+			}
 		}
 
 		updatedTeam = team.Team{
@@ -349,19 +566,20 @@ func (s *legacySQLStore) UpdateTeam(ctx context.Context, ns claims.NamespaceInfo
 			IsProvisioned: cmd.IsProvisioned,
 			Updated:       cmd.Updated.Time,
 		}
-
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
 	}
-
 	return &UpdateTeamResult{Team: updatedTeam}, nil
 }
 
 type DeleteTeamCommand struct {
 	UID string
+
+	// Cleans up team_group rows in the same tx as the team row delete.
+	ExternalGroupReconciler ExternalGroupReconciler
 }
 
 var sqlDeleteTeamTemplate = mustTemplate("delete_team.sql")
@@ -385,28 +603,33 @@ func (r deleteTeamQuery) Validate() error {
 }
 
 func (s *legacySQLStore) DeleteTeam(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}
 
-	req := newDeleteTeam(sql, &cmd)
-	if err := req.Validate(); err != nil {
+	teamDeleteReq := newDeleteTeam(sql, &cmd)
+	if err := teamDeleteReq.Validate(); err != nil {
 		return err
 	}
 
-	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
-		_, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
-			OrgID: ns.OrgID,
-			UID:   cmd.UID,
-		})
-		if err != nil {
-			return err
-		}
+	// Resolve the team's internal ID before opening the write transaction. Doing
+	// the read inside WithTransaction would acquire a second DB connection while
+	// the tx holds the write lock, which deadlocks on SQLite.
+	existing, err := s.GetTeamInternalID(ctx, ns, GetTeamInternalIDQuery{
+		OrgID: ns.OrgID,
+		UID:   cmd.UID,
+	})
+	if err != nil {
+		return err
+	}
+	teamID := existing.ID
 
-		teamDeleteReq := newDeleteTeam(sql, &cmd)
-		if err := teamDeleteReq.Validate(); err != nil {
-			return err
+	return sql.DB.GetSqlxSession().WithTransaction(ctx, func(st *session.SessionTx) error {
+		if cmd.ExternalGroupReconciler != nil {
+			if err := cmd.ExternalGroupReconciler.DeleteAll(ctx, st, ns.OrgID, teamID); err != nil {
+				return fmt.Errorf("failed to delete team external groups: %w", err)
+			}
 		}
 
 		teamDeleteQuery, err := sqltemplate.Execute(sqlDeleteTeamTemplate, teamDeleteReq)

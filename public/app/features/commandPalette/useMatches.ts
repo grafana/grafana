@@ -1,4 +1,4 @@
-import { ActionImpl, Priority, useKBar } from 'kbar';
+import { type ActionImpl, Priority, useKBar } from 'kbar';
 import { useThrottledValue } from 'kbar/lib/utils';
 import * as React from 'react';
 
@@ -7,7 +7,7 @@ import { fuzzySearch } from '@grafana/data';
 // From https://github.dev/timc1/kbar/blob/main/src/useMatches.tsx
 // We are using fuzzySearch here instead of kbar's implementation as it's more performant
 
-export const NO_GROUP = {
+const NO_GROUP = {
   name: 'none',
   priority: Priority.NORMAL,
 };

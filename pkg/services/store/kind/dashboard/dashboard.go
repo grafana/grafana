@@ -12,6 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+const (
+	// A resource has exactly one spec (the k8s wrapper). Anything deeper is untrusted nesting.
+	maxSpecDepth = 1
+	// Classic dashboards nest rows one level; allow generous headroom while bounding recursion.
+	maxPanelDepth = 4
+)
+
 type templateVariable struct {
 	current struct {
 		value any
@@ -119,11 +126,11 @@ func ReadDashboard(stream io.Reader, lookup DatasourceLookup) (*DashboardSummary
 
 func ReadDashboardWithLogContext(stream io.Reader, lookup DatasourceLookup, logContext map[string]any) (*DashboardSummaryInfo, error) {
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, stream, 1024)
-	return readDashboardIter("$", iter, lookup, logContext)
+	return readDashboardIter("$", iter, lookup, logContext, 0)
 }
 
 // nolint:gocyclo
-func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup DatasourceLookup, lc map[string]any) (*DashboardSummaryInfo, error) {
+func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup DatasourceLookup, lc map[string]any, specDepth int) (*DashboardSummaryInfo, error) {
 	dash := &DashboardSummaryInfo{}
 
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
@@ -146,7 +153,12 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 
 		// recursively read the spec as dashboard json
 		case "spec":
-			return readDashboardIter(jsonPath+".spec", iter, lookup, lc)
+			if specDepth >= maxSpecDepth {
+				logRecursionLimit(jsonPath+".spec", "spec", lc)
+				iter.Skip()
+				continue
+			}
+			return readDashboardIter(jsonPath+".spec", iter, lookup, lc, specDepth+1)
 
 		case "id":
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".id", lc, jsoniter.NumberValue) {
@@ -263,7 +275,20 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 			}
 
 			for ix := 0; iter.ReadArray(); ix++ {
-				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s[%d]", panelsPath, ix), lc)
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s[%d]", panelsPath, ix), lc, 0)
+				if ok {
+					dash.Panels = append(dash.Panels, p)
+				}
+			}
+
+		case "elements":
+			// needed for v2 dashboards
+			elementsPath := jsonPath + ".elements"
+			if !checkAndSkipUnexpectedElement(iter, elementsPath, lc, jsoniter.ObjectValue) {
+				continue
+			}
+			for elementKey := iter.ReadObject(); elementKey != ""; elementKey = iter.ReadObject() {
+				p, ok := readV2ElementInfo(iter, lookup, fmt.Sprintf("%s.%s", elementsPath, elementKey), lc)
 				if ok {
 					dash.Panels = append(dash.Panels, p)
 				}
@@ -364,6 +389,9 @@ func readDashboardIter(jsonPath string, iter *jsoniter.Iterator, lookup Datasour
 	for idx, panel := range dash.Panels {
 		if panel.Type == "row" {
 			dash.Panels[idx].Datasource = nil
+			for _, collapsed := range panel.Collapsed {
+				targets.addPanel(collapsed)
+			}
 			continue
 		}
 
@@ -403,6 +431,17 @@ func checkAndSkipUnexpectedElement(iter *jsoniter.Iterator, jsonPath string, log
 
 	logger.Error("Unexpected element in Dashboard JSON", params...)
 	return false
+}
+
+// logRecursionLimit logs when a nested element is skipped because it exceeds the maximum
+// allowed nesting depth, mirroring how checkAndSkipUnexpectedElement appends log context.
+func logRecursionLimit(jsonPath, field string, logContext map[string]any) {
+	params := make([]any, 0, 4+2*len(logContext))
+	params = append(params, "jsonPath", jsonPath, "field", field)
+	for k, v := range logContext {
+		params = append(params, k, v)
+	}
+	logger.Error("Dashboard JSON nesting exceeds maximum depth", params...)
 }
 
 func valueTypesToString(allowedValues ...jsoniter.ValueType) string {
@@ -450,27 +489,8 @@ func fillDefaultDatasources(dash *DashboardSummaryInfo, lookup DatasourceLookup)
 }
 
 func filterOutSpecialDatasources(dash *DashboardSummaryInfo) {
-	for i, panel := range dash.Panels {
-		var dsRefs []DataSourceRef
-
-		// partition into actual datasource references and variables
-		for _, ds := range panel.Datasource {
-			switch ds.UID {
-			case "-- Mixed --":
-				// The actual datasources used as targets will remain
-				continue
-			case "-- Dashboard --":
-				// The `Dashboard` datasource refers to the results of the query used in another panel
-				continue
-			case "grafana":
-				// this is the uid for the -- Grafana -- datasource
-				continue
-			default:
-				dsRefs = append(dsRefs, ds)
-			}
-		}
-
-		dash.Panels[i].Datasource = dsRefs
+	for i := range dash.Panels {
+		dash.Panels[i].Datasource = filterSpecialDatasourcesFromRefs(dash.Panels[i].Datasource)
 	}
 }
 
@@ -494,8 +514,28 @@ func replaceDatasourceVariables(dash *DashboardSummaryInfo, datasourceVariablesL
 	}
 }
 
+// special datasource UIDs that should be excluded from indexed panel datasource refs
+const (
+	specialDSMixed     = "-- Mixed --"
+	specialDSDashboard = "-- Dashboard --"
+	specialDSGrafana   = "grafana"
+)
+
 func isSpecialDatasource(uid string) bool {
-	return uid == "-- Mixed --" || uid == "-- Dashboard --"
+	return uid == specialDSMixed || uid == specialDSDashboard || uid == specialDSGrafana
+}
+
+func filterSpecialDatasourcesFromRefs(refs []DataSourceRef) []DataSourceRef {
+	if len(refs) == 0 {
+		return refs
+	}
+	out := make([]DataSourceRef, 0, len(refs))
+	for _, ds := range refs {
+		if !isSpecialDatasource(ds.UID) {
+			out = append(out, ds)
+		}
+	}
+	return out
 }
 
 func isVariableRef(uid string) bool {
@@ -511,7 +551,7 @@ func getDataSourceVariableName(dsVariableRef DataSourceRef) string {
 }
 
 func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVariablesLookup *datasourceVariableLookup) []DataSourceRef {
-	var referencedDs []DataSourceRef
+	var referencedDs []DataSourceRef //nolint:prealloc
 	for _, dsVariableRef := range dsVariableRefs {
 		variableName := getDataSourceVariableName(dsVariableRef)
 		refs := datasourceVariablesLookup.getDatasourceRefs(variableName)
@@ -521,7 +561,7 @@ func findDatasourceRefsForVariables(dsVariableRefs []DataSourceRef, datasourceVa
 }
 
 // nolint:gocyclo
-func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) (PanelSummaryInfo, bool) {
+func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any, depth int) (PanelSummaryInfo, bool) {
 	panel := PanelSummaryInfo{}
 
 	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
@@ -640,12 +680,18 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath st
 
 		// Rows have nested panels
 		case "panels":
+			if depth >= maxPanelDepth {
+				logRecursionLimit(jsonPath+".panels", "panels", lc)
+				iter.Skip()
+				continue
+			}
+
 			if !checkAndSkipUnexpectedElement(iter, jsonPath+".panels", lc, jsoniter.ArrayValue) {
 				continue
 			}
 
 			for ix := 0; iter.ReadArray(); ix++ {
-				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s.panels[%d]", jsonPath, ix), lc)
+				p, ok := readpanelInfo(iter, lookup, fmt.Sprintf("%s.panels[%d]", jsonPath, ix), lc, depth+1)
 				if ok {
 					panel.Collapsed = append(panel.Collapsed, p)
 				}
@@ -662,4 +708,142 @@ func readpanelInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath st
 	panel.Datasource = targets.GetDatasourceInfo()
 
 	return panel, true
+}
+
+func readV2ElementInfo(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) (PanelSummaryInfo, bool) {
+	if !checkAndSkipUnexpectedElement(iter, jsonPath, lc, jsoniter.ObjectValue) {
+		return PanelSummaryInfo{}, false
+	}
+	var kind string
+	var panel PanelSummaryInfo
+	for field := iter.ReadObject(); field != ""; field = iter.ReadObject() {
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+		switch field {
+		case "kind":
+			if !checkAndSkipUnexpectedElement(iter, jsonPath+".kind", lc, jsoniter.StringValue) {
+				continue
+			}
+			kind = iter.ReadString()
+		case "spec":
+			specPath := jsonPath + ".spec"
+			if !checkAndSkipUnexpectedElement(iter, specPath, lc, jsoniter.ObjectValue) {
+				continue
+			}
+			switch kind {
+			case "Panel":
+				panel = readV2PanelSpec(iter, lookup, specPath, lc)
+			case "LibraryPanel":
+				panel = readV2LibraryPanelSpec(iter, specPath, lc)
+			default:
+				iter.Skip()
+			}
+		default:
+			iter.Skip()
+		}
+	}
+	return panel, kind == "Panel" || kind == "LibraryPanel"
+}
+
+func readObjectValueGetString(iter *jsoniter.Iterator, key string) (string, bool) {
+	if iter.WhatIsNext() != jsoniter.ObjectValue {
+		return "", false
+	}
+	v, _ := iter.Read().(map[string]any)
+	if v == nil {
+		return "", false
+	}
+	s, ok := v[key].(string)
+	return s, ok
+}
+
+func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath string, lc map[string]any) PanelSummaryInfo {
+	panel := PanelSummaryInfo{}
+	for field := iter.ReadObject(); field != ""; field = iter.ReadObject() {
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+		switch field {
+		case "title":
+			if checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
+				panel.Title = iter.ReadString()
+			}
+		case "description":
+			if checkAndSkipUnexpectedElement(iter, jsonPath+".description", lc, jsoniter.StringValue) {
+				panel.Description = iter.ReadString()
+			}
+		case "vizConfig":
+			if iter.WhatIsNext() == jsoniter.ObjectValue {
+				if k, ok := readObjectValueGetString(iter, "kind"); ok && k != "" {
+					panel.Type = k
+				}
+			} else {
+				iter.Skip()
+			}
+		case "data":
+			if iter.WhatIsNext() == jsoniter.ObjectValue {
+				v, _ := iter.Read().(map[string]any)
+				if spec, _ := v["spec"].(map[string]any); spec != nil {
+					if trans, _ := spec["transformations"].([]any); trans != nil {
+						for _, t := range trans {
+							if m, ok := t.(map[string]any); ok {
+								if id, ok := m["id"].(string); ok {
+									panel.Transformer = append(panel.Transformer, id)
+								}
+							}
+						}
+					}
+					if queries, _ := spec["queries"].([]any); queries != nil {
+						for _, q := range queries {
+							if m, ok := q.(map[string]any); ok {
+								if ds, ok := m["datasource"].(map[string]any); ok {
+									uid, _ := ds["uid"].(string)
+									typ, _ := ds["type"].(string)
+									if uid != "" {
+										panel.Datasource = append(panel.Datasource, DataSourceRef{UID: uid, Type: typ})
+									}
+								}
+							}
+						}
+					}
+				}
+			} else {
+				iter.Skip()
+			}
+		default:
+			iter.Skip()
+		}
+	}
+	panel.Datasource = filterSpecialDatasourcesFromRefs(panel.Datasource)
+	return panel
+}
+
+func readV2LibraryPanelSpec(iter *jsoniter.Iterator, jsonPath string, lc map[string]any) PanelSummaryInfo {
+	panel := PanelSummaryInfo{}
+	for field := iter.ReadObject(); field != ""; field = iter.ReadObject() {
+		if iter.WhatIsNext() == jsoniter.NilValue {
+			iter.Skip()
+			continue
+		}
+		switch field {
+		case "title":
+			if checkAndSkipUnexpectedElement(iter, jsonPath+".title", lc, jsoniter.StringValue) {
+				panel.Title = iter.ReadString()
+			}
+		case "libraryPanel":
+			if iter.WhatIsNext() == jsoniter.ObjectValue {
+				if uid, ok := readObjectValueGetString(iter, "uid"); ok {
+					panel.LibraryPanel = uid
+				}
+			} else {
+				iter.Skip()
+			}
+		default:
+			iter.Skip()
+		}
+	}
+	return panel
 }

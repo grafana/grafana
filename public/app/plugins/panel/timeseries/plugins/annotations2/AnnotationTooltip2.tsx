@@ -1,16 +1,27 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2, dateTimeFormat, systemDateFormats, textUtil, LinkModel, ActionModel } from '@grafana/data';
+import {
+  type GrafanaTheme2,
+  dateTimeFormat,
+  systemDateFormats,
+  textUtil,
+  type LinkModel,
+  type ActionModel,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
 import { VizTooltipFooter } from '@grafana/ui/internal';
 import alertDef from 'app/features/alerting/state/alertDef';
 
+import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
+
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
   timeZone: string;
+  isPinned: boolean;
+  onClose: () => void;
   onEdit: () => void;
   links?: LinkModel[];
   actions?: ActionModel[];
@@ -18,18 +29,32 @@ interface Props {
 
 const retFalse = () => false;
 
-export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links = [], actions = [] }: Props) => {
+export const AnnotationTooltip2 = ({
+  annoVals,
+  annoIdx,
+  timeZone,
+  isPinned,
+  onClose,
+  onEdit,
+  links = [],
+  actions = [],
+}: Props) => {
   const annoId = annoVals.id?.[annoIdx];
 
   const styles = useStyles2(getStyles);
-
+  const focusRef = React.useRef<HTMLButtonElement | null>(null);
   const { canEditAnnotations = retFalse, canDeleteAnnotations = retFalse, onAnnotationDelete } = usePanelContext();
-
   const dashboardUID = annoVals.dashboardUID?.[annoIdx];
 
   // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. The id being 0 is the best indicator the annotation came from loki
   const canEdit = annoId !== 0 && canEditAnnotations(dashboardUID);
   const canDelete = annoId !== 0 && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;
+
+  React.useEffect(() => {
+    if (isPinned) {
+      focusRef.current?.focus();
+    }
+  }, [isPinned]);
 
   const timeFormatter = (value: number) =>
     dateTimeFormat(value, {
@@ -76,10 +101,11 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
             </span>
             {time}
           </div>
-          {(canEdit || canDelete) && (
-            <div className={styles.editControls}>
+          {(canEdit || canDelete || isPinned) && (
+            <div className={styles.controls}>
               {canEdit && (
                 <IconButton
+                  ref={focusRef}
                   name={'pen'}
                   size={'sm'}
                   onClick={onEdit}
@@ -88,10 +114,21 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
               )}
               {canDelete && (
                 <IconButton
+                  ref={canEdit ? null : focusRef}
                   name={'trash-alt'}
                   size={'sm'}
                   onClick={() => onAnnotationDelete(annoId)}
                   tooltip={t('timeseries.annotation-tooltip2.tooltip-delete', 'Delete')}
+                />
+              )}
+              {isPinned && (
+                <AnnotationTooltipHeaderCloseIcon
+                  forwardRef={canEdit || canDelete ? null : focusRef}
+                  onClick={(e) => {
+                    // Don't trigger onClick
+                    e.stopPropagation();
+                    onClose();
+                  }}
                 />
               )}
             </div>
@@ -105,7 +142,7 @@ export const AnnotationTooltip2 = ({ annoVals, annoIdx, timeZone, onEdit, links 
         <div>
           <Stack gap={0.5} wrap={true}>
             {annoVals.tags?.[annoIdx]?.map((t: string, i: number) => (
-              <Tag name={t} key={`${t}-${i}`} />
+              <Tag data-testid={'annotation-tag'} name={t} key={`${t}-${i}`} />
             ))}
           </Stack>
         </div>
@@ -139,7 +176,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.primary,
     fontWeight: 400,
   }),
-  editControls: css({
+  controls: css({
     display: 'flex',
     '> :last-child': {
       marginLeft: 0,

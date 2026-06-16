@@ -1,30 +1,30 @@
-import OpenLayersMap from 'ol/Map';
-import { Point } from 'ol/geom';
+import type OpenLayersMap from 'ol/Map';
+import { type Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints.js';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
 import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type PanelData,
+  type GrafanaTheme2,
   FrameGeometrySourceMode,
-  EventBus,
-  PanelOptionsEditorBuilder,
+  type EventBus,
+  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
 
-import { MarkersLegend, MarkersLegendProps } from '../../components/MarkersLegend';
+import { MarkersLegend, type MarkersLegendProps } from '../../components/MarkersLegend';
 import { ObservablePropsWrapper } from '../../components/ObservablePropsWrapper';
 import { StyleEditor } from '../../editor/StyleEditor';
 import { getWebGLStyle, textMarker } from '../../style/markers';
-import { DEFAULT_SIZE, defaultStyleConfig, StyleConfig, StyleConfigValues } from '../../style/types';
+import { DEFAULT_SIZE, defaultStyleConfig, type StyleConfig, type StyleConfigValues } from '../../style/types';
 import { getDisplacement, getRGBValues, getStyleConfigState, styleUsesText } from '../../style/utils';
 import { getStyleDimension } from '../../utils/utils';
 

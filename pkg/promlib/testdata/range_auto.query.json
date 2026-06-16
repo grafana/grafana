@@ -1,9 +1,0 @@
-{
-  "RefId": "A",
-  "RangeQuery": true,
-  "Start": 1664376185,
-  "End": 1664376485,
-  "Step": 1,
-  "LegendFormat": "__auto",
-  "Expr": "histogram_quantile(0.95, sum(rate(tns_request_duration_seconds_bucket[$__rate_interval])) by (le))"
-}

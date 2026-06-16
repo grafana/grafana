@@ -1,11 +1,16 @@
 package utils
 
 import (
+	"compress/flate"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 	"time"
 
+	"github.com/andybalholm/brotli"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/jaeger/types"
 )
@@ -150,9 +155,14 @@ func TransformTraceResponse(trace types.TraceResponse, refID string) *data.Frame
 			}
 		}
 
-		// Convert logs
+		// Convert logs — timestamps from microseconds to milliseconds
 		logs := json.RawMessage{}
-		logsMarshaled, err := json.Marshal(span.Logs)
+		convertedLogs := make([]types.TraceLog, len(span.Logs))
+		for i, l := range span.Logs {
+			convertedLogs[i] = l
+			convertedLogs[i].Timestamp = l.Timestamp / 1000
+		}
+		logsMarshaled, err := json.Marshal(convertedLogs)
 		if err == nil {
 			logs = json.RawMessage(logsMarshaled)
 		}
@@ -210,4 +220,41 @@ func TransformTraceResponse(trace types.TraceResponse, refID string) *data.Frame
 	}
 
 	return frame
+}
+
+// Decode reads and decompresses the body based on Content-Encoding (gzip, deflate, br, or none).
+func Decode(encoding string, original io.ReadCloser) ([]byte, error) {
+	var reader io.Reader
+	var err error
+	switch encoding {
+	case "gzip":
+		reader, err = gzip.NewReader(original)
+		if err != nil {
+			return nil, err
+		}
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "deflate":
+		reader = flate.NewReader(original)
+		defer func() {
+			if err := reader.(io.ReadCloser).Close(); err != nil {
+				backend.Logger.Warn("Failed to close reader body", "err", err)
+			}
+		}()
+	case "br":
+		reader = brotli.NewReader(original)
+	case "":
+		reader = original
+	default:
+		return nil, fmt.Errorf("unexpected encoding type %q", encoding)
+	}
+
+	body, err := io.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }

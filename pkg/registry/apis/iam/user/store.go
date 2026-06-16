@@ -3,12 +3,16 @@ package user
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -17,44 +21,30 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const AnnoKeyLastSeenAt = "iam.grafana.app/lastSeenAt"
 
 var (
-	_ rest.Scoper               = (*LegacyStore)(nil)
-	_ rest.SingularNameProvider = (*LegacyStore)(nil)
-	_ rest.Getter               = (*LegacyStore)(nil)
-	_ rest.Lister               = (*LegacyStore)(nil)
-	_ rest.Storage              = (*LegacyStore)(nil)
-	_ rest.CreaterUpdater       = (*LegacyStore)(nil)
-	_ rest.GracefulDeleter      = (*LegacyStore)(nil)
-	_ rest.CollectionDeleter    = (*LegacyStore)(nil)
-	_ rest.TableConvertor       = (*LegacyStore)(nil)
+	_ grafanarest.Storage = (*LegacyStore)(nil)
 )
 
 var userResource = iamv0alpha1.UserResourceInfo
 
-func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, enableAuthnMutation bool, tracer trace.Tracer) *LegacyStore {
-	return &LegacyStore{store, ac, enableAuthnMutation, tracer}
+func NewLegacyStore(store legacy.LegacyIdentityStore, ac claims.AccessClient, tracer trace.Tracer) *LegacyStore {
+	return &LegacyStore{store, ac, tracer}
 }
 
 type LegacyStore struct {
-	store               legacy.LegacyIdentityStore
-	ac                  claims.AccessClient
-	enableAuthnMutation bool
-	tracer              trace.Tracer
+	store  legacy.LegacyIdentityStore
+	ac     claims.AccessClient
+	tracer trace.Tracer
 }
 
 // Update implements rest.Updater.
 func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Update")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "update")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -102,19 +92,10 @@ func (s *LegacyStore) Update(ctx context.Context, name string, objInfo rest.Upda
 	return &iamUser, false, nil
 }
 
-// DeleteCollection implements rest.CollectionDeleter.
-func (s *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "deletecollection")
-}
-
 // Delete implements rest.GracefulDeleter.
 func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	ctx, span := s.tracer.Start(ctx, "user.Delete")
 	defer span.End()
-
-	if !s.enableAuthnMutation {
-		return nil, false, apierrors.NewMethodNotSupported(userResource.GroupResource(), "delete")
-	}
 
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -181,12 +162,25 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 	ctx, span := s.tracer.Start(ctx, "user.List")
 	defer span.End()
 
+	query := legacy.ListUserQuery{}
+
+	if options.FieldSelector != nil {
+		if email, ok := options.FieldSelector.RequiresExactMatch("spec.email"); ok {
+			query.Email = email
+		}
+		if login, ok := options.FieldSelector.RequiresExactMatch("spec.login"); ok {
+			query.Login = login
+		}
+	}
+
+	query.ID = getDeprecatedInternalIDFromLabelSelectors(options)
+
 	res, err := common.List(
 		ctx, userResource, s.ac, common.PaginationFromListOptions(options),
 		func(ctx context.Context, ns claims.NamespaceInfo, p common.Pagination) (*common.ListResponse[*iamv0alpha1.User], error) {
-			found, err := s.store.ListUsers(ctx, ns, legacy.ListUserQuery{
-				Pagination: p,
-			})
+			q := query
+			q.Pagination = p
+			found, err := s.store.ListUsers(ctx, ns, q)
 
 			if err != nil {
 				return nil, err
@@ -251,10 +245,6 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 	ctx, span := s.tracer.Start(ctx, "user.Create")
 	defer span.End()
 
-	if !s.enableAuthnMutation {
-		return nil, apierrors.NewMethodNotSupported(userResource.GroupResource(), "create")
-	}
-
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -295,6 +285,35 @@ func (s *LegacyStore) Create(ctx context.Context, obj runtime.Object, createVali
 
 	iamUser := toUserItem(&result.User, ns.Value)
 	return &iamUser, nil
+}
+
+func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOptions) int64 {
+	if options.LabelSelector == nil {
+		return 0
+	}
+
+	reqs, selectable := options.LabelSelector.Requirements()
+	if !selectable {
+		return 0
+	}
+
+	for _, req := range reqs {
+		if req.Key() != utils.LabelKeyDeprecatedInternalID || req.Operator() != selection.Equals {
+			continue
+		}
+
+		vals := req.Values()
+		if vals.Len() != 1 {
+			return 0
+		}
+
+		idStr, _ := vals.PopAny()
+		if id, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+			return id
+		}
+	}
+
+	return 0
 }
 
 func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {

@@ -58,11 +58,12 @@ type Identity struct {
 	HelpFlags1 user.HelpFlags1
 	// LastSeenAt is the time when the entity was last seen.
 	LastSeenAt time.Time
-	// Teams is the list of teams the entity is a member of.
-	Teams []int64
-	// idP Groups that the entity is a member of. This is only populated if the
-	// identity provider supports groups.
+	// Deprecated: Teams is the list of teams the entity is a member of.
+	TeamIDs []int64
+	// Groups holds team UIDs, populated by the user sync hook from usr.TeamUIDs.
 	Groups []string
+	// ExternalGroups holds groups asserted by the external IdP (SAML/OIDC/LDAP).
+	ExternalGroups []string
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
 	// SAMLSession is the SAML session information.
@@ -74,6 +75,8 @@ type Identity struct {
 	ClientParams ClientParams
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
+	// AccessToken is the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
+	AccessToken string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
 	// ExternalUID is the unique identifier for the entity in the external system.
@@ -145,7 +148,11 @@ func (i *Identity) GetTokenDelegatedPermissions() []string {
 }
 
 func (i *Identity) GetGroups() []string {
-	return []string{}
+	return i.Groups
+}
+
+func (i *Identity) GetExternalGroups() []string {
+	return i.ExternalGroups
 }
 
 func (i *Identity) GetExtra() map[string][]string {
@@ -197,6 +204,10 @@ func (i *Identity) GetEmail() string {
 
 func (i *Identity) GetIDToken() string {
 	return i.IDToken
+}
+
+func (i *Identity) GetAccessToken() string {
+	return i.AccessToken
 }
 
 func (i *Identity) GetIsGrafanaAdmin() bool {
@@ -257,7 +268,7 @@ func (i *Identity) GetGlobalPermissions() map[string][]string {
 }
 
 func (i *Identity) GetTeams() []int64 {
-	return i.Teams
+	return i.TeamIDs
 }
 
 func (i *Identity) HasRole(role org.RoleType) bool {
@@ -303,11 +314,14 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsDisabled:        i.IsDisabled,
 		HelpFlags1:        i.HelpFlags1,
 		LastSeenAt:        i.LastSeenAt,
-		Teams:             i.Teams,
+		TeamIDs:           i.TeamIDs,
+		TeamUIDs:          i.Groups,
+		ExternalGroups:    i.ExternalGroups,
 		Permissions:       i.Permissions,
 		IDToken:           i.IDToken,
 		IDTokenClaims:     i.IDTokenClaims,
 		AccessTokenClaims: i.AccessTokenClaims,
+		AccessToken:       i.AccessToken,
 		FallbackType:      i.Type,
 	}
 
@@ -327,14 +341,15 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	id, _ := strconv.ParseInt(i.ID, 10, 64)
 	return login.ExternalUserInfo{
-		OAuthToken:     i.OAuthToken,
-		AuthModule:     i.AuthenticatedBy,
-		AuthId:         i.AuthID,
-		UserId:         id,
-		Email:          i.Email,
-		Login:          i.Login,
-		Name:           i.Name,
-		Groups:         i.Groups,
+		OAuthToken: i.OAuthToken,
+		AuthModule: i.AuthenticatedBy,
+		AuthId:     i.AuthID,
+		UserId:     id,
+		Email:      i.Email,
+		Login:      i.Login,
+		Name:       i.Name,
+		// Groups are the group names from the external IdP, e.g. LDAP or SAML groups.
+		Groups:         i.ExternalGroups,
 		OrgRoles:       i.OrgRoles,
 		IsGrafanaAdmin: i.IsGrafanaAdmin,
 		IsDisabled:     i.IsDisabled,

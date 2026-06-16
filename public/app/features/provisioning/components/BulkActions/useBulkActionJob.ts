@@ -1,4 +1,5 @@
-import { useCreateRepositoryJobsMutation, RepositoryView, Job } from 'app/api/clients/provisioning/v0alpha1';
+import { t } from '@grafana/i18n';
+import { useCreateRepositoryJobsMutation, type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 export interface ResourceRef {
@@ -9,6 +10,8 @@ export interface ResourceRef {
 
 export interface DeleteJobSpec {
   action: 'delete';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   delete: {
     ref?: string;
     resources: ResourceRef[];
@@ -17,6 +20,8 @@ export interface DeleteJobSpec {
 
 export interface MoveJobSpec {
   action: 'move';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   move: {
     ref?: string;
     targetPath: string; // Must end with '/' slash
@@ -24,7 +29,7 @@ export interface MoveJobSpec {
   };
 }
 
-export type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
+type BulkJobSpec = DeleteJobSpec | MoveJobSpec;
 
 interface UseBulkActionJobResult {
   createBulkJob: (
@@ -59,7 +64,13 @@ export function useBulkActionJob(): UseBulkActionJobResult {
         job: response, // Return the full job object
       };
     } catch (error) {
-      return { success: false, error: extractErrorMessage(error) };
+      return {
+        success: false,
+        error: extractErrorMessage(
+          error,
+          t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error happened when creating job')
+        ),
+      };
     }
   };
 

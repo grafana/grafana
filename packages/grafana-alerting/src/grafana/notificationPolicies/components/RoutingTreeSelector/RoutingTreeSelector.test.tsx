@@ -1,3 +1,4 @@
+import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
@@ -10,7 +11,7 @@ import {
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const server = setupMockServer();
 
@@ -19,18 +20,7 @@ beforeEach(() => {
 });
 
 beforeAll(() => {
-  // Required for testing combobox
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 });
 
 describe('listing routing trees', () => {
@@ -147,16 +137,39 @@ describe('clearable behavior', () => {
   });
 });
 
+describe('multi select', () => {
+  it('should show all options and allow selecting multiple trees', async () => {
+    const onChangeHandler = jest.fn();
+
+    const { user } = render(<RoutingTreeSelector multi value={[]} onChange={onChangeHandler} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const options = await screen.findAllByRole('option');
+    expect(options).toHaveLength(simpleRoutingTreesList.items.length);
+
+    // Select first custom tree
+    await user.click(await screen.findByRole('option', { name: /team-platform/i }));
+
+    expect(onChangeHandler).toHaveBeenCalledWith([
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: 'team-platform' }),
+      }),
+    ]);
+  });
+
+  it('should show pre-selected value as a pill', async () => {
+    const onChangeHandler = jest.fn();
+
+    render(<RoutingTreeSelector multi value={[USER_DEFINED_TREE_NAME]} onChange={onChangeHandler} />);
+
+    // MultiCombobox renders selected values as pills
+    expect(await screen.findByText(/default policy/i)).toBeInTheDocument();
+  });
+});
+
 describe('error handling', () => {
   beforeEach(() => {
     server.use(...routingTreeWithErrorScenario);
-    // RTK Query logs console.error on failed requests (non-serializable values in state),
-    // which jest-fail-on-console would catch. Suppress them since the error is expected.
-    jest.spyOn(console, 'error').mockImplementation();
-  });
-
-  afterEach(() => {
-    jest.restoreAllMocks();
   });
 
   it('should display an error alert when the API request fails', async () => {

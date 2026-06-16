@@ -1,7 +1,7 @@
-import { PanelModel } from '@grafana/data';
+import { type PanelModel } from '@grafana/data';
 import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
 
-import { DashboardModel } from '../state/DashboardModel';
+import { type DashboardModel } from '../state/DashboardModel';
 import { createDashboardModelFixture, createPanelSaveModel } from '../state/__fixtures__/dashboardFixtures';
 
 // skipping these tests because panelMerge is not used

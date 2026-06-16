@@ -50,6 +50,22 @@ describe('formValuesFromQueryParams', () => {
     expect(result).toEqual(defaultFormValues);
   });
 
+  it('should preserve evaluateEvery when provided', () => {
+    // "Continue in Alerting" from the panel drawer passes the rule's interval through this param;
+    // it must not be overwritten with the default.
+    const ruleDefinition = JSON.stringify({ evaluateEvery: '5m' });
+
+    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe('5m');
+  });
+
+  it('should fall back to the default evaluateEvery when not provided', () => {
+    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe(defaultFormValues.evaluateEvery);
+  });
+
   it('should normalize annotations', () => {
     const ruleDefinition = JSON.stringify({
       annotations: [
@@ -570,5 +586,16 @@ describe('formValuesFromPrefill', () => {
     expect(query.model).not.toHaveProperty('range');
     expect(query.model).not.toHaveProperty('expression');
     expect(query.model).not.toHaveProperty('queryType');
+  });
+
+  it('should preserve missingSeriesEvalsToResolve when duplicating a rule', () => {
+    const prefillData = {
+      type: RuleFormType.grafana,
+      missingSeriesEvalsToResolve: 5,
+    };
+
+    const result = formValuesFromPrefill(prefillData);
+
+    expect(result.missingSeriesEvalsToResolve).toBe(5);
   });
 });

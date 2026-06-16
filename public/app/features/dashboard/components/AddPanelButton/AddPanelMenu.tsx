@@ -3,8 +3,9 @@ import { useMemo } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { Menu } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
   onAddLibraryPanel,
@@ -17,12 +18,13 @@ import { useDispatch, useSelector } from 'app/types/store';
 
 import { setInitialDatasource } from '../../state/reducers';
 
-export interface Props {
+interface Props {
   dashboard: DashboardModel;
 }
 
 const AddPanelMenu = ({ dashboard }: Props) => {
-  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(), []);
+  const { error, value: panels = [] } = useListedPanelPluginMetas();
+  const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(panels), [panels]);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
 
@@ -65,7 +67,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
           onPasteCopiedPanel(dashboard, copiedPanelPlugin);
         }}
-        disabled={!copiedPanelPlugin}
+        disabled={!copiedPanelPlugin || Boolean(error)}
       />
     </Menu>
   );

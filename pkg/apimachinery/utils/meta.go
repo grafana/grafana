@@ -65,12 +65,6 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
-// Only used in modes 0-2 (legacy db) for returning the folder fullpath
-
-const LabelGetFullpath = "grafana.app/fullpath"
-const AnnoKeyFullpath = "grafana.app/fullpath"
-const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
-
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
@@ -111,11 +105,6 @@ type GrafanaMetaAccessor interface {
 
 	// Deprecated: This should only be used to support legacy /api endpoints that need to return internal IDs. Those endpoints should be marked as deprecated and once they are removed, this will be too
 	SetDeprecatedInternalID(id int64)
-
-	GetFullpath() string
-	SetFullpath(path string)
-	GetFullpathUIDs() string
-	SetFullpathUIDs(uids string)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -182,7 +171,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 
 	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+	if r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
 		r = r.Elem()
 	}
 	return &grafanaMetaAccessor{raw, obj, r}, nil
@@ -210,6 +199,7 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
+			anno = nilIfEmpty(anno)
 		}
 	} else {
 		if anno == nil {
@@ -327,7 +317,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 	if id == 0 {
 		if labels != nil {
 			delete(labels, LabelKeyDeprecatedInternalID)
-			m.obj.SetLabels(labels)
+			m.obj.SetLabels(nilIfEmpty(labels))
 		}
 		return
 	}
@@ -338,22 +328,6 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
-}
-
-func (m *grafanaMetaAccessor) GetFullpath() string {
-	return m.GetAnnotation(AnnoKeyFullpath)
-}
-
-func (m *grafanaMetaAccessor) SetFullpath(path string) {
-	m.SetAnnotation(AnnoKeyFullpath, path)
-}
-
-func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
-	return m.GetAnnotation(AnnoKeyFullpathUIDs)
-}
-
-func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
-	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.
@@ -880,6 +854,12 @@ func (m *grafanaMetaAccessor) GetSecureValues() (vals common.InlineSecureValues,
 				create, _, _ := unstructured.NestedString(sv, "create")
 				if create != "" {
 					inline.Create = common.NewSecretValue(create)
+
+					if rawDesc, _, _ := unstructured.NestedFieldNoCopy(sv, "description"); rawDesc != nil {
+						if desc, ok := rawDesc.(*string); ok && desc != nil && *desc != "" {
+							inline.Description = desc
+						}
+					}
 				}
 			}
 			vals[k] = inline
@@ -960,6 +940,15 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	}
 
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+// nilIfEmpty returns nil for an empty map so the field is dropped from the
+// serialized object rather than written as an empty {}.
+func nilIfEmpty(m map[string]string) map[string]string {
+	if len(m) == 0 {
+		return nil
+	}
+	return m
 }
 
 func getJSONFieldName(f reflect.Value, idx int) string {

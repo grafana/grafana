@@ -45,7 +45,8 @@ func nonceMiddleware(next http.Handler, logger log.Logger) http.Handler {
 func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, ctx.RequestNonce)
+		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
+		policy := ReplacePolicyVariables(cfg.CSPTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy", policy)
 		next.ServeHTTP(rw, req)
 	})
@@ -54,17 +55,39 @@ func cspMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.
 func cspReportOnlyMiddleware(cfg *setting.Cfg, next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, ctx.RequestNonce)
+		hosts := CSPHostLists{FormActionAdditionalHosts: cfg.FormActionAdditionalHosts}
+		policy := ReplacePolicyVariables(cfg.CSPReportOnlyTemplate, cfg.AppURL, hosts, ctx.RequestNonce)
 		rw.Header().Set("Content-Security-Policy-Report-Only", policy)
 		next.ServeHTTP(rw, req)
 	})
 }
 
-func ReplacePolicyVariables(policyTemplate, appURL, nonce string) string {
+// CSPHostLists contains per-directive host lists for CSP template variable replacement.
+type CSPHostLists struct {
+	FrameAncestorHosts        []string
+	FormActionAdditionalHosts []string
+}
+
+func ReplacePolicyVariables(policyTemplate, appURL string, hosts CSPHostLists, nonce string) string {
 	policy := strings.ReplaceAll(policyTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
 	re := regexp.MustCompile(`^\w+:(//)?`)
 	rootPath := re.ReplaceAllString(appURL, "")
 	policy = strings.ReplaceAll(policy, "$ROOT_PATH", rootPath)
+
+	// If the CSP directive has a $ALLOW_EMBEDDING_HOSTS variable, and the frameAncestorHosts is empty
+	// then we deny all embedding by setting it to 'none'.
+	var hostList string
+	if len(hosts.FrameAncestorHosts) == 0 {
+		hostList = "'none'"
+	} else {
+		hostList = strings.Join(hosts.FrameAncestorHosts, " ")
+	}
+	policy = strings.ReplaceAll(policy, "$ALLOW_EMBEDDING_HOSTS", hostList)
+
+	// $FORM_ACTION_ADDITIONAL_HOSTS is replaced with the configured additional form-action hosts.
+	// When empty, it resolves to an empty string — 'self' should be included directly in the template.
+	policy = strings.ReplaceAll(policy, "$FORM_ACTION_ADDITIONAL_HOSTS", strings.Join(hosts.FormActionAdditionalHosts, " "))
+
 	return policy
 }
 

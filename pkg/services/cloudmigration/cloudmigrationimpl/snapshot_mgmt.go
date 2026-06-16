@@ -3,7 +3,6 @@ package cloudmigrationimpl
 import (
 	"bytes"
 	"context"
-	cryptoRand "crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +13,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/codes"
-	"golang.org/x/crypto/nacl/box"
 
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
@@ -541,6 +539,7 @@ func (s *Service) buildSnapshot(
 	metadata []byte,
 	snapshotMeta cloudmigration.CloudMigrationSnapshot,
 	resourceTypes cloudmigration.ResourceTypes,
+	encryptionAlgo string,
 ) error {
 	ctx, span := s.tracer.Start(ctx, "CloudMigrationService.buildSnapshot")
 	defer span.End()
@@ -554,7 +553,12 @@ func (s *Service) buildSnapshot(
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
+	encrypter := crypto.NewNacl()
+	if encryptionAlgo != string(cloudmigration.EncryptionAlgoNacl) {
+		return fmt.Errorf("unsupported encryption algo: %v. only 'nacl' is supported", s.cfg.CloudMigration.EncryptionAlgo)
+	}
+
+	keys, err := encrypter.GenerateKeys()
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
@@ -564,9 +568,9 @@ func (s *Service) buildSnapshot(
 	// Use GMS public key + the grafana generated private key to encrypt snapshot files.
 	snapshotWriter, err := snapshot.NewSnapshotWriter(contracts.AssymetricKeys{
 		Public:  snapshotMeta.GMSPublicKey,
-		Private: privateKey[:],
+		Private: keys.Private,
 	},
-		crypto.NewNacl(),
+		encrypter,
 		snapshotMeta.LocalDir,
 	)
 	if err != nil {
@@ -614,7 +618,7 @@ func (s *Service) buildSnapshot(
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with database storage in %d ms", time.Since(start).Milliseconds()))
 
 	case cloudmigration.ResourceStorageTypeFs:
-		if err := s.buildSnapshotWithFSStorage(publicKey[:], metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
+		if err := s.buildSnapshotWithFSStorage(keys.Public, metadata, snapshotWriter, resourcesGroupedByType, maxItemsPerPartition); err != nil {
 			return fmt.Errorf("building snapshot with file system storage: %w", err)
 		}
 		s.log.Debug(fmt.Sprintf("buildSnapshot: wrote data partitions with file system storage in %d ms", time.Since(start).Milliseconds()))
@@ -629,7 +633,7 @@ func (s *Service) buildSnapshot(
 		SessionID:              snapshotMeta.SessionUID,
 		Status:                 cloudmigration.SnapshotStatusPendingUpload,
 		LocalResourcesToCreate: localSnapshotResource,
-		PublicKey:              publicKey[:],
+		PublicKey:              keys.Public,
 	}); err != nil {
 		return err
 	}

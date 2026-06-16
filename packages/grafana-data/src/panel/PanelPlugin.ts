@@ -1,32 +1,34 @@
 import { defaultsDeep, set } from 'lodash';
-import { ComponentClass, ComponentType } from 'react';
+import { type ComponentClass, type ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry';
-import { StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
-import { PanelModel } from '../types/dashboard';
-import { FieldConfigProperty, FieldConfigSource } from '../types/fieldOverrides';
+import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
+import { type PanelModel } from '../types/dashboard';
+import { type FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
 import {
-  PanelPluginMeta,
-  PanelProps,
-  PanelEditorProps,
-  PanelMigrationHandler,
-  PanelTypeChangedHandler,
-  PanelPluginDataSupport,
+  type PanelPluginMeta,
+  type PanelProps,
+  type PanelEditorProps,
+  type PanelMigrationHandler,
+  type PanelTypeChangedHandler,
+  type PanelPluginDataSupport,
 } from '../types/panel';
 import { GrafanaPlugin } from '../types/plugin';
 import {
   getSuggestionHash,
-  PanelPluginVisualizationSuggestion,
-  VisualizationSuggestion,
-  VisualizationSuggestionsSupplierDeprecated,
-  VisualizationSuggestionsSupplier,
-  VisualizationSuggestionsBuilder,
+  type PanelPluginVisualizationSuggestion,
+  type VisualizationSuggestion,
+  type VisualizationSuggestionsSupplierDeprecated,
+  type VisualizationSuggestionsSupplier,
+  type VisualizationPresetsContext,
+  type VisualizationPresetsSupplier,
+  type VisualizationSuggestionsBuilder,
 } from '../types/suggestions';
-import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
 import { createFieldConfigRegistry } from './registryFactories';
-import { PanelDataSummary } from './suggestions/getPanelDataSummary';
+import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
 export type StandardOptionConfig = {
@@ -34,6 +36,32 @@ export type StandardOptionConfig = {
   settings?: any;
   hideFromDefaults?: boolean;
 };
+
+/**
+ * Context passed to a panel plugin's screenshot handler. The plugin uses these
+ * fields to render its own image - typically when the default capture path
+ * cannot represent the panel correctly (e.g. canvas / WebGL contexts).
+ *
+ * @alpha
+ */
+export interface PanelScreenshotContext {
+  /** The panel's wrapping DOM element. */
+  element: HTMLElement;
+  /** Output image format. */
+  format: 'png' | 'jpeg' | 'webp';
+}
+
+/**
+ * Screenshot handler that a panel plugin can register via
+ * {@link PanelPlugin.setScreenshotImage}.
+ *
+ * - Return a `Blob` to use as the captured image.
+ * - Return `null` to fall through to the default capture path.
+ * - Throw to fail the capture.
+ *
+ * @alpha
+ */
+export type PanelScreenshotHandler = (ctx: PanelScreenshotContext) => Promise<Blob | null>;
 
 /** @beta */
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
@@ -118,6 +146,7 @@ export class PanelPlugin<
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
+  private presetsSupplier?: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>;
 
   panel: ComponentType<PanelProps<TOptions>> | null;
   editor?: ComponentClass<PanelEditorProps<TOptions>>;
@@ -125,6 +154,8 @@ export class PanelPlugin<
   shouldMigrate?: (panel: PanelModel) => boolean;
   onPanelTypeChanged?: PanelTypeChangedHandler<TOptions>;
   noPadding?: boolean;
+  /** @internal - set via {@link setScreenshotImage}, read by the panel screenshot service. */
+  onScreenshot?: PanelScreenshotHandler;
   dataSupport: PanelPluginDataSupport = {
     annotations: false,
     alertStates: false,
@@ -375,7 +406,6 @@ export class PanelPlugin<
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplierDeprecated): this;
   /**
-   * @alpha
    * sets function that can return visualization examples and suggestions.
    */
   setSuggestionsSupplier(supplier: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>): this;
@@ -424,6 +454,41 @@ export class PanelPlugin<
   }
 
   /**
+   * @alpha
+   * Register a supplier of presets for a panel plugin
+   */
+  setPresetsSupplier(supplier: VisualizationPresetsSupplier<TOptions, TFieldConfigOptions>): this {
+    this.presetsSupplier = supplier;
+    return this;
+  }
+
+  /**
+   * @alpha
+   * Return style presets for a panel plugin
+   */
+  getPresets(
+    context: VisualizationPresetsContext = {}
+  ): Array<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>> | void {
+    const withDefaults = (
+      suggestion: VisualizationSuggestion<TOptions, TFieldConfigOptions>
+    ): Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'> =>
+      defaultsDeep(suggestion, {
+        pluginId: this.meta.id,
+        name: this.meta.name,
+        options: {},
+        fieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+      } satisfies Omit<PanelPluginVisualizationSuggestion<TOptions, TFieldConfigOptions>, 'hash'>);
+
+    return this.presetsSupplier?.(context)?.map((s) => {
+      const withDefaultsApplied = withDefaults(s);
+      return Object.assign(withDefaultsApplied, { hash: getSuggestionHash(withDefaultsApplied) });
+    });
+  }
+
+  /**
    * @deprecated use getSuggestions
    * we have to keep this method intact to support cloud-onboarding plugin.
    */
@@ -453,5 +518,40 @@ export class PanelPlugin<
 
   hasPluginId(pluginId: string) {
     return this.meta.id === pluginId;
+  }
+
+  /**
+   * Register a screenshot handler for this panel.
+   *
+   * Used by canvas / WebGL panels (geomap, flamegraph, heatmap, canvas, etc.)
+   * that the default capture path cannot render correctly. The handler
+   * receives the panel's wrapping DOM element plus the requested image format
+   * and returns a `Blob`, `null` (fall through to the default path), or throws
+   * (fail the capture).
+   *
+   * Consumed by `getPanelScreenshotService().capture()` from `@grafana/runtime`.
+   *
+   * @example
+   * ```ts
+   * new PanelPlugin(MyCanvasPanel).setScreenshotImage(async ({ element, format }) => {
+   *   const canvas = element.querySelector<HTMLCanvasElement>('canvas');
+   *   if (!canvas) {
+   *     return null; // fall through to default capture path
+   *   }
+   *   // Re-render synchronously before reading - required for WebGL contexts
+   *   // that don't preserve their drawing buffer.
+   *   myRenderer.renderSync();
+   *   const mimeType = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+   *   return await new Promise<Blob | null>((resolve) =>
+   *     canvas.toBlob(resolve, mimeType, format === 'png' ? undefined : 0.92)
+   *   );
+   * });
+   * ```
+   *
+   * @alpha
+   */
+  setScreenshotImage(handler: PanelScreenshotHandler) {
+    this.onScreenshot = handler;
+    return this;
   }
 }

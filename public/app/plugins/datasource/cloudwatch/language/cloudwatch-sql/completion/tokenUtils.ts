@@ -1,4 +1,4 @@
-import { LinkedToken } from '../../monarch/LinkedToken';
+import { type LinkedToken } from '../../monarch/LinkedToken';
 import { FROM, SCHEMA, SELECT } from '../language';
 
 import { SQLTokenTypes } from './types';
@@ -17,7 +17,7 @@ export const getMetricNameToken = (currentToken: LinkedToken | null) => {
   return assumedMetricNameToken?.isVariable() || assumedMetricNameToken?.isIdentifier() ? assumedMetricNameToken : null;
 };
 
-export const getFromKeywordToken = (currentToken: LinkedToken | null) => {
+const getFromKeywordToken = (currentToken: LinkedToken | null) => {
   const selectToken = getSelectToken(currentToken);
   return selectToken?.getNextOfType(SQLTokenTypes.Keyword, FROM);
 };

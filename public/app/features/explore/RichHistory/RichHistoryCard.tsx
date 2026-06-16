@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useState } from 'react';
 import * as React from 'react';
-import { connect, ConnectedProps } from 'react-redux';
+import { connect, type ConnectedProps } from 'react-redux';
 
-import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
+import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -18,7 +18,7 @@ import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/feat
 import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
-import { RichHistoryQuery } from 'app/types/explore';
+import { type RichHistoryQuery } from 'app/types/explore';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
@@ -198,7 +198,6 @@ export function RichHistoryCard(props: Props) {
             'Are you sure you want to permanently delete your starred query?'
           ),
           yesText: t('explore.rich-history-card.confirm-delete', 'Delete'),
-          icon: 'trash-alt',
           onConfirm: () => performDelete(queryHistoryItem.id),
         })
       );

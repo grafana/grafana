@@ -10,7 +10,7 @@ import (
 )
 
 // AlertRuleFieldsToIgnoreInDiff contains fields that are ignored when calculating the RuleDelta.Diff.
-var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy"}
+var AlertRuleFieldsToIgnoreInDiff = [...]string{"ID", "Version", "Updated", "UpdatedBy", "FolderFullpath"}
 
 // AlertRuleFieldsWhichAffectQuery contains fields which affect the rule's query(s)
 var AlertRuleFieldsWhichAffectQuery = [...]string{"Data", "IntervalSeconds"}

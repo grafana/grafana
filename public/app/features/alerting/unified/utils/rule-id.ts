@@ -2,16 +2,22 @@ import { nth } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
 import {
-  CloudRuleIdentifier,
-  CombinedRule,
-  EditableRuleIdentifier,
-  Rule,
-  RuleGroupIdentifier,
-  RuleGroupIdentifierV2,
-  RuleIdentifier,
-  RuleWithLocation,
+  type CloudRuleIdentifier,
+  type CombinedRule,
+  type EditableRuleIdentifier,
+  type Rule,
+  type RuleGroupIdentifier,
+  type RuleGroupIdentifierV2,
+  type RuleIdentifier,
+  type RuleWithLocation,
 } from 'app/types/unified-alerting';
-import { Annotations, Labels, PromRuleType, RulerCloudRuleDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  type Annotations,
+  type Labels,
+  PromRuleType,
+  type RulerCloudRuleDTO,
+  type RulerRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { logError } from '../Analytics';
 import { shouldUsePrometheusRulesPrimary } from '../featureToggles';
@@ -243,7 +249,7 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     .join('$');
 }
 
-export function hash(value: string): number {
+function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
@@ -305,14 +311,27 @@ export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
   throw new Error('Only recording and alerting rules can be hashed');
 }
 
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-export function hashQuery(query: string) {
-  // remove comments
-  query = query
+/**
+ * Strips PromQL comments from a query string.
+ * Handles both full-line comments (lines starting with #) and inline comments
+ * (# appearing after code on the same line, e.g. `or # fallback condition`).
+ * Mimir normalizes expressions by stripping comments before storing them in
+ * Prometheus state, so the ruler expression and the Prometheus query must be
+ * processed identically before comparison.
+ */
+export function stripPromQLComments(query: string): string {
+  return query
+    .replace(/#[^\n]*/g, '') // strip from # to end of line (inline and full-line comments)
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
+    .filter((line) => Boolean(line))
     .join('\n');
+}
+
+// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
+export function hashQuery(query: string) {
+  // remove comments (full-line and inline)
+  query = stripPromQLComments(query);
 
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
@@ -336,7 +355,7 @@ export function hashQuery(query: string) {
   return query.split('').sort().join('');
 }
 
-export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
   return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
 }
 

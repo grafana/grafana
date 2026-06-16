@@ -14,13 +14,15 @@ import (
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-const UserDefinedRoutingTreeName = "user-defined"
-const NamedRouteMatcher = "__grafana_managed_route__"
+const UserDefinedRoutingTreeName = models.DefaultRoutingTreeName
+const NamedRouteMatcher = models.NamedRouteLabel
 
 type ManagedRoute struct {
 	Name    string
@@ -31,13 +33,13 @@ type ManagedRoute struct {
 	GroupWait      *model.Duration
 	GroupInterval  *model.Duration
 	RepeatInterval *model.Duration
-	Routes         []*definition.Route
+	Routes         []*v1.Route
 
 	Provenance models.Provenance
 	Origin     models.ResourceOrigin
 }
 
-func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
+func (r *ManagedRoute) GeneratedSubRoute() *v1.Route {
 	amRoute := ManagedRouteToRoute(r)
 
 	// It's important that the generated sub-route is fully defined so that they will never rely on the values of the root.
@@ -56,9 +58,13 @@ func (r *ManagedRoute) GeneratedSubRoute() *definition.Route {
 	}
 	if r.Name != UserDefinedRoutingTreeName {
 		// Set label matcher.
-		amRoute.ObjectMatchers = definitions.ObjectMatchers{managedRouteMatcher(r.Name)}
+		amRoute.ObjectMatchers = v1.ObjectMatchers{managedRouteMatcher(r.Name)}
 	}
 	return &amRoute
+}
+
+func (r *ManagedRoute) GetUID() string {
+	return r.Name
 }
 
 func (r *ManagedRoute) ResourceType() string {
@@ -73,7 +79,7 @@ func (r *ManagedRoute) ResourceID() string {
 	return r.Name
 }
 
-func NewManagedRoute(name string, r *definition.Route) *ManagedRoute {
+func NewManagedRoute(name string, r *v1.Route) *ManagedRoute {
 	return &ManagedRoute{
 		Name:    name,
 		Version: CalculateRouteFingerprint(*r),
@@ -122,13 +128,13 @@ func (m ManagedRoutes) Contains(name string) bool {
 	return false
 }
 
-func WithManagedRoutes(root *definitions.Route, managedRoutes map[string]*definition.Route) *definitions.Route {
+func WithManagedRoutes(root *v1.Route, managedRoutes map[string]*v1.Route) *v1.Route {
 	if len(managedRoutes) == 0 {
 		// If there are no managed routes, we just return the original root.
 		return root
 	}
 	newRoot := *root
-	newManagedRoutes := make([]*definition.Route, 0, len(newRoot.Routes)+len(managedRoutes))
+	newManagedRoutes := make([]*v1.Route, 0, len(newRoot.Routes)+len(managedRoutes))
 	for _, k := range slices.Sorted(maps.Keys(managedRoutes)) {
 		// On the off chance that the route is nil or invalid managed route with the restricted name, we skip it.
 		if managedRoutes[k] == nil || k == UserDefinedRoutingTreeName {
@@ -174,9 +180,27 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 	delete(rev.Config.ManagedRoutes, name)
 }
 
-func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.Route) (*ManagedRoute, error) {
-	if name == "" {
-		return nil, fmt.Errorf("route name is required")
+// validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
+func validateManagedRouteName(name string) error {
+	if name = strings.TrimSpace(name); name == "" {
+		return fmt.Errorf("route name is required")
+	}
+	// Colon in names confuses RBAC. Make sure we do not allow that.
+	if strings.Contains(name, ":") {
+		return fmt.Errorf("managed route name cannot contain invalid character ':'")
+	}
+	if len(name) > ualert.UIDMaxLength {
+		return fmt.Errorf("managed route name cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
+		return fmt.Errorf("managed route name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
+}
+
+func (rev *ConfigRevision) CreateManagedRoute(name string, subtree v1.Route) (*ManagedRoute, error) {
+	if err := validateManagedRouteName(name); err != nil {
+		return nil, models.MakeErrRouteInvalidFormat(err)
 	}
 
 	if name == UserDefinedRoutingTreeName {
@@ -196,14 +220,14 @@ func (rev *ConfigRevision) CreateManagedRoute(name string, subtree definitions.R
 	}
 
 	if rev.Config.ManagedRoutes == nil {
-		rev.Config.ManagedRoutes = make(map[string]*definition.Route, 1)
+		rev.Config.ManagedRoutes = make(map[string]*v1.Route, 1)
 	}
 	rev.Config.ManagedRoutes[name] = &amRoute
 
 	return managedRoute, nil
 }
 
-func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Route) (*ManagedRoute, error) {
+func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree v1.Route) (*ManagedRoute, error) {
 	if name == "" {
 		return nil, fmt.Errorf("route name is required")
 	}
@@ -224,7 +248,7 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Rou
 		rev.Config.AlertmanagerConfig.Route = &amRoute
 	} else {
 		if rev.Config.ManagedRoutes == nil {
-			rev.Config.ManagedRoutes = make(map[string]*definition.Route, 1)
+			rev.Config.ManagedRoutes = make(map[string]*v1.Route, 1)
 		}
 		rev.Config.ManagedRoutes[name] = &amRoute
 	}
@@ -232,11 +256,11 @@ func (rev *ConfigRevision) UpdateNamedRoute(name string, subtree definitions.Rou
 	return managedRoute, nil
 }
 
-func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *definitions.PostableUserConfig) (*ManagedRoute, error) {
+func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*ManagedRoute, error) {
 	// Ensure the new default receiver exists and if not, create it.
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
-		var defaultRcv *definitions.PostableApiReceiver
+		var defaultRcv *v1.PostableApiReceiver
 		for _, rcv := range defaultCfg.AlertmanagerConfig.Receivers {
 			if rcv.Name == defaultCfg.AlertmanagerConfig.Route.Receiver {
 				defaultRcv = rcv
@@ -252,7 +276,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *definitions.Postabl
 	return rev.UpdateNamedRoute(UserDefinedRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
 }
 
-func (rev *ConfigRevision) ValidateRoute(route definitions.Route) error {
+func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {
 	err := route.Validate()
 	if err != nil {
 		return err
@@ -270,13 +294,13 @@ func (rev *ConfigRevision) ValidateRoute(route definitions.Route) error {
 	return nil
 }
 
-func (rev *ConfigRevision) validateReceiverReferences(route definitions.Route) error {
+func (rev *ConfigRevision) validateReceiverReferences(route v1.Route) error {
 	receivers := rev.GetReceiversNames()
 	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
 	return route.ValidateReceivers(receivers)
 }
 
-func (rev *ConfigRevision) validateTimeIntervalReferences(route definitions.Route) error {
+func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error {
 	timeIntervals := map[string]struct{}{}
 	for _, mt := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
@@ -288,8 +312,8 @@ func (rev *ConfigRevision) validateTimeIntervalReferences(route definitions.Rout
 }
 
 // RenameReceiverInRoutes renames all references to a receiver in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, includeManagedRoutes bool) map[*definitions.Route]int {
-	res := make(map[*definitions.Route]int)
+func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+	res := make(map[*v1.Route]int)
 	if cnt := renameReceiverInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
@@ -303,7 +327,7 @@ func (rev *ConfigRevision) RenameReceiverInRoutes(oldName, newName string, inclu
 	return res
 }
 
-func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route) int {
+func renameReceiverInRoute(oldName, newName string, routes ...*v1.Route) int {
 	if len(routes) == 0 {
 		return 0
 	}
@@ -319,8 +343,8 @@ func renameReceiverInRoute(oldName, newName string, routes ...*definitions.Route
 }
 
 // RenameTimeIntervalInRoutes renames all references to a time interval in all routes. Returns number of routes that were updated
-func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, includeManagedRoutes bool) map[*definitions.Route]int {
-	res := make(map[*definitions.Route]int)
+func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, includeManagedRoutes bool) map[*v1.Route]int {
+	res := make(map[*v1.Route]int)
 	if cnt := renameTimeIntervalInRoute(oldName, newName, rev.Config.AlertmanagerConfig.Route); cnt > 0 {
 		res[rev.Config.AlertmanagerConfig.Route] = cnt
 	}
@@ -334,7 +358,7 @@ func (rev *ConfigRevision) RenameTimeIntervalInRoutes(oldName, newName string, i
 	return res
 }
 
-func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.Route) int {
+func renameTimeIntervalInRoute(oldName, newName string, routes ...*v1.Route) int {
 	if len(routes) == 0 {
 		return 0
 	}
@@ -357,13 +381,13 @@ func renameTimeIntervalInRoute(oldName, newName string, routes ...*definitions.R
 	return updated
 }
 
-func CalculateRouteFingerprint(route definitions.Route) string {
+func CalculateRouteFingerprint(route v1.Route) string {
 	sum := fnv.New64a()
 	writeToHash(sum, &route)
 	return fmt.Sprintf("%016x", sum.Sum64())
 }
 
-func writeToHash(sum hash.Hash, r *definitions.Route) {
+func writeToHash(sum hash.Hash, r *v1.Route) {
 	writeBytes := func(b []byte) {
 		_, _ = sum.Write(b)
 		// add a byte sequence that cannot happen in UTF-8 strings.

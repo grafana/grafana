@@ -121,7 +121,7 @@ func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 }
 
 func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) string {
-	var statements = []string{}
+	statements := make([]string, 0, len(columns))
 
 	for _, col := range columns {
 		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SQLType(col))
@@ -346,7 +346,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 
 func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
-		parsedDSN, err := pq.ParseURL(dsn)
+		parsedDSN, err := pq.ParseURL(dsn) // nolint:staticcheck
 		if err != nil {
 			return "", err
 		}

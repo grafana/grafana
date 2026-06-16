@@ -53,11 +53,11 @@ func TestGithubClient_GetApp(t *testing.T) {
 				ID:    12345,
 				Slug:  "my-test-app",
 				Owner: "grafana",
-				Permissions: conngh.AppPermissions{
-					Contents:     conngh.AppPermissionWrite,
-					Metadata:     conngh.AppPermissionRead,
-					PullRequests: conngh.AppPermissionWrite,
-					Webhooks:     conngh.AppPermissionWrite,
+				Permissions: conngh.Permissions{
+					Contents:     conngh.PermissionWrite,
+					Metadata:     conngh.PermissionRead,
+					PullRequests: conngh.PermissionWrite,
+					Webhooks:     conngh.PermissionWrite,
 				},
 			},
 			wantErr: nil,
@@ -252,6 +252,12 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
+				Permissions: conngh.Permissions{
+					Contents:     conngh.PermissionWrite,
+					Metadata:     conngh.PermissionRead,
+					PullRequests: conngh.PermissionWrite,
+					Webhooks:     conngh.PermissionWrite,
+				},
 			},
 			wantErr: false,
 		},
@@ -303,6 +309,9 @@ func TestGithubClient_GetAppInstallation(t *testing.T) {
 			wantInstallation: conngh.AppInstallation{
 				ID:      67890,
 				Enabled: true,
+				Permissions: conngh.Permissions{
+					Contents: conngh.PermissionRead,
+				},
 			},
 			wantErr: false,
 		},
@@ -623,7 +632,7 @@ func TestGithubClient_ListInstallationRepositories(t *testing.T) {
 
 						// Create 100 repos per page to simulate going over 1000 limit
 						repos := make([]*github.Repository, 100)
-						for i := 0; i < 100; i++ {
+						for i := range 100 {
 							repoNum := (pageNum-1)*100 + i + 1
 							repos[i] = &github.Repository{
 								Name: github.Ptr(fmt.Sprintf("repo%d", repoNum)),
@@ -704,6 +713,7 @@ func TestGithubClient_CreateInstallationAccessToken(t *testing.T) {
 			),
 			installationID: "12345",
 			repo:           "test-repo",
+			// #nosec G101 -- test fixture, not a real credential
 			wantToken: conngh.InstallationToken{
 				Token:     "ghs_test_token_123456789",
 				ExpiresAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),

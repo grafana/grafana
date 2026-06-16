@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
+	promlabels "github.com/prometheus/prometheus/model/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -376,7 +377,7 @@ func waitForClusterSettled(t *testing.T, grafanas []*haGrafana) {
 			pos := getPeerPosition(t, g.Addr)
 			positions[pos] = true
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			assert.True(c, positions[i], "Position %d should be assigned", i)
 		}
 	}, 30*time.Second, 1*time.Second)
@@ -387,12 +388,16 @@ func waitForClusterSettled(t *testing.T, grafanas []*haGrafana) {
 func assertPosition0IsEvaluator(t *testing.T, grafanas []*haGrafana) {
 	t.Helper()
 
-	baselines := make([]int, len(grafanas))
-	for i, g := range grafanas {
-		baselines[i] = getEvalTotal(t, g.Addr)
-	}
-
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		baselines := make([]int, len(grafanas))
+		for i, g := range grafanas {
+			baselines[i] = getEvalTotal(t, g.Addr)
+		}
+
+		// Wait a few seconds to allow for any evaluations to occur.
+		// the evaluation ingterval is 1s, so this should allow for multiple evaluation cycles if the node is evaluating.
+		time.Sleep(3 * time.Second)
+
 		for i, g := range grafanas {
 			pos := getPeerPosition(t, g.Addr)
 			evals := getEvalTotal(t, g.Addr)
@@ -404,7 +409,7 @@ func assertPosition0IsEvaluator(t *testing.T, grafanas []*haGrafana) {
 				assert.False(c, isEvaluating, "position %d node should not be evaluating", pos)
 			}
 		}
-	}, 30*time.Second, 1*time.Second)
+	}, 45*time.Second, 1*time.Second)
 }
 
 // assertIdenticalAlertGroups verifies that all nodes have identical alert groups.
@@ -445,6 +450,7 @@ func assertConsistentRuleMetadata(t *testing.T, grafanas []*haGrafana) {
 			return a.Labels.Get("alertname") < b.Labels.Get("alertname")
 		}),
 		cmpopts.IgnoreFields(apimodels.AlertingRule{}, "LastEvaluation", "EvaluationTime"),
+		cmpopts.EquateComparable(promlabels.Labels{}),
 	}
 
 	var refRules map[string]apimodels.AlertingRule

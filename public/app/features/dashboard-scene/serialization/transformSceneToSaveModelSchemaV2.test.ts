@@ -1,5 +1,12 @@
-import { VariableRefresh, PanelData, LoadingState, toDataFrame, FieldType, getDefaultTimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import {
+  VariableRefresh,
+  type PanelData,
+  LoadingState,
+  toDataFrame,
+  FieldType,
+  getDefaultTimeRange,
+} from '@grafana/data';
+import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -17,7 +24,7 @@ import {
   SceneVariableSet,
   TextBoxVariable,
   VizPanel,
-  SceneDataQuery,
+  type SceneDataQuery,
   SceneQueryRunner,
   SceneDataTransformer,
   SceneDataNode,
@@ -30,11 +37,12 @@ import {
   VariableSort as VariableSortV1,
 } from '@grafana/schema';
 import {
-  GridLayoutSpec,
-  AutoGridLayoutSpec,
-  RowsLayoutSpec,
-  TabsLayoutSpec,
+  type GridLayoutSpec,
+  type AutoGridLayoutSpec,
+  type RowsLayoutSpec,
+  type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -43,7 +51,7 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -54,16 +62,20 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
-import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { djb2Hash } from '../utils/djb2Hash';
 
 import {
   getPersistedDSFor,
   getElementDatasource,
+  normalizeDataSourceRef,
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
   getAutoAssignedDSRef,
   getVizPanelQueries,
+  vizPanelToSchemaV2,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -207,6 +219,23 @@ describe('transformSceneToSaveModelSchemaV2', () => {
           targetBlank: false,
           tooltip: '',
           type: 'link',
+        },
+        // This link is was added by a datasource, we wouldn't like it to end up in the JSON schema
+        {
+          title: 'Default link',
+          url: 'http://test.com',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          type: 'link',
+          origin: {
+            type: 'datasource',
+            group: 'datasource',
+          },
         },
       ],
       body: new DefaultGridLayoutManager({
@@ -453,6 +482,78 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     expect(result.links).toHaveLength(2);
     expect(result.links![0]).toHaveProperty('placement', 'inControlsMenu');
     expect(result.links![1]).not.toHaveProperty('placement');
+  });
+
+  it('should omit links with origin from serialized save model', () => {
+    const sceneWithOriginLink = new DashboardScene({
+      links: [
+        {
+          title: 'Editable Link',
+          url: 'http://example.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+        },
+        {
+          title: 'Default link',
+          url: 'http://ds.com',
+          type: 'link',
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource', group: 'loki' },
+        },
+      ],
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginLink);
+
+    expect(result.links).toHaveLength(1);
+    expect(result.links![0].title).toBe('Editable Link');
+    expect(result.links![0].origin).toBeUndefined();
+  });
+
+  it('should omit variables with origin from serialized save model', () => {
+    const sceneWithOriginVariable = new DashboardScene({
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'editableVar',
+            label: 'Editable',
+            query: 'a,b',
+            value: 'a',
+            text: 'a',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+          }),
+          new CustomVariable({
+            name: 'dsVar',
+            label: 'From datasource',
+            query: 'x,y',
+            value: 'x',
+            text: 'x',
+            skipUrlSync: false,
+            hide: VariableHideV1.dontHide,
+            origin: { type: 'datasource', group: 'loki' },
+          }),
+        ],
+      }),
+    });
+
+    const result = transformSceneToSaveModelSchemaV2(sceneWithOriginVariable);
+
+    expect(result.variables).toHaveLength(1);
+    expect(result.variables![0].spec.name).toBe('editableVar');
+    expect(result.variables![0].spec.origin).toBeUndefined();
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -1332,6 +1433,205 @@ describe('dynamic layouts', () => {
   });
 });
 
+describe('snapshot mode: repeated panels', () => {
+  it('should include repeated panel clones in elements and expanded grid layout items', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-10',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const clone1Key = 'panel-10-clone-1';
+    const clone2Key = 'panel-10-clone-2';
+
+    const clone1 = sourcePanel.clone({ key: clone1Key, repeatSourceKey: sourcePanel.state.key });
+    const clone2 = sourcePanel.clone({ key: clone2Key, repeatSourceKey: sourcePanel.state.key });
+
+    const repeater = new DashboardGridItem({
+      key: 'grid-item-10',
+      x: 2,
+      y: 3,
+      width: 24,
+      height: 21,
+      itemHeight: 7,
+      body: sourcePanel,
+      variableName: 'var',
+      repeatDirection: 'v',
+      maxPerRow: 4,
+      repeatedPanels: [clone1, clone2],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new DefaultGridLayoutManager({
+          grid: new SceneGridLayout({
+            children: [repeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    // Snapshot mode must include repeat clones in `elements` or layout references break.
+    expect(result.elements[clone1Key]).toBeDefined();
+    expect(result.elements[clone2Key]).toBeDefined();
+
+    expect(result.elements[clone1Key].kind).toBe('Panel');
+    expect(result.elements[clone1Key].spec.id).toBe(djb2Hash(clone1Key));
+    expect(result.elements[clone2Key].spec.id).toBe(djb2Hash(clone2Key));
+
+    expect(result.layout.kind).toBe('GridLayout');
+    const gridLayout = result.layout.spec as GridLayoutSpec;
+
+    // Source + clones expanded into explicit items in snapshot mode.
+    expect(gridLayout.items).toHaveLength(3);
+    expect(gridLayout.items.map((i) => i.spec.element.name)).toEqual(['panel-10', clone1Key, clone2Key]);
+
+    // Snapshot output shouldn't contain a repeater definition; just explicit items.
+    expect(gridLayout.items[0].spec.repeat).toBeUndefined();
+
+    // Repeat positioning should be anchored to the repeater's original x/y.
+    expect(gridLayout.items[0].spec.x).toBe(2);
+    expect(gridLayout.items[0].spec.y).toBe(3);
+    expect(gridLayout.items[1].spec.y).toBe(10);
+    expect(gridLayout.items[2].spec.y).toBe(17);
+  });
+
+  it('should expand auto grid repeaters to explicit items in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-20',
+      pluginId: 'timeseries',
+      title: 'AutoGrid source',
+    });
+
+    const cloneKey = 'panel-20-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const autoGridRepeater = new AutoGridItem({
+      key: 'auto-grid-item-1',
+      body: sourcePanel,
+      variableName: 'var',
+      repeatedPanels: [clone],
+    });
+
+    const scene = setupDashboardScene(
+      getMinimalSceneState(
+        new AutoGridLayoutManager({
+          columnWidth: 'standard',
+          rowHeight: 'standard',
+          maxColumnCount: 4,
+          fillScreen: false,
+          layout: new AutoGridLayout({
+            children: [autoGridRepeater],
+          }),
+        })
+      )
+    );
+
+    const result = transformSceneToSaveModelSchemaV2(scene, true);
+
+    expect(result.layout.kind).toBe('AutoGridLayout');
+    const layout = result.layout.spec as AutoGridLayoutSpec;
+
+    // Snapshot mode should include explicit panels, not a repeat definition.
+    expect(layout.items).toHaveLength(2);
+    expect(layout.items[0].spec.repeat).toBeUndefined();
+
+    // Base item references the original panel, clone item references clone key.
+    expect(layout.items[0].spec.element.name).toBe('panel-20');
+    expect(layout.items[1].spec.element.name).toBe(cloneKey);
+
+    // Snapshot mode must include repeat clones in `elements`.
+    expect(result.elements[cloneKey]).toBeDefined();
+    expect(result.elements[cloneKey].spec.id).toBe(djb2Hash(cloneKey));
+  });
+});
+
+describe('vizPanelToSchemaV2 snapshot repeat clones', () => {
+  it('should assign a stable unique id per repeat clone in snapshot mode', () => {
+    const sourcePanel = new VizPanel({
+      key: 'panel-30',
+      pluginId: 'timeseries',
+      title: 'Source',
+    });
+
+    const cloneKey = 'panel-30-clone-1';
+    const clone = sourcePanel.clone({ key: cloneKey, repeatSourceKey: sourcePanel.state.key });
+
+    const snapshotElement = vizPanelToSchemaV2(clone, undefined, true);
+    const normalElement = vizPanelToSchemaV2(clone, undefined, false);
+
+    expect(snapshotElement.kind).toBe('Panel');
+    expect(snapshotElement.spec.id).toBe(djb2Hash(cloneKey));
+    expect(snapshotElement.spec.id).not.toBe(normalElement.spec.id);
+  });
+});
+
+describe('vizPanelToSchemaV2 time range fields', () => {
+  function buildPanel(timeRange?: SceneTimeRange | PanelTimeRange) {
+    return new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Test',
+      ...(timeRange && { $timeRange: timeRange }),
+    });
+  }
+
+  function getQueryOptions(timeRange?: SceneTimeRange | PanelTimeRange) {
+    const result = vizPanelToSchemaV2(buildPanel(timeRange), undefined, false);
+    expect(result.kind).toEqual('Panel');
+    return (result.spec as PanelSpec).data.spec.queryOptions;
+  }
+
+  function expectNoTimeRangeFields(queryOptions: ReturnType<typeof getQueryOptions>, except?: string) {
+    const fields = ['timeFrom', 'timeShift', 'hideTimeOverride', 'timeCompare'] as const;
+    for (const f of fields) {
+      if (f !== except) {
+        expect(queryOptions[f]).toBeUndefined();
+      }
+    }
+  }
+
+  it('should omit time range fields when the panel has no $timeRange', () => {
+    expectNoTimeRangeFields(getQueryOptions());
+  });
+
+  it('should omit time range fields when $timeRange is a SceneTimeRange (not PanelTimeRange)', () => {
+    expectNoTimeRangeFields(getQueryOptions(new SceneTimeRange({})));
+  });
+
+  it('should serialize all four time range fields when set on PanelTimeRange', () => {
+    const queryOptions = getQueryOptions(
+      new PanelTimeRange({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        compareWith: '1d',
+      })
+    );
+
+    expect(queryOptions).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      timeCompare: '1d',
+    });
+  });
+
+  it.each([
+    ['timeFrom only', { timeFrom: '2h' }, 'timeFrom', '2h'],
+    ['timeShift only', { timeShift: '1h' }, 'timeShift', '1h'],
+    ['hideTimeOverride only', { hideTimeOverride: true }, 'hideTimeOverride', true],
+    ['compareWith only maps to timeCompare', { compareWith: '1d' }, 'timeCompare', '1d'],
+  ] as const)('should serialize %s', (_, state, field, value) => {
+    const queryOptions = getQueryOptions(new PanelTimeRange(state));
+
+    expect(queryOptions[field]).toBe(value);
+    expectNoTimeRangeFields(queryOptions, field);
+  });
+});
+
 // Instead of reusing annotation layer objects, create a factory function to generate new ones each time
 function createAnnotationLayers() {
   return [
@@ -1544,5 +1844,47 @@ describe('validateDashboardSchemaV2', () => {
     expect(validateDashboardSchemaV2({ ...validDashboard, layout: { kind: 'RowsLayout', spec: { rows: [] } } })).toBe(
       true
     );
+  });
+});
+
+describe('normalizeDataSourceRef', () => {
+  let originalSrv: DataSourceSrv | undefined;
+  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
+
+  beforeAll(() => {
+    try {
+      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
+    } catch {
+      originalSrv = undefined;
+    }
+    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    setDataSourceSrv(originalSrv as DataSourceSrv);
+  });
+
+  it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
+    const ref = { uid: 'abc', type: 'prometheus' };
+    expect(normalizeDataSourceRef(ref)).toBe(ref);
+
+    expect(normalizeDataSourceRef(undefined)).toBeUndefined();
+    expect(normalizeDataSourceRef(null)).toBeUndefined();
+  });
+
+  it('resolves a string datasource into a DataSourceRef', () => {
+    expect(normalizeDataSourceRef('prometheus')).toEqual({
+      uid: 'prom-uid',
+      type: 'prometheus',
+      apiVersion: 'v1',
+    });
+
+    // Falls back to a UID-only ref when the datasource is unknown.
+    getInstanceSettings.mockReturnValueOnce(undefined as never);
+    expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
+
+    // Template variables short-circuit and never call getInstanceSettings.
+    expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
+    expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });
 });

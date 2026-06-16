@@ -1,5 +1,5 @@
 import { expect, test } from '@grafana/plugin-e2e';
-import { AlertVariant } from '@grafana/ui';
+import { type AlertVariant } from '@grafana/ui';
 
 import {
   successfulAnnotationQueryWithData,

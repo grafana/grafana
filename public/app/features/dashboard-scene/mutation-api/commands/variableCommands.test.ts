@@ -1,7 +1,7 @@
 import { SceneVariableSet } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
-import { MutationExecutor } from '../MutationExecutor';
+import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
 function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {}): DashboardScene {
@@ -32,18 +32,18 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
 }
 
 describe('Variable mutation commands', () => {
-  let executor: MutationExecutor;
+  let client: DashboardMutationClient;
   let scene: ReturnType<typeof buildMockScene>;
 
   beforeEach(() => {
     // Scenes library warns when re-parenting variables via replaceVariableSet
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     scene = buildMockScene({ editable: true });
-    executor = new MutationExecutor(scene);
+    client = new DashboardMutationClient(scene);
   });
 
   it('ADD_VARIABLE adds a variable to the dashboard', async () => {
-    const result: MutationResult = await executor.execute({
+    const result: MutationResult = await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: {
@@ -63,7 +63,7 @@ describe('Variable mutation commands', () => {
 
   it('LIST_VARIABLES returns dashboard variables', async () => {
     // First add a variable
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: {
@@ -76,7 +76,7 @@ describe('Variable mutation commands', () => {
       },
     });
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'LIST_VARIABLES',
       payload: {},
     });
@@ -87,7 +87,7 @@ describe('Variable mutation commands', () => {
 
   it('REMOVE_VARIABLE removes a variable by name', async () => {
     // First add a variable
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: {
@@ -97,7 +97,7 @@ describe('Variable mutation commands', () => {
       },
     });
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'REMOVE_VARIABLE',
       payload: { name: 'env' },
     });
@@ -107,20 +107,20 @@ describe('Variable mutation commands', () => {
   });
 
   it('ADD_VARIABLE with position inserts at the specified index', async () => {
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'first', query: 'a,b' } },
       },
     });
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'third', query: 'x,y' } },
       },
     });
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'second', query: 'c,d' } },
@@ -130,21 +130,21 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
 
-    const listResult = await executor.execute({ type: 'LIST_VARIABLES', payload: {} });
+    const listResult = await client.execute({ type: 'LIST_VARIABLES', payload: {} });
     expect(listResult.success).toBe(true);
     const variables = (listResult.data as { variables: Array<{ spec: { name: string } }> }).variables;
     expect(variables.map((v) => v.spec.name)).toEqual(['first', 'second', 'third']);
   });
 
   it('ADD_VARIABLE rejects duplicate variable name', async () => {
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
       },
     });
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'a,b,c' } },
@@ -156,14 +156,14 @@ describe('Variable mutation commands', () => {
   });
 
   it('UPDATE_VARIABLE updates an existing variable', async () => {
-    await executor.execute({
+    await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: { kind: 'CustomVariable', spec: { name: 'env', query: 'dev,staging,prod' } },
       },
     });
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'UPDATE_VARIABLE',
       payload: {
         name: 'env',
@@ -177,7 +177,7 @@ describe('Variable mutation commands', () => {
   });
 
   it('UPDATE_VARIABLE returns error when variable not found', async () => {
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'UPDATE_VARIABLE',
       payload: {
         name: 'nonexistent',
@@ -190,7 +190,7 @@ describe('Variable mutation commands', () => {
   });
 
   it('REMOVE_VARIABLE returns error for non-existent variable', async () => {
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'REMOVE_VARIABLE',
       payload: { name: 'nonexistent' },
     });
@@ -200,7 +200,7 @@ describe('Variable mutation commands', () => {
   });
 
   it('ENTER_EDIT_MODE enters edit mode when not editing', async () => {
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ENTER_EDIT_MODE',
       payload: {},
     });
@@ -212,9 +212,9 @@ describe('Variable mutation commands', () => {
 
   it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
     scene = buildMockScene({ editable: true, isEditing: true });
-    executor = new MutationExecutor(scene);
+    client = new DashboardMutationClient(scene);
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ENTER_EDIT_MODE',
       payload: {},
     });
@@ -225,7 +225,7 @@ describe('Variable mutation commands', () => {
   });
 
   it('rejects invalid payloads with a validation error', async () => {
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
       payload: { variable: { invalid: true } },
     });
@@ -235,7 +235,7 @@ describe('Variable mutation commands', () => {
   });
 
   it('rejects unknown command types', async () => {
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'NONEXISTENT_COMMAND',
       payload: {},
     });
@@ -246,9 +246,9 @@ describe('Variable mutation commands', () => {
 
   it('rejects commands when dashboard is not editable', async () => {
     scene = buildMockScene({ editable: false });
-    executor = new MutationExecutor(scene);
+    client = new DashboardMutationClient(scene);
 
-    const result = await executor.execute({
+    const result = await client.execute({
       type: 'ADD_VARIABLE',
       payload: {
         variable: {

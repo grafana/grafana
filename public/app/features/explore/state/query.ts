@@ -1,27 +1,27 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { type AnyAction, createAction, type PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { findLast, flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
-import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { combineLatest, identity, type Observable, of, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
+  type AbsoluteTimeRange,
+  type DataFrame,
   DataQueryErrorType,
-  DataQueryResponse,
-  DataSourceApi,
+  type DataQueryResponse,
+  type DataSourceApi,
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  QueryFixAction,
-  ScopedVars,
-  SupplementaryQueryType,
+  type QueryFixAction,
+  type ScopedVars,
+  type SupplementaryQueryType,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import {
   buildQueryTransaction,
@@ -40,14 +40,14 @@ import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state
 import { SupportingQueryType } from 'app/plugins/datasource/loki/dataquery.gen';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
-  ExploreItemState,
-  ExplorePanelData,
-  ExploreState,
-  QueryOptions,
-  QueryTransaction,
-  SupplementaryQueries,
+  type ExploreItemState,
+  type ExplorePanelData,
+  type ExploreState,
+  type QueryOptions,
+  type QueryTransaction,
+  type SupplementaryQueries,
 } from 'app/types/explore';
-import { createAsyncThunk, StoreState, ThunkDispatch, ThunkResult } from 'app/types/store';
+import { createAsyncThunk, type StoreState, type ThunkDispatch, type ThunkResult } from 'app/types/store';
 
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
@@ -112,20 +112,18 @@ export interface CancelQueriesPayload {
 }
 export const cancelQueriesAction = createAction<CancelQueriesPayload>('explore/cancelQueries');
 
-export interface QueriesImportedPayload {
+interface QueriesImportedPayload {
   exploreId: string;
   queries: DataQuery[];
 }
-export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
+const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export interface QueryStoreSubscriptionPayload {
   exploreId: string;
   querySubscription: Unsubscribable;
 }
 
-export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
-  'explore/queryStoreSubscription'
-);
+const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>('explore/queryStoreSubscription');
 
 const setSupplementaryQueryEnabledAction = createAction<{
   exploreId: string;
@@ -133,7 +131,7 @@ const setSupplementaryQueryEnabledAction = createAction<{
   enabled: boolean;
 }>('explore/setSupplementaryQueryEnabledAction');
 
-export interface StoreSupplementaryQueryDataProvider {
+interface StoreSupplementaryQueryDataProvider {
   exploreId: string;
   dataProvider?: Observable<DataQueryResponse>;
   type: SupplementaryQueryType;
@@ -147,7 +145,7 @@ export interface CleanSupplementaryQueryDataProvider {
 /**
  * Stores available supplementary query data provider after running the query. Used internally by runQueries().
  */
-export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
+const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
   'explore/storeSupplementaryQueryDataProviderAction'
 );
 
@@ -159,7 +157,7 @@ export const cleanSupplementaryQueryAction = createAction<{ exploreId: string; t
   'explore/cleanSupplementaryQueryAction'
 );
 
-export interface StoreSupplementaryQueryDataSubscriptionPayload {
+interface StoreSupplementaryQueryDataSubscriptionPayload {
   exploreId: string;
   dataSubscription?: SubscriptionLike;
   type: SupplementaryQueryType;
@@ -200,7 +198,7 @@ export interface ChangeLoadingStatePayload {
   exploreId: string;
   loadingState: LoadingState;
 }
-export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
+const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
 
 export interface SetPausedStatePayload {
   exploreId: string;
@@ -234,20 +232,20 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
  * Adds query results to cache.
  * This is currently used to cache last 5 query results for log queries run from logs navigation (pagination).
  */
-export interface AddResultsToCachePayload {
+interface AddResultsToCachePayload {
   exploreId: string;
   cacheKey: string;
   queryResponse: ExplorePanelData;
 }
-export const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
+const addResultsToCacheAction = createAction<AddResultsToCachePayload>('explore/addResultsToCache');
 
 /**
  *  Clears cache.
  */
-export interface ClearCachePayload {
+interface ClearCachePayload {
   exploreId: string;
 }
-export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
+const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
 /**
  * Adds a query row after the row with the given index.

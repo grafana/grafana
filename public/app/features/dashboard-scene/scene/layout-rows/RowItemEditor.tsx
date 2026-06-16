@@ -1,7 +1,9 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Alert, Field, Input, Switch, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -10,12 +12,14 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
-import { RowItem } from './RowItem';
+import { type RowItem } from './RowItem';
 
 export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -71,7 +75,63 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
+  // OpenFeature is not initialized for anonymous users, so fall back to
+  // the static feature toggle to ensure section variables work without auth.
+  const sectionVariablesEnabled = useBooleanFlagValue(
+    'dashboardSectionVariables',
+    Boolean(config.featureToggles.dashboardSectionVariables)
+  );
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
+      id: 'dash-row-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-variables-list',
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const sectionFiltersCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.rows-layout.row-options.section-filters.title', 'Filters'),
+      id: 'dash-row-section-filters',
+      isOpenDefault: true,
+      renderTitle: () => <SectionFiltersCategoryTitle />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'dash-row-section-filters-list',
+        skipField: true,
+        render: () => <SectionFiltersList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [
+        rowCategory,
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+        sectionVariablesCategory,
+        ...layoutCategory,
+        repeatCategory,
+      ]
+    : [rowCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),

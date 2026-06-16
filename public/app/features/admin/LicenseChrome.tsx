@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import grafanaIconSvg from 'img/grafana_icon.svg';
 import headerDarkSvg from 'img/licensing/header_dark.svg';
@@ -81,7 +81,7 @@ interface CircleProps {
   style?: React.CSSProperties;
 }
 
-export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
+const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
   const theme = useTheme2();
   return (
     <div

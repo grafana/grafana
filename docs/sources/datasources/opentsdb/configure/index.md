@@ -15,37 +15,6 @@ menuTitle: Configure
 title: Configure the OpenTSDB data source
 weight: 100
 last_reviewed: 2026-01-28
-refs:
-  provisioning-data-sources:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  troubleshooting-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-  query-editor:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
 ---
 
 # Configure the OpenTSDB data source
@@ -124,11 +93,11 @@ Select the version that matches your OpenTSDB server. If you're unsure, check yo
 
 Click **Save & test** to verify that Grafana can connect to your OpenTSDB server. A successful test confirms that the URL is correct and the server is responding.
 
-If the test fails, refer to [Troubleshooting](ref:troubleshooting-opentsdb) for common issues and solutions.
+If the test fails, refer to [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) for common issues and solutions.
 
 ## Provision the data source
 
-You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](ref:provisioning-data-sources).
+You can define and configure the data source in YAML files as part of the Grafana provisioning system. For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
 ### YAML example
 
@@ -283,8 +252,8 @@ Replace the following placeholders:
 
 Now that you've configured OpenTSDB, you can:
 
-- [Query OpenTSDB data](ref:query-editor) to build dashboards and visualizations
-- [Use template variables](ref:template-variables) to create dynamic, reusable dashboards
-- [Add annotations](ref:annotations) to overlay events on your graphs
-- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds
-- [Troubleshoot issues](ref:troubleshooting-opentsdb) if you encounter problems
+- [Query OpenTSDB data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/query-editor/) to build dashboards and visualizations
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) to create dynamic, reusable dashboards
+- [Add annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/annotations/) to overlay events on your graphs
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/) to get notified when metrics cross thresholds
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) if you encounter problems

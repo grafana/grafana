@@ -4,7 +4,7 @@ import { useMemo, type JSX } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, ButtonVariant } from '../Button/Button';
+import { Button, type ButtonVariant } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {

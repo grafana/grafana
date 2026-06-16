@@ -3,12 +3,13 @@ package sync
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -67,10 +68,23 @@ func (s *RBACSync) SyncPermissionsHook(ctx context.Context, ident *authn.Identit
 	grouped := accesscontrol.GroupScopesByActionContext(ctx, permissions)
 
 	// Restrict access to the list of actions
-	actionsLookup := ident.ClientParams.FetchPermissionsParams.RestrictedActions
-	if len(actionsLookup) > 0 {
-		filtered := make(map[string][]string, len(actionsLookup))
-		for _, action := range actionsLookup {
+	grafanaRestrictions := ident.ClientParams.FetchPermissionsParams.RestrictedActions
+	k8sRestrictions := ident.ClientParams.FetchPermissionsParams.K8sRestrictedActions
+	if grafanaRestrictions != nil || k8sRestrictions != nil {
+		allowedActions := make([]string, 0, len(grafanaRestrictions)+len(k8sRestrictions))
+
+		// Translate K8s restrictions to Grafana actions
+		k8sPermissions := s.translateK8sPermissions(ctx, k8sRestrictions)
+		for _, perm := range k8sPermissions {
+			allowedActions = append(allowedActions, perm.Action)
+		}
+
+		// Add Grafana actions directly
+		allowedActions = append(allowedActions, grafanaRestrictions...)
+
+		// Filter permissions
+		filtered := make(map[string][]string, len(allowedActions))
+		for _, action := range allowedActions {
 			if scopes, ok := grouped[action]; ok {
 				filtered[action] = scopes
 			}
@@ -90,6 +104,14 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 	roles := ident.ClientParams.FetchPermissionsParams.Roles
 	actions := ident.ClientParams.FetchPermissionsParams.AllowedActions
 	k8s := ident.ClientParams.FetchPermissionsParams.K8s
+	// These identities are token-defined (e.g. Extended JWT access policies / service identities):
+	// their permission set is enumerated in the token by the issuing authz server, so we build it
+	// directly from the token claims and skip GetUserPermissions. This deliberately bypasses the
+	// Zanzana merge for migrated resources: the token is authoritative (including k8s-style grants
+	// via the K8s field), and unioning local Zanzana permissions here could grant access beyond
+	// what the token delegated. If migrated resources for these identities ever need to be sourced
+	// from local Zanzana, the merge would have to happen here and be reconciled against the token's
+	// delegated scope.
 	if len(roles) > 0 || len(actions) > 0 || len(k8s) > 0 {
 		for _, role := range roles {
 			roleDTO, err := s.ac.GetRoleByName(ctx, ident.GetOrgID(), role)
@@ -174,7 +196,7 @@ func (s *RBACSync) translateK8sPermissions(_ context.Context, k8sPerms []string)
 		case len(groupResource) == 2:
 			// Case group/resource:verb
 			resource := groupResource[1]
-			resourceMappings, ok := s.mapper.Get(group, resource)
+			resourceMappings, ok := s.mapper.Get(group, resource, "")
 			if !ok {
 				s.log.Warn("Unknown K8s resource", "group", group, "resource", resource)
 				continue
@@ -236,7 +258,7 @@ func cloudRolesToAddAndRemove(ident *authn.Identity) ([]string, []string, error)
 		}
 	}
 
-	return maps.Keys(rolesToAdd), rolesToRemove, nil
+	return slices.Collect(maps.Keys(rolesToAdd)), rolesToRemove, nil
 }
 
 func (s *RBACSync) SyncCloudRoles(ctx context.Context, ident *authn.Identity, r *authn.Request) error {

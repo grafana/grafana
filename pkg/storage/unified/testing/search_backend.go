@@ -85,7 +85,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 			return 0, err
 		}
 		return 1, nil
-	}, nil, false, time.Time{})
+	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -152,7 +152,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		})
 		require.NoError(t, err)
 		return resourceVersion, nil
-	}, nil, false, time.Time{})
+	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, index)
 
@@ -292,7 +292,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 							References: resource.ResourceReferences{
 								{
 									Relation: "depends-on",
-									Group:    "dashboards.grafana.app",
+									Group:    "dashboard.grafana.app",
 									Kind:     "LibraryPanel",
 									Name:     "lib-panel-1",
 								},
@@ -312,7 +312,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 							References: resource.ResourceReferences{
 								{
 									Relation: "depends-on",
-									Group:    "dashboards.grafana.app",
+									Group:    "dashboard.grafana.app",
 									Kind:     "LibraryPanel",
 									Name:     "lib-panel-2",
 								},
@@ -335,7 +335,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 			})
 			require.NoError(t, err)
 			return newResourceVersion, nil
-		}, nil, false, time.Time{})
+		}, nil, false, time.Time{}, 0)
 		require.NoError(t, err)
 		require.NotNil(t, index)
 

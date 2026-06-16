@@ -12,20 +12,14 @@ keywords:
 menuTitle: Configure Loki
 title: Configure the Loki data source
 weight: 200
-refs:
-  log-details:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields
 ---
 
 # Loki data source
 
-Grafana ships with built-in support for [Loki](/docs/loki/latest/), an open-source log aggregation system by Grafana Labs. If you are new to Loki the following documentation will help you get started:
+Grafana ships with built-in support for [Loki](https://grafana.com/docs/loki/latest/), an open-source log aggregation system by Grafana Labs. If you are new to Loki the following documentation will help you get started:
 
-- [Getting started](/docs/loki/latest/get-started/)
-- [Best practices](/docs/loki/latest/best-practices/#best-practices)
+- [Getting started](https://grafana.com/docs/loki/latest/get-started/)
+- [Best practices](https://grafana.com/docs/loki/latest/best-practices/#best-practices)
 
 ## Configure the Loki data source
 
@@ -62,7 +56,7 @@ The first option to configure is the name of your connection:
 There are several authentication methods you can choose in the Authentication section.
 
 {{< admonition type="note" >}}
-Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](/docs/loki/latest/configuration/).
+Use TLS (Transport Layer Security) for an additional layer of security when working with Loki. For information on setting up TLS encryption with Loki see [Grafana Loki configuration parameters](https://grafana.com/docs/loki/latest/configuration/).
 {{< /admonition >}}
 
 - **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
@@ -100,7 +94,7 @@ To troubleshoot configuration and other issues, check the log file located at `/
 Derived Fields are used to extract new fields from your logs and create a link from the value of the field.
 
 For example, you can link to your tracing backend directly from your logs, or link to a user profile page if the log line contains a corresponding `userId`.
-These links appear in the [log details](ref:log-details).
+These links appear in the [log details](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/logs-integration/#labels-and-detected-fields).
 
 You can add multiple derived fields.
 

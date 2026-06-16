@@ -8,6 +8,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAppManifestsCanFilterOutManifestsWithNoKinds(t *testing.T) {
+	all := AppManifests()
+	for _, m := range AppManifestsWithKinds(all) {
+		if m.ManifestData.AppName == "provisioning" {
+			t.Errorf("should not have a provisioning manifest as it has no kinds defined")
+		}
+	}
+}
+
 func TestSelectableFieldsForManifests(t *testing.T) {
 	// No selectable fields
 	m1 := app.NewEmbeddedManifest(app.ManifestData{

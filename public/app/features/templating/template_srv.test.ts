@@ -1,5 +1,5 @@
-import { dateTime, QueryVariableModel, TimeRange, TypedVariableModel } from '@grafana/data';
-import { VariableInterpolation } from '@grafana/runtime';
+import { dateTime, type QueryVariableModel, type TimeRange, type TypedVariableModel } from '@grafana/data';
+import { type VariableInterpolation } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -18,11 +18,11 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { mockDataSource } from '../alerting/unified/mocks';
-import { VariableAdapter, variableAdapters } from '../variables/adapters';
+import { type VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 
-import { TemplateSrv } from './template_srv';
+import { type TemplateSrv } from './template_srv';
 
 const key = 'key';
 

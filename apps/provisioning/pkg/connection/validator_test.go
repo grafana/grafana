@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -180,6 +181,90 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			operation:     admission.Update,
 			factoryErrors: field.ErrorList{},
 			wantErr:       false,
+		},
+		{
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection (modified)",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:     admission.Update,
+			factoryErrors: field.ErrorList{},
+			wantErr:       false,
+		},
+		{
+			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			},
+			operation:     admission.Update,
+			factoryErrors: field.ErrorList{},
+			wantErr:       false,
+		},
+		{
+			name: "blocks CREATE when incoming object carries the pending-delete label",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:       admission.Create,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
 		},
 	}
 
@@ -411,6 +496,37 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				field.Required(field.NewPath("spec", "github", "appId"), "appId is required"),
 			},
 			wantErr: true,
+		},
+		{
+			name: "dryRun with bad value in error propagates bad value to field error",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+					GitHub: &provisioning.GitHubConnectionConfig{
+						AppID:          "123",
+						InstallationID: "456",
+					},
+				},
+			},
+			operation:     admission.Create,
+			dryRun:        true,
+			factoryErrors: field.ErrorList{},
+			testResults: &provisioning.TestResults{
+				Success: false,
+				Code:    400,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    "spec.github.appID",
+						Detail:   "appID mismatch",
+						BadValue: "123",
+					},
+				},
+			},
+			wantErr:         true,
+			wantErrContains: "appID mismatch",
 		},
 		{
 			name: "non-dryRun does not run runtime validation",

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -57,6 +56,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		Version:                     ar.Version,
 		UID:                         ar.UID,
 		NamespaceUID:                ar.NamespaceUID,
+		FolderFullpath:              ar.FolderFullpath,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
 		RuleGroupIndex:              ar.RuleGroupIndex,
@@ -77,7 +77,7 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 	}
 
 	if ar.UpdatedBy != nil {
-		result.UpdatedBy = util.Pointer(models.UserUID(*ar.UpdatedBy))
+		result.UpdatedBy = new(models.UserUID(*ar.UpdatedBy))
 	}
 
 	var err error
@@ -119,14 +119,25 @@ func convertAlertRuleToModel(ar alertRule, l log.Logger, opts AlertRuleConvertOp
 		}
 	}
 
+	if ar.NotificationSettings != "" && ar.AlertRoutingPolicy != nil {
+		l.Warn("Both policy routing and contact point routing exist on rule", append(result.GetKey().LogContext(), "policy", *ar.AlertRoutingPolicy)...)
+	}
+
 	if !opts.ExcludeContactPointRouting && ar.NotificationSettings != "" {
 		ns, err := parseNotificationSettings(ar.NotificationSettings)
 		if err != nil {
 			return models.AlertRule{}, fmt.Errorf("failed to parse notification settings: %w", err)
 		}
 		if ns != nil {
-			result.NotificationSettings = util.Pointer(models.NotificationSettingsFromContact(*ns))
+			result.NotificationSettings = new(models.NotificationSettingsFromContact(*ns))
 		}
+	}
+
+	if ar.AlertRoutingPolicy != nil {
+		if result.NotificationSettings == nil {
+			result.NotificationSettings = &models.NotificationSettings{}
+		}
+		result.NotificationSettings.PolicyRouting = &models.PolicyRouting{Policy: *ar.AlertRoutingPolicy}
 	}
 
 	if !opts.ExcludeMetadata && ar.Metadata != "" {
@@ -164,6 +175,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		Version:                     ar.Version,
 		UID:                         ar.UID,
 		NamespaceUID:                ar.NamespaceUID,
+		FolderFullpath:              ar.FolderFullpath,
 		DashboardUID:                ar.DashboardUID,
 		PanelID:                     ar.PanelID,
 		RuleGroupIndex:              ar.RuleGroupIndex,
@@ -182,7 +194,7 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 	}
 
 	if ar.UpdatedBy != nil {
-		result.UpdatedBy = util.Pointer(string(*ar.UpdatedBy))
+		result.UpdatedBy = new(string(*ar.UpdatedBy))
 	}
 
 	// Serialize complex types to JSON strings
@@ -225,6 +237,10 @@ func alertRuleFromModelsAlertRule(ar models.AlertRule) (alertRule, error) {
 		result.NotificationSettings = string(notificationSettingsData)
 	}
 
+	if pr := ar.PolicyRouting(); pr != nil && !pr.IsDefault() {
+		result.AlertRoutingPolicy = &pr.Policy
+	}
+
 	metadata, err := json.Marshal(ar.Metadata)
 	if err != nil {
 		return alertRule{}, fmt.Errorf("failed to metadata: %w", err)
@@ -261,6 +277,7 @@ func alertRuleToAlertRuleVersion(rule alertRule) alertRuleVersion {
 		Labels:                      rule.Labels,
 		IsPaused:                    rule.IsPaused,
 		NotificationSettings:        rule.NotificationSettings,
+		AlertRoutingPolicy:          rule.AlertRoutingPolicy,
 		Metadata:                    rule.Metadata,
 		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 	}
@@ -295,6 +312,7 @@ func alertRuleVersionToAlertRule(version alertRuleVersion) alertRule {
 		Labels:                      version.Labels,
 		IsPaused:                    version.IsPaused,
 		NotificationSettings:        version.NotificationSettings,
+		AlertRoutingPolicy:          version.AlertRoutingPolicy,
 		Metadata:                    version.Metadata,
 		MissingSeriesEvalsToResolve: version.MissingSeriesEvalsToResolve,
 	}

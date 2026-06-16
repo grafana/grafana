@@ -49,7 +49,7 @@ func writeKindSQL(query model.SearchLibraryElementsQuery, builder *db.SQLBuilder
 func writeTypeFilterSQL(typeFilter []string, builder *db.SQLBuilder) {
 	if len(typeFilter) > 0 {
 		var sql bytes.Buffer
-		params := make([]any, 0)
+		params := make([]any, 0, len(typeFilter))
 		sql.WriteString(` AND le.type IN (?` + strings.Repeat(",?", len(typeFilter)-1) + ")")
 		for _, filter := range typeFilter {
 			params = append(params, filter)

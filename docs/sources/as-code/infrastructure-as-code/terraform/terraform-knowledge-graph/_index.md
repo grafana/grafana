@@ -7,6 +7,10 @@ cards:
       height: 24
       href: ./getting-started/
       title: Get started with Terraform
+    - description: Configure the Knowledge Graph stack with token provisioning, dataset configuration, and stack enablement.
+      height: 24
+      href: ./knowledge-graph-stack/
+      title: Knowledge Graph stack
     - description: Configure notification alerts to manage how alerts are processed and routed in your Knowledge Graph.
       height: 24
       href: ./notification-alerts/
@@ -42,7 +46,7 @@ cards:
   title_class: pt-0 lh-1
 description: Manage Grafana Cloud Knowledge Graph using Terraform
 hero:
-  description: Use Terraform to manage Grafana Cloud Knowledge Graph resources as code. Configure notification alerts, suppressed assertions, custom model rules, log configurations, and threshold configurations using infrastructure as code best practices.
+  description: Use Terraform to manage Grafana Cloud Knowledge Graph resources as code. Configure the Knowledge Graph stack, notification alerts, suppressed assertions, custom model rules, log configurations, and threshold configurations using infrastructure as code best practices.
   level: 1
   title: Manage Knowledge Graph using Terraform
 menuTitle: Manage Knowledge Graph in Grafana Cloud using Terraform
@@ -61,6 +65,9 @@ keywords:
   - Trace Configuration
   - Profile Configuration
   - Threshold Configuration
+  - Knowledge Graph Stack
+  - Stack Onboarding
+  - Datasets
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-knowledge-graph/
 ---
 
@@ -70,7 +77,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-cod
 
 ## Overview
 
-Terraform enables you to manage [Grafana Cloud Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) resources using infrastructure as code. With Terraform, you can define, version control, and deploy Knowledge Graph configurations including alert rules, suppression policies, entity models, log, trace, and profile correlations, and thresholds.
+Terraform enables you to manage [Grafana Cloud Knowledge Graph](/docs/grafana-cloud/knowledge-graph/) resources using infrastructure as code. With Terraform, you can define, version control, and deploy Knowledge Graph configurations including stack onboarding, alert rules, suppression policies, entity models, log, trace, and profile correlations, and thresholds.
 
 ## Explore
 

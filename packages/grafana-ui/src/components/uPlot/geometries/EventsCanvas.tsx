@@ -1,11 +1,11 @@
-import { useLayoutEffect, useMemo, useRef, useState, ReactNode } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as React from 'react';
 import { useMountedState } from 'react-use';
-import uPlot from 'uplot';
+import type uPlot from 'uplot';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 
-import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
+import { type UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { Marker } from './Marker';
 import { XYCanvas } from './XYCanvas';

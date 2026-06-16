@@ -3,13 +3,14 @@ package service_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/ptr"
 )
 
 func TestCrud(t *testing.T) {
@@ -25,7 +26,7 @@ func TestCrud(t *testing.T) {
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v2"))
+		input.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v2"))
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
@@ -57,7 +58,7 @@ func TestCrud(t *testing.T) {
 		// Update the secure value
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v3"))
+		input.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v3"))
 		sv2, err := sut.UpdateSv(t.Context(), input)
 		require.NoError(t, err)
 
@@ -173,6 +174,314 @@ func TestCrud(t *testing.T) {
 		sv, err := sut.CreateSv(t.Context())
 		require.NoError(t, err)
 		require.NotNil(t, sv)
+	})
+
+	t.Run("inline secure values always use the system keeper, even when a 3rd party keeper is active", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		ns := "ns1"
+
+		// Create a 3rd party keeper and set it as active in the namespace.
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      "k1",
+			},
+			Spec: secretv1beta1.KeeperSpec{
+				Aws: &secretv1beta1.KeeperAWSConfig{},
+			},
+		}, "actor-uid")
+		require.NoError(t, err)
+		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
+
+		// If not inline, it will use the active keeper.
+		notInlineSv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "not-inline"
+			cfg.Sv.Namespace = ns
+		})
+		require.NoError(t, err)
+		require.Equal(t, keeper.Name, notInlineSv.Status.Keeper)
+
+		// An inline secure value (one with OwnerReferences) must use the `system` keeper.
+		owner := common.ObjectReference{
+			APIGroup:   "prometheus.datasource.grafana.app",
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "test-ds",
+			Namespace:  ns,
+		}
+		inlineSv, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "inline"
+			cfg.Sv.Namespace = ns
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.Equal(t, contracts.SystemKeeperName, inlineSv.Status.Keeper)
+	})
+
+	t.Run("delete all from group", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		apiGroup := "prometheus.datasource.grafana.app"
+		ns := "ns1"
+
+		owner := common.ObjectReference{
+			APIGroup:   apiGroup,
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "test-ds",
+			Namespace:  ns,
+		}
+
+		// Create 2 owned secure values from the same API group
+		owned1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "owned-1"
+			cfg.Sv.Namespace = ns
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, owned1)
+
+		owned2, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "owned-2"
+			cfg.Sv.Namespace = ns
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, owned2)
+
+		// Create 1 shared secure value in the same ns (no owner)
+		shared, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "shared"
+			cfg.Sv.Namespace = ns
+		})
+		require.NoError(t, err)
+		require.NotNil(t, shared)
+
+		// Delete all from group
+		err = sut.SecureValueService.DeleteAllFromGroup(t.Context(), xkube.Namespace(ns), apiGroup)
+		require.NoError(t, err)
+
+		// Owned ones should be (soft) deleted
+		list, err := sut.SecureValueMetadataStorage.List(t.Context(), xkube.Namespace(ns))
+		require.NoError(t, err)
+
+		names := make([]string, 0, len(list))
+		for _, sv := range list {
+			names = append(names, sv.Name)
+		}
+
+		require.NotContains(t, names, owned1.Name)
+		require.NotContains(t, names, owned2.Name)
+		require.Contains(t, names, shared.Name)
+	})
+}
+
+func TestUpdateOwnerReferences(t *testing.T) {
+	t.Parallel()
+
+	namespace := "ns1"
+	owner := common.ObjectReference{
+		APIGroup:   "prometheus.datasource.grafana.app",
+		APIVersion: "v0alpha1",
+		Kind:       "DataSource",
+		Name:       "test-ds",
+		Namespace:  namespace,
+	}
+
+	t.Run("update without owner references on either side does not require AccessPolicy identity", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+		require.Empty(t, sv1.OwnerReferences)
+
+		input := sv1.DeepCopy()
+		input.Spec.Description = "updated"
+
+		sv2, err := sut.UpdateSv(t.Context(), input)
+		require.NoError(t, err)
+		require.Equal(t, "updated", sv2.Spec.Description)
+	})
+
+	t.Run("update keeping the same owner reference does not require AccessPolicy identity", func(t *testing.T) {
+		t.Parallel()
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.Len(t, sv1.OwnerReferences, 1)
+
+		input := sv1.DeepCopy()
+		input.Spec.Description = "updated"
+
+		sv2, err := sut.UpdateSv(t.Context(), input)
+		require.NoError(t, err)
+		require.Equal(t, "updated", sv2.Spec.Description)
+		require.Len(t, sv2.OwnerReferences, 1)
+	})
+
+	t.Run("adding an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context())
+			require.NoError(t, err)
+			require.Empty(t, sv1.OwnerReferences)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored for any other identity, owner references stay empty", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context())
+			require.NoError(t, err)
+			require.Empty(t, sv1.OwnerReferences)
+
+			input := sv1.DeepCopy()
+			input.Spec.Description = "updated"
+			input.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Empty(t, sv2.OwnerReferences)
+			// Other fields are still updated.
+			require.Equal(t, "updated", sv2.Spec.Description)
+		})
+	})
+
+	t.Run("removing an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = nil
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Empty(t, sv2.OwnerReferences)
+		})
+
+		t.Run("ignored for any other identity, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.Spec.Description = "updated"
+			input.OwnerReferences = nil
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+			require.Equal(t, "updated", sv2.Spec.Description)
+		})
+	})
+
+	t.Run("changing an owner reference", func(t *testing.T) {
+		t.Parallel()
+
+		differentOwner := common.ObjectReference{
+			APIGroup:   "prometheus.datasource.grafana.app",
+			APIVersion: "v0alpha1",
+			Kind:       "DataSource",
+			Name:       "other-ds",
+			Namespace:  namespace,
+		}
+
+		t.Run("applied for AccessPolicy identity", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+			require.Len(t, sv1.OwnerReferences, 1)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			ctx := testutils.CreateServiceAuthContext(t.Context(), "service-identity", namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, differentOwner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored for any other identity, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			ctx := testutils.CreateUserAuthContext(t.Context(), namespace, nil)
+			sv2, err := sut.UpdateSv(ctx, input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
+
+		t.Run("ignored when auth info is missing, owner references are preserved", func(t *testing.T) {
+			t.Parallel()
+			sut := testutils.Setup(t)
+
+			sv1, err := sut.CreateSv(t.Context(), func(cfg *testutils.CreateSvConfig) {
+				cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+			})
+			require.NoError(t, err)
+
+			input := sv1.DeepCopy()
+			input.OwnerReferences = []metav1.OwnerReference{differentOwner.ToOwnerReference()}
+
+			sv2, err := sut.UpdateSv(t.Context(), input)
+			require.NoError(t, err)
+			require.Len(t, sv2.OwnerReferences, 1)
+			require.Equal(t, owner.Name, sv2.OwnerReferences[0].Name)
+		})
 	})
 }
 

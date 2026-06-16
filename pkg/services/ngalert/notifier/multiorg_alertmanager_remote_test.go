@@ -22,6 +22,7 @@ import (
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -64,7 +65,6 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		configStore,
 		10*time.Second,
 		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
-		remote.NoopAutogenFn,
 		m.GetRemoteAlertmanagerMetrics(),
 		tracing.InitializeTracerForTest(),
 		false,
@@ -88,10 +88,16 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		ngfakes.NewFakeReceiverPermissionsService(),
+		ngfakes.NewFakeRoutePermissionsService(),
 		nopLogger,
 		secretsService,
 		featuremgmt.WithFeatures(),
 		nil,
+		false,
+		nil, // adminConfigStore - not needed in this test
+		nil, // datasourceService - not needed in this test
+		nil, // httpClientProvider - not needed in this test
+		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)
@@ -135,7 +141,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		lastConfig = fakeAM.config
 	}
 
-	// It should send config and state on shutdown.
+	// It should send state on shutdown.
 	{
 		// Let's change the configuration and state again.
 		require.NoError(t, configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
@@ -145,10 +151,10 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			LastApplied:               time.Now().Unix(),
 		}))
 
-		// Both state and config should be updated when shutting the Alertmanager down.
+		// State should be updated when shutting the Alertmanager down.
 		moa.StopAndWait()
 		require.Eventually(t, func() bool {
-			return fakeAM.config != lastConfig && fakeAM.state != lastState
+			return fakeAM.state != lastState
 		}, 15*time.Second, 300*time.Millisecond)
 	}
 }
@@ -261,7 +267,7 @@ var validConfig = `{
 				"name": "email receiver",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}]

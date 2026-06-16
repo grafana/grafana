@@ -1,14 +1,14 @@
-import { BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
+import { type BaseQueryFn, createApi, defaultSerializeQueryArgs } from '@reduxjs/toolkit/query/react';
 import { isBoolean, omit } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { type BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 
 import { logMeasurement } from '../Analytics';
 
-export type ExtendedBackendSrvRequest = BackendSrvRequest & {
+type ExtendedBackendSrvRequest = BackendSrvRequest & {
   /**
    * Data to send with a request. Maps to the `data` property on a `BackendSrvRequest`
    *
@@ -18,7 +18,7 @@ export type ExtendedBackendSrvRequest = BackendSrvRequest & {
   body?: BackendSrvRequest['data'];
 };
 
-export type NotificationOptions = {
+type NotificationOptions = {
   /**
    * Custom success message to show after completion of the request.
    *
@@ -54,7 +54,7 @@ export type AlertingApiExtraOptions = {
   hideErrorMessage?: boolean;
 };
 
-export const backendSrvBaseQuery =
+const backendSrvBaseQuery =
   (): BaseQueryFn<BaseQueryFnArgs> =>
   async ({ body, notificationOptions = {}, ...requestOptions }, api, extraOptions?: AlertingApiExtraOptions) => {
     const { errorMessage, showErrorAlert, successMessage, showSuccessAlert } = notificationOptions;

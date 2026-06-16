@@ -137,6 +137,34 @@ func TestCheck_Run(t *testing.T) {
 		assert.Contains(t, *failures[0].MoreInfo, "test message")
 	})
 
+	t.Run("should skip health check when datasource plugin is frontend-only", func(t *testing.T) {
+		datasources := []*datasources.DataSource{
+			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
+		}
+
+		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
+		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
+		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "should not run"}}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
+		mockPluginStore := &MockPluginStore{exists: true, frontendOnly: true}
+
+		check := &check{
+			DatasourceSvc: mockDatasourceSvc,
+			PluginRepo:    mockPluginRepo,
+			PluginStore:   mockPluginStore,
+			healthChecker: &checks.HealthCheckerImpl{
+				PluginContextProvider: mockPluginContextProvider,
+				PluginClient:          mockPluginClient,
+			},
+		}
+
+		failures, err := runChecks(check)
+		assert.NoError(t, err)
+		assert.Empty(t, failures)
+	})
+
 	t.Run("should skip health check when plugin does not support backend health checks", func(t *testing.T) {
 		datasources := []*datasources.DataSource{
 			{UID: "valid-uid-1", Type: "prometheus", Name: "Prometheus"},
@@ -382,6 +410,32 @@ func TestCheck_Run(t *testing.T) {
 	})
 }
 
+func TestCanBeInstalled_CacheConsistency(t *testing.T) {
+	t.Run("cached result should match initial result when plugin is available in repo", func(t *testing.T) {
+		mockPluginStore := &MockPluginStore{exists: false}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "my-plugin", Status: "active"},
+		}}
+
+		c := &check{
+			PluginStore:               mockPluginStore,
+			PluginRepo:                mockPluginRepo,
+			GrafanaVersion:            "11.0.0",
+			pluginCanBeInstalledCache: make(map[string]bool),
+		}
+
+		ctx := context.Background()
+
+		first, err := c.canBeInstalled(ctx, "my-plugin")
+		assert.NoError(t, err)
+		assert.True(t, first, "first call: plugin available in repo should return true")
+
+		second, err := c.canBeInstalled(ctx, "my-plugin")
+		assert.NoError(t, err)
+		assert.True(t, second, "second (cached) call should also return true")
+	})
+}
+
 func TestCheck_Item(t *testing.T) {
 	t.Run("should return nil when datasource is not found", func(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: []*datasources.DataSource{}}
@@ -434,11 +488,20 @@ func (m *MockPluginClient) CheckHealth(context.Context, *backend.CheckHealthRequ
 type MockPluginStore struct {
 	pluginstore.Store
 
-	exists bool
+	exists       bool
+	frontendOnly bool
 }
 
 func (m *MockPluginStore) Plugin(context.Context, string) (pluginstore.Plugin, bool) {
-	return pluginstore.Plugin{}, m.exists
+	if !m.exists {
+		return pluginstore.Plugin{}, false
+	}
+
+	return pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			Backend: !m.frontendOnly,
+		},
+	}, true
 }
 
 type MockPluginRepo struct {

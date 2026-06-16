@@ -1,6 +1,6 @@
-import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
-import { applyQueryDefaults, SQLQuery, SqlQueryModel } from '@grafana/sql';
+import { type ScopedVars } from '@grafana/data';
+import { type TemplateSrv } from '@grafana/runtime';
+import { applyQueryDefaults, type SQLQuery, type SqlQueryModel } from '@grafana/sql';
 
 export class MSSqlQueryModel implements SqlQueryModel {
   target: SQLQuery;

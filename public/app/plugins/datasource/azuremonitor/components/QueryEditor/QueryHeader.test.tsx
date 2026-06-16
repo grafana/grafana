@@ -1,13 +1,13 @@
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, LoadingState, type PanelData } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
 import createMockQuery from '../../mocks/query';
-import { AzureMonitorQuery } from '../../types/query';
+import { type AzureMonitorQuery } from '../../types/query';
 import { selectOptionInTest } from '../../utils/testUtils';
 
 import { QueryHeader } from './QueryHeader';

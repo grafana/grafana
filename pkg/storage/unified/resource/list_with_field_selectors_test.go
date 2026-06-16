@@ -28,7 +28,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -38,7 +38,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_HISTORY,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -48,7 +48,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
 				},
 			},
 			expectedAllowed: false,
@@ -58,7 +58,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 				Source:         resourcepb.ListRequest_STORE,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_Exact,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -69,7 +69,7 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 				Source:         resourcepb.ListRequest_STORE,
 				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
@@ -79,11 +79,21 @@ func TestUseFieldSelectorSearch(t *testing.T) {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app"},
 					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 				},
 			},
 			expectedAllowed: true,
+		},
+		"false when group has no kinds in manifest": {
+			req: &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "provisioning.grafana.app"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			},
+			expectedAllowed: false,
 		},
 	}
 
@@ -107,7 +117,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 		"removes metadata.namespace and keep valid field": {
 			req: &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{
 						{Key: "metadata.namespace", Operator: "=", Values: []string{"ns"}},
 						{Key: "spec.foo", Operator: "="},
@@ -119,7 +129,7 @@ func TestFilterFieldSelectors(t *testing.T) {
 		"removes multiple unsupported fields": {
 			req: &resourcepb.ListRequest{
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "ns"},
+					Key: &resourcepb.ResourceKey{Namespace: "nsx"},
 					Fields: []*resourcepb.Requirement{
 						{Key: "metadata.namespace", Operator: "=", Values: []string{"ns", "other"}},
 						{Key: "spec.foo", Operator: "!="},
@@ -154,7 +164,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "a"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
 							ResourceVersion: 1,
 							SortFields:      []string{"s1"},
 						},
@@ -166,7 +176,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 		req := &resourcepb.ListRequest{
 			Limit: 10,
 			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 			},
 		}
@@ -187,12 +197,12 @@ func TestListWithFieldSelectors(t *testing.T) {
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "a"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
 							ResourceVersion: 1,
 							SortFields:      []string{"s1"},
 						},
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "b"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
 							ResourceVersion: 2,
 							SortFields:      []string{"s2"},
 						},
@@ -212,7 +222,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 		req := &resourcepb.ListRequest{
 			Limit: 10,
 			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 			},
 		}
@@ -232,12 +242,12 @@ func TestListWithFieldSelectors(t *testing.T) {
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "a"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
 							ResourceVersion: 1,
 							SortFields:      []string{"s1"},
 						},
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "b"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
 							ResourceVersion: 2,
 							SortFields:      []string{"s2"},
 						},
@@ -249,7 +259,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 		req := &resourcepb.ListRequest{
 			Limit: 1,
 			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 			},
 		}
@@ -278,12 +288,12 @@ func TestListWithFieldSelectors(t *testing.T) {
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "b"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
 							ResourceVersion: 2,
 							SortFields:      []string{"s2"},
 						},
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "c"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "c"},
 							ResourceVersion: 2,
 							SortFields:      []string{"s3"},
 						},
@@ -296,7 +306,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 			Limit:         1,
 			NextPageToken: continueToken,
 			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 			},
 		}
@@ -329,12 +339,12 @@ func TestListWithFieldSelectors(t *testing.T) {
 				Results: &resourcepb.ResourceTable{
 					Rows: []*resourcepb.ResourceTableRow{
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "a"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"},
 							ResourceVersion: 1,
 							SortFields:      []string{"s1"},
 						},
 						{
-							Key:             &resourcepb.ResourceKey{Namespace: "ns", Group: "g", Resource: "r", Name: "b"},
+							Key:             &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"},
 							ResourceVersion: 2,
 							SortFields:      []string{"s2"},
 						},
@@ -346,7 +356,7 @@ func TestListWithFieldSelectors(t *testing.T) {
 		req := &resourcepb.ListRequest{
 			Limit: 10,
 			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "ns"},
+				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
 				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
 			},
 		}
@@ -397,6 +407,10 @@ func (*stubSearchClient) RebuildIndexes(_ context.Context, _ *resourcepb.Rebuild
 	return nil, nil
 }
 
+func (*stubSearchClient) VectorSearch(_ context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, nil
+}
+
 type fakeBackend struct {
 	forbidden map[string]struct{}
 }
@@ -423,11 +437,13 @@ func (*fakeBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(
 func (*fakeBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, nil
 }
-func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64) (int64, iter.Seq2[*ModifiedResource, error]) {
+func (*fakeBackend) ListModifiedSince(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
 	return 0, func(func(*ModifiedResource, error) bool) {}
 }
-func (*fakeBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
-	return nil, nil
+func (*fakeBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
+	ch := make(chan *WrittenEvent)
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch, nil
 }
 func (*fakeBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, nil

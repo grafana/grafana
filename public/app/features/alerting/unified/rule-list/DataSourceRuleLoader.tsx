@@ -8,7 +8,7 @@ import { isCloudRulerGroup } from '../utils/rules';
 import { DataSourceRuleListItem } from './DataSourceRuleListItem';
 import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleActionsSkeleton } from './components/RuleActionsSkeleton';
-import { PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
+import { type PromRuleWithOrigin } from './hooks/useFilteredRulesIterator';
 import { getMatchingRulerRule } from './ruleMatching';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;

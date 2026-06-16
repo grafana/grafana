@@ -15,7 +15,7 @@ import (
 
 func TransformMetricsResponse(query string, resp tempopb.QueryRangeResponse) []*data.Frame {
 	// prealloc frames
-	frames := make([]*data.Frame, len(resp.Series))
+	frames := make([]*data.Frame, len(resp.Series)) //nolint:prealloc
 	var exemplarFrames []*data.Frame
 
 	for i, series := range resp.Series {
@@ -125,7 +125,7 @@ func transformLabelsAndGetName(seriesLabels []v1.KeyValue) (string, data.Labels)
 			}
 			sort.Strings(keys)
 
-			var labelStrings []string
+			labelStrings := make([]string, 0, len(keys))
 			for _, key := range keys {
 				labelStrings = append(labelStrings, fmt.Sprintf("%s=%s", key, labels[key]))
 			}

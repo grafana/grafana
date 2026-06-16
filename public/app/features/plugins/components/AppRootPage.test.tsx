@@ -3,9 +3,10 @@ import { Component } from 'react';
 import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
-import { AppPlugin, PluginType, AppRootProps, NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
+import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
 import { setEchoSrv } from '@grafana/runtime';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -16,11 +17,11 @@ import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsReg
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from '../extensions/registry/ExposedComponentsRegistry';
 import { pluginImporter } from '../importer/pluginImporter';
-import { getPluginSettings } from '../pluginSettings';
 
 import AppRootPage from './AppRootPage';
 
-jest.mock('../pluginSettings', () => ({
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
 jest.mock('../importer/pluginImporter', () => ({
@@ -42,6 +43,9 @@ jest.mock('@grafana/runtime', () => ({
         },
       },
     },
+    unifiedAlerting: {
+      minInterval: '10s',
+    },
   },
 }));
 
@@ -55,6 +59,8 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   Parameters<typeof getPluginSettings>
 >;
 
+// don't care about this component - it's just for a test
+// eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
 class RootComponent extends Component<AppRootProps> {
   static timesRendered = 0;
   render() {

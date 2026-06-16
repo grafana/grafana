@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 // We need a px font size to accurately measure the width of items.
 // This should be in sync with the body font size in the theme.
@@ -8,8 +8,8 @@ export const MENU_ITEM_FONT_SIZE = 14;
 export const MENU_ITEM_DESCRIPTION_FONT_SIZE = 12;
 export const MENU_ITEM_FONT_WEIGHT = 500;
 export const MENU_ITEM_PADDING = 8;
-export const MENU_ITEM_GAP = 2;
-export const MENU_ITEM_LINE_HEIGHT = 1.5;
+const MENU_ITEM_GAP = 2;
+const MENU_ITEM_LINE_HEIGHT = 1.5;
 
 // Used with Downshift to get the height of each item
 export const MENU_OPTION_HEIGHT = MENU_ITEM_GAP + MENU_ITEM_PADDING * 2 + MENU_ITEM_FONT_SIZE * MENU_ITEM_LINE_HEIGHT;

@@ -1,43 +1,28 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Badge } from '@grafana/ui';
+import { config, isFetchError } from '@grafana/runtime';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { getManagedByRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
-import { DashboardScene } from './DashboardScene';
+import { type DashboardScene } from './DashboardScene';
 
 export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: DashboardScene }) => {
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();
 
   const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
-  const { data: repoData } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
+  // All other places where we check for orphaned resources (e.g. OrphanedResourceBanner) use
+  // useGetResourceRepositoryView. We don't here because it's much heavier than what's needed and
+  // also fetches folder data.
+  const { data: repoData, isError, error } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
 
   if (!kind) {
     return null;
   }
 
-  let text;
+  // Repository-managed dashboard where the repo no longer exists
+  const isOrphaned = kind === ManagerKind.Repo && isError && isFetchError(error) && error.status === 404;
 
-  switch (kind) {
-    case ManagerKind.Terraform:
-      text = t('dashboard-scene.managed-badge.terraform', 'Managed by: Terraform');
-      break;
-    case ManagerKind.Kubectl:
-      text = t('dashboard-scene.managed-badge.kubectl', 'Managed by: Kubectl');
-      break;
-    case ManagerKind.Plugin:
-      text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
-      break;
-    case ManagerKind.Repo:
-      text = getManagedByRepositoryTooltip(repoData?.spec?.title || id);
-      break;
-    default:
-      text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
-  }
-
-  return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
+  return <ManagedBadge managerKind={kind} name={repoData?.spec?.title || id} isOrphaned={isOrphaned} />;
 };

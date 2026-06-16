@@ -1,4 +1,4 @@
-import { monacoTypes } from '@grafana/ui';
+import { type monacoTypes } from '@grafana/ui';
 
 // this thing here is a workaround in a way.
 // what we want to achieve, is that when the autocomplete-window

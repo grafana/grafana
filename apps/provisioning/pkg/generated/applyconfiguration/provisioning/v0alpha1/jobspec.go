@@ -15,6 +15,12 @@ type JobSpecApplyConfiguration struct {
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
 	Repository *string `json:"repository,omitempty"`
+	// Commit message for this job. Applies to job actions that produce
+	// commits (delete, move, migrate, push, fixFolderMetadata).
+	// When empty, the backend falls back to the action-specific message
+	// field (ExportJobOptions.Message, MigrateJobOptions.Message) for
+	// backwards compatibility, then to a built-in default.
+	Message *string `json:"message,omitempty"`
 	// Pull request options
 	PullRequest *PullRequestJobOptionsApplyConfiguration `json:"pr,omitempty"`
 	// Required when the action is `push`
@@ -27,6 +33,8 @@ type JobSpecApplyConfiguration struct {
 	Delete *DeleteJobOptionsApplyConfiguration `json:"delete,omitempty"`
 	// Move when the action is `move`
 	Move *MoveJobOptionsApplyConfiguration `json:"move,omitempty"`
+	// Options when the action is `fix-folder-metadata`
+	FixFolderMetadata *FixFolderMetadataJobOptionsApplyConfiguration `json:"fixFolderMetadata,omitempty"`
 }
 
 // JobSpecApplyConfiguration constructs a declarative configuration of the JobSpec type for use with
@@ -48,6 +56,14 @@ func (b *JobSpecApplyConfiguration) WithAction(value provisioningv0alpha1.JobAct
 // If called multiple times, the Repository field is set to the value of the last call.
 func (b *JobSpecApplyConfiguration) WithRepository(value string) *JobSpecApplyConfiguration {
 	b.Repository = &value
+	return b
+}
+
+// WithMessage sets the Message field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Message field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithMessage(value string) *JobSpecApplyConfiguration {
+	b.Message = &value
 	return b
 }
 
@@ -96,5 +112,13 @@ func (b *JobSpecApplyConfiguration) WithDelete(value *DeleteJobOptionsApplyConfi
 // If called multiple times, the Move field is set to the value of the last call.
 func (b *JobSpecApplyConfiguration) WithMove(value *MoveJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
 	b.Move = value
+	return b
+}
+
+// WithFixFolderMetadata sets the FixFolderMetadata field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the FixFolderMetadata field is set to the value of the last call.
+func (b *JobSpecApplyConfiguration) WithFixFolderMetadata(value *FixFolderMetadataJobOptionsApplyConfiguration) *JobSpecApplyConfiguration {
+	b.FixFolderMetadata = value
 	return b
 }

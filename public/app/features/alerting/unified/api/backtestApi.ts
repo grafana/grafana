@@ -1,12 +1,12 @@
-import { DataFrameJSON } from '@grafana/data';
-import { AlertQuery, GrafanaAlertStateDecision, Labels } from 'app/types/unified-alerting-dto';
+import { type DataFrameJSON } from '@grafana/data';
+import { type AlertQuery, type GrafanaAlertStateDecision, type Labels } from 'app/types/unified-alerting-dto';
 
 import { alertingApi } from './alertingApi';
 
 /**
  * Request body for the backtest API matching the BacktestConfig struct in the backend
  */
-export interface BacktestRequest {
+interface BacktestRequest {
   // Required time range fields
   from: string; // ISO 8601 timestamp
   to: string; // ISO 8601 timestamp
@@ -33,9 +33,9 @@ export interface BacktestRequest {
   namespace_uid?: string;
 }
 
-export const BACKTEST_URL = '/api/v1/rule/backtest';
+const BACKTEST_URL = '/api/v1/rule/backtest';
 
-export const backtestApi = alertingApi.injectEndpoints({
+const backtestApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     runBacktest: build.mutation<DataFrameJSON, BacktestRequest>({
       query: (requestBody) => ({

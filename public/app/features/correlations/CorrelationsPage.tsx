@@ -2,10 +2,16 @@ import { css } from '@emotion/css';
 import { negate } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
-import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { type Status } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationData, CorrelationsData, FetchError, isFetchError, reportInteraction } from '@grafana/runtime';
+import {
+  type CorrelationData,
+  type CorrelationsData,
+  type FetchError,
+  isFetchError,
+  reportInteraction,
+} from '@grafana/runtime';
 import {
   Badge,
   Button,
@@ -25,8 +31,8 @@ import { useNavModel } from 'app/core/hooks/useNavModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AddCorrelationForm } from './Forms/AddCorrelationForm';
-import { EditCorrelationForm } from './Forms/EditCorrelationForm';
+import { AddCorrelationFormWrapper } from './Forms/AddCorrelationForm';
+import { EditCorrelationFormWrapper } from './Forms/EditCorrelationForm';
 import { EmptyCorrelationsCTA } from './components/EmptyCorrelationsCTA';
 import type { Correlation, GetCorrelationsParams, RemoveCorrelationParams } from './types';
 
@@ -42,7 +48,6 @@ type CorrelationsPageProps = {
     | Status
   >;
   error?: Error | FetchError;
-  hasNextPage?: boolean;
 };
 
 const collator = new Intl.Collator();
@@ -57,8 +62,15 @@ const loaderWrapper = css({
   justifyContent: 'center',
 });
 
+/*
+    We need to support pagination for cursor based (app platform), and offset based (legacy) apis
+    cursor based pagination just does page forward/back with no list
+    offset based has a list of pages along with forward/back
+   The legacy api returns correlations.doesContinue as undefined, so we know to show pages
+  */
+
 export default function CorrelationsPage(props: CorrelationsPageProps) {
-  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn, hasNextPage } = props;
+  const { fetchCorrelations, correlations, isLoading, error, removeFn, changePageFn } = props;
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
   const page = useRef(1);
@@ -71,6 +83,8 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
   };
 
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const corrData = correlations?.correlations ?? [];
+  const hasWritable = corrData.some(negate(isCorrelationsReadOnly));
 
   const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
@@ -152,13 +166,12 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
         id: 'actions',
         cell: RowActions,
         disableGrow: true,
-        visible: (data) => canWriteCorrelations && data.some(negate(isCorrelationsReadOnly)),
+        visible: (data) => canWriteCorrelations && hasWritable,
       },
     ],
-    [RowActions, canWriteCorrelations]
+    [RowActions, canWriteCorrelations, hasWritable]
   );
 
-  const corrData = correlations?.correlations ?? [];
   const showEmptyListCTA = corrData.length === 0 && !isAdding && !error;
   const addButton = canWriteCorrelations && corrData.length !== 0 && !isAdding && (
     <Button icon="plus" onClick={() => setIsAdding(true)}>
@@ -207,7 +220,7 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               </Alert>
             )
           }
-          {isAdding && <AddCorrelationForm onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
+          {isAdding && <AddCorrelationFormWrapper onClose={() => setIsAdding(false)} onCreated={handleAdded} />}
 
           {correlations && corrData.length >= 1 && (
             <>
@@ -225,14 +238,20 @@ export default function CorrelationsPage(props: CorrelationsPageProps) {
               />
               <Pagination
                 currentPage={page.current}
-                numberOfPages={Math.ceil(correlations?.totalCount / correlations?.limit)}
+                numberOfPages={
+                  correlations.doesContinue === undefined || correlations.doesContinue === null
+                    ? Math.ceil(correlations?.totalCount / correlations?.limit)
+                    : 0
+                }
                 onNavigate={(toPage: number) => {
                   if (changePageFn) {
                     changePageFn(toPage);
                   }
                   fetchCorrelations({ page: (page.current = toPage) });
                 }}
-                hasNextPage={hasNextPage}
+                hasNextPage={
+                  correlations.doesContinue ?? page.current < Math.ceil(correlations?.totalCount / correlations?.limit)
+                }
               />
             </>
           )}
@@ -260,7 +279,7 @@ function ExpendedRow({ correlation: { source, ...correlation }, readOnly, onUpda
       ? { ...correlation, type: 'query', sourceUID: source.uid, targetUID: correlation.target.uid }
       : { ...correlation, type: 'external', sourceUID: source.uid };
 
-  return <EditCorrelationForm correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
+  return <EditCorrelationFormWrapper correlation={corr} onUpdated={onUpdated} readOnly={readOnly} />;
 }
 
 const getDatasourceCellStyles = (theme: GrafanaTheme2) => ({

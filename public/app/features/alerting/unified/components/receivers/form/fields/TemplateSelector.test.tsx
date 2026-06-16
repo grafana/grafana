@@ -1,7 +1,8 @@
-import { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, type ReactNode } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, userEvent } from 'test/test-utils';
 
-import { CodeEditor } from '@grafana/ui';
+import { type CodeEditor } from '@grafana/ui';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { getAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
@@ -10,13 +11,13 @@ import {
   resetTemplatesDb,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import { AlertmanagerProvider } from 'app/features/alerting/unified/state/AlertmanagerContext';
-import { NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
+import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { DEFAULT_TEMPLATES } from 'app/features/alerting/unified/utils/template-constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { TemplateSelector, TemplatesPicker, getTemplateOptions } from './TemplateSelector';
+import { TemplateSelector, TemplatesPicker, WrapWithTemplateSelection, getTemplateOptions } from './TemplateSelector';
 import { parseTemplates } from './utils';
 
 type CodeEditorProps = ComponentProps<typeof CodeEditor>;
@@ -174,5 +175,82 @@ describe('TemplatesPicker', () => {
 
     expect(screen.getByRole('option', { name: 'slack-template' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'mimir-template' })).toBeInTheDocument();
+  });
+});
+
+describe('WrapWithTemplateSelection', () => {
+  const FormWrapper = ({
+    children,
+    defaultValues,
+  }: {
+    children: React.ReactNode;
+    defaultValues?: Record<string, unknown>;
+  }) => {
+    const methods = useForm({ defaultValues });
+    return (
+      <AlertmanagerProvider accessType="notification" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+        <FormProvider {...methods}>{children}</FormProvider>
+      </AlertmanagerProvider>
+    );
+  };
+
+  const templateOption = {
+    label: 'Title',
+    placeholder: '{{ template "default.title" . }}',
+  } as NotificationChannelOption;
+
+  it('should show Edit button when readOnly is false and field has a template value', () => {
+    render(
+      <FormWrapper defaultValues={{ title: '{{ template "default.title" . }}' }}>
+        <WrapWithTemplateSelection
+          useTemplates={true}
+          onSelectTemplate={jest.fn()}
+          option={templateOption}
+          name="title"
+          readOnly={false}
+        >
+          <input />
+        </WrapWithTemplateSelection>
+      </FormWrapper>
+    );
+
+    expect(screen.getByRole('button', { name: /edit title/i })).toBeInTheDocument();
+  });
+
+  it('should NOT show Edit button when readOnly is true and field has a template value', () => {
+    render(
+      <FormWrapper defaultValues={{ title: '{{ template "default.title" . }}' }}>
+        <WrapWithTemplateSelection
+          useTemplates={true}
+          onSelectTemplate={jest.fn()}
+          option={templateOption}
+          name="title"
+          readOnly={true}
+        >
+          <input />
+        </WrapWithTemplateSelection>
+      </FormWrapper>
+    );
+
+    expect(screen.queryByRole('button', { name: /edit title/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/Template: default\.title/)).toBeInTheDocument();
+  });
+
+  it('should NOT show Edit button when readOnly is true and field is empty', () => {
+    render(
+      <FormWrapper defaultValues={{ title: '' }}>
+        <WrapWithTemplateSelection
+          useTemplates={true}
+          onSelectTemplate={jest.fn()}
+          option={templateOption}
+          name="title"
+          readOnly={true}
+        >
+          <input />
+        </WrapWithTemplateSelection>
+      </FormWrapper>
+    );
+
+    expect(screen.queryByRole('button', { name: /edit title/i })).not.toBeInTheDocument();
   });
 });

@@ -1,14 +1,14 @@
 import {
-  AnnotationQuery,
-  Dashboard,
+  type AnnotationQuery,
+  type Dashboard,
   defaultDashboardCursorSync,
   defaultVariableModel,
-  Panel,
-  RowPanel,
-  VariableModel,
+  type Panel,
+  type RowPanel,
+  type VariableModel,
 } from '@grafana/schema';
-import { GetVariables } from 'app/features/variables/state/selectors';
-import { DashboardMeta } from 'app/types/dashboard';
+import { type GetVariables } from 'app/features/variables/state/selectors';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardModel } from '../DashboardModel';
 

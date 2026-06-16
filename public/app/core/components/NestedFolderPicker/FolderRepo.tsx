@@ -1,13 +1,16 @@
 import { memo } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Badge, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import {
+  RepoViewStatus,
+  useGetResourceRepositoryView,
+} from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
-import { DashboardViewItem } from 'app/features/search/types';
-import { FolderDTO } from 'app/types/folders';
+import { type DashboardViewItem } from 'app/features/search/types';
+import { type FolderDTO } from 'app/types/folders';
 
 export interface Props {
   folder?: FolderDTO | DashboardViewItem;
@@ -21,7 +24,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
@@ -30,19 +33,17 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
     return null;
   }
 
-  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
+  const isOrphaned = status === RepoViewStatus.Orphaned;
+
+  if (isOrphaned) {
+    return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
+  }
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && (
-        <Badge
-          color="darkgrey"
-          text={t('folder-repo.read-only-badge', 'Read only')}
-          tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-        />
-      )}
-      <Badge color="purple" icon="exchange-alt" tooltip={repoTooltipText} />
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
+      <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
     </Stack>
   );
 });

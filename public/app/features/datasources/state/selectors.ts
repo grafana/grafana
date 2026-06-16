@@ -1,7 +1,7 @@
 import memoizeOne from 'memoize-one';
 
-import { DataSourcePluginMeta, DataSourceSettings, UrlQueryValue } from '@grafana/data';
-import { DataSourcesState } from 'app/types/datasources';
+import { type DataSourcePluginMeta, type DataSourceSettings, type UrlQueryValue } from '@grafana/data';
+import { type DataSourcesState } from 'app/types/datasources';
 
 // Use consistent references for empty objects to prevent infinite re-renders
 const EMPTY_DATASOURCE = {} as DataSourceSettings;
@@ -43,6 +43,5 @@ export const getDataSourceMeta = (state: DataSourcesState, type: string): DataSo
 };
 
 export const getDataSourcesSearchQuery = (state: DataSourcesState) => state.searchQuery;
-export const getDataSourcesLayoutMode = (state: DataSourcesState) => state.layoutMode;
 export const getDataSourcesCount = (state: DataSourcesState) => state.dataSourcesCount;
 export const getDataSourcesSort = (state: DataSourcesState) => state.isSortAscending;

@@ -1,9 +1,9 @@
 import { cx } from '@emotion/css';
 import { isEqual } from 'lodash';
-import { Component, createRef, ReactNode } from 'react';
-import { ValueContainerProps as BaseValueContainerProps, type GroupBase } from 'react-select';
+import { Component, createRef, type ReactNode } from 'react';
+import { type ValueContainerProps as BaseValueContainerProps, type GroupBase } from 'react-select';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { withTheme2 } from '../../themes/ThemeContext';
 

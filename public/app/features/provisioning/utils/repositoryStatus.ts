@@ -1,12 +1,5 @@
-import { BadgeColor, IconName } from '@grafana/ui';
-import { SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
-
-export interface RepositoryStatus {
-  color: BadgeColor;
-  text: string;
-  icon: IconName;
-  tooltip?: string;
-}
+import { type IconName } from '@grafana/ui';
+import { type SyncStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
  * Generic type for Kubernetes resources with generation tracking

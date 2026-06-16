@@ -1,17 +1,15 @@
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom-v5-compat';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { CONNECTIONS_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { formatTimestamp } from '../utils/time';
-
-import { CheckRepository } from './CheckRepository';
 
 export function RepositoryHealthCard({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
@@ -86,9 +84,6 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
           )}
         </Grid>
       </Card.Description>
-      <Card.Actions className={styles.actions}>
-        <CheckRepository repository={repo} />
-      </Card.Actions>
     </Card>
   );
 }
@@ -103,9 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(2),
-    }),
-    actions: css({
-      marginTop: 'auto',
     }),
   };
 };

@@ -7,7 +7,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "grafana-default-email",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey@grafana.com",
@@ -15,6 +14,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
           "type": "email",
           "uid": "xeKQrBrnk",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
             "lastNotifyAttemptDuration": "1ms",
@@ -57,7 +57,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "lotsa-emails",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
@@ -67,6 +66,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
           "type": "email",
           "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -101,11 +101,11 @@ exports[`useContactPoints should return contact points with status 1`] = `
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "Oncall-integration",
           "settings": {
             "url": "https://oncall-endpoint.example.com",
           },
           "type": "oncall",
+          "version": "v1",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
             "description": "Sends notifications to Grafana IRM",
@@ -138,8 +138,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "provisioned-contact-point",
-          "provenance": "api",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey@grafana.com",
@@ -147,6 +145,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
           "type": "email",
           "uid": "s8SdCVjnk",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -188,7 +187,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "Slack with multiple channels",
           "secureFields": {
             "token": true,
           },
@@ -197,6 +195,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
           "type": "slack",
           "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -211,7 +210,6 @@ exports[`useContactPoints should return contact points with status 1`] = `
         },
         {
           "disableResolveMessage": false,
-          "name": "Slack with multiple channels",
           "secureFields": {
             "token": true,
           },
@@ -220,6 +218,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
           },
           "type": "slack",
           "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -263,7 +262,6 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "grafana-default-email",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey@grafana.com",
@@ -271,6 +269,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
           "type": "email",
           "uid": "xeKQrBrnk",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
             "lastNotifyAttemptDuration": "1ms",
@@ -313,7 +312,6 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "lotsa-emails",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
@@ -323,6 +321,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
           "type": "email",
           "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -357,11 +356,11 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "Oncall-integration",
           "settings": {
             "url": "https://oncall-endpoint.example.com",
           },
           "type": "oncall",
+          "version": "v1",
           Symbol(receiver_status): undefined,
           Symbol(receiver_metadata): {
             "description": "Sends notifications to Grafana IRM",
@@ -397,8 +396,6 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "provisioned-contact-point",
-          "provenance": "api",
           "secureFields": {},
           "settings": {
             "addresses": "gilles.demey@grafana.com",
@@ -406,6 +403,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
           "type": "email",
           "uid": "s8SdCVjnk",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -447,7 +445,6 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
       "grafana_managed_receiver_configs": [
         {
           "disableResolveMessage": false,
-          "name": "Slack with multiple channels",
           "secureFields": {
             "token": true,
           },
@@ -456,6 +453,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
           "type": "slack",
           "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",
@@ -470,7 +468,6 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
         },
         {
           "disableResolveMessage": false,
-          "name": "Slack with multiple channels",
           "secureFields": {
             "token": true,
           },
@@ -479,6 +476,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           },
           "type": "slack",
           "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+          "version": "v1",
           Symbol(receiver_status): {
             "lastNotifyAttempt": "",
             "lastNotifyAttemptDuration": "",

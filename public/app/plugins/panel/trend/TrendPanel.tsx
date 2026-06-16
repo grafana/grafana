@@ -1,24 +1,24 @@
 import { useMemo } from 'react';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldMatcherID,
   fieldMatchers,
   FieldType,
-  PanelProps,
-  TimeRange,
+  type PanelProps,
+  type TimeRange,
   useDataLinksContext,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { KeyboardPlugin, TooltipDisplayMode, TooltipPlugin2, usePanelContext } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/internal';
-import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
+import { type XYFieldMatchers } from 'app/core/components/GraphNG/types';
 import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 import { prepSeries } from './utils';
 
 export const TrendPanel = ({

@@ -11,9 +11,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,7 +29,7 @@ func (b *FolderAPIBuilder) beginCreate(ctx context.Context, obj runtime.Object, 
 		return nil, err
 	}
 
-	if meta.GetFolder() == "" {
+	if folder.IsRootFolderUID(meta.GetFolder()) {
 		// Zanzana only cares about parent-child folder relationships; nothing to do if folder is at root.
 		log.Info("Skipping Zanzana folder propagation for new root-level folder", "folder", meta.GetName())
 		return func(ctx context.Context, success bool) {}, nil
@@ -83,8 +83,7 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		return
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
+	if b.useZanzana {
 		log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
 		err = b.permissionStore.DeleteFolderParents(ctx, meta.GetNamespace(), meta.GetName())
 		if err != nil {
@@ -92,9 +91,14 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		}
 	}
 
-	if b.resourcePermissionsSvc != nil {
+	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
+	if err != nil {
+		log.Error("failed to get resource permissions client", "error", err)
+		return
+	}
+	if resourcePermissionsSvc != nil {
 		log.Debug("deleting folder permissions", "uid", meta.GetName(), "namespace", meta.GetNamespace())
-		client := (*b.resourcePermissionsSvc).Namespace(meta.GetNamespace())
+		client := (*resourcePermissionsSvc).Namespace(meta.GetNamespace())
 		err := client.Delete(ctx, fmt.Sprintf("%s-%s-%s", folders.FolderResourceInfo.GroupVersionResource().Group, folders.FolderResourceInfo.GroupVersionResource().Resource, meta.GetName()), metav1.DeleteOptions{})
 		if err != nil && !apierrors.IsNotFound(err) {
 			log.Error("failed to delete folder permissions", "error", err)

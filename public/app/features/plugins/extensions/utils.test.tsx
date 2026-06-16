@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
-import { config, AppPluginConfig } from '@grafana/runtime';
+import { config, type AppPluginConfig } from '@grafana/runtime';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -24,8 +24,8 @@ import {
   isMutationObserverProxy,
 } from './utils';
 
-jest.mock('app/features/plugins/pluginSettings', () => ({
-  ...jest.requireActual('app/features/plugins/pluginSettings'),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' }, id: 'test-plugin' }),
 }));
 

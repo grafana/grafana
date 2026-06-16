@@ -4,12 +4,14 @@ aliases:
   - ../data-sources/influxdb/provision-influxdb/
   - ../features/datasources/influxdb/
   - provision-influxdb/
-description: InfluxDB data source for Grafana
+description: Guide for using the InfluxDB data source in Grafana
 keywords:
   - grafana
   - influxdb
-  - guide
   - flux
+  - influxql
+  - sql
+  - time series
 labels:
   products:
     - cloud
@@ -18,44 +20,65 @@ labels:
 menuTitle: InfluxDB
 title: InfluxDB data source
 weight: 700
-refs:
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
-  transformations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+review_date: 2026-05-01
 ---
 
 # InfluxDB data source
 
 {{< docs/shared lookup="influxdb/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-Grafana includes built-in support for InfluxDB. You do not have to install a plugin to add the InfluxDB data source.
+Grafana includes a built-in InfluxDB data source plugin, enabling you to query and visualize data from InfluxDB without installing additional plugins. Grafana offers multiple configuration options for this data source, including a choice of three query languages (SQL, InfluxQL, and Flux). SQL and InfluxQL provide both visual builder and code editing modes, while Flux provides a code editor only.
 
-Grafana offers multiple configuration options for the InfluxDB data source, including a choice of three query languages and a robust query editor that includes both a code editor and a visual query builder.
+## Supported versions
 
-## Get started with the InfluxDB data source
+This data source supports the following InfluxDB products:
 
-The following documents will help you get started with the InfluxDB data source in Grafana:
+- InfluxDB OSS 1.x, 2.x, and 3.x
+- InfluxDB Enterprise 1.x and 3.x
+- InfluxDB Cloud Serverless
+- InfluxDB Cloud Dedicated
+- InfluxDB Cloud (TSM)
 
-- [Get started with Grafana and InfluxDB](/docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-influxdb/)
-- [Configure the InfluxDB data source](./configure-influxdb-data-source/)
-- [InfluxDB query editor](./query-editor/)
-- [InfluxDB templates and variables](./template-variables/)
-- [Troubleshoot issues with the InfluxDB data source](./troubleshooting/)
+## Supported features
 
-Once you have configured the data source you can:
+| Feature     | Supported |
+| ----------- | --------- |
+| Metrics     | Yes       |
+| Logs        | Yes       |
+| Traces      | No        |
+| Alerting    | Yes       |
+| Annotations | Yes       |
 
-- Add [annotations](ref:annotations)
-- Set up [alerting](ref:alerting)
-- Add [transformations](ref:transformations)
+## Get started
+
+The following documents help you set up and use the InfluxDB data source:
+
+- [Configure the InfluxDB data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/configure/)
+- [InfluxDB query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/query-editor/)
+- [InfluxDB template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/template-variables/)
+- [InfluxDB annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/annotations/)
+- [InfluxDB alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/alerting/)
+- [Troubleshoot InfluxDB data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/influxdb/troubleshooting/)
+
+## Additional features
+
+After configuring the data source, you can:
+
+- Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query data without building a dashboard.
+- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
+- Configure [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) for dynamic dashboards.
+- [Build dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/) to visualize your InfluxDB data.
+- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) rules based on your InfluxDB query results.
+
+## Plugin updates
+
+Always ensure that your plugin version is up-to-date so you have access to all current features and improvements. Navigate to **Plugins and data** > **Plugins** to check for updates. Grafana recommends upgrading to the latest Grafana version, and this applies to plugins as well.
+
+{{< admonition type="note" >}}
+Plugins are automatically updated in Grafana Cloud.
+{{< /admonition >}}
+
+## Related resources
+
+- [Official InfluxDB documentation](https://docs.influxdata.com/)
+- [Grafana community forum](https://community.grafana.com/)

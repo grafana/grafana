@@ -1,6 +1,11 @@
-import { arrayToDataFrame, createDataFrame, DataFrame, DataTopic, FieldType } from '@grafana/data';
+import { arrayToDataFrame, createDataFrame, type DataFrame, DataTopic, FieldType } from '@grafana/data';
 
-import { getXAnnotationFrames, getXYAnnotationFrames } from './utils';
+import {
+  ANNOTATION_REGION_MIN_WIDTH,
+  getAnnoRegionBoxStyle,
+  getXAnnotationFrames,
+  getXYAnnotationFrames,
+} from './utils';
 
 const exemplarFrame = createDataFrame({
   refId: 'A',
@@ -161,5 +166,50 @@ describe('getXYAnnotationFrames', () => {
   it('should include xymark frames', () => {
     const framesWithxymark = [...frames, xymark];
     expect(getXYAnnotationFrames(framesWithxymark)).toEqual([xymark]);
+  });
+});
+
+describe('getAnnoRegionBoxStyle', () => {
+  it.each([
+    {
+      name: 'narrow region applies min width and centers',
+      plotWidth: 600,
+      left: 100,
+      right: 102,
+      expected: { left: 100 - (ANNOTATION_REGION_MIN_WIDTH - 2) / 2, width: 2, minWidth: ANNOTATION_REGION_MIN_WIDTH },
+    },
+    {
+      name: 'region with width less than threshold',
+      plotWidth: 600,
+      left: 100,
+      right: 104,
+      expected: { left: 100 - (ANNOTATION_REGION_MIN_WIDTH - 4) / 2, width: 4, minWidth: ANNOTATION_REGION_MIN_WIDTH },
+    },
+    {
+      name: 'enough has no min width',
+      plotWidth: 600,
+      left: 100,
+      right: 105,
+      expected: { left: 100, width: 5, minWidth: undefined },
+    },
+    {
+      name: 'clamps left to 0 when shift would be negative',
+      plotWidth: 600,
+      left: 2,
+      right: 3,
+      expected: { left: 0, width: 1, minWidth: ANNOTATION_REGION_MIN_WIDTH },
+    },
+    {
+      name: 'clamps right edge to plot width before measuring width',
+      plotWidth: 600,
+      left: 598,
+      right: 700,
+      expected: { left: 598 - (ANNOTATION_REGION_MIN_WIDTH - 2) / 2, width: 2, minWidth: ANNOTATION_REGION_MIN_WIDTH },
+    },
+  ])('$name', ({ plotWidth, left, right, expected }) => {
+    const style = getAnnoRegionBoxStyle(plotWidth, right, left);
+    expect(style.left).toBe(expected.left);
+    expect(style.width).toBe(expected.width);
+    expect(style.minWidth).toBe(expected.minWidth);
   });
 });

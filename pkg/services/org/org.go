@@ -22,6 +22,9 @@ type Service interface {
 	RemoveOrgUser(context.Context, *RemoveOrgUserCommand) error
 	GetOrgUsers(context.Context, *GetOrgUsersQuery) ([]*OrgUserDTO, error)
 	SearchOrgUsers(context.Context, *SearchOrgUsersQuery) (*SearchOrgUsersQueryResult, error)
+	// SearchOrgUsersByEmails returns org members whose emails match the given list.
+	// Email matching is case-insensitive. Service accounts are excluded from results.
+	SearchOrgUsersByEmails(context.Context, *SearchOrgUsersByEmailsQuery) ([]*OrgUserDTO, error)
 	RegisterDelete(query string)
 }
 

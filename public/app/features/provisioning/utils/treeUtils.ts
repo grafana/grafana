@@ -1,7 +1,9 @@
-import { IconName } from '@grafana/ui';
-import { ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type IconName } from '@grafana/ui';
+import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
-import { FileDetails, FlatTreeItem, ItemType, SyncStatus, TreeItem } from '../types';
+import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
+
+import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
 
 const collator = new Intl.Collator();
 
@@ -69,7 +71,7 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
   return 'File';
 }
 
-export function getDisplayTitle(path: string, resource?: ResourceListItem): string {
+function getDisplayTitle(path: string, resource?: ResourceListItem): string {
   if (resource?.title) {
     return resource.title;
   }
@@ -101,7 +103,7 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
     return node.status;
   }
 
-  // If any child is pending, folder is pending
+  // If any child is pending, folder is pending.
   for (const child of node.children) {
     const childStatus = child.type === 'Folder' ? calculateFolderStatus(child) : child.status;
     if (childStatus === 'pending') {
@@ -115,11 +117,17 @@ function calculateFolderStatus(node: TreeItem): SyncStatus | undefined {
 export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   const nodeMap = new Map<string, TreeItem>();
   const roots: TreeItem[] = [];
+  const mergedByPath = new Map(mergedItems.map((item) => [item.path, item]));
+  const lookupResourceHash = (path: string) => mergedByPath.get(path)?.resource?.hash;
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
+    const isFolderMetadata = isFolderMetadataPath(item.path);
     const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    const resourceHash = isFolderMetadata
+      ? getParentFolderResourceHash(item.path, lookupResourceHash)
+      : item.resource?.hash;
 
     nodeMap.set(item.path, {
       path: item.path,
@@ -129,9 +137,23 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       children: [],
       resourceName: item.resource?.name,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: showStatus ? getStatus(item.file?.hash, item.resource?.hash) : undefined,
+      status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,
     });
+  }
+
+  // Detect provisioned folders missing _folder.json metadata. If the folder resource
+  // has a non-empty hash, the metadata was previously synced — its absence means the
+  // file was removed from the remote repo, so the folder is pending until the next sync.
+  for (const [path, node] of nodeMap) {
+    if (node.type === 'Folder' && node.resourceName) {
+      const metadataPath = getFolderMetadataPath(path);
+      const fileExists = nodeMap.has(metadataPath);
+      node.missingFolderMetadata = !fileExists;
+      if (!fileExists && mergedByPath.get(path)?.resource?.hash) {
+        node.status = 'pending';
+      }
+    }
   }
 
   // Build parent-child relationships

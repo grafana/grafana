@@ -2,18 +2,18 @@ import { css, cx } from '@emotion/css';
 import { keyBy, startCase, uniqueId } from 'lodash';
 import * as React from 'react';
 
-import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type PanelData, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { DataSourceRef } from '@grafana/schema';
-import { Preview } from '@grafana/sql/src/components/visual-query-builder/Preview';
+import { type DataSourceRef } from '@grafana/schema';
+import { Preview } from '@grafana/sql';
 import { Alert, Badge, ErrorBoundaryAlert, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
-import { AlertDataQuery, AlertQuery } from '../../../types/unified-alerting-dto';
+import { type AlertDataQuery, type AlertQuery } from '../../../types/unified-alerting-dto';
 import { isExpressionQuery } from '../../expressions/guards';
 import {
-  ExpressionQuery,
+  type ExpressionQuery,
   ExpressionQueryType,
   ReducerMode,
   downsamplingTypes,
@@ -28,7 +28,7 @@ import { Spacer } from './components/Spacer';
 import { TimeRangeLabel } from './components/TimeRangeLabel';
 import { WithReturnButton } from './components/WithReturnButton';
 import { ExpressionResult } from './components/expressions/Expression';
-import { ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
+import { type ThresholdDefinition, getThresholdsForQueries } from './components/rule-editor/util';
 import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { DatasourceModelPreview } from './components/rule-viewer/tabs/Query/DataSourceModelPreview';
 import { AlertRuleAction, useAlertRuleAbility } from './hooks/useAbilities';
@@ -345,6 +345,11 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
     <div className={styles.container}>
       {model.conditions?.map(({ query, operator, reducer, evaluator }, index) => {
         const isRange = isRangeEvaluator(evaluator);
+        const params = evaluator.params;
+        let thresholdDisplay = '';
+        if (params) {
+          thresholdDisplay = isRange ? `(${params[0]}; ${params[1]})` : String(params[0]);
+        }
 
         return (
           <React.Fragment key={index}>
@@ -357,11 +362,9 @@ function ClassicConditionViewer({ model }: { model: ExpressionQuery }) {
             <div className={styles.blue}>
               <Trans i18nKey="alerting.classic-condition-viewer.of">OF</Trans>
             </div>
-            <div className={styles.bold}>{query.params[0]}</div>
+            <div className={styles.bold}>{query.params?.[0]}</div>
             <div className={styles.blue}>{evalFunctions[evaluator.type].text}</div>
-            <div className={styles.bold}>
-              {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
-            </div>
+            <div className={styles.bold}>{thresholdDisplay}</div>
           </React.Fragment>
         );
       })}
@@ -486,7 +489,7 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         </div>
         <div className={styles.value}>{expression}</div>
 
-        {evaluator && (
+        {evaluator?.params && (
           <>
             <div className={styles.blue}>{thresholdFunction?.label}</div>
             <div className={styles.bold}>
@@ -496,7 +499,7 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         )}
       </div>
       <div className={styles.container}>
-        {unloadEvaluator && (
+        {unloadEvaluator?.params && (
           <>
             <div className={styles.label}>
               <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">

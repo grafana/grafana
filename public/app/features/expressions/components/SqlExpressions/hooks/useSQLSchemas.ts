@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { useDeepCompareEffect } from 'react-use';
 
 import { getAPINamespace } from '@grafana/api-clients';
-import { getDefaultTimeRange, TimeRange } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type AdHocVariableFilter, getDefaultTimeRange, type ScopedVars, type TimeRange } from '@grafana/data';
+import { config, getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
+
+import { interpolateSourceQueries } from '../../../utils/interpolateSourceQueries';
 
 export function isDashboardDatasource(query: DataQuery): boolean {
   return query.datasource?.uid === SHARED_DASHBOARD_QUERY;
@@ -35,9 +38,11 @@ interface UseSQLSchemasOptions {
   queries?: DataQuery[];
   enabled: boolean;
   timeRange?: TimeRange;
+  scopedVars?: ScopedVars;
+  filters?: AdHocVariableFilter[];
 }
 
-export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOptions) {
+export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters }: UseSQLSchemasOptions) {
   const isFeatureEnabled = useMemo(
     () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
     []
@@ -48,9 +53,14 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
   const [loading, setLoading] = useState(enabled && isFeatureEnabled && Boolean(queries));
   const [error, setError] = useState<Error | null>(null);
 
-  // Store queries in ref so we can access current value without triggering effect
+  // Store queries/scopedVars/filters in refs so we can access current values
+  // without triggering the fetch effect on every parent render.
   const queriesRef = useRef(queries);
   queriesRef.current = queries;
+  const scopedVarsRef = useRef(scopedVars);
+  scopedVarsRef.current = scopedVars;
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
 
   const fetchSchemas = useCallback(async () => {
     if (!enabled || !isFeatureEnabled) {
@@ -66,7 +76,6 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     setError(null);
 
     try {
-      // Filter out Dashboard datasource queries - they are frontend-only and can't be processed by backend
       const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
 
       if (nonDashboardQueries.length === 0) {
@@ -75,13 +84,31 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
         return;
       }
 
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
+      const resolvedQueries = nonDashboardQueries.map((query) => {
+        if (!query.datasource && defaultDs) {
+          return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
+        }
+        return query;
+      });
+
+      // Interpolate dashboard variables in source queries so the schema
+      // request mirrors what the panel execution path actually sends. Without
+      // this, datasources like Prometheus can reject raw `$var` / `$__macro`
+      // syntax and datasources like Loki silently return empty data.
+      const interpolatedQueries = await interpolateSourceQueries(
+        resolvedQueries,
+        scopedVarsRef.current ?? {},
+        filtersRef.current
+      );
+
       const namespace = getAPINamespace();
       const currentTimeRange = timeRange || getDefaultTimeRange();
 
       const response = await getBackendSrv().post<SQLSchemasResponse>(
         `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
         {
-          queries: nonDashboardQueries,
+          queries: interpolatedQueries,
           from: currentTimeRange.from.toISOString(),
           to: currentTimeRange.to.toISOString(),
         }
@@ -95,9 +122,13 @@ export function useSQLSchemas({ queries, enabled, timeRange }: UseSQLSchemasOpti
     }
   }, [enabled, isFeatureEnabled, timeRange]);
 
-  useEffect(() => {
+  // Refetch on mount, when fetchSchemas identity changes (enabled/feature/timeRange),
+  // and when scopedVars/filters change by value. Identity-based comparison would
+  // refetch on every parent render that creates new context objects with the same
+  // contents; deep comparison avoids that.
+  useDeepCompareEffect(() => {
     fetchSchemas();
-  }, [fetchSchemas]);
+  }, [fetchSchemas, scopedVars ?? {}, filters ?? []]);
 
   return { schemas, loading, error, isFeatureEnabled, refetch: fetchSchemas };
 }

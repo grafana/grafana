@@ -1,12 +1,12 @@
 import { AppEvents, textUtil } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { type BackendSrvRequest, getBackendSrv, getTemplateSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
-import { createAbsoluteUrl, RelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { createAbsoluteUrl, type RelativeUrl } from 'app/features/alerting/unified/utils/url';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { HttpRequestMethod } from '../../panelcfg.gen';
 
-import { APIEditorConfig } from './APIEditor';
+import { type APIEditorConfig } from './APIEditor';
 
 type IsLoadingCallback = (loading: boolean) => void;
 

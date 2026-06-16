@@ -1,6 +1,8 @@
-import { LoadingState } from './data';
-import { MetricFindValue } from './datasource';
-import { DataSourceRef } from './query';
+import { type DataSourceRef } from '@grafana/schema';
+import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+
+import { type LoadingState } from './data';
+import { type MetricFindValue } from './datasource';
 
 export type VariableType = TypedVariableModel['type'];
 
@@ -76,6 +78,10 @@ export interface AdHocVariableModel extends BaseVariableModel {
    */
   defaultKeys?: MetricFindValue[];
   allowCustomValue?: boolean;
+  /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
 }
 
 export interface GroupByVariableModel extends VariableWithOptions {
@@ -197,6 +203,7 @@ export interface BaseVariableModel {
   error: any | null;
   description: string | null;
   usedInRepeat?: boolean;
+  origin?: ControlSourceRef;
 }
 
 export interface SnapshotVariableModel extends VariableWithOptions {

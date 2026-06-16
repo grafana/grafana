@@ -7,22 +7,28 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"time"
 
-	"github.com/dustin/go-humanize"
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -78,6 +84,29 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
+// verifyFolder enforces the folder-annotation contract on write. When folder
+// support is disabled, any folder annotation is a validation error (422): the
+// resource does not live in the folder tree at all. When folder support is
+// enabled, the annotation is accepted as-is.
+func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
+	if s.opts.EnableFolderSupport {
+		return nil
+	}
+	if obj.GetFolder() == "" {
+		return nil
+	}
+	return apierrors.NewInvalid(
+		obj.GetGroupVersionKind().GroupKind(),
+		obj.GetName(),
+		field.ErrorList{
+			field.Forbidden(
+				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+			),
+		},
+	)
+}
+
 // Called on create
 func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) (objectForStorage, error) {
 	v := objectForStorage{}
@@ -102,8 +131,8 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
-	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	if err = s.verifyFolder(obj); err != nil {
+		return v, err
 	}
 	if s.opts.MaximumNameLength > 0 && len(obj.GetName()) > s.opts.MaximumNameLength {
 		return v, apierrors.NewBadRequest(fmt.Sprintf("name exceeds maximum length (%d)", s.opts.MaximumNameLength))
@@ -116,17 +145,28 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
 		return v, err
 	}
+	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+		return v, err
+	}
 
-	if s.opts.RequireDeprecatedInternalID {
-		// nolint:staticcheck
-		id := obj.GetDeprecatedInternalID()
-		if id < 1 {
-			// the ID must be smaller than 9007199254740991, otherwise we will lose prescision
-			// on the frontend, which uses the number type to store ids. The largest safe number in
-			// javascript is 9007199254740991, compared to 9223372036854775807 as the max int64
-			// nolint:staticcheck
-			obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64() & ((1 << 52) - 1))
+	// Make sure the deprecated internal ID is valid
+	id := obj.GetDeprecatedInternalID() // nolint:staticcheck
+	// nolint:staticcheck
+	switch {
+	case id > 0:
+		if s.opts.DeprecatedInternalID == DeprecatedID_None {
+			return v, apierrors.NewBadRequest("internal ID is not supported")
 		}
+		if err := s.ensureSingleDeprecatedInternalID(ctx, id, obj); err != nil {
+			return v, err
+		}
+	case s.opts.DeprecatedInternalID == DeprecatedID_Required:
+		// the ID must be smaller than 9007199254740991, otherwise we will lose precision
+		// on the frontend, which uses the number type to store ids. The largest safe number in
+		// javascript is 9007199254740991, compared to 9223372036854775807 as the max int64
+		obj.SetDeprecatedInternalID(s.snowflake.Generate().Int64() & ((1 << 52) - 1))
+	case s.opts.DeprecatedInternalID == DeprecatedID_None:
+		obj.SetDeprecatedInternalID(0) // remove it
 	}
 
 	obj.SetGenerateName("") // Clear the random name field
@@ -135,7 +175,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
-	obj.SetCreatedBy(info.GetUID())
+	createdBy := info.GetUID()
+	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+		createdBy = metaUID
+	}
+	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
@@ -143,10 +187,44 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, err
 	}
 
-	if err = s.encode(newObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(newObject, &v.raw)
 	return v, err
+}
+
+// ensureSingleDeprecatedInternalID rejects a write when the requested internal
+// ID is already in use. This is best effort, not a guarantee: the check queries
+// an eventually-consistent search index and is not atomic with the write, so
+// concurrent (or rapid sequential, before the index catches up) writes with the
+// same ID can both pass. It catches the common accidental-duplicate case, not
+// races.
+func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64, obj utils.GrafanaMetaAccessor) error {
+	if s.opts.Index == nil {
+		// The storage was not configured to verify uniqueness
+		return nil
+	}
+	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Limit: 1, // we only need to know if any match exists
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     s.gr.Group,
+				Resource:  s.gr.Resource,
+				Namespace: obj.GetNamespace(),
+			},
+			Labels: []*resourcepb.Requirement{{
+				Key:      utils.LabelKeyDeprecatedInternalID,
+				Operator: string(selection.Equals),
+				Values:   []string{strconv.FormatInt(id, 10)},
+			}},
+		},
+	})
+	if err != nil {
+		return err
+	}
+	if rsp.Results != nil && len(rsp.Results.Rows) > 0 {
+		return apierrors.NewConflict(s.gr, obj.GetName(),
+			fmt.Errorf("deprecatedInternalID=%d is already in use", id))
+	}
+	return nil
 }
 
 // Called on update
@@ -193,12 +271,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
 	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
 
-	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
-	// avoid setting it back to 0
-	previousInternalID := previous.GetDeprecatedInternalID() // nolint:staticcheck
-	if previousInternalID != 0 {
-		obj.SetDeprecatedInternalID(previousInternalID) // nolint:staticcheck
-	}
+	// Make sure the deprecated internalID does not change
+	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
 	if err != nil {
@@ -207,10 +281,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	// Check if we should bump the generation
 	if obj.GetFolder() != previous.GetFolder() {
-		if !s.opts.EnableFolderSupport {
-			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		if err = s.verifyFolder(obj); err != nil {
+			return v, err
 		}
-		// TODO: check that we can move the folder?
+		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+			return v, err
+		}
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
@@ -224,59 +300,77 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+		return v, err
+	}
+
+	// If staying in the same folder but manager properties changed, re-validate
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would leave unmanaged resources in a repo-managed folder.
+	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+		newMgr, newOk := obj.GetManagerProperties()
+		oldMgr, oldOk := previous.GetManagerProperties()
+		if newOk != oldOk || newMgr != oldMgr {
+			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+				return v, err
+			}
+		}
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
-		obj.SetUpdatedBy(info.GetUID())
-		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-		// Only validate when the generation has changed
-		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-			return v, err
+		updatedBy := info.GetUID()
+		if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
+			updatedBy = metaUID
 		}
+		obj.SetUpdatedBy(updatedBy)
+		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
 		obj.SetAnnotation(utils.AnnoKeyUpdatedTimestamp, previous.GetAnnotation(utils.AnnoKeyUpdatedTimestamp))
 	}
 
-	if err = s.encode(updateObject, &v.raw); err == nil {
-		err = s.handleLargeResources(ctx, obj, &v.raw)
-	}
+	err = s.encode(updateObject, &v.raw)
 	return v, err
 }
 
-// The bytes buffer will be reset with the proper value
-func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf *bytes.Buffer) error {
-	support := s.opts.LargeObjectSupport
-	size := buf.Len()
-	if support != nil && size > support.Threshold() {
-		if support.MaxSize() > 0 && size > support.MaxSize() {
-			return fmt.Errorf("request object is too big (%s > %s)", humanize.Bytes(uint64(size)), humanize.Bytes(uint64(support.MaxSize())))
-		}
-
-		key := &resourcepb.ResourceKey{
-			Group:     s.gr.Group,
-			Resource:  s.gr.Resource,
-			Namespace: obj.GetNamespace(),
-			Name:      obj.GetName(),
-		}
-
-		err := support.Deconstruct(ctx, key, s.store, obj, buf.Bytes())
-		if err != nil {
-			return err
-		}
-
-		buf.Reset()
-		orig, ok := obj.GetRuntimeObject()
-		if !ok {
-			return fmt.Errorf("error using object as runtime object")
-		}
-
-		// Now encode the smaller version
-		return s.encode(orig, buf)
+func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
+	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
+		return nil
 	}
-	return nil
+	folder, err := s.getParentFolder(ctx, obj)
+	if err != nil {
+		return err
+	}
+	if folder == nil {
+		return nil
+	}
+	return ensureSameRepoManager(folder, obj)
+}
+
+// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
+// when the dynamic client is not available, signalling the caller to skip
+// the consistency check.
+func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
+	if s.getDynClient == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
+		return nil, nil
+	}
+	dynClient, err := s.getDynClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	name := obj.GetFolder()
+	gvr := folders.FolderResourceInfo.GroupVersionResource()
+	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
+	}
+
+	return utils.MetaAccessor(raw)
 }
 
 func (s *Storage) checkGVK(obj runtime.Object) error {

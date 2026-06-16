@@ -1,19 +1,21 @@
 import { createSelector } from '@reduxjs/toolkit';
 import { debounce } from 'lodash';
 
-import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
+import { type PluginError, type PluginType, unEscapeStringFromRegex } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
 import { filterByKeyword, isPluginUpdatable } from '../helpers';
-import { RequestStatus, PluginCatalogStoreState } from '../types';
+import { RequestStatus, type PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
 
-export const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
+const selectRoot = (state: PluginCatalogStoreState) => state.plugins;
 
-export const selectItems = createSelector(selectRoot, ({ items }) => items);
+const selectItems = createSelector(selectRoot, ({ items }) => items);
 
-export const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
+const { selectAll, selectById } = pluginsAdapter.getSelectors(selectItems);
+
+export { selectById };
 
 const debouncedTrackSearch = debounce((count) => {
   reportInteraction('plugins_search', {
@@ -99,8 +101,7 @@ export const selectPluginErrors = (filterByPluginType?: PluginType) =>
   });
 
 // The following selectors are used to get information about the outstanding or completed plugins-related network requests.
-export const selectRequest = (actionType: string) =>
-  createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
+const selectRequest = (actionType: string) => createSelector(selectRoot, ({ requests = {} }) => requests[actionType]);
 
 export const selectIsRequestPending = (actionType: string) =>
   createSelector(selectRequest(actionType), (request) => request?.status === RequestStatus.Pending);
