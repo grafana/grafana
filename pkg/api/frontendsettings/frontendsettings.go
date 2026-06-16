@@ -17,7 +17,7 @@ import (
 
 // GetBaseFrontendSettings returns the JSON object with all the settings needed for
 // front end initialisation.
-func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dtos.FrontendSettingsDTO, error) {
+func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg) (*dtos.FrontendSettingsDTO, error) {
 	defaultDS := "-- Grafana --"
 
 	trustedTypesDefaultPolicyEnabled := (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
@@ -31,7 +31,7 @@ func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dto
 		Apps:                                 make(map[string]*plugins.AppDTO, 0),
 		AppUrl:                               cfg.AppURL,
 		AppSubUrl:                            cfg.AppSubURL,
-		AllowOrgCreate:                       (cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AllowOrgCreate:                       (cfg.AllowUserOrgCreate && reqCtx.IsSignedIn) || reqCtx.IsGrafanaAdmin,
 		AuthProxyEnabled:                     cfg.AuthProxy.Enabled,
 		LdapEnabled:                          cfg.LDAPAuthEnabled,
 		JwtHeaderName:                        cfg.JWTAuth.HeaderName,
@@ -89,7 +89,7 @@ func GetBaseFrontendSettings(c *contextmodel.ReqContext, cfg *setting.Cfg) (*dto
 		EnableFrontendSandboxForPlugins:  cfg.EnableFrontendSandboxForPlugins,
 		PluginRestrictedAPIsAllowList:    cfg.PluginRestrictedAPIsAllowList,
 		PluginRestrictedAPIsBlockList:    cfg.PluginRestrictedAPIsBlockList,
-		PublicDashboardAccessToken:       c.PublicDashboardAccessToken,
+		PublicDashboardAccessToken:       reqCtx.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:          cfg.PublicDashboardsEnabled,
 		CloudMigrationEnabled:            cfg.CloudMigration.Enabled,
 		CloudMigrationIsTarget:           isCloudMigrationTarget,
