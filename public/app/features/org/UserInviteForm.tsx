@@ -62,7 +62,7 @@ const defaultValues: FormModel = {
   sendEmail: true,
 };
 
-export const UserInviteForm = () => {
+const UserInviteForm = () => {
   const dispatch = useDispatch();
   const disabled = !getCanInviteUsersToOrg();
 

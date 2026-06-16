@@ -224,8 +224,7 @@ test.describe(
         // Delete all selected
         await page.getByRole('button', { name: 'Delete' }).click();
         // Wait for the delete modal to finish loading folder contents.
-        // TODO: after #122747 is merged, match the exact count (e.g. /\d+ items?/) instead of /item/
-        await expect(page.getByText(/item/)).toBeVisible();
+        await expect(page.getByRole('alert', { name: /contains other resources that will be deleted/i })).toBeVisible();
         await page.getByPlaceholder('Type "Delete" to confirm').fill('Delete');
         await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 

@@ -16,28 +16,46 @@ type sizeLimitedReaderWriter struct {
 	maxBytes int64
 }
 
-// sizeLimitedVersionedReaderWriter mirrors sizeLimitedReaderWriter but also
-// satisfies Versioned, so wrapping a versioned repository does not strip the
-// interface from downstream callers (e.g. the sync worker, which falls back
-// to full sync when the repo no longer reports as Versioned).
+// Combo wrappers preserve optional interfaces that downstream code discovers
+// via type assertion (same pattern as net/http middleware preserving Flusher/Hijacker).
 type sizeLimitedVersionedReaderWriter struct {
 	sizeLimitedReaderWriter
 	Versioned
 }
 
+type sizeLimitedURLsReaderWriter struct {
+	sizeLimitedReaderWriter
+	RepositoryWithURLs
+}
+
+type sizeLimitedVersionedURLsReaderWriter struct {
+	sizeLimitedReaderWriter
+	Versioned
+	RepositoryWithURLs
+}
+
 // NewSizeLimitedReaderWriter wraps rw so its Read method enforces the given
-// byte cap. The wrapper preserves the Versioned interface when the inner
-// repository implements it. When maxBytes <= 0 the original rw is returned
-// unchanged.
+// byte cap. The wrapper preserves Versioned and RepositoryWithURLs interfaces
+// when the inner repository implements them. When maxBytes <= 0 the original
+// rw is returned unchanged.
 func NewSizeLimitedReaderWriter(rw ReaderWriter, maxBytes int64) ReaderWriter {
 	if maxBytes <= 0 {
 		return rw
 	}
-	limitedRw := sizeLimitedReaderWriter{ReaderWriter: rw, maxBytes: maxBytes}
-	if v, ok := rw.(Versioned); ok {
-		return &sizeLimitedVersionedReaderWriter{sizeLimitedReaderWriter: limitedRw, Versioned: v}
+	base := sizeLimitedReaderWriter{ReaderWriter: rw, maxBytes: maxBytes}
+	v, isVersioned := rw.(Versioned)
+	u, isURLs := rw.(RepositoryWithURLs)
+
+	switch {
+	case isVersioned && isURLs:
+		return &sizeLimitedVersionedURLsReaderWriter{base, v, u}
+	case isVersioned:
+		return &sizeLimitedVersionedReaderWriter{base, v}
+	case isURLs:
+		return &sizeLimitedURLsReaderWriter{base, u}
+	default:
+		return &base
 	}
-	return &limitedRw
 }
 
 func (s *sizeLimitedReaderWriter) Read(ctx context.Context, path, ref string) (*FileInfo, error) {

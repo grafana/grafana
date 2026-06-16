@@ -331,12 +331,28 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
+// sanitizeHeaderValue strips ASCII control characters (including CRLF) and
+// truncates to 128 bytes to prevent header injection and oversized headers.
+func sanitizeHeaderValue(v string) string {
+	s := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, v)
+	const maxLen = 128
+	if len(s) > maxLen {
+		s = s[:maxLen]
+	}
+	return s
+}
+
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
 	headers := make(map[string]string, len(metadata)+3)
 
 	if len(metadata) > 0 {
 		for key, value := range metadata {
-			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
+			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(sanitizeHeaderValue(value))
 		}
 	}
 

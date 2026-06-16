@@ -1,6 +1,6 @@
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
-export type User = {
+type User = {
   uid: string;
   displayName?: string;
   avatarUrl?: string;

@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
@@ -89,10 +93,51 @@ func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
 func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
 	vec := newFakeVector()
 	o := newBackfiller(t, newFakeStorage(), vec)
-	require.NoError(t, o.Run(context.Background()))
 
-	assert.Equal(t, 1, vec.lockAttempts)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- o.Run(ctx) }()
+
+	// Run loops on a ticker; wait for the lock, then stop it.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts == 1
+	}, time.Second, time.Millisecond)
+	cancel()
+	require.ErrorIs(t, <-done, context.Canceled)
+
 	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+}
+
+// TestBackfill_ObservesItemDuration verifies the per-item histogram
+// fires when an item is processed. A regression here would mean the
+// wiring between processBackfillItem and VectorMetrics is broken.
+func TestBackfill_ObservesItemDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := resource.ProvideVectorMetrics(reg)
+
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns-1", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+
+	b.runBackfill(context.Background())
+
+	// One successful observation under the (group, resource, status) labels
+	// the production code uses.
+	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "vector_storage_backfill_item_duration_seconds"))
 }
 
 func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {

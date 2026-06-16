@@ -34,7 +34,11 @@ func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.C
 
 func initVectorTables(mg *migrator.Migrator) {
 	mg.AddMigration("create pgvector extension",
-		migrator.NewRawSQLMigration("").Postgres(`CREATE EXTENSION IF NOT EXISTS vector;`))
+		migrator.NewRawSQLMigration("").Postgres(`DO $$ BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+		CREATE EXTENSION vector;
+	END IF;
+END $$;`))
 
 	// (resource, namespace) lead the PK so partition pruning can use it.
 	// halfvec + nested partitioning aren't expressible via xorm, so raw SQL.
@@ -125,4 +129,37 @@ func initVectorTables(mg *migrator.Migrator) {
 		migrator.NewAddTableMigration(backfillJobs))
 	mg.AddMigration("create vector_backfill_jobs (model, resource) index",
 		migrator.NewAddIndexMigration(backfillJobs, backfillJobs.Indices[0]))
+
+	mg.AddMigration("create query_embedding_cache",
+		migrator.NewRawSQLMigration("").Postgres(`
+			CREATE TABLE IF NOT EXISTS query_embedding_cache (
+				namespace VARCHAR(256) NOT NULL,
+				model VARCHAR(256) NOT NULL,
+				query_hash CHAR(64) NOT NULL,
+				embedding halfvec(1024) NOT NULL,
+				created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				PRIMARY KEY (namespace, model, query_hash)
+			);
+		`))
+	mg.AddMigration("create query_embedding_cache eviction index",
+		migrator.NewRawSQLMigration("").Postgres(
+			`CREATE INDEX IF NOT EXISTS query_embedding_cache_eviction_idx
+				ON query_embedding_cache (namespace, created_at);`,
+		))
+
+	rateBuckets := migrator.Table{
+		Name: "vector_search_rate_buckets",
+		Columns: []*migrator.Column{
+			{Name: "namespace", Type: migrator.DB_Varchar, Length: 256, Nullable: false, IsPrimaryKey: true},
+			{Name: "window_start", Type: migrator.DB_TimeStampz, Nullable: false, IsPrimaryKey: true},
+			{Name: "request_count", Type: migrator.DB_BigInt, Nullable: false, Default: "0"},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"window_start"}, Type: migrator.IndexType},
+		},
+	}
+	mg.AddMigration("create vector_search_rate_buckets",
+		migrator.NewAddTableMigration(rateBuckets))
+	mg.AddMigration("create vector_search_rate_buckets window_start index",
+		migrator.NewAddIndexMigration(rateBuckets, rateBuckets.Indices[0]))
 }

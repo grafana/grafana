@@ -17,7 +17,6 @@ import {
 import { type RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
@@ -25,10 +24,10 @@ import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor, interpolateSectionTitle } from '../../utils/utils';
+import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -119,7 +118,12 @@ export class RowItem
     const layoutChildren = this.state.layout.getOutlineChildren();
     if (
       isEditing &&
-      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardSectionVariables, false) &&
+      // OpenFeature is not initialized for anonymous users, so fall back to
+      // the static feature toggle to ensure section variables work without auth.
+      getFeatureFlagClient().getBooleanValue(
+        FlagKeys.DashboardSectionVariables,
+        Boolean(config.featureToggles.dashboardSectionVariables)
+      ) &&
       this.state.$variables
     ) {
       return [
@@ -136,7 +140,12 @@ export class RowItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(interpolateSectionTitle(this, this.state.title ?? 'Row'));
+    const siblings = this.parent
+      ? this.getParentLayout()
+          .getOutlineChildren()
+          .filter((item): item is RowItem => item instanceof RowItem)
+      : [];
+    return getSlugForRowOrTab(this, siblings);
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
@@ -194,7 +203,11 @@ export class RowItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
+    return this.clone({
+      key: undefined,
+      layout: this.getLayout().duplicate(panelIdGenerator),
+      $variables: cloneSectionVariableSet(this.state.$variables),
+    });
   }
 
   public serialize(): RowsLayoutRowKind {

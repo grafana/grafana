@@ -37,8 +37,7 @@ var WireSetExts = wire.NewSet(
 	iam.ProvideNoopExternalGroupMappingApiInstaller,
 	iam.ProvideNoopRoleBindingApiInstaller,
 
-	externalgroupmapping.ProvideNoopTeamGroupsREST,
-	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
+	externalgroupmapping.ProvideNoopTeamGroupsHandlerProvider,
 
 	externalgroupmapping.ProvideNoopSearchREST,
 	wire.Bind(new(externalgroupmapping.SearchHandler), new(*externalgroupmapping.NoopSearchREST)),
@@ -67,6 +66,7 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
 	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+	datasource.ProvideProxyDependencies,
 
 	// Secrets
 	secret.RegisterDependencies,

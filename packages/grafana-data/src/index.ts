@@ -275,6 +275,7 @@ export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
+export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
@@ -437,7 +438,13 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
-export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './panel/PanelPlugin';
+export {
+  PanelPlugin,
+  type SetFieldConfigOptionsArgs,
+  type StandardOptionConfig,
+  type PanelScreenshotContext,
+  type PanelScreenshotHandler,
+} from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
   filterFieldConfigOverrides,

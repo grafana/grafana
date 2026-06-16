@@ -18,6 +18,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Author{}.OpenAPIModelName():                           schema_pkg_apis_provisioning_v0alpha1_Author(ref),
 		BitbucketConnectionConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref),
 		BitbucketRepositoryConfig{}.OpenAPIModelName():        schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref),
+		BranchOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
 		CommitOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
 		Connection{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
 		ConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
@@ -55,6 +56,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		MigrateJobOptions{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref),
 		MoveJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref),
 		PullRequestJobOptions{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref),
+		PullRequestOptions{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref),
 		QuotaStatus{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_QuotaStatus(ref),
 		RefItem{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_RefItem(ref),
 		RefList{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_RefList(ref),
@@ -75,6 +77,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ResourceType{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ResourceType(ref),
 		ResourceWrapper{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_ResourceWrapper(ref),
 		SecureValues{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref),
+		SupportedResource{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref),
 		SyncJobOptions{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_SyncJobOptions(ref),
 		SyncOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref),
 		SyncStatus{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
@@ -182,6 +185,32 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"nameTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for the branch name created in branch workflow. Supports variables: {{action}}, {{resourceKind}}, {{title}}, {{userLogin}}, {{random}}. {{random}} is a 6-character alphanumeric token generated at render time to avoid collisions. The result is sanitised to a valid git ref (lowercase, alphanumeric + dashes, max 100 chars). When empty, the current auto-generated name is preserved.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the branch name field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -190,7 +219,43 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 				Properties: map[string]spec.Schema{
 					"singleResourceMessageTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+							Description: "Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. \"Save dashboard: <title>\").",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signingMethod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"gpg", "smime", "ssh"},
+						},
+					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -612,7 +677,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Message to use when committing the changes in a single commit",
+							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -889,6 +954,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"appID", "installationID"},
 			},
@@ -1008,6 +1080,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -1603,6 +1682,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 							Format:      "",
 						},
 					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Commit message for this job. Applies to job actions that produce commits (delete, move, migrate, push, fixFolderMetadata). When empty, the backend falls back to the action-specific message field (ExportJobOptions.Message, MigrateJobOptions.Message) for backwards compatibility, then to a built-in default.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"pr": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Pull request options",
@@ -1818,7 +1904,7 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 				Properties: map[string]spec.Schema{
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Message to use when committing the changes in a single commit",
+							Description: "Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1933,6 +2019,32 @@ func schema_pkg_apis_provisioning_v0alpha1_PullRequestJobOptions(ref common.Refe
 						SchemaProps: spec.SchemaProps{
 							Description: "URL to the originator (eg, PR URL)",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_PullRequestOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"titleTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Template for pull request titles. Supports the same variables as BranchOptions.NameTemplate ({{random}} is available but rarely useful here). When empty, the first line of the commit message is used.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"enforceTemplate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When true, the PR title field in Save drawers is read-only.",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},
@@ -2197,6 +2309,18 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Ref:         ref(CommitOptions{}.OpenAPIModelName()),
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Branch naming options. Only meaningful when Workflows includes \"branch\".",
+							Ref:         ref(BranchOptions{}.OpenAPIModelName()),
+						},
+					},
+					"pullRequest": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Pull request options. Only meaningful when Workflows includes \"branch\".",
+							Ref:         ref(PullRequestOptions{}.OpenAPIModelName()),
+						},
+					},
 					"workflows": {
 						SchemaProps: spec.SchemaProps{
 							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
@@ -2282,7 +2406,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), BranchOptions{}.OpenAPIModelName(), CommitOptions{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubEnterpriseRepositoryConfig{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), PullRequestOptions{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -2486,11 +2610,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryView(ref common.ReferenceCa
 					},
 					"target": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+							Description: "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"folder", "instance"},
+							Enum:        []interface{}{"folder", "folderless", "instance"},
 						},
 					},
 					"branch": {
@@ -2576,7 +2700,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 										Default: "",
 										Type:    []string{"string"},
 										Format:  "",
-										Enum:    []interface{}{"folder", "instance"},
+										Enum:    []interface{}{"folder", "folderless", "instance"},
 									},
 								},
 							},
@@ -2614,6 +2738,20 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 							},
 						},
 					},
+					"availableResources": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled).",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(SupportedResource{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 					"items": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -2637,7 +2775,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryViewList(ref common.Referen
 			},
 		},
 		Dependencies: []string{
-			RepositoryView{}.OpenAPIModelName()},
+			RepositoryView{}.OpenAPIModelName(), SupportedResource{}.OpenAPIModelName()},
 	}
 }
 
@@ -3182,11 +3320,55 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
+					"commitSigningKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
 			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_SupportedResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "SupportedResource describes a resource type declared for provisioning. A resource is identified by its group and kind; the API version and plural resource are resolved at runtime via discovery, so they are not part of this descriptor.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"group": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Group is the API group of the resource (e.g. \"dashboard.grafana.app\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is the kind of the resource (e.g. \"Dashboard\").",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"group", "kind"},
+			},
+		},
 	}
 }
 
@@ -3227,11 +3409,11 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncOptions(ref common.ReferenceCallb
 					},
 					"target": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
+							Description: "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"folderless\"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"folder", "instance"},
+							Enum:        []interface{}{"folder", "folderless", "instance"},
 						},
 					},
 					"intervalSeconds": {

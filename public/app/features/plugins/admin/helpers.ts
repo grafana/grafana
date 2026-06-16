@@ -313,8 +313,8 @@ export enum Sorters {
 
 export const sortPlugins = (plugins: CatalogPlugin[], sortBy: Sorters) => {
   const sorters: { [name: string]: (a: CatalogPlugin, b: CatalogPlugin) => number } = {
-    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.localeCompare(b.name),
-    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.localeCompare(a.name),
+    nameAsc: (a: CatalogPlugin, b: CatalogPlugin) => a.name.trim().localeCompare(b.name.trim()),
+    nameDesc: (a: CatalogPlugin, b: CatalogPlugin) => b.name.trim().localeCompare(a.name.trim()),
     updated: (a: CatalogPlugin, b: CatalogPlugin) =>
       dateTimeParse(b.updatedAt).valueOf() - dateTimeParse(a.updatedAt).valueOf(),
     published: (a: CatalogPlugin, b: CatalogPlugin) =>

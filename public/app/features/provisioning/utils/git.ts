@@ -145,6 +145,7 @@ export function getRepoFileUrl({
   const isDir = fullPath.endsWith('/');
 
   switch (repoType) {
+    case 'githubEnterprise':
     case 'github':
       return buildRepoUrl({
         baseUrl: url,

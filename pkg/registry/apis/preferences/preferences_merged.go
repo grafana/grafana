@@ -39,6 +39,7 @@ func newMerger(cfg *setting.Cfg) *merger {
 			Timezone:  &cfg.DateFormats.DefaultTimezone,
 			WeekStart: &cfg.DateFormats.DefaultWeekStart,
 			Language:  &cfg.DefaultLanguage,
+			HomeURL:   &cfg.HomePage, // [users] home_page
 		},
 	}
 	if home.HasCustomHome(cfg) {
@@ -48,8 +49,6 @@ func newMerger(cfg *setting.Cfg) *merger {
 }
 
 func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	schema := defs[preferences.Preferences{}.OpenAPIModelName()].Schema
-
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -70,7 +69,6 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 										Description: "workspace",
 										Schema:      spec.StringProperty(),
 									},
-									// TODO?? Allow getting theme+language from accept
 								},
 							},
 							Responses: &spec3.Responses{
@@ -81,7 +79,11 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &schema,
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/components/schemas/" + preferences.Preferences{}.OpenAPIModelName()),
+																},
+															},
 														},
 													},
 												},

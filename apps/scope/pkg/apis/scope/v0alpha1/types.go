@@ -297,6 +297,18 @@ func (FindScopeNavigationsResults) OpenAPIModelName() string {
 	return OpenAPIPrefix + "FindScopeNavigationsResults"
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FindDefaultScope struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Scope   Scope  `json:"scope,omitempty"`
+	Message string `json:"message,omitempty"`
+}
+
+func (FindDefaultScope) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FindDefaultScope"
+}
+
 type ScopeNavigationSpec struct {
 	URL   string `json:"url"`
 	Scope string `json:"scope"`

@@ -128,6 +128,8 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     path: '/dashboards',
     workflow: 'write',
   },
+  isLoading: false,
+  isMissingRepo: false,
 };
 
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
@@ -155,15 +157,18 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it('should return null when initialValues is not available', async () => {
+  it('should show a spinner while repository data is loading', async () => {
     setup(
       {},
       {
         ...mockHookData,
+        repository: undefined,
         initialValues: undefined,
+        isLoading: true,
       }
     );
-    expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
   });
 
   it('should show error when repository is not found', async () => {
@@ -173,6 +178,7 @@ describe('NewProvisionedFolderForm', () => {
         ...mockHookData,
         repository: undefined,
         initialValues: undefined,
+        isMissingRepo: true,
       }
     );
     expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
