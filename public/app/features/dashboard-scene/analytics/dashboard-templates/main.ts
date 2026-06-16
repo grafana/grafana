@@ -18,12 +18,7 @@ import {
   type DeleteCompletedProperties,
 } from './types';
 
-const SCHEMA_VERSION = 1;
-
-const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboard_template', {
-  /** Version of the event schema, used to handle breaking changes in the properties contract. */
-  schema_version: SCHEMA_VERSION,
-});
+const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboard_template');
 
 /**
  * Analytics events for the Custom (org-defined) Dashboard Templates feature lifecycle:
