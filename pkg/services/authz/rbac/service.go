@@ -967,12 +967,11 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 		return false, nil
 	}
 
-	// Capabilities check
-	if req.ParentFolder == "" {
+	// Capabilities check: no specific object named and no folder context, so the
+	// caller is only asking whether the user could ever perform this action. The
+	// stack role alone answers that.
+	if req.ParentFolder == "" && req.Name == "" {
 		ctxLogger.Debug("folderAuthz: no parent folder provided, capabilities check")
-		if req.Name != "" {
-			return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
-		}
 		return true, nil
 	}
 
@@ -997,6 +996,13 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// without walking the tree.
 	if folderScopeMap["*"] {
 		return true, nil
+	}
+
+	// A specific object was named but its parent folder is unknown. Without a
+	// folder the only thing that can authorize the request is a wildcard folder
+	// grant (handled above).
+	if req.ParentFolder == "" {
+		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
 	}
 
 	// Global access check failed, return early
