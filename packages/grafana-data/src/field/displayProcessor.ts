@@ -11,6 +11,7 @@ import { type Field, FieldType } from '../types/dataFrame';
 import { type DecimalCount, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
 import { type FormattedValue } from '../types/valueFormats';
+import { type ValueMappingResult } from '../types/valueMapping';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
 import { isBooleanUnit } from '../valueFormats/baseFormatters';
@@ -86,8 +87,46 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
+  const isStringUnitOuter = unit === 'string';
+  const hasMappings = (config.mappings?.length ?? 0) > 0;
 
-  return (value: unknown, adjacentDecimals?: DecimalCount) => {
+  // Single source of truth for a value's color + percent, shared by the full
+  // processor and the color-only resolver below. The full processor passes the
+  // value mapping it already resolved (for text/icon) so we don't look it up twice;
+  // the color-only path resolves its own mapping and discards the percent.
+  const resolveColorAndPercent = (
+    value: unknown,
+    numeric: number,
+    mappingResult: ValueMappingResult | null
+  ): { color: string | undefined; percent: number | undefined } => {
+    let color: string | undefined;
+    let percent: number | undefined;
+
+    if (mappingResult?.color != null) {
+      color = options.theme.visualization.getColorByName(mappingResult.color);
+    } else if (!hasMappings && field.type === FieldType.enum && value != null && config.type?.enum) {
+      const enumIndex = +value;
+      const { color: enumColor } = config.type.enum;
+      color = enumColor ? enumColor[enumIndex] : undefined;
+
+      // If no color specified in enum field config we will fallback to iterating through the theme palette
+      if (color == null) {
+        color = options.theme.visualization.getColorByName(palette[enumIndex % palette.length]);
+      }
+    }
+
+    if (!Number.isNaN(numeric) && color == null) {
+      ({ color, percent } = scaleFunc(numeric));
+    }
+
+    if (!color) {
+      ({ color, percent } = scaleFunc(-Infinity));
+    }
+
+    return { color, percent };
+  };
+
+  const proc: DisplayProcessor = (value: unknown, adjacentDecimals?: DecimalCount): DisplayValue => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -102,17 +141,14 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     let color: string | undefined;
     let icon: string | undefined;
     let percent: number | undefined;
+    let mappingResult: ValueMappingResult | null = null;
 
     if (mappings && mappings.length > 0) {
-      const mappingResult = getValueMappingResult(mappings, value);
+      mappingResult = getValueMappingResult(mappings, value);
 
       if (mappingResult) {
         if (mappingResult.text != null) {
           text = mappingResult.text;
-        }
-
-        if (mappingResult.color != null) {
-          color = options.theme.visualization.getColorByName(mappingResult.color);
         }
 
         if (mappingResult.icon != null) {
@@ -130,16 +166,9 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
       const enumIndex = +value;
       if (config && config.type && config.type.enum) {
-        const { text: enumText, color: enumColor } = config.type.enum;
+        const { text: enumText } = config.type.enum;
 
         text = enumText ? enumText[enumIndex] : `${value}`;
-        // If no color specified in enum field config we will fallback to iterating through the theme palette
-        color = enumColor ? enumColor[enumIndex] : undefined;
-
-        if (color == null) {
-          const namedColor = palette[enumIndex % palette.length];
-          color = options.theme.visualization.getColorByName(namedColor);
-        }
       }
     }
 
@@ -167,13 +196,6 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
         suffix = v.suffix;
         prefix = v.prefix;
       }
-
-      // Return the value along with scale info
-      if (color == null) {
-        const scaleResult = scaleFunc(numeric);
-        color = scaleResult.color;
-        percent = scaleResult.percent;
-      }
     }
 
     if (text == null && isArray(value)) {
@@ -191,11 +213,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    if (!color) {
-      const scaleResult = scaleFunc(-Infinity);
-      color = scaleResult.color;
-      percent = scaleResult.percent;
-    }
+    ({ color, percent } = resolveColorAndPercent(value, numeric, mappingResult));
 
     const display: DisplayValue = {
       text,
@@ -215,6 +233,38 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
 
     return display;
   };
+
+  // Lean color-only resolver: resolves the value mapping itself (we must, because
+  // mapping resolution is order-sensitive — a RangeToText/SpecialValue mapping can
+  // match before a later ValueToText one — so a precomputed value->color map would
+  // diverge) then delegates to the shared color logic, skipping all text/number
+  // formatting that callers wanting only a color would otherwise pay for.
+  const resolveColor = (value: unknown): string | undefined => {
+    if (hasDateUnit && typeof value === 'string') {
+      value = toUtc(value).valueOf();
+    }
+
+    const numeric = isStringUnitOuter ? NaN : anyToNumber(value);
+
+    let mappingResult: ValueMappingResult | null = null;
+    if (hasMappings) {
+      mappingResult = getValueMappingResult(config.mappings!, value);
+    } else if (field.type === FieldType.enum && value == null) {
+      // matches the full processor's enum-null short-circuit (no color)
+      return undefined;
+    }
+
+    return resolveColorAndPercent(value, numeric, mappingResult).color;
+  };
+
+  proc.color = resolveColor;
+
+  // Text-only is currently a thin wrapper over the full processor. A lean text
+  // path (skipping scale/color resolution) can follow once needed; today the
+  // color path is the one callers pay for unnecessarily.
+  proc.text = (value, decimals) => proc(value, decimals).text;
+
+  return proc;
 }
 
 function toStringProcessor(value: unknown): DisplayValue {

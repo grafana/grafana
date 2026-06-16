@@ -1,6 +1,23 @@
 import { type FormattedValue } from './valueFormats';
 
-export type DisplayProcessor = (value: unknown, decimals?: DecimalCount) => DisplayValue;
+export interface DisplayProcessor {
+  (value: unknown, decimals?: DecimalCount): DisplayValue;
+  /**
+   * Resolve only the color of a value, skipping the (expensive) text/number
+   * formatting. Equivalent to `display(value).color`. Optional because not every
+   * DisplayProcessor (e.g. plain inline ones) provides it — fall back to
+   * `display(value).color` when absent.
+   *
+   * @alpha
+   */
+  color?(value: unknown): string | undefined;
+  /**
+   * Resolve only the formatted text of a value. Equivalent to `display(value).text`.
+   *
+   * @alpha
+   */
+  text?(value: unknown, decimals?: DecimalCount): string;
+}
 
 export interface DisplayValue extends FormattedValue {
   /**

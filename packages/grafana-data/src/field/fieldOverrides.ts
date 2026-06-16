@@ -342,7 +342,9 @@ type DecimalsCache = Map<unknown, DisplayValue>;
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
   let caches: Map<number, DecimalsCache>;
-  return (value: unknown, decimals?: DecimalCount) => {
+  let colorCache: Map<unknown, string | undefined>;
+
+  const wrapped: DisplayProcessor = (value: unknown, decimals?: DecimalCount) => {
     // pre-allocating these maps is quite expensive, so we do it just-in-time.
     // -1, 0, 1..15 = 17 entries
     caches ??= new Map(Array.from({ length: 17 }, (_, i) => [i - 1, new Map()]));
@@ -370,6 +372,33 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
 
     return v;
   };
+
+  // Color-only cache: a single value->hex map (decimals don't affect color). A miss
+  // here computes only the color via disp.color (no text/number formatting), and we
+  // deliberately do NOT read the full DisplayValue cache, since a miss there would
+  // compute text too. Colors are hex-normalized to match the full cached path.
+  if (disp.color) {
+    wrapped.color = (value: unknown) => {
+      colorCache ??= new Map();
+
+      if (!colorCache.has(value)) {
+        if (colorCache.size === maxCacheSize) {
+          colorCache.clear();
+        }
+
+        const c = disp.color!(value);
+        colorCache.set(value, c != null ? asHexString(c) : c);
+      }
+
+      return colorCache.get(value);
+    };
+  }
+
+  if (disp.text) {
+    wrapped.text = (value: unknown, decimals?: DecimalCount) => disp.text!(value, decimals);
+  }
+
+  return wrapped;
 }
 
 export interface FieldOverrideEnv extends FieldOverrideContext {
