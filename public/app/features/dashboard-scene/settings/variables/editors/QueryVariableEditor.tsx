@@ -150,7 +150,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
   ];
 }
 
-export function ModalEditor({ variable }: { variable: QueryVariable }) {
+function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onRunQuery = () => {

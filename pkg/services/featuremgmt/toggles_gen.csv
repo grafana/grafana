@@ -92,6 +92,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-22,reportRenderBinding,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
+2026-06-08,canvasExternalPlugin,experimental,@grafana/dataviz-squad,false,false,false
 2025-07-24,timeComparison,preview,@grafana/dataviz-squad,false,false,true
 2023-12-13,tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,stateTimeline.nameAboveBars,experimental,@grafana/dataviz-squad,false,false,true
@@ -369,3 +370,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-26,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-27,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
+2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true

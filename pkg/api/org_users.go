@@ -318,7 +318,15 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		SortOpts: sortOpts,
 	}
 
-	result, err := hs.searchOrgUsersHelper(c, query)
+	ctx := c.Req.Context()
+	kubernetesUsersRedirect := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+
+	var result *org.SearchOrgUsersQueryResult
+	if kubernetesUsersRedirect {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.searchOrgUsersHelper(c, query)
+	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
@@ -379,6 +387,56 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	result.Page = query.Page
 	result.PerPage = query.Limit
 	return result, nil
+}
+
+func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
+		SignedInUser:         query.User,
+		OrgID:                query.OrgID,
+		Query:                query.Query,
+		Page:                 query.Page,
+		Limit:                query.Limit,
+		SortOpts:             query.SortOpts,
+		IncludeAccessControl: c.QueryBool("accesscontrol"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orgUsers := make([]*org.OrgUserDTO, 0, len(searchResult.Users))
+	for _, u := range searchResult.Users {
+		if query.UserID != 0 && u.ID != query.UserID {
+			continue
+		}
+		orgUsers = append(orgUsers, &org.OrgUserDTO{
+			OrgID:         query.OrgID,
+			UserID:        u.ID,
+			UID:           u.UID,
+			Email:         u.Email,
+			Name:          u.Name,
+			Login:         u.Login,
+			Role:          u.Role,
+			AvatarURL:     dtos.GetGravatarUrl(hs.Cfg, u.Email),
+			AccessControl: u.AccessControl,
+			LastSeenAt:    u.LastSeenAt,
+			LastSeenAtAge: u.LastSeenAtAge,
+			Created:       u.Created,
+			IsDisabled:    u.IsDisabled,
+			IsProvisioned: u.IsProvisioned,
+		})
+	}
+
+	totalCount := searchResult.TotalCount
+	if query.UserID != 0 {
+		totalCount = int64(len(orgUsers))
+	}
+
+	return &org.SearchOrgUsersQueryResult{
+		TotalCount: totalCount,
+		OrgUsers:   orgUsers,
+		Page:       searchResult.Page,
+		PerPage:    searchResult.PerPage,
+	}, nil
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg

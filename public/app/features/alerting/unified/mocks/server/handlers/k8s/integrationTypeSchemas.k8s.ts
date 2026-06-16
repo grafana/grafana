@@ -30,7 +30,7 @@ function transformToK8sSchema(notifier: NotifierDTO) {
   };
 }
 
-export const getIntegrationTypeSchemasHandler = () =>
+const getIntegrationTypeSchemasHandler = () =>
   http.get<{ namespace: string }>(
     `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/integrationtypeschemas`,
     () => {

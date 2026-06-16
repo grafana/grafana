@@ -12726,6 +12726,12 @@
       },
       "UserSearchHitDTO": {
         "properties": {
+          "accessControl": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
           "authLabels": {
             "items": {
               "type": "string"
@@ -12766,6 +12772,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "role": {
             "type": "string"
           },
           "uid": {
