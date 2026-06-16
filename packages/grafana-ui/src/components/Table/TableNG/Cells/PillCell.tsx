@@ -90,7 +90,8 @@ function getPillColor(value: unknown, field: Field, theme: GrafanaTheme2): strin
   const cfg = field.config;
 
   if (cfg.mappings?.length ?? 0 > 0) {
-    return field.display!(value).color ?? FALLBACK_COLOR;
+    // color-only: skip the mapped text we'd otherwise discard
+    return field.display!.color?.(value) ?? field.display!(value).color ?? FALLBACK_COLOR;
   }
 
   if (cfg.color?.mode === FieldColorModeId.Fixed) {
