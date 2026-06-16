@@ -15,7 +15,7 @@ import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
 
-export const updateVariablePayloadSchema = payloads.updateVariable;
+const updateVariablePayloadSchema = payloads.updateVariable;
 
 export type UpdateVariablePayload = z.infer<typeof updateVariablePayloadSchema>;
 

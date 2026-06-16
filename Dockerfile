@@ -61,6 +61,7 @@ FROM ${GO_IMAGE} AS go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
+ARG SOURCE_DATE_EPOCH=""
 ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 
@@ -101,6 +102,7 @@ COPY .github .github
 
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
+ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH}
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
@@ -387,7 +389,12 @@ EXPOSE 3000
 
 USER $GF_UID
 
-ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker", "cfg:default.log.mode=console"]
+# ENTRYPOINT holds the invariant invocation; CMD holds the overridable default
+# args. Splitting them follows the conventional Docker pattern so runtime args
+# (docker run <img> <args> / Kubernetes args:) replace the defaults instead of
+# being permanently pinned after a fully-baked ENTRYPOINT.
+ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker"]
+CMD ["cfg:default.log.mode=console"]
 
 # Default stage — alpine. Builds without --target produce an alpine image.
 # Use --target=final-ubuntu to build the ubuntu variant instead.

@@ -146,12 +146,7 @@ func ProvideWebhooksWithImages(
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
 			render := NewRenderConnector(blobstore, b)
-			webhook := NewWebhookConnector(
-				isPublic,
-				b,
-				screenshotRenderer,
-				registry,
-			)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
 			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering)

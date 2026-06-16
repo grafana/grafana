@@ -780,9 +780,10 @@ export function applyFilter(
  * @internal
  */
 export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const hasNestedFrames = (nestedFramesFieldName ?? '').length > 0;
   const fnBody = `
     const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const hasNestedFrames = ${hasNestedFrames};
     const frameLength = frame.length ?? values[0]?.length ?? 0;
     const rows = Array(frameLength);
 

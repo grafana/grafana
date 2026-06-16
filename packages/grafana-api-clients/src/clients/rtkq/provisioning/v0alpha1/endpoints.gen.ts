@@ -15,15 +15,11 @@ const injectedRtkApi = api
           url: `/connections`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -171,15 +167,11 @@ const injectedRtkApi = api
           url: `/jobs`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -282,15 +274,11 @@ const injectedRtkApi = api
           url: `/repositories`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
             continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
@@ -571,8 +559,6 @@ export type ListConnectionApiResponse = /** status 200 OK */ ConnectionList;
 export type ListConnectionApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -589,47 +575,6 @@ export type ListConnectionApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
-    
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-    
-    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
-      - object.metadata.uid
-      - object.metadata.namespace
-    
-    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
-    
-    Examples:
-      2-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-      4-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
-        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
-        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
-    
-    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
-  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -831,8 +776,6 @@ export type ListJobApiResponse = /** status 200 OK */ JobList;
 export type ListJobApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -849,47 +792,6 @@ export type ListJobApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
-    
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-    
-    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
-      - object.metadata.uid
-      - object.metadata.namespace
-    
-    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
-    
-    Examples:
-      2-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-      4-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
-        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
-        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
-    
-    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
-  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1042,8 +944,6 @@ export type ListRepositoryApiResponse = /** status 200 OK */ RepositoryList;
 export type ListRepositoryApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -1060,47 +960,6 @@ export type ListRepositoryApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
-    
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
-      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-    
-    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
-      - object.metadata.uid
-      - object.metadata.namespace
-    
-    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
-    
-    Examples:
-      2-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
-      4-shard split:
-        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
-        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
-        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
-        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
-    
-    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
-  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1604,6 +1463,8 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
+  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
@@ -1932,6 +1793,8 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
+  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned. */
+  commitSigningKey?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
@@ -1956,10 +1819,23 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
-  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
+  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
+  /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
+  signerEmail?: string;
+  /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
+  signerName?: string;
+  /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
+    
+    Possible enum values:
+     - `"gpg"`
+     - `"smime"`
+     - `"ssh"` */
+  signingMethod?: 'gpg' | 'smime' | 'ssh';
   /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
+  /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
+  smimeCertificate?: string;
 };
 export type ConnectionInfo = {
   name: string;
@@ -1981,6 +1857,8 @@ export type GitHubRepositoryConfig = {
   branch: string;
   /** Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews). */
   generateDashboardPreviews?: boolean;
+  /** WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
+  webhookDisabled?: boolean;
   /** Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
@@ -2028,7 +1906,7 @@ export type SyncOptions = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
 };
@@ -2285,6 +2163,14 @@ export type WebhookResponse = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
 };
+export type SupportedResource = {
+  /** Disabled reports whether the resource is declared but not acted on by provisioning. Active resources omit this field. */
+  disabled?: boolean;
+  /** Group is the API group of the resource (e.g. "dashboard.grafana.app"). */
+  group: string;
+  /** Kind is the kind of the resource (e.g. "Dashboard"). */
+  kind: string;
+};
 export type RepositoryView = {
   /** For git, this is the target branch */
   branch?: string;
@@ -2298,7 +2184,7 @@ export type RepositoryView = {
     
     Possible enum values:
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
-     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment. NOTE: This target is not supported yet. The value is reserved in the API, but repositories that use it are currently rejected during validation.
+     - `"folderless"` Resources are saved at the top level without a wrapper folder. Like `folder`, multiple `folderless` repositories may coexist with each other, with `folder` repositories, and with unprovisioned resources. Unlike `folder`, no repo-named container folder is created: files at the repository path root become top-level resources and subdirectories become top-level folders. Ownership is tracked per-resource via manager annotations rather than by folder containment.
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'folderless' | 'instance';
   /** Repository display */
@@ -2327,6 +2213,8 @@ export type RepositoryViewList = {
   apiVersion?: string;
   /** AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc) */
   availableRepositoryTypes?: ('bitbucket' | 'git' | 'github' | 'githubEnterprise' | 'gitlab' | 'local')[];
+  /** AvailableResources is the list of resource types declared for provisioning in this instance, including disabled ones (see SupportedResource.Disabled). */
+  availableResources?: SupportedResource[];
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
