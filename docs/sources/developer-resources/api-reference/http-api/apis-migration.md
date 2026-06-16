@@ -22,8 +22,8 @@ weight: 01
 # Migrate to the new Grafana APIs
 
 {{< admonition type="note" >}}
-New APIs available in Grafana 12 and later.
-Legacy APIs deprecated in Grafana 13.
+New APIs are available in Grafana 12 and later.
+Legacy APIs are deprecated starting in Grafana 13.
 {{< /admonition >}}
 
 Grafana is migrating existing APIs to the new `/apis` model, a Kubernetes-style API layer which follows a standardized API structure alongside consistent API versioning. Refer to the [New API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) documentation for more details.
