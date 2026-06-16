@@ -141,6 +141,19 @@ describe('BulkActionsBar', () => {
         expect(screen.getByRole('dialog')).toBeInTheDocument();
       });
 
+      it('lists only the selected query refIds in the confirmation modal', async () => {
+        const { user } = renderBar({
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        expect(within(dialog).getByText('A')).toBeInTheDocument();
+        expect(within(dialog).getByText('B')).toBeInTheDocument();
+        expect(within(dialog).queryByText('C')).not.toBeInTheDocument();
+      });
+
       it('calls bulkDeleteQueries and exits multi-select mode after confirming delete', async () => {
         const bulkDeleteQueries = jest.fn();
         const setMultiSelectMode = jest.fn();
@@ -292,6 +305,29 @@ describe('BulkActionsBar', () => {
 
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
         expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      it('lists transformation names in the confirmation modal, falling back to the transform id', async () => {
+        const transformations: Transformation[] = [
+          {
+            transformId: 'tx-0',
+            registryItem: { name: 'Organize fields' } as Transformation['registryItem'],
+            transformConfig: { id: 'organize', options: {} },
+          },
+          { transformId: 'tx-1', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
+        ];
+        const { user } = renderBar({
+          transformations,
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        // Uses the registry display name when present...
+        expect(within(dialog).getByText('Organize fields')).toBeInTheDocument();
+        // ...and falls back to the transform config id when there is no registry item.
+        expect(within(dialog).getByText('reduce')).toBeInTheDocument();
       });
 
       it('calls bulkDeleteTransformations and exits multi-select mode after confirming', async () => {
