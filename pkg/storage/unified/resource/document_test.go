@@ -70,6 +70,9 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		Resource:  gvr.Resource,
 		Name:      "thing-1",
 	}
+	// One members entry deliberately omits the "name" sub-field. The
+	// extractor must skip that entry rather than dropping the whole
+	// member_names field for the document.
 	body := []byte(`{
 		"apiVersion": "example.grafana.app/v1",
 		"kind": "Thing",
@@ -79,6 +82,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 			"size": 42,
 			"members": [
 				{"name": "alice"},
+				{"role": "viewer"},
 				{"name": "bob"}
 			]
 		}
@@ -97,6 +101,8 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "alice@example.com", doc.Fields["email"])
 		require.Equal(t, int64(42), doc.Fields["size"])
+		// The middle member has no "name" sub-field, so it is skipped
+		// without losing the names that did resolve.
 		require.Equal(t, []any{"alice", "bob"}, doc.Fields["member_names"])
 	})
 

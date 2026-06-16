@@ -18,14 +18,19 @@ const arrayProjection = "[*]"
 // shapes are supported:
 //
 //   - Plain dot path ("spec.email"): traverses the object via
-//     unstructured.NestedFieldNoCopy. The returned value may be a scalar, a
-//     slice, or a map; the caller decides what to do with it.
+//     unstructured.NestedFieldNoCopy. The returned value reflects whatever
+//     sits at the path — a scalar, a slice, or a map. coerceToFieldShape
+//     accepts scalars and slices of scalars only; a map will fail
+//     coercion and the field will be dropped with a warning. There is no
+//     SearchFieldType for maps today.
 //   - Scalar-array passthrough ("spec.tags"): identical to the plain dot
 //     path; the result happens to be a slice of scalars.
 //   - Array projection ("spec.members[*].name"): traverses to the slice
 //     before "[*]", then evaluates the remainder against each element. The
 //     returned value is []any with one entry per source element. Elements
-//     that fail their own traversal contribute nil.
+//     that fail their own traversal contribute nil; coerceToFieldShape
+//     skips those positions so a single missing sub-field does not drop
+//     the whole array.
 //
 // Returns (nil, nil) when the path resolves to a missing field at any step
 // (or to a JSON null). The caller drops such fields. An error is returned
