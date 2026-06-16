@@ -77,7 +77,7 @@ JWT structure example.
     "UID": "1234567890",
     "name": "John Doe",
     "username": "johndoe",
-    "emails": ["personal@email.com", "professional@email.com"]
+    "emails": ["personal@example.com", "professional@example.com"]
   }
 }
 ```
@@ -90,7 +90,7 @@ JWT structure example.
 username_attribute_path = user.username # user's login is johndoe
 
 # Specify a nested attribute to use as an email to sign in.
-email_attribute_path = user.emails[1] # user's email is professional@email.com
+email_attribute_path = user.emails[1] # user's email is professional@example.com
 ```
 
 ## Iframe Embedding

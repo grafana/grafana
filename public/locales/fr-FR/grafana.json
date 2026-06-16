@@ -29,7 +29,7 @@
       "add-label": "Ajouter une autorisation",
       "loading": "Chargement des autorisations…",
       "no-permissions": "Il n'y a aucune autorisation",
-      "permissions-change-warning": "Cette action modifiera les autorisations pour ce dossier et tous ses descendants. Au total, elle affectera :",
+      "permissions-change-warning": "",
       "role": "Rôle",
       "serviceaccount": "Compte de service",
       "team": "Équipe",
@@ -1180,12 +1180,6 @@
       "label-metric": "Métrique",
       "label-pending-period": "Période en attente"
     },
-    "evaluation-group": {
-      "label-delete": "Supprimer",
-      "label-export": "Exporter",
-      "label-reorder-rules": "Réorganiser les règles",
-      "text-provisioned": "Mis en service"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Un groupe évalue toutes ses règles sur le même intervalle d’évaluation.",
       "description-often-rules-group-evaluated": "Fréquence à laquelle toutes les règles du groupe sont évaluées.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Saisir un nom",
       "title-new-evaluation-group": "Nouveau groupe d'évaluation"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Une erreur s’est produite lors de la récupération des détails du groupe"
     },
     "existing-rule-editor": {
       "sorry-permission": "Nous sommes désolés ! Vous n’avez pas la permission de modifier cette règle.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Cette source de données n’a pas de règles configurées",
         "new-alert-rule": "Nouvelle règle d'alerte",
-        "new-ds-managed-alerting-rule": "Nouvelle règle d’alerte gérée par la source de données",
         "new-ds-managed-recording-rule": "Nouvelle règle d'enregistrement gérée par la source de données",
         "new-grafana-alerting-rule": "Nouvelle règle d'alerte",
         "new-grafana-recording-rule": "Nouvelle règle d’enregistrement",
@@ -2540,22 +2529,9 @@
         "aria-label": "ajoutez une politique",
         "text": "Nouvelle politique de notification"
       },
-      "delete-reasons": {
-        "no-permissions": "Vous n’avez pas l’autorisation requise pour supprimer cette politique de notification",
-        "provisioned": "La politique de notification est mise en service et ne peut pas être supprimée depuis l’interface utilisateur"
-      },
-      "delete-text": "La politique de notification ne peut pas être supprimée pour les raisons suivantes :",
-      "empty-state": {
-        "message": "Aucune politique trouvée"
-      },
       "fetch": {
         "error": "Échec de la récupération des politiques"
       },
-      "reset-reasons": {
-        "no-permissions": "Vous n’avez pas l’autorisation requise pour réinitialiser cette politique de notification",
-        "provisioned": "La politique de notification est mise en service et ne peut pas être réinitialisée depuis l’interface utilisateur"
-      },
-      "reset-text": "La politique de notification ne peut pas être réinitialisée pour les raisons suivantes :",
       "text-loading": "Chargement…"
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Remplacer les horaires",
       "repeat-interval": "Intervalle de répétition : <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "effacer",
-      "aria-label-search-routing-trees": "rechercher des arborescences de routage",
-      "clear": "Effacer",
-      "label-search-by-name-or-receiver": "Rechercher par nom de politique ou par point de contact",
-      "placeholder-search": "Rechercher"
-    },
-    "routing-tree-header": {
-      "reset": "Réinitialiser"
-    },
     "rule-actions-buttons": {
       "title-edit": "Modifier",
       "title-view": "Afficher"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Règles d'alerte"
       },
-      "rulerrule-loading-error": "Échec du chargement de la règle",
       "toggle": {
         "use-new-experience": "Utiliser la nouvelle expérience",
         "view-previous-experience": "Revenir à l’expérience précédente"
@@ -3577,9 +3542,6 @@
       "collapse": "Réduire",
       "collapse-all": "Tout réduire",
       "collapse-sidebar": "Réduire la barre latérale",
-      "compact-firing": "déclenchement",
-      "compact-pending": "en attente",
-      "compact-rules": "règles",
       "error-loading-rule": "Erreur lors du chargement de la règle",
       "expand": "Agrandir",
       "expand-all": "Tout développer",
@@ -4262,13 +4224,9 @@
       "cancel-button": "Annuler",
       "confirmation-text": "Supprimer",
       "delete-button": "Supprimer",
-      "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
-      "delete-modal-invalid-title": "Impossible de supprimer le dossier",
       "delete-modal-restore-dashboards-common": "Les tableaux de bord supprimés seront conservés dans l’historique pendant une durée maximale de 12 mois. Les utilisateurs disposant de l’autorisation de suppression peuvent restaurer les tableaux de bord qu’ils ont supprimés. Les administrateurs peuvent, quant à eux, restaurer les tableaux de bord supprimés par tout utilisateur. L’historique est limité à 1 000 tableaux de bord ; les plus anciens pourront être supprimés plus tôt si cette limite est atteinte.",
       "delete-modal-restore-dashboards-prefix-folder": "Cette action supprimera immédiatement les dossiers sélectionnés.",
       "delete-modal-restore-dashboards-suffix-folder": "Les dossiers ne peuvent pas être restaurés.",
-      "delete-modal-text": "Cette action supprimera le contenu suivant :",
-      "delete-modal-text-one-folder": "Cette action supprimera le dossier « <1>{{ folderName }}</1> » et le contenu suivant :",
       "delete-modal-title": "Supprimer",
       "delete-provisioned-folder": "Supprimer le dossier provisionné",
       "deleting": "Suppression…",
@@ -4276,8 +4234,6 @@
       "move-button": "Déplacer",
       "move-modal-alert": "Le déplacement de cet élément peut modifier ses permissions.",
       "move-modal-field-label": "Nom du dossier",
-      "move-modal-text": "Cette action déplacera le contenu suivant :",
-      "move-modal-text-one-folder": "Cette action déplacera le dossier « <1>{{ folderName }}</1> » et le contenu suivant :",
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "Déplacer un dossier provisionné",
       "moving": "Déplacement...",
@@ -4287,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Attribuer un propriétaire au dossier",
       "rename-provisioned-folder": "Renommer le dossier provisionné",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
-      "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés"
+      "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Récemment supprimé"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Dossier non trouvé",
       "title-ruler-namespace-error": "Impossible de charger les règles"
@@ -4306,13 +4269,19 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "error-deleting-resources": "Erreur lors de la suppression des ressources"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Erreur lors de la suppression des ressources",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuler",
       "button-move": "Déplacer",
       "button-moving": "Déplacement en cours…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Si vous avez un accès direct à la cible, veuillez la modifier directement dans le référentiel associé.",
         "read-only-saving-message": "Ce référentiel est en lecture seule et provisionné via Git. {{readOnlyMessage}}",
@@ -4323,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Erreur lors du déplacement des ressources",
       "error-no-target-folder-path": "Le chemin du dossier cible est invalide ou vide ; veuillez sélectionner à nouveau.",
-      "move-total": "Au total, cela affectera :",
       "move-warning": "Cette action déplacera les dossiers sélectionnés et leurs descendants. Les dossiers cibles disponibles dépendent des ressources sélectionnées.",
       "move-warning-tooltip": "Vous pouvez déplacer uniquement les ressources provisionnées à l’intérieur de leur dossier provisionné, et les ressources locales vers des dossiers locaux.",
-      "target-folder": "Dossier de destination"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} règle d'alerte",
-      "alertRule_other": "{{count}} règles d'alerte",
-      "dashboard_one": "{{count}} tableau de bord",
-      "dashboard_other": "{{count}} tableaux de bord",
-      "folder_one": "{{count}} dossier",
-      "folder_other": "{{count}} dossiers",
-      "libraryPanel_one": "{{count}} panneau Bibliothèque",
-      "libraryPanel_other": "{{count}} panneaux Bibliothèque",
-      "total_one": "{{count}} objet",
-      "total_other": "{{count}} objets"
+      "target-folder": "Dossier de destination",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4367,12 +4325,11 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Champs obligatoires manquants",
       "success-message": "Dossier supprimé avec succès"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Impossible de récupérer les informations descendantes"
     },
     "empty-state": {
       "button-title": "Créer un tableau de bord",
@@ -5277,10 +5234,6 @@
       },
       "pane-header": "Ajouter"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Fermer le widget « Ajouter un panneau »",
-      "tooltip-close-widget": "Fermer le widget"
-    },
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
@@ -5373,6 +5326,8 @@
     },
     "code-pane": {
       "collapse": "Réduire l’éditeur",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Développer l’éditeur",
       "header": "Modifier en tant que code",
       "modal-title": "Modifier le tableau de bord en tant que code"
@@ -5672,8 +5627,7 @@
           "apply": "Appliquer",
           "change-value": "Modifier la valeur de la variable",
           "discard": "Abandonner",
-          "modal-title": "Personnaliser les options",
-          "values": "Valeurs séparées par une virgule"
+          "modal-title": "Personnaliser les options"
         },
         "datasource-options": {
           "name-filter": "Nom du filtre",
@@ -5898,7 +5852,6 @@
     },
     "inspect": {
       "data-tab": "Données",
-      "error-tab": "Erreur",
       "json-tab": "JSON",
       "meta-tab": "Métadonnées",
       "query-tab": "Requête",
@@ -6016,13 +5969,6 @@
         }
       }
     },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Titre du widget"
-        }
-      }
-    },
     "options": {
       "description": "Description",
       "title-option": "Titre"
@@ -6080,9 +6026,6 @@
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Données brutes"
-    },
     "panel-links": {
       "aria-label-panel-links": "Liens de panneau"
     },
@@ -6123,18 +6066,6 @@
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
       "confirmText-restore-version": "Oui, restaurer à la version {{version}}",
       "title-restore-version": "Restaurer la version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Options de ligne"
-    },
-    "row-options-form": {
-      "cancel": "Annuler",
-      "label-repeat-for": "Répéter pour",
-      "label-title": "Titre",
-      "update": "Mettre à jour"
-    },
-    "row-options-modal": {
-      "title-row-options": "Options de ligne"
     },
     "rows-layout": {
       "cancel": "Annuler",
@@ -6495,16 +6426,6 @@
       "changes": "Voulez-vous enregistrer vos modifications ?",
       "discard": "Abandonner",
       "title-unsaved-changes": "Modifications non enregistrées"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Les panneaux de cette ligne utilisent la source de données {{SHARED_DASHBOARD_QUERY}}. Ces panneaux feront référence au panneau de la ligne d'origine, pas à ceux des lignes répétées."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Supprimer la ligne",
-      "learn-more": "En savoir plus",
-      "title": {
-        "delete-row": "Supprimer la ligne"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Impossible de trouver un ID Grafana.com valide",
@@ -8781,19 +8702,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Ajoutez des informations supplémentaires à côté du service et de l’opération sur une ligne de la barre d’espace dans la vue de la trace.",
-      "title-span-bar": "Barre d’espace"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Sélectionner un nom d’étiquette",
-      "label-label": "Étiquette",
-      "label-tag-key": "Clé de balise",
-      "placeholder-duration": "Durée",
-      "placeholder-enter-tag-key": "Saisir la clé de balise",
-      "tooltip-default-duration": "Par défaut : durée",
-      "tooltip-tag-key": "Clé de balise qui sera utilisée pour obtenir la valeur de la balise. Les attributs et les ressources d’une période seront recherchés pour la clé de la balise"
-    },
     "span-detail": {
       "label": {
         "kind": "Type :",
@@ -9006,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Exécuter la requête"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "Erreur",
       "loading": "Chargement des informations de schéma…",
@@ -9030,13 +8943,6 @@
       "folder-deleted-success": "Dossier supprimé",
       "folder-move-error-provisioned": "Impossible de déplacer le dossier provisionné. Pour le déplacer, effectuez l’opération dans le référentiel puis synchronisez afin d’appliquer les modifications.",
       "folder-moved-success": "Dossier déplacé"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Chargement en cours"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11522,6 @@
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Cet outil permet de migrer certaines ressources de cette installation vers votre pile cloud. Pour commencer, vous devez créer un instantané de cette installation. La création d'un instantané prend généralement moins de deux minutes. L'instantané est stocké avec cette installation Grafana.",
-      "title": "Aucun instantané n'existe",
-      "when-complete": "Une fois l'instantané terminé, vous pourrez le télécharger sur votre pile cloud."
-    },
     "building-snapshot": {
       "description": "Nous rassemblons vos ressources pour la migration vers Grafana Cloud. Cela ne devrait prendre qu’un instant.",
       "description-eta": "La création d'un instantané prend généralement moins de deux minutes.",
@@ -12245,8 +12146,10 @@
       "undock": "Ancrer le menu"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Réduire la section : {{sectionName}}",
-      "expand-aria-label": "Élargir la section : {{sectionName}}"
+      "expand-aria-label": "Élargir la section : {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Changer l’organisation"
@@ -12477,13 +12380,6 @@
       "recently-viewed-dashboards": "Tableaux de bord consultés récemment",
       "search": "Rechercher",
       "starred-dashboards": "Tableaux de bord favoris"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Nom du calcul"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13129,6 +13025,14 @@
       "folders-count_one": "{{count}} dossier",
       "folders-count_other": "{{count}} dossier"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Évitez la configuration et bénéficiez de Git Sync entièrement géré et hébergé sur Grafana Cloud avec l’<2>abonnement Grafana Cloud gratuit à vie</2>.",
       "title": "Vous pouvez également utiliser Git Sync sur Grafana Cloud"
@@ -13147,6 +13051,18 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Paramètres du référentiel enregistrés",
@@ -13177,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Ma configuration"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Remplace l’URL détectée automatiquement pour l’enregistrement des webhooks.",
-      "description-webhook-url-learn-more": "En savoir plus",
-      "label-git-hub-features": "Fonctionnalités GitHub",
-      "label-webhook-url": "URL du webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13333,28 +13242,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
-      "description-generate-dashboard-previews": "Créer des liens de prévisualisation pour les demandes de tirage",
       "description-image-rendering": "Nécessite un rendu d’image. <2>Configurer le rendu d’image</2>",
-      "description-preview-requirements": "(nécessite le <2>rendu d’images</2> et l’activation de l’accès public)",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-sync-interval": "Fréquence de synchronisation des changements depuis le dépôt",
-      "description-webhook-url": "Remplace l’URL détectée automatiquement pour l’enregistrement des webhooks.",
       "error-sync-interval-required": "L’intervalle de synchronisation est requis",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
-      "label-generate-dashboard-previews": "Générer des aperçus de tableaux de bord",
       "label-read-only": "Lecture seule",
-      "label-sync-interval": "Intervalle de synchronisation (secondes)",
-      "label-webhook-url": "URL du webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
     "fix-folder-metadata": {
       "button": "Corriger les ID de dossier"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Annuler",
+      "default-commit-message": "",
       "error-message": "Échec du démarrage de la tâche de correction des métadonnées du dossier. Veuillez réessayer.",
       "error-title": "Erreur lors de la correction des métadonnées du dossier",
-      "loading": "Chargement du référentiel en cours…",
       "read-only-message": "Les métadonnées du dossier ne peuvent pas être corrigées automatiquement.",
       "submit": "Corriger les ID de dossier",
       "submitting": "Correction en cours…",
@@ -13585,6 +13488,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
+    },
     "quota-limit": {
       "note": "Remarque :",
       "to-increase-limits": "Pour ajouter davantage de {{type}},",
@@ -13751,11 +13662,24 @@
     "shared": {
       "branch-description": "La branche à utiliser pour le provisionnement",
       "branch-label": "Branche",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Facultatif. Chemin d’accès au sous-répertoire contenant les ressources que vous souhaitez synchroniser.",
       "path-label": "Chemin",
       "progress-bar": {
         "aria-label": "Barre de progression"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Nom d’utilisateur",
       "url-label": "URL du référentiel",
       "url-pattern": "Doit être une URL de référentiel valide (https://nom-hôte/propriétaire/référentiel)"
@@ -13823,6 +13747,13 @@
     "watch-stream": {
       "error-description": "Les mises à jour en temps réel n’ont pas pu être lancées. Actualisez la page pour voir les données les plus récentes.",
       "error-title": "Mises à jour en temps réel indisponibles"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Veuillez prendre connaissance des limitations suivantes. Pour plus de détails, consultez la <2>documentation Git Sync</2>.",
@@ -14129,7 +14060,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14138,6 +14068,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14214,6 +14145,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Ajouter sous {{id}}",
       "add-expression": "Ajouter une expression",
@@ -14232,9 +14167,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nouveau {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Requêtes et expressions",
       "toggle-size": "Basculer la taille de la barre latérale",
       "transformations": "Transformations",
+      "transformations-empty": "",
       "view-toggle": "Afficher",
       "alerts_one": "Alerte ({{count}})",
       "alerts_other": "Alertes ({{count}})",

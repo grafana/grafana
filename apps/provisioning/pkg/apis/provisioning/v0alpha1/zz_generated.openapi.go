@@ -954,6 +954,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubConnectionConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"appID", "installationID"},
 			},
@@ -1073,6 +1080,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					"generateDashboardPreviews": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether we should show dashboard previews for pull requests. By default, this is false (i.e. we will not create previews).",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

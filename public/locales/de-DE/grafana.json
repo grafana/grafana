@@ -29,7 +29,7 @@
       "add-label": "Berechtigung hinzufügen",
       "loading": "Berechtigungen werden geladen …",
       "no-permissions": "Keine Berechtigungen vorhanden",
-      "permissions-change-warning": "Dadurch werden die Berechtigungen für diesen Ordner und alle seine Unterordner geändert. Insgesamt betrifft dies Folgendes:",
+      "permissions-change-warning": "",
       "role": "Rolle",
       "serviceaccount": "Service-Konto",
       "team": "Team",
@@ -1180,12 +1180,6 @@
       "label-metric": "Metrik",
       "label-pending-period": "Wartezeit"
     },
-    "evaluation-group": {
-      "label-delete": "Löschen",
-      "label-export": "Exportieren",
-      "label-reorder-rules": "Regeln neu anordnen",
-      "text-provisioned": "Bereitgestellt"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Eine Gruppe bewertet ihre gesamten Regeln über das gleiche Bewertungsintervall.",
       "description-often-rules-group-evaluated": "Wie oft alle Regeln in der Gruppe bewertet werden.",
@@ -1194,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Name eingeben",
       "title-new-evaluation-group": "Neue Evaluierungsgruppe"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Beim Versuch des Abrufs der Gruppendetails ist ein Fehler aufgetreten"
     },
     "existing-rule-editor": {
       "sorry-permission": "Es tut uns leid! Sie haben keine Berechtigung zum Bearbeiten dieser Regel.",
@@ -1967,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Diese Datenquelle hat keine konfigurierten Regeln",
         "new-alert-rule": "Neue Warnregel",
-        "new-ds-managed-alerting-rule": "Neue von der Datenquelle verwaltete Alarmregel",
         "new-ds-managed-recording-rule": "Neue von der Datenquellen verwaltete Aufnahmeregel",
         "new-grafana-alerting-rule": "Neue Warnregel",
         "new-grafana-recording-rule": "Neue Aufnahmeregel",
@@ -2540,22 +2529,9 @@
         "aria-label": "Richtlinie hinzufügen",
         "text": "Neue Benachrichtigungsrichtlinie"
       },
-      "delete-reasons": {
-        "no-permissions": "Sie haben nicht die erforderliche Berechtigung, um diese Benachrichtigungsrichtlinie zu löschen",
-        "provisioned": "Die Benachrichtigungsrichtlinie ist bereitgestellt und kann nicht über die Benutzeroberfläche gelöscht werden"
-      },
-      "delete-text": "Die Benachrichtigungsrichtlinie kann aus folgenden Gründen nicht gelöscht werden:",
-      "empty-state": {
-        "message": "Keine Richtlinien gefunden"
-      },
       "fetch": {
         "error": "Abrufen der Richtlinien fehlgeschlagen"
       },
-      "reset-reasons": {
-        "no-permissions": "Sie haben nicht die erforderliche Berechtigung, um diese Benachrichtigungsrichtlinie zurückzusetzen",
-        "provisioned": "Die Benachrichtigungsrichtlinie ist bereitgestellt und kann nicht über die Benutzeroberfläche zurückgesetzt werden"
-      },
-      "reset-text": "Die Benachrichtigungsrichtlinie kann aus folgenden Gründen nicht zurückgesetzt werden:",
       "text-loading": "Lädt ...."
     },
     "policies-tree-wrapper": {
@@ -2765,16 +2741,6 @@
       "label-override-timings": "Zeitsteuerungen überschreiben",
       "repeat-interval": "Wiederholungsintervall: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "löschen",
-      "aria-label-search-routing-trees": "Routing-Strukturen suchen",
-      "clear": "Löschen",
-      "label-search-by-name-or-receiver": "Suche nach Richtlinienname oder Kontaktpunkt",
-      "placeholder-search": "Suchen"
-    },
-    "routing-tree-header": {
-      "reset": "Zurücksetzen"
-    },
     "rule-actions-buttons": {
       "title-edit": "Bearbeiten",
       "title-view": "Anzeigen"
@@ -2980,7 +2946,6 @@
       "return-button": {
         "title": "Warnregeln"
       },
-      "rulerrule-loading-error": "Die Regel konnte nicht geladen werden",
       "toggle": {
         "use-new-experience": "Neue Benutzeroberfläche verwenden",
         "view-previous-experience": "Zurück zur vorherigen Oberfläche"
@@ -3577,9 +3542,6 @@
       "collapse": "Einklappen",
       "collapse-all": "Alle einklappen",
       "collapse-sidebar": "Seitenleiste einklappen",
-      "compact-firing": "wird ausgelöst",
-      "compact-pending": "ausstehend",
-      "compact-rules": "Regeln",
       "error-loading-rule": "Fehler beim Laden der Regel",
       "expand": "Ausklappen",
       "expand-all": "Alle ausklappen",
@@ -4262,13 +4224,9 @@
       "cancel-button": "Abbrechen",
       "confirmation-text": "Löschen",
       "delete-button": "Löschen",
-      "delete-modal-invalid-text": "Ein oder mehrere Ordner enthalten Bibliotheksfenster oder Alarmierungsregeln. Löschen Sie diese zuerst, um fortzufahren.",
-      "delete-modal-invalid-title": "Ordner kann nicht gelöscht werden",
       "delete-modal-restore-dashboards-common": "Gelöschte Dashboards werden bis zu 12 Monate im Verlauf gespeichert. Nutzer mit Löschberechtigungen können die von ihnen selbst gelöschten Dashboards wiederherstellen und Administratoren können von jedem beliebigen Nutzer gelöschte Dashboards wiederherstellen. Der Verlauf ist auf 1000 Dashboards beschränkt – ältere können früher entfernt werden, wenn die Grenze erreicht wird.",
       "delete-modal-restore-dashboards-prefix-folder": "Durch diese Aktion werden die ausgewählten Ordner sofort gelöscht.",
       "delete-modal-restore-dashboards-suffix-folder": "Ordner können nicht wiederhergestellt werden.",
-      "delete-modal-text": "Diese Aktion wird folgenden Inhalt löschen:",
-      "delete-modal-text-one-folder": "Durch diese Aktion werden der Ordner „<1>{{ folderName }}</1>“ und der folgende Inhalt gelöscht:",
       "delete-modal-title": "Löschen",
       "delete-provisioned-folder": "Bereitgestellten Ordner löschen",
       "deleting": "Löschen...",
@@ -4276,8 +4234,6 @@
       "move-button": "Verschieben",
       "move-modal-alert": "Das Verschieben dieses Elements kann seine Berechtigungen ändern.",
       "move-modal-field-label": "Ordnername",
-      "move-modal-text": "Diese Aktion wird folgenden Inhalt verschieben:",
-      "move-modal-text-one-folder": "Durch diese Aktion werden der Ordner „<1>{{ folderName }}</1>“ und der folgende Inhalt verschoben:",
       "move-modal-title": "Verschieben",
       "move-provisioned-folder": "Bereitgestellten Ordner verschieben",
       "moving": "Verschieben...",
@@ -4287,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Ordner einen Eigentümer zuweisen",
       "rename-provisioned-folder": "Bereitgestellten Ordner umbenennen",
       "selected-mix-resources-modal-text": "Sie haben sowohl bereitgestellte als auch nicht bereitgestellte Ressourcen ausgewählt. Diese können nicht zusammen verarbeitet werden. Bitte wählen Sie nur bereitgestellte Ressourcen oder nur nicht bereitgestellte Ressourcen aus und versuchen Sie es dann erneut.",
-      "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt"
+      "selected-mix-resources-modal-title": "Gemischte Ressourcentypen ausgewählt",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Kürzlich gelöscht"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Ordner nicht gefunden",
       "title-ruler-namespace-error": "Regeln können nicht geladen werden"
@@ -4306,13 +4269,19 @@
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "delete-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner gelöscht. Insgesamt betrifft dies:",
-      "error-deleting-resources": "Fehler beim Löschen von Ressourcen"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Fehler beim Löschen von Ressourcen",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Abbrechen",
       "button-move": "Verschieben",
       "button-moving": "Wird verschoben ...",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Wenn Sie direkten Zugriff auf das Ziel haben, nehmen Sie bitte Änderungen direkt im Ziel-Repository vor.",
         "read-only-saving-message": "Das Repository ist schreibgeschützt und wird in Git bereitgestellt. {{readOnlyMessage}}",
@@ -4323,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Fehler beim Verschieben von Ressourcen",
       "error-no-target-folder-path": "Der Zielordnerpfad ist ungültig oder leer, bitte wählen Sie ihn erneut aus.",
-      "move-total": "Insgesamt betrifft dies:",
       "move-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner verschoben. Die verfügbaren Zielordner hängen von den ausgewählten Ressourcen ab.",
       "move-warning-tooltip": "Sie können bereitgestellte Ressourcen nur innerhalb ihres bereitgestellten Ordners und lokale Ressourcen nur in lokale Ordner verschieben.",
-      "target-folder": "Zielordner"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} Alarmierungsregel",
-      "alertRule_other": "{{count}} Alarmierungsregeln",
-      "dashboard_one": "{{count}} Dashboard",
-      "dashboard_other": "{{count}} Dashboards",
-      "folder_one": "{{count}} Ordner",
-      "folder_other": "{{count}} Ordner",
-      "libraryPanel_one": "{{count}} Bibliotheksfenster",
-      "libraryPanel_other": "{{count}} Bibliotheksfenster",
-      "total_one": "{{count}} Element",
-      "total_other": "{{count}} Elemente"
+      "target-folder": "Zielordner",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4367,12 +4325,11 @@
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
       "button-deleting": "Wird gelöscht …",
-      "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Fehlende Pflichtfelder",
       "success-message": "Ordner erfolgreich gelöscht"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Nachfolgerinformationen können nicht abgerufen werden"
     },
     "empty-state": {
       "button-title": "Dashboard erstellen",
@@ -5277,10 +5234,6 @@
       },
       "pane-header": "Hinzufügen"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Widget „Panel hinzufügen“ schließen",
-      "tooltip-close-widget": "Widget schließen"
-    },
     "add-menu": {
       "import": "Aus Bibliothek importieren",
       "paste-panel": "Panel einfügen",
@@ -5373,6 +5326,8 @@
     },
     "code-pane": {
       "collapse": "Editor einklappen",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Editor ausklappen",
       "header": "Als Code bearbeiten",
       "modal-title": "Dashboard als Code bearbeiten"
@@ -5672,8 +5627,7 @@
           "apply": "Anwenden",
           "change-value": "Variablenwert ändern",
           "discard": "Verwerfen",
-          "modal-title": "Benutzerdefinierte Optionen",
-          "values": "Werte werden durch Komma getrennt"
+          "modal-title": "Benutzerdefinierte Optionen"
         },
         "datasource-options": {
           "name-filter": "Namensfilter",
@@ -5898,7 +5852,6 @@
     },
     "inspect": {
       "data-tab": "Daten",
-      "error-tab": "Fehler",
       "json-tab": "JSON",
       "meta-tab": "Metadaten",
       "query-tab": "Abfrage",
@@ -6016,13 +5969,6 @@
         }
       }
     },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget-Titel"
-        }
-      }
-    },
     "options": {
       "description": "Beschreibung",
       "title-option": "Titel"
@@ -6080,9 +6026,6 @@
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Rohdaten"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panel-Links"
     },
@@ -6123,18 +6066,6 @@
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
       "confirmText-restore-version": "Ja, auf Version {{version}} zurücksetzen",
       "title-restore-version": "Version wiederherstellen"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Zeilenoptionen"
-    },
-    "row-options-form": {
-      "cancel": "Abbrechen",
-      "label-repeat-for": "Wiederholen für",
-      "label-title": "Titel",
-      "update": "Aktualisieren"
-    },
-    "row-options-modal": {
-      "title-row-options": "Zeilenoptionen"
     },
     "rows-layout": {
       "cancel": "Abbrechen",
@@ -6495,16 +6426,6 @@
       "changes": "Möchten Sie Ihre Änderungen speichern?",
       "discard": "Verwerfen",
       "title-unsaved-changes": "Nicht gespeicherte Änderungen"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panels in dieser Zeile verwenden {{SHARED_DASHBOARD_QUERY}} als Datenquelle. Diese Panels verweisen auf das Panel in der ursprünglichen Zeile, nicht auf jene in den wiederholten Zeilen."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Zeile löschen",
-      "learn-more": "Mehr erfahren",
-      "title": {
-        "delete-row": "Zeile löschen"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",
@@ -8781,19 +8702,6 @@
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
     },
-    "span-bar-section": {
-      "description-link": "Ergänzen Sie in einer Zeile der Spannenleiste in der Trace-Ansicht zusätzliche Informationen neben dem Dienst und der Operation.",
-      "title-span-bar": "Spannenleiste"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Label-Name auswählen",
-      "label-label": "Label",
-      "label-tag-key": "Tag-Key",
-      "placeholder-duration": "Dauer",
-      "placeholder-enter-tag-key": "Tag-Key eingeben",
-      "tooltip-default-duration": "Standard: Dauer",
-      "tooltip-tag-key": "Tag-Key, der genutzt wird, um den Tag-Wert zu erhalten. Die Attribute und Ressourcen einer Spanne werden nach dem Tag-Key durchsucht"
-    },
     "span-detail": {
       "label": {
         "kind": "Art:",
@@ -9006,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Abfrage ausführen"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "Fehler",
       "loading": "Schemainformationen werden geladen …",
@@ -9030,13 +8943,6 @@
       "folder-deleted-success": "Ordner gelöscht",
       "folder-move-error-provisioned": "Bereitgestellter Ordner kann nicht verschoben werden. Um ihn zu verschieben, verschieben Sie ihn in das Repository und synchronisieren Sie es, um die Änderungen zu übernehmen.",
       "folder-moved-success": "Ordner verschoben"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Wird geladen"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -11616,11 +11522,6 @@
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Dieses Tool kann Ressourcen von dieser Installation zu Ihrem Cloud-Stack migrieren. Erstellen Sie einen Snapshot dieser Installation, um zu beginnen. Das Erstellen eines Snapshots dauert in der Regel weniger als zwei Minuten. Der Snapshot wird neben dieser Grafana-Installation gespeichert.",
-      "title": "Kein Snapshot vorhanden",
-      "when-complete": "Sobald der Snapshot erstellt wurde, können Sie ihn in Ihren Cloud-Stack hochladen."
-    },
     "building-snapshot": {
       "description": "Wir sammeln Ihre Ressourcen für die Migration in Grafana Cloud. Dies sollte nur einen Moment dauern.",
       "description-eta": "Das Erstellen eines Snapshots dauert in der Regel weniger als zwei Minuten.",
@@ -12245,8 +12146,10 @@
       "undock": "Menü abdocken"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Abschnitt einklappen: {{sectionName}}",
-      "expand-aria-label": "Abschnitt ausklappen: {{sectionName}}"
+      "expand-aria-label": "Abschnitt ausklappen: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Organisation ändern"
@@ -12477,13 +12380,6 @@
       "recently-viewed-dashboards": "Zuletzt angesehene Dashboards",
       "search": "Suchen",
       "starred-dashboards": "Mit Stern versehene Dashboards"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Name der Berechnung"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13129,6 +13025,14 @@
       "folders-count_one": "{{count}} Ordner",
       "folders-count_other": "{{count}} Ordner"
     },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
     "cloud-info-box": {
       "body": "Sparen Sie sich die Einrichtung und erhalten Sie Git Sync vollständig verwaltet und gehostet in Grafana Cloud – mit dem <2>jederzeit kostenlosen Grafana-Cloud-Plan</2>.",
       "title": "Sie können Git Sync auch in Grafana Cloud nutzen"
@@ -13147,6 +13051,18 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Repository-Einstellungen gespeichert",
@@ -13177,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Meine Konfiguration"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Überschreibt die automatisch erkannte URL für die Registrierung von Webhooks.",
-      "description-webhook-url-learn-more": "Mehr erfahren",
-      "label-git-hub-features": "GitHub-Funktionen",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13333,28 +13242,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Fügt eine Bildvorschau der Dashboard-Änderungen bei Pull-Requests hinzu. Bilder Ihrer Grafana-Dashboards werden in Ihrem Git-Repository bereitgestellt und sind für jede Person mit Repository-Zugriff sichtbar.",
-      "description-generate-dashboard-previews": "Erstellen Sie Vorschau-Links für Pull-Requests",
       "description-image-rendering": "Erfordert Bild-Rendering. <2>Bild-Rendering einrichten</2>",
-      "description-preview-requirements": "(erfordert <2>Image Rendering</2> und aktivierten öffentlichen Zugriff)",
       "description-read-only": "Ressourcen können über Grafana nicht geändert werden.",
       "description-sync-interval": "Wie oft Änderungen aus dem Repository synchronisiert werden sollen",
-      "description-webhook-url": "Überschreibt die automatisch erkannte URL für die Registrierung von Webhooks.",
       "error-sync-interval-required": "Synchronisierungsintervall erforderlich",
       "label-enable-previews": "Dashboard-Vorschau in Pull-Requests aktivieren",
-      "label-generate-dashboard-previews": "Dashboard-Vorschauen generieren",
       "label-read-only": "Nur lesen",
-      "label-sync-interval": "Synchronisierungsintervall (Sekunden)",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Synchronisierungsintervall (Sekunden)"
     },
     "fix-folder-metadata": {
       "button": "Ordner-IDs korrigieren"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Abbrechen",
+      "default-commit-message": "",
       "error-message": "Der Auftrag zum Korrigieren der Ordner-Metadaten konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
       "error-title": "Fehler beim Korrigieren der Ordner-Metadaten",
-      "loading": "Repository wird geladen …",
       "read-only-message": "Ordner-Metadaten können nicht automatisch korrigiert werden.",
       "submit": "Ordner-IDs korrigieren",
       "submitting": "Wird korrigiert …",
@@ -13585,6 +13488,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
+    },
     "quota-limit": {
       "note": "Hinweis:",
       "to-increase-limits": "Um weitere {{type}} hinzuzufügen,",
@@ -13751,11 +13662,24 @@
     "shared": {
       "branch-description": "Der für die Bereitstellung verwendete Branch",
       "branch-label": "Branch",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Optional. Pfad zum Unterverzeichnis mit den Ressourcen, die Sie synchronisieren möchten.",
       "path-label": "Pfad",
       "progress-bar": {
         "aria-label": "Fortschrittsbalken"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Benutzername",
       "url-label": "Repository-URL",
       "url-pattern": "Muss eine gültige Repository-URL sein (https://hostname/owner/repo)"
@@ -13823,6 +13747,13 @@
     "watch-stream": {
       "error-description": "Echtzeit-Updates konnten nicht gestartet werden. Aktualisieren Sie die Seite, um die neuesten Daten zu sehen.",
       "error-title": "Live-Updates nicht verfügbar"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Bitte beachten Sie die folgenden Einschränkungen. Weitere Details finden Sie in der <2>Git-Sync-Dokumentation</2>.",
@@ -14129,7 +14060,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14138,6 +14068,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14214,6 +14145,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Unter {{id}} hinzufügen",
       "add-expression": "Ausdruck hinzufügen",
@@ -14232,9 +14167,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "{{type}} neu",
+      "queries-empty": "",
       "queries-expressions": "Abfragen und Ausdrücke",
       "toggle-size": "Seitenleistengröße umschalten",
       "transformations": "Transformationen",
+      "transformations-empty": "",
       "view-toggle": "Anzeigen",
       "alerts_one": "Warnung ({{count}})",
       "alerts_other": "Warnungen ({{count}})",

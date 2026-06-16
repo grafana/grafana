@@ -12,7 +12,7 @@ import (
 
 func TestSearchFieldsFromTableColumns(t *testing.T) {
 	t.Run("filterable string produces filter+retrieve", func(t *testing.T) {
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{
 				Name:        "email",
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
@@ -34,7 +34,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	})
 
 	t.Run("non-filterable string is retrieve-only", func(t *testing.T) {
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{
 				Name: "title",
 				Type: resourcepb.ResourceTableColumnDefinition_STRING,
@@ -47,7 +47,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	t.Run("filterable non-string is retrieve-only", func(t *testing.T) {
 		// Filterable is only honored on STRING fields in the current mapper;
 		// non-string types must not gain a keyword variant via translation.
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{
 				Name: "lastSeenAt",
 				Type: resourcepb.ResourceTableColumnDefinition_INT64,
@@ -62,7 +62,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	})
 
 	t.Run("array flag is propagated", func(t *testing.T) {
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{
 				Name:    "tags",
 				Type:    resourcepb.ResourceTableColumnDefinition_STRING,
@@ -81,7 +81,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	})
 
 	t.Run("date_time collapses to date", func(t *testing.T) {
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{Name: "ts", Type: resourcepb.ResourceTableColumnDefinition_DATE_TIME},
 		})
 		require.Len(t, got, 1)
@@ -91,7 +91,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	t.Run("object and binary types map to unknown", func(t *testing.T) {
 		// OBJECT and BINARY have no corresponding SearchFieldType because the
 		// new design omits them; they map to SearchFieldTypeUnknown.
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			{Name: "obj", Type: resourcepb.ResourceTableColumnDefinition_OBJECT},
 			{Name: "bin", Type: resourcepb.ResourceTableColumnDefinition_BINARY},
 		})
@@ -101,7 +101,7 @@ func TestSearchFieldsFromTableColumns(t *testing.T) {
 	})
 
 	t.Run("nil entries are dropped", func(t *testing.T) {
-		got := searchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
+		got := SearchFieldsFromTableColumns([]*resourcepb.ResourceTableColumnDefinition{
 			nil,
 			{Name: "x", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 			nil,

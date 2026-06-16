@@ -144,6 +144,39 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "webhookDisabled without spec.webhook is valid",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:             "https://github.com/grafana/grafana",
+						Branch:          "main",
+						WebhookDisabled: true,
+					},
+				},
+			},
+		},
+		{
+			name: "webhookDisabled with spec.webhook set is invalid",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:             "https://github.com/grafana/grafana",
+						Branch:          "main",
+						WebhookDisabled: true,
+					},
+					Webhook: &provisioning.WebhookConfig{
+						BaseURL: "https://grafana.example.com",
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"webhookDisabled", "cannot be true when spec.webhook is set"},
+		},
 	}
 
 	for _, tt := range tests {
