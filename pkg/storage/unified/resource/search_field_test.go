@@ -166,3 +166,105 @@ func TestMapProvider_PreferredVersionFallback(t *testing.T) {
 	// Resources without a registered preferred version return "".
 	assert.Equal(t, "", p.PreferredVersion("other.grafana.app", "things"))
 }
+
+func TestMapProvider_IndexAffectingHash(t *testing.T) {
+	const (
+		group    = "iam.grafana.app"
+		resource = "users"
+	)
+	v0 := schema.GroupVersionResource{Group: group, Version: "v0alpha1", Resource: resource}
+	v1 := schema.GroupVersionResource{Group: group, Version: "v1", Resource: resource}
+
+	base := []SearchFieldDefinition{
+		{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		{Name: "login", Path: "spec.login", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+	}
+
+	p := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{v0: base}, nil)
+	h := p.IndexAffectingHash(group, resource)
+	assert.Len(t, h, 64) // sha256 hex
+
+	t.Run("empty registration returns empty", func(t *testing.T) {
+		empty := NewMapProvider(nil, nil)
+		assert.Equal(t, "", empty.IndexAffectingHash(group, resource))
+	})
+
+	t.Run("unknown (group, resource) returns empty", func(t *testing.T) {
+		assert.Equal(t, "", p.IndexAffectingHash("other.grafana.app", "things"))
+	})
+
+	t.Run("stable under field reordering", func(t *testing.T) {
+		reordered := []SearchFieldDefinition{base[1], base[0]}
+		p2 := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{v0: reordered}, nil)
+		assert.Equal(t, h, p2.IndexAffectingHash(group, resource))
+	})
+
+	t.Run("stable under capability reordering", func(t *testing.T) {
+		flipped := []SearchFieldDefinition{
+			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityRetrieve, SearchCapabilityFilter}},
+			base[1],
+		}
+		p2 := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{v0: flipped}, nil)
+		assert.Equal(t, h, p2.IndexAffectingHash(group, resource))
+	})
+
+	t.Run("insensitive to Description", func(t *testing.T) {
+		withDesc := make([]SearchFieldDefinition, len(base))
+		copy(withDesc, base)
+		withDesc[0].Description = "the email address of the user"
+		p2 := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{v0: withDesc}, nil)
+		assert.Equal(t, h, p2.IndexAffectingHash(group, resource))
+	})
+
+	t.Run("sensitive to each indexed field", func(t *testing.T) {
+		cases := map[string]func(*SearchFieldDefinition){
+			"Name":             func(s *SearchFieldDefinition) { s.Name = "emailX" },
+			"Path":             func(s *SearchFieldDefinition) { s.Path = "spec.emailX" },
+			"Type":             func(s *SearchFieldDefinition) { s.Type = SearchFieldTypeBoolean },
+			"Array":            func(s *SearchFieldDefinition) { s.Array = true },
+			"Capabilities":     func(s *SearchFieldDefinition) { s.Capabilities = []SearchCapability{SearchCapabilityRetrieve} },
+			"EmitZeroIfAbsent": func(s *SearchFieldDefinition) { s.EmitZeroIfAbsent = true },
+			"CopyFromStandard": func(s *SearchFieldDefinition) { s.CopyFromStandard = StandardFieldCreated },
+		}
+		for name, mutate := range cases {
+			t.Run(name, func(t *testing.T) {
+				mutated := make([]SearchFieldDefinition, len(base))
+				copy(mutated, base)
+				mutate(&mutated[0])
+				p2 := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{v0: mutated}, nil)
+				assert.NotEqual(t, h, p2.IndexAffectingHash(group, resource), "mutating %s must change the hash", name)
+			})
+		}
+	})
+
+	t.Run("covers every registered version", func(t *testing.T) {
+		v1Fields := []SearchFieldDefinition{
+			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		}
+		pMulti := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v0: base,
+			v1: v1Fields,
+		}, nil)
+		hMulti := pMulti.IndexAffectingHash(group, resource)
+		assert.NotEqual(t, h, hMulti, "adding a new version must change the hash")
+
+		// Changing only the non-preferred version must still change the hash.
+		drifted := []SearchFieldDefinition{
+			{Name: "email", Path: "spec.emailAddress", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		}
+		pDrifted := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v0: base,
+			v1: drifted,
+		}, nil)
+		assert.NotEqual(t, hMulti, pDrifted.IndexAffectingHash(group, resource))
+	})
+
+	t.Run("unaffected by sibling (group, resource)", func(t *testing.T) {
+		other := schema.GroupVersionResource{Group: group, Version: "v0alpha1", Resource: "teams"}
+		pSibling := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+			v0:    base,
+			other: {{Name: "email", Type: SearchFieldTypeString}},
+		}, nil)
+		assert.Equal(t, h, pSibling.IndexAffectingHash(group, resource))
+	})
+}

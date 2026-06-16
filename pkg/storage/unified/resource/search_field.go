@@ -1,7 +1,11 @@
 package resource
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -216,6 +220,18 @@ type SearchFieldsProvider interface {
 	// when the requested apiVersion is unknown. Returns the empty string
 	// when no preferred version has been registered.
 	PreferredVersion(group, resource string) string
+
+	// IndexAffectingHash returns a stable hex hash over every
+	// SearchFieldDefinition registered for (group, resource), across all
+	// versions. Only fields that change what gets indexed are mixed in:
+	// Name, Path, Type, Array, Capabilities (sorted), EmitZeroIfAbsent,
+	// CopyFromStandard. Description is intentionally excluded so
+	// presentation-only edits do not trigger a rebuild.
+	//
+	// Returns the empty string when no SearchFieldDefinitions are
+	// registered for the (group, resource). Callers treat "" as "no
+	// expected hash" and skip the rebuild check.
+	IndexAffectingHash(group, resource string) string
 }
 
 // mapProvider is an in-memory SearchFieldsProvider populated from Go-level
@@ -248,4 +264,74 @@ func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefin
 
 func (p *mapProvider) PreferredVersion(group, resource string) string {
 	return p.preferredVersion[schema.GroupResource{Group: group, Resource: resource}]
+}
+
+// hashableField is the canonical projection of a SearchFieldDefinition used
+// when computing the index-affecting hash. JSON tags are short so the
+// marshalled form stays compact. The wire format is never exposed to
+// callers, but it is the input to SHA-256 and the resulting hex is
+// persisted in every index's IndexBuildInfo. Any change to the field set,
+// tags, or sort order of this struct shifts every previously-computed hash
+// and triggers a one-time reindex for every kind that uses
+// SearchFieldsProvider — treat it as part of the on-disk format.
+type hashableField struct {
+	Name             string             `json:"n"`
+	Path             string             `json:"p,omitempty"`
+	Type             SearchFieldType    `json:"t"`
+	Array            bool               `json:"a,omitempty"`
+	Capabilities     []SearchCapability `json:"c,omitempty"`
+	EmitZeroIfAbsent bool               `json:"z,omitempty"`
+	CopyFromStandard StandardField      `json:"s,omitempty"`
+}
+
+type hashableVersion struct {
+	Version string          `json:"v"`
+	Fields  []hashableField `json:"f"`
+}
+
+func (p *mapProvider) IndexAffectingHash(group, resource string) string {
+	var versions []string
+	for gvr := range p.fields {
+		if gvr.Group == group && gvr.Resource == resource {
+			versions = append(versions, gvr.Version)
+		}
+	}
+	if len(versions) == 0 {
+		return ""
+	}
+	slices.Sort(versions)
+
+	payload := make([]hashableVersion, 0, len(versions))
+	for _, v := range versions {
+		gvr := schema.GroupVersionResource{Group: group, Version: v, Resource: resource}
+		sfds := p.fields[gvr]
+		fields := make([]hashableField, 0, len(sfds))
+		for _, sfd := range sfds {
+			caps := slices.Clone(sfd.Capabilities)
+			slices.Sort(caps)
+			fields = append(fields, hashableField{
+				Name:             sfd.Name,
+				Path:             sfd.Path,
+				Type:             sfd.Type,
+				Array:            sfd.Array,
+				Capabilities:     caps,
+				EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
+				CopyFromStandard: sfd.CopyFromStandard,
+			})
+		}
+		slices.SortFunc(fields, func(a, b hashableField) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		payload = append(payload, hashableVersion{Version: v, Fields: fields})
+	}
+
+	// json.Marshal on a slice of structs with no maps and no float NaN/Inf
+	// cannot error in practice; we still discard the error explicitly to be
+	// safe — returning "" forces a rebuild rather than masking a problem.
+	blob, err := json.Marshal(payload)
+	if err != nil {
+		return ""
+	}
+	sum := sha256.Sum256(blob)
+	return hex.EncodeToString(sum[:])
 }
