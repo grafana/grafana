@@ -259,3 +259,62 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	_, err = os.Stat(present)
 	require.NoError(t, err, "present dashboard should still be exported despite sibling being missing")
 }
+
+// TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
+// verifies the selective-export folder behavior: only the folders required to
+// place the named dashboard are written (its full parent ancestry, generated on
+// demand even though those folders were not named), while folders belonging to
+// unrelated, non-exported dashboards stay out of the repository entirely.
+func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// Two independent folder hierarchies, each holding one dashboard. Only the
+	// dashboard in the "exported" hierarchy is named in the export; the
+	// "unrelated" hierarchy must not be touched.
+	exportedParent := helper.CreateUnmanagedFolder(t, ctx, "exportedparent", "")
+	exportedChild := helper.CreateUnmanagedFolder(t, ctx, "exportedchild", exportedParent)
+	selectedDash := helper.CreateUnmanagedDashboard(t, ctx, "selecteddash", exportedChild)
+
+	unrelatedFolder := helper.CreateUnmanagedFolder(t, ctx, "unrelatedfolder", "")
+	_ = helper.CreateUnmanagedDashboard(t, ctx, "unrelateddash", unrelatedFolder)
+
+	const repo = "selective-export-folders-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 2,
+		ExpectedFolders:    3,
+	})
+
+	helper.DebugState(t, repo, "BEFORE SELECTIVE EXPORT")
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	helper.DebugState(t, repo, "AFTER SELECTIVE EXPORT")
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// The named dashboard lands at its full nested path even though neither of
+	// its parent folders was named in the export.
+	selectedPath := filepath.Join(helper.ProvisioningPath, "exportedparent", "exportedchild", "selecteddash.json")
+	_, err := os.Stat(selectedPath)
+	require.NoError(t, err, "named dashboard should be exported at its generated nested path %s", selectedPath)
+
+	// The unrelated hierarchy must not have been exported: neither its folder
+	// directory nor its dashboard file may appear in the repository.
+	files := helper.ListRepositoryFiles(t, ctx, repo)
+	for _, f := range files {
+		require.NotContains(t, f.Path, "unrelated",
+			"unrelated folder/dashboard must not be exported during selective export; got file %q", f.Path)
+	}
+}

@@ -8,19 +8,20 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_ExportSpecificResources_FolderSkipped verifies the
+// TestIntegrationProvisioning_ExportSpecificResources_FolderExported verifies the
 // generalized selective-export controller against a non-dashboard kind end to
 // end: a Folder reference in Push.Resources passes admission (the default
-// supported set is {Folder, Dashboard}) and is then skipped by the worker
-// (folders are exported as a tree by ExportFolders, not as standalone files)
-// rather than failing the job with the old dashboard-only "is not a Dashboard"
-// rejection. The job still succeeds and the requested dashboard is exported.
-func TestIntegrationProvisioning_ExportSpecificResources_FolderSkipped(t *testing.T) {
+// supported set is {Folder, Dashboard}) and is exported as part of the folder
+// tree (with its ancestry) rather than failing the job with the old
+// dashboard-only "is not a Dashboard" rejection. The job succeeds and both the
+// requested dashboard and the requested folder are written.
+func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
 
@@ -28,7 +29,11 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderSkipped(t *testin
 	_, err := helper.DashboardsV1.Resource.Create(ctx, dash, metav1.CreateOptions{})
 	require.NoError(t, err, "should be able to create v1 dashboard")
 
-	const repo = "selective-export-folderskip-repo"
+	// A real folder, named explicitly in the export. Unlike the old behavior, a
+	// passed folder is now exported rather than silently skipped.
+	helper.CreateUnmanagedFolder(t, ctx, "exportedfolderref", "")
+
+	const repo = "selective-export-folderref-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
 		SyncTarget:             "instance",
@@ -37,21 +42,39 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderSkipped(t *testin
 		SkipResourceAssertions: true,
 	})
 
-	// The folder reference need not resolve to an existing object: the
-	// controller skips folders right after resolving the kind, before any Get.
+	folderUID := folderUIDByTitle(t, ctx, helper, "exportedfolderref")
+
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
 		Push: &provisioning.ExportJobOptions{
 			Resources: []provisioning.ResourceRef{
 				{Name: "test-v1", Kind: "Dashboard", Group: "dashboard.grafana.app"},
-				{Name: "any-folder", Kind: "Folder", Group: "folder.grafana.app"},
+				{Name: folderUID, Kind: "Folder", Group: "folder.grafana.app"},
 			},
 		},
 	}
 	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
-	// The dashboard sibling is still exported despite the folder ref being skipped.
+	// The dashboard sibling is exported alongside the folder ref.
 	present := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v1.json")
 	_, err = os.Stat(present)
-	require.NoError(t, err, "requested dashboard should be exported alongside the skipped folder ref")
+	require.NoError(t, err, "requested dashboard should be exported alongside the folder ref")
+
+	// The explicitly named folder is exported as a directory in the repository.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "exportedfolderref"),
+		"explicitly requested folder should be exported")
+}
+
+// folderUIDByTitle returns the UID of the folder with the given title.
+func folderUIDByTitle(t *testing.T, ctx context.Context, helper *common.ProvisioningTestHelper, title string) string {
+	t.Helper()
+	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
+	require.NoError(t, err, "should be able to list folders")
+	for _, f := range folders.Items {
+		if got, _, _ := unstructured.NestedString(f.Object, "spec", "title"); got == title {
+			return f.GetName()
+		}
+	}
+	require.Failf(t, "folder not found", "no folder with title %q", title)
+	return ""
 }
