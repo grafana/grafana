@@ -19,7 +19,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		iniFile := ini.Empty()
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, "https://base.example.com", config.AppURL)
 		assert.Equal(t, true, config.CSPEnabled)
@@ -43,7 +43,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		securitySection, _ := iniFile.NewSection("security")
 		_, _ = securitySection.NewKey("allow_embedding_hosts", "foo.example.com")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		// CSP overridden field
 		assert.Equal(t, []string{"foo.example.com"}, config.AllowEmbeddingHosts)
@@ -69,7 +69,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
 		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, "tenant-write-key", config.RudderstackWriteKey)
 		assert.Equal(t, "https://tenant-dataplane.example.com", config.RudderstackDataPlaneUrl)
@@ -84,7 +84,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		securitySection, _ := iniFile.NewSection("security")
 		_, _ = securitySection.NewKey("allow_embedding_hosts", "wiki.example.com foo.example.com")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"wiki.example.com", "foo.example.com"}, config.AllowEmbeddingHosts)
 	})
@@ -98,7 +98,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		securitySection, _ := iniFile.NewSection("security")
 		_, _ = securitySection.NewKey("allow_embedding_hosts", "*")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"*"}, config.AllowEmbeddingHosts)
 	})
@@ -112,7 +112,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		securitySection, _ := iniFile.NewSection("security")
 		_, _ = securitySection.NewKey("form_action_additional_hosts", "login.example.com auth.example.com")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"login.example.com", "auth.example.com"}, config.FormActionAdditionalHosts)
 	})
@@ -126,7 +126,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		securitySection, _ := iniFile.NewSection("security")
 		_, _ = securitySection.NewKey("form_action_additional_hosts", "*")
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"*"}, config.FormActionAdditionalHosts)
 	})
@@ -138,7 +138,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 		iniFile := ini.Empty()
 
-		config.ApplyOverrides(iniFile, log.New("test"))
+		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"base.example.com"}, config.FormActionAdditionalHosts)
 	})
