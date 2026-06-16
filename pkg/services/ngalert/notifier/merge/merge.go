@@ -154,7 +154,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 	{
 		maps.Copy(templates, cfg.Templates)
 		for name, content := range mimirCfg.TemplateFiles {
-			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, provenance)
+			tmpl := v1.NewTemplateGroup("", name, content, v1.TemplateKindMimir, provenance)
 			if _, ok := templates[tmpl.UID]; ok {
 				return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
 			}

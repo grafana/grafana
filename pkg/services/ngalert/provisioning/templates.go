@@ -87,7 +87,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 
 	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 && len(revision.Config.ExtraConfigs[0].TemplateFiles) > 0 {
 		for name, content := range revision.Config.ExtraConfigs[0].TemplateFiles {
-			templates = append(templates, v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus))
+			templates = append(templates, v1.NewTemplateGroup("", name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus))
 		}
 	}
 
@@ -379,7 +379,7 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 
 	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
 		if name, content, ok := find(revision.Config.ExtraConfigs[0].TemplateFiles, v1.ResourceUID(uid), v1.TemplateKindMimir); ok {
-			return v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus), true, nil
+			return v1.NewTemplateGroup("", name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus), true, nil
 		}
 	}
 

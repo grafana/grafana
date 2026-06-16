@@ -682,7 +682,7 @@ func TestMergeExtraConfig(t *testing.T) {
 		})
 		existingUID := v1.TemplateUID(v1.TemplateKindMimir, templateName)
 		input.Templates = map[v1.ResourceUID]v1.TemplateGroup{
-			existingUID: v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
+			existingUID: v1.NewTemplateGroup("", templateName, templateContent, v1.TemplateKindMimir, models.ProvenanceNone),
 		}
 		_, _, err := MergeExtraConfig(context.Background(), &input, models.ProvenanceConvertedPrometheus)
 		require.ErrorContains(t, err, templateName)
