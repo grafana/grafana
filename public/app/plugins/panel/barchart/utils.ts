@@ -231,7 +231,11 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     const disp = color.display!;
     fillOpacity = (color.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(color!.values[valueIdx]).color!;
+    // color-only: skip the formatted text we'd otherwise discard
+    getColor = (seriesIdx: number, valueIdx: number) => {
+      let v = color!.values[valueIdx];
+      return disp.color?.(v) ?? disp(v).color!;
+    };
   } else {
     const hasPerBarColor = frame.fields.some((f) => {
       const fromThresholds = f.config.color?.mode === FieldColorModeId.Thresholds;
@@ -257,7 +261,9 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame.fields[seriesIdx];
-        return field.display!(field.values[valueIdx]).color!;
+        let v = field.values[valueIdx];
+        // color-only: skip the formatted text we'd otherwise discard
+        return field.display!.color?.(v) ?? field.display!(v).color!;
       };
     }
   }
