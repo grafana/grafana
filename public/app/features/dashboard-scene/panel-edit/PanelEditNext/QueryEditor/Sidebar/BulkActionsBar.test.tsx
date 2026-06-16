@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -14,6 +14,15 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const mockReportInteraction = jest.mocked(reportInteraction);
+
+// jsdom does no layout, so offsetWidth/clientWidth are always 0 (content always "fits" and the
+// bar renders full labels). The compact-mode tests drive the overflow measurement by mocking
+// the prototype getters the bar reads: offsetWidth for the measured content row, clientWidth
+// for the container it must fit into.
+function mockMeasuredWidths({ contentWidth, containerWidth }: { contentWidth: number; containerWidth: number }) {
+  jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(contentWidth);
+  jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(containerWidth);
+}
 
 // Replace DataSourceModal with a minimal test double to avoid loading its full dep tree.
 jest.mock('app/features/datasources/components/picker/DataSourceModal', () => ({
@@ -60,6 +69,10 @@ describe('BulkActionsBar', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   describe('visibility', () => {
     it('renders nothing when multi-select mode is off', () => {
       // Bulk arrays may linger; the bar is gated on the explicit multi-select mode.
@@ -92,7 +105,7 @@ describe('BulkActionsBar', () => {
       });
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /disable all/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /disable/i })).toBeInTheDocument();
     });
   });
 
@@ -107,7 +120,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(false);
     });
@@ -120,7 +133,7 @@ describe('BulkActionsBar', () => {
         },
       });
 
-      await user.click(screen.getByRole('button', { name: /clear selection/i }));
+      await user.click(screen.getByRole('button', { name: /exit multi-select/i }));
 
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
         action: 'toggle_multi_select',
@@ -338,8 +351,8 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // Transformations are enabled (no disabled flag), so button says "Disable all"
-        await user.click(screen.getByRole('button', { name: /disable all/i }));
+        // Transformations are enabled (no disabled flag), so button says "Disable"
+        await user.click(screen.getByRole('button', { name: /disable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], true);
         // Enable/Disable is an in-place toggle — the selection persists.
         expect(setMultiSelectMode).not.toHaveBeenCalled();
@@ -365,10 +378,79 @@ describe('BulkActionsBar', () => {
           actionsOverrides: { bulkToggleTransformationsDisabled },
         });
 
-        // All selected are disabled — button says "Enable all"
-        await user.click(screen.getByRole('button', { name: /enable all/i }));
+        // All selected are disabled — button says "Enable"
+        await user.click(screen.getByRole('button', { name: /enable/i }));
         expect(bulkToggleTransformationsDisabled).toHaveBeenCalledWith(['tx-0', 'tx-1'], false);
       });
+    });
+  });
+
+  describe('compact mode', () => {
+    it('shows button labels when the full-label content fits the available space', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 400 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
+    });
+
+    it('keeps labels when the content exactly fits the container', () => {
+      // The boundary: collapse requires strict overflow, so an exact fit stays full.
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 300 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
+    });
+
+    it('drops button labels but keeps accessible names when the full-label content overflows', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+
+      // Icon-only, but still named for screen readers via aria-label.
+      const datasourceButton = screen.getByRole('button', { name: 'Data source' });
+      expect(datasourceButton).not.toHaveTextContent('Data source');
+      expect(screen.getByRole('button', { name: 'Delete' })).not.toHaveTextContent('Delete');
+    });
+
+    it('applies the same compact decision to both sections at once', () => {
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: {
+          multiSelectMode: true,
+          selectedQueryRefIds: ['A'],
+          selectedTransformationIds: ['tx-0'],
+        },
+      });
+
+      expect(screen.getByRole('button', { name: 'Hide' })).not.toHaveTextContent('Hide');
+      expect(screen.getByRole('button', { name: 'Disable' })).not.toHaveTextContent('Disable');
+    });
+
+    it('restores button labels once the container grows past the width the full labels needed', () => {
+      // Capture ResizeObserver callbacks so the test can replay a container resize.
+      const resizeCallbacks: VoidFunction[] = [];
+      jest.spyOn(globalThis, 'ResizeObserver').mockImplementation((callback: ResizeObserverCallback) => {
+        const observer: ResizeObserver = { observe: jest.fn(), unobserve: jest.fn(), disconnect: jest.fn() };
+        resizeCallbacks.push(() => callback([], observer));
+        return observer;
+      });
+
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 200 });
+      renderBar({
+        uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+      });
+      expect(screen.getByRole('button', { name: 'Data source' })).not.toHaveTextContent('Data source');
+
+      // Widen the container past the remembered full-label width (300) and notify the observer.
+      mockMeasuredWidths({ contentWidth: 300, containerWidth: 400 });
+      act(() => resizeCallbacks.forEach((notify) => notify()));
+
+      expect(screen.getByRole('button', { name: 'Data source' })).toHaveTextContent('Data source');
     });
   });
 });

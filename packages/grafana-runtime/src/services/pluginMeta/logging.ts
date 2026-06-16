@@ -9,3 +9,7 @@ export function logPluginMetaWarning(message: string, context: LogContext): void
 export function logPluginMetaError(message: string, error: unknown, context?: LogContext): void {
   getLogger('grafana/runtime.plugins.meta').logError(new Error(message, { cause: error }), context);
 }
+
+export function logPluginMetaDebug(message: string, context: LogContext): void {
+  getLogger('grafana/runtime.plugins.meta').logDebug(message, context);
+}

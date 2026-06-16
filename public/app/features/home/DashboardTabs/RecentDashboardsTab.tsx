@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Button, EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -11,6 +11,8 @@ import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { clearHistoryClicked, emptyCtaClicked } from '../analytics/main';
+
+import { DashboardTabError } from './DashboardTabError';
 
 interface Props {
   dashboards: DashboardQueryResult[];
@@ -30,20 +32,10 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
 
   if (error) {
     return (
-      <Stack grow={1} direction="column" alignItems="center" justifyContent="center">
-        {/* Extra div as Alert will flex-grow by default, but we want it centered */}
-        <div>
-          <Alert
-            severity="warning"
-            title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
-            action={
-              <Button onClick={retry} variant="secondary" size="sm">
-                <Trans i18nKey="home.recent-dashboards-tab.retry">Retry</Trans>
-              </Button>
-            }
-          />
-        </div>
-      </Stack>
+      <DashboardTabError
+        title={t('home.recent-dashboards-tab.error-title', 'Could not load recently viewed dashboards')}
+        retry={retry}
+      />
     );
   }
 
