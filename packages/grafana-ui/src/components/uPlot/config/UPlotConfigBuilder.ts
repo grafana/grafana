@@ -227,7 +227,9 @@ export class UPlotConfigBuilder {
         // interpolate for gradients/thresholds
         if (typeof s !== 'string') {
           let field = this.frames![0].fields[seriesIdx];
-          s = field.display!(field.values[u.cursor.idxs![seriesIdx]!]).color!;
+          let v = field.values[u.cursor.idxs![seriesIdx]!];
+          // color-only: skip the formatted text we'd otherwise discard
+          s = field.display!.color?.(v) ?? field.display!(v).color!;
         }
 
         return s + alphaHex;
