@@ -260,7 +260,7 @@ const getPlotLegendStyles = (theme: GrafanaTheme2) => ({
   }),
   filterContent: css({
     position: 'relative',
-    flexShrink: 0,
+    maxWidth: '50%',
     overflow: 'auto',
     borderRight: `1px solid ${theme.colors.border.weak}`,
     paddingRight: theme.spacing(1),

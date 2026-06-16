@@ -55,11 +55,19 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("unable to decrypt token: %w", err)
 	}
 
+	signingKey, err := secure.CommitSigningKey(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decrypt signing key: %w", err)
+	}
+
 	gitRepo, err := git.NewRepository(ctx, r, git.RepositoryConfig{
-		URL:    r.Spec.GitHub.URL,
-		Branch: r.Spec.GitHub.Branch,
-		Path:   r.Spec.GitHub.Path,
-		Token:  token,
+		URL:              r.Spec.GitHub.URL,
+		Branch:           r.Spec.GitHub.Branch,
+		Path:             r.Spec.GitHub.Path,
+		Token:            token,
+		CommitSigningKey: signingKey,
+		SigningMethod:    git.SigningMethodFromSpec(r),
+		SMIMECertificate: git.SMIMECertificateFromSpec(r),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating git repository: %w", err)
@@ -71,6 +79,13 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	}
 
 	if util.IsInterfaceNil(e.webhookBuilder) {
+		return ghRepo, nil
+	}
+
+	// Webhook integration is explicitly disabled for this repository, so polling will be
+	// used instead. Skip registration even if a webhook URL would otherwise be available.
+	if r.Spec.GitHub.WebhookDisabled {
+		logger.Debug("Skipping webhook setup: webhookDisabled is true")
 		return ghRepo, nil
 	}
 

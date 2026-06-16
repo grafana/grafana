@@ -1,15 +1,14 @@
 import { memo } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Badge, Stack } from '@grafana/ui';
+import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -43,13 +42,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
-      {isReadOnlyRepo && (
-        <Badge
-          color="darkgrey"
-          text={t('folder-repo.read-only-badge', 'Read only')}
-          tooltip={getReadOnlyTooltipText({ isLocal: repoType === 'local' })}
-        />
-      )}
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <ManagedBadge managerKind={ManagerKind.Repo} name={repository?.title || repository?.name} />
     </Stack>
   );

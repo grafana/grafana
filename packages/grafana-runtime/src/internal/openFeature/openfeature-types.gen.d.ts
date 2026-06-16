@@ -34,7 +34,6 @@ declare module "@openfeature/core" {
     | "dashboardSectionVariables"
     | "globalDashboardVariables"
     | "queryEditorNext"
-    | "queryEditorNextMultiSelect"
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
@@ -53,7 +52,8 @@ declare module "@openfeature/core" {
     | "grafana.enableScopesFirstMode"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
-    | "grafana.panelEditNextFeedbackEvent";
+    | "grafana.panelEditNextFeedbackEvent"
+    | "grafana.visualDesignRefresh";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

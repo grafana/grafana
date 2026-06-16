@@ -19,7 +19,7 @@ export interface LineStyleConfig {
 
 type Props = StandardEditorProps<LineStyleConfig>;
 
-export const defaultLineStyleConfig: LineStyleConfig = {
+const defaultLineStyleConfig: LineStyleConfig = {
   style: LineStyle.Solid,
   animate: false,
 };

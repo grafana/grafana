@@ -25,7 +25,7 @@ import { type AlertQuery } from 'app/types/unified-alerting-dto';
 import { type LinkError, createDAGFromQueriesSafe, getDescendants } from '../components/rule-editor/dag';
 import { getTimeRangeForExpression } from '../utils/timeRange';
 
-export interface AlertingQueryResult {
+interface AlertingQueryResult {
   error?: string;
   status?: number; // HTTP status error
   frames: DataFrameJSON[];

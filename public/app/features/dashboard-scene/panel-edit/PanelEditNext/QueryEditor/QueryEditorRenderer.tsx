@@ -15,7 +15,7 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
-export interface QueryDatasourceData {
+interface QueryDatasourceData {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
 }

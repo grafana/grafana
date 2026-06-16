@@ -1180,6 +1180,84 @@ func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.R
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
 }
 
+// RequireResource polls until the named resource is gettable via client and returns it.
+// Use after a write/sync to assert a resource has been provisioned into Grafana.
+func RequireResource(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, name string) *unstructured.Unstructured {
+	t.Helper()
+	var got *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := client.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "get %q", name) {
+			return
+		}
+		got = obj
+	}, WaitTimeoutDefault, WaitIntervalDefault, "resource %q should be provisioned", name)
+	return got
+}
+
+// ResourceToJSON marshals an unstructured resource to JSON, e.g. for a files-endpoint write.
+func ResourceToJSON(t *testing.T, obj *unstructured.Unstructured) []byte {
+	t.Helper()
+	data, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	return data
+}
+
+// ExportedResourceFiles walks the repository directory and returns the paths of files whose
+// apiVersion has the given group prefix (e.g. "playlist.grafana.app/"). It lets export tests
+// assert what was written without hard-coding the generated file names.
+func (h *ProvisioningTestHelper) ExportedResourceFiles(t *testing.T, groupPrefix string) []string {
+	t.Helper()
+	var matches []string
+	err := filepath.WalkDir(h.ProvisioningPath, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		switch strings.ToLower(filepath.Ext(p)) {
+		case ".json", ".yaml", ".yml":
+		default:
+			return nil
+		}
+		apiVersion, _, _ := unstructured.NestedString(h.LoadYAMLOrJSONFile(p).Object, "apiVersion")
+		if strings.HasPrefix(apiVersion, groupPrefix) {
+			matches = append(matches, p)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	return matches
+}
+
+// PlaylistGVR is the playlist resource served by the App SDK apiserver.
+var PlaylistGVR = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v1",
+	Resource: "playlists",
+}
+
+// NewPlaylist builds a minimal playlist resource for provisioning tests.
+func NewPlaylist(name, title string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": PlaylistGVR.GroupVersion().String(),
+			"kind":       "Playlist",
+			"metadata": map[string]any{
+				"name": name,
+			},
+			"spec": map[string]any{
+				"title":    title,
+				"interval": "5m",
+				"items": []any{
+					map[string]any{"type": "dashboard_by_tag", "value": "provisioning"},
+				},
+			},
+		},
+	}
+}
+
 // GrafanaOption is a functional option for RunGrafana.
 type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
@@ -1661,6 +1739,24 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	return resp
 }
 
+// ListRepositoryFiles returns the file listing from the repository's files endpoint
+// (GET .../files/). It is a directory listing only — it does not parse resources or run
+// a dry-run, so it is safe to call regardless of whether the files are already
+// provisioned in Grafana.
+func (h *ProvisioningTestHelper) ListRepositoryFiles(t *testing.T, ctx context.Context, repo string) []provisioning.FileItem {
+	t.Helper()
+	rsp := h.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files/").
+		Do(ctx)
+	require.NoError(t, rsp.Error(), "listing repository files should succeed")
+	list := &provisioning.FileList{}
+	require.NoError(t, rsp.Into(list))
+	return list.Items
+}
+
 // FilesClient provides convenience methods for interacting with the provisioning
 // files subresource (/repositories/{repo}/files/{path}) via direct HTTP.
 // It avoids the Kubernetes REST client limitation with '/' in subresource names.
@@ -1720,9 +1816,9 @@ func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *Fi
 }
 
 // Post sends a POST request to the given path with no body.
-func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
+func (c *FilesClient) Post(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()
-	return c.Do(t, http.MethodPost, filePath, nil)
+	return c.Do(t, http.MethodPost, filePath, body)
 }
 
 // Put sends a PUT request to the given path with a JSON body.
@@ -2612,6 +2708,80 @@ func NewManagedDashboard(apiVersion, name, repoName, sourcePath, message string)
 			},
 		},
 	}
+}
+
+// NewUnmanagedFolder builds an unstructured Folder with no manager annotations,
+// for tests that need a pre-existing folder the provisioning code has not
+// claimed. A generated name is used so multiple folders can coexist; pass a
+// non-empty parentUID to nest the folder beneath another.
+func NewUnmanagedFolder(title, parentUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-folder-",
+		"namespace":    "default",
+	}
+	if parentUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: parentUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "folder.grafana.app/v1",
+			"kind":       "Folder",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title": title,
+			},
+		},
+	}
+}
+
+// NewUnmanagedDashboard builds an unstructured Dashboard with no manager
+// annotations. A generated name is used; pass a non-empty folderUID to place it
+// inside a folder.
+func NewUnmanagedDashboard(apiVersion, title, folderUID string) *unstructured.Unstructured {
+	metadata := map[string]interface{}{
+		"generateName": "unmanaged-dash-",
+		"namespace":    "default",
+	}
+	if folderUID != "" {
+		metadata["annotations"] = map[string]interface{}{
+			utils.AnnoKeyFolder: folderUID,
+		}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": apiVersion,
+			"kind":       "Dashboard",
+			"metadata":   metadata,
+			"spec": map[string]interface{}{
+				"title":         title,
+				"schemaVersion": 41,
+			},
+		},
+	}
+}
+
+// CreateUnmanagedFolder creates a folder with no manager annotations under the
+// given parent (pass "" for a root folder) and returns its generated UID. It
+// asserts the folder starts unmanaged so callers can rely on that precondition.
+func (h *ProvisioningTestHelper) CreateUnmanagedFolder(t *testing.T, ctx context.Context, title, parentUID string) string {
+	t.Helper()
+	created, err := h.Folders.Resource.Create(ctx, NewUnmanagedFolder(title, parentUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged folder %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "folder %q should start unmanaged", title)
+	return created.GetName()
+}
+
+// CreateUnmanagedDashboard creates a v1 dashboard with no manager annotations in
+// the given folder (pass "" for a root dashboard) and returns its generated
+// name. It asserts the dashboard starts unmanaged.
+func (h *ProvisioningTestHelper) CreateUnmanagedDashboard(t *testing.T, ctx context.Context, title, folderUID string) string {
+	t.Helper()
+	created, err := h.DashboardsV1.Resource.Create(ctx, NewUnmanagedDashboard("dashboard.grafana.app/v1", title, folderUID), metav1.CreateOptions{})
+	require.NoError(t, err, "should create unmanaged dashboard %q", title)
+	require.Empty(t, created.GetAnnotations()[utils.AnnoKeyManagerIdentity], "dashboard %q should start unmanaged", title)
+	return created.GetName()
 }
 
 type exportRepoInfo struct {
