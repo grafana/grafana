@@ -1,5 +1,3 @@
-import { type CSSObject } from '@emotion/serialize';
-
 import { type AlertState, type DataTransformerConfig, type GrafanaTheme2, TransformerCategory } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type CustomTransformerDefinition } from '@grafana/scenes';
@@ -98,7 +96,7 @@ export function getEditorBorderColor({
   return typeConfig[editorType].color;
 }
 
-export function getHiddenMaskStyles(theme: GrafanaTheme2): CSSObject {
+export function getHiddenMaskStyles(theme: GrafanaTheme2) {
   return {
     opacity: theme.isDark ? 0.6 : 0.7,
     filter: 'grayscale(0.8)',
