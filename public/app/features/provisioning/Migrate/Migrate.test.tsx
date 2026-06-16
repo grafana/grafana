@@ -69,6 +69,7 @@ describe('Migrate', () => {
 
     expect(await screen.findByText(/no provisioned resources yet/i)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /start migration/i })).not.toBeInTheDocument();
   });
 
   it('renders the folder cards when there are folders but no dashboards', async () => {
@@ -89,7 +90,7 @@ describe('Migrate', () => {
     expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
   });
 
-  describe('with stats', () => {
+  describe('with unmanaged resources', () => {
     beforeEach(() => {
       respondWithStats(stats);
     });
@@ -117,12 +118,39 @@ describe('Migrate', () => {
       expect(screen.getByText('56 of 108 managed')).toBeInTheDocument();
     });
 
-    it('keeps the migration guide note linking to the provisioning docs', async () => {
-      render(<Migrate />);
+    it('opens the migrate drawer from the Start migration button', async () => {
+      const { user } = render(<Migrate />);
 
-      expect(await screen.findByText(/the guided migration workflow is on its way/i)).toBeInTheDocument();
-      const docsLink = screen.getByRole('link', { name: /provisioning documentation/i });
-      expect(docsLink).toHaveAttribute('href', expect.stringContaining('grafana.com/docs'));
+      const startButton = await screen.findByRole('button', { name: /start migration/i });
+      expect(screen.queryByText(/all dashboards and folders will be migrated/i)).not.toBeInTheDocument();
+
+      await user.click(startButton);
+
+      // The real drawer opens with its repository-selection copy.
+      expect(await screen.findByText(/all dashboards and folders will be migrated/i)).toBeInTheDocument();
     });
+  });
+
+  it('shows an "all managed" note and no migrate action when nothing is unmanaged', async () => {
+    respondWithStats({
+      instance: [
+        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
+        { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+      ],
+      managed: [
+        {
+          kind: 'repo',
+          stats: [
+            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
+            { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+          ],
+        },
+      ],
+    });
+
+    render(<Migrate />);
+
+    expect(await screen.findByText(/already managed in git/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /start migration/i })).not.toBeInTheDocument();
   });
 });
