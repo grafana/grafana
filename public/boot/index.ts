@@ -216,17 +216,19 @@ async function initGrafana() {
     return Promise.reject({ redirect: bootData.redirect });
   }
 
-  window.grafanaBootData.settings = {
-    ...bootData.settings,
-    ...window.grafanaBootData.settings,
-  };
-  window.grafanaBootData.navTree = bootData.navTree;
   window.grafanaBootData.user = bootData.user;
-  if (bootData.settings?.buildInfo?.edition) {
-    window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
-  }
 
   if (!window.__grafanaReduceBootdataAPI) {
+    window.grafanaBootData.settings = {
+      ...bootData.settings,
+      ...window.grafanaBootData.settings,
+    };
+    window.grafanaBootData.navTree = bootData.navTree;
+
+    if (bootData.settings?.buildInfo?.edition) {
+      window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
+    }
+
     // The per-theme CSS still contains some global styles needed
     // to render the page correctly.
     const cssLink = document.createElement('link');
