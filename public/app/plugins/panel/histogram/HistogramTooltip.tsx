@@ -8,6 +8,7 @@ import {
   VizTooltipHeader,
   VizTooltipWrapper,
   getContentItems,
+  type FilterByGroupedLabelsModel,
   type VizTooltipItem,
 } from '@grafana/ui/internal';
 
@@ -28,6 +29,7 @@ export interface HistogramTooltipProps {
 
   isPinned: boolean;
   maxHeight?: number;
+  filterByGroupedLabels?: FilterByGroupedLabelsModel;
 }
 
 export const HistogramTooltip = ({
@@ -39,6 +41,7 @@ export const HistogramTooltip = ({
   sortOrder = SortOrder.None,
   isPinned,
   maxHeight,
+  filterByGroupedLabels,
 }: HistogramTooltipProps) => {
   const xMinField = series.fields[0];
   const xMaxField = series.fields[1];
@@ -67,7 +70,7 @@ export const HistogramTooltip = ({
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
 
-    footer = <VizTooltipFooter dataLinks={links} />;
+    footer = <VizTooltipFooter dataLinks={links} filterByGroupedLabels={filterByGroupedLabels} />;
   }
 
   return (
