@@ -269,7 +269,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-10,vizLegendFacetedFilter,GA,@grafana/dataviz-squad,false,false,true
 2025-12-18,heatmapRowsAxisOptions,preview,@grafana/dataviz-squad,false,false,true
 2026-05-22,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
-2025-10-17,preventPanelChromeOverflow,preview,@grafana/grafana-frontend-platform,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
