@@ -86,12 +86,19 @@ const getDefaultSearchHandler = () =>
     const nameFilter = new URL(request.url).searchParams.getAll('name');
     const mappedTypeFilters = typeFilters.map((f) => typeFilterMap[f] || f);
     const tagFilter = new URL(request.url).searchParams.getAll('tag');
+    const ownerReferenceFilter = new URL(request.url).searchParams.getAll('ownerReference');
 
     const filtered = mockTree.filter((filterItem) => {
       const filters: FilterArray = [
         // Filter UI items out of fixtures as... they're UI items 🤷
         ({ item }) => item.kind !== 'ui',
       ];
+
+      if (ownerReferenceFilter.length > 0) {
+        // Fixture tree items have no owner references, so any owner filter matches nothing.
+        // Use getCustomSearchHandler to test responses with owner references.
+        filters.push(() => false);
+      }
 
       if (nameFilter.length > 0) {
         const filteredNameFilter = nameFilter.filter((name) => name !== 'general');

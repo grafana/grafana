@@ -4,6 +4,7 @@ import { getCustomSearchHandler, apiFoldersHandlers } from '@grafana/test-utils/
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { listDashboards, listFolders } from './services';
 
@@ -143,16 +144,22 @@ describe('browse-dashboards services', () => {
         });
       });
 
-      it('adds shared with me folder at root level', async () => {
+      it('adds shared with me and team folders at root level', async () => {
         server.use(getCustomSearchHandler(allHits));
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
-        expect(result).toHaveLength(3);
+        expect(result).toHaveLength(4);
         expect(result[0]).toMatchObject({
           kind: 'folder',
           uid: 'sharedwithme',
           title: 'Shared with me',
           url: undefined, // shared with me has no URL
+        });
+        expect(result[1]).toMatchObject({
+          kind: 'folder',
+          uid: TEAM_FOLDERS_UID,
+          title: 'My team folders',
+          url: undefined, // team folders is a virtual folder with no URL
         });
       });
 
@@ -177,8 +184,9 @@ describe('browse-dashboards services', () => {
 
         const result = await listFolders(undefined, undefined, 1, PAGE_SIZE);
 
-        expect(result).toHaveLength(2);
+        expect(result).toHaveLength(3);
         expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+        expect(result[0]).toMatchObject({ uid: TEAM_FOLDERS_UID });
       });
     });
 

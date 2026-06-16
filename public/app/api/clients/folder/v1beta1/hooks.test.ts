@@ -54,6 +54,13 @@ jest.mock('../../../../types/store', () => {
   };
 });
 
+// The folder mutations refresh the team folders tree as a side effect. listTeamFolders would error
+// here because this test mocks the app dispatch, so stub it out.
+jest.mock('app/features/browse-dashboards/api/services', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/services'),
+  listTeamFolders: jest.fn(async () => []),
+}));
+
 setBackendSrv(backendSrv);
 setupMockServer();
 

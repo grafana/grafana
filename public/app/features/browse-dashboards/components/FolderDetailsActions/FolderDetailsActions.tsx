@@ -33,7 +33,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
   return (
     <Stack alignItems="center">
-      {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
+      {canReadTeams && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}
       <LinkButton

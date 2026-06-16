@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
-import { config } from '@grafana/runtime';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
@@ -184,10 +183,8 @@ function createFlatTree(
 
     const items = [thisItem, ...mappedChildren];
 
-    // Add a divider after the last virtual folder (shared with me / team folders)
-    const isLastVirtualFolder =
-      isVirtualTeamFolder(thisItem.item.uid) ||
-      (isSharedWithMe(thisItem.item.uid) && !config.featureToggles.teamFolders);
+    // Add a divider after the last virtual folder (team folders)
+    const isLastVirtualFolder = isVirtualTeamFolder(thisItem.item.uid);
 
     if (isLastVirtualFolder) {
       items.push({

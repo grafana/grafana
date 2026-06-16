@@ -209,7 +209,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     describe('folder owner', () => {
-      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI', 'teamFolders'] });
+      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
       beforeEach(() => {
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
       });

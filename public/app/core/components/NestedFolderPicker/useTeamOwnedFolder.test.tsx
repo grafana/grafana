@@ -96,17 +96,4 @@ describe('useGetTeamFolders', () => {
       { skip: true }
     );
   });
-
-  it('skips loading teams and folders when skip is true', () => {
-    renderHook(() => useGetTeamFolders({ skip: true }));
-
-    expect(useGetSignedInUserTeamListQuery).toHaveBeenCalledWith(undefined, { skip: true });
-    expect(useSearchDashboardsAndFoldersQuery).toHaveBeenCalledWith(
-      {
-        ownerReference: [],
-        type: 'folder',
-      },
-      { skip: true }
-    );
-  });
 });

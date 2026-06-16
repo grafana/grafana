@@ -2161,14 +2161,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "teamFolders",
-			Description: "Enables team folders functionality",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
-		},
-		{
 			Name:        "interactiveLearning",
 			Description: "Enables the interactive learning app",
 			Stage:       FeatureStagePublicPreview,
