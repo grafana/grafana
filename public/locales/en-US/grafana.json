@@ -13443,9 +13443,16 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "all-resources": "All resources",
+      "dashboards": "Dashboards",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
-      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step."
+      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step.",
+      "loading": "Loading stats...",
+      "n-of-m-managed": "{{managed}} of {{total}} managed"
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
