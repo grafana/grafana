@@ -3,7 +3,7 @@ import { EditorView } from '@codemirror/view';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CodeMirrorInlineInput, singleLineFilter } from './InlineInput';
+import { CodeMirrorInlineInput, singleLineFilter, stripNewlinesOnPaste } from './InlineInput';
 
 describe('singleLineFilter', () => {
   let container: HTMLDivElement;
@@ -44,6 +44,49 @@ describe('singleLineFilter', () => {
     const view = createEditor('a');
     view.dispatch({ changes: { from: 1, insert: 'bc' } });
     expect(view.state.doc.toString()).toBe('abc');
+    view.destroy();
+  });
+});
+
+describe('stripNewlinesOnPaste', () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(container);
+  });
+
+  function createEditor(text: string) {
+    return new EditorView({
+      // Paired with singleLineFilter, mirroring the real component: without
+      // newline stripping the filter would reject the whole multi-line paste.
+      state: EditorState.create({ doc: text, extensions: [stripNewlinesOnPaste, singleLineFilter] }),
+      parent: container,
+    });
+  }
+
+  function paste(view: EditorView, text: string) {
+    const event = new Event('paste', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'clipboardData', { value: { getData: () => text } });
+    view.contentDOM.dispatchEvent(event);
+  }
+
+  it('collapses a multi-line paste into a single line instead of rejecting it', () => {
+    const view = createEditor('');
+    paste(view, 'one\ntwo\r\nthree');
+    expect(view.state.doc.lines).toBe(1);
+    expect(view.state.doc.toString()).toBe('onetwothree');
+    view.destroy();
+  });
+
+  it('inserts a single-line paste unchanged', () => {
+    const view = createEditor('');
+    paste(view, 'https://example.com');
+    expect(view.state.doc.toString()).toBe('https://example.com');
     view.destroy();
   });
 });

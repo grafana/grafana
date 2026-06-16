@@ -105,29 +105,30 @@ export function dataLinkAutocompletion(
       return null;
     }
 
-    // Explicit trigger (Ctrl+Space): show everything at the cursor.
-    if (context.explicit) {
-      return {
-        from: context.pos,
-        options: suggestions.map(createCompletionOption),
-        filter: false,
-      };
-    }
-
     const word = context.matchBefore(TRIGGER_PATTERN);
+
+    // Outside a trigger, only respond when completion was explicitly requested
+    // (Ctrl+Space): insert a fresh `${...}` at the cursor.
     if (!word) {
-      return null;
+      return context.explicit
+        ? { from: context.pos, options: suggestions.map(createCompletionOption), filter: false }
+        : null;
     }
 
     const triggerChar = word.text.charAt(0);
     // The variable name typed so far, after stripping the trigger and brace.
     const typed = word.text.replace(/^[$=]\{?/, '');
     // `=` is preserved (replace after it); `$`/`${` is replaced (it's re-inserted).
+    // Anchoring at the trigger (rather than the cursor) is what stops an explicit
+    // request after a typed `$` from producing `$${...}`.
     const from = triggerChar === '=' ? word.from + 1 : word.from;
 
-    const matches = typed
-      ? suggestions.filter((s) => s.label.toLowerCase().includes(typed.toLowerCase()))
-      : suggestions;
+    // An explicit request (Ctrl+Space) shows every variable; implicit triggering
+    // filters by the name typed so far.
+    const matches =
+      context.explicit || !typed
+        ? suggestions
+        : suggestions.filter((s) => s.label.toLowerCase().includes(typed.toLowerCase()));
 
     return {
       from,

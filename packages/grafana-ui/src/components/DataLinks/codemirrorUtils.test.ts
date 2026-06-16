@@ -70,58 +70,47 @@ describe('codemirrorUtils', () => {
     } as unknown as CompletionContext;
   }
 
+  // The text content of every `.cm-variable` decoration the highlighter rendered.
+  function highlightedTokens(view: EditorView): string[] {
+    return Array.from(view.dom.querySelectorAll('.cm-variable')).map((el) => el.textContent ?? '');
+  }
+
   describe('createDataLinkTheme', () => {
-    it('creates a theme extension for light mode', () => {
-      const theme = createTheme({ colors: { mode: 'light' } });
-      expect(createDataLinkTheme(theme)).toBeDefined();
-    });
-
-    it('creates a theme extension for dark mode', () => {
-      const theme = createTheme({ colors: { mode: 'dark' } });
-      expect(createDataLinkTheme(theme)).toBeDefined();
-    });
-
-    it('applies theme with variable highlighting', () => {
+    it('colors the variable token with the theme success color', () => {
       const theme = createTheme({ colors: { mode: 'light' } });
       const view = createEditor('${variable}', [createDataLinkTheme(theme), createDataLinkHighlighter()]);
-      expect(view.dom).toHaveTextContent('${variable}');
+      const token = view.dom.querySelector('.cm-variable');
+      expect(token).not.toBeNull();
+      // The theme rule targets `.cm-variable`; assert it actually applies a color.
+      expect(getComputedStyle(token!).color).not.toBe('');
       view.destroy();
     });
   });
 
   describe('createDataLinkHighlighter', () => {
-    it('creates highlighter extension', () => {
-      expect(createDataLinkHighlighter()).toBeDefined();
-    });
-
-    it('highlights single variable', () => {
+    it('decorates a single variable', () => {
       const view = createEditor('${variable}', [createDataLinkHighlighter()]);
-      expect(view.dom).toHaveTextContent('${variable}');
+      expect(highlightedTokens(view)).toEqual(['${variable}']);
       view.destroy();
     });
 
-    it('highlights multiple variables', () => {
-      const view = createEditor('${var1} and ${var2}', [createDataLinkHighlighter()]);
-      expect(view.dom).toHaveTextContent('${var1} and ${var2}');
+    it('decorates each variable when several are present, including in URLs', () => {
+      const view = createEditor('https://x.com?id=${id}&name=${name}', [createDataLinkHighlighter()]);
+      expect(highlightedTokens(view)).toEqual(['${id}', '${name}']);
       view.destroy();
     });
 
-    it('highlights variables in URLs', () => {
-      const view = createEditor('https://example.com?id=${id}&name=${name}', [createDataLinkHighlighter()]);
-      expect(view.dom).toHaveTextContent('https://example.com?id=${id}&name=${name}');
-      view.destroy();
-    });
-
-    it('does not highlight incomplete variables', () => {
+    it('does not decorate an incomplete variable', () => {
       const view = createEditor('${incomplete', [createDataLinkHighlighter()]);
-      expect(view.state.doc.toString()).toBe('${incomplete');
+      expect(highlightedTokens(view)).toEqual([]);
       view.destroy();
     });
 
-    it('updates highlights when document changes', () => {
+    it('updates decorations when the document changes', () => {
       const view = createEditor('initial', [createDataLinkHighlighter()]);
+      expect(highlightedTokens(view)).toEqual([]);
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '${newVar}' } });
-      expect(view.dom).toHaveTextContent('${newVar}');
+      expect(highlightedTokens(view)).toEqual(['${newVar}']);
       view.destroy();
     });
   });
@@ -155,6 +144,23 @@ describe('codemirrorUtils', () => {
 
       it('returns null when no suggestions', () => {
         expect(dataLinkAutocompletion([])(createMockContext('', 0, true))).toBeNull();
+      });
+
+      it('anchors at a typed $ so an explicit request does not produce `$${...}`', () => {
+        // Ctrl+Space with a `$` already typed must replace the `$`, not insert
+        // after it. `from` at the `$` means applying `${var}` yields `${var}`.
+        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?p=$', 7, true));
+        expect(result?.from).toBe(6); // index of `$`
+      });
+
+      it('preserves a typed = on an explicit request (from points after =)', () => {
+        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?param=', 10, true));
+        expect(result?.from).toBe(10); // after `=`, so the separator is not replaced
+      });
+
+      it('still shows every suggestion on an explicit request after a trigger', () => {
+        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$ser', 4, true));
+        expect(result?.options).toHaveLength(4); // explicit ignores the typed filter
       });
     });
 

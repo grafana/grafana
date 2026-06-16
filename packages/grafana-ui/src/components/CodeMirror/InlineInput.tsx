@@ -49,7 +49,7 @@ export const singleLineFilter: Extension = EditorState.transactionFilter.of((tr)
  * copied with a trailing newline) collapses into the single line rather than
  * being rejected wholesale by `singleLineFilter`.
  */
-const stripNewlinesOnPaste: Extension = EditorView.domEventHandlers({
+export const stripNewlinesOnPaste: Extension = EditorView.domEventHandlers({
   paste(event, view) {
     const text = event.clipboardData?.getData('text');
     if (!text || !/[\r\n]/.test(text)) {

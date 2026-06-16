@@ -36,7 +36,9 @@ export const DataLinkInput = memo(
       <CodeMirrorInlineInput
         id="data-link-input"
         value={value}
-        // onChange's optional second arg is unused here; the signatures are compatible.
+        // CodeMirrorInlineInput only ever calls onChange(value); the optional
+        // callback in DataLinkInput's onChange is never invoked, so passing it
+        // straight through is safe.
         onChange={onChange}
         placeholder={placeholder}
         aria-labelledby={ariaLabelledby}
