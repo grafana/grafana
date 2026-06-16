@@ -63,7 +63,7 @@ If using the Grafana User Interface:
 
 If using the Grafana Terraform Provider:
 
-1. Configure the [grafana_role_assignment](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment) as follows
+1. Configure the [`grafana_role_assignment`](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/role_assignment) as follows
 
 ```yaml
 scim_sa_roles = [
