@@ -46,6 +46,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
 		testcases.NewPreferencesTestCase(),
+		testcases.NewSnapshotsTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -337,6 +338,7 @@ const (
 	starsID                = "stars migration"
 	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
+	snapshotsID            = "snapshots migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
@@ -346,6 +348,7 @@ var migrationIDsToDefault = map[string]bool{
 	datasourceID:           false,
 	starsID:                false,
 	preferencesID:          false,
+	snapshotsID:            false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
