@@ -1041,6 +1041,8 @@ github.com/grafana/nanogit v0.17.3/go.mod h1:8/ywe2yPs5hD9vbumRuGTbXNrLlo/gCPHfA
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/schemads v0.0.9/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZLSPxeM3LA=
 github.com/grafana/schemads v0.0.11/go.mod h1:5mjuxhSmbQZLjUSjzv+vTmNp+R2fYhSdiZLSPxeM3LA=
+github.com/grafana/schemads v0.2.3 h1:cfneDXyPK5OHqBr2RZlaxjHQNWcSUOX2UKhXLe4MaiE=
+github.com/grafana/schemads v0.2.3/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0 h1:bjh0PVYSVVFxzINqPFYJmAmJNrWPgnVjuSdYJGHmtFU=
 github.com/grafana/tail v0.0.0-20230510142333-77b18831edf0/go.mod h1:7t5XR+2IA8P2qggOAHTj/GCZfoLBle3OvNSYh1VkRBU=
 github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec/go.mod h1:j1IY7J2rUz7TcTjFVVx6HCpyTlYOJPtXuGRZ7sI+vSo=
