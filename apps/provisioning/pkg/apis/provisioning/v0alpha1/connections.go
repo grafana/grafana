@@ -70,6 +70,11 @@ type GitHubEnterpriseConnectionConfig struct {
 
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 	ServerURL string `json:"serverUrl"`
+
+	// WebhookDisabled disables webhook integration for this connection. When true, the GitHub
+	// App does not require webhooks:write permission and Grafana will not register or receive
+	// webhook events. Use this when Grafana is not reachable from the public internet.
+	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
 }
 
 func (GitHubEnterpriseConnectionConfig) OpenAPIModelName() string {

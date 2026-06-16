@@ -16,6 +16,10 @@ type GitHubEnterpriseConnectionConfigApplyConfiguration struct {
 	InstallationID *string `json:"installationID,omitempty"`
 	// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 	ServerURL *string `json:"serverUrl,omitempty"`
+	// WebhookDisabled disables webhook integration for this connection. When true, the GitHub
+	// App does not require webhooks:write permission and Grafana will not register or receive
+	// webhook events. Use this when Grafana is not reachable from the public internet.
+	WebhookDisabled *bool `json:"webhookDisabled,omitempty"`
 }
 
 // GitHubEnterpriseConnectionConfigApplyConfiguration constructs a declarative configuration of the GitHubEnterpriseConnectionConfig type for use with
@@ -45,5 +49,13 @@ func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithInstallationID(
 // If called multiple times, the ServerURL field is set to the value of the last call.
 func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithServerURL(value string) *GitHubEnterpriseConnectionConfigApplyConfiguration {
 	b.ServerURL = &value
+	return b
+}
+
+// WithWebhookDisabled sets the WebhookDisabled field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the WebhookDisabled field is set to the value of the last call.
+func (b *GitHubEnterpriseConnectionConfigApplyConfiguration) WithWebhookDisabled(value bool) *GitHubEnterpriseConnectionConfigApplyConfiguration {
+	b.WebhookDisabled = &value
 	return b
 }

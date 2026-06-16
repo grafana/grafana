@@ -57,6 +57,7 @@ func ConfigFromConnection(conn *provisioning.Connection) ConnectionConfig {
 		cfg.InstallationID = ghe.InstallationID
 		cfg.ServerURL = ghe.ServerURL
 		cfg.InstallationURL = BuildInstallationURL(ghe.ServerURL, ghe.InstallationID)
+		cfg.WebhookDisabled = ghe.WebhookDisabled
 	}
 	return cfg
 }
