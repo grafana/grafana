@@ -63,7 +63,10 @@ export const HistogramTooltip = ({
   let footer: ReactNode;
 
   if (isPinned && seriesIdx != null) {
-    const field = series.fields[seriesIdx];
+    // seriesIdx/dataIdxs are indexed against xMinOnlyFrame (the xMax bucket field is
+    // removed before the uPlot data is built), so the field must be looked up there too.
+    // Using `series` (which still contains xMax) yields an off-by-one wrong series.
+    const field = xMinOnlyFrame.fields[seriesIdx];
     const dataIdx = dataIdxs[seriesIdx]!;
     const links = getDataLinks(field, dataIdx);
 
