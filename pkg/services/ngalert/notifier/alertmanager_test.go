@@ -252,12 +252,8 @@ receivers:
 				return
 			}
 			require.NoError(t, err)
-			templateDefs := tc.config.SortedTemplates(true)
-			expectedTemplateCount := len(tc.config.Templates)
-			if len(tc.config.ExtraConfigs) > 0 {
-				expectedTemplateCount += len(tc.config.ExtraConfigs[0].TemplateFiles)
-			}
-			require.Len(t, templateDefs, expectedTemplateCount)
+			templateDefs := tc.config.SortedTemplates()
+			require.Len(t, templateDefs, len(tc.config.Templates))
 		})
 	}
 }
