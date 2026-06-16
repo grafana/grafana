@@ -1144,15 +1144,25 @@ type AnnotationAppPlatformSettings struct {
 	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
 	// for new annotations.
 	EnableLegacyID bool
+
+	// APIMigrationPhase controls legacy API proxy behavior.
+	// Values: "off" (default), "proxy-writes", "proxy-all".
+	APIMigrationPhase string
+
+	// APIServerURL is the URL of the standalone annotation API server.
+	// Empty means proxy is disabled regardless of APIMigrationPhase.
+	APIServerURL string
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
-		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString("off"),
+		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
