@@ -215,12 +215,13 @@ jobs:
 
       # Start Grafana from the standalone directory
       # The server is immediately backgrounded so it can initialise in parallel while the Playwright browsers are installing 🤓
+      # to turn on scrict CSP, add `cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \`
+
       - name: Start Grafana server
         run: |
           grafana-server/bin/grafana server \
             --homepath="$PWD/grafana-server" \
             cfg:server.http_port=3001 \
-            cfg:security.content_security_policy_template="require-trusted-types-for 'script'; script-src 'self' 'unsafe-inline' 'strict-dynamic' \$NONCE;object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline' blob:;img-src * data:;base-uri 'self';connect-src 'self' grafana.com ws://\$ROOT_PATH wss://\$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';" \
             > grafana-server/grafana.log 2>&1 &
 
           printf "\nThe Grafana server is starting in the background.\n"
