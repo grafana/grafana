@@ -233,9 +233,11 @@ export function ResourcesToMigrate({
 
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
         <Text variant="bodySmall" color="secondary">
-          {t('provisioning.migrate.resources-to-migrate-footer', 'Showing {{count}} of {{total}} folders', {
+          {t('provisioning.migrate.resources-to-migrate-footer', '', {
             count: filtered.length,
             total: unmanagedFolders.length,
+            defaultValue_one: 'Showing {{count}} of {{total}} folders',
+            defaultValue_other: 'Showing {{count}} of {{total}} folders',
           })}
         </Text>
         {unmanagedFolders.length > 0 && (
@@ -247,11 +249,15 @@ export function ResourcesToMigrate({
             tooltip={migrateDisabled ? migrateTooltip : undefined}
           >
             {allSelected
-              ? t('provisioning.migrate.resources-to-migrate-migrate-all', 'Migrate all ({{count}})', {
+              ? t('provisioning.migrate.resources-to-migrate-migrate-all', '', {
                   count: selectedCount,
+                  defaultValue_one: 'Migrate all ({{count}})',
+                  defaultValue_other: 'Migrate all ({{count}})',
                 })
-              : t('provisioning.migrate.resources-to-migrate-migrate-selected', 'Migrate selected ({{count}})', {
+              : t('provisioning.migrate.resources-to-migrate-migrate-selected', '', {
                   count: selectedCount,
+                  defaultValue_one: 'Migrate selected ({{count}})',
+                  defaultValue_other: 'Migrate selected ({{count}})',
                 })}
           </Button>
         )}
@@ -305,8 +311,10 @@ function FolderEntry({
         <Stack direction="column" gap={0} flex={1}>
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
-            {t('provisioning.migrate.resources-folder-summary', '{{count}} resources', {
+            {t('provisioning.migrate.resources-folder-summary', '', {
               count: folder.dashboardCount,
+              defaultValue_one: '{{count}} resource',
+              defaultValue_other: '{{count}} resources',
             })}
           </Text>
         </Stack>

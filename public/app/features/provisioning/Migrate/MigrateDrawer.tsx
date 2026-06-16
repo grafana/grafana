@@ -110,11 +110,13 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
       <Stack direction="column" gap={2}>
         {isSelective ? (
           <Text color="secondary">
-            {t(
-              'provisioning.migrate.drawer-description-selective',
-              '{{count}} selected resources (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.',
-              { count: selection?.dashboards ?? resources?.length ?? 0 }
-            )}
+            {t('provisioning.migrate.drawer-description-selective', '', {
+              count: selection?.dashboards ?? resources?.length ?? 0,
+              defaultValue_one:
+                '{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.',
+              defaultValue_other:
+                '{{count}} selected resources (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.',
+            })}
           </Text>
         ) : (
           <Text color="secondary">
