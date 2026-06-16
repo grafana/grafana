@@ -35,7 +35,7 @@ export interface Props {
   range: TimeRange;
 }
 
-export function Editor({
+function Editor({
   refId,
   onChange,
   datasource,

@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -155,6 +156,40 @@ func TestCheckQuota(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A missing ref surfaces from the git layer as ErrRefNotFound wrapped by fmt.Errorf
+// (a *fmt.wrapError, not an APIStatus). The directory-listing handler must unwrap it so
+// the client gets a 404 instead of a 500 + UnhandledError log.
+func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
+	mockAccess := auth.NewMockAccessChecker(t)
+	mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	wrappedErr := fmt.Errorf("ref not found: %s: %w", "refs/heads/test-panel", repository.ErrRefNotFound)
+	mockReadWriter := repository.NewMockReaderWriter(t)
+	mockReadWriter.EXPECT().ReadTree(mock.Anything, "test-panel").Return([]repository.FileTreeEntry(nil), wrappedErr)
+
+	connector := &filesConnector{access: mockAccess}
+	responder := &fakeResponder{}
+
+	connector.handleDirectoryListing(
+		context.Background(),
+		"test-repo",
+		resources.DualWriteOptions{Path: "", Ref: "test-panel"},
+		mockReadWriter,
+		responder,
+	)
+
+	require.Error(t, responder.err)
+	// The responder must receive a concrete *StatusError (an APIStatus), not a wrapped
+	// error — the apiserver's ErrorToAPIStatus maps via a non-unwrapping type assertion,
+	// so a wrapped error becomes 500 + UnhandledError. A deliberate type assertion (not
+	// errors.As) is what mirrors that behavior here; errors.As would unwrap and pass even
+	// for the wrapped error that causes the 500.
+	//nolint:errorlint // intentional: assert the concrete type the responder receives, matching the apiserver's non-unwrapping mapping
+	statusErr, ok := responder.err.(*apierrors.StatusError)
+	require.True(t, ok, "responder must receive a *StatusError, got %T", responder.err)
+	require.True(t, apierrors.IsNotFound(statusErr), "expected a 404 NotFound, got %#v", statusErr)
 }
 
 func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
@@ -424,6 +459,53 @@ func TestParseRequestOptionsPathValidation(t *testing.T) {
 	}
 }
 
+func TestParseRequestOptionsRefValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		ref     string
+		wantErr bool
+	}{
+		{name: "empty ref is allowed", ref: ""},
+		{name: "valid branch name", ref: "main"},
+		{name: "valid branch with slash", ref: "feature/my-branch"},
+		{name: "valid short commit SHA", ref: "abc1234"},
+		{name: "valid full commit SHA", ref: "abcdef0123456789abcdef0123456789abcdef01"},
+		{name: "invalid ref with semicolon", ref: "main; rm -rf /", wantErr: true},
+		{name: "invalid ref with space", ref: "main branch", wantErr: true},
+		{name: "invalid ref with backtick", ref: "main`whoami`", wantErr: true},
+		{name: "invalid ref with double dots", ref: "feature/..bad", wantErr: true},
+		{name: "invalid ref with newline", ref: "main\nfoo", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(&provisioningapi.Repository{
+				Spec: provisioningapi.RepositorySpec{
+					Title: "test-repo",
+				},
+			}).Maybe()
+
+			connector := &filesConnector{}
+			r := httptest.NewRequest(http.MethodGet, "/test-repo/files/dashboard.json", nil)
+			if tt.ref != "" {
+				q := r.URL.Query()
+				q.Set("ref", tt.ref)
+				r.URL.RawQuery = q.Encode()
+			}
+
+			_, err := connector.parseRequestOptions(r, "test-repo", mockRepo)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, repository.ErrInvalidRef)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestHandleGetRawFile(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -468,7 +550,7 @@ func TestHandleGetRawFile(t *testing.T) {
 				},
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 
 			if tt.readError != nil {
 				mockReadWriter.EXPECT().Read(mock.Anything, tt.path, "").Return(nil, tt.readError)
@@ -521,7 +603,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 			Check(mock.Anything, mock.Anything, mock.Anything).
 			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
 
-		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 		connector := &filesConnector{access: mockAccess}
 
 		_, err := connector.handleGetRawFile(
@@ -565,7 +647,7 @@ func TestHandleGetRawFile_MaxFileSize(t *testing.T) {
 			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
-			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, false)
+			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), false)
 
 			mockReadWriter.EXPECT().Read(mock.Anything, path, "").Return(&repository.FileInfo{
 				Path: path,

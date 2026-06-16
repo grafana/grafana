@@ -252,7 +252,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			input: map[string]any{
 				"panels": []any{}, // this used to be a panic
 			},
-			expect: "Dashboard is missing required title property",
+			expect: "Dashboard spec is missing required title property",
 		}}
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
@@ -514,6 +514,45 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 200, rsp.Response.StatusCode)
 	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
+
+	//---------------------------------------------------------
+	// Reject creating a second dashboard that reuses an existing
+	// grafana.app/deprecatedInternalID. Without admission enforcement, two
+	// dashboards could end up sharing the same legacy id (the symptom was
+	// /api/dashboards/db returning 500 with "unexpected number of dashboards
+	// for id N. found: 2. desired: 1" on any later overwrite).
+	//---------------------------------------------------------
+	t.Run("reject duplicate deprecatedInternalID on create", func(t *testing.T) {
+		const sharedID = int64(99999)
+
+		newDashboardWithID := func(name string) *unstructured.Unstructured {
+			return &unstructured.Unstructured{
+				Object: map[string]any{
+					"apiVersion": "dashboard.grafana.app/v1",
+					"kind":       "Dashboard",
+					"metadata": map[string]any{
+						"name": name,
+					},
+					"spec": map[string]any{
+						"id":            sharedID,
+						"title":         name,
+						"schemaVersion": int64(36),
+					},
+				},
+			}
+		}
+
+		first, err := clientV1.Resource.Create(ctx, newDashboardWithID("dup-id-a"), metav1.CreateOptions{})
+		require.NoError(t, err, "first create with spec.id should succeed")
+		require.Equal(t, "99999", first.GetLabels()[utils.LabelKeyDeprecatedInternalID], //nolint:staticcheck
+			"mutation hook should lift spec.id onto the label")
+
+		_, err = clientV1.Resource.Create(ctx, newDashboardWithID("dup-id-b"), metav1.CreateOptions{})
+		require.Error(t, err, "second create with same spec.id must be rejected")
+		require.True(t, errors.IsConflict(err),
+			"expected HTTP 409 Conflict, got %T: %v", err, err)
+		require.Contains(t, err.Error(), "deprecatedInternalID=99999")
+	})
 }
 
 func TestIntegrationListPagination(t *testing.T) {

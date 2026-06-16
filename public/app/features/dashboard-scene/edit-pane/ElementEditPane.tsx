@@ -18,7 +18,7 @@ export class ElementEditPane extends SceneObjectBase {
   }
 }
 
-export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
+function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
   const styles = useStyles2(getStyles);
 
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);

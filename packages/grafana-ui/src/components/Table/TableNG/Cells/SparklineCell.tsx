@@ -23,7 +23,7 @@ import { isTableCellStylesKeyEqual } from '../styles';
 import { type SparklineCellProps, type TableCellStyles } from '../types';
 import { getAlignmentFactor, getCellOptions, prepareSparklineValue } from '../utils';
 
-export const defaultSparklineCellConfig: TableSparklineCellOptions = {
+const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Smooth,

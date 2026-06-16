@@ -11,7 +11,7 @@ import { Portal } from '../Portal/Portal';
 import { VizTooltipFooter } from '../VizTooltip/VizTooltipFooter';
 import { VizTooltipWrapper } from '../VizTooltip/VizTooltipWrapper';
 
-import { type DataLinksActionsTooltipCoords } from './utils';
+import { type DataLinksActionsTooltipCoords } from './cellUtils';
 
 interface Props {
   links: LinkModel[];

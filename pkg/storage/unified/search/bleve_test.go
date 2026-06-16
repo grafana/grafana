@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	bolterrors "go.etcd.io/bbolt/errors"
-	"go.uber.org/atomic"
 	"go.uber.org/goleak"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -57,6 +58,109 @@ func TestBleveBackend(t *testing.T) {
 	t.Cleanup(backend.Stop)
 
 	testBleveBackend(t, backend)
+}
+
+func TestBleveSearchRootFolderExpansion(t *testing.T) {
+	tmpdir, err := os.MkdirTemp("", "grafana-bleve-test")
+	require.NoError(t, err)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          tmpdir,
+		FileThreshold: 5,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	key := &resourcepb.ResourceKey{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
+	info, err := builders.DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		return &builders.DashboardDocumentBuilder{
+			Namespace:        namespace,
+			Blob:             blob,
+			Stats:            make(map[string]map[string]int64),
+			DatasourceLookup: dashboard.CreateDatasourceLookup([]*dashboard.DatasourceQueryResult{{}}),
+		}, nil
+	})
+	require.NoError(t, err)
+
+	// Index three dashboards: one at the root using the legacy empty sentinel,
+	// one at the root using the canonical "general" sentinel, and one nested.
+	doc := func(name, folder string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:     1,
+				Name:   name,
+				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: key.Group, Resource: key.Resource},
+				Title:  name,
+				Folder: folder,
+				Fields: map[string]any{},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}, 3, info.Fields, "test", func(index resource.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("legacy-root", ""),
+				doc("general-root", foldermodel.GeneralFolderUID),
+				doc("nested", "other"),
+			},
+		}); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	searchFolder := func(operator string, values ...string) []string {
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: key,
+				Fields: []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: operator,
+					Values:   values,
+				}},
+			},
+			Limit: 100000,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		names := make([]string, 0, len(rsp.Results.Rows))
+		for _, row := range rsp.Results.Rows {
+			names = append(names, row.Key.Name)
+		}
+		return names
+	}
+
+	t.Run("querying the canonical root matches both root sentinels", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), foldermodel.GeneralFolderUID)
+		require.ElementsMatch(t, []string{"legacy-root", "general-root"}, names)
+	})
+
+	t.Run("querying the legacy root matches both root sentinels", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), "")
+		require.ElementsMatch(t, []string{"legacy-root", "general-root"}, names)
+	})
+
+	t.Run("a non-root folder is not expanded", func(t *testing.T) {
+		names := searchFolder(string(selection.Equals), "other")
+		require.ElementsMatch(t, []string{"nested"}, names)
+	})
+
+	t.Run("root is expanded inside an in-list alongside other folders", func(t *testing.T) {
+		names := searchFolder(string(selection.In), "other", foldermodel.GeneralFolderUID)
+		require.ElementsMatch(t, []string{"legacy-root", "general-root", "nested"}, names)
+	})
 }
 
 func testBleveBackend(t *testing.T, backend *bleveBackend) {
@@ -1435,11 +1539,11 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 
 func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs int) (resource.UpdateFn, *atomic.Int64) {
 	cnt := 0
-	updateCalls := atomic.NewInt64(0)
+	var updateCalls atomic.Int64
 
 	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		now := time.Now()
-		updateCalls.Inc()
+		updateCalls.Add(1)
 
 		cnt++
 
@@ -1461,7 +1565,7 @@ func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs
 
 		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
 		return now.UnixMilli(), docs, err
-	}, updateCalls
+	}, &updateCalls
 }
 
 func TestCleanOldIndexes(t *testing.T) {
@@ -1783,9 +1887,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	rebuilds := atomic.NewInt64(0)
-	updates := atomic.NewInt64(0)
-	searches := atomic.NewInt64(0)
+	var rebuilds, updates, searches atomic.Int64
 	const searchConcurrency = 25
 	for i := range searchConcurrency {
 		wg.Add(1)
@@ -1807,7 +1909,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					}
 					require.NoError(t, err)
 				}
-				updates.Inc()
+				updates.Add(1)
 
 				resp, err := idx.Search(ctx, nil, &resourcepb.ResourceSearchRequest{
 					Options: &resourcepb.ListOptions{
@@ -1828,7 +1930,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 					require.NoError(t, err)
 				}
 				require.Equal(t, int64(10), resp.TotalHits)
-				searches.Inc()
+				searches.Add(1)
 			}
 		}()
 	}
@@ -1839,7 +1941,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 		for ctx.Err() == nil {
 			_, err := be.BuildIndex(t.Context(), ns, 10, nil, "test", indexTestDocs(ns, 10, 100), updateTestDocs(ns, 5), false, time.Time{}, 0)
 			require.NoError(t, err)
-			rebuilds.Inc()
+			rebuilds.Add(1)
 		}
 	}()
 
@@ -1927,7 +2029,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	attemptedUpdates := atomic.NewInt64(0)
+	var attemptedUpdates atomic.Int64
 
 	// Verify that each returned RV (unix timestamp in millis) is either the same as before, or at least minInterval later.
 	const searchConcurrency = 10
@@ -1938,7 +2040,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 
 			var collectedRVs []int64
 			for ctx.Err() == nil {
-				attemptedUpdates.Inc()
+				attemptedUpdates.Add(1)
 
 				// We use t.Context() here to avoid getting errors from context cancellation.
 				rv, err := idx.UpdateIndex(t.Context())

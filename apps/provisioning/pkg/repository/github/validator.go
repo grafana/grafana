@@ -12,7 +12,9 @@ import (
 )
 
 // Validate validates the github repository configuration without requiring decrypted secrets.
-func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
+// allowInsecure permits http:// URLs together with a token (cleartext credentials); it should
+// only be true for local/dev environments.
+func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.ErrorList {
 	repo, ok := obj.(*provisioning.Repository)
 	if !ok {
 		return nil
@@ -48,7 +50,17 @@ func Validate(_ context.Context, obj runtime.Object) field.ErrorList {
 		return list
 	}
 
+	// A custom webhook URL (spec.webhook) and webhookDisabled are mutually exclusive:
+	// one says "receive webhooks at this address" while the other says "never use webhooks."
+	if gh.WebhookDisabled && repo.Spec.Webhook != nil {
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "github", "webhookDisabled"),
+			gh.WebhookDisabled,
+			"cannot be true when spec.webhook is set",
+		))
+	}
+
 	// Validate git-related fields (branch, path, token/connection) using the shared git validator
-	list = append(list, git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path)...)
+	list = append(list, git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path, allowInsecure)...)
 	return list
 }

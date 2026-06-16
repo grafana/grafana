@@ -14,9 +14,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
 	"github.com/blevesearch/bleve/v2/mapping"
@@ -27,19 +28,17 @@ import (
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.uber.org/atomic"
 	"k8s.io/apimachinery/pkg/selection"
-
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -90,6 +89,29 @@ type BleveOptions struct {
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
+
+	// DiskCleanupInterval is how often the background on-disk cleanup pass runs.
+	// The first run after start is jittered uniformly in [0, DiskCleanupInterval)
+	// so the sweep doesn't run immediately at startup, when the instance is still
+	// busy opening or rebuilding indexes. Zero disables the loop (the goroutine
+	// is not started).
+	DiskCleanupInterval time.Duration
+
+	// DiskCleanupGracePeriod is the minimum age a candidate directory must have
+	// before it is eligible for deletion. Applied as a two-step mtime gate so a
+	// directory that is still being written to (active scorch index, in-flight
+	// snapshot CopyTo) is always preserved. Only consulted when
+	// DiskCleanupInterval > 0.
+	DiskCleanupGracePeriod time.Duration
+
+	// DiskCleanupUnopenedGracePeriod is a longer grace period applied only to
+	// the newest on-disk index of a resource this pod owns but has not opened
+	// in this process. A pod owning a resource it has not been queried for
+	// keeps the most recent on-disk index for this duration, so a later
+	// BuildIndex call can hand it to findPreviousFileBasedIndex and skip a full
+	// rebuild. Older siblings under the same resource still use
+	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
+	DiskCleanupUnopenedGracePeriod time.Duration
 }
 
 // SnapshotOptions configures remote index snapshot handling in BuildIndex and
@@ -240,6 +262,9 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 	be.bgTasksWg.Add(1)
 	go be.evictExpiredOrUnownedIndexesPeriodically(ctx)
 
+	be.bgTasksWg.Add(1)
+	go be.writeOpenIndexListPeriodically(ctx)
+
 	if opts.Snapshot.Store != nil {
 		// Initialise snapshot metric label series only on instances where the
 		// feature is actually wired up; ProvideIndexMetrics deliberately skips
@@ -254,6 +279,15 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 			be.bgTasksWg.Add(1)
 			go be.cleanupSnapshotsPeriodically(ctx)
 		}
+	}
+
+	if opts.DiskCleanupInterval > 0 {
+		// Same rationale as InitSnapshotMetrics: only emit the
+		// index_server_disk_cleanup_* series on instances where the feature is
+		// enabled.
+		be.indexMetrics.InitDiskCleanupMetrics()
+		be.bgTasksWg.Add(1)
+		go be.cleanupDiskPeriodically(ctx)
 	}
 
 	if be.indexMetrics != nil {
@@ -398,10 +432,20 @@ func (b *bleveBackend) shouldUpload(key resource.NamespacedResource, idx *bleveI
 	if err != nil {
 		return false, fmt.Errorf("reading snapshot mutation count for %v: %w", key, err)
 	}
-	if mutationCount < int64(b.opts.Snapshot.MinDocChanges) {
+	if mutationCount >= int64(b.opts.Snapshot.MinDocChanges) {
+		return true, nil
+	}
+
+	if b.opts.Snapshot.MaxIndexAge <= 0 {
 		return false, nil
 	}
-	return true, nil
+
+	// Refresh stable indexes well before cleanup can age out the remote snapshot.
+	refreshInterval := b.opts.Snapshot.MaxIndexAge / 3
+	if refreshInterval <= 0 {
+		refreshInterval = b.opts.Snapshot.MaxIndexAge
+	}
+	return now.Sub(lastUploadTime) >= refreshInterval, nil
 }
 
 func (b *bleveBackend) setUploadTracking(key resource.NamespacedResource, uploadedAt time.Time) {
@@ -1474,10 +1518,15 @@ func (b *bleveBackend) findPreviousFileBasedIndex(resourceDir string) (bleve.Ind
 
 // Stop closes all indexes and stops background tasks.
 func (b *bleveBackend) Stop() {
-	b.closeAllIndexes()
-
 	b.bgTasksCancel()
 	b.bgTasksWg.Wait()
+
+	// Stop the periodic writer before the final write so shutdown writes one stable list.
+	if err := b.WriteOpenIndexStats(time.Now()); err != nil {
+		b.log.Warn("failed to write open index stats during shutdown", "err", err)
+	}
+
+	b.closeAllIndexes()
 }
 
 func (b *bleveBackend) closeAllIndexes() {
@@ -2097,6 +2146,32 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// filters
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Temporarily expand a root-folder filter so it matches both the
+			// legacy empty sentinel ("") and the canonical "general" UID. This
+			// keeps results consistent whether the index was written before or
+			// after the apistore started stamping "general" on root-parented
+			// resources. Done here so every caller stays agnostic of the
+			// sentinel used on disk.
+			if v.Key == resource.SEARCH_FIELD_FOLDER &&
+				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+				expanded := false
+				values := make([]string, 0, len(v.Values)+1)
+				for _, val := range v.Values {
+					if !foldermodel.IsRootFolderUID(val) {
+						values = append(values, val)
+						continue
+					}
+					if !expanded {
+						values = append(values, "", foldermodel.GeneralFolderUID)
+						expanded = true
+					}
+				}
+				if expanded {
+					v.Operator = string(selection.In)
+					v.Values = values
+				}
+			}
+
 			// Fields should already have correct prefix (either "fields." or "selectableFields.")
 			q, err := requirementQuery(v, "")
 			if err != nil {

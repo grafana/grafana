@@ -110,6 +110,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 	return &UserSync{
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
+		cfg:                       cfg,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -127,6 +128,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 type UserSync struct {
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
+	cfg                       *setting.Cfg
 	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
@@ -291,6 +293,15 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	if !id.ClientParams.SyncUser {
 		return nil
+	}
+
+	// Auth proxy and LDAP key the asserted role by DefaultOrgID but never set OrgID,
+	// so GetOrgRole() looks up key 0 and resolves to RoleNone. Align OrgID to DefaultOrgID so the
+	// asserted role is written to the k8s user's Spec.Role on create/update.
+	if id.OrgID == 0 &&
+		(id.AuthenticatedBy == login.AuthProxyAuthModule || id.AuthenticatedBy == login.LDAPAuthModule) &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		id.OrgID = s.cfg.DefaultOrgID()
 	}
 
 	// Does user exist in the database?
@@ -540,6 +551,18 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
+	// Sync the asserted org role onto the k8s user's Spec.Role
+	if id.ClientParams.SyncOrgRoles && len(id.OrgRoles) > 0 &&
+		s.cfg.RBAC.SingleOrganization &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if assertedRole, ok := id.OrgRoles[id.OrgID]; ok && string(assertedRole) != usr.OrgRole {
+			role := string(assertedRole)
+			updateCmd.OrgRole = &role
+			usr.OrgRole = role
+			needsUpdate = true
+		}
+	}
+
 	span.SetAttributes(
 		attribute.String("identity.ID", id.ID),
 		attribute.String("identity.ExternalUID", id.ExternalUID),
@@ -633,12 +656,20 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
+	// Forward the identity's active-org role so the k8s User is created with the
+	// asserted Spec.Role instead of falling back to AutoAssignOrgRole.
+	var defaultOrgRole string
+	if len(id.OrgRoles) > 0 {
+		defaultOrgRole = string(id.GetOrgRole())
+	}
+
 	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
-		Login:        id.Login,
-		Email:        id.Email,
-		Name:         id.Name,
-		IsAdmin:      isAdmin,
-		SkipOrgSetup: len(id.OrgRoles) > 0,
+		Login:          id.Login,
+		Email:          id.Email,
+		Name:           id.Name,
+		IsAdmin:        isAdmin,
+		DefaultOrgRole: defaultOrgRole,
+		SkipOrgSetup:   len(id.OrgRoles) > 0,
 	})
 	if err != nil {
 		return nil, err
