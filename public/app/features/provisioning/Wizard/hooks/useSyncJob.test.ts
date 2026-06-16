@@ -14,10 +14,10 @@ setupProvisioningMswServer();
 
 describe('useSyncJob', () => {
   it('starts a migrate job and exposes the created job', async () => {
-    let body = '';
+    let body: unknown;
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
-        body = await request.text();
+        body = await request.json();
         return HttpResponse.json(createJob());
       })
     );
@@ -26,15 +26,17 @@ describe('useSyncJob', () => {
 
     await act(() => result.current.startJob(true));
 
-    await waitFor(() => expect(result.current.job).toBeDefined());
-    expect(body).toContain('"action":"migrate"');
+    await waitFor(() => {
+      expect(result.current.job).toBeDefined();
+      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: {} }));
+    });
   });
 
   it('threads requiresMigration=false through to a pull job', async () => {
-    let body = '';
+    let body: unknown;
     server.use(
       http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
-        body = await request.text();
+        body = await request.json();
         return HttpResponse.json(createJob());
       })
     );
@@ -43,8 +45,12 @@ describe('useSyncJob', () => {
 
     await act(() => result.current.startJob(false));
 
-    await waitFor(() => expect(result.current.job).toBeDefined());
-    expect(body).toContain('"action":"pull"');
+    await waitFor(() => {
+      expect(result.current.job).toBeDefined();
+      expect(body).toEqual(
+        expect.objectContaining({ action: 'pull', pull: expect.objectContaining({ incremental: false }) })
+      );
+    });
   });
 
   it('does not set a job when no repository is selected', async () => {
