@@ -92,6 +92,9 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 
 	mwNode.Id = "standalone-plugin-page-" + mwPluginID
 	mwNode.IsNew = true
+	// Reset the standalone app's plugin SortWeight so it falls back to its
+	// appended position and sorts last among SLO's child pages.
+	mwNode.SortWeight = 0
 	sloNode.Children = append(sloNode.Children, mwNode)
 
 	if appsNode := treeRoot.FindById(navtree.NavIDApps); appsNode != nil && len(appsNode.Children) == 0 {
