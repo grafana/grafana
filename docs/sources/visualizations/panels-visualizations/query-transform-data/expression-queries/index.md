@@ -1,6 +1,5 @@
 ---
 aliases:
-  - ../../../panels-visualizations/query-transform-data/ # /docs/grafana/next/panels-visualizations/query-transform-data/
   - ../../../panels-visualizations/query-transform-data/expression-queries/ # /docs/grafana/next/panels-visualizations/query-transform-data/expression-queries/
   - ../../../panels/query-a-data-source/use-expressions-to-manipulate-data/ # /docs/grafana/next/panels/query-a-data-source/use-expressions-to-manipulate-data/
   - ../../../panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/ # /docs/grafana/next/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/
