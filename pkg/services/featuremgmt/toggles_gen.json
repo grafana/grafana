@@ -4020,7 +4020,8 @@
       "metadata": {
         "name": "preventPanelChromeOverflow",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-17T14:40:08Z"
+        "creationTimestamp": "2025-10-17T14:40:08Z",
+        "deletionTimestamp": "2026-06-16T13:33:46Z"
       },
       "spec": {
         "description": "Restrict PanelChrome contents with overflow: hidden;",
