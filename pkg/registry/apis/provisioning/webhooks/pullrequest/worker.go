@@ -130,9 +130,15 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	if cfg.GitHub == nil {
-		logger.Debug("expecting github configuration")
-		return apierrors.NewBadRequest("expecting github configuration")
+	var base string
+	switch {
+	case cfg.GitHub != nil:
+		base = cfg.GitHub.Branch
+	case cfg.GitLab != nil:
+		base = cfg.GitLab.Branch
+	default:
+		logger.Debug("expecting github or gitlab configuration")
+		return apierrors.NewBadRequest("expecting github or gitlab configuration")
 	}
 
 	reader, ok := repo.(repository.Reader)
@@ -151,8 +157,6 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
-	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
-	base := cfg.GitHub.Branch
 	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
 		logger.Error("failed to list pull request files", "error", err)
