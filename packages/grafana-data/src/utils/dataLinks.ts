@@ -38,11 +38,6 @@ export type LinkToExploreOptions = {
   replaceVariables: InterpolateFunction;
 };
 
-// from scenes...
-function isCustomVariableValue(value: any) {
-  return typeof value === 'object' && 'formatter' in value;
-}
-
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
   const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
 
@@ -72,10 +67,12 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
     const timeRangeField = link.meta?.timeRange?.field;
     // default to undefined, which is "now", if field is not defined or is not a valid variable
     let baseTimeStr: string | undefined = undefined;
+
+    //check that timeRangeField is defined, has a variable, and is not a custom variable (logic from isCustomVariableValue in scenes)
     if (
       timeRangeField !== undefined &&
       Object.keys(scopedVars).includes(timeRangeField) &&
-      !isCustomVariableValue(timeRangeField)
+      !(typeof timeRangeField === 'object' && 'formatter' in timeRangeField)
     ) {
       const varStringTimeRangeField = `\$\{${timeRangeField}\}`;
       baseTimeStr = interpolateObject(varStringTimeRangeField, scopedVars, replaceVariables);
