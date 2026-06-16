@@ -28,7 +28,7 @@ In the **Dashboard controls** section of the sidebar, you can add variables, ann
 
 {{< admonition type="note" >}}
 The **Filter and Group by** feature renames the **Ad hoc filters** variable and extends it by adding grouping for Prometheus and Loki data sources.
-However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
+However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"` under the `variables` schema property.
 {{< /admonition >}}
 
 <!-- vale Grafana.WordList = YES -->

@@ -23,7 +23,7 @@ weight: 4
 
 {{< admonition type="note" >}}
 The **Filter and Group by** feature renames the **Ad hoc filters** variable and extends it by adding grouping for Prometheus and Loki data sources.
-However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"`.
+However, in the dashboard schema, it's still referred to as `"kind": "AdhocVariable"` under the `variables` schema property.
 {{< /admonition >}}
 
 <!-- vale Grafana.WordList = YES -->
@@ -121,7 +121,7 @@ Hover the cursor over any panel using the data source of the filter to show the 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
 
 This can be helpful when you're working with a panel that's far away from the dashboard controls.
-Your selection is applied to the all the panels in the dashboard with the same data source.
+Your selection is applied to all the panels in the dashboard with the same data source.
 
 You can also further filter a time series panel, which allows you to drill down further into your data.
 After setting your group by dimension and splitting your data, click on a series in a panel and click **Filter on this value** or **Filter out this value**.
