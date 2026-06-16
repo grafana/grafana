@@ -1313,6 +1313,22 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			expectedHook:  nil,
 			expectedError: nil,
 		},
+		{
+			name:      "no webhook when webhookDisabled is true",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch:          "main",
+						WebhookDisabled: true,
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1760,6 +1776,28 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: nil,
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
+		{
+			name:      "no webhook update when webhookDisabled is true",
+			setupMock: func(_ *MockClient) {},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch:          "main",
+						WebhookDisabled: true,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
