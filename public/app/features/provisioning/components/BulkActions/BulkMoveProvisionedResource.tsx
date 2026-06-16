@@ -159,14 +159,11 @@ function FormContent({
             <BulkActionJobStatus
               job={job}
               jobType="move"
-              successTitle={
-                submittedViaBranchWorkflow.current
-                  ? t(
-                      'browse-dashboards.bulk-move-resources-form.success-title-branch',
-                      'Requested changes were pushed to a branch'
-                    )
-                  : t('browse-dashboards.bulk-move-resources-form.success-title', 'Resources moved successfully')
-              }
+              committedTitle={t(
+                'browse-dashboards.bulk-move-resources-form.success-title',
+                'Resources moved successfully'
+              )}
+              pushedToBranch={submittedViaBranchWorkflow.current}
             />
           ) : (
             <>

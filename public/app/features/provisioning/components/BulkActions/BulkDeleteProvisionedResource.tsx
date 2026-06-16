@@ -103,14 +103,11 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
             <BulkActionJobStatus
               job={job}
               jobType="delete"
-              successTitle={
-                submittedViaBranchWorkflow.current
-                  ? t(
-                      'browse-dashboards.bulk-delete-resources-form.success-title-branch',
-                      'Requested changes were pushed to a branch'
-                    )
-                  : t('browse-dashboards.bulk-delete-resources-form.success-title', 'Resources deleted successfully')
-              }
+              committedTitle={t(
+                'browse-dashboards.bulk-delete-resources-form.success-title',
+                'Resources deleted successfully'
+              )}
+              pushedToBranch={submittedViaBranchWorkflow.current}
             />
           ) : (
             <>

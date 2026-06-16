@@ -27,7 +27,6 @@ export function useSyncJob({ repoName, setStepStatusInfo }: UseSyncJobParams) {
       if (response) {
         setJob(response);
       }
-      return response;
     },
     [createSyncJob]
   );

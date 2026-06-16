@@ -1,44 +1,44 @@
 import { useCallback, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type StepStatusInfo } from '../../Wizard/types';
-import { type JobType, type StatusInfo } from '../../types';
+import { type JobType } from '../../types';
 
 interface BulkActionJobStatusProps {
   job: Job;
   jobType: JobType;
-  // Stable string (from t(...)); the caller decides the wording per workflow.
-  successTitle: string;
+  // Success wording when the job committed directly to the configured branch.
+  committedTitle: string;
+  // The job was submitted via the branch workflow, so its changes went to a branch.
+  pushedToBranch: boolean;
 }
 
-export function BulkActionJobStatus({ job, jobType, successTitle }: BulkActionJobStatusProps) {
-  const [jobError, setJobError] = useState<string | StatusInfo>();
-  const [jobWarning, setJobWarning] = useState<string | StatusInfo>();
-  const [jobSuccess, setJobSuccess] = useState<string | StatusInfo>();
+export function BulkActionJobStatus({ job, jobType, committedTitle, pushedToBranch }: BulkActionJobStatusProps) {
+  // Keep the first terminal status so the longer retry path re-emitting the same
+  // status does not flip the alert back and forth in a render loop.
+  const [status, setStatus] = useState<StepStatusInfo>();
 
-  const onStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      // Keep the first terminal value so the longer retry path re-emitting the same
-      // status does not flip the alert back and forth in a render loop.
-      if (statusInfo.status === 'error' && statusInfo.error) {
-        const { error } = statusInfo;
-        setJobError((prev) => prev ?? error);
-      } else if (statusInfo.status === 'warning') {
-        const { warning } = statusInfo;
-        setJobWarning((prev) => prev ?? warning);
-      } else if (statusInfo.status === 'success') {
-        setJobSuccess((prev) => prev ?? { title: successTitle });
-      }
-    },
-    [successTitle]
-  );
+  const onStatusChange = useCallback((info: StepStatusInfo) => {
+    if (info.status === 'error' || info.status === 'warning' || info.status === 'success') {
+      setStatus((prev) => prev ?? info);
+    }
+  }, []);
+
+  const successTitle = pushedToBranch
+    ? t('provisioning.bulk-action.success-title-branch', 'Requested changes were pushed to a branch')
+    : committedTitle;
 
   return (
     <>
-      <ProvisioningAlert error={jobError} warning={jobWarning} success={jobSuccess} />
+      <ProvisioningAlert
+        error={status?.status === 'error' ? status.error : undefined}
+        warning={status?.status === 'warning' ? status.warning : undefined}
+        success={status?.status === 'success' ? { title: successTitle } : undefined}
+      />
       <JobStatus watch={job} jobType={jobType} onStatusChange={onStatusChange} />
     </>
   );
