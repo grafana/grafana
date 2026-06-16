@@ -45,7 +45,10 @@ import {
 } from '@grafana/runtime';
 import {
   getPanelPluginMetas,
+  initDataSourceInstanceSettings,
   initOpenFeature,
+  setExpressionDataSourceInstanceSettings,
+  setDataSourcePluginImporter,
   setGetObservablePluginComponents,
   setGetObservablePluginLinks,
   setPanelDataErrorView,
@@ -90,6 +93,7 @@ import { initAlerting } from './features/alerting/unified/initAlerting';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
+import { instanceSettings as expressionInstanceSettings } from './features/expressions/ExpressionDatasource';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -106,6 +110,7 @@ import { usePluginFunctions } from './features/plugins/extensions/usePluginFunct
 import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
 import { getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
+import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -247,7 +252,14 @@ export class GrafanaApp {
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
 
-      // Init DataSourceSrv
+      // Init async data source services (populates cache from boot data so
+      // new `getInstanceSettings` / `getInstanceSettingsList` callers don't
+      // need to wait on a network round trip).
+      setExpressionDataSourceInstanceSettings(expressionInstanceSettings);
+      initDataSourceInstanceSettings(config.datasources, config.defaultDatasource);
+      setDataSourcePluginImporter(pluginImporter.importDataSource.bind(pluginImporter));
+
+      // Init DataSourceSrv (legacy sync API; retained for backwards compatibility)
       const dataSourceSrv = new DatasourceSrv();
       dataSourceSrv.init(config.datasources, config.defaultDatasource);
       setDataSourceSrv(dataSourceSrv);

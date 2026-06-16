@@ -6,7 +6,7 @@ import { type GetUsageResponse, useGetUsageQuery } from '@grafana/api-clients/rt
 
 const WARNING_THRESHOLD = 0.85;
 
-export type QuotaState = 'ok' | 'nearing' | 'at_limit';
+type QuotaState = 'ok' | 'nearing' | 'at_limit';
 
 export interface ResourceStatus {
   kind: 'dashboards' | 'folders';

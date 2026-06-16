@@ -1,7 +1,7 @@
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { isRootFolderUID } from 'app/features/search/constants';
 
 import { type RestoreNotificationData } from '../types';
 
@@ -38,7 +38,7 @@ export function getRestoreNotificationData(
         targetUrl:
           successCount === 1
             ? `${config.appSubUrl}/d/${successful[0]}`
-            : !restoreTarget || restoreTarget === GENERAL_FOLDER_UID
+            : isRootFolderUID(restoreTarget)
               ? `${config.appSubUrl}/dashboards`
               : `${config.appSubUrl}/dashboards/f/${restoreTarget}`,
       },

@@ -7,6 +7,7 @@ import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import HomeRoute from './HomeRoute';
 
@@ -35,6 +36,14 @@ describe('HomeRoute', () => {
   beforeEach(() => {
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
+    // Deny alerting permission so the FiringAlertsCard renders null
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    // Stub endpoints that FiringAlertsCard would call
+    server.use(
+      http.get('/api/user/teams', () => HttpResponse.json([])),
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([]))
+    );
   });
 
   afterEach(async () => {

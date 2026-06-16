@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
@@ -25,7 +26,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/atomic"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -208,7 +208,7 @@ func NewStorageBackend(
 
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -225,7 +225,11 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	})
 }
 
-func resolveLeaseHolder(cfg *setting.Cfg) string {
+// ResolveLeaseHolder builds a stable-per-process identifier used for KV
+// lease ownership. Exported so other unified-storage backend wirings
+// (e.g. the enterprise unified-kv-grpc backend) can produce the same
+// holder format without duplicating the logic.
+func ResolveLeaseHolder(cfg *setting.Cfg) string {
 	id := "unknown"
 	if cfg.InstanceID != "" {
 		id = cfg.InstanceID
@@ -302,6 +306,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		watchBufferSize:         opts.WatchBufferSize,
 		storageMetrics:          opts.storageMetrics,
 		bulkLock:                &bulkLock{running: make(map[string]bool)},
+		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		tmpDir:                  opts.TmpDir,
@@ -343,6 +348,10 @@ type backend struct {
 	dialect    sqltemplate.Dialect
 	bulkLock   *bulkLock
 
+	// analyzeBulkRowThreshold is the number of rows bulk-loaded into resource_history
+	// above which ANALYZE runs before the backfill. Overridable in tests.
+	analyzeBulkRowThreshold int
+
 	// -- Storage Services
 
 	// watch streaming
@@ -372,7 +381,7 @@ type backend struct {
 
 	// Fields to control the cleanup of "lastImportTime" rows (used to find indexes to rebuild)
 	lastImportTimeMaxAge       time.Duration
-	lastImportTimeDeletionTime atomic.Time
+	lastImportTimeDeletionTime atomic.Pointer[time.Time]
 }
 
 func (b *backend) Init(ctx context.Context) error {
@@ -1430,7 +1439,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 	queryDB := b.lastImportTimeDB(ctx)
 
 	// Delete old entries, if configured, and if enough time has passed since last deletion.
-	if b.lastImportTimeMaxAge > 0 && time.Since(b.lastImportTimeDeletionTime.Load()) > limitLastImportTimesDeletion {
+	last := b.lastImportTimeDeletionTime.Load()
+	if b.lastImportTimeMaxAge > 0 && (last == nil || time.Since(*last) > limitLastImportTimesDeletion) {
 		now := time.Now()
 
 		res, err := dbutil.Exec(ctx, queryDB, sqlResourceLastImportTimeDelete, &sqlResourceLastImportTimeDeleteRequest{
@@ -1449,7 +1459,7 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 			b.log.Info("Deleted old last import times", "rows", aff)
 		}
 
-		b.lastImportTimeDeletionTime.Store(now)
+		b.lastImportTimeDeletionTime.Store(&now)
 	}
 
 	rows, err := dbutil.QueryRows(ctx, queryDB, sqlResourceLastImportTimeQuery, &sqlResourceLastImportTimeQueryRequest{

@@ -6,7 +6,7 @@
 const POLICY_TREE_NAME_PATTERN = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
 
 /** Maximum length for a policy tree name, enforced by the backend (k8s DNS-1123 subdomain) */
-export const POLICY_TREE_NAME_MAX_LENGTH = 40;
+const POLICY_TREE_NAME_MAX_LENGTH = 40;
 
 /**
  * Validates a policy tree name against RFC 1123 subdomain rules.

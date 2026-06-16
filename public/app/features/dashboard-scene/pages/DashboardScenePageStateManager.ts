@@ -95,7 +95,7 @@ export const DASHBOARD_CACHE_TTL = 500;
 const LOAD_SCENE_MEASUREMENT = 'loadDashboardScene';
 
 /** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
-export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
 
 interface DashboardCacheEntry<T> {
   dashboard: T;
@@ -115,7 +115,7 @@ export interface LoadDashboardOptions {
   defaultLinks?: DashboardLink[];
 }
 
-export type HomeDashboardDTO = DashboardDTO & {
+type HomeDashboardDTO = DashboardDTO & {
   dashboard: DashboardDataDTO | DashboardV2Spec;
 };
 
@@ -125,7 +125,7 @@ export type HomeDashboardDTO = DashboardDTO & {
  * Kubernetes-style dashboard resource returned verbatim from the backend when
  * `default_home_dashboard_path` points at a `dashboard.grafana.app/*` file.
  */
-export type HomeDashboardFetchResult =
+type HomeDashboardFetchResult =
   | HomeDashboardDTO
   | DashboardWithAccessInfo<DashboardV2Spec>
   | DashboardWithAccessInfo<DashboardDataDTO>;
@@ -1267,7 +1267,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   }
 }
 
-export function shouldForceV2API(): boolean {
+function shouldForceV2API(): boolean {
   return Boolean(config.featureToggles.dashboardNewLayouts);
 }
 

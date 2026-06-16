@@ -230,8 +230,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
 	builders := []embed.Builder{dashboard.New()}
 
-	var err error
-	resourceOpts.VectorBackfiller, err = backfill.NewVectorBackfiller(backfill.Options{
+	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
 		Storage:        opts.Backend,
 		VectorBackend:  opts.VectorBackend,
 		BatchEmbedder:  batchEmbedder,
@@ -248,6 +247,7 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		VectorBackend: opts.VectorBackend,
 		BatchEmbedder: batchEmbedder,
 		Builders:      builders,
+		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
 		Metrics:       resourceOpts.VectorMetrics,
 	})
@@ -266,6 +266,22 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.Search = opts.SearchOptions
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
+
+	if opts.VectorBackend != nil {
+		if opts.Cfg.VectorQueryCacheEnabled {
+			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
+				resourceOpts.Search.QueryCache = cache
+				resourceOpts.Search.QueryCacheMaxPerTenant = opts.Cfg.VectorQueryCacheMaxPerTenant
+			}
+		}
+		if opts.Cfg.VectorRateLimitEnabled {
+			if rl, ok := opts.VectorBackend.(vector.RateLimiter); ok {
+				resourceOpts.Search.RateLimiter = rl
+				resourceOpts.Search.RateLimitPerTenant = opts.Cfg.VectorRateLimitPerTenant
+				resourceOpts.Search.RateLimitWindow = opts.Cfg.VectorRateLimitWindow
+			}
+		}
+	}
 	return nil
 }
 

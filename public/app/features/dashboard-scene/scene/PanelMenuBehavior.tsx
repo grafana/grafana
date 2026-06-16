@@ -20,6 +20,8 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { LogMessages, logInfo, trackCreateRuleFromPanelDrawerOpened } from 'app/features/alerting/unified/Analytics';
+import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
@@ -39,6 +41,7 @@ import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders'
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
+import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
@@ -237,7 +240,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       moreSubMenu.push({
         text: t('panel.header-menu.new-alert-rule', `New alert rule`),
         iconClassName: 'bell',
-        onClick: (e) => onCreateAlert(panel),
+        onClick: () => onCreateAlert(panel, dashboard),
       });
     }
 
@@ -542,19 +545,53 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
   );
 }
 
-const onCreateAlert = async (panel: VizPanel) => {
+const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
+  let formValues: Partial<RuleFormValues> | undefined;
   try {
-    const formValues = await scenesPanelToRuleFormValues(panel);
-    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
-      defaults: JSON.stringify(formValues),
-      returnTo: window.location.pathname + window.location.search,
-    });
-    locationService.push(ruleFormUrl);
+    formValues = await scenesPanelToRuleFormValues(panel);
   } catch (err) {
     const message = `Error getting rule values from the panel: ${getMessageFromError(err)}`;
     dispatch(notifyApp(createErrorNotification(message)));
     return;
   }
+
+  // When the drawer flow is disabled, fall back to the legacy full-page rule editor.
+  // This preserves the historical behaviour of navigating with whatever defaults are available
+  // (including undefined, which simply lands the user in a blank form).
+  if (!config.featureToggles.createAlertRuleFromPanel) {
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: window.location.pathname + window.location.search,
+    });
+    locationService.push(ruleFormUrl);
+    return;
+  }
+
+  // The drawer is intentionally narrower than the full rule editor and has no datasource picker,
+  // so a blank drawer would leave the user with no way to recover. Surface the same info as the
+  // edit-panel button's inline Alert and skip opening the drawer.
+  if (!formValues) {
+    dispatch(
+      notifyApp(
+        createErrorNotification(
+          t(
+            'alerting.new-rule-from-panel-button.title-no-alerting-capable-query-found',
+            'No alerting capable query found'
+          ),
+          t(
+            'alerting.new-rule-from-panel-button.body-no-alerting-capable-query-found',
+            'Cannot create alerts from this panel because no query to an alerting capable datasource is found.'
+          )
+        )
+      )
+    );
+    return;
+  }
+
+  logInfo(LogMessages.alertRuleFromPanel);
+  trackCreateRuleFromPanelDrawerOpened();
+
+  dashboard.showModal(new NewAlertRuleDrawer({ prefill: formValues }));
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {

@@ -1,12 +1,12 @@
 module github.com/grafana/grafana/pkg/codegen
 
-go 1.26.3
+go 1.26.4
 
 require (
 	cuelang.org/go v0.11.1
-	github.com/dave/dst v0.27.3
+	github.com/dave/dst v0.27.4
 	github.com/grafana/codejen v0.0.4-0.20250428224353-8764ced07770
-	github.com/grafana/cog v0.1.12
+	github.com/grafana/cog v0.1.13
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	golang.org/x/tools v0.45.0
@@ -34,10 +34,10 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect

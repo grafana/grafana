@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
@@ -16,7 +17,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/atomic"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 

@@ -6,12 +6,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
-import {
-  type DashboardSearchHit,
-  DashboardSearchItemType,
-  type DashboardViewItem,
-  type DashboardViewItemKind,
-} from '../types';
+import { isRootFolderUID } from '../constants';
+import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
 import { type SearchHit } from './unified';
@@ -180,40 +176,21 @@ export function resourceToSearchResult(
       field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
     }
 
-    const hit = {
+    // Collapse root-parented items ("" or "general") into the "general" UID
+    // the rest of the search UI uses for the synthetic root folder.
+    const folderAnno = item?.metadata?.annotations?.[AnnoKeyFolder] ?? '';
+    const folder = isRootFolderUID(folderAnno) ? 'general' : folderAnno;
+    const hit: SearchHit = {
       resource: 'dashboards',
       name: item.metadata.name,
       title: item.spec?.title,
-      folder: item?.metadata?.annotations?.[AnnoKeyFolder] ?? 'general',
+      folder,
       tags: item.spec?.tags || [],
       field,
       url: '',
     };
-    if (!hit.folder) {
-      return { ...hit, folder: 'general' };
-    }
 
     return hit;
-  });
-}
-
-export function searchHitsToDashboardSearchHits(searchHits: SearchHit[]): DashboardSearchHit[] {
-  return searchHits.map((hit) => {
-    const dashboardHit: DashboardSearchHit = {
-      type: hit.resource === 'folders' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-      title: hit.title,
-      uid: hit.name, // k8s name is the uid
-      url: hit.url,
-      tags: hit.tags || [],
-      isDeleted: true, // All results from trash are deleted
-      sortMeta: 0, // Default value for deleted items
-    };
-
-    if (hit.folder && hit.folder !== 'general') {
-      dashboardHit.folderUid = hit.folder;
-    }
-
-    return dashboardHit;
   });
 }
 

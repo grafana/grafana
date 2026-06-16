@@ -36,7 +36,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -228,7 +228,7 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
-          go test -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+          go test -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
