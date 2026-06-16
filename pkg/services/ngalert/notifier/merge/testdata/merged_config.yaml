@@ -53,7 +53,7 @@ receivers:
           type: email
           disableResolveMessage: false
           settings:
-            addresses: <example@email.com>
+            addresses: <example@example.com>
     - name: test-webhook
       grafana_managed_receiver_configs:
         - uid: "12345"

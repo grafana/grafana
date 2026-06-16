@@ -29,7 +29,7 @@
       "add-label": "Een toestemming toevoegen",
       "loading": "Machtigingen worden geladen …",
       "no-permissions": "Er zijn geen toestemmingen",
-      "permissions-change-warning": "Dit wijzigt de toestemmingen voor deze map en alle onderliggende mappen. In totaal heeft dit invloed op:",
+      "permissions-change-warning": "",
       "role": "Rol",
       "serviceaccount": "Serviceaccount",
       "team": "Team",
@@ -4224,13 +4224,9 @@
       "cancel-button": "Annuleren",
       "confirmation-text": "Verwijderen",
       "delete-button": "Verwijderen",
-      "delete-modal-invalid-text": "Een of meer mappen bevatten bibliotheekpanelen of waarschuwingsregels. Verwijder deze eerst om verder te gaan.",
-      "delete-modal-invalid-title": "Kan de map niet verwijderen",
       "delete-modal-restore-dashboards-common": "Verwijderde dashboards worden maximaal 12 maanden in de geschiedenis bewaard. Gebruikers met verwijderingsmachtigingen kunnen de dashboards die ze hebben verwijderd herstellen en beheerders kunnen dashboards herstellen die door een gebruiker zijn verwijderd. De geschiedenis is beperkt tot 1000 dashboards. Oudere dashboards kunnen eerder worden verwijderd als de limiet is bereikt.",
       "delete-modal-restore-dashboards-prefix-folder": "Met deze actie worden de geselecteerde mappen onmiddellijk verwijderd.",
       "delete-modal-restore-dashboards-suffix-folder": "Mappen kunnen niet worden hersteld.",
-      "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
-      "delete-modal-text-one-folder": "Met deze actie worden de map \"<1>{{ folderName }}</1>\" en de volgende inhoud verwijderd:",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
       "deleting": "Bezig met verwijderen ...",
@@ -4238,8 +4234,6 @@
       "move-button": "Verplaatsen",
       "move-modal-alert": "Het verplaatsen van dit item kan de toestemmingen wijzigen.",
       "move-modal-field-label": "Mapnaam",
-      "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
-      "move-modal-text-one-folder": "Met deze actie wordt de map \"<1>{{ folderName }}</1>\" en de volgende inhoud verplaatst:",
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "Geprovisioneerde map verplaatsen",
       "moving": "Bezig met verplaatsen ...",
@@ -4249,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Een eigenaar aan de map toewijzen",
       "rename-provisioned-folder": "Geprovisioneerde map hernoemen",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
-      "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd"
+      "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Onlangs verwijderd"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Map niet gevonden",
       "title-ruler-namespace-error": "Kan regels niet laden"
@@ -4268,13 +4269,19 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "delete-warning": "Hiermee worden geselecteerde mappen en hun afgeleiden verwijderd. In totaal heeft dit invloed op:",
-      "error-deleting-resources": "Fout bij verwijderen van bronnen"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Fout bij verwijderen van bronnen",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuleren",
       "button-move": "Verplaatsen",
       "button-moving": "Bezig met verplaatsen...",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Als je direct toegang hebt tot het doel, voer de wijzigingen dan rechtstreeks door in de doelrepository.",
         "read-only-saving-message": "De repository is alleen-lezen en is aangemaakt in Git. {{readOnlyMessage}}",
@@ -4285,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
-      "move-total": "In totaal heeft dit invloed op:",
       "move-warning": "Dit verplaatst de geselecteerde mappen en alle onderliggende items. Beschikbare doelmappen zijn afhankelijk van de geselecteerde bronnen.",
       "move-warning-tooltip": "Je kunt alleen geprovisioneerde bronnen verplaatsen binnen hun geprovisioneerde map en lokale bronnen naar lokale mappen.",
-      "target-folder": "Doelmap"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} waarschuwingsregel",
-      "alertRule_other": "{{count}} waarschuwingsregel",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
-      "folder_one": "{{count}} map",
-      "folder_other": "{{count}} map",
-      "libraryPanel_one": "{{count}} bibliotheekpaneel",
-      "libraryPanel_other": "{{count}} bibliotheekpaneel",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "target-folder": "Doelmap",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4329,12 +4325,11 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Ontbrekende verplichte velden",
       "success-message": "Map is verwijderd"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Kan afgeleide informatie niet ophalen"
     },
     "empty-state": {
       "button-title": "Dashboard maken",
@@ -5239,10 +5234,6 @@
       },
       "pane-header": "Toevoegen"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Widget 'Paneel toevoegen' sluiten",
-      "tooltip-close-widget": "Widget sluiten"
-    },
     "add-menu": {
       "import": "Importeren uit bibliotheek",
       "paste-panel": "Paneel plakken",
@@ -6035,9 +6026,6 @@
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Onbewerkte gegevens"
-    },
     "panel-links": {
       "aria-label-panel-links": "Paneellinks"
     },
@@ -6078,18 +6066,6 @@
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
       "confirmText-restore-version": "Herstellen naar versie {{version}}",
       "title-restore-version": "Versie herstellen"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opties voor rijen"
-    },
-    "row-options-form": {
-      "cancel": "Annuleren",
-      "label-repeat-for": "Herhalen voor",
-      "label-title": "Titel",
-      "update": "Bijwerken"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opties voor rijen"
     },
     "rows-layout": {
       "cancel": "Annuleren",
@@ -6450,16 +6426,6 @@
       "changes": "Wil je de wijzigingen opslaan?",
       "discard": "Negeren",
       "title-unsaved-changes": "Onopgeslagen wijzigingen"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panelen in deze rij gebruiken de {{SHARED_DASHBOARD_QUERY}}-gegevensbron. Deze panelen verwijzen naar het paneel in de oorspronkelijke rij, niet naar die in de herhaalde rijen."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Rij verwijderen",
-      "learn-more": "Meer informatie",
-      "title": {
-        "delete-row": "Rij verwijderen"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
@@ -8947,6 +8913,11 @@
     },
     "sql-expr": {
       "button-run-query": "Query uitvoeren"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "Fout",
@@ -12175,8 +12146,10 @@
       "undock": "Menu ontkoppelen"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Sectie samenvouwen: {{sectionName}}",
-      "expand-aria-label": "Sectie uitvouwen: {{sectionName}}"
+      "expand-aria-label": "Sectie uitvouwen: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Organisatie wijzigen"
@@ -13082,7 +13055,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Instellingen voor repository zijn opgeslagen",
@@ -13113,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Mijn configuratie"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overschrijft de automatisch gedetecteerde URL voor het registreren van webhooks.",
-      "description-webhook-url-learn-more": "Meer informatie",
-      "label-git-hub-features": "GitHub-functies",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13269,28 +13242,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
-      "description-generate-dashboard-previews": "Voorbeeldlinks maken voor pull-verzoeken",
       "description-image-rendering": "Vereist beeldweergave. <2>Beeldweergave instellen</2>",
-      "description-preview-requirements": "(vereist <2>afbeeldingsweergave</2> en ingeschakelde openbare toegang)",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-sync-interval": "Hoe vaak wijzigingen uit de repository moeten worden gesynchroniseerd",
-      "description-webhook-url": "Overschrijft de automatisch gedetecteerde URL voor het registreren van webhooks.",
       "error-sync-interval-required": "Synchronisatie-interval is vereist",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
-      "label-generate-dashboard-previews": "Dashboardvoorbeeldweergaven genereren",
       "label-read-only": "Alleen lezen",
-      "label-sync-interval": "Synchronisatie-interval (seconden)",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Synchronisatie-interval (seconden)"
     },
     "fix-folder-metadata": {
       "button": "Map-ID's herstellen"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Annuleren",
+      "default-commit-message": "",
       "error-message": "Kan de taak voor het herstellen van mapmetadata niet starten. Probeer het opnieuw.",
       "error-title": "Er is een fout opgetreden bij het herstellen van de mapmetadata",
-      "loading": "Repository aan het laden...",
       "read-only-message": "Mapmetadata kunnen niet automatisch worden hersteld.",
       "submit": "Map-ID's herstellen",
       "submitting": "Herstellen...",
@@ -13695,11 +13662,24 @@
     "shared": {
       "branch-description": "De branch die moet worden gebruikt voor provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Optioneel. Pad naar de submap met de bronnen die je wilt synchroniseren.",
       "path-label": "Pad",
       "progress-bar": {
         "aria-label": "Voortgangsbalk"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Gebruikersnaam",
       "url-label": "Repository-URL",
       "url-pattern": "Moet een geldige repository-URL zijn (https://hostname/owner/repo)"
@@ -13767,6 +13747,13 @@
     "watch-stream": {
       "error-description": "Realtime updates konden niet worden gestart. Vernieuw de pagina om de meest recente gegevens te zien.",
       "error-title": "Live-updates niet beschikbaar"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Houd rekening met de volgende beperkingen. Zie de <2>Git Sync-documentatie</2> voor meer informatie.",
@@ -14073,7 +14060,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14082,6 +14068,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
