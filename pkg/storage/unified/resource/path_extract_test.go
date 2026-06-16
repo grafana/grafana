@@ -184,6 +184,18 @@ func TestCoerceToFieldShape_Array(t *testing.T) {
 	// Non-slice when Array is true is rejected.
 	_, ok = coerceToFieldShape("a", SearchFieldTypeString, true)
 	assert.False(t, ok)
+
+	// Nil elements (produced by extractPath for array-projection entries
+	// whose sub-path was missing) are skipped, not treated as a coercion
+	// failure for the whole array.
+	v, ok = coerceToFieldShape([]any{"alice", nil, "bob"}, SearchFieldTypeString, true)
+	require.True(t, ok)
+	assert.Equal(t, []any{"alice", "bob"}, v)
+
+	// An all-nil array indexes as an empty slice, not a dropped field.
+	v, ok = coerceToFieldShape([]any{nil, nil}, SearchFieldTypeString, true)
+	require.True(t, ok)
+	assert.Equal(t, []any{}, v)
 }
 
 func TestCoerceToFieldShape_Nil(t *testing.T) {

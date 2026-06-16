@@ -109,6 +109,13 @@ func coerceToFieldShape(val any, t SearchFieldType, isArray bool) (any, bool) {
 	}
 	out := make([]any, 0, len(slice))
 	for _, elem := range slice {
+		// Nil entries come from array-projection elements whose sub-path was
+		// missing (see extractPath). Skip them so the array stays indexed
+		// with the elements that did resolve, rather than dropping the
+		// whole field on a single missing sub-path.
+		if elem == nil {
+			continue
+		}
 		coerced, ok := coerceScalar(elem, t)
 		if !ok {
 			return nil, false
