@@ -147,6 +147,9 @@ export enum AccessControlAction {
   AlertingReceiversWrite = 'alert.notifications.receivers:write',
   AlertingReceiversRead = 'alert.notifications.receivers:read',
   AlertingReceiversDelete = 'alert.notifications.receivers:delete',
+  /** @deprecated Use AlertingReceiversTestCreate instead */
+  AlertingReceiversTest = 'alert.notifications.receivers:test',
+  AlertingReceiversTestCreate = 'alert.notifications.receivers.test:create',
   AlertingReceiversUpdateProtected = 'alert.notifications.receivers.protected:write',
 
   // Legacy Alerting routes actions

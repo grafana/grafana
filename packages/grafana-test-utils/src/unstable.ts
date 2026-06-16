@@ -16,5 +16,7 @@ export { customSetTeamRolesHandler } from './handlers/api/access-control/handler
 export { customCreateFolderHandler, customFolderCountsHandler } from './handlers/api/folders/handlers';
 export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 
+export * as folderHandlers from './handlers/apis/folder.grafana.app/v1beta1/handlers';
+
 export { setTestFlags, getTestFeatureFlagClient } from './utilities/featureFlags';
 export { mockLogger } from './utilities/mockLogger';
