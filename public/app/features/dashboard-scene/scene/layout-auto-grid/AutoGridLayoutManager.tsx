@@ -14,6 +14,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import { DashboardUI } from 'app/features/dashboard-scene/edit-pane/editActionGuard';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
@@ -56,6 +57,7 @@ export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
+@DashboardUI
 export class AutoGridLayoutManager
   extends SceneObjectBase<AutoGridLayoutManagerState>
   implements DashboardLayoutGrid, DashboardDropTarget
