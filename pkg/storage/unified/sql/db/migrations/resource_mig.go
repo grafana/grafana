@@ -277,6 +277,29 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+search_snapshot_data_table.Name, migrator.NewAddTableMigration(search_snapshot_data_table))
 	mg.AddMigration("Change key_path collation of search_snapshot_data in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE search_snapshot_data ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	// Tables backing the stats/daily and stats/aggregates KV sections used by
+	// the usage-stats ingester. Both store small integer counters as text
+	// values keyed by the encoded stats key_path.
+	resource_stats_daily_table := migrator.Table{
+		Name: "resource_stats_daily",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_Text, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_stats_daily_table.Name, migrator.NewAddTableMigration(resource_stats_daily_table))
+	mg.AddMigration("Change key_path collation of resource_stats_daily in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_stats_daily ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
+	resource_stats_aggregates_table := migrator.Table{
+		Name: "resource_stats_aggregates",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_Text, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_stats_aggregates_table.Name, migrator.NewAddTableMigration(resource_stats_aggregates_table))
+	mg.AddMigration("Change key_path collation of resource_stats_aggregates in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_stats_aggregates ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

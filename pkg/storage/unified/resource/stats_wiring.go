@@ -9,8 +9,10 @@ import (
 )
 
 // NewStatsIngesterForBackend builds a usage-stats ingester (unified-storage
-// stats POC) when the given backend is KV-backed (file / unified-kv-grpc).
-// Returns nil for non-KV backends, which disables the RecordEvent RPC.
+// stats POC) when the given backend is KV-backed: the file (badger) backend or
+// the SQL backend running in sqlkv mode (enable_sqlkv_backend=true), where the
+// stats sections persist to the resource_stats_* tables. Returns nil for
+// non-KV backends (legacy SQL), which disables the RecordEvent RPC.
 func NewStatsIngesterForBackend(backend StorageBackend, reg prometheus.Registerer) *stats.Ingester {
 	kvBackend, ok := backend.(KVBackend)
 	if !ok {

@@ -203,7 +203,8 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 }
 
 // withStats builds the usage-stats ingester (POC) when the storage backend is
-// KV-backed (e.g. storage_type=file / badger). Non-KV backends skip it.
+// KV-backed: storage_type=file (badger) or storage_type=unified with
+// enable_sqlkv_backend=true (sqlkv). The legacy non-KV SQL backend skips it.
 func withStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.StatsIngester = resource.NewStatsIngesterForBackend(opts.Backend, opts.Reg)
 	return nil

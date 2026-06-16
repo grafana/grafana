@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
 	// dailySection holds the per-day buckets: the source of truth.
-	dailySection = "stats/daily"
+	dailySection = kv.StatsDailySection
 	// aggregatesSection holds the derived window cache for the index.
-	aggregatesSection = "stats/aggregates"
+	aggregatesSection = kv.StatsAggregatesSection
 
 	// overflowBucket is the day value for the bucket holding the sum of
 	// everything older than MaxWindow days. It sorts after real YYYY-MM-DD

@@ -104,39 +104,3 @@ func TestRecalcWindowsAndOverflow(t *testing.T) {
 	_, exists := daily[today.AddDate(0, 0, -40).Format(dayLayout)]
 	require.False(t, exists)
 }
-
-func TestBackfill(t *testing.T) {
-	ctx := context.Background()
-	store := NewStore(newTestKV(t))
-	decls := DefaultDeclarations()
-
-	now := time.Date(2026, 6, 12, 12, 0, 0, 0, time.UTC).Unix()
-	today := time.Unix(now, 0).UTC().Truncate(24 * time.Hour)
-	yesterday := today.AddDate(0, 0, -1).Format(dayLayout)
-
-	daily := []LegacyDailyRow{
-		{Namespace: "default", DashboardUID: "dash", Day: yesterday, Views: 8},
-		{Namespace: "default", DashboardUID: "dash", Day: today.Format(dayLayout), Views: 999}, // today skipped
-	}
-	totals := []LegacyTotals{
-		{Namespace: "default", DashboardUID: "dash", Views: 50},
-	}
-
-	require.NoError(t, store.Backfill(ctx, today.Format(dayLayout), daily, totals))
-
-	o := objectRef{Group: dashboardsGroup, Resource: dashboardsResource, Namespace: "default", Name: "dash"}
-	buckets, err := store.ReadDailyForObject(ctx, o)
-	require.NoError(t, err)
-	require.Equal(t, int64(8), buckets[yesterday]["view"])
-	require.Equal(t, int64(42), buckets[overflowBucket]["view"]) // 50 total - 8 retained
-	_, hasToday := buckets[today.Format(dayLayout)]
-	require.False(t, hasToday)
-
-	// Idempotent re-run.
-	require.NoError(t, store.Backfill(ctx, today.Format(dayLayout), daily, totals))
-
-	require.NoError(t, store.Recalc(ctx, decls, now))
-	all, err := NewKVDashboardStats(store).GetStats(ctx, "default")
-	require.NoError(t, err)
-	require.Equal(t, int64(50), all["dash"]["view_total"])
-}

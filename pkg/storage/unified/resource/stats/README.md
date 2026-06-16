@@ -5,9 +5,13 @@ store per-object stats in KV, recompute rolling windows daily, and expose
 aggregates to the search index. See `unified-storage-stats-design.md` at the
 repo root for the full design.
 
-This is an in-process POC (single-tenant shape). It deliberately skips cloud
-rollout plumbing, the SQL-table `namespace` column / backup changes, enterprise
-endpoint retirement, multi-replica lease tuning, and orphan GC.
+This is an in-process POC (single-tenant shape). It runs on any KV-backed
+storage backend: the `file` (badger) backend or the SQL backend in sqlkv mode
+(`enable_sqlkv_backend=true`), where the stats sections persist to the
+`resource_stats_daily` / `resource_stats_aggregates` tables. It deliberately
+skips cloud rollout plumbing, the SQL-table `namespace` column / backup
+changes, enterprise endpoint retirement, multi-replica lease tuning, and
+orphan GC.
 
 ## Pieces
 
@@ -19,7 +23,6 @@ endpoint retirement, multi-replica lease tuning, and orphan GC.
 | `ingest.go`           | In-memory accumulator + `RecordEvent` (tracked-resource + metric validation, dropped-events metric) + grab-flush-release lease flush. |
 | `recalc.go`           | Daily reconcile: fold expiring buckets into overflow, recompute windows/totals. |
 | `dashboard_stats.go`  | Search read path (`KVDashboardStats`) satisfying search `builders.DashboardStats`, behind a feature flag. |
-| `backfill.go`         | Legacy `dashboard_usage_*` → KV seeding (idempotent, leaves today to go-forward). |
 
 ## Data model
 
@@ -41,8 +44,11 @@ flag are available in the search DI graph.
 
 ## Not yet wired (follow-ups)
 
-- `RecordEvent` proto/RPC on `ResourceStore` (this POC exposes the Go
-  `Ingester.RecordEvent` entry point; the RPC is an additive proto change).
-- SqlKV section table migration with a real `namespace` column (needed for the
-  hosted-grafana backup `WHERE namespace=` filter).
+- Search read path: `KVDashboardStats` exists but `search/builders` still uses
+  the OSS no-op; the cutover (behind a feature flag) is not connected.
+- `RecordEvent` authz (`verb=get`) check.
+- A real `namespace` column on the stats tables (needed for the hosted-grafana
+  backup `WHERE namespace=` filter); the POC tables are plain `(key_path, value)`.
+- Backfill from legacy `dashboard_usage_*` (reader + seeding); removed from the
+  POC for now.
 - Phase 2 incremental refresh via a `stats/log` section.
