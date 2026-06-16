@@ -65,7 +65,12 @@ export const XYChartTooltip = ({
 
   let label = series.name.value;
 
-  let seriesColor = colorField?.display?.(colorField.values[rowIndex]).color ?? series.color.fixed ?? '#fff';
+  // color-only: skip the formatted text we'd otherwise discard
+  let seriesColor =
+    colorField?.display?.color?.(colorField.values[rowIndex]) ??
+    colorField?.display?.(colorField.values[rowIndex]).color ??
+    series.color.fixed ??
+    '#fff';
   let fillOpacity = colorField?.config.custom?.fillOpacity;
 
   // TODO: skip this if seriesColor already has an alpha component, such as opacity-by-value or opacity gradient schemes
