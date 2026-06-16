@@ -182,9 +182,11 @@ func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
 
 	require.Error(t, responder.err)
 	// The responder must receive a concrete *StatusError (an APIStatus), not a wrapped
-	// error — otherwise the generic apiserver maps it to 500 + UnhandledError. errors.As /
-	// IsNotFound would unwrap and pass either way, so assert the concrete type the
-	// responder actually gets.
+	// error — the apiserver's ErrorToAPIStatus maps via a non-unwrapping type assertion,
+	// so a wrapped error becomes 500 + UnhandledError. A deliberate type assertion (not
+	// errors.As) is what mirrors that behavior here; errors.As would unwrap and pass even
+	// for the wrapped error that causes the 500.
+	//nolint:errorlint // intentional: assert the concrete type the responder receives, matching the apiserver's non-unwrapping mapping
 	statusErr, ok := responder.err.(*apierrors.StatusError)
 	require.True(t, ok, "responder must receive a *StatusError, got %T", responder.err)
 	require.True(t, apierrors.IsNotFound(statusErr), "expected a 404 NotFound, got %#v", statusErr)
