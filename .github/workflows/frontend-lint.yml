@@ -270,7 +270,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:

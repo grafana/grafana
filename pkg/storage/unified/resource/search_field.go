@@ -16,12 +16,25 @@ import (
 type SearchCapability string
 
 const (
-	SearchCapabilityFilter   SearchCapability = "filter"   // exact-match filtering (Bleve keyword analyzer)
-	SearchCapabilityText     SearchCapability = "text"     // full-token search (Bleve standard analyzer)
-	SearchCapabilityPartial  SearchCapability = "partial"  // substring matching (Bleve ngram analyzer); requires text
-	SearchCapabilitySort     SearchCapability = "sort"     // sortable on the keyword variant
+	SearchCapabilityFilter SearchCapability = "filter" // exact-match filtering (Bleve keyword analyzer)
+	SearchCapabilityText   SearchCapability = "text"   // full-token search (Bleve standard analyzer)
+	// SearchCapabilityPartial enables substring matching (Bleve ngram
+	// analyzer). Requires SearchCapabilityText.
+	SearchCapabilityPartial SearchCapability = "partial"
+	// SearchCapabilitySort makes the field sortable. It also enables DocValues
+	// on the keyword variant, which the authz searcher reads column-wise to
+	// check folder permissions on every matching document.
+	SearchCapabilitySort     SearchCapability = "sort"
 	SearchCapabilityFacet    SearchCapability = "facet"    // facetable on the keyword variant
 	SearchCapabilityRetrieve SearchCapability = "retrieve" // value is stored and returned in search results
+	// SearchCapabilityUnranked applies only to text fields. It drops per-term
+	// frequency stats and field-length norms from the index, saving space at
+	// the cost of BM25 ranking quality. Use it for text fields that are
+	// indexed (for example so the value can be retrieved or matched) but are
+	// never queried in a scored context. Redundant on filter / facet / sort
+	// fields: keyword variants are always exact-match and never carry BM25
+	// stats.
+	SearchCapabilityUnranked SearchCapability = "unranked"
 )
 
 // SearchFieldType is the value type of a search field.
@@ -34,9 +47,15 @@ const (
 	// the protobuf enum). Downstream switches can reference it by name.
 	SearchFieldTypeUnknown SearchFieldType = ""
 	SearchFieldTypeString  SearchFieldType = "string"
-	SearchFieldTypeInt32   SearchFieldType = "int32"
-	SearchFieldTypeInt64   SearchFieldType = "int64"
-	SearchFieldTypeFloat   SearchFieldType = "float"
+	// SearchFieldTypeInt64 covers integer-shaped fields. The protobuf column
+	// enum distinguishes INT32 and INT64; this SFD type set collapses them
+	// into a single int64. Standard fields never use INT32 today, and
+	// numeric search behaviour is identical (bleve indexes through float64
+	// internally).
+	SearchFieldTypeInt64 SearchFieldType = "int64"
+	// SearchFieldTypeDouble covers floating-point fields. The protobuf-level
+	// distinction between FLOAT and DOUBLE is similarly collapsed; SFDs use
+	// float64 for both.
 	SearchFieldTypeDouble  SearchFieldType = "double"
 	SearchFieldTypeBoolean SearchFieldType = "boolean"
 	SearchFieldTypeDate    SearchFieldType = "date"
@@ -113,8 +132,10 @@ func SearchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefiniti
 }
 
 // searchFieldTypeFromProto maps the protobuf column type to the new
-// SearchFieldType. DATE_TIME collapses to date because the new design omits
-// a separate dateTime type. OBJECT, BINARY, and UNKNOWN_TYPE return
+// SearchFieldType. INT32 collapses into Int64 and FLOAT into Double:
+// bleve stores both as float64 and the SFD type set does not preserve the
+// distinction. DATE_TIME collapses to date because the new design omits a
+// separate dateTime type. OBJECT, BINARY, and UNKNOWN_TYPE return
 // SearchFieldTypeUnknown because they are not part of the new type set.
 func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnType) SearchFieldType {
 	switch t {
@@ -122,13 +143,11 @@ func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnT
 		return SearchFieldTypeString
 	case resourcepb.ResourceTableColumnDefinition_BOOLEAN:
 		return SearchFieldTypeBoolean
-	case resourcepb.ResourceTableColumnDefinition_INT32:
-		return SearchFieldTypeInt32
-	case resourcepb.ResourceTableColumnDefinition_INT64:
+	case resourcepb.ResourceTableColumnDefinition_INT32,
+		resourcepb.ResourceTableColumnDefinition_INT64:
 		return SearchFieldTypeInt64
-	case resourcepb.ResourceTableColumnDefinition_FLOAT:
-		return SearchFieldTypeFloat
-	case resourcepb.ResourceTableColumnDefinition_DOUBLE:
+	case resourcepb.ResourceTableColumnDefinition_FLOAT,
+		resourcepb.ResourceTableColumnDefinition_DOUBLE:
 		return SearchFieldTypeDouble
 	case resourcepb.ResourceTableColumnDefinition_DATE,
 		resourcepb.ResourceTableColumnDefinition_DATE_TIME:

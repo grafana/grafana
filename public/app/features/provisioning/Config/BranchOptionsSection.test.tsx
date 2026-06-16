@@ -41,7 +41,7 @@ describe('BranchOptionsSection', () => {
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 
-    expect(screen.getByText('Branch options (advanced)')).toBeInTheDocument();
+    expect(screen.getByText('Branch options')).toBeInTheDocument();
     // Collapse renders its children only when open
     expect(screen.queryByText('Branch name template')).not.toBeInTheDocument();
   });
@@ -49,7 +49,7 @@ describe('BranchOptionsSection', () => {
   it('reveals the branch name template and enforcement fields when expanded', async () => {
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Branch options (advanced)'));
+    await user.click(screen.getByText('Branch options'));
 
     expect(screen.getByText('Branch name template')).toBeInTheDocument();
     expect(screen.getByText('Enforce branch name template')).toBeInTheDocument();
@@ -58,7 +58,7 @@ describe('BranchOptionsSection', () => {
   it('registers the inputs under the provided spec paths', async () => {
     const { user } = render(<Wrapper />);
 
-    await user.click(screen.getByText('Branch options (advanced)'));
+    await user.click(screen.getByText('Branch options'));
 
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'branchOptions.nameTemplate');
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'branchOptions.enforceTemplate');

@@ -29,7 +29,7 @@
       "add-label": "Dodaj uprawnienie",
       "loading": "Ładowanie uprawnień…",
       "no-permissions": "Brak uprawnień",
-      "permissions-change-warning": "Spowoduje to zmianę uprawnień dla tego folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
+      "permissions-change-warning": "",
       "role": "Rola",
       "serviceaccount": "Konto usługi",
       "team": "Zespół",
@@ -4272,13 +4272,9 @@
       "cancel-button": "Anuluj",
       "confirmation-text": "Usuń",
       "delete-button": "Usuń",
-      "delete-modal-invalid-text": "Co najmniej jeden folder zawiera panele bibliotek lub reguły alertów. Usuń je, aby kontynuować.",
-      "delete-modal-invalid-title": "Nie można usunąć folderu",
       "delete-modal-restore-dashboards-common": "Usunięte pulpity będą przechowywane w historii przez maksymalnie 12 miesięcy. Użytkownicy z uprawnieniami do usuwania mogą przywracać usunięte przez siebie pulpity, a administratorzy mogą przywracać pulpity usunięte przez dowolnego użytkownika. Historia jest ograniczona do 1000 pulpitów – starsze mogą zostać usunięte wcześniej, jeśli limit zostanie osiągnięty.",
       "delete-modal-restore-dashboards-prefix-folder": "To działanie spowoduje natychmiastowe usunięcie wybranych folderów.",
       "delete-modal-restore-dashboards-suffix-folder": "Folderów nie można przywrócić.",
-      "delete-modal-text": "To działanie spowoduje usunięcie następującej zawartości:",
-      "delete-modal-text-one-folder": "To działanie spowoduje usunięcie folderu „<1>{{ folderName }}</1>” i następującej zawartości:",
       "delete-modal-title": "Usuń",
       "delete-provisioned-folder": "Usuń przydzielony folder",
       "deleting": "Usuwanie…",
@@ -4286,8 +4282,6 @@
       "move-button": "Przenieś",
       "move-modal-alert": "Przeniesienie tego elementu może zmienić jego uprawnienia.",
       "move-modal-field-label": "Nazwa folderu",
-      "move-modal-text": "To działanie spowoduje przeniesienie następującej zawartości:",
-      "move-modal-text-one-folder": "To działanie spowoduje przeniesienie folderu „<1>{{ folderName }}</1>” i następującej zawartości:",
       "move-modal-title": "Przenieś",
       "move-provisioned-folder": "Przenieś aprowizowany folder",
       "moving": "Przenoszenie…",
@@ -4297,11 +4291,24 @@
       "new-folder-owner-selector-checkbox": "Przypisz właściciela do folderu",
       "rename-provisioned-folder": "Zmień nazwę aprowizowanego folderu",
       "selected-mix-resources-modal-text": "Wybrano zarówno zasoby udostępnione, jak i nieudostępnione. Nie można ich przetwarzać razem. Wybierz tylko zasoby udostępnione lub tylko zasoby nieudostępnione i spróbuj ponownie.",
-      "selected-mix-resources-modal-title": "Wybrano mieszane typy zasobów"
+      "selected-mix-resources-modal-title": "Wybrano mieszane typy zasobów",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_few": "",
+      "delete-modal-folder-empty_many": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_few": "",
+      "delete-modal-folder-not-empty_many": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_few": "",
+      "move-modal-folder-not-empty_many": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Ostatnio usunięte"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Nie znaleziono folderu",
       "title-ruler-namespace-error": "Nie można załadować reguł"
@@ -4316,13 +4323,23 @@
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
       "button-deleting": "Usuwanie…",
-      "delete-warning": "Spowoduje to usunięcie wybranych folderów i ich elementów podrzędnych. Wpłynie to na następujące elementy:",
-      "error-deleting-resources": "Błąd podczas usuwania zasobów"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Błąd podczas usuwania zasobów",
+      "folder-empty_one": "",
+      "folder-empty_few": "",
+      "folder-empty_many": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Anuluj",
       "button-move": "Przenieś",
       "button-moving": "Przenoszenie…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Jeśli masz bezpośredni dostęp do celu, wprowadź zmiany bezpośrednio w repozytorium docelowym.",
         "read-only-saving-message": "Repozytorium jest tylko do odczytu i jest udostępniane w Git. {{readOnlyMessage}}",
@@ -4333,32 +4350,13 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Błąd przenoszenia zasobów",
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
-      "move-total": "Łącznie wpłynie to na następujące elementy:",
       "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Dostępne foldery docelowe zależą od wybranych zasobów.",
       "move-warning-tooltip": "Zasoby aprowizowane możesz przenosić tylko w ramach ich aprowizowanego folderu, a zasoby lokalne – do folderów lokalnych.",
-      "target-folder": "Folder docelowy"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} reguła alertu",
-      "alertRule_few": "{{count}} reguły alertu",
-      "alertRule_many": "{{count}} reguł alertu",
-      "alertRule_other": "{{count}} reguły alertu",
-      "dashboard_one": "{{count}} pulpit",
-      "dashboard_few": "{{count}} pulpity",
-      "dashboard_many": "{{count}} pulpitów",
-      "dashboard_other": "{{count}} pulpitu",
-      "folder_one": "{{count}} folder",
-      "folder_few": "{{count}} foldery",
-      "folder_many": "{{count}} folderów",
-      "folder_other": "{{count}} folderu",
-      "libraryPanel_one": "{{count}} panel biblioteki",
-      "libraryPanel_few": "{{count}} panele biblioteki",
-      "libraryPanel_many": "{{count}} paneli biblioteki",
-      "libraryPanel_other": "{{count}} panelu biblioteki",
-      "total_one": "{{count}} element",
-      "total_few": "{{count}} elementy",
-      "total_many": "{{count}} elementów",
-      "total_other": "{{count}} elementu"
+      "target-folder": "Folder docelowy",
+      "folder-not-empty_one": "",
+      "folder-not-empty_few": "",
+      "folder-not-empty_many": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4387,12 +4385,11 @@
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
       "button-deleting": "Usuwanie…",
-      "delete-warning": "Spowoduje to usunięcie folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Brak wymaganych pól",
       "success-message": "Folder został usunięty"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Nie można pobrać informacji o elemencie potomnym"
     },
     "empty-state": {
       "button-title": "Utwórz pulpit",
@@ -5303,10 +5300,6 @@
       },
       "pane-header": "Dodaj"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Zamknij widżet „Dodaj panel”",
-      "tooltip-close-widget": "Zamknij widżet"
-    },
     "add-menu": {
       "import": "Importuj z biblioteki",
       "paste-panel": "Wklej panel",
@@ -6101,9 +6094,6 @@
       "placeholder-search-options": "Opcje wyszukiwania",
       "visualization-button-tooltip": "Opcje wyszukiwania"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Nieprzetworzone dane"
-    },
     "panel-links": {
       "aria-label-panel-links": "Linki panelu"
     },
@@ -6144,18 +6134,6 @@
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
       "confirmText-restore-version": "Tak, przywróć wersję {{version}}",
       "title-restore-version": "Przywróć wersję"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opcje wiersza"
-    },
-    "row-options-form": {
-      "cancel": "Anuluj",
-      "label-repeat-for": "Powtórz dla",
-      "label-title": "Tytuł",
-      "update": "Aktualizuj"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opcje wiersza"
     },
     "rows-layout": {
       "cancel": "Anuluj",
@@ -6516,16 +6494,6 @@
       "changes": "Czy chcesz zapisać zmiany?",
       "discard": "Odrzuć",
       "title-unsaved-changes": "Niezapisane zmiany"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panele w tym wierszu korzystają ze źródła danych {{SHARED_DASHBOARD_QUERY}}. Panele te będą odwoływać się do panelu w oryginalnym wierszu, a nie do tych w powtarzanych wierszach."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Usuń wiersz",
-      "learn-more": "Dowiedz się więcej",
-      "title": {
-        "delete-row": "Usuń wiersz"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Nie można znaleźć prawidłowego identyfikatora Grafana.com",
@@ -9047,6 +9015,11 @@
     },
     "sql-expr": {
       "button-run-query": "Uruchom zapytanie"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "Błąd",
@@ -12311,8 +12284,10 @@
       "undock": "Odepnij menu z dokowania"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Zwiń sekcję: {{sectionName}}",
-      "expand-aria-label": "Rozwiń sekcję: {{sectionName}}"
+      "expand-aria-label": "Rozwiń sekcję: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Zmień organizację"
@@ -13230,7 +13205,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Ustawienia repozytorium zostały zapisane",
@@ -13261,13 +13243,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Moja konfiguracja"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Zastępuje automatycznie wykryty adres URL do rejestrowania webhooków.",
-      "description-webhook-url-learn-more": "Dowiedz się więcej",
-      "label-git-hub-features": "Funkcje GitHub",
-      "label-webhook-url": "Adres URL webhooka",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13419,28 +13394,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Dodaje podgląd obrazu zmian pulpitu w żądaniach pull. Obrazy pulpitów Grafany zostaną udostępnione w repozytorium Git i będą widoczne dla każdego, kto ma do niego dostęp.",
-      "description-generate-dashboard-previews": "Utwórz linki podglądu dla żądań pull",
       "description-image-rendering": "Wymaga renderowania obrazów. <2>Skonfiguruj renderowanie obrazów</2>",
-      "description-preview-requirements": "(wymaga <2>renderowania obrazów</2> i włączonego dostępu publicznego)",
       "description-read-only": "Zasobów nie można modyfikować za pośrednictwem usługi Grafana.",
       "description-sync-interval": "Jak często synchronizować zmiany z repozytorium",
-      "description-webhook-url": "Zastępuje automatycznie wykryty adres URL do rejestrowania webhooków.",
       "error-sync-interval-required": "Odstęp czasu synchronizacji jest wymagany",
       "label-enable-previews": "Włącz podglądy pulpitu w żądaniach pull",
-      "label-generate-dashboard-previews": "Generuj podglądy pulpitu",
       "label-read-only": "Tylko do odczytu",
-      "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)",
-      "label-webhook-url": "Adres URL webhooka",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Odstęp czasu synchronizacji (sekundy)"
     },
     "fix-folder-metadata": {
       "button": "Napraw identyfikatory folderów"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Anuluj",
+      "default-commit-message": "",
       "error-message": "Nie udało się uruchomić zadania naprawy metadanych folderów. Spróbuj ponownie.",
       "error-title": "Błąd podczas naprawiania metadanych folderów",
-      "loading": "Ładowanie repozytorium…",
       "read-only-message": "Metadanych folderów nie można naprawić automatycznie.",
       "submit": "Napraw identyfikatory folderów",
       "submitting": "Trwa naprawianie…",
@@ -13865,11 +13834,24 @@
     "shared": {
       "branch-description": "Gałąź używana do aprowizacji",
       "branch-label": "Gałąź",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Opcjonalnie. Ścieżka do podkatalogu zawierającego zasoby, które chcesz synchronizować.",
       "path-label": "Ścieżka",
       "progress-bar": {
         "aria-label": "Pasek postępu"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Nazwa użytkownika",
       "url-label": "Adres URL repozytorium",
       "url-pattern": "Musi to być prawidłowy adres URL repozytorium (https://hostname/owner/repo)"
@@ -13937,6 +13919,13 @@
     "watch-stream": {
       "error-description": "Nie udało się uruchomić aktualizacji w czasie rzeczywistym. Odśwież stronę, aby zobaczyć najnowsze dane.",
       "error-title": "Aktualizacje na żywo są niedostępne"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Pamiętaj o następujących ograniczeniach. Więcej szczegółów można znaleźć w <2>dokumentacji dotyczącej synchronizacji z usługą Git</2>.",
@@ -14245,7 +14234,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14254,6 +14242,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",

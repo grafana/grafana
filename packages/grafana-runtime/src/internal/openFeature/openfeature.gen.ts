@@ -55,6 +55,8 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -330,6 +332,17 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
