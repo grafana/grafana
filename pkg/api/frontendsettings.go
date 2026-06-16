@@ -126,7 +126,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
-	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg)
+	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg, hs.License)
 
 	if err != nil {
 		return nil, err
@@ -206,13 +206,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
-	frontendSettings.LicenseInfo = dtos.FrontendSettingsLicenseInfoDTO{
-		Expiry:          hs.License.Expiry(),
-		StateInfo:       hs.License.StateInfo(),
-		LicenseUrl:      hs.License.LicenseURL(hasAccess(licensing.PageAccess)),
-		Edition:         hs.License.Edition(),
-		EnabledFeatures: hs.License.EnabledFeatures(),
-	}
+	frontendSettings.LicenseInfo.LicenseUrl = hs.License.LicenseURL(hasAccess(licensing.PageAccess))
 
 	frontendSettings.RendererAvailable = hs.RenderService.IsAvailable(c.Req.Context())
 	frontendSettings.RendererVersion = hs.RenderService.Version()

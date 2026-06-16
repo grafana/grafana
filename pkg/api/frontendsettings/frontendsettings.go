@@ -120,7 +120,12 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 			Env:           cfg.Env,
 		},
 
-		// [TODO] Restore LicenseInfo in frontend-service
+		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
+			Expiry:          license.Expiry(),
+			StateInfo:       license.StateInfo(),
+			Edition:         license.Edition(),
+			EnabledFeatures: license.EnabledFeatures(),
+		},
 
 		FeatureToggles:                   make(map[string]bool),
 		AnonymousEnabled:                 cfg.Anonymous.Enabled,
