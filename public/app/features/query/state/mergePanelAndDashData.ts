@@ -1,9 +1,9 @@
-import { combineLatest, Observable, of } from 'rxjs';
+import { combineLatest, type Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
 
-import { arrayToDataFrame, DataFrame, DataTopic, PanelData } from '@grafana/data';
+import { arrayToDataFrame, type DataFrame, DataTopic, type PanelData } from '@grafana/data';
 
-import { DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
+import { type DashboardQueryRunnerResult } from './DashboardQueryRunner/types';
 
 function addAnnoDataTopic(annotations: DataFrame[] = []) {
   annotations.forEach((f) => {

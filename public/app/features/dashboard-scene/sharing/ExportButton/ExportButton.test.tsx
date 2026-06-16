@@ -32,8 +32,8 @@ describe('ExportButton', () => {
     const exportButton = await screen.findByRole('button', { name: /export dashboard/i });
     await userEvent.click(exportButton);
 
-    // Should show JSON export option
-    expect(await screen.findByRole('menuitem', { name: /export as json/i })).toBeInTheDocument();
+    // Should show code export option
+    expect(await screen.findByRole('menuitem', { name: /export as code/i })).toBeInTheDocument();
   });
 });
 

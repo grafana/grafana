@@ -1,7 +1,7 @@
 import { get } from 'lodash';
 
 import { t } from '@grafana/i18n';
-import { FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 
 import { getErrorCode } from '../misc';
 
@@ -13,7 +13,7 @@ export type ApiMachineryErrorResponse = FetchError<ApiMachineryError>;
 // these are known error IDs, used by both Kubernetes API and the front-end (using error `cause`).
 export type KnownErrorCodes = typeof ERROR_NEWER_CONFIGURATION;
 // Kubernetes API Machinery errors are a superset of supported errors codes.
-export type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MATCHER_CONFLICT;
+type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MATCHER_CONFLICT;
 
 /**
  * This function gives us the opportunity to translate or transform error codes that are returned from the Kubernetes APIs
@@ -21,7 +21,20 @@ export type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MAT
 export function getErrorMessageFromApiMachineryErrorResponse(error: ApiMachineryErrorResponse): string | undefined {
   const code = getErrorCode(error);
   if (!code) {
-    return error.data.message;
+    const baseMessage = error.data.message;
+    const causes = error.data.details?.causes?.flatMap((cause) => {
+      if (!cause.message) {
+        return [];
+      }
+      return [cause.field ? `${cause.field}: ${cause.message}` : cause.message];
+    });
+    if (causes && causes.length > 0) {
+      return t('alerting.errors.api-machinery.with-causes', '{{-baseMessage}}: {{-causes}}', {
+        baseMessage,
+        causes: causes.join(', '),
+      });
+    }
+    return baseMessage;
   }
 
   const errorMessageMap: Record<KnownMachineryErrorCodes, string | undefined> = {

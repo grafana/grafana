@@ -76,16 +76,26 @@ type DataSource struct {
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
-func IsSecureSocksDSProxyEnabled(jsonData *simplejson.Json) bool {
-	return jsonData != nil && jsonData.Get("enableSecureSocksProxy").MustBool(false)
+func IsSecureSocksDSProxyEnabled(jsonData map[string]any) bool {
+	v, _ := jsonData["enableSecureSocksProxy"].(bool)
+	return v
 }
 
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 	if ds.isSecureSocksDSProxyEnabled == nil {
-		enabled := IsSecureSocksDSProxyEnabled(ds.JsonData)
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonDataMap())
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled
+}
+
+// JsonDataMap returns JsonData as a map[string]any, or empty map if unset
+func (ds *DataSource) JsonDataMap() map[string]any {
+	def := map[string]any{}
+	if ds.JsonData == nil {
+		return def
+	}
+	return ds.JsonData.MustMap(def)
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -143,18 +153,6 @@ func GetTeamHTTPHeaders(jsonData *simplejson.Json) (*TeamHTTPHeaders, error) {
 	}
 
 	return teamHTTPHeaders, nil
-}
-
-// AllowedCookies parses the jsondata.keepCookies and returns a list of
-// allowed cookies, otherwise an empty list.
-func (ds DataSource) AllowedCookies() []string {
-	if ds.JsonData != nil {
-		if keepCookies := ds.JsonData.Get("keepCookies"); keepCookies != nil {
-			return keepCookies.MustStringArray()
-		}
-	}
-
-	return []string{}
 }
 
 // ----------------------
@@ -274,6 +272,10 @@ type GetDataSourceQuery struct {
 
 	// Required
 	OrgID int64
+
+	// Type is the datasource plugin type (e.g. "prometheus", "loki").
+	// When set alongside UID, it scopes the lookup to that specific type.
+	Type string
 }
 
 type DatasourcesPermissionFilterQuery struct {

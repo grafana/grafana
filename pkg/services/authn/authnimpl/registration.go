@@ -3,6 +3,7 @@ package authnimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -33,7 +34,7 @@ import (
 type Registration struct{}
 
 func ProvideRegistration(
-	cfg *setting.Cfg, authnSvc authn.Service,
+	ctx context.Context, cfgProvider configprovider.ConfigProvider, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
 	apikeyService apikey.Service, userService user.Service,
@@ -44,14 +45,19 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProviderService setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
-) Registration {
+) (Registration, error) {
 	logger := log.New("authn.registration")
+
+	cfg, err := cfgProvider.Get(ctx)
+	if err != nil {
+		return Registration{}, err
+	}
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
 
 	if cfg.LoginCookieName != "" {
-		authnSvc.RegisterClient(clients.ProvideSession(cfg, sessionService, authInfoService, tracer))
+		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -76,27 +82,6 @@ func ProvideRegistration(
 
 		if !cfg.DisableLoginForm {
 			authnSvc.RegisterClient(clients.ProvideForm(passwordClient))
-		}
-	}
-
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.PasswordlessMagicLinkAuth.Enabled && features.IsEnabled(context.Background(), featuremgmt.FlagPasswordlessMagicLinkAuthentication) {
-		hasEnabledProviders := authnSvc.IsClientEnabled(authn.ClientSAML) || authnSvc.IsClientEnabled(authn.ClientLDAP)
-		if !hasEnabledProviders {
-			oauthInfos := socialService.GetOAuthInfoProviders()
-			for _, provider := range oauthInfos {
-				if provider.Enabled {
-					hasEnabledProviders = true
-					break
-				}
-			}
-		}
-
-		if hasEnabledProviders {
-			logger.Error("Failed to configure passwordless magic link auth: cannot enable both passwordless magic link auth & SSO")
-		} else {
-			passwordless := clients.ProvidePasswordless(cfg, loginAttempts, userService, tempUserService, notificationService, cache)
-			authnSvc.RegisterClient(passwordless)
 		}
 	}
 
@@ -160,5 +145,5 @@ func ProvideRegistration(
 	authnSvc.RegisterPostAuthHook(nsSync.SyncNamespace, 150)
 	authnSvc.RegisterPostAuthHook(sync.AccessClaimsHook, 160)
 
-	return Registration{}
+	return Registration{}, nil
 }

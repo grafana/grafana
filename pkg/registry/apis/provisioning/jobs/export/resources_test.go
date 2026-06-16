@@ -54,6 +54,7 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 	}
 
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	setupProgress(mockProgress)
 
@@ -69,7 +70,7 @@ func runExportTest(t *testing.T, mockItems []unstructured.Unstructured, setupPro
 		Branch: "feature/branch",
 	}
 
-	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress)
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, false)
 
 	mockProgress.AssertExpectations(t)
 	repoResources.AssertExpectations(t)
@@ -98,7 +99,7 @@ func TestExportResources_Dashboards_Success(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
@@ -120,15 +121,15 @@ func TestExportResources_Dashboards_Success(t *testing.T) {
 func TestExportResources_Dashboards_ClientError(t *testing.T) {
 	setupProgress := func(progress *jobs.MockJobProgressRecorder) {
 		progress.On("SetMessage", mock.Anything, "start resource export").Return()
-		progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, fmt.Errorf("didn't work"))
+		// ForKind fails before the plural resource is known, so the error refers to the kind.
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, fmt.Errorf("didn't work"))
 	}
 
 	err := runExportTest(t, nil, setupProgress, setupResources)
-	require.EqualError(t, err, "get client for dashboards: didn't work")
+	require.EqualError(t, err, "get client for Dashboard: didn't work")
 }
 
 func TestExportResources_Dashboards_WithErrors(t *testing.T) {
@@ -151,7 +152,7 @@ func TestExportResources_Dashboards_WithErrors(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
@@ -185,7 +186,7 @@ func TestExportResources_Dashboards_TooManyErrors(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
@@ -215,7 +216,7 @@ func TestExportResources_Dashboards_IgnoresExisting(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
@@ -262,7 +263,7 @@ func TestExportResources_Dashboards_SavedVersion(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		options := resources.WriteOptions{
 			Path: "grafana",
 			Ref:  "feature/branch",
@@ -328,7 +329,7 @@ func TestExportResources_Dashboards_FailedConversionNoStoredVersion(t *testing.T
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		// The value is not saved
 	}
 
@@ -490,7 +491,7 @@ func TestExportResources_Dashboards_Versions(t *testing.T) {
 
 			setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
 				// Setup v1 client
-				resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+				resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 
 				// Setup version-specific client
 				versionGVR := schema.GroupVersionResource{
@@ -546,12 +547,99 @@ func TestExportResources_Dashboards_SkipsManagedResources(t *testing.T) {
 	}
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 		// No WriteResourceFileFromObject call expected since resource should be skipped
 	}
 
 	err = runExportTest(t, mockItems, setupProgress, setupResources)
 	require.NoError(t, err)
+}
+
+func TestExportResources_GenerateNewUIDs(t *testing.T) {
+	mockItems := []unstructured.Unstructured{
+		createDashboardObject("original-name-1"),
+		createDashboardObject("original-name-2"),
+	}
+
+	mockClient := &mockDynamicInterface{items: mockItems}
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	mockProgress.On("SetMessage", mock.Anything, "start resource export").Return()
+	mockProgress.On("SetMessage", mock.Anything, "export dashboards").Return()
+
+	// The result builder should still record the original names
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name() == "original-name-1" && result.Action() == repository.FileActionCreated
+	})).Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Name() == "original-name-2" && result.Action() == repository.FileActionCreated
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil).Times(2)
+
+	resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
+
+	// The object written should have a NEW name (not the original)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		name := obj.GetName()
+		return name != "original-name-1" && name != "original-name-2" && name != ""
+	}), resources.WriteOptions{Path: "grafana", Ref: "feature/branch"}).Return("exported.json", nil).Times(2)
+
+	options := provisioningV0.ExportJobOptions{
+		Path:   "grafana",
+		Branch: "feature/branch",
+	}
+
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	require.NoError(t, err)
+
+	mockProgress.AssertExpectations(t)
+	repoResources.AssertExpectations(t)
+	resourceClients.AssertExpectations(t)
+}
+
+func TestExportResources_GenerateNewUIDs_UniquePerResource(t *testing.T) {
+	mockItems := []unstructured.Unstructured{
+		createDashboardObject("dash-a"),
+		createDashboardObject("dash-b"),
+	}
+
+	mockClient := &mockDynamicInterface{items: mockItems}
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	mockProgress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
+
+	// Collect generated names to verify uniqueness
+	var generatedNames []string
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			obj := args.Get(1).(*unstructured.Unstructured)
+			generatedNames = append(generatedNames, obj.GetName())
+		}).Return("exported.json", nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Path:   "grafana",
+		Branch: "feature/branch",
+	}
+
+	err := ExportResources(context.Background(), options, resourceClients, repoResources, mockProgress, true)
+	require.NoError(t, err)
+
+	require.Len(t, generatedNames, 2, "should have written 2 resources")
+	require.NotEqual(t, generatedNames[0], generatedNames[1], "generated names should be unique")
+	require.NotEqual(t, generatedNames[0], "dash-a")
+	require.NotEqual(t, generatedNames[0], "dash-b")
+	require.NotEqual(t, generatedNames[1], "dash-a")
+	require.NotEqual(t, generatedNames[1], "dash-b")
 }
 
 func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
@@ -616,7 +704,7 @@ func TestExportResources_Dashboards_MultipleVersions(t *testing.T) {
 
 	setupResources := func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
 		// Setup v1 client
-		resourceClients.On("ForResource", mock.Anything, resources.DashboardResource).Return(mockClient, gvk, nil)
+		resourceClients.On("ForKind", mock.Anything, mock.Anything).Return(mockClient, resources.DashboardResource, nil)
 
 		// Setup v2alpha1 client
 		v2alphaDashboard := createV2DashboardObject("v2alpha-dashboard", "v2alpha1")

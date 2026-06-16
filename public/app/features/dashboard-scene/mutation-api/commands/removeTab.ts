@@ -4,7 +4,7 @@
  * Remove a tab by path. Optionally move contained panels to another group.
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
@@ -14,7 +14,7 @@ import { movePanelsToLayout } from './movePanelsHelper';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const removeTabPayloadSchema = payloads.removeTab;
+const removeTabPayloadSchema = payloads.removeTab;
 
 export type RemoveTabPayload = z.infer<typeof removeTabPayloadSchema>;
 
@@ -24,6 +24,7 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
 
   payloadSchema: payloads.removeTab,
   permission: requiresNewDashboardLayouts,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -61,7 +62,8 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
 
       return {
         success: true,
-        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: undefined }],
+        data: { path },
+        changes: [{ path, previousValue: { title: resolved.item.state.title }, newValue: null }],
       };
     } catch (error) {
       return {

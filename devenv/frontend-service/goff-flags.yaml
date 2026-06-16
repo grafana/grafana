@@ -4,3 +4,46 @@ flagName:
     disabled: false
   defaultRule:
     variation: disabled
+
+reportRenderBinding:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: enabled
+
+compiledBootScript:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+grafana.assetSriChecks:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+grafana.meticulousAIRecorder:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+grafana.meticulousAIRecorderHighVolume:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled
+
+grafana.meticulousAIMode:
+  variations:
+    off: "off"
+    on-prod-env: "on-prod-env"
+    on-dev-env: "on-dev-env"
+  defaultRule:
+    variation: off

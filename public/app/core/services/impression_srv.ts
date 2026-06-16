@@ -5,7 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { contextSrv } from './context_srv';
 
-export class ImpressionSrv {
+class ImpressionSrv {
   constructor() {}
 
   addDashboardImpression(dashboardUID: string) {
@@ -58,6 +58,9 @@ export class ImpressionSrv {
     return result;
   }
 
+  clearImpressions() {
+    store.set(this.impressionKey(), JSON.stringify([]));
+  }
   impressionKey() {
     return 'dashboard_impressions-' + contextSrv.user.orgId;
   }

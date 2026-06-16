@@ -1,11 +1,14 @@
 import { useRef, useEffect } from 'react';
 
-import { GetSnapshotResponseDto, SnapshotDto } from '@grafana/api-clients/rtkq/legacy/migrate-to-cloud';
+import {
+  type GetSnapshotResponseDto,
+  type SnapshotDto,
+} from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { pluralizeResourceName } from './resourceInfo';
-import { ResourceTableItem } from './types';
+import { type ResourceTableItem } from './types';
 
 // After the number of distinct resource types migrated exceeeds this value, we display a generic success message.
 const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;

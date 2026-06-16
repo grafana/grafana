@@ -1,10 +1,13 @@
+import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+
+import { DeprecatedInternalId } from '../apiserver/types';
 
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
   return await getBackendSrv().get('/api/datasources');
@@ -14,11 +17,12 @@ export const getDataSources = async (): Promise<DataSourceSettings[]> => {
 const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = 'lds-sv-';
 
 export interface K8sMetadata {
-  name: string;
   namespace: string;
-  uid?: string;
+  name: string; // Equivalent to legacy UID
+  generateName?: string; // only valid for create
+  uid?: string; // do not confuse this with legacy UID
   resourceVersion: string;
-  generation?: number;
+  generation?: number; // increments when the spec changes
   creationTimestamp?: string;
   labels: { [key: string]: string };
   annotations: { [key: string]: string };
@@ -29,13 +33,15 @@ export interface DatasourceInstanceK8sSpec {
   jsonData: DataSourceJsonData;
   title: string;
   url: string;
+  user: string;
+  database: string;
   basicAuth: boolean;
   basicAuthUser: string;
   isDefault?: boolean;
   readOnly?: boolean;
 }
 
-export interface DatasourceAccessK8s {
+interface DatasourceAccessK8s {
   kind: string;
   apiVersion: string;
   Permissions: Record<string, boolean>;
@@ -44,12 +50,12 @@ export interface DatasourceAccessK8s {
 export interface DataSourceSettingsK8s {
   kind: string;
   apiVersion: string;
-  metadata: K8sMetadata;
+  metadata: Partial<K8sMetadata>;
   spec: DatasourceInstanceK8sSpec;
   secure?: Record<string, Record<string, string>>;
 }
 
-export const getDataSourceK8sGroup = (uid: string): string => {
+const getDataSourceK8sGroup = (uid: string): string => {
   for (const [key, ds] of Object.entries(config.datasources)) {
     if (key.startsWith('--')) {
       continue;
@@ -61,7 +67,7 @@ export const getDataSourceK8sGroup = (uid: string): string => {
   return '';
 };
 
-export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
+const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
   dsSettings: Partial<DataSourceSettings>,
   version: string
 ): Partial<DataSourceSettingsK8s> => {
@@ -73,6 +79,8 @@ export const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     basicAuth: dsSettings.basicAuth ? dsSettings.basicAuth : false,
     basicAuthUser: dsSettings.basicAuthUser ? dsSettings.basicAuthUser : '',
     isDefault: dsSettings.isDefault,
+    user: dsSettings.user ? dsSettings.user : '',
+    database: dsSettings.database ? dsSettings.database : '',
   };
   const dsK8sSettings: Partial<DataSourceSettingsK8s> = {
     spec: k8sSpec,
@@ -89,7 +97,7 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
   let k8sMetadata: K8sMetadata = {
     name: dsSettings.uid,
     namespace: namespace,
-    resourceVersion: '',
+    resourceVersion: dsSettings.version ? dsSettings.version.toString() : '',
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
@@ -102,6 +110,8 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     basicAuthUser: dsSettings.basicAuthUser,
     isDefault: dsSettings.isDefault,
     readOnly: dsSettings.readOnly,
+    user: dsSettings.user ? dsSettings.user : '',
+    database: dsSettings.database ? dsSettings.database : '',
   };
   let dsK8sSettings: DataSourceSettingsK8s = {
     kind: 'DataSource',
@@ -127,19 +137,24 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
 ): DataSourceSettings => {
   // TODO: remove this once we figure out what code is using the deprecated
   // id field.
-  let id = parseInt(dsK8sSettings.metadata.labels['grafana.app/deprecatedInternalID'] || '', 10);
+  let id = parseInt(dsK8sSettings.metadata.labels?.[DeprecatedInternalId] || '', 10);
+  let version = 0;
+  if (dsK8sSettings.metadata.resourceVersion) {
+    version = parseInt(dsK8sSettings.metadata.resourceVersion, 10);
+  }
   let dsSettings: DataSourceSettings = {
     id: id,
-    uid: dsK8sSettings.metadata.name,
+    uid: dsK8sSettings.metadata.name!,
     orgId: 1,
     name: dsK8sSettings.spec.title,
     typeLogoUrl: '',
     type: dsK8sSettings.apiVersion.replace(/\.datasource\.grafana\.app\/[a-z0-9]+$/, ''),
+    version: version,
     typeName: '',
     access: dsK8sSettings.spec.access,
     url: dsK8sSettings.spec.url,
-    user: '',
-    database: '',
+    user: dsK8sSettings.spec.user,
+    database: dsK8sSettings.spec.database,
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
     isDefault: dsK8sSettings.spec.isDefault ? true : false,
@@ -156,13 +171,13 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
   return dsSettings;
 };
 
-export const getSecretDigest = (fieldName: string): Promise<ArrayBuffer> => {
+const getSecretDigest = (fieldName: string): Promise<ArrayBuffer> => {
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(fieldName));
 };
 
 // This function produces the same is based on datasources.GetLegacySecureValueName in
 // grafana/pkg/registry/apis/datasource/converter.go
-export const getSecretName = async (datasourceUid: string, fieldName: string): Promise<string> => {
+const getSecretName = async (datasourceUid: string, fieldName: string): Promise<string> => {
   const fieldAndUid = datasourceUid + '|' + fieldName;
   const digestBuffer = await getSecretDigest(fieldAndUid).then((value) => {
     return value;
@@ -172,7 +187,7 @@ export const getSecretName = async (datasourceUid: string, fieldName: string): P
   return `${LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX}${hexString}`;
 };
 
-export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
   // TODO: read this from backend.
   let k8sVersion = 'v0alpha1';
   let k8sGroup = getDataSourceK8sGroup(k8sName);
@@ -209,7 +224,7 @@ export const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string
 };
 
 export const getDataSourceByUid = async (uid: string) => {
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     return getDataSourceFromK8sAPI(uid, config.namespace);
   }
 
@@ -235,16 +250,15 @@ export const createDataSourceWithK8sAPI = async (dataSource: Partial<DataSourceS
   if (dataSource.secureJsonData) {
     dsK8sSettings.secure = {};
     for (let [k, v] of Object.entries(dataSource.secureJsonData)) {
-      if (v !== '') {
-        let value = {
-          create: v,
-          name: k,
-        };
-        if (isRecordOfString(value)) {
-          dsK8sSettings.secure[k] = value;
-        }
+      if (v !== '' && isString(v)) {
+        dsK8sSettings.secure[k] = { create: v };
       }
     }
+  }
+
+  // K8s apis require an explicit name, or request to generate the name for POST
+  if (!(dsK8sSettings.metadata?.name || dsK8sSettings.metadata?.generateName)) {
+    dsK8sSettings.metadata = { ...dsK8sSettings.metadata, generateName: 'g' }; // prefix for server generated unique name
   }
   return getBackendSrv().post(
     `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources`,
@@ -258,7 +272,7 @@ export const createDataSource = (dataSource: Partial<DataSourceSettings>) =>
 export const getDataSourcePlugins = () => getBackendSrv().get('/api/plugins', { enabled: 1, type: 'datasource' });
 
 export const updateDataSource = async (dataSource: DataSourceSettings) => {
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let k8sVersion = 'v0alpha1';
     let dsK8sSettings = convertLegacyDatasourceSettingsToK8sDatasourceSettings(
       dataSource,
@@ -292,31 +306,36 @@ export const updateDataSource = async (dataSource: DataSourceSettings) => {
         }
       }
     }
-    return getBackendSrv().put(
-      `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
-      dsK8sSettings,
-      {
-        showErrorAlert: false,
-        showSuccessAlert: false,
-        validatePath: true,
-      }
+    return convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+      await getBackendSrv().put<DataSourceSettingsK8s>(
+        `/apis/${dsK8sSettings.apiVersion}/namespaces/${config.namespace}/datasources/${dsK8sSettings.metadata.name}`,
+        dsK8sSettings,
+        {
+          showErrorAlert: false,
+          showSuccessAlert: false,
+          validatePath: true,
+        }
+      )
     );
   }
+
   // we're setting showErrorAlert and showSuccessAlert to false to suppress the popover notifications. Request result will now be
   // handled by the data source config page
-  return getBackendSrv().put(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
-    showErrorAlert: false,
-    showSuccessAlert: false,
-    validatePath: true,
-  });
+  return getBackendSrv()
+    .put<{ datasource: DataSourceSettings }>(`/api/datasources/uid/${dataSource.uid}`, dataSource, {
+      showErrorAlert: false,
+      showSuccessAlert: false,
+      validatePath: true,
+    })
+    .then((response) => response.datasource);
 };
 
 export const deleteDataSource = (uid: string) => {
   let deleteUrl = `/api/datasources/uid/${uid}`;
-  if (getFeatureFlagClient().getBooleanValue('datasources.config.ui.useNewDatasourceCRUDAPIs', false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
     let namespace = config.namespace;
     let apiVersion = `${getDataSourceK8sGroup(uid)}/v0alpha1`;
     deleteUrl = `/apis/${apiVersion}/namespaces/${namespace}/datasources/${uid}`;
   }
-  getBackendSrv().delete(deleteUrl);
+  return getBackendSrv().delete(deleteUrl);
 };

@@ -1,4 +1,4 @@
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types/valueMapping';
+import { MappingType, SpecialValueMatch, type ValueMapping } from '../types/valueMapping';
 
 import { getValueMappingResult, isNumeric } from './valueMappings';
 

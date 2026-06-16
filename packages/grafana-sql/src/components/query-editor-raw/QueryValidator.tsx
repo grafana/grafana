@@ -2,11 +2,11 @@ import { css } from '@emotion/css';
 import { useState, useMemo, useEffect } from 'react';
 import { useAsyncFn, useDebounce } from 'react-use';
 
-import { formattedValueToString, getValueFormat, TimeRange } from '@grafana/data';
+import { formattedValueToString, getValueFormat, type TimeRange } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { Icon, Spinner, useTheme2 } from '@grafana/ui';
 
-import { DB, SQLQuery, ValidationResults } from '../../types';
+import { type DB, type SQLQuery, type ValidationResults } from '../../types';
 
 export interface QueryValidatorProps {
   db: DB;

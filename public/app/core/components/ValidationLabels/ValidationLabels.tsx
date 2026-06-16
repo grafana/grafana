@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Box, Icon, Text, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
@@ -16,7 +16,7 @@ export interface ValidationLabelsProps {
   pristine: boolean;
 }
 
-export interface ValidationLabelProps {
+interface ValidationLabelProps {
   strongPasswordValidation: StrongPasswordValidation;
   password: string;
   pristine: boolean;
@@ -71,7 +71,7 @@ export const ValidationLabels = ({ strongPasswordValidations, password, pristine
   );
 };
 
-export const ValidationLabel = ({ strongPasswordValidation, password, pristine }: ValidationLabelProps) => {
+const ValidationLabel = ({ strongPasswordValidation, password, pristine }: ValidationLabelProps) => {
   const styles = useStyles2(getStyles);
 
   const { basicAuthStrongPasswordPolicy } = config.auth;
@@ -102,7 +102,7 @@ export const ValidationLabel = ({ strongPasswordValidation, password, pristine }
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: {
       style: css({

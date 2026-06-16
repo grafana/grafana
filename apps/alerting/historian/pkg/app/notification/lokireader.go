@@ -103,7 +103,7 @@ func (h *LokiReader) Query(ctx context.Context, query Query) (QueryResult, error
 	// Phase 1: If labels are specified, query the alerts stream to collect matching UUIDs.
 	var labelUUIDs []string
 	if query.Labels != nil && len(*query.Labels) > 0 {
-		alertLogql, err := buildAlertLabelQuery(*query.Labels)
+		alertLogql, err := buildAlertLabelQuery(query.RuleUID, *query.Labels)
 		if err != nil {
 			return QueryResult{}, err
 		}
@@ -217,6 +217,11 @@ func (h *LokiReader) QueryAlerts(ctx context.Context, query AlertQuery) (AlertQu
 // topk(sum(count_over_time(...))) aggregation.
 func buildMetricsQuery(logqlInner string, from, to time.Time, limit int64, groupBy QueryGroupBy) string {
 	inner := buildMetricsRangeQuery(logqlInner, to.Sub(from), groupBy)
+	// Skip topk when grouping by RuleUID because the raw rule_uids label contains
+	// comma-separated UIDs that must be exploded client-side before applying topk.
+	if groupBy.RuleUID {
+		return inner
+	}
 	return fmt.Sprintf(`topk(%d, %s)`, limit, inner)
 }
 
@@ -251,6 +256,9 @@ func buildMetricsRangeQuery(logqlInner string, step time.Duration, groupBy Query
 	if groupBy.Error {
 		labels = append(labels, "error")
 	}
+	if groupBy.RuleUID {
+		labels = append(labels, "rule_uids")
+	}
 	sumBy := ""
 	if len(labels) > 0 {
 		sumBy = fmt.Sprintf(" by (%s) ", strings.Join(labels, ","))
@@ -281,12 +289,67 @@ func (h *LokiReader) runMetricsQuery(ctx context.Context, logqlInner string, fro
 		counts = append(counts, count)
 	}
 
+	// When grouping by RuleUID, explode the comma-separated rule_uids into
+	// individual counts, aggregate, and apply client-side topk.
+	if groupBy.RuleUID {
+		counts = explodeRuleUIDCounts(counts, limit)
+	}
+
 	// Sort counts by count (highest first).
 	sort.Slice(counts, func(i, j int) bool {
 		return counts[i].Count > counts[j].Count
 	})
 
 	return counts, nil
+}
+
+// explodeRuleUIDCounts splits counts with comma-separated rule_uids into individual
+// counts per rule UID, aggregates (sums) counts sharing the same (ruleUID + other groupBy
+// dimensions) key, sorts by count descending, and applies the limit (client-side topk).
+func explodeRuleUIDCounts(counts []Count, limit int64) []Count {
+	aggregated := make(map[string]*Count)
+
+	key := func(c Count) string {
+		c0 := c
+		c0.Count = 0
+		b, _ := json.Marshal(c0)
+		return string(b)
+	}
+
+	for _, c := range counts {
+		ruleUIDs := []string{""}
+		if c.RuleUID != nil && *c.RuleUID != "" {
+			ruleUIDs = strings.Split(*c.RuleUID, ",")
+		}
+		for _, uid := range ruleUIDs {
+			entry := c
+			uidCopy := uid
+			entry.RuleUID = &uidCopy
+			k := key(entry)
+			if existing, ok := aggregated[k]; ok {
+				existing.Count += entry.Count
+			} else {
+				aggregated[k] = &entry
+			}
+		}
+	}
+
+	result := make([]Count, 0, len(aggregated))
+	for _, c := range aggregated {
+		result = append(result, *c)
+	}
+
+	// Sort by count descending.
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Count > result[j].Count
+	})
+
+	// Apply limit (client-side topk).
+	if int64(len(result)) > limit {
+		result = result[:limit]
+	}
+
+	return result
 }
 
 // defaultStep returns a sensible default step interval for a range query over the given time range.
@@ -399,6 +462,11 @@ func parseCountLabels(m map[string]string) (Count, error) {
 	if v, ok := m["error"]; ok {
 		entry.Error = &v
 	}
+	if v, ok := m["rule_uids"]; ok {
+		// Store the raw comma-separated rule_uids string temporarily in the RuleUID
+		// field. The explodeRuleUIDCounts function will split and reaggregate later.
+		entry.RuleUID = &v
+	}
 	return entry, nil
 }
 
@@ -482,9 +550,19 @@ func parseLokiAlertEntry(s lokiclient.Sample) (AlertEntry, error) {
 }
 
 // buildAlertLabelQuery builds a LogQL query against the alerts stream with label matchers.
+// When ruleUID is provided, a structured metadata filter is added before JSON parsing
+// so Loki can discard non-matching entries without deserializing the log line.
 // After | json, Loki flattens nested label keys so labels.alertname becomes labels_alertname.
-func buildAlertLabelQuery(labels Matchers) (string, error) {
+func buildAlertLabelQuery(ruleUID *string, labels Matchers) (string, error) {
 	logql := fmt.Sprintf(`{%s=%q}`, historian.LabelFrom, historian.LabelFromValueAlerts)
+
+	if ruleUID != nil && *ruleUID != "" {
+		if !validRuleUIDRegex.MatchString(*ruleUID) {
+			return "", fmt.Errorf("%w: rule uid: %q", ErrInvalidQuery, *ruleUID)
+		}
+		logql += fmt.Sprintf(` | rule_uid = %q`, *ruleUID)
+	}
+
 	logql += ` | json`
 	for _, matcher := range labels {
 		if !validLabelKeyRegex.MatchString(matcher.Label) {

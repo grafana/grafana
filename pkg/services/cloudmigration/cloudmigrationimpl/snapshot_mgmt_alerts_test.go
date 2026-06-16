@@ -14,11 +14,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -28,7 +28,7 @@ var alertRulesPermissions = map[string][]string{
 	accesscontrol.ActionAlertingRuleRead:   {"*"},
 	accesscontrol.ActionAlertingRuleCreate: {"*"},
 	accesscontrol.ActionAlertingRuleUpdate: {"*"},
-	dashboards.ActionFoldersRead:           {"*"},
+	folder.ActionFoldersRead:               {"*"},
 	datasources.ActionQuery:                {"*"},
 }
 
@@ -74,7 +74,7 @@ func TestGetNotificationTemplates(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, notificationTemplates)
 		require.Len(t, notificationTemplates, 1)
-		require.Equal(t, createdTemplate.Name, notificationTemplates[0].Name)
+		require.Equal(t, createdTemplate.Title, notificationTemplates[0].Name)
 	})
 }
 
@@ -93,8 +93,12 @@ func TestGetContactPoints(t *testing.T) {
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
-					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets:  {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversCreate:       nil,
+					accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingProvisioningSetStatus: nil,
 				},
 			},
 		}
@@ -138,7 +142,15 @@ func TestGetNotificationPolicies(t *testing.T) {
 
 		s := setUpServiceTest(t).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversCreate:       nil,
+				accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingProvisioningSetStatus: nil,
+			},
+		}}
 
 		muteTiming := createMuteTiming(t, ctx, s, user)
 		require.NotEmpty(t, muteTiming.Name)
@@ -310,12 +322,12 @@ func createMuteTiming(t *testing.T, ctx context.Context, service *Service, user 
 	return createdTiming
 }
 
-func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) definitions.NotificationTemplate {
+func createNotificationTemplate(t *testing.T, ctx context.Context, service *Service, user *user.SignedInUser) v1.TemplateGroup {
 	t.Helper()
 
-	tmpl := definitions.NotificationTemplate{
-		Name:     "MyTestNotificationTemplate",
-		Template: "This is a test template\n{{ .ExternalURL }}",
+	tmpl := v1.TemplateGroup{
+		Title:   "MyTestNotificationTemplate",
+		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
 	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
@@ -442,7 +454,7 @@ func createFolder(t *testing.T, ctx context.Context, service *Service, user *use
 		Title:        title,
 		SignedInUser: user,
 	})
-	if err != nil && !errors.Is(err, dashboards.ErrFolderWithSameUIDExists) {
+	if err != nil && !errors.Is(err, folder.ErrSameUIDExists) {
 		require.NoError(t, err)
 	}
 }

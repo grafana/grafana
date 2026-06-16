@@ -1,17 +1,17 @@
 import { z } from 'zod';
 
-import { GrafanaTheme } from '../types/theme';
+import { type GrafanaTheme } from '../types/theme';
 
-import { ThemeBreakpoints } from './breakpoints';
-import { ThemeColors } from './createColors';
-import { ThemeComponents } from './createComponents';
-import { ThemeShadows } from './createShadows';
-import { ThemeShape } from './createShape';
-import { ThemeSpacing } from './createSpacing';
-import { ThemeTransitions } from './createTransitions';
-import { ThemeTypography } from './createTypography';
-import { ThemeVisualizationColors } from './createVisualizationColors';
-import { ThemeZIndices } from './zIndex';
+import { type ThemeBreakpoints } from './breakpoints';
+import { type ThemeColors } from './createColors';
+import { type ThemeComponents } from './createComponents';
+import { type ThemeShadows } from './createShadows';
+import { type ThemeShape } from './createShape';
+import { type ThemeSpacing } from './createSpacing';
+import { type ThemeTransitions } from './createTransitions';
+import { type ThemeTypography } from './createTypography';
+import { type ThemeVisualizationColors } from './createVisualizationColors';
+import { type ThemeZIndices } from './zIndex';
 
 /**
  * @beta
@@ -56,15 +56,10 @@ export const ThemeRichColorInputSchema = z.object({
   contrastText: z.string().optional(),
 });
 
-export const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
+const ThemeRichColorSchema = ThemeRichColorInputSchema.required();
 
 /** @alpha */
 export type ThemeRichColor = z.infer<typeof ThemeRichColorSchema>;
-
-/** @internal */
-export type DeepPartial<T> = {
-  [P in keyof T]?: DeepPartial<T[P]>;
-};
 
 /** @internal */
 export type DeepRequired<T> = Required<{

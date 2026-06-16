@@ -1,10 +1,10 @@
-import { UrlQueryMap } from '@grafana/data';
-import { Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { ListOptions, Resource, ResourceList } from 'app/features/apiserver/types';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
-import { AnnotationsPermissions, SaveDashboardResponseDTO } from 'app/types/dashboard';
+import { type UrlQueryMap } from '@grafana/data';
+import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type ListOptions, type Resource, type ResourceList, type TableResponse } from 'app/features/apiserver/types';
+import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
+import { type AnnotationsPermissions, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 /**
  * Represents the format/version of a dashboard for import/export operations.
@@ -38,9 +38,11 @@ export interface DashboardAPI<G, T> {
   getDashboardHistoryVersions(uid: string, versions: number[]): Promise<Array<Resource<T>>>;
   /** Restore a dashboard to a previous version */
   restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO>;
-  /** List all deleted dashboards */
-  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<ResourceList<T>>;
-  /**  Restore a deleted dashboard by re-creating it */
+  /** List all deleted dashboards (table format — metadata only, no spec) */
+  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse>;
+  /** Get a single dashboard resource by name */
+  getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<T>>;
+  /** Restore a deleted dashboard by re-creating it */
   restoreDashboard(dashboard: Resource<T>): Promise<Resource<T>>;
 }
 
@@ -64,7 +66,7 @@ export interface DashboardVersionError extends Error {
   status: number;
   data: {
     // The version which was stored when the dashboard was created / updated.
-    // Currently known versions are: 'v2beta1' | 'v1beta1' | 'v0alpha1'
+    // Currently known versions are: 'v2' | 'v2beta1' | 'v1beta1' | 'v0alpha1'
     storedVersion: string;
     message: string;
   };

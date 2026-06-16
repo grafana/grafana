@@ -22,7 +22,7 @@ var _ store = (*sqlStore)(nil)
 type sqlStore struct {
 	db             db.DB
 	secretsStore   secretskv.SecretsKVStore
-	secretsService secrets.Service
+	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 }
 
 const (

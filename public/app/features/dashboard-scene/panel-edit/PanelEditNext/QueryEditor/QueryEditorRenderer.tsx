@@ -1,52 +1,66 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { CoreApp, DataSourcePluginContextProvider } from '@grafana/data';
+import {
+  CoreApp,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
+  type PanelData,
+} from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
-import { Alert, Spinner, Stack, Text } from '@grafana/ui';
+import { type DataQuery } from '@grafana/schema';
+import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
-export function QueryEditorRenderer() {
-  const { queries, data } = useQueryRunnerContext();
-  const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
-  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
-  const error = data?.errors?.find((e) => e.refId === selectedQuery?.refId);
+interface QueryDatasourceData {
+  datasource?: DataSourceApi;
+  dsSettings?: DataSourceInstanceSettings;
+}
 
-  const selectedRefId = selectedQuery?.refId;
+interface QueryEditorPanelProps {
+  query: DataQuery | null;
+  queryDsData: QueryDatasourceData | null;
+  queryDsLoading: boolean;
+  queries: DataQuery[];
+  data?: PanelData;
+  updateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
+  addQuery: (query?: Partial<DataQuery>, afterRefId?: string) => string | undefined;
+  runQueries: () => void;
+}
 
-  // Ref updated during render (not in an effect) so handleChange can detect
-  // and discard stale onChange calls from downstream editors on query switch.
-  const selectedRefIdRef = useRef(selectedRefId);
-  selectedRefIdRef.current = selectedRefId;
-
+export function QueryEditorPanel({
+  query,
+  queryDsData,
+  queryDsLoading,
+  queries,
+  data,
+  updateQuery,
+  addQuery,
+  runQueries,
+}: QueryEditorPanelProps) {
+  const error = data?.errors?.find((e) => e.refId === query?.refId);
+  const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
-    return selectedRefId && data ? filterPanelDataToQuery(data, selectedRefId) : undefined;
-  }, [data, selectedRefId]);
+    return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
+  }, [data, queryRefId]);
 
+  // Key off updatedQuery.refId so late onChange calls (e.g. editor unmount cleanup) hit the right query.
   const handleChange = useCallback(
     (updatedQuery: DataQuery) => {
-      const currentRefId = selectedRefIdRef.current;
-      if (!currentRefId) {
-        return;
-      }
-      // Discard stale onChange calls targeting a previously selected query.
-      if (updatedQuery.refId !== currentRefId) {
-        return;
-      }
-      updateSelectedQuery(updatedQuery, currentRefId);
+      updateQuery(updatedQuery, updatedQuery.refId);
     },
-    [updateSelectedQuery]
+    [updateQuery]
   );
 
-  if (!selectedQuery) {
+  if (!query) {
     return null;
   }
 
-  if (selectedQueryDsLoading) {
+  if (queryDsLoading) {
     return (
       <Stack gap={1}>
         <Spinner />
@@ -57,7 +71,7 @@ export function QueryEditorRenderer() {
     );
   }
 
-  if (!selectedQueryDsData?.datasource || !selectedQueryDsData?.dsSettings) {
+  if (!queryDsData?.datasource || !queryDsData?.dsSettings) {
     return (
       <Alert
         severity="error"
@@ -66,7 +80,7 @@ export function QueryEditorRenderer() {
     );
   }
 
-  const QueryEditorComponent = selectedQueryDsData.datasource.components?.QueryEditor;
+  const QueryEditorComponent = queryDsData.datasource.components?.QueryEditor;
 
   if (!QueryEditorComponent) {
     return (
@@ -80,25 +94,46 @@ export function QueryEditorRenderer() {
     );
   }
 
-  const { datasource, dsSettings } = selectedQueryDsData;
+  const { datasource, dsSettings } = queryDsData;
 
   return (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
-        <QueryEditorComponent
-          key={selectedQuery.refId}
-          app={CoreApp.Dashboard}
-          data={filteredData}
-          datasource={datasource}
-          onAddQuery={addQuery}
-          onChange={handleChange}
-          onRunQuery={runQueries}
-          queries={queries}
-          query={selectedQuery}
-          range={filteredData?.timeRange}
-        />
+        <ErrorBoundaryAlert boundaryName="query-editor-renderer">
+          <QueryEditorComponent
+            key={query.refId}
+            app={CoreApp.PanelEditor}
+            data={filteredData}
+            datasource={datasource}
+            onAddQuery={addQuery}
+            onChange={handleChange}
+            onRunQuery={runQueries}
+            queries={queries}
+            query={query}
+            range={filteredData?.timeRange}
+          />
+        </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
       {error && <QueryErrorAlert error={error} />}
     </>
+  );
+}
+
+export function QueryEditorRenderer() {
+  const { queries, data } = useQueryRunnerContext();
+  const { selectedQuery, selectedQueryDsData, selectedQueryDsLoading } = useQueryEditorUIContext();
+  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+
+  return (
+    <QueryEditorPanel
+      query={selectedQuery}
+      queryDsData={selectedQueryDsData}
+      queryDsLoading={selectedQueryDsLoading}
+      queries={queries}
+      data={data}
+      updateQuery={updateSelectedQuery}
+      addQuery={addQuery}
+      runQueries={runQueries}
+    />
   );
 }

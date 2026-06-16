@@ -1,8 +1,8 @@
-import { ReactElement } from 'react';
-import { Validate, UseFormSetValue } from 'react-hook-form';
+import { type ReactElement } from 'react';
+import { type Validate, type UseFormSetValue } from 'react-hook-form';
 
-import { IconName, SelectableValue } from '@grafana/data';
-import { Settings } from 'app/types/settings';
+import { type IconName, type SelectableValue } from '@grafana/data';
+import { type Settings } from 'app/types/settings';
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -14,7 +14,7 @@ export interface AuthProviderInfo {
 export type GetStatusHook = () => Promise<AuthProviderStatus>;
 
 // Settings types common to the provider settings data when working with the API and forms
-export type SSOProviderSettingsBase = {
+type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignUp?: boolean;
   apiUrl?: string;
@@ -138,7 +138,7 @@ export type FieldData = {
 };
 
 /** Configuration for conditionally disabling a field based on another field's value */
-export type DisabledWhenConfig = {
+type DisabledWhenConfig = {
   /** The field name to watch */
   field: keyof SSOProviderDTO;
   /** The value that triggers the disabled state */

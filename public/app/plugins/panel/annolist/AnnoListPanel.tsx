@@ -1,31 +1,46 @@
 import { css } from '@emotion/css';
 import { createRef, PureComponent, type JSX } from 'react';
 import { Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import {
   AnnotationChangeEvent,
-  AnnotationEvent,
+  type AnnotationEvent,
   AppEvents,
   dateTime,
   dateMath,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   locationUtil,
-  PanelProps,
+  type PanelProps,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getBackendSrv, locationService } from '@grafana/runtime';
+import { config, getBackendSrv, locationService, ScopesContext, type ScopesContextValue } from '@grafana/runtime';
 import { Button, ScrollContainer, stylesFactory, TagList } from '@grafana/ui';
 import { AbstractList } from '@grafana/ui/internal';
+import { type AnnotationEventResource, annotationK8sClient } from 'app/api/clients/annotation/v0alpha1';
+import { getAPINamespace } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
+import { isK8sAnnotationsClientEnabled } from 'app/features/annotations/api';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+
+interface DisplayItem {
+  identity: { type: string; name: string };
+  displayName: string;
+  avatarURL?: string;
+  internalId?: number;
+}
 
 import { AnnotationListItem } from './AnnotationListItem';
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 interface UserInfo {
   id?: number;
   login?: string;
   email?: string;
+  // The k8s identity ref ("user:<uid>") used to filter through the new /search endpoint.
+  // Absent when the legacy path (k8s annotations client disabled) populated this entry.
+  uid?: string;
 }
 
 export interface Props extends PanelProps<Options> {}
@@ -38,6 +53,11 @@ interface State {
   requestId: string;
 }
 export class AnnoListPanel extends PureComponent<Props, State> {
+  // ScopesContext lets the /search call below filter annotations by the dashboard's
+  // currently selected scopes — same source the create/update path reads from.
+  static contextType = ScopesContext;
+  declare context: ScopesContextValue | undefined;
+
   style = getStyles(config.theme2);
   subs = new Subscription();
   tagListRef = createRef<HTMLUListElement>();
@@ -55,8 +75,6 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.doSearch();
-
     // When an annotation on this dashboard changes, re-run the query
     this.subs.add(
       this.props.eventBus.getStream(AnnotationChangeEvent).subscribe({
@@ -65,6 +83,23 @@ export class AnnoListPanel extends PureComponent<Props, State> {
         },
       })
     );
+
+    // ScopesContext exposes a stable Provider value; consumers subscribe to
+    // stateObservable to react to scope changes. The BehaviorSubject replay
+    // drives the initial doSearch; distinctUntilChanged dedupes by joined
+    // scope-name key so only real changes trigger a re-query.
+    if (this.context) {
+      this.subs.add(
+        this.context.stateObservable
+          .pipe(
+            map((state) => state.value.map((s) => s.metadata.name).join(',')),
+            distinctUntilChanged()
+          )
+          .subscribe(() => this.doSearch())
+      );
+    } else {
+      this.doSearch();
+    }
   }
 
   componentWillUnmount() {
@@ -91,44 +126,61 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // https://github.com/grafana/grafana/blob/main/public/app/features/annotations/annotations_srv.ts
 
     const { options } = this.props;
-    const { queryUser, queryTags } = this.state;
+    const { queryUser, queryTags, requestId } = this.state;
 
-    const params: {
-      tags: typeof options.tags;
-      limit: typeof options.limit;
-      type: string;
-    } & Record<string, unknown> = {
-      tags: options.tags,
-      limit: options.limit,
-      type: 'annotation', // Skip the Annotations that are really alerts.  (Use the alerts panel!)
-    };
-
-    if (options.onlyFromThisDashboard) {
-      params.dashboardUID = getDashboardSrv().getCurrent()?.uid;
-    }
+    const dashboardUID = options.onlyFromThisDashboard ? getDashboardSrv().getCurrent()?.uid : undefined;
 
     let timeInfo = '';
+    let from: number | undefined;
+    let to: number | undefined;
     if (options.onlyInTimeRange) {
       const { timeRange } = this.props;
-      params.from = timeRange.from.valueOf();
-      params.to = timeRange.to.valueOf();
+      from = timeRange.from.valueOf();
+      to = timeRange.to.valueOf();
     } else {
       timeInfo = 'All Time';
     }
 
-    if (queryUser) {
-      params.userId = queryUser.id;
-    }
+    const interpolatedTags = options.tags?.length
+      ? options.tags.map((tag) => this.props.replaceVariables(tag))
+      : undefined;
+    const tags = queryTags.length
+      ? interpolatedTags
+        ? [...interpolatedTags, ...queryTags]
+        : queryTags
+      : interpolatedTags;
 
-    if (options.tags && options.tags.length) {
-      params.tags = options.tags.map((tag) => this.props.replaceVariables(tag));
-    }
+    const scopeNames = this.context?.state.value?.map((s) => s.metadata.name);
 
-    if (queryTags.length) {
-      params.tags = params.tags ? [...params.tags, ...queryTags] : queryTags;
+    let annotations: AnnotationEvent[];
+    if (await isK8sAnnotationsClientEnabled()) {
+      // /search hardcodes Type: "annotation" on the backend, so the legacy `type: 'annotation'`
+      // filter is implicit. User filter switches from legacy `userId` to k8s `createdBy`.
+      const events = await annotationK8sClient.search(
+        {
+          dashboardUID,
+          from,
+          to,
+          limit: options.limit,
+          tags,
+          createdBy: queryUser?.uid ? `user:${queryUser.uid}` : undefined,
+          scopes: scopeNames && scopeNames.length > 0 ? scopeNames : undefined,
+        },
+        requestId
+      );
+      annotations = await this.hydrateIdentities(events);
+    } else {
+      const params: Record<string, unknown> = {
+        tags,
+        limit: options.limit,
+        type: 'annotation',
+        dashboardUID,
+        from,
+        to,
+        userId: queryUser?.id,
+      };
+      annotations = await getBackendSrv().get('/api/annotations', params, requestId);
     }
-
-    const annotations = await getBackendSrv().get('/api/annotations', params, this.state.requestId);
 
     this.setState({
       annotations,
@@ -136,6 +188,37 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       loaded: true,
     });
   }
+
+  // Hydrate identity-derived fields on each event by batching one IAM /display
+  // lookup for all unique createdBy keys. /display omits email, so displayName
+  // stands in for the existing "Created by" tooltip text.
+  private hydrateIdentities = async (events: AnnotationEventResource[]): Promise<AnnotationEvent[]> => {
+    const keys = Array.from(new Set(events.map((e) => e.createdBy).filter((k): k is string => Boolean(k))));
+    if (keys.length === 0) {
+      return events;
+    }
+
+    const url = `/apis/iam.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/display`;
+    const response = await getBackendSrv().get<{ display?: DisplayItem[] }>(url, { key: keys });
+    const byKey = new Map<string, DisplayItem>();
+    for (const d of response.display ?? []) {
+      byKey.set(`${d.identity.type}:${d.identity.name}`, d);
+    }
+
+    return events.map((event) => {
+      const display = event.createdBy ? byKey.get(event.createdBy) : undefined;
+      if (!display) {
+        return event;
+      }
+      return {
+        ...event,
+        userId: display.internalId,
+        login: display.displayName,
+        email: display.displayName,
+        avatarUrl: display.avatarURL,
+      };
+    });
+  };
 
   onAnnoClick = async (anno: AnnotationEvent) => {
     if (!anno.time) {
@@ -157,9 +240,13 @@ export class AnnoListPanel extends PureComponent<Props, State> {
       return;
     }
 
-    const result = await getBackendSrv().get('/api/search', { dashboardUIDs: anno.dashboardUID });
-    if (result && result.length && result[0].uid === anno.dashboardUID) {
-      const dash = result[0];
+    const result = await getGrafanaSearcher().search({
+      uid: [anno.dashboardUID],
+      kind: ['dashboard'],
+      limit: 1,
+    });
+    const dash = result.view.toArray()[0];
+    if (dash?.uid === anno.dashboardUID) {
       const url = new URL(dash.url, window.location.origin);
       url.searchParams.set('from', String(params.from));
       url.searchParams.set('to', String(params.to));
@@ -218,11 +305,16 @@ export class AnnoListPanel extends PureComponent<Props, State> {
   };
 
   onUserClick = (anno: AnnotationEvent) => {
+    // Hydrated events expose the k8s identity ref ("user:<uid>") via createdBy when
+    // the k8s annotations client is enabled. Stash the uid so the next /search can filter by it.
+    const createdBy = 'createdBy' in anno && typeof anno.createdBy === 'string' ? anno.createdBy : undefined;
+    const uid = createdBy?.startsWith('user:') ? createdBy.slice('user:'.length) : undefined;
     this.setState({
       queryUser: {
         id: anno.userId,
         login: anno.login,
         email: anno.email,
+        uid,
       },
     });
   };

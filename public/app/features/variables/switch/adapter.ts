@@ -1,10 +1,10 @@
 import { cloneDeep } from 'lodash';
 
-import { SwitchVariableModel } from '@grafana/data';
+import { type SwitchVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { dispatch } from '../../../store/store';
-import { VariableAdapter } from '../adapters';
+import { type VariableAdapter } from '../adapters';
 import { setOptionAsCurrent, setOptionFromUrl } from '../state/actions';
 import { containsVariable, toKeyedVariableIdentifier } from '../utils';
 

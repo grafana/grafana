@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -495,10 +494,10 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 	return response.Success("Annotation deleted")
 }
 
-func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user *user.SignedInUser) (*annotations.ItemDTO, response.Response) {
+func findAnnotationByID(ctx context.Context, repo annotations.Repository, annotationID int64, user identity.Requester) (*annotations.ItemDTO, response.Response) {
 	query := &annotations.ItemQuery{
 		AnnotationID: annotationID,
-		OrgID:        user.OrgID,
+		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	}
 	items, err := repo.Find(ctx, query)
@@ -560,16 +559,9 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 
 		// tempUser is used to resolve annotation type.
 		// The annotation doesn't get returned to the real user, so real user's permissions don't matter here.
-		tempUser := &user.SignedInUser{
-			OrgID: orgID,
-			Permissions: map[int64]map[string][]string{
-				orgID: {
-					accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeOrganization, dashboards.ScopeDashboardsAll},
-				},
-			},
-		}
+		tmpCtx, tempUser := identity.WithServiceIdentity(ctx, orgID)
 
-		annotation, resp := findAnnotationByID(ctx, annotationsRepo, int64(annotationId), tempUser)
+		annotation, resp := findAnnotationByID(tmpCtx, annotationsRepo, int64(annotationId), tempUser)
 		if resp != nil {
 			return nil, errors.New("could not resolve annotation type")
 		}
@@ -585,14 +577,14 @@ func AnnotationTypeScopeResolver(annotationsRepo annotations.Repository, feature
 				scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}
 				// Append dashboard parent scopes if dashboard is in a folder or the general scope if dashboard is not in a folder
 				if dashboard.FolderUID != "" {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
-					inheritedScopes, err := dashboards.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(dashboard.FolderUID))
+					inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderSvc)
 					if err != nil {
 						return nil, err
 					}
 					scopes = append(scopes, inheritedScopes...)
 				} else {
-					scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
+					scopes = append(scopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folder.GeneralFolderUID))
 				}
 				return scopes, nil
 			})

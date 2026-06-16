@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
@@ -12,7 +12,7 @@ export interface TraceIdTimeParamsOptions {
   enabled?: boolean;
 }
 
-export interface TraceIdTimeParamsData extends DataSourceJsonData {
+interface TraceIdTimeParamsData extends DataSourceJsonData {
   traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 

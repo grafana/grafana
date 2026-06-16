@@ -8,6 +8,7 @@ export default defineConfig({
       'public/app/extensions/**/*',
       'public/app/plugins/datasource/**/*',
       'packages/*/dist/**/*',
+      '**/node_modules/**/*',
     ],
     input: ['public/**/*.{tsx,ts}', 'packages/grafana-ui/**/*.{tsx,ts}', 'packages/grafana-data/**/*.{tsx,ts}'],
     output: 'public/locales/{{language}}/{{namespace}}.json',

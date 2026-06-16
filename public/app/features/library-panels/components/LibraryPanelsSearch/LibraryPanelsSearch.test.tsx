@@ -1,15 +1,15 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
-import { PanelPluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
+import { type PanelPluginMeta, type PluginMetaInfo, PluginType } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { Panel } from '@grafana/schema';
+import { type Panel } from '@grafana/schema';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as api from '../../state/api';
-import { LibraryElementsSearchResult } from '../../types';
+import { type LibraryElementsSearchResult } from '../../types';
 
-import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSearch';
+import { LibraryPanelsSearch, type LibraryPanelsSearchProps } from './LibraryPanelsSearch';
 
 setBackendSrv(backendSrv);
 setupMockServer();

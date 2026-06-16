@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Controller, FieldErrors, FieldPath, UseFormReturn } from 'react-hook-form';
+import { Controller, type FieldErrors, type FieldPath, type UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
+import { Button, Field, type FormFieldErrors, type FormsOnSubmit, Stack, Input, Alert } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardInputs, DatasourceSelection, DataSourceInput, ImportFormDataV2 } from '../../types';
-import { validateTitle } from '../utils/validation';
+import {
+  type DashboardInput,
+  type DashboardInputs,
+  type DatasourceSelection,
+  type DataSourceInput,
+  type ImportFormDataV2,
+} from '../../types';
+import { getUidFieldDescription, getUidFieldLabel } from '../utils/uidFieldText';
+import { validateTitle, validateUid } from '../utils/validation';
 
 interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'control' | 'getValues' | 'watch'> {
   inputs: DashboardInputs;
@@ -17,6 +24,7 @@ interface Props extends Pick<UseFormReturn<ImportFormDataV2>, 'register' | 'cont
   onCancel: () => void;
   onSubmit: FormsOnSubmit<ImportFormDataV2>;
   hasFloatGridItems: boolean;
+  onFolderChange?: (uid: string) => void;
 }
 
 export const ImportDashboardFormV2 = ({
@@ -28,9 +36,18 @@ export const ImportDashboardFormV2 = ({
   onCancel,
   onSubmit,
   hasFloatGridItems,
+  onFolderChange,
 }: Props) => {
   const [isSubmitted, setSubmitted] = useState(false);
-  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>({});
+  const [uidReset, setUidReset] = useState(false);
+  const [selectedDataSources, setSelectedDataSources] = useState<Record<string, DatasourceSelection>>(() =>
+    Object.fromEntries(
+      inputs.dataSources
+        .filter((input) => input.matchedDatasource)
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        .map((input) => [`datasource-${input.name}`, input.matchedDatasource!])
+    )
+  );
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -67,13 +84,21 @@ export const ImportDashboardFormV2 = ({
         />
       </Field>
 
-      <Field label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')} noMargin>
+      <Field
+        label={t('dashboard-scene.import-dashboard-form-v2.label-folder', 'Folder')}
+        htmlFor="dashboard-import-folder"
+        noMargin
+      >
         <Controller
           render={({ field: { ref, value, onChange, ...field } }) => (
             <FolderPicker
               {...field}
+              id="dashboard-import-folder"
               onChange={(uid, title) => {
                 onChange(uid, title);
+                if (uid) {
+                  onFolderChange?.(uid);
+                }
               }}
               value={value}
             />
@@ -81,6 +106,40 @@ export const ImportDashboardFormV2 = ({
           name="folderUid"
           control={control}
         />
+      </Field>
+
+      <Field
+        label={getUidFieldLabel()}
+        description={getUidFieldDescription()}
+        invalid={!!errors.k8s?.name}
+        error={errors.k8s?.name?.message}
+        noMargin
+      >
+        <>
+          {!uidReset ? (
+            <Input
+              disabled
+              {...register('k8s.name', {
+                setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                validate: async (v) => (!v ? true : await validateUid(String(v))),
+              })}
+              addonAfter={
+                !uidReset && (
+                  <Button type="button" onClick={() => setUidReset(true)}>
+                    <Trans i18nKey="manage-dashboards.import-dashboard-form.change-uid">Change uid</Trans>
+                  </Button>
+                )
+              }
+            />
+          ) : (
+            <Input
+              {...register('k8s.name', {
+                setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                validate: async (v) => (!v ? true : await validateUid(String(v))),
+              })}
+            />
+          )}
+        </>
       </Field>
 
       {inputs.dataSources &&
@@ -93,8 +152,9 @@ export const ImportDashboardFormV2 = ({
 
           return (
             <Field
-              label={input.name}
+              label={input.label}
               description={input.description}
+              htmlFor={dataSourceOption}
               key={dataSourceOption}
               invalid={!!errors[dataSourceOption]}
               error={errors[dataSourceOption] ? 'Please select a data source' : undefined}
@@ -102,9 +162,11 @@ export const ImportDashboardFormV2 = ({
             >
               <Controller<ImportFormDataV2, FieldPath<ImportFormDataV2>>
                 name={dataSourceOption}
+                defaultValue={input.matchedDatasource}
                 render={({ field: { ref, ...field } }) => (
                   <DataSourcePicker
                     {...field}
+                    inputId={dataSourceOption}
                     noDefault={true}
                     placeholder={input.info}
                     pluginId={input.pluginId}
@@ -125,6 +187,22 @@ export const ImportDashboardFormV2 = ({
                 control={control}
                 rules={{ required: true }}
               />
+            </Field>
+          );
+        })}
+
+      {inputs.constants &&
+        inputs.constants.map((input: DashboardInput) => {
+          const constantKey = `constant-${input.name}`;
+          return (
+            <Field
+              label={input.label}
+              key={constantKey}
+              invalid={!!errors[constantKey]}
+              error={errors[constantKey] ? `${input.label} needs a value` : undefined}
+              noMargin
+            >
+              <Input {...register(constantKey, { required: true })} defaultValue={input.value} />
             </Field>
           );
         })}

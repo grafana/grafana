@@ -1,13 +1,13 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isEmpty, isString, set } from 'lodash';
 
-import { dateTimeFormatTimeAgo, setWeekStart, TimeZone } from '@grafana/data';
-import { getWeekStart, WeekStart } from '@grafana/ui';
+import { dateTimeFormatTimeAgo, setWeekStart, type TimeZone } from '@grafana/data';
+import { getWeekStart, type WeekStart } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ThunkResult } from 'app/types/store';
-import { Team } from 'app/types/teams';
-import { UserDTO, UserOrg, UserSession } from 'app/types/user';
+import { type ThunkResult } from 'app/types/store';
+import { type Team } from 'app/types/teams';
+import { type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
 export interface UserState {
   orgId: number;
@@ -39,7 +39,7 @@ export const initialUserState: UserState = {
   user: null,
 };
 
-export const slice = createSlice({
+const slice = createSlice({
   name: 'user/profile',
   initialState: initialUserState,
   reducers: {
@@ -131,7 +131,7 @@ export const updateWeekStartForSession = (weekStart?: WeekStart): ThunkResult<vo
   };
 };
 
-export const {
+const {
   setUpdating,
   initLoadOrgs,
   orgsLoaded,
@@ -145,6 +145,20 @@ export const {
   updateWeekStart,
   updateFiscalYearStartMonth,
 } = slice.actions;
+
+export {
+  setUpdating,
+  initLoadOrgs,
+  orgsLoaded,
+  initLoadTeams,
+  teamsLoaded,
+  userLoaded,
+  userSessionRevoked,
+  initLoadSessions,
+  sessionsLoaded,
+  updateTimeZone,
+  updateWeekStart,
+};
 
 export const userReducer = slice.reducer;
 export default { user: slice.reducer };

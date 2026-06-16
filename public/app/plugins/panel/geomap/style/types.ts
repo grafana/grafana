@@ -1,15 +1,15 @@
-import { Style } from 'ol/style';
+import { type Style } from 'ol/style';
 
 import {
-  ColorDimensionConfig,
-  ResourceDimensionConfig,
+  type ColorDimensionConfig,
+  type ResourceDimensionConfig,
   ResourceDimensionMode,
-  ScaleDimensionConfig,
-  ScalarDimensionConfig,
+  type ScaleDimensionConfig,
+  type ScalarDimensionConfig,
   ScalarDimensionMode,
-  TextDimensionConfig,
+  type TextDimensionConfig,
 } from '@grafana/schema';
-import { DimensionSupplier } from 'app/features/dimensions/types';
+import { type DimensionSupplier } from 'app/features/dimensions/types';
 
 export enum GeometryTypeId {
   Point = 'point',
@@ -104,7 +104,7 @@ export interface SymbolAlign {
  * Static options for text display.  See:
  * https://openlayers.org/en/latest/apidoc/module-ol_style_Text.html
  */
-export interface TextStyleConfig {
+interface TextStyleConfig {
   fontSize?: number;
   offsetX?: number;
   offsetY?: number;

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import {
-  DataSourceJsonData,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourceJsonData,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigDescriptionLink, ConfigSubSection } from '@grafana/plugin-ui';
@@ -15,7 +15,7 @@ export interface TagLimitOptions extends DataSourceJsonData {
 
 interface Props extends DataSourcePluginOptionsEditorProps<TagLimitOptions> {}
 
-export default function TagLimitSettings({ options, onOptionsChange }: Props) {
+function TagLimitSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
 
   return (

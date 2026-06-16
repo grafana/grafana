@@ -183,6 +183,26 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 
+					// Exclude esoteric/unsupported k8s properties on the list request
+					if v.Get != nil {
+						action, ok := v.Get.Extensions.GetString("x-kubernetes-action")
+						if ok && (action == "list") {
+							params := make([]*spec3.Parameter, 0, len(v.Get.Parameters))
+							for _, p := range v.Get.Parameters {
+								switch p.Name {
+								case
+									"allowWatchBookmarks",
+									"resourceVersionMatch",
+									"sendInitialEvents",
+									"shardSelector": // we may support this, but not yet
+								default:
+									params = append(params, p)
+								}
+							}
+							v.Get.Parameters = params
+						}
+					}
+
 					// Replace any */* media types with json+yaml
 					ops := []*spec3.Operation{v.Delete, v.Put, v.Post}
 					for _, op := range ops {
@@ -238,7 +258,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					if idx > 0 {
 						parent := copy.Paths.Paths[path[:idx+6]]
 						if parent != nil && parent.Get != nil {
-							for _, op := range GetPathOperations(spec) {
+							for _, op := range GetPathOperations(&spec.PathProps) {
 								action, ok := op.Extensions.GetString("x-kubernetes-action")
 								if ok && action == "connect" {
 									op.Tags = parent.Get.Tags
@@ -253,7 +273,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 				}
 				// Remove protobuf from all paths (including routes added by addBuilderRoutes)
 				for _, path := range result.Paths.Paths {
-					allOps := GetPathOperations(path)
+					allOps := GetPathOperations(&path.PathProps)
 					for _, op := range allOps {
 						if op == nil {
 							continue
@@ -288,7 +308,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 }
 
 // GetPathOperations returns the set of non-nil operations defined on a path
-func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+func GetPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
 	ops := make(map[string]*spec3.Operation)
 	if path.Get != nil {
 		ops[http.MethodGet] = path.Get

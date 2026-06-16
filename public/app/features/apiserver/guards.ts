@@ -1,6 +1,6 @@
 import { isObject } from '@grafana/data';
 
-import { K8sStatusCause, Resource, ResourceList } from './types';
+import { type K8sStatusCause, type Resource } from './types';
 
 /**
  * Type guard to check if an unknown value has all required fields to be a Resource
@@ -26,25 +26,9 @@ export function isResource<T = object, S = object, K = string>(value: unknown): 
 }
 
 /**
- * Type guard to check if an unknown value has all required fields to be a ResourceList
- */
-export function isResourceList<T = object, S = object, K = string>(value: unknown): value is ResourceList<T, S, K> {
-  if (!isObject(value) || !('metadata' in value) || !('items' in value)) {
-    return false;
-  }
-
-  const { metadata, items } = value;
-  if (!isObject(metadata)) {
-    return false;
-  }
-
-  return 'resourceVersion' in metadata && typeof metadata.resourceVersion === 'string' && Array.isArray(items);
-}
-
-/**
  * Type guard to check if an item looks like a K8sStatusCause.
  */
-export function isStatusCause(item: unknown): item is K8sStatusCause {
+function isStatusCause(item: unknown): item is K8sStatusCause {
   return isObject(item) && 'field' in item && 'message' in item && 'reason' in item;
 }
 

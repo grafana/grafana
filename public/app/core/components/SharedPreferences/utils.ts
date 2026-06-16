@@ -1,14 +1,14 @@
 import { css } from '@emotion/css';
 
-import { PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
-import { ThemeRegistryItem } from '@grafana/data';
+import { type PreferencesSpec as UserPreferencesDTO } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type ThemeRegistryItem } from '@grafana/data';
 import { LANGUAGES, PSEUDO_LOCALE, t } from '@grafana/i18n';
-import { ComboboxOption } from '@grafana/ui';
-import { LOCALES } from 'app/core/internationalization/locales';
+import { type ComboboxOption } from '@grafana/ui';
 
 export interface Props {
   resourceUri: string;
   disabled?: boolean;
+  /** @deprecated No used in the new functional component */
   preferenceType: 'org' | 'team' | 'user';
   onConfirm?: () => Promise<boolean>;
 }
@@ -18,7 +18,9 @@ export type State = UserPreferencesDTO & {
   isSubmitting: boolean;
 };
 
-export const compareStrings = (() => {
+export type PrefsState = UserPreferencesDTO;
+
+const compareStrings = (() => {
   let collator: Intl.Collator | undefined;
 
   return (a: string, b: string) => {
@@ -60,24 +62,6 @@ export const getLanguageOptions = (): ComboboxOption[] => {
     ...languageOptions,
   ];
 
-  return options;
-};
-
-export const getRegionalFormatOptions = (): ComboboxOption[] => {
-  const localeOptions = LOCALES.map((v) => ({
-    value: v.code,
-    label: v.name,
-  })).sort((a, b) => {
-    return compareStrings(a.label, b.label);
-  });
-
-  const options = [
-    {
-      value: '',
-      label: t('common.locale.default', 'Default'),
-    },
-    ...localeOptions,
-  ];
   return options;
 };
 

@@ -1,4 +1,4 @@
-import { DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
 
 interface JsonData extends DataSourceJsonData {
   oauthPassThru?: unknown; // we do not assume boolean, to be more robust
@@ -58,6 +58,14 @@ function parseAllowedTypes(data: unknown): AllowedTypes {
 }
 
 export function isQueryServiceCompatible(datasources: DSSettings[], allowedTypes: unknown) {
+  if (datasources.length === 0) {
+    // note: this probably means something went wrong,
+    // we should not have no-queries. still,
+    // in this case we take the safer choice,
+    // and say no to query service.
+    return false;
+  }
+
   const at = parseAllowedTypes(allowedTypes);
   if (!areDataSourceTypesAllowed(datasources, new Set(at.types))) {
     return false;

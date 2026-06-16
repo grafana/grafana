@@ -1,20 +1,20 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, type ReactNode, useContext } from 'react';
 
 import {
-  DataQueryError,
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataTransformerConfig,
-  PanelData,
+  type DataQueryError,
+  type DataSourceApi,
+  type DataSourceInstanceSettings,
+  type DataTransformerConfig,
+  type PanelData,
 } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
-import { QueryGroupOptions } from 'app/types/query';
+import { type VizPanel } from '@grafana/scenes';
+import { type DataQuery } from '@grafana/schema';
+import { type ExpressionQuery, type ExpressionQueryType } from 'app/features/expressions/types';
+import { type QueryGroupOptions } from 'app/types/query';
 
-import { QueryEditorType } from '../constants';
+import { type QueryEditorType, type QueryEditorTypeConfig } from '../constants';
 
-import { AlertRule, QueryOptionField, Transformation } from './types';
+import { type AlertRule, type QueryOptionField, type Transformation } from './types';
 
 export interface PendingExpression {
   insertAfter: string;
@@ -38,7 +38,6 @@ export interface DatasourceState {
 export interface QueryRunnerState {
   queries: DataQuery[];
   data?: PanelData;
-  isLoading: boolean;
   queryError?: DataQueryError;
 }
 
@@ -61,20 +60,49 @@ export interface QueryOptionsState {
   focusedField: QueryOptionField | null;
 }
 
-interface TransformationToggles {
+export interface TransformationToggleState {
   showHelp: boolean;
-  toggleHelp: () => void;
   showDebug: boolean;
+}
+
+interface TransformationToggles extends TransformationToggleState {
+  toggleHelp: () => void;
   toggleDebug: () => void;
+}
+
+export interface SelectionModifiers {
+  /** True when Ctrl or Cmd is held — toggles this card in/out of the selection without clearing others. */
+  multi?: boolean;
+  /** True when Shift is held — range-selects from the last selected card to this one. */
+  range?: boolean;
+}
+
+export interface StackedEditorItem {
+  type: QueryEditorType.Query | QueryEditorType.Expression | QueryEditorType.Transformation;
+  id: string;
+}
+
+export interface StackedEditorState {
+  enabled: boolean;
+  enter: () => void;
+  exit: () => void;
+  syncActiveItem: (item: StackedEditorItem) => void;
 }
 
 export interface QueryEditorUIState {
   selectedQuery: DataQuery | ExpressionQuery | null;
   selectedTransformation: Transformation | null;
   selectedAlert: AlertRule | null;
+  selectedQueryRefIds: readonly string[];
+  selectedTransformationIds: readonly string[];
+  multiSelectMode: boolean;
   setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => void;
   setSelectedTransformation: (transformation: Transformation | null) => void;
   setSelectedAlert: (alert: AlertRule | null) => void;
+  setMultiSelectMode: (enabled: boolean) => void;
+  toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
+  toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
+  clearSelection: () => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;
@@ -93,7 +121,11 @@ export interface QueryEditorUIState {
   pendingTransformation: PendingTransformation | null;
   setPendingTransformation: (pending: PendingTransformation | null) => void;
   finalizePendingTransformation: (transformationId: string) => void;
+  stackedMode: StackedEditorState;
   showVersionBanner: boolean;
+  /** Action surface whose inline delete confirmation is open, so only one Actions instance confirms at a time. */
+  confirmingDeleteActionKey: string | null;
+  setConfirmingDeleteActionKey: (key: string | null) => void;
 }
 
 export interface QueryEditorActions {
@@ -112,7 +144,15 @@ export interface QueryEditorActions {
   toggleTransformationDisabled: (transformId: string) => void;
   updateTransformation: (oldConfig: DataTransformerConfig, newConfig: DataTransformerConfig) => void;
   reorderTransformations: (transformations: DataTransformerConfig[]) => void;
+  // Bulk actions
+  bulkDeleteQueries: (refIds: readonly string[]) => void;
+  bulkToggleQueriesHide: (refIds: readonly string[], hide: boolean) => void;
+  bulkDeleteTransformations: (transformIds: readonly string[]) => void;
+  bulkToggleTransformationsDisabled: (transformIds: readonly string[], disabled: boolean) => void;
+  bulkChangeDataSource: (refIds: readonly string[], settings: DataSourceInstanceSettings) => Promise<void>;
 }
+
+export type QueryEditorTypeConfigState = Record<QueryEditorType, QueryEditorTypeConfig>;
 
 const DatasourceContext = createContext<DatasourceState | null>(null);
 const QueryRunnerContext = createContext<QueryRunnerState | null>(null);
@@ -120,6 +160,7 @@ const PanelContext = createContext<PanelState | null>(null);
 const AlertingContext = createContext<AlertingState | null>(null);
 const QueryEditorUIContext = createContext<QueryEditorUIState | null>(null);
 const ActionsContext = createContext<QueryEditorActions | null>(null);
+const QueryEditorTypeConfigContext = createContext<QueryEditorTypeConfigState | null>(null);
 
 export function useDatasourceContext(): DatasourceState {
   const context = useContext(DatasourceContext);
@@ -169,6 +210,14 @@ export function useQueryEditorUIContext(): QueryEditorUIState {
   return context;
 }
 
+export function useQueryEditorTypeConfig(): QueryEditorTypeConfigState {
+  const context = useContext(QueryEditorTypeConfigContext);
+  if (!context) {
+    throw new Error('useQueryEditorTypeConfig must be used within QueryEditorProvider');
+  }
+  return context;
+}
+
 interface QueryEditorProviderProps {
   children: ReactNode;
   dsState: DatasourceState;
@@ -177,6 +226,7 @@ interface QueryEditorProviderProps {
   alertingState: AlertingState;
   uiState: QueryEditorUIState;
   actions: QueryEditorActions;
+  typeConfig: QueryEditorTypeConfigState;
 }
 
 export function QueryEditorProvider({
@@ -187,6 +237,7 @@ export function QueryEditorProvider({
   alertingState,
   uiState,
   actions,
+  typeConfig,
 }: QueryEditorProviderProps) {
   return (
     <ActionsContext.Provider value={actions}>
@@ -194,7 +245,11 @@ export function QueryEditorProvider({
         <QueryRunnerContext.Provider value={qrState}>
           <PanelContext.Provider value={panelState}>
             <AlertingContext.Provider value={alertingState}>
-              <QueryEditorUIContext.Provider value={uiState}>{children}</QueryEditorUIContext.Provider>
+              <QueryEditorUIContext.Provider value={uiState}>
+                <QueryEditorTypeConfigContext.Provider value={typeConfig}>
+                  {children}
+                </QueryEditorTypeConfigContext.Provider>
+              </QueryEditorUIContext.Provider>
             </AlertingContext.Provider>
           </PanelContext.Provider>
         </QueryRunnerContext.Provider>

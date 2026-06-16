@@ -1,4 +1,4 @@
-import { test, expect, DashboardPage, E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
 const DASHBOARD_NAME = 'Test variable output';
@@ -18,7 +18,6 @@ async function assertPreviewValues(
 
 test.use({
   featureToggles: {
-    kubernetesDashboards: process.env.FORCE_V2_DASHBOARDS_API === 'true',
     dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
   },
 });

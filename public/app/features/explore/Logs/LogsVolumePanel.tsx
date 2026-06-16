@@ -3,18 +3,18 @@ import { identity } from 'lodash';
 import * as React from 'react';
 
 import {
-  AbsoluteTimeRange,
-  DataQueryResponse,
+  type AbsoluteTimeRange,
+  type DataQueryResponse,
   LoadingState,
-  SplitOpen,
-  EventBus,
-  GrafanaTheme2,
-  DataFrame,
-  TimeRange,
+  type SplitOpen,
+  type EventBus,
+  type GrafanaTheme2,
+  type DataFrame,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { TimeZone } from '@grafana/schema';
-import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { type TimeZone } from '@grafana/schema';
+import { Icon, type SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';

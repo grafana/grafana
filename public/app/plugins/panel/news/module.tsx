@@ -3,7 +3,7 @@ import { t } from '@grafana/i18n';
 
 import { NewsPanel } from './NewsPanel';
 import { DEFAULT_FEED_URL } from './constants';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { type Options, defaultOptions } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((builder) => {
   const category = [t('news.category-news', 'News')];

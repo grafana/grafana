@@ -1,7 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
 
-import { USAQuery } from '../dataquery';
+import { type USAQuery } from '../dataquery';
 
 export interface Props {
   onChange: (value: USAQuery) => void;
@@ -67,13 +67,13 @@ export const usaQueryModes = [
   'timeseries-wide',
 ].map((f) => ({ label: f, value: f }));
 
-export const fieldNames = [
+const fieldNames = [
   'foo',
   'bar',
   'baz', // all short
 ].map((f) => ({ label: f, value: f }));
 
-export const stateNames = [
+const stateNames = [
   'AL',
   'AK',
   'AZ',

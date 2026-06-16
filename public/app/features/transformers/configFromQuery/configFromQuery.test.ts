@@ -6,7 +6,7 @@ import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapp
 import {
   extractConfigFromQuery,
   getConfigFromDataTransformer,
-  ConfigFromQueryTransformOptions,
+  type ConfigFromQueryTransformOptions,
 } from './configFromQuery';
 
 describe('config from data', () => {

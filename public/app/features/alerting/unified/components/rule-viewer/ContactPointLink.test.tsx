@@ -9,7 +9,7 @@ import {
   RECEIVER_NAME,
   listContactPointsEmptyResponseScenario,
   listContactPointsScenario,
-} from './ContactPointLink.test.scenario';
+} from './ContactPointLink.scenario';
 
 const server = setupMockServer();
 

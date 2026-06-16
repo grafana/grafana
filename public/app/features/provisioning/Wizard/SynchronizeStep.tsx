@@ -1,18 +1,19 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text, TextLink } from '@grafana/ui';
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
+import { Box, Button, Checkbox, Field, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
+import { type Job } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
+import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
 
 import { useStepStatus } from './StepStatusContext';
 import { useCreateSyncJob } from './hooks/useCreateSyncJob';
 import { useRepositoryStatus } from './hooks/useRepositoryStatus';
 import { useResourceStats } from './hooks/useResourceStats';
-import { WizardFormData, WizardStep } from './types';
+import { type WizardFormData, type WizardStep } from './types';
 import { getSyncStepStatus } from './utils/getSteps';
 
 export interface SynchronizeStepProps {
@@ -81,17 +82,17 @@ export const SynchronizeStep = memo(function SynchronizeStep({
 
   const isButtonDisabled = hasError || !isHealthy;
 
-  const startSynchronization = async () => {
+  const startSynchronization = useCallback(async () => {
     const response = await createSyncJob(requiresMigration);
     if (response) {
       setJob(response);
     }
-  };
+  }, [createSyncJob, requiresMigration]);
 
-  const retryJob = () => {
+  const retryJob = useCallback(() => {
     setJob(undefined);
-    startSynchronization();
-  };
+    void startSynchronization();
+  }, [startSynchronization]);
 
   if (isLoading || healthStatusNotReady) {
     return (
@@ -130,88 +131,7 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           to the repository and provisioned back into the instance.
         </Trans>
       </Text>
-      {isHealthy && (
-        <Alert
-          title={t('provisioning.wizard.alert-title', 'Important: Review Git Sync limitations before proceeding')}
-          severity={'warning'}
-        >
-          <Stack direction="column" gap={2}>
-            <Text>
-              <Trans i18nKey="provisioning.wizard.alert-intro">
-                Please be aware of the following limitations. For more details, see the{' '}
-                <TextLink
-                  external
-                  href="https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/intro-git-sync/"
-                >
-                  Git Sync documentation
-                </TextLink>
-                .
-              </Trans>
-            </Text>
-            <ul style={{ marginLeft: '16px', marginTop: 0, marginBottom: 0 }}>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-1">
-                  Resources can still be created, edited, or deleted during this process, but changes may not be
-                  exported.
-                </Trans>
-              </li>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-unsupported">
-                  Alerts and library panels are not supported in provisioned folders.
-                </Trans>
-              </li>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-permissions">
-                  Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles
-                  are preserved with their standard access levels.
-                </Trans>
-              </li>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-3">
-                  The duration of this process depends on the number of resources involved.
-                </Trans>
-              </li>
-              {syncTarget === 'instance' && (
-                <li>
-                  <Trans i18nKey="provisioning.wizard.alert-point-instance-alerts">
-                    Existing alerts and library panels will be lost and will not be usable after migration.
-                  </Trans>
-                </li>
-              )}
-              {syncTarget === 'folder' && (
-                <>
-                  <li>
-                    <Trans i18nKey="provisioning.wizard.alert-point-folder-structure">
-                      When migrating existing dashboards, the folder structure will be replicated in the repository.
-                      Original folders will be emptied of dashboards but may still contain alerts or library panels.
-                    </Trans>
-                  </li>
-                  <li>
-                    <Trans i18nKey="provisioning.wizard.alert-point-folder-cleanup">
-                      You may need to manually remove or manage original folders after migration.
-                    </Trans>
-                  </li>
-                </>
-              )}
-            </ul>
-            <Text color="secondary" variant="bodySmall">
-              <Trans i18nKey="provisioning.wizard.alert-point-4">
-                Enterprise instance administrators can display an announcement banner to notify users that migration is
-                in progress. See{' '}
-                <TextLink
-                  external
-                  variant="bodySmall"
-                  href="https://grafana.com/docs/grafana/latest/administration/announcement-banner/"
-                >
-                  this guide
-                </TextLink>{' '}
-                for step-by-step instructions.
-              </Trans>
-            </Text>
-          </Stack>
-        </Alert>
-      )}
-      {/* Migration/export functionality is experimental and gated behind the provisioningExport feature flag */}
+      {isHealthy && <GitSyncLimitationsAlert syncTarget={syncTarget} />}
       {config.featureToggles.provisioningExport && (
         <>
           <Text element="h3">

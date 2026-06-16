@@ -1,4 +1,4 @@
-import { AppPluginConfig, ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
+import { type AppPluginConfig, type ExtensionInfo, PluginExtensionPoints } from '@grafana/data';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.
@@ -32,7 +32,8 @@ export function getExtensionPointPluginDependenciesSync(extensionPointId: string
     .filter(
       (app) =>
         app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)) ||
-        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId))
+        app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) ||
+        app.extensions.addedFunctions.some((fn) => fn.targets.includes(extensionPointId))
     )
     .map((app) => app.id)
     .reduce((acc: string[], id: string) => {
@@ -147,8 +148,5 @@ export function getAppPluginsToPreloadSync(apps: AppPluginConfig[]): AppPluginCo
     apps
   );
 
-  // TODO(@MattIPv4): cloud-home-app is deprecated and should not be preloaded
-  return apps.filter((app) => {
-    return app.id !== 'cloud-home-app' && (app.preload || dashboardPanelMenuPluginIds.includes(app.id));
-  });
+  return apps.filter((app) => app.preload || dashboardPanelMenuPluginIds.includes(app.id));
 }

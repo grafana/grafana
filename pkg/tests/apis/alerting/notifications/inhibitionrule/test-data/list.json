@@ -1,13 +1,15 @@
 {
   "kind": "InhibitionRuleList",
-  "apiVersion": "notifications.alerting.grafana.app/v0alpha1",
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
   "metadata": {},
   "items": [
     {
+      "kind": "InhibitionRule",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
-        "name": "integration-test-imported-inhibition-rule-0",
+        "name": "5c32a792ae63d385",
         "namespace": "default",
-        "uid": "6l9FtSak11LLD4VZEKotOiV1sWRgt9W8ToWy2dWNLRQX",
+        "uid": "E6FSwCFl7sufOnbWURwny21WsorOzTPRWzSVdHMgs00X",
         "resourceVersion": "fa1ddb8baf6c4173",
         "annotations": {
           "grafana.com/provenance": "converted_prometheus"
@@ -17,25 +19,25 @@
         "source_matchers": [
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "alertname",
+            "value": "HighCPU"
           },
           {
             "type": "=",
-            "label": "alertname",
-            "value": "HighCPU"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           }
         ],
         "target_matchers": [
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "alertname",
+            "value": "CPUWarning"
           },
           {
             "type": "=",
-            "label": "alertname",
-            "value": "CPUWarning"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           }
         ],
         "equal": [
@@ -44,10 +46,12 @@
       }
     },
     {
+      "kind": "InhibitionRule",
+      "apiVersion": "notifications.alerting.grafana.app/v1beta1",
       "metadata": {
-        "name": "integration-test-imported-inhibition-rule-1",
+        "name": "79ae9582fbc9abb4",
         "namespace": "default",
-        "uid": "zZ7kSZEGBQGRuY74Qp0nJLg8fWXVWSAkPWKvQWbGXVAX",
+        "uid": "SYlViYHwhfUexIFOZiqGdynqxcZ5iKVJZA3dnL6oUxQX",
         "resourceVersion": "b3e5c88931ea4509",
         "annotations": {
           "grafana.com/provenance": "converted_prometheus"
@@ -57,25 +61,25 @@
         "source_matchers": [
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "severity",
+            "value": "critical"
           },
           {
             "type": "=",
-            "label": "severity",
-            "value": "critical"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           }
         ],
         "target_matchers": [
           {
             "type": "=",
-            "label": "__grafana_managed_route__",
-            "value": "integration-test"
+            "label": "severity",
+            "value": "warning"
           },
           {
             "type": "=",
-            "label": "severity",
-            "value": "warning"
+            "label": "__grafana_managed_route__",
+            "value": "integration-test"
           }
         ],
         "equal": [

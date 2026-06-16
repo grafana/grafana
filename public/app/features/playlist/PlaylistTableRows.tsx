@@ -1,15 +1,15 @@
 import { css } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, IconButton, useStyles2, Spinner, IconName } from '@grafana/ui';
+import { Icon, IconButton, useStyles2, Spinner, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
-import { PlaylistItemUI } from './types';
+import { type PlaylistItemUI } from './types';
 
 interface Props {
   items: PlaylistItemUI[];
@@ -92,13 +92,7 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       {items.map((item, index) => (
         <Draggable key={`${index}/${item.value}`} draggableId={`${index}`} index={index}>
           {(provided) => (
-            <div
-              className={styles.row}
-              ref={provided.innerRef}
-              {...provided.draggableProps}
-              {...provided.dragHandleProps}
-              role="row"
-            >
+            <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
               <div
                 className={styles.actions}
                 role="cell"
@@ -118,11 +112,13 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
                   data-testid={selectors.pages.PlaylistForm.itemDelete}
                   tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                 />
-                <Icon
-                  title={t('playlist-edit.form.table-drag', 'Drag and drop to reorder')}
-                  name="draggabledots"
-                  size="md"
-                />
+                <div {...provided.dragHandleProps}>
+                  <Icon
+                    title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
+                    name="draggabledots"
+                    size="md"
+                  />
+                </div>
               </div>
             </div>
           )}

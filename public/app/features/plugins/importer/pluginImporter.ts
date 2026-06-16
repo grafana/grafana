@@ -1,26 +1,26 @@
 import {
   AppPlugin,
-  AppPluginMeta,
-  DataQuery,
-  DataSourceApi,
-  DataSourceJsonData,
+  type AppPluginMeta,
+  type DataQuery,
+  type DataSourceApi,
+  type DataSourceJsonData,
   DataSourcePlugin,
-  DataSourcePluginMeta,
-  PanelPlugin,
-  PanelPluginMeta,
+  type DataSourcePluginMeta,
+  type PanelPlugin,
+  type PanelPluginMeta,
   PluginLoadingStrategy,
-  PluginMeta,
+  type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GenericDataSourcePlugin } from 'app/features/datasources/types';
+import { getLogger } from '@grafana/runtime/unstable';
+import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
 
 import { getPluginExtensionRegistries } from '../extensions/registry/setup';
-import { pluginsLogger } from '../utils';
 
 import { importPluginModule } from './importPluginModule';
-import { PluginImporter, PostImportStrategy, PreImportStrategy } from './types';
+import { type PluginImporter, type PostImportStrategy, type PreImportStrategy } from './types';
 
 const defaultPreImport: PreImportStrategy = (plugin) => {
   throwIfAngular(plugin);
@@ -33,6 +33,8 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
     pluginId: plugin.id,
     moduleHash: plugin.moduleHash,
     translations: plugin.translations,
+    hasUpdate: plugin.hasUpdate,
+    pluginName: plugin.name,
   };
 
   return args;
@@ -137,26 +139,30 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
 ): Promise<P> => {
   const cached = getPluginFromCache<P>(meta.id);
   if (cached) {
-    pluginsLogger.logDebug(`Retrieving plugin from cache`, {
-      path: meta.module,
-      pluginId: meta.id,
-      pluginVersion: meta.info?.version ?? '',
-      expectedHash: meta.moduleHash ?? '',
-      loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-    });
+    if (process.env.NODE_ENV !== 'test') {
+      getLogger('features.plugins').logDebug(`Retrieving plugin from cache`, {
+        path: meta.module,
+        pluginId: meta.id,
+        pluginVersion: meta.info?.version ?? '',
+        expectedHash: meta.moduleHash ?? '',
+        loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+      });
+    }
     return Promise.resolve(cached);
   }
 
   if (promisesCache.has(meta.id)) {
-    pluginsLogger.logDebug(`Retrieving plugin from inflight plugin load request`, {
-      path: meta.module,
-      pluginId: meta.id,
-      pluginVersion: meta.info?.version ?? '',
-      expectedHash: meta.moduleHash ?? '',
-      loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
-    });
+    if (process.env.NODE_ENV !== 'test') {
+      getLogger('features.plugins').logDebug(`Retrieving plugin from inflight plugin load request`, {
+        path: meta.module,
+        pluginId: meta.id,
+        pluginVersion: meta.info?.version ?? '',
+        expectedHash: meta.moduleHash ?? '',
+        loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
+        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
+      });
+    }
     return getPromiseFromCache(meta);
   }
 

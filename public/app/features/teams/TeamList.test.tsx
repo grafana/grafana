@@ -1,8 +1,9 @@
-import { render, screen, userEvent, waitFor } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_TEAMS } from '@grafana/test-utils/unstable';
+import { ModalRoot } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -60,6 +61,33 @@ describe('TeamList', () => {
       render(<TeamList />);
 
       expect(await screen.findByRole('link', { name: /new team/i })).toHaveStyle('pointer-events: none');
+    });
+  });
+
+  it('should close the delete modal after confirming team deletion', async () => {
+    const mockTeam = MOCK_TEAMS[0];
+    render(
+      <>
+        <TeamList />
+        <ModalRoot />
+      </>
+    );
+
+    // Click the delete button to open the modal
+    await userEvent.click(await screen.findByRole('button', { name: `Delete ${mockTeam.spec.title}` }));
+
+    // The modal should be visible with a Delete heading
+    const modalTitle = await screen.findByRole('heading', { name: /delete/i });
+    expect(modalTitle).toBeInTheDocument();
+
+    // Click the confirm delete button in the modal (the one inside the dialog, not the icon buttons)
+    const modal = screen.getByRole('dialog');
+    const confirmButton = within(modal).getByRole('button', { name: /delete/i });
+    await userEvent.click(confirmButton);
+
+    // The modal should close after deletion
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /delete/i })).not.toBeInTheDocument();
     });
   });
 });

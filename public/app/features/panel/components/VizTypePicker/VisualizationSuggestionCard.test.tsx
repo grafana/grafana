@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react';
 import {
   FieldType,
   LoadingState,
-  PanelData,
-  PanelPluginVisualizationSuggestion,
+  type PanelData,
+  type PanelPluginVisualizationSuggestion,
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -12,17 +12,12 @@ import { config } from '@grafana/runtime';
 
 import { VisualizationSuggestionCard } from './VisualizationSuggestionCard';
 
-jest.mock('../PanelRenderer', () => ({
-  PanelRenderer: () => <div data-testid="panel-renderer" />,
-}));
+const mockPanelRendererProps = jest.fn();
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      newVizSuggestions: true,
-    },
+jest.mock('../PanelRenderer', () => ({
+  PanelRenderer: (props: object) => {
+    mockPanelRendererProps(props);
+    return <div data-testid="panel-renderer" />;
   },
 }));
 
@@ -48,8 +43,8 @@ describe('VisualizationSuggestionCard', () => {
     options: {},
   };
 
-  afterEach(() => {
-    config.featureToggles.newVizSuggestions = true;
+  beforeEach(() => {
+    mockPanelRendererProps.mockClear();
   });
 
   it('should render a panel renderer card when no imgSrc is provided', () => {
@@ -83,11 +78,96 @@ describe('VisualizationSuggestionCard', () => {
     expect(previewModifier).toHaveBeenCalled();
   });
 
-  it('should wrap content in a Tooltip when newVizSuggestions feature flag is disabled', () => {
-    config.featureToggles.newVizSuggestions = false;
+  it('should render successfully when isSelected is true', () => {
+    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} isSelected={true} />);
 
-    render(<VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={200} />);
+    const button = screen.getByLabelText('Time series');
+    expect(button).toBeInTheDocument();
+    expect(button).toBeVisible();
+  });
 
-    expect(screen.getByLabelText('Time series')).toBeInTheDocument();
+  it('should render successfully when isSelected is omitted', () => {
+    const { container: withoutProp } = render(
+      <VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} />
+    );
+    const { container: withFalseProp } = render(
+      <VisualizationSuggestionCard data={mockData} suggestion={baseSuggestion} width={100} isSelected={false} />
+    );
+
+    expect(withoutProp.innerHTML).toBe(withFalseProp.innerHTML);
+  });
+
+  describe('maxSeries series-slicing', () => {
+    let originalPanelSeriesLimit: number;
+    beforeEach(() => {
+      originalPanelSeriesLimit = config.panelSeriesLimit;
+    });
+
+    afterEach(() => {
+      config.panelSeriesLimit = originalPanelSeriesLimit;
+    });
+
+    const twoSeriesData: PanelData = {
+      series: [
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2] },
+            { name: 'a', type: FieldType.number, values: [1, 2] },
+          ],
+        }),
+        toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, 2] },
+            { name: 'b', type: FieldType.number, values: [3, 4] },
+          ],
+        }),
+      ],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+      structureRev: 1,
+    };
+
+    it('uses config.panelSeriesLimit when maxSeries is not set in cardOptions', () => {
+      config.panelSeriesLimit = 1;
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={baseSuggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('uses cardOptions.maxSeries when it is smaller than config.panelSeriesLimit', () => {
+      config.panelSeriesLimit = 5;
+
+      const suggestion: PanelPluginVisualizationSuggestion = {
+        ...baseSuggestion,
+        cardOptions: { maxSeries: 1 },
+      };
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={suggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('uses config.panelSeriesLimit when it is smaller than cardOptions.maxSeries', () => {
+      config.panelSeriesLimit = 1;
+
+      const suggestion: PanelPluginVisualizationSuggestion = {
+        ...baseSuggestion,
+        cardOptions: { maxSeries: 5 },
+      };
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={suggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(1);
+    });
+
+    it('does not slice when neither cardOptions.maxSeries nor config.panelSeriesLimit is set', () => {
+      // when this number is 0, that actually means no limit
+      config.panelSeriesLimit = 0;
+
+      render(<VisualizationSuggestionCard data={twoSeriesData} suggestion={baseSuggestion} width={100} />);
+      const { data } = mockPanelRendererProps.mock.calls[0][0] as { data: PanelData };
+      expect(data.series).toHaveLength(2);
+    });
   });
 });

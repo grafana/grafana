@@ -133,7 +133,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
 		newField := data.NewField("Value", labels, []*float64{
-			util.ToPtr(222.0),
+			new(222.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
 		testFrame := data.NewFrame("series alias",
@@ -174,7 +174,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias sum"
 			testFrameWithoutMeta.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.ToPtr(333.0),
+				new(333.0),
 			})
 			testFrameWithoutMeta.Fields[1] = newField
 			testFrameWithoutMeta.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -187,7 +187,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.ToPtr(222.0),
+				new(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -199,7 +199,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("Value", labels, []*float64{
-				util.ToPtr(222.0),
+				new(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -379,7 +379,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 	t.Run("Influxdb response parser with invalid timestamp-format", func(t *testing.T) {
 		newField := data.NewField("Value", nil, []*float64{
-			util.ToPtr(50.0), util.ToPtr(52.0),
+			new(50.0), new(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",

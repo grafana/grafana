@@ -1,12 +1,12 @@
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
-export type User = {
+type User = {
   uid: string;
   displayName?: string;
   avatarUrl?: string;
 };
 
-export type OnSelectQueryType = (query: DataQuery) => void;
+export type OnSelectQueryType = (query: DataQuery, title?: string) => void;
 
 export type QueryLibraryEventsPropertyMap = Record<string, string | boolean | undefined>;
 

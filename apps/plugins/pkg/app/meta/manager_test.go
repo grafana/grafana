@@ -431,6 +431,10 @@ type mockProvider struct {
 	getMetaFunc func(ctx context.Context, ref PluginRef) (*Result, error)
 }
 
+func (m *mockProvider) Name() string {
+	return "mock"
+}
+
 func (m *mockProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
 	if m.getMetaFunc != nil {
 		return m.getMetaFunc(ctx, ref)

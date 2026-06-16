@@ -1,6 +1,8 @@
 import { debounce } from 'lodash';
 
-import { reportInteraction } from '@grafana/runtime';
+import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -26,7 +28,7 @@ export function trackTransformationFilterChanged(filter: string | null) {
   });
 }
 
-type AddCardSource = 'section_header' | 'inline';
+type AddCardSource = 'section_header' | 'inline' | 'empty_state';
 
 export function trackAddQuery(querySource: 'saved_query' | 'new_query', cardSource: AddCardSource) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
@@ -57,10 +59,17 @@ export function trackAddTransformationInitiated(source: AddCardSource) {
   });
 }
 
-export function trackCardAction(action: 'delete' | 'toggle_hide' | 'duplicate', itemType: QueryEditorType) {
+export type CardActionSource = 'content_header' | 'sidebar_card';
+
+export function trackCardAction(
+  action: 'delete' | 'toggle_hide' | 'duplicate',
+  itemType: QueryEditorType,
+  source: CardActionSource
+) {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action,
     item_type: itemType,
+    source,
   });
 }
 
@@ -105,4 +114,58 @@ export function trackFeedbackClick() {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'click_feedback_link',
   });
+}
+
+export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_sidebar_size',
+    direction,
+  });
+}
+
+export function trackSidebarViewChange(view: QueryEditorType) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'change_sidebar_view',
+    view,
+  });
+}
+
+export function trackStackedViewToggle(direction: 'enter' | 'exit') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_stacked_view',
+    direction,
+  });
+}
+
+export function trackQueryOptionsToggle(open: boolean) {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_query_options',
+    open,
+  });
+}
+
+export function trackMultiSelectToggle(direction: 'enter' | 'exit') {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'toggle_multi_select',
+    direction,
+  });
+}
+
+export function trackRenameInitiated() {
+  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
+    action: 'rename_initiated',
+    item_type: QueryEditorType.Query,
+  });
+}
+
+export function startFeedbackSurvey(): void {
+  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
+    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
+    false
+  );
+  if (isPanelEditNextFeedbackEventEnabled) {
+    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
+    getAppEvents().publish(new PanelEditNextFeedbackEvent());
+    return;
+  }
 }

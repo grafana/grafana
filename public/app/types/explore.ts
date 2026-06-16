@@ -1,26 +1,26 @@
-import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
+import { type Observable, type SubscriptionLike, type Unsubscribable } from 'rxjs';
 
 import {
-  AbsoluteTimeRange,
-  DataFrame,
-  DataQuery,
-  DataQueryRequest,
-  DataSourceApi,
-  HistoryItem,
-  LogsModel,
-  PanelData,
-  RawTimeRange,
-  TimeRange,
-  EventBusExtended,
-  DataQueryResponse,
-  ExplorePanelsState,
-  SupplementaryQueryType,
-  UrlQueryMap,
-  ExploreCorrelationHelperData,
-  DataLinkTransformationConfig,
+  type AbsoluteTimeRange,
+  type DataFrame,
+  type DataQuery,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type HistoryItem,
+  type LogsModel,
+  type PanelData,
+  type RawTimeRange,
+  type TimeRange,
+  type EventBusExtended,
+  type DataQueryResponse,
+  type ExplorePanelsState,
+  type SupplementaryQueryType,
+  type UrlQueryMap,
+  type ExploreCorrelationHelperData,
+  type DataLinkTransformationConfig,
 } from '@grafana/data';
-import { CorrelationData } from '@grafana/runtime';
-import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
+import { type CorrelationData } from '@grafana/runtime';
+import { type RichHistorySearchFilters, type RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 export type ExploreQueryParams = UrlQueryMap;
 
@@ -30,7 +30,7 @@ export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_EDITOR,
 }
 
-export interface CorrelationEditorDetails {
+interface CorrelationEditorDetails {
   editorMode: boolean;
   correlationDirty: boolean;
   queryEditorDirty: boolean;
@@ -254,13 +254,6 @@ export interface ExploreItemState {
   compact: boolean;
 }
 
-export interface ExploreUpdateState {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  mode: boolean;
-}
-
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
@@ -307,7 +300,7 @@ export enum TABLE_RESULTS_STYLE {
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
-export interface SupplementaryQuery {
+interface SupplementaryQuery {
   enabled: boolean;
   dataProvider?: Observable<DataQueryResponse>;
   dataSubscription?: SubscriptionLike;

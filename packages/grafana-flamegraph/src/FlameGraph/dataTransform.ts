@@ -1,11 +1,11 @@
 import {
   createTheme,
-  DataFrame,
-  DisplayProcessor,
-  Field,
+  type DataFrame,
+  type DisplayProcessor,
+  type Field,
   FieldType,
   getDisplayProcessor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
 } from '@grafana/data';
 
 import { SampleUnit } from '../types';
@@ -219,7 +219,7 @@ export function getMessageCheckFieldsResult(wrongFields: CheckFieldsResult) {
   return '';
 }
 
-export type CheckFieldsResult = {
+type CheckFieldsResult = {
   wrongTypeFields: Array<{ name: string; expectedTypes: FieldType[]; type: FieldType }>;
   missingFields: string[];
 };

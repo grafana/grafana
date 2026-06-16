@@ -1,15 +1,14 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { getAppEvents } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import {
-  ProvisionedFolderFormDataResult,
+  type ProvisionedFolderFormDataResult,
   useProvisionedFolderFormData,
 } from '../../hooks/useProvisionedFolderFormData';
 import { setupProvisioningMswServer } from '../../mocks/server';
@@ -22,7 +21,6 @@ jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getAppEvents: jest.fn(),
     config: {
       ...actual.config,
     },
@@ -114,7 +112,7 @@ const mockHookData: ProvisionedFolderFormDataResult = {
   folder: {
     metadata: {
       annotations: {
-        'grafana.app/sourcePath': '/dashboards',
+        'grafana.app/sourcePath': 'dashboards',
       },
     },
     spec: {
@@ -130,6 +128,8 @@ const mockHookData: ProvisionedFolderFormDataResult = {
     path: '/dashboards',
     workflow: 'write',
   },
+  isLoading: false,
+  isMissingRepo: false,
 };
 
 function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | null): { url: URL; body: unknown } {
@@ -143,7 +143,6 @@ describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
-    (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (usePullRequestParam as jest.Mock).mockReturnValue({});
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
   });
@@ -158,15 +157,18 @@ describe('NewProvisionedFolderForm', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
 
-  it('should return null when initialValues is not available', async () => {
+  it('should show a spinner while repository data is loading', async () => {
     setup(
       {},
       {
         ...mockHookData,
+        repository: undefined,
         initialValues: undefined,
+        isLoading: true,
       }
     );
-    expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Repository not found')).not.toBeInTheDocument();
   });
 
   it('should show error when repository is not found', async () => {
@@ -176,6 +178,7 @@ describe('NewProvisionedFolderForm', () => {
         ...mockHookData,
         repository: undefined,
         initialValues: undefined,
+        isMissingRepo: true,
       }
     );
     expect(await screen.findByLabelText('Repository not found')).toBeInTheDocument();
@@ -239,6 +242,49 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.body).toEqual({ title: 'New Test Folder', type: 'folder' });
   });
 
+  it('should not produce double slashes when folder annotation has trailing slash', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+
+    const hookDataWithTrailingSlash = {
+      ...mockHookData,
+      folder: {
+        metadata: {
+          annotations: {
+            'grafana.app/sourcePath': 'dashboards/',
+          },
+        },
+        spec: {
+          title: '',
+        },
+      },
+    };
+
+    const { user } = setup({}, hookDataWithTrailingSlash);
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'New Folder');
+
+    const submitButton = screen.getByRole('button', { name: /^create$/i });
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).not.toContain('//');
+    expect(request.url.pathname).toContain('/dashboards/New%20Folder/');
+  });
+
   it('should create folder with branch workflow', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
@@ -284,6 +330,41 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('feature/new-folder');
     expect(request.url.searchParams.get('message')).toBe('Create folder: Branch Folder');
     expect(request.body).toEqual({ title: 'Branch Folder', type: 'folder' });
+  });
+
+  it('renders the message from the repo commit template when comment is empty', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-folder' } } },
+        });
+      })
+    );
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const folderNameInput = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.clear(folderNameInput);
+    await user.type(folderNameInput, 'Templated Folder');
+
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.searchParams.get('message')).toBe('chore(folders): create Templated Folder');
   });
 
   // Error response handling (alertError publish, onDismiss) is tested in useProvisionedRequestHandler.test.ts.

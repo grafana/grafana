@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { LoadingBar } from '@grafana/ui';
 
 import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -10,14 +9,15 @@ import { AddCardButton } from './AddCardButton';
 import { GhostSidebarCard } from './Cards/GhostSidebarCard';
 import { QueryCard } from './Cards/QueryCard';
 import { TransformationCard } from './Cards/TransformationCard';
+import { CollapsableSection } from './CollapsableSection';
 import { DraggableList } from './DraggableList/DraggableList';
 import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
-import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
+import { SectionEmptyState } from './SectionEmptyState';
 
 export function QueriesAndTransformationsView() {
-  const { queries, isLoading } = useQueryRunnerContext();
+  const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
-  const { pendingExpression, pendingSavedQuery, pendingTransformation } = useQueryEditorUIContext();
+  const { pendingExpression, pendingSavedQuery, pendingTransformation, multiSelectMode } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
 
   const [queriesOpen, setQueriesOpen] = useState(true);
@@ -26,41 +26,44 @@ export function QueriesAndTransformationsView() {
   const expandQueries = useCallback(() => setQueriesOpen(true), []);
   const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
 
-  if (isLoading) {
-    return (
-      <LoadingBar
-        width={400}
-        ariaLabel={t(
-          'query-editor-next.sidebar.loading-queries-transformations',
-          'Loading queries and transformations'
-        )}
-      />
-    );
-  }
+  // A pending card renders a ghost placeholder in the section, so the section isn't truly empty
+  // while one is being added.
+  const showExpressionGhost = !!pendingExpression && !pendingExpression.insertAfter;
+  const showSavedQueryGhost = !!pendingSavedQuery && !pendingSavedQuery.insertAfter;
+  const showTransformationGhost = !!pendingTransformation && !pendingTransformation.insertAfter;
+
+  // Only surface the per-section placeholders when the whole panel is empty. Showing "No
+  // transformations yet" on every panel that simply hasn't added a transformation (the common
+  // case) would be noise.
+  const isPanelEmpty = queries.length === 0 && transformations.length === 0;
+  const showQueriesEmptyState = isPanelEmpty && !showExpressionGhost && !showSavedQueryGhost;
+  const showTransformationsEmptyState = isPanelEmpty && !showTransformationGhost;
 
   return (
     <>
-      <SidebarCollapsableHeader
+      <CollapsableSection
         label={t('query-editor-next.sidebar.queries-expressions', 'Queries & Expressions')}
         isOpen={queriesOpen}
         onToggle={setQueriesOpen}
         headerAction={<AddCardButton variant="query" alwaysVisible onAdd={expandQueries} />}
       >
-        <DraggableList
-          droppableId="query-sidebar-queries"
-          items={queries}
-          keyExtractor={(query) => query.refId}
-          renderItem={(query) => <QueryCard query={query} />}
-          onDragEnd={onQueryDragEnd}
-        />
-        {pendingExpression && !pendingExpression.insertAfter && (
-          <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />
+        {queries.length > 0 && (
+          <DraggableList
+            isDragDisabled={multiSelectMode}
+            droppableId="query-sidebar-queries"
+            items={queries}
+            keyExtractor={(query) => query.refId}
+            renderItem={(query) => <QueryCard query={query} />}
+            onDragEnd={onQueryDragEnd}
+          />
         )}
-        {pendingSavedQuery && !pendingSavedQuery.insertAfter && (
-          <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />
+        {showExpressionGhost && <GhostSidebarCard id={PENDING_CARD_ID.expression} type={QueryEditorType.Expression} />}
+        {showSavedQueryGhost && <GhostSidebarCard id={PENDING_CARD_ID.savedQuery} type={QueryEditorType.Query} />}
+        {showQueriesEmptyState && (
+          <SectionEmptyState message={t('query-editor-next.sidebar.queries-empty', 'No queries or expressions')} />
         )}
-      </SidebarCollapsableHeader>
-      <SidebarCollapsableHeader
+      </CollapsableSection>
+      <CollapsableSection
         label={t('query-editor-next.sidebar.transformations', 'Transformations')}
         isOpen={transformationsOpen}
         onToggle={setTransformationsOpen}
@@ -68,6 +71,7 @@ export function QueriesAndTransformationsView() {
       >
         {transformations.length > 0 && (
           <DraggableList
+            isDragDisabled={multiSelectMode}
             droppableId="query-sidebar-transformations"
             items={transformations}
             keyExtractor={(t) => t.transformId}
@@ -75,10 +79,13 @@ export function QueriesAndTransformationsView() {
             onDragEnd={onTransformationDragEnd}
           />
         )}
-        {pendingTransformation && !pendingTransformation.insertAfter && (
+        {showTransformationGhost && (
           <GhostSidebarCard id={PENDING_CARD_ID.transformation} type={QueryEditorType.Transformation} />
         )}
-      </SidebarCollapsableHeader>
+        {showTransformationsEmptyState && (
+          <SectionEmptyState message={t('query-editor-next.sidebar.transformations-empty', 'No transformations')} />
+        )}
+      </CollapsableSection>
     </>
   );
 }

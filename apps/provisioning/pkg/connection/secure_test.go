@@ -48,7 +48,7 @@ func newDecryptResultWithError(err error) decrypt.DecryptResult {
 func TestProvideDecrypter(t *testing.T) {
 	t.Run("should return a decrypter function", func(t *testing.T) {
 		mockSvc := &mockDecryptService{}
-		decrypter := connection.ProvideDecrypter(mockSvc)
+		decrypter := connection.ProvideDecrypter(mockSvc, nil)
 
 		require.NotNil(t, decrypter)
 
@@ -178,7 +178,7 @@ func TestSecureValues_PrivateKey(t *testing.T) {
 				err:     tt.mockErr,
 			}
 
-			decrypter := connection.ProvideDecrypter(mockSvc)
+			decrypter := connection.ProvideDecrypter(mockSvc, nil)
 			secureVals := decrypter(tt.connection)
 
 			value, err := secureVals.PrivateKey(context.Background())
@@ -274,7 +274,7 @@ func TestSecureValues_ClientSecret(t *testing.T) {
 				err:     tt.mockErr,
 			}
 
-			decrypter := connection.ProvideDecrypter(mockSvc)
+			decrypter := connection.ProvideDecrypter(mockSvc, nil)
 			secureVals := decrypter(tt.connection)
 
 			value, err := secureVals.ClientSecret(context.Background())
@@ -404,7 +404,7 @@ func TestSecureValues_Token(t *testing.T) {
 				err:     tt.mockErr,
 			}
 
-			decrypter := connection.ProvideDecrypter(mockSvc)
+			decrypter := connection.ProvideDecrypter(mockSvc, nil)
 			secureVals := decrypter(tt.connection)
 
 			value, err := secureVals.Token(context.Background())
@@ -448,7 +448,7 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 			},
 		}
 
-		decrypter := connection.ProvideDecrypter(mockSvc)
+		decrypter := connection.ProvideDecrypter(mockSvc, nil)
 		secureVals := decrypter(conn)
 
 		privateKey, err := secureVals.PrivateKey(context.Background())
@@ -489,7 +489,7 @@ func TestSecureValues_MultipleFields(t *testing.T) {
 			},
 		}
 
-		decrypter := connection.ProvideDecrypter(mockSvc)
+		decrypter := connection.ProvideDecrypter(mockSvc, nil)
 		secureVals := decrypter(conn)
 
 		// PrivateKey should return Create value without calling decrypt

@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { PanelData } from '@grafana/data';
+import { type PanelData } from '@grafana/data';
 import { LinkButton } from '@grafana/ui';
 
-import { AwsUrl, encodeUrl } from '../../../aws_url';
-import { CloudWatchLogsQuery } from '../../../dataquery.gen';
-import { CloudWatchDatasource } from '../../../datasource';
+import { type AwsUrl, encodeUrl } from '../../../aws_url';
+import { type CloudWatchLogsQuery } from '../../../dataquery.gen';
+import { type CloudWatchDatasource } from '../../../datasource';
 
 interface Props {
   query: CloudWatchLogsQuery;

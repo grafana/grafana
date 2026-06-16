@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { StandardEditorProps, GrafanaTheme2, UnitFieldConfigSettings } from '@grafana/data';
+import { type StandardEditorProps, type GrafanaTheme2, type UnitFieldConfigSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, UnitPicker, useStyles2 } from '@grafana/ui';
 

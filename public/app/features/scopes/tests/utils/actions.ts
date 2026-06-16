@@ -1,19 +1,18 @@
 import { act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DateTime, makeTimeRange, dateMath } from '@grafana/data';
-import { MultiValueVariable, sceneGraph, VariableValue } from '@grafana/scenes';
-import { defaultTimeZone, TimeZone } from '@grafana/schema';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DateTime, makeTimeRange, dateMath } from '@grafana/data';
+import { type MultiValueVariable, sceneGraph, type VariableValue } from '@grafana/scenes';
+import { defaultTimeZone, type TimeZone } from '@grafana/schema';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { ScopesService } from '../../ScopesService';
+import { type ScopesService } from '../../ScopesService';
 
 import {
   getDashboardFolderExpand,
   getDashboardsExpand,
   getDashboardsSearch,
   getNotFoundForFilterClear,
-  getPersistedApplicationsGrafanaSelect,
   getPersistedApplicationsMimirSelect,
   getRecentScopeSet,
   getRecentScopesSection,
@@ -67,7 +66,6 @@ export const expandResultCloud = async () => click(getResultCloudExpand);
 export const selectRecentScope = async (scope: string) => click(() => getRecentScopeSet(scope));
 export const selectResultApplicationsGrafana = async () => click(getResultApplicationsGrafanaSelect);
 export const selectPersistedApplicationsMimir = async () => click(getPersistedApplicationsMimirSelect);
-export const selectPersistedApplicationsGrafana = async () => click(getPersistedApplicationsGrafanaSelect);
 export const selectResultApplicationsMimir = async () => click(getResultApplicationsMimirSelect);
 export const selectResultApplicationsCloud = async () => click(getResultApplicationsCloudSelect);
 export const selectResultApplicationsCloudDev = async () => click(getResultApplicationsCloudDevSelect);
@@ -99,7 +97,7 @@ export const updateTimeRange = async (
       .onTimeRangeChange(makeTimeRange(dateMath.parse(from, false, timeZone)!, dateMath.parse(to, false, timeZone)!))
   );
 
-export const updateVariable = async (dashboardScene: DashboardScene, name: string, value: VariableValue) => {
+const updateVariable = async (dashboardScene: DashboardScene, name: string, value: VariableValue) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const variable = sceneGraph.lookupVariable(name, dashboardScene) as MultiValueVariable;
 

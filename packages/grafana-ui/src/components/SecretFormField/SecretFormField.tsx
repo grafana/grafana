@@ -1,5 +1,4 @@
-import { omit } from 'lodash';
-import { InputHTMLAttributes } from 'react';
+import { type InputHTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { Trans } from '@grafana/i18n';
@@ -8,7 +7,7 @@ import { Button } from '../Button/Button';
 import { FormField } from '../FormField/FormField';
 import { Field } from '../Forms/Field';
 import { SecretInput } from '../SecretInput';
-import { PopoverContent } from '../Tooltip/types';
+import { type PopoverContent } from '../Tooltip/types';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
@@ -59,8 +58,8 @@ export const SecretFormField = ({
               type="text"
               className={`gf-form-input width-${inputWidth}`}
               disabled={true}
+              {...inputProps}
               value="configured"
-              {...omit(inputProps, 'value')}
             />
             <Button onClick={onReset} variant="secondary" type="button">
               <Trans i18nKey="grafana-ui.secret-form-field.reset">Reset</Trans>

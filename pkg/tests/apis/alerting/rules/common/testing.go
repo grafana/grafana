@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -38,6 +38,22 @@ func NewRecordingRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0al
 	}
 }
 
+func NewRuleSequenceClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList] {
+	t.Helper()
+
+	client, err := dynamic.NewForConfig(user.NewRestConfig())
+	require.NoError(t, err)
+
+	return &apis.TypedClient[v0alpha1.RuleSequence, v0alpha1.RuleSequenceList]{
+		Client: client.Resource(
+			v0alpha1.RuleSequenceKind().GroupVersionResource()).Namespace("default"),
+	}
+}
+
+func GetTestHelperWithRuleSequences(t *testing.T) *apis.K8sTestHelper {
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+}
+
 func NewFolderClient(t *testing.T, user apis.User) *apis.TypedClient[folders.Folder, folders.FolderList] {
 	t.Helper()
 
@@ -51,11 +67,7 @@ func NewFolderClient(t *testing.T, user apis.User) *apis.TypedClient[folders.Fol
 }
 
 func GetTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			"kubernetesAlertingRules",
-		},
-	})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
 func CreateTestFolder(t *testing.T, helper *apis.K8sTestHelper, folderUID string) {

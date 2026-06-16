@@ -1,14 +1,14 @@
 import { keys as _keys } from 'lodash';
 
-import { dateTime, TimeRange, VariableHide } from '@grafana/data';
-import { Dashboard, defaultVariableModel, RowPanel } from '@grafana/schema';
+import { dateTime, type TimeRange, VariableHide } from '@grafana/data';
+import { type Dashboard, defaultVariableModel, type RowPanel } from '@grafana/schema';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
 import { variableAdapters } from '../../variables/adapters';
 import { createAdHocVariableAdapter } from '../../variables/adhoc/adapter';
 import { createCustomVariableAdapter } from '../../variables/custom/adapter';
 import { createQueryVariableAdapter } from '../../variables/query/adapter';
-import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
+import { setTimeSrv, type TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
 
@@ -986,7 +986,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd, canEdit: true, canDelete: true },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );
@@ -1017,8 +1016,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: true },
-              organization: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: false },
+              dashboard: { canAdd: false, canEdit: canEditWithOrgPermission, canDelete: true },
             },
           }
         );
@@ -1048,7 +1046,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd: false, canEdit: canEditWithDashboardPermission, canDelete: true },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );
@@ -1079,8 +1076,7 @@ describe('DashboardModel', () => {
           {},
           {
             annotationsPermissions: {
-              dashboard: { canAdd: false, canEdit: false, canDelete: false },
-              organization: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
+              dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithOrgPermission },
             },
           }
         );
@@ -1110,7 +1106,6 @@ describe('DashboardModel', () => {
           {
             annotationsPermissions: {
               dashboard: { canAdd: false, canEdit: false, canDelete: canDeleteWithDashboardPermission },
-              organization: { canAdd: false, canEdit: false, canDelete: false },
             },
           }
         );

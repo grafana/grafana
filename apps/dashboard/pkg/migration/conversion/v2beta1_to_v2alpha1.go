@@ -303,7 +303,7 @@ func convertTransformation_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTransfor
 	out.Kind = in.Kind
 	out.Spec.Id = in.Spec.Id
 	out.Spec.Disabled = in.Spec.Disabled
-	out.Spec.Filter = (*dashv2alpha1.DashboardMatcherConfig)(in.Spec.Filter)
+	out.Spec.Filter = convertMatcherConfigPtr_V2beta1_to_V2alpha1(in.Spec.Filter)
 	out.Spec.Topic = (*dashv2alpha1.DashboardDataTopic)(in.Spec.Topic)
 	out.Spec.Options = in.Spec.Options
 }
@@ -392,13 +392,29 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 	}
 }
 
+func convertMatcherScopePtr_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardMatcherScope) *dashv2alpha1.DashboardMatcherScope {
+	if in == nil {
+		return nil
+	}
+	s := dashv2alpha1.DashboardMatcherScope(*in)
+	return &s
+}
+
+func convertMatcherConfigPtr_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardMatcherConfig) *dashv2alpha1.DashboardMatcherConfig {
+	if in == nil {
+		return nil
+	}
+	return &dashv2alpha1.DashboardMatcherConfig{
+		Id:      in.Id,
+		Scope:   convertMatcherScopePtr_V2beta1_to_V2alpha1(in.Scope),
+		Options: in.Options,
+	}
+}
+
 func convertFieldConfigOverride_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardV2beta1FieldConfigSourceOverrides, out *dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides) {
 	out.SystemRef = in.SystemRef
 
-	out.Matcher = dashv2alpha1.DashboardMatcherConfig{
-		Id:      in.Matcher.Id,
-		Options: in.Matcher.Options,
-	}
+	out.Matcher = *convertMatcherConfigPtr_V2beta1_to_V2alpha1(&in.Matcher)
 
 	out.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, len(in.Properties))
 	for i, prop := range in.Properties {
@@ -731,6 +747,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2beta1_to_V2alpha1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -802,6 +819,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.AdhocVariableKind.Spec.SkipUrlSync,
 				Description:      in.AdhocVariableKind.Spec.Description,
 				AllowCustomValue: in.AdhocVariableKind.Spec.AllowCustomValue,
+				EnableGroupBy:    in.AdhocVariableKind.Spec.EnableGroupBy,
 				Datasource:       datasource,
 			},
 		}
@@ -970,6 +988,23 @@ func convertTabRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabRep
 	return &dashv2alpha1.DashboardTabRepeatOptions{
 		Mode:  in.Mode,
 		Value: in.Value,
+	}
+}
+
+func convertCustomValuesFormat_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCustomVariableSpecValuesFormat) *dashv2alpha1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+
+	switch *in {
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
 	}
 }
 

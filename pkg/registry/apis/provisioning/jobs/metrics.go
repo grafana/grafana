@@ -1,10 +1,14 @@
 package jobs
 
 import (
+	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 type JobMetrics struct {
@@ -15,6 +19,8 @@ type JobMetrics struct {
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
+
+	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
 }
 
 type QueueMetrics struct {
@@ -22,30 +28,41 @@ type QueueMetrics struct {
 	queueWaitTime *prometheus.HistogramVec
 }
 
+var (
+	queueOnce    sync.Once
+	queueMetrics QueueMetrics
+
+	jobOnce    sync.Once
+	jobMetrics JobMetrics
+)
+
 func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
-	queueSize := prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "grafana_provisioning_jobs_queue_size",
-			Help: "Number of jobs currently in the queue",
-		},
-		[]string{"action"},
-	)
-	registry.MustRegister(queueSize)
+	queueOnce.Do(func() {
+		queueSize := prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "grafana_provisioning_jobs_queue_size",
+				Help: "Number of jobs currently in the queue",
+			},
+			[]string{"action"},
+		)
+		registry.MustRegister(queueSize)
 
-	queueWaitTime := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_jobs_queue_wait_seconds",
-			Help:    "Time jobs spend waiting in the queue before being claimed",
-			Buckets: []float64{1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
-		},
-		[]string{"action"},
-	)
-	registry.MustRegister(queueWaitTime)
+		queueWaitTime := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_queue_wait_seconds",
+				Help:    "Time jobs spend waiting in the queue before being claimed",
+				Buckets: []float64{1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			},
+			[]string{"action"},
+		)
+		registry.MustRegister(queueWaitTime)
 
-	return QueueMetrics{
-		queueSize:     queueSize,
-		queueWaitTime: queueWaitTime,
-	}
+		queueMetrics = QueueMetrics{
+			queueSize:     queueSize,
+			queueWaitTime: queueWaitTime,
+		}
+	})
+	return queueMetrics
 }
 
 func (m *QueueMetrics) IncreaseQueueSize(action string) {
@@ -61,62 +78,76 @@ func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {
 }
 
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
-	processedTotal := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "grafana_provisioning_jobs_processed_total",
-			Help: "Total number of jobs processed",
-		},
-		[]string{"action", "outcome"},
-	)
-	registry.MustRegister(processedTotal)
+	jobOnce.Do(func() {
+		processedTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_processed_total",
+				Help: "Total number of jobs processed",
+			},
+			[]string{"action", "outcome"},
+		)
+		registry.MustRegister(processedTotal)
 
-	durationHist := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_jobs_duration_seconds",
-			Help:    "Duration of job",
-			Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
-		},
-		[]string{"action", "resources_changed_bucket"},
-	)
+		durationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_duration_seconds",
+				Help:    "Duration of job",
+				Buckets: []float64{5.0, 10.0, 30.0, 60.0, 120.0, 300.0},
+			},
+			[]string{"action", "resources_changed_bucket"},
+		)
+		registry.MustRegister(durationHist)
 
-	incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_jobs_incremental_sync_phase_duration_seconds",
-			Help:    "Duration of job phases for incremental sync",
-			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
-		},
-		[]string{"phase"},
-	)
-	registry.MustRegister(incrementalSyncPhaseDurationHist)
+		incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_incremental_sync_phase_duration_seconds",
+				Help:    "Duration of job phases for incremental sync",
+				Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+			},
+			[]string{"phase"},
+		)
+		registry.MustRegister(incrementalSyncPhaseDurationHist)
 
-	fullSyncPhaseDurationHist := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_jobs_full_sync_phase_duration_seconds",
-			Help:    "Duration of job phases for full sync",
-			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
-		},
-		[]string{"phase"},
-	)
-	registry.MustRegister(fullSyncPhaseDurationHist)
+		fullSyncPhaseDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_full_sync_phase_duration_seconds",
+				Help:    "Duration of job phases for full sync",
+				Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+			},
+			[]string{"phase"},
+		)
+		registry.MustRegister(fullSyncPhaseDurationHist)
 
-	syncDurationHist := prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "grafana_provisioning_jobs_sync_duration_seconds",
-			Help:    "Duration of sync (full or incremental)",
-			Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
-		},
-		[]string{"type"},
-	)
-	registry.MustRegister(syncDurationHist)
+		syncDurationHist := prometheus.NewHistogramVec(
+			prometheus.HistogramOpts{
+				Name:    "grafana_provisioning_jobs_sync_duration_seconds",
+				Help:    "Duration of sync (full or incremental)",
+				Buckets: prometheus.ExponentialBucketsRange(0.01, 10*60, 8), // 1ms -> 10m
+			},
+			[]string{"type"},
+		)
+		registry.MustRegister(syncDurationHist)
 
-	return JobMetrics{
-		registry:                         registry,
-		processedTotal:                   processedTotal,
-		durationHist:                     durationHist,
-		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
-		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
-		syncDurationHist:                 syncDurationHist,
-	}
+		resourceOpsTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_resource_operations_total",
+				Help: "Total resource operations performed during provisioning job runs",
+			},
+			[]string{"action", "operation", "outcome", "reason", "group", "kind"},
+		)
+		registry.MustRegister(resourceOpsTotal)
+
+		jobMetrics = JobMetrics{
+			registry:                         registry,
+			processedTotal:                   processedTotal,
+			durationHist:                     durationHist,
+			incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
+			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
+			syncDurationHist:                 syncDurationHist,
+			resourceOpsTotal:                 resourceOpsTotal,
+		}
+	})
+	return jobMetrics
 }
 
 func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountChanged int, duration float64) {
@@ -138,6 +169,42 @@ func (m *JobMetrics) RecordFullSyncPhase(phase FullSyncPhase, duration time.Dura
 
 func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duration) {
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
+}
+
+// RecordResourceOperation derives outcome, operation, and reason from the
+// result and increments the resource operations counter.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+	var outcome ResourceOutcome
+	reason := result.Reason()
+
+	switch {
+	case result.Error() != nil:
+		outcome = OutcomeError
+	case result.Warning() != nil:
+		outcome = OutcomeWarning
+		reason = result.WarningReason()
+	default:
+		outcome = OutcomeSuccess
+	}
+
+	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+}
+
+func fileActionToOperation(action repository.FileAction) ResourceOperation {
+	switch action {
+	case repository.FileActionCreated:
+		return OperationCreated
+	case repository.FileActionUpdated:
+		return OperationUpdated
+	case repository.FileActionDeleted:
+		return OperationDeleted
+	case repository.FileActionRenamed:
+		return OperationRenamed
+	case repository.FileActionIgnored:
+		return OperationIgnored
+	default:
+		return ResourceOperation(action)
+	}
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
@@ -176,16 +243,20 @@ type FullSyncPhase int
 const (
 	FullSyncPhaseUnknown FullSyncPhase = iota // to prevent zero value being valid
 	FullSyncPhaseCompare
+	FullSyncPhaseFileRenames
 	FullSyncPhaseFileDeletions
 	FullSyncPhaseFolderDeletions
 	FullSyncPhaseFolderCreations
 	FullSyncPhaseFileCreations
+	FullSyncPhaseOldFolderCleanup
 )
 
 func (p FullSyncPhase) String() string {
 	switch p {
 	case FullSyncPhaseCompare:
 		return "compare"
+	case FullSyncPhaseFileRenames:
+		return "file_renames"
 	case FullSyncPhaseFileDeletions:
 		return "file_deletions"
 	case FullSyncPhaseFolderDeletions:
@@ -194,6 +265,8 @@ func (p FullSyncPhase) String() string {
 		return "folder_creations"
 	case FullSyncPhaseFileCreations:
 		return "file_creations"
+	case FullSyncPhaseOldFolderCleanup:
+		return "old_folder_cleanup"
 	default:
 		return "unknown"
 	}

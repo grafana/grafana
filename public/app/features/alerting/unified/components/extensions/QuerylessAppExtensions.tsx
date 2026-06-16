@@ -1,6 +1,6 @@
 import { first } from 'lodash';
 
-import { PluginExtensionLink } from '@grafana/data';
+import { type PluginExtensionLink } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 

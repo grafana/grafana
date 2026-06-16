@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -43,9 +44,9 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup Go
-      uses: actions/setup-go@v6.0.0
+      uses: ./.github/actions/setup-go
       with:
-        go-version-file: go.mod
+        cache-build: 'false'
     - name: Generate golden files
       run: make generate-golden-files
       working-directory: apps/dashboard
@@ -82,7 +83,7 @@ jobs:
       with:
         persist-credentials: false
     - name: Download golden files
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -116,12 +117,17 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Download golden files
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: golden-files
         path: apps/dashboard/pkg/migration
@@ -141,6 +147,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Decoupled plugin tests"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:
@@ -157,6 +165,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Packages unit tests"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:
@@ -185,6 +195,8 @@ jobs:
 
     name: All frontend unit tests complete
     runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -202,6 +214,8 @@ jobs:
     if: needs.detect-changes.outputs.devenv-changed == 'true'
     runs-on: ubuntu-x64-large
     name: "Devenv frontend-service build"
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:

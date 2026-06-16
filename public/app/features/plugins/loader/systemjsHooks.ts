@@ -9,7 +9,7 @@ import { getPluginInfoFromCache, resolvePluginUrlWithCache } from './pluginInfoC
 import { SystemJS } from './systemjs';
 // eslint-disable-next-line import/order
 import { sharedDependenciesMap } from './sharedDependencies';
-import { SystemJSWithLoaderHooks } from './types';
+import { type SystemJSWithLoaderHooks } from './types';
 import { buildImportMap, isHostedOnCDN } from './utils';
 
 export function initSystemJSHooks() {
@@ -107,7 +107,7 @@ export function decorateSystemJSResolve(
   }
 }
 
-export function decorateSystemJsOnload(err: unknown, id: string) {
+function decorateSystemJsOnload(err: unknown, id: string) {
   // IF the url is relative resolve to current origin, absolute urls passed in will ignore base.
   const url = new URL(id, window.location.origin);
   if (url.pathname.endsWith('.css') && !err) {

@@ -4,7 +4,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
-import { ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../ImportToGMA';
 
 import { CancelButton } from './CancelButton';
 

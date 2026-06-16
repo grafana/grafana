@@ -1,4 +1,4 @@
-import { ReactElement } from 'react';
+import { type ReactElement } from 'react';
 
 import { PluginErrorCode } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack } from '@grafana/ui';
 
 import { getLatestCompatibleVersion, isDisabledAngularPlugin, isNonAngularVersion } from '../helpers';
-import { CatalogPlugin } from '../types';
+import { type CatalogPlugin } from '../types';
 
 type Props = {
   className?: string;

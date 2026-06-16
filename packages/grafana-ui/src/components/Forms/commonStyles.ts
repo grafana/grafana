@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
-import { ComponentSize } from '../../types/size';
+import { type ComponentSize } from '../../types/size';
 
 export const getFocusStyle = (theme: GrafanaTheme2) =>
   css({
@@ -91,7 +91,7 @@ export const inputSizes = () => {
   };
 };
 
-export const inputSizesPixels = (size: string) => {
+const inputSizesPixels = (size: string) => {
   switch (size) {
     case 'sm':
       return '200px';

@@ -1,20 +1,22 @@
 import { css, cx, keyframes } from '@emotion/css';
 import { useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaPanelEditNextFeedbackEvent } from '@grafana/runtime/internal';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
-import { QUERY_EDITOR_BANNER_FEEDBACK_URL } from '../../constants';
+import { startFeedbackSurvey } from '../../tracking';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 export function ExperimentalFeedbackButton() {
   const { showVersionBanner } = useQueryEditorUIContext();
   const { onSwitchToClassic } = useActionsContext();
   const styles = useStyles2(getStyles);
+  const feedbackEventEnabled = useFlagGrafanaPanelEditNextFeedbackEvent();
 
   // Track whether the banner was visible when this component first mounted.
-  // If it was, the user dismissed it in this session — animate the button in.
+  // If it was, the user dismissed it - animate the button in.
   // If it wasn't (already dismissed on load), skip the animation.
   const bannerWasInitiallyVisible = useRef(showVersionBanner);
   const shouldAnimate = bannerWasInitiallyVisible.current && !showVersionBanner;
@@ -25,16 +27,20 @@ export function ExperimentalFeedbackButton() {
 
   const menu = (
     <Menu>
-      <Menu.Item
-        label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
-        icon="external-link-alt"
-        url={QUERY_EDITOR_BANNER_FEEDBACK_URL}
-        target="_blank"
-      />
+      {feedbackEventEnabled && (
+        <Menu.Item
+          label={t('query-editor-next.experimental-button.give-feedback', 'Give feedback')}
+          icon="comment-alt-message"
+          onClick={() => startFeedbackSurvey()}
+        />
+      )}
       <Menu.Item
         label={t('query-editor-next.experimental-button.back-to-classic', 'Go back to classic editor')}
         icon="arrow-left"
-        onClick={onSwitchToClassic}
+        onClick={() => {
+          startFeedbackSurvey();
+          onSwitchToClassic?.();
+        }}
       />
     </Menu>
   );
@@ -80,7 +86,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   animated: css({
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${slideInAndPulse} 0.4s ${theme.transitions.easing.easeOut} both`,
+      animation: `${slideInAndPulse} 0.6s ${theme.transitions.easing.easeOut} 100ms both`,
     },
   }),
   button: css({

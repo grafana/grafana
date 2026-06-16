@@ -9,24 +9,27 @@ import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Drawer, Field, Input, Spinner, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
-  Job,
-  RepositoryView,
+  type Job,
+  type RepositoryView,
   useCreateRepositoryFilesWithPathMutation,
   useGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
+import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { StatusInfo } from '../../types';
-import { ProvisionedDashboardFormData } from '../../types/form';
+import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { type StatusInfo } from '../../types';
+import { type ProvisionedDashboardFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { getTargetFolderPathInRepo } from '../BulkActions/utils';
+import { getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { joinPath } from '../utils/path';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -92,7 +95,7 @@ export function MoveProvisionedDashboardForm({
       repoName: repository?.name,
       hidePrependSlash: true,
     });
-    const newPath = `${targetFolderPath}${filename}`;
+    const newPath = joinPath(targetFolderPath ?? '', filename ?? '');
     setTargetPath(newPath);
   }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 
@@ -123,6 +126,17 @@ export function MoveProvisionedDashboardForm({
       return;
     }
 
+    const currentSourcePath = currentFileData?.resource?.dryRun?.metadata?.annotations?.[AnnoKeySourcePath];
+    if (currentSourcePath && isResourceAlreadyInTarget(currentSourcePath, targetFolderPath)) {
+      showError(
+        t(
+          'dashboard-scene.move-provisioned-dashboard-form.already-in-folder',
+          'Dashboard is already in the selected folder.'
+        )
+      );
+      return;
+    }
+
     reportInteraction('grafana_provisioning_dashboard_move_submitted', {
       workflow,
       repositoryName: repo,
@@ -145,7 +159,15 @@ export function MoveProvisionedDashboardForm({
       }
 
       const branchRef = ref;
-      const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+      const commitMessage = getSingleResourceCommitMessage({
+        comment,
+        repository,
+        action: 'move',
+        resourceKind: 'dashboard',
+        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+        title: dashboard.state.title ?? '',
+        ...getCurrentCommitUser(),
+      });
 
       try {
         await moveFile({

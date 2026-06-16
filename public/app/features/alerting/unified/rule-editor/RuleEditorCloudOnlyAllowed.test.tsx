@@ -2,13 +2,14 @@ import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
-import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
+import { type PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { discoverFeaturesByUid } from '../api/buildInfo';
 import { fetchRulerRulesGroup } from '../api/ruler';
-import { ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
+import { type ExpressionEditorProps } from '../components/rule-editor/ExpressionEditor';
 import { setupMswServer } from '../mockApi';
 import { grantUserPermissions, mockDataSource } from '../mocks';
 import { setupDataSources } from '../testSetup/datasources';
@@ -131,6 +132,10 @@ function getDiscoverFeaturesMock(application: PromApplication, features?: Partia
 }
 
 setupMswServer();
+
+beforeAll(() => {
+  mockBoundingClientRect();
+});
 
 describe('RuleEditor cloud: checking editable data sources', () => {
   beforeEach(() => {

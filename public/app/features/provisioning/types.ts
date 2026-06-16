@@ -1,22 +1,25 @@
-import { Path } from 'react-hook-form';
-
 import {
-  BitbucketRepositoryConfig,
-  ConnectionSpec,
-  GitHubRepositoryConfig,
-  GitLabRepositoryConfig,
-  GitRepositoryConfig,
-  LocalRepositoryConfig,
-  RepositorySpec,
+  type BitbucketRepositoryConfig,
+  type BranchOptions,
+  type CommitOptions,
+  type ConnectionSpec,
+  type GitHubRepositoryConfig,
+  type GitLabRepositoryConfig,
+  type GitRepositoryConfig,
+  type LocalRepositoryConfig,
+  type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
-export type JobType = 'sync' | 'delete' | 'move' | 'fix';
+export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
-export type RepositoryType = RepositorySpec['type'];
 export type RepoWorkflows = RepositorySpec['workflows'];
 
-export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySpec['type']> &
+// `branch` is omitted because the spec-level `branch` (BranchOptions: naming
+// template / enforcement) collides with the git config `branch` (the branch
+// name string). The branch name keeps the flat `branch` field below; the
+// BranchOptions live under `branchOptions`.
+export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | 'branch' | RepositorySpec['type']> &
   BitbucketRepositoryConfig &
   GitRepositoryConfig &
   GitHubRepositoryConfig &
@@ -27,14 +30,17 @@ export type RepositoryFormData = Omit<RepositorySpec, 'workflows' | RepositorySp
     enablePushToConfiguredBranch: boolean;
     // top-level inline secure value
     token?: string;
+    signingMethod?: CommitOptions['signingMethod'] | '';
+    commitSigningKey?: string;
+    smimeCertificate?: string;
     // GitHub App connection name (when using app-based auth instead of PAT)
     connectionName?: string;
+    // Spec-level branch naming options (maps to RepositorySpec.branch)
+    branchOptions?: BranchOptions;
   };
 
-export type RepositorySettingsField = Path<RepositoryFormData>;
-
 // Connection type definition - extracted from API client
-export type ConnectionType = ConnectionSpec['type'];
+type ConnectionType = ConnectionSpec['type'];
 
 export type ConnectionFormData = {
   type: ConnectionType;
@@ -54,14 +60,14 @@ export interface ProvisioningPreview {
 
 export type WorkflowOption = RepositorySpec['workflows'][number];
 
-export type HistoryItem = {
+type HistoryItem = {
   ref: string;
   message: string;
   createdAt?: number;
   authors: AuthorInfo[];
 };
 
-export type AuthorInfo = {
+type AuthorInfo = {
   name: string;
   username: string;
   avatarURL?: string;

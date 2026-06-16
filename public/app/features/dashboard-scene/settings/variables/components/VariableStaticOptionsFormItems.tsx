@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, type DropResult } from '@hello-pangea/dnd';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import {
-  VariableStaticOptionsFormItem,
+  type VariableStaticOptionsFormItem,
   VariableStaticOptionsFormItemEditor,
 } from './VariableStaticOptionsFormItemEditor';
 

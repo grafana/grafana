@@ -21,25 +21,22 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationHealth(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:            repo,
-		Target:          "folder",
+		SyncTarget:      "folder",
 		ExpectedFolders: 1,
 	})
 
 	// Verify the health status before calling the endpoint
 	repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 	require.NoError(t, err)
-	originalRepo := common.UnstructuredToRepository(t, repoObj)
+	originalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 	require.True(t, originalRepo.Status.Health.Healthy, "repository should be marked healthy")
 	require.Empty(t, originalRepo.Status.Health.Error, "should be empty")
 	require.Empty(t, originalRepo.Status.Health.Message, "should not have messages")
@@ -173,7 +170,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after update
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := common.UnstructuredToRepository(t, repoObj)
+		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		require.True(t, afterTest.Status.Health.Healthy, "repository should be marked healthy")
 		require.Empty(t, afterTest.Status.Health.Error, "should be empty")
 		require.Empty(t, afterTest.Status.Health.Message, "should not have messages")
@@ -200,7 +197,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Get the repository status before the test
 		repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		beforeTest := common.UnstructuredToRepository(t, repoObj)
+		beforeTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("Before test - Healthy: %v, Checked: %d", beforeTest.Status.Health.Healthy, beforeTest.Status.Health.Checked)
 
 		// Call the test endpoint
@@ -226,7 +223,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status after test - timestamp should change
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		afterTest := common.UnstructuredToRepository(t, repoObj)
+		afterTest := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After test - Healthy: %v, Checked: %d", afterTest.Status.Health.Healthy, afterTest.Status.Health.Checked)
 
 		// For unhealthy repositories, the timestamp should change as the health check will be triggered
@@ -258,7 +255,7 @@ func TestIntegrationHealth(t *testing.T) {
 		// Verify repository health status is now healthy again
 		repoObj, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
 		require.NoError(t, err)
-		finalRepo := common.UnstructuredToRepository(t, repoObj)
+		finalRepo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		t.Logf("After recreating directory - Healthy: %v, Checked: %d", finalRepo.Status.Health.Healthy, finalRepo.Status.Health.Checked)
 		require.True(t, finalRepo.Status.Health.Healthy, "repository should be healthy again after recreating directory")
 		require.Empty(t, finalRepo.Status.Health.Error, "should have no error after recreating directory")
@@ -294,12 +291,10 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 }
 
 func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("dryRun call with App's insufficient permissions returns 403", func(t *testing.T) {
 		// Setup mock with insufficient permissions
@@ -312,7 +307,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 			"webhooks":      "read", // needs write
 		})
 		installation := &github.Installation{
-			ID: github.Ptr(int64(454545)),
+			ID: new(int64(454545)),
 		}
 
 		connectionFactory.Client = ghmock.NewMockedHTTPClient(
@@ -488,12 +483,12 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 			"webhooks":      "write",
 		})
 		installation := &github.Installation{
-			ID: github.Ptr(int64(454545)),
+			ID: new(int64(454545)),
 			Permissions: &github.InstallationPermissions{
-				Contents:        github.Ptr("write"),
-				Metadata:        github.Ptr("read"),
-				PullRequests:    github.Ptr("write"),
-				RepositoryHooks: github.Ptr("write"),
+				Contents:        new("write"),
+				Metadata:        new("read"),
+				PullRequests:    new("write"),
+				RepositoryHooks: new("write"),
 			},
 		}
 
@@ -548,9 +543,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 }
 
 func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access
@@ -768,4 +761,68 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		err = helper.Repositories.Resource.Delete(ctx, "test-git-healthy-readonly", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
+}
+
+func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
+	app := &github.App{
+		ID:   new(id),
+		Slug: new("test-app"),
+		Owner: &github.User{
+			Login: new("test-owner"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = new(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = new(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = new(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = new(hooks)
+		}
+
+		app.Permissions = installationPerms
+	}
+
+	return app
+}
+
+func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
+	installation := &github.Installation{
+		ID: new(id),
+		Permissions: &github.InstallationPermissions{
+			Contents:        new("write"),
+			Metadata:        new("read"),
+			PullRequests:    new("write"),
+			RepositoryHooks: new("write"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = new(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = new(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = new(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = new(hooks)
+		}
+
+		installation.Permissions = installationPerms
+	}
+
+	return installation
 }

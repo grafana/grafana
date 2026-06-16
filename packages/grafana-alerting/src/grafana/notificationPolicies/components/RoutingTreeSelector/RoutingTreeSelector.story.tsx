@@ -1,17 +1,17 @@
-import type { Meta, StoryFn, StoryObj } from '@storybook/react';
+import type { Meta, StoryFn, StoryObj } from '@storybook/react-webpack5';
 import { useId } from 'react';
 
 import { Field } from '@grafana/ui';
 
 import { defaultDecorators } from '../../../../../tests/story-utils';
 
-import { RoutingTreeSelector, RoutingTreeSelectorProps } from './RoutingTreeSelector';
+import { RoutingTreeSelector, type RoutingTreeSelectorProps } from './RoutingTreeSelector';
 import mdx from './RoutingTreeSelector.mdx';
 import {
   routingTreeWithErrorScenario,
   simpleRoutingTreesListScenario,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const meta: Meta<typeof RoutingTreeSelector> = {
   component: RoutingTreeSelector,

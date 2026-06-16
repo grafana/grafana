@@ -4,33 +4,34 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlAdapter struct {
-	repo     annotations.Repository
-	cleaner  annotations.Cleaner
-	nsMapper request.NamespaceMapper
-	cfg      *setting.Cfg
+	repo            annotations.Repository
+	cleaner         annotations.Cleaner
+	cleanupSettings annotations.CleanupSettings
 }
 
-func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, nsMapper request.NamespaceMapper, cfg *setting.Cfg) *sqlAdapter {
+func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cleanupSettings annotations.CleanupSettings) *sqlAdapter {
 	return &sqlAdapter{
-		repo:     repo,
-		cleaner:  cleaner,
-		nsMapper: nsMapper,
-		cfg:      cfg,
+		repo:            repo,
+		cleaner:         cleaner,
+		cleanupSettings: cleanupSettings,
 	}
 }
+
+// Close is a no-op as sqlAdapter does not own the underlying sqlstore
+func (a *sqlAdapter) Close() error { return nil }
 
 func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	id, err := parseAnnotationID(name)
@@ -51,8 +52,8 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 	query := &annotations.ItemQuery{
 		SignedInUser: user,
 		OrgID:        orgID,
-		Limit:        1000,
-		AlertID:      -1,
+		AnnotationID: id,
+		Type:         "annotation",
 	}
 
 	items, err := a.repo.Find(ctx, query)
@@ -60,13 +61,11 @@ func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotati
 		return nil, err
 	}
 
-	for _, item := range items {
-		if item.ID == id {
-			return a.toK8sResource(item, namespace), nil
-		}
+	if len(items) == 0 {
+		return nil, ErrNotFound
 	}
 
-	return nil, fmt.Errorf("annotation not found")
+	return a.toK8sResource(items[0], namespace), nil
 }
 
 func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOptions) (*AnnotationList, error) {
@@ -102,7 +101,7 @@ func (a *sqlAdapter) List(ctx context.Context, namespace string, opts ListOption
 		To:           opts.To,
 		Limit:        queryLimit,
 		Offset:       offset,
-		AlertID:      -1,
+		Type:         "annotation",
 		// CreatedBy holds the uid of the user to filter by. The SQL layer resolves
 		// this to a numeric user_id via subquery.
 		UserUID:  opts.CreatedBy,
@@ -189,11 +188,12 @@ func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
 	})
 }
 
-func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
+// Cleanup runs the legacy SQL cleaner; before is ignored because cleanupSettings carries its own cutoff.
+func (a *sqlAdapter) Cleanup(ctx context.Context, _ time.Time) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
 	}
-	deleted, _, err := a.cleaner.Run(ctx, a.cfg)
+	deleted, _, err := a.cleaner.Run(ctx, a.cleanupSettings)
 	return deleted, err
 }
 
@@ -222,10 +222,12 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 }
 
 func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) *annotationV0.Annotation {
+	name := fmt.Sprintf("a-%d", item.ID)
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("a-%d", item.ID),
+			Name:      name,
 			Namespace: namespace,
+			UID:       types.UID(name),
 		},
 		Spec: annotationV0.AnnotationSpec{
 			Text: item.Text,
@@ -241,8 +243,11 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 		anno.Spec.PanelID = &item.PanelID
 	}
 
-	if item.UserUID != "" {
-		if m, err := utils.MetaAccessor(anno); err == nil {
+	if item.ID > 0 {
+		setLegacyID(anno, item.ID)
+	}
+	if m, err := utils.MetaAccessor(anno); err == nil {
+		if item.UserUID != "" {
 			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
 		}
 	}

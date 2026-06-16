@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
 import { useRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
-import { PanelEditor } from '../PanelEditor';
+import { PanelEditPanelWrapper } from '../PanelEditPanelWrapper';
+import { type PanelEditor } from '../PanelEditor';
 import { QueryEditorBanner } from '../QueryEditorBanner';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
@@ -30,7 +31,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
         </div>
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
-        <scene.panelToShow.Component model={scene.panelToShow} />
+        <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
         {nextDataPane && (
           <div className={styles.vizResizeHandle}>
             <div

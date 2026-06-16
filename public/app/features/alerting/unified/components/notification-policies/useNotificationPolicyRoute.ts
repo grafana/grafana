@@ -1,22 +1,27 @@
-import uFuzzy from '@leeoniya/ufuzzy';
-import { pick, uniq } from 'lodash';
-import memoize from 'micro-memoize';
+import { pick } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { INHERITABLE_KEYS, type InheritableProperties } from '@grafana/alerting/internal';
 import {
   API_GROUP,
   API_VERSION,
-  RoutingTree,
-  RoutingTreeRoute,
-  RoutingTreeRouteDefaults,
+  type RoutingTree,
+  type RoutingTreeRoute,
+  type RoutingTreeRouteDefaults,
   generatedAPI as routingTreeApi,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
-import { BaseAlertmanagerArgs, Skippable } from 'app/features/alerting/unified/types/hooks';
-import { MatcherOperator, ROUTES_META_SYMBOL, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { type BaseAlertmanagerArgs, type Skippable } from 'app/features/alerting/unified/types/hooks';
+import {
+  MatcherOperator,
+  type ObjectMatcher,
+  ROUTES_META_SYMBOL,
+  type Route,
+  type RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import { NotificationPolicyAction } from '../../hooks/abilities/types';
 import { useAsync } from '../../hooks/useAsync';
 import { useProduceNewAlertmanagerConfiguration } from '../../hooks/useProduceNewAlertmanagerConfig';
 import {
@@ -24,13 +29,13 @@ import {
   deleteRouteAction,
   updateRouteAction,
 } from '../../reducers/alertmanager/notificationPolicyRoutes';
-import { FormAmRoute } from '../../types/amroutes';
-import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
+import { type FormAmRoute } from '../../types/amroutes';
+import { addUniqueIdentifierToRoute, extractNotificationPolicyProvenance } from '../../utils/amroutes';
 import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 import { getAnnotation, isProvisionedResource, shouldUseK8sApi } from '../../utils/k8s/utils';
 import { routeAdapter } from '../../utils/routeAdapter';
 import {
-  InsertPosition,
+  type InsertPosition,
   addRouteToReferenceRoute,
   cleanKubernetesRouteIDs,
   mergePartialAmRouteWithRouteTree,
@@ -38,8 +43,22 @@ import {
 } from '../../utils/routeTree';
 
 export function isRouteProvisioned(route: Route): boolean {
-  const provenance = route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
-  return isProvisionedResource(provenance);
+  return isProvisionedResource(extractNotificationPolicyProvenance(route));
+}
+
+/**
+ * Returns the k8s ObjectMeta for a notification policy route, or undefined
+ * if the route was not loaded via the k8s API.
+ *
+ * Unwraps the two-level indirection: route → ROUTES_META_SYMBOL → metadata.
+ */
+export function getRoutePolicyMeta(route: Route) {
+  return route[ROUTES_META_SYMBOL]?.metadata;
+}
+
+/** True when the route has k8s ObjectMeta attached (i.e. loaded via the k8s API). */
+export function routeHasK8sMeta(route: Route): boolean {
+  return Boolean(route[ROUTES_META_SYMBOL]?.metadata);
 }
 
 const {
@@ -53,7 +72,21 @@ const {
 
 const { useGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 
-const memoK8sRouteToRoute = memoize(k8sRouteToRoute);
+// WeakMap-based caches for stable Route object references. Using WeakMap rather than a
+// fixed-size LRU (micro-memoize's default) avoids cache eviction when multiple external
+// Alertmanagers are configured — each AM calls the function with a different route object,
+// and evictions cause new references on every render, triggering infinite re-renders in
+// useAsync. WeakMap has no size limit and automatically GCs entries when keys are released.
+const k8sRouteToRouteCache = new WeakMap<RoutingTree, Route>();
+function memoK8sRouteToRoute(route: RoutingTree): Route {
+  const cached = k8sRouteToRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result = k8sRouteToRoute(route);
+  k8sRouteToRouteCache.set(route, result);
+  return result;
+}
 
 export const useNotificationPolicyRoute = (
   { alertmanager }: BaseAlertmanagerArgs,
@@ -114,14 +147,21 @@ export const useListNotificationPolicyRoutes = ({ skip }: Skippable = {}) => {
   );
 };
 
-const parseAmConfigRoute = memoize((route: Route): Route => {
-  return {
+const amConfigRouteCache = new WeakMap<Route, Route>();
+export function parseAmConfigRoute(route: Route): Route {
+  const cached = amConfigRouteCache.get(route);
+  if (cached) {
+    return cached;
+  }
+  const result: Route = {
     ...route,
     [ROUTES_META_SYMBOL]: {
       provenance: route.provenance,
     },
   };
-});
+  amConfigRouteCache.set(route, result);
+  return result;
+}
 
 export function useUpdateExistingNotificationPolicy({ alertmanager }: BaseAlertmanagerArgs) {
   const k8sApiSupported = shouldUseK8sApi(alertmanager);
@@ -268,7 +308,7 @@ export function useDeleteRoutingTree() {
   });
 }
 
-export function useCreateRoutingTree() {
+function useCreateRoutingTree() {
   const [createRoutingTree] = useCreateRoutingTreeMutation();
 
   return useAsync(async (partialFormRoute: Partial<FormAmRoute>) => {
@@ -313,9 +353,7 @@ export function useCreateRoutingTree() {
  */
 export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [createPoliciesSupported, createPoliciesAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.CreateNotificationPolicy
-  );
+  const createAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Create });
   const [createTrigger] = useCreateRoutingTree();
 
   const existingPolicyNames = useMemo(
@@ -327,41 +365,12 @@ export function useCreatePolicyAction(allPolicies: Route[] | undefined) {
     isCreateModalOpen,
     openCreateModal: () => setIsCreateModalOpen(true),
     closeCreateModal: () => setIsCreateModalOpen(false),
-    createPoliciesSupported,
-    createPoliciesAllowed,
+    createPoliciesSupported: createAbility.granted || createAbility.cause === 'INSUFFICIENT_PERMISSIONS',
+    createPoliciesAllowed: createAbility.granted,
     createTrigger,
     existingPolicyNames,
   };
 }
-
-const fuzzyFinder = new uFuzzy({
-  intraMode: 1,
-  intraIns: 1,
-  intraSub: 1,
-  intraDel: 1,
-  intraTrn: 1,
-});
-
-export const useRootRouteSearch = (policies: Route[], search?: string | null): Route[] => {
-  const nameHaystack = useMemo(() => {
-    return policies.map((policy) => policy.name ?? '');
-  }, [policies]);
-
-  const receiverHaystack = useMemo(() => {
-    return policies.map((policy) => policy.receiver ?? '');
-  }, [policies]);
-
-  if (!search) {
-    return policies;
-  }
-
-  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
-  const typeHits = fuzzyFinder.filter(receiverHaystack, search) ?? [];
-
-  const hits = [...nameHits, ...typeHits];
-
-  return uniq(hits).map((id) => policies[id]) ?? [];
-};
 
 /**
  * Convert Route to K8s compatible format. Make sure we aren't sending any additional properties the API doesn't recognize
@@ -397,6 +406,11 @@ export function createKubernetesRoutingTreeSpec(rootRoute: Route): RoutingTree {
 }
 
 export const NAMED_ROOT_LABEL_NAME = '__grafana_managed_route__';
+
+/** Returns true when the ObjectMatcher targets the internal routing label added by k8sRouteToRoute. */
+export function isNamedRootMatcher(matcher: ObjectMatcher): boolean {
+  return matcher[0] === NAMED_ROOT_LABEL_NAME;
+}
 
 export function k8sRouteToRoute(route: RoutingTree): Route {
   return {

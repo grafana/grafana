@@ -1,44 +1,47 @@
-import React from 'react';
+import type React from 'react';
 
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { logWarning } from '@grafana/runtime';
+import { config, logWarning } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
-  SceneObjectState,
+  NewSceneObjectAddedEvent,
+  type SceneObjectState,
   SceneObjectBase,
   sceneGraph,
   VariableDependencyConfig,
-  SceneObject,
-  SceneGridItemLike,
+  type SceneObject,
+  type SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type TabsLayoutTabKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_TAB_COPY_KEY } from 'app/core/constants';
-import kbn from 'app/core/utils/kbn';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
+import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
+import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor, getSlugForRowOrTab, interpolateSectionTitle } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
-import { RowItem } from '../layout-rows/RowItem';
+import { type RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
-import { BulkActionElement } from '../types/BulkActionElement';
-import { DashboardDropTarget } from '../types/DashboardDropTarget';
+import { type BulkActionElement } from '../types/BulkActionElement';
+import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
-import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
-import { LayoutParent } from '../types/LayoutParent';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
+import { type LayoutParent } from '../types/LayoutParent';
 
 import { useEditOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
@@ -68,8 +71,10 @@ export class TabItem
 
   public readonly isEditableDashboardElement = true;
   public readonly isDashboardDropTarget = true;
+  public readonly dashboardLayoutItemType = 'tab';
+  private _filtersSet?: SectionFiltersSet;
 
-  public containerRef = React.createRef<HTMLDivElement>();
+  public containerRef: React.MutableRefObject<HTMLDivElement | null> = { current: null };
 
   constructor(state?: Partial<TabItemState>) {
     super({
@@ -96,14 +101,38 @@ export class TabItem
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
       typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
-      instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
+      instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'layers',
       isHidden,
     };
   }
 
-  public getOutlineChildren(): SceneObject[] {
-    return this.state.layout.getOutlineChildren();
+  private getFiltersSet(): SectionFiltersSet {
+    if (!this._filtersSet) {
+      this._filtersSet = new SectionFiltersSet({ sectionRef: this.getRef() });
+    }
+    return this._filtersSet;
+  }
+
+  public getOutlineChildren(isEditing?: boolean): SceneObject[] {
+    const layoutChildren = this.state.layout.getOutlineChildren();
+    if (
+      isEditing &&
+      // OpenFeature is not initialized for anonymous users, so fall back to
+      // the static feature toggle to ensure section variables work without auth.
+      getFeatureFlagClient().getBooleanValue(
+        FlagKeys.DashboardSectionVariables,
+        Boolean(config.featureToggles.dashboardSectionVariables)
+      ) &&
+      this.state.$variables
+    ) {
+      return [
+        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
+        this.state.$variables,
+        ...layoutChildren,
+      ];
+    }
+    return layoutChildren;
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -111,7 +140,13 @@ export class TabItem
   }
 
   public getSlug(): string {
-    return kbn.slugifyForUrl(sceneGraph.interpolate(this, this.state.title ?? 'Tab'));
+    const siblings = this.parent ? this.getParentLayout().getTabsIncludingRepeats() : [];
+    return getSlugForRowOrTab(this, siblings);
+  }
+
+  public isCurrentTab() {
+    const parentLayout = this.getParentLayout();
+    return parentLayout.state.currentTabSlug === this.getSlug();
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
@@ -122,9 +157,11 @@ export class TabItem
       source: this,
       perform: () => {
         this.setState({ layout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
       undo: () => {
         this.setState({ layout: currentLayout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
     });
   }
@@ -137,13 +174,6 @@ export class TabItem
   }
 
   public onConfirmDelete() {
-    const layout = this.getParentLayout();
-
-    if (layout.shouldUngroup()) {
-      layout.removeTab(this);
-      return;
-    }
-
     if (this.getLayout().getVizPanels().length === 0) {
       this.onDelete();
       return;
@@ -185,7 +215,11 @@ export class TabItem
   // panelIdGenerator is a shared sequential counter created by the parent layout
   // we forward id to ensure sibling tabs never produce duplicate panel IDs
   public duplicate(panelIdGenerator?: PanelIdGenerator): TabItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
+    return this.clone({
+      key: undefined,
+      layout: this.getLayout().duplicate(panelIdGenerator),
+      $variables: cloneSectionVariableSet(this.state.$variables),
+    });
   }
 
   public onChangeTitle(title: string) {
@@ -202,7 +236,11 @@ export class TabItem
     if (repeat) {
       this.setState({ repeatByVariable: repeat });
     } else {
-      this.setState({ repeatedTabs: undefined, $variables: undefined, repeatByVariable: undefined });
+      this.setState({
+        repeatedTabs: undefined,
+        $variables: removeRepeatLocalVariableFromSet(this.state.$variables, this.state.repeatByVariable),
+        repeatByVariable: undefined,
+      });
     }
   }
 

@@ -3,7 +3,7 @@ import { getBackendSrv } from 'app/core/services/backend_srv';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import { SetupStep } from './types';
+import { type SetupStep } from './types';
 
 const step1TutorialTitle = 'Grafana fundamentals';
 const step2TutorialTitle = 'Create users and teams';

@@ -3,14 +3,18 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen } from 'test/test-utils';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
-import { SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
-import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
+import { type SupportedRulesSourceType } from 'app/features/alerting/unified/utils/datasource';
+import {
+  type AlertManagerDataSourceJsonData,
+  AlertManagerImplementation,
+} from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../ImportToGMA';
 
 import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
 
@@ -78,6 +82,10 @@ const defaultStep1Props = {
 };
 
 describe('Step1AlertmanagerResources', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
   beforeEach(() => {
     setupDataSources(alertmanagerDataSource);
     grantUserPermissions([AccessControlAction.AlertingNotificationsWrite]);

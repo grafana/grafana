@@ -1,11 +1,11 @@
 import { map } from 'rxjs/operators';
 
 import {
-  DataFrame,
+  type DataFrame,
   DataTransformerID,
-  DataTransformerInfo,
-  DataFrameWithValue,
-  Field,
+  type DataTransformerInfo,
+  type DataFrameWithValue,
+  type Field,
   FieldType,
   MutableDataFrame,
   isTimeSeriesFrame,

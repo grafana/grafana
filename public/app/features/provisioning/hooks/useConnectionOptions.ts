@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { ExternalRepository } from '../types';
+import { type ExternalRepository } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
@@ -80,9 +80,12 @@ export function useConnectionOptions(enabled: boolean) {
         const remaining = repos.length - maxToShow;
         const repoText =
           remaining > 0
-            ? t('provisioning.connection-options.repos-truncated', '{{shown}} +{{count}} more', {
+            ? t('provisioning.connection-options.repos-truncated', '', {
                 shown,
                 count: remaining,
+                interpolation: { escapeValue: false },
+                defaultValue_one: '{{shown}} +{{count}} more',
+                defaultValue_other: '{{shown}} +{{count}} more',
               })
             : shown;
         descriptionParts.push(repoText);

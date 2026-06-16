@@ -1,26 +1,26 @@
 import { identity, isEqual } from 'lodash';
-import { MutableRefObject } from 'react';
+import { type MutableRefObject } from 'react';
 
 import { EventBusSrv } from '@grafana/data';
-import { LocationService } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type LocationService } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { initializeExplore } from 'app/features/explore/state/explorePane';
 import { clearPanes, syncTimesAction } from 'app/features/explore/state/main';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { ThunkDispatch } from 'app/types/store';
+import { type ThunkDispatch } from 'app/types/store';
 
 import { getUrlStateFromPaneState } from '../external.utils';
 import {
   getDefaultQuery,
   getPaneDatasource,
   getQueryFilter,
-  InitState,
+  type InitState,
   isMixedDatasource,
   removeQueriesWithInvalidDatasource,
 } from '../internal.utils';
-import { ExploreURLV1 } from '../migrators/v1';
+import { type ExploreURLV1 } from '../migrators/v1';
 
 export function initializeFromURL(
   urlState: ExploreURLV1,

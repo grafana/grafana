@@ -1,17 +1,17 @@
 import { LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
-  SceneComponentProps,
-  SceneDataProvider,
+  type SceneComponentProps,
+  type SceneDataProvider,
   SceneDataTransformer,
   sceneGraph,
   SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  VizPanel,
+  type SceneObjectRef,
+  type SceneObjectState,
+  type VizPanel,
 } from '@grafana/scenes';
 import { InspectTab } from 'app/features/inspector/types';
-import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
+import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
 

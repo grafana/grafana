@@ -29,11 +29,6 @@ export interface FeatureToggles {
   */
   publicDashboardsEmailSharing?: boolean;
   /**
-  * Enables public dashboard rendering using scenes
-  * @default true
-  */
-  publicDashboardsScene?: boolean;
-  /**
   * Support new streaming approach for loki (prototype, needs special loki build)
   * @default false
   */
@@ -44,20 +39,10 @@ export interface FeatureToggles {
   */
   featureHighlights?: boolean;
   /**
-  * Configurable storage for dashboards, datasources, and resources
-  * @default false
-  */
-  storage?: boolean;
-  /**
   * Allow elements nesting
   * @default false
   */
   canvasPanelNesting?: boolean;
-  /**
-  * Run the GRPC server
-  * @default false
-  */
-  grpcServer?: boolean;
   /**
   * Enables cross-account querying in CloudWatch datasources
   * @default true
@@ -74,11 +59,6 @@ export interface FeatureToggles {
   */
   alertingRuleGroupSortByFolderFullpath?: boolean;
   /**
-  * Allow datasource to provide custom UI for context view
-  * @default true
-  */
-  logsContextDatasourceUi?: boolean;
-  /**
   * Use stream shards to split queries into smaller subqueries
   * @default false
   */
@@ -94,20 +74,10 @@ export interface FeatureToggles {
   */
   influxdbBackendMigration?: boolean;
   /**
-  * Registers a live apiserver
-  * @default false
-  */
-  liveAPIServer?: boolean;
-  /**
   * populate star status from apiserver
   * @default false
   */
   starsFromAPIServer?: boolean;
-  /**
-  * Routes stars requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesStars?: boolean;
   /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
@@ -130,7 +100,7 @@ export interface FeatureToggles {
   disableSSEDataplane?: boolean;
   /**
   * Uses JWT-based auth for rendering instead of relying on remote cache
-  * @default false
+  * @default true
   */
   renderAuthJWT?: boolean;
   /**
@@ -144,20 +114,10 @@ export interface FeatureToggles {
   */
   faroDatasourceSelector?: boolean;
   /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
-  /**
   * Enable Faro session replay for Grafana
   * @default false
   */
   faroSessionReplay?: boolean;
-  /**
-  * A table visualisation for logs in Explore
-  * @default true
-  */
-  logsExploreTableVisualisation?: boolean;
   /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
@@ -179,15 +139,10 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
-  * Next generation provisioning... and git
-  * @default false
+  * Enables Git Sync and as-code provisioning for Grafana resources
+  * @default true
   */
   provisioning?: boolean;
-  /**
-  * Allow setting folder metadata for provisioned folders
-  * @default false
-  */
-  provisioningFolderMetadata?: boolean;
   /**
   * Enable export functionality for provisioned resources
   * @default false
@@ -199,15 +154,10 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
-  * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
+  * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
-  /**
-  * Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight
-  * @default false
-  */
-  queryCacheRequestDeduplication?: boolean;
   /**
   * Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval
   * @default false
@@ -224,15 +174,25 @@ export interface FeatureToggles {
   */
   aiGeneratedDashboardChanges?: boolean;
   /**
-  * Enables CSV encoding options in the reporting feature
+  * Enables configuration of PDF report settings
   * @default false
   */
-  reportingCsvEncodingOptions?: boolean;
+  reportingHeaderSettings?: boolean;
+  /**
+  * Enables the configurable footer settings for PDF reports
+  * @default false
+  */
+  reportingFooterSettings?: boolean;
   /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */
   sseGroupByDatasource?: boolean;
+  /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
   /**
   * Enables running Loki queries in parallel
   * @default false
@@ -254,35 +214,20 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Use the kubernetes API in the frontend for dashboards
+  * Enables k8s short URL API and uses it under the hood when handling legacy /api
   * @default true
-  */
-  kubernetesDashboards?: boolean;
-  /**
-  * Enables k8s short url api and uses it under the hood when handling legacy /api
-  * @default false
   */
   kubernetesShortURLs?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
-  * @default false
+  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  * @default true
   */
   useKubernetesShortURLsAPI?: boolean;
-  /**
-  * Adds support for Kubernetes alerting and recording rules
-  * @default false
-  */
-  kubernetesAlertingRules?: boolean;
   /**
   * Adds support for Kubernetes correlations
   * @default false
   */
   kubernetesCorrelations?: boolean;
-  /**
-  * Adds support for Kubernetes unified storage quotas
-  * @default false
-  */
-  kubernetesUnifiedStorageQuotas?: boolean;
   /**
   * Adds support for Kubernetes logs drilldown
   * @default false
@@ -294,35 +239,10 @@ export interface FeatureToggles {
   */
   kubernetesQueryCaching?: boolean;
   /**
-  * Disable schema validation for dashboards/v1
+  * Register legacy datasource apis that use the numeric id
   * @default false
   */
-  dashboardDisableSchemaValidationV1?: boolean;
-  /**
-  * Disable schema validation for dashboards/v2
-  * @default false
-  */
-  dashboardDisableSchemaValidationV2?: boolean;
-  /**
-  * Log schema validation errors so they can be analyzed later
-  * @default false
-  */
-  dashboardSchemaValidationLogging?: boolean;
-  /**
-  * Enable fallback parsing behavior when scan row encounters invalid dashboard JSON
-  * @default false
-  */
-  scanRowInvalidDashboardParseFallbackEnabled?: boolean;
-  /**
-  * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
-  * @default false
-  */
-  datasourceQueryTypes?: boolean;
-  /**
-  * Does not register datasource apis that use the numeric id
-  * @default false
-  */
-  datasourceDisableIdApi?: boolean;
+  datasourceLegacyIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -359,10 +279,10 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
-  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
-  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -385,14 +305,19 @@ export interface FeatureToggles {
   alertingProvenanceLockWrites?: boolean;
   /**
   * Enables the UI to use certain backend-side filters
-  * @default false
+  * @default true
   */
   alertingUIUseBackendFilters?: boolean;
   /**
   * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
-  * @default false
+  * @default true
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
+  /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
   /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
@@ -404,15 +329,30 @@ export interface FeatureToggles {
   */
   annotationPermissionUpdate?: boolean;
   /**
-  * Enables dashboard rendering using scenes for all roles
+  * Enables annotation clustering and switches to refactored annotation code
   * @default true
   */
-  dashboardScene?: boolean;
+  annotationsClustering?: boolean;
   /**
   * Enables new dashboard layouts
-  * @default false
+  * @default true
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
+  /**
+  * Enables default layout selector in dashboard settings
+  * @default true
+  */
+  dashboardDefaultLayoutSelector?: boolean;
+  /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
@@ -449,6 +389,11 @@ export interface FeatureToggles {
   */
   dashboardFiltersOverview?: boolean;
   /**
+  * Enables the feedback button in the dashboard edit sidebar
+  * @default true
+  */
+  feedbackButton?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */
@@ -464,10 +409,20 @@ export interface FeatureToggles {
   */
   reportingV2Layouts?: boolean;
   /**
+  * Enables render binding support for report rendering
+  * @default false
+  */
+  reportRenderBinding?: boolean;
+  /**
   * Allow pan and zoom in canvas panel
   * @default false
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Load Canvas panel from an external plugin instead of the bundled core plugin
+  * @default false
+  */
+  canvasExternalPlugin?: boolean;
   /**
   * Enables time comparison option in supported panels
   * @default false
@@ -525,12 +480,12 @@ export interface FeatureToggles {
   scopeApi?: boolean;
   /**
   * Use the single node endpoint for the scope api. This is used to fetch the scope parent node.
-  * @default false
+  * @default true
   */
   useScopeSingleNodeEndpoint?: boolean;
   /**
   * Makes the frontend use the 'names' param for fetching multiple scope nodes at once
-  * @default false
+  * @default true
   */
   useMultipleScopeNodesEndpoint?: boolean;
   /**
@@ -540,7 +495,7 @@ export interface FeatureToggles {
   logQLScope?: boolean;
   /**
   * Enables SQL Expressions, which can execute SQL queries against data source results.
-  * @default false
+  * @default true
   */
   sqlExpressions?: boolean;
   /**
@@ -548,6 +503,11 @@ export interface FeatureToggles {
   * @default false
   */
   sqlExpressionsColumnAutoComplete?: boolean;
+  /**
+  * Enables CodeMirror editor for SQL Expressions
+  * @default false
+  */
+  sqlExpressionsCodeMirror?: boolean;
   /**
   * Enable grafana's embedded kube-aggregator
   * @default false
@@ -584,10 +544,10 @@ export interface FeatureToggles {
   */
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
-  * Wraps the ad hoc and group by variables in a single wrapper, with all other variables below it
-  * @default false
+  * Renders ad hoc filters and group by in a single unified control
+  * @default true
   */
-  dashboardAdHocAndGroupByWrapper?: boolean;
+  dashboardUnifiedDrilldownControls?: boolean;
   /**
   * Enables configuring default origin filters for ad-hoc filter variables
   * @default false
@@ -614,10 +574,25 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables RBAC for playlists
+  * @default false
+  */
+  playlistsRBAC?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default false
   */
   savedQueriesRBAC?: boolean;
+  /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
+  /**
+  * Enables the new unconfigured panel experience
+  * @default true
+  */
+  newUnconfiguredPanel?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -644,8 +619,13 @@ export interface FeatureToggles {
   */
   dashboardTemplatesAssistantButton?: boolean;
   /**
-  * Enables the new alert list view design
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
   * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
+  /**
+  * Enables the new alert list view design
+  * @default true
   */
   alertingListViewV2?: boolean;
   /**
@@ -655,19 +635,9 @@ export interface FeatureToggles {
   alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
-  * @default false
+  * @default true
   */
   alertingNavigationV2?: boolean;
-  /**
-  * Enables saved searches for alert rules list
-  * @default false
-  */
-  alertingSavedSearches?: boolean;
-  /**
-  * Enables saved searches for the Alert Activity page
-  * @default false
-  */
-  alertingTriageSavedSearches?: boolean;
   /**
   * Disables the ability to send alerts to an external Alertmanager datasource.
   * @default false
@@ -714,6 +684,11 @@ export interface FeatureToggles {
   */
   zanzanaNoLegacyClient?: boolean;
   /**
+  * Merge Zanzana permissions into legacy RBAC for access-control API endpoints.
+  * @default false
+  */
+  zanzanaMergeUserPermissions?: boolean;
+  /**
   * Enables reload of dashboards on scopes, time range and variables changes
   * @default false
   */
@@ -734,11 +709,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusAzureOverrideAudience?: boolean;
-  /**
-  * Enable the new alerting search experience
-  * @default false
-  */
-  alertingFilterV2?: boolean;
   /**
   * Enable grafana dataplane aggregator
   * @default false
@@ -775,6 +745,11 @@ export interface FeatureToggles {
   */
   groupAttributeSync?: boolean;
   /**
+  * Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation
+  * @default false
+  */
+  groupToNestedTableV2?: boolean;
+  /**
   * Enables step mode for alerting queries and expressions
   * @default true
   */
@@ -795,35 +770,15 @@ export interface FeatureToggles {
   */
   rolePickerDrawer?: boolean;
   /**
-  * Pick the dual write mode from database configs
-  * @default false
-  */
-  managedDualWriter?: boolean;
-  /**
   * Enables SRI checks for plugin assets
   * @default false
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables to save big objects in blob storage
-  * @default false
-  */
-  unifiedStorageBigObjectsSupport?: boolean;
-  /**
   * Enables time pickers sync
   * @default false
   */
   timeRangeProvider?: boolean;
-  /**
-  * Enables time range panning functionality
-  * @default true
-  */
-  timeRangePan?: boolean;
-  /**
-  * Enables new keyboard shortcuts for time range zoom operations
-  * @default true
-  */
-  newTimeRangeZoomShortcuts?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -834,11 +789,6 @@ export interface FeatureToggles {
   * @default false
   */
   playlistsReconciler?: boolean;
-  /**
-  * Enable passwordless login via magic link authentication
-  * @default false
-  */
-  passwordlessMagicLinkAuthentication?: boolean;
   /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
@@ -910,11 +860,6 @@ export interface FeatureToggles {
   */
   alertingNotificationsStepMode?: boolean;
   /**
-  * Enable unified storage search UI
-  * @default false
-  */
-  unifiedStorageSearchUI?: boolean;
-  /**
   * Enables cross cluster search in the Elasticsearch data source
   * @default false
   */
@@ -924,11 +869,6 @@ export interface FeatureToggles {
   * @default true
   */
   lokiLabelNamesQueryApi?: boolean;
-  /**
-  * Enable folder's api server counts
-  * @default false
-  */
-  k8SFolderCounts?: boolean;
   /**
   * Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly.
   * @default true
@@ -945,8 +885,18 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
-  * Enables Advisor app
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
   * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
+  * Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiWriteFromAppPlatform?: boolean;
+  /**
+  * Enables Advisor app
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
@@ -974,11 +924,6 @@ export interface FeatureToggles {
   * @default true
   */
   newLogsPanel?: boolean;
-  /**
-  * Enables the temporary themes for GrafanaCon
-  * @default true
-  */
-  grafanaconThemes?: boolean;
   /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
@@ -1010,16 +955,6 @@ export interface FeatureToggles {
   */
   newShareReportDrawer?: boolean;
   /**
-  * Disable pre-loading app plugins when the request is coming from the renderer
-  * @default false
-  */
-  rendererDisableAppPluginsPreload?: boolean;
-  /**
-  * Enables SRI checks for Grafana JavaScript assets
-  * @default false
-  */
-  assetSriChecks?: boolean;
-  /**
   * Enables the alert rule restore feature
   * @default true
   */
@@ -1050,17 +985,6 @@ export interface FeatureToggles {
   */
   azureMonitorLogsBuilderEditor?: boolean;
   /**
-  * Specifies the locale so the correct format for numbers and dates can be shown
-  * @deprecated
-  * @default false
-  */
-  localeFormatPreference?: boolean;
-  /**
-  * Enables the unified storage grpc connection pool
-  * @default false
-  */
-  unifiedStorageGrpcConnectionPool?: boolean;
-  /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
   */
@@ -1080,11 +1004,6 @@ export interface FeatureToggles {
   * @default false
   */
   unifiedNavbars?: boolean;
-  /**
-  * Enables a control component for the logs panel in Explore
-  * @default true
-  */
-  logsPanelControls?: boolean;
   /**
   * Enables creating metrics from profiles and storing them as recording rules
   * @default false
@@ -1111,37 +1030,15 @@ export interface FeatureToggles {
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
-  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
-  * @default false
-  */
-  alertRuleUseFiredAtForStartsAt?: boolean;
-  /**
   * Enables the alerting bulk actions in the UI
   * @default true
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthzApis?: boolean;
-  /**
-  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthZHandlerRedirect?: boolean;
-  /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
   */
   kubernetesAuthZResourcePermissionsRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRolesRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1152,11 +1049,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthzZanzanaSync?: boolean;
-  /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
   /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
@@ -1178,15 +1070,20 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRoleBindingsApi?: boolean;
   /**
-  * Enables create, delete, and update mutations for resources owned by IAM identity
+  * Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
   * @default false
   */
-  kubernetesAuthnMutation?: boolean;
+  kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
-  * Enables restore deleted dashboards feature
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
   * @default false
   */
-  restoreDashboards?: boolean;
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
+  /**
+  * Enables service account resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzServiceAccountResourcePermissions?: boolean;
   /**
   * Enables recently viewed dashboards section in the browsing dashboard page
   * @default false
@@ -1218,15 +1115,15 @@ export interface FeatureToggles {
   */
   alertEnrichmentConditional?: boolean;
   /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
+  /**
   * Enables the API to import Alertmanager configuration
   * @default false
   */
   alertingImportAlertmanagerAPI?: boolean;
-  /**
-  * Enables the UI to see imported Alertmanager configuration
-  * @default false
-  */
-  alertingImportAlertmanagerUI?: boolean;
   /**
   * Disables the DMA feature in the UI
   * @default false
@@ -1273,11 +1170,6 @@ export interface FeatureToggles {
   */
   alertingNotificationHistory?: boolean;
   /**
-  * Enable dual reader for unified storage search
-  * @default false
-  */
-  unifiedStorageSearchDualReaderEnabled?: boolean;
-  /**
   * Supports __from and __to macros that always use the dashboard level time range
   * @default false
   */
@@ -1304,7 +1196,7 @@ export interface FeatureToggles {
   newLogContext?: boolean;
   /**
   * Enables new design for the Clickhouse data source configuration page
-  * @default false
+  * @default true
   */
   newClickhouseConfigPageDesign?: boolean;
   /**
@@ -1339,7 +1231,8 @@ export interface FeatureToggles {
   azureResourcePickerUpdates?: boolean;
   /**
   * Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
-  * @default false
+  * @deprecated
+  * @default true
   */
   prometheusTypeMigration?: boolean;
   /**
@@ -1363,45 +1256,35 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default true
-  */
-  newGauge?: boolean;
-  /**
-  * Enable new visualization suggestions
-  * @default false
-  */
-  newVizSuggestions?: boolean;
-  /**
   * Enable style actions (copy/paste) in the panel editor
-  * @default false
+  * @default true
   */
   panelStyleActions?: boolean;
   /**
   * Enable visualization presets
-  * @default false
+  * @default true
   */
   vizPresets?: boolean;
   /**
-  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
+  * Enable field overrides for FieldType.nestedFrames fields (like in nested tables)
   * @default false
   */
-  externalVizSuggestions?: boolean;
+  nestedFramesFieldOverrides?: boolean;
   /**
-  * Limit the number of legend items by default, with an option to show all
-  * @default false
+  * Enable faceted labels filter for series visibility in the legend
+  * @default true
   */
-  vizLegendSeriesLimit?: boolean;
+  vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
   */
   heatmapRowsAxisOptions?: boolean;
   /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
+  * Enable gradient color scheme option for the pie chart panel
+  * @default false
   */
-  preventPanelChromeOverflow?: boolean;
+  pieChartGradientColorScheme?: boolean;
   /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
@@ -1412,11 +1295,6 @@ export interface FeatureToggles {
   * @default false
   */
   pluginStoreServiceLoading?: boolean;
-  /**
-  * Increases panel padding globally
-  * @default true
-  */
-  newPanelPadding?: boolean;
   /**
   * When storing dashboard and folder resource permissions, only store action sets and not the full list of underlying permission
   * @default true
@@ -1442,6 +1320,11 @@ export interface FeatureToggles {
   * @default false
   */
   elasticsearchRawDSLQuery?: boolean;
+  /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false
@@ -1478,20 +1361,20 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables plugins decoupling from bootdata
-  * @default false
-  */
-  useMTPlugins?: boolean;
-  /**
   * Enables support for variables whose values can have multiple properties
-  * @default false
+  * @default true
   */
   multiPropsVariables?: boolean;
   /**
   * Enables support for section level variables (rows and tabs)
-  * @default false
+  * @default true
   */
   dashboardSectionVariables?: boolean;
+  /**
+  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+  * @default false
+  */
+  globalDashboardVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
@@ -1504,7 +1387,7 @@ export interface FeatureToggles {
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
   * Enables profiles exemplars support in profiles drilldown
-  * @default false
+  * @default true
   */
   profilesExemplars?: boolean;
   /**
@@ -1523,20 +1406,35 @@ export interface FeatureToggles {
   */
   queryEditorNext?: boolean;
   /**
-  * Enables search for team bindings in the app platform API
+  * Enables team APIs in the app platform
   * @default false
   */
-  kubernetesTeamBindings?: boolean;
+  kubernetesTeamsApi?: boolean;
   /**
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
   */
   kubernetesUsersApi?: boolean;
+  /**
+  * Enables service account APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountsApi?: boolean;
+  /**
+  * Enables service account token APIs in the app platform
+  * @default false
+  */
+  kubernetesServiceAccountTokensApi?: boolean;
+  /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
   /**
   * Enables external group mapping APIs in the app platform
   * @default false
@@ -1553,15 +1451,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
+  * Redirects the requests of the user service to the app platform APIs
   * @default false
+  */
+  kubernetesUsersRedirect?: boolean;
+  /**
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**
-  * Registers an API server for each backend app plugin exposing a settings endpoint
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
   * @default false
   */
-  appPluginAPIServer?: boolean;
+  alertingPolicyRoutingSettings?: boolean;
   /**
   * Makes NoData and Error alerts fire immediately, without 'pending' stage
   * @default false
@@ -1583,6 +1486,11 @@ export interface FeatureToggles {
   */
   alertingNotificationHistoryTriage?: boolean;
   /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
+  /**
   * Whether to use the new React 19 runtime
   * @default false
   */
@@ -1592,11 +1500,6 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceUseSettingsService?: boolean;
-  /**
-  * Whether to use the new SharedPreferences functional component
-  * @default false
-  */
-  functionalSharedPreferences?: boolean;
   /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false
@@ -1613,8 +1516,123 @@ export interface FeatureToggles {
   */
   dsAbstractionApp?: boolean;
   /**
+  * Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpoint?: boolean;
+  /**
   * Enables new analytics framework
   * @default false
   */
   analyticsFramework?: boolean;
+  /**
+  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
+  /**
+  * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
+  * @default false
+  */
+  datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
+  /**
+  * Enables the new Flame Graph UI containing the Call Tree view
+  * @default false
+  */
+  flameGraphWithCallTree?: boolean;
+  /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
+  /**
+  * Enables an inline version of Log Details that creates no new scrolls
+  * @default false
+  */
+  inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables fine-grained Y-axis tick options beyond the auto-ticks
+  * @default false
+  */
+  yAxisTickControl?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
+  /**
+  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+  * @default false
+  */
+  frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Enables the splash screen modal for introducing new Grafana features on first session
+  * @default false
+  */
+  splashScreen?: boolean;
+  /**
+  * Enables forwarding team headers from tempo for streaming requests with LBAC rules
+  * @default false
+  */
+  streamingForwardTeamHeadersTempo?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
+  /**
+  * Enables heatmap visualization support for Pyroscope profiles
+  * @default false
+  */
+  profilesHeatmap?: boolean;
+  /**
+  * Enables the time seeker in traces drilldown
+  * @default false
+  */
+  tracesDrilldownTimeSeeker?: boolean;
+  /**
+  * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
+  * @default true
+  */
+  clearPreviousFieldValues?: boolean;
+  /**
+  * Enables new colorblind safe palette and line fill patterns for panels
+  * @default false
+  */
+  enableColorblindSafePanelOptions?: boolean;
+  /**
+  * Enables cache configs data migration to unified storage
+  * @default false
+  */
+  cacheConfigUnifiedStorageMigration?: boolean;
+  /**
+  * Enables validation on the InfluxDB data source configuration page
+  * @default false
+  */
+  influxDBConfigValidation?: boolean;
+  /**
+  * Enables validation on the ClickHouse data source configuration page
+  * @default false
+  */
+  clickHouseConfigValidation?: boolean;
+  /**
+  * Enables the new Rules API v2 UI with evaluation chains and groupless rule creation
+  * @default false
+  */
+  ['alerting.rulesAPIV2']?: boolean;
+  /**
+  * Switch the Grafana Alerting UI from notifications.alerting.grafana.app/v0alpha1 to v1beta1
+  * @default false
+  */
+  ['alerting.notificationsAPIV1Beta1']?: boolean;
+  /**
+  * Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+  * @default false
+  */
+  ['alerting.syncExternalAlertmanager']?: boolean;
 }

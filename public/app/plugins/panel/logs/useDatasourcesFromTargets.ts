@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceApi } from '@grafana/data';
+import { type DataSourceApi } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 export const useDatasourcesFromTargets = (targets: DataQuery[] | undefined): Map<string, DataSourceApi> => {
   const [dataSourcesMap, setDataSourcesMap] = useState(new Map<string, DataSourceApi>());

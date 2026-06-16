@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { VizPanel } from '@grafana/scenes';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { PanelDataPane } from '../PanelDataPane/PanelDataPane';
+import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
@@ -28,6 +28,10 @@ jest.mock('./QueryEditor/Sidebar/Sidebar', () => ({
   Sidebar: () => <div data-testid="query-editor-sidebar" />,
 }));
 
+jest.mock('../PanelEditPanelWrapper', () => ({
+  PanelEditPanelWrapper: () => <div data-testid="panel-viz" />,
+}));
+
 // Minimal mock so instanceof checks in VizAndDataPaneNext work without scene setup
 jest.mock('./PanelDataPaneNext', () => ({
   PanelDataPaneNext: class {
@@ -40,9 +44,11 @@ const MockPanelComponent = () => <div data-testid="panel-viz" />;
 function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
   return {
     scene: {
-      panelToShow: { Component: MockPanelComponent },
+      panel: { Component: MockPanelComponent },
+      tableView: { Component: MockPanelComponent },
       controls: null,
       dataPane,
+      dashboard: {},
     },
     layout: {
       sidebarSize: SidebarSize.Mini,

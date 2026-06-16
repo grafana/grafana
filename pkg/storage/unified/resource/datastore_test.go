@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -54,7 +56,7 @@ func setupSqlKV(t *testing.T) kv.KV {
 }
 
 func setupTestDataStore(t *testing.T) *dataStore {
-	return newDataStore(setupBadgerKV(t))
+	return newDataStore(setupBadgerKV(t), nil)
 }
 
 func TestNewDataStore(t *testing.T) {
@@ -63,7 +65,7 @@ func TestNewDataStore(t *testing.T) {
 }
 
 func setupTestDataStoreSqlKv(t *testing.T) *dataStore {
-	return newDataStore(setupSqlKV(t))
+	return newDataStore(setupSqlKV(t), nil)
 }
 
 func TestDataKey_String(t *testing.T) {
@@ -265,7 +267,7 @@ func TestDataKey_Validate(t *testing.T) {
 		},
 		// Invalid cases - empty fields
 		{
-			name: "invalid - empty namespace",
+			name: "valid - empty namespace (cluster-scoped)",
 			key: DataKey{
 				Namespace:       "",
 				Group:           "test-group",
@@ -274,8 +276,7 @@ func TestDataKey_Validate(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
-			expectError: true,
-			errorMsg:    ErrNamespaceRequired,
+			expectError: false,
 		},
 		{
 			name: "invalid - empty group",
@@ -1263,8 +1264,8 @@ func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *data
 		require.Equal(t, "namespace", validationErr.Field)
 	})
 
-	// Test another type of invalid key
-	emptyFieldKey := DataKey{
+	// Empty namespace is valid for cluster-scoped resources
+	clusterScopedKey := DataKey{
 		Namespace:       "",
 		Group:           "test-group",
 		Resource:        "test-resource",
@@ -1273,25 +1274,21 @@ func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *data
 		Action:          DataActionCreated,
 	}
 
-	t.Run("Get with empty namespace returns validation error", func(t *testing.T) {
-		_, err := ds.Get(ctx, emptyFieldKey)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Save with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		err := ds.Save(ctx, clusterScopedKey, testValue)
+		require.NoError(t, err)
 	})
 
-	t.Run("Save with empty namespace returns validation error", func(t *testing.T) {
-		err := ds.Save(ctx, emptyFieldKey, testValue)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Get with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		reader, err := ds.Get(ctx, clusterScopedKey)
+		require.NoError(t, err)
+		require.NotNil(t, reader)
+		_ = reader.Close()
 	})
 
-	t.Run("Delete with empty namespace returns validation error", func(t *testing.T) {
-		err := ds.Delete(ctx, emptyFieldKey)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Delete with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		err := ds.Delete(ctx, clusterScopedKey)
+		require.NoError(t, err)
 	})
 }
 
@@ -1425,14 +1422,13 @@ func TestListRequestKey_Validate(t *testing.T) {
 			errorField:  "resource",
 		},
 		{
-			name: "invalid - name without namespace",
+			name: "valid - name without namespace (cluster-scoped)",
 			key: ListRequestKey{
 				Name:     "test-name",
 				Resource: "test-resource",
 				Group:    "test-group",
 			},
-			expectError: true,
-			errorMsg:    ErrNameMustBeEmptyWhenNamespaceEmpty,
+			expectError: false,
 		},
 		{
 			name: "invalid - name without group and resource",
@@ -1619,12 +1615,6 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 
 	t.Run("returns error for empty required fields", func(t *testing.T) {
 		testCases := map[string]ListRequestKey{
-			"empty namespace": {
-				Namespace: "",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
 			"empty group": {
 				Namespace: "test-namespace",
 				Group:     "",
@@ -2675,14 +2665,13 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			errorField: "resource",
 		},
 		{
-			name: "missing namespace",
+			name: "valid - missing namespace (cluster-scoped)",
 			key: GetRequestKey{
 				Group:    "apps",
 				Resource: "resources",
 				Name:     "test-resource",
 			},
-			expectErr:  true,
-			errorField: "namespace",
+			expectErr: false,
 		},
 		{
 			name: "missing name",
@@ -2839,7 +2828,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	require.Equal(t, 243, totalEntries) // 3×3×3×3×3 = 243 total entries
 
 	t.Run("get stats for all namespaces", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
 		require.NoError(t, err)
 
 		// Should have 27 resource types (3 namespaces × 3 groups × 3 resources)
@@ -2873,7 +2862,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("get stats for specific namespace ns1", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// Should have 9 resource types (3 groups × 3 resources for ns1)
@@ -2897,7 +2886,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("get stats for specific namespace ns2", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns2", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns2"}, 0)
 		require.NoError(t, err)
 
 		// Should have 9 resource types (3 groups × 3 resources for ns2)
@@ -2912,28 +2901,78 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 
 	t.Run("get stats with minCount filter", func(t *testing.T) {
 		// With minCount=0, all resources should be included (each has 3 items > 0)
-		stats, err := ds.GetResourceStats(ctx, "", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 27) // All 27 resource types should be included
 
 		// With minCount=2, all resources should still be included (each has 3 items > 2)
-		stats, err = ds.GetResourceStats(ctx, "", 2)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 2)
 		require.NoError(t, err)
 		require.Len(t, stats, 27) // All 27 resource types should still be included
 
 		// With minCount=3, no resources should be included (each has exactly 3 items, not > 3)
-		stats, err = ds.GetResourceStats(ctx, "", 3)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 3)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 
 		// With minCount=4, no resources should be included (each has only 3 items < 4)
-		stats, err = ds.GetResourceStats(ctx, "", 4)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 4)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 	})
 
 	t.Run("get stats for non-existent namespace", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "non-existent", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "non-existent"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 0)
+	})
+
+	t.Run("filter by group only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 resources for the "apps" group
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by resource only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 groups for the "deployments" resource
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces for apps/deployments
+		require.Len(t, stats, 3)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by namespace group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1", Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, "apps", stats[0].Group)
+		require.Equal(t, "deployments", stats[0].Resource)
+		require.Equal(t, int64(3), stats[0].Count)
+	})
+
+	t.Run("filter by non-existent group", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "non-existent"}, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 	})
@@ -2955,7 +2994,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 		require.NoError(t, err)
 
 		// Get stats for ns1 - apps/deployments should now have 2 items instead of 3
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// Find the apps/deployments stat
@@ -2981,7 +3020,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("verify resource versions are meaningful", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// All ResourceVersions should be positive and reasonable
@@ -3149,7 +3188,7 @@ func testDataStoreBatchGet(t *testing.T, ctx context.Context, ds *dataStore) {
 
 	t.Run("batch get with some non-existent keys", func(t *testing.T) {
 		// Create 3 existing keys
-		existingKeys := make([]DataKey, 3)
+		existingKeys := make([]DataKey, 3) //nolint:prealloc
 		for i := 0; i < 3; i++ {
 			rv := node.Generate().Int64()
 			existingKeys[i] = DataKey{
@@ -3354,4 +3393,56 @@ func testDataStoreGetLatestAndPredecessor(t *testing.T, ctx context.Context, ds 
 		require.Error(t, err)
 		require.Equal(t, ErrNotFound, err)
 	})
+}
+
+func TestIsSnowflake(t *testing.T) {
+	created2017 := time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC)
+	micro2017 := created2017.UnixMicro()
+	snowflake2017 := rvmanager.SnowflakeFromRV(micro2017)
+
+	require.Less(t, snowflake2017, int64(1e18),
+		"sanity: a pre-2018 snowflake must fall below the old 1e18 threshold")
+	require.Equal(t, micro2017, rvmanager.RVFromSnowflake(snowflake2017),
+		"sanity: the micro-RV and key_path snowflake must round-trip")
+
+	tests := []struct {
+		name string
+		rv   int64
+		want bool
+	}{
+		{"zero", 0, false},
+		{"legacy micro-RV from 2017", micro2017, false},
+		{"recent legacy micro-RV", time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		{"far-future legacy micro-RV (year 2200)", time.Date(2200, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro(), false},
+		// Regression: a snowflake from a pre-2018 timestamp is < 1e18 and was
+		// previously misclassified as a legacy micro-RV.
+		{"snowflake from 2017 timestamp", snowflake2017, true},
+		{"snowflake from 2013 timestamp", rvmanager.SnowflakeFromRV(time.Date(2013, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+		{"modern snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro()), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, IsSnowflake(tt.rv))
+		})
+	}
+}
+
+// TestToSnowflakeRVIdempotent verifies that a value that is already a snowflake
+// must pass through toSnowflakeRV unchanged, including when it derives from an
+// old (pre-2018) timestamp and is therefore numerically below 1e18.
+func TestToSnowflakeRVIdempotent(t *testing.T) {
+	cases := []struct {
+		name      string
+		snowflake int64
+	}{
+		{"snowflake from 2017 timestamp", rvmanager.SnowflakeFromRV(time.Date(2017, 3, 26, 17, 3, 40, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2014 timestamp", rvmanager.SnowflakeFromRV(time.Date(2014, 6, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+		{"snowflake from 2025 timestamp", rvmanager.SnowflakeFromRV(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC).UnixMicro())},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.snowflake, ToSnowflakeRV(tt.snowflake),
+				"toSnowflakeRV must not re-encode a value that is already a snowflake")
+		})
+	}
 }

@@ -1,18 +1,18 @@
 import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 
-import { CatalogPlugin, PluginIconName } from '../types';
+import { type CatalogPlugin, PluginIconName } from '../types';
 
 import { PluginListItemBadges } from './PluginListItemBadges';
 import { PluginLogo } from './PluginLogo';
 
-export const LOGO_SIZE = '48px';
+const LOGO_SIZE = '48px';
 
 type Props = {
   plugin: CatalogPlugin;
@@ -94,7 +94,7 @@ const PluginListItemSkeleton: SkeletonComponent = ({ rootProps }) => {
 export const PluginListItem = attachSkeleton(PluginListItemComponent, PluginListItemSkeleton);
 
 // Styles shared between the different type of list items
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'grid',

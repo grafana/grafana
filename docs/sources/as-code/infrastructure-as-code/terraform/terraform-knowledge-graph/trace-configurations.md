@@ -240,6 +240,8 @@ resource "grafana_asserts_trace_config" "example" {
 
 ## Best practices
 
+Consider the following best practices when configuring trace correlation with Terraform.
+
 ### Priority management
 
 - Assign lower priority numbers to more specific configurations

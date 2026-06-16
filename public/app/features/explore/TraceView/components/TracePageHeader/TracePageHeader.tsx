@@ -17,12 +17,12 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
-  CoreApp,
-  TraceSearchProps,
-  DataFrame,
+  type CoreApp,
+  type TraceSearchProps,
+  type DataFrame,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   PluginExtensionPoints,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -34,10 +34,10 @@ import {
   config,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
-import { TimeZone } from '@grafana/schema';
+import { type TimeZone } from '@grafana/schema';
 import {
   Badge,
-  BadgeColor,
+  type BadgeColor,
   Button,
   ButtonGroup,
   CollapsableSection,
@@ -53,9 +53,13 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
-import { ViewRangeTimeUpdate, TUpdateViewRangeTimeFunction, ViewRange } from '../TraceTimelineViewer/types';
+import {
+  type ViewRangeTimeUpdate,
+  type TUpdateViewRangeTimeFunction,
+  type ViewRange,
+} from '../TraceTimelineViewer/types';
 import { getHeaderTags, getTraceName } from '../model/trace-viewer';
-import { Trace, TraceViewPluginExtensionContext } from '../types/trace';
+import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
 import { getServiceColorKey } from '../utils/service-name';
 

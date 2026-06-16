@@ -2,21 +2,21 @@ import { useEffect, useState } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
-import { QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
+import { type QueryEditorProps, getDefaultTimeRange, toOption } from '@grafana/data';
 import { EditorField, EditorRows } from '@grafana/plugin-ui';
 import { Input } from '@grafana/ui';
 
-import { TimeSeriesList, QueryType } from '../dataquery.gen';
-import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery } from '../types/query';
-import { CloudMonitoringOptions } from '../types/types';
+import { type TimeSeriesList, QueryType } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
+import { type CloudMonitoringQuery } from '../types/query';
+import { type CloudMonitoringOptions } from '../types/types';
 
 import { AnnotationsHelp } from './AnnotationsHelp';
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
 
 export type Props = QueryEditorProps<CloudMonitoringDatasource, CloudMonitoringQuery, CloudMonitoringOptions>;
 
-export const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeriesList = (datasource) => ({
+const defaultQuery: (datasource: CloudMonitoringDatasource) => TimeSeriesList = (datasource) => ({
   ...defaultTimeSeriesList(datasource),
   title: '',
   text: '',

@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { QueryVariable, VariableValueOption } from '@grafana/scenes';
+import { type QueryVariable, type VariableValueOption } from '@grafana/scenes';
 import { Field, Stack, Switch } from '@grafana/ui';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableMultiPropStaticOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/VariableMultiPropStaticOptionsForm';
@@ -34,6 +34,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
   const [areStaticOptionsEnabled, setAreStaticOptionsEnabled] = useState(!!staticOptions?.length);
   const displayMultiPropsEditor = areStaticOptionsEnabled && config.featureToggles.multiPropsVariables;
   const properties = useGetPropertiesFromOptions(options, staticOptions);
+  const useStaticOptionsId = useId();
 
   return (
     <>
@@ -42,6 +43,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
       </VariableLegend>
       <Stack direction="column" gap={2}>
         <Field
+          htmlFor={useStaticOptionsId}
           noMargin
           label={t('dashboard-scene.query-variable-editor-form.label-use-static-options', 'Use static options')}
           description={t(
@@ -52,6 +54,7 @@ export function QueryVariableStaticOptions(props: QueryVariableStaticOptionsProp
           <>
             <Stack direction="column" gap={2}>
               <Switch
+                id={useStaticOptionsId}
                 data-testid={
                   selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsStaticOptionsToggle
                 }

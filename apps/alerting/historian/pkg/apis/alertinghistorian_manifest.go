@@ -27,6 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting-historian",
+	AppDisplayName:   "alerting-historian",
 	Group:            "historian.alerting.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -136,6 +137,11 @@ var appManifestData = app.ManifestData{
 																					Type: []string{"boolean"},
 																				},
 																			},
+																			"ruleUID": {
+																				SchemaProps: spec.SchemaProps{
+																					Type: []string{"boolean"},
+																				},
+																			},
 																			"status": {
 																				SchemaProps: spec.SchemaProps{
 																					Type: []string{"boolean"},
@@ -149,6 +155,7 @@ var appManifestData = app.ManifestData{
 																			"status",
 																			"outcome",
 																			"error",
+																			"ruleUID",
 																		},
 																	},
 																},
@@ -441,6 +448,11 @@ var appManifestData = app.ManifestData{
 									},
 								},
 								"receiver": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"ruleUID": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
 									},

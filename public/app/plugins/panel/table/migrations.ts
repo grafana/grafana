@@ -1,19 +1,19 @@
 import { omitBy, isNil, isNumber, defaultTo, groupBy, omit } from 'lodash';
 
 import {
-  PanelModel,
+  type PanelModel,
   FieldMatcherID,
-  ConfigOverrideRule,
+  type ConfigOverrideRule,
   ThresholdsMode,
-  ThresholdsConfig,
-  FieldConfig,
-  DataFrame,
+  type ThresholdsConfig,
+  type FieldConfig,
+  type DataFrame,
   FieldType,
   ByNamesMatcherMode,
 } from '@grafana/data';
-import { ReduceTransformerOptions } from '@grafana/data/internal';
+import { type ReduceTransformerOptions } from '@grafana/data/internal';
 
-import { Options } from './panelcfg.gen';
+import { type Options } from './panelcfg.gen';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.

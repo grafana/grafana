@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { SceneDataLayerProvider } from '@grafana/scenes';
+import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { partitionAnnotationsByDisplay } from '../../edit-pane/dashboard/DashboardAnnotationsList';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { partitionAnnotationLayers } from './AnnotationSetEditableElement';
 import { annotationEditActions } from './actions';
 
 export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
@@ -25,7 +25,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
   const onSelectAnnotation = useCallback(
     (layer: SceneDataLayerProvider) => {
       const { editPane } = getDashboardSceneFor(dataLayerSet).state;
-      editPane.selectObject(layer, layer.state.key!);
+      editPane.selectObject(layer);
     },
     [dataLayerSet]
   );
@@ -41,8 +41,8 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
     DashboardInteractions.addAnnotationButtonClicked({ source: 'edit_pane' });
   }, [dataLayerSet]);
 
-  const { standardLayers, controlsMenuLayers } = useMemo(
-    () => partitionAnnotationLayers(annotationLayers),
+  const { visible, controlsMenu, hidden } = useMemo(
+    () => partitionAnnotationsByDisplay(annotationLayers),
     [annotationLayers]
   );
 
@@ -81,14 +81,19 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
     [dataLayerSet]
   );
 
-  const onStandardDragEnd = useMemo(
-    () => createDragEndHandler(standardLayers, (updatedList) => [...updatedList, ...controlsMenuLayers]),
-    [controlsMenuLayers, createDragEndHandler, standardLayers]
+  const onVisibleDragEnd = useMemo(
+    () => createDragEndHandler(visible, (updatedList) => [...updatedList, ...controlsMenu, ...hidden]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
   );
 
-  const onControlsDragEnd = useMemo(
-    () => createDragEndHandler(controlsMenuLayers, (updatedList) => [...standardLayers, ...updatedList]),
-    [controlsMenuLayers, createDragEndHandler, standardLayers]
+  const onControlsMenuDragEnd = useMemo(
+    () => createDragEndHandler(controlsMenu, (updatedList) => [...visible, ...updatedList, ...hidden]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
+  );
+
+  const onHiddenDragEnd = useMemo(
+    () => createDragEndHandler(hidden, (updatedList) => [...visible, ...controlsMenu, ...updatedList]),
+    [createDragEndHandler, controlsMenu, hidden, visible]
   );
 
   const onPointerDown = useCallback((event: React.PointerEvent) => {
@@ -152,12 +157,17 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
 
   return (
     <Stack direction="column" gap={0}>
-      <DragDropContext onDragEnd={onStandardDragEnd}>
-        {renderList(standardLayers, 'annotations-outline-standard')}
+      <DragDropContext onDragEnd={onVisibleDragEnd}>
+        {renderList(visible, 'annotations-outline-visible')}
       </DragDropContext>
-      {controlsMenuLayers.length > 0 && (
-        <DragDropContext onDragEnd={onControlsDragEnd}>
-          {renderList(controlsMenuLayers, 'annotations-outline-controls')}
+      {controlsMenu.length > 0 && (
+        <DragDropContext onDragEnd={onControlsMenuDragEnd}>
+          {renderList(controlsMenu, 'annotations-outline-controls-menu')}
+        </DragDropContext>
+      )}
+      {hidden.length > 0 && (
+        <DragDropContext onDragEnd={onHiddenDragEnd}>
+          {renderList(hidden, 'annotations-outline-hidden')}
         </DragDropContext>
       )}
       {canAdd && (

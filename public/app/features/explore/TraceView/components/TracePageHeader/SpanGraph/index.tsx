@@ -16,8 +16,12 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import { memo } from 'react';
 
-import { ViewRange, TUpdateViewRangeTimeFunction, ViewRangeTimeUpdate } from '../../TraceTimelineViewer/types';
-import { Trace, TraceSpan } from '../../types/trace';
+import {
+  type ViewRange,
+  type TUpdateViewRangeTimeFunction,
+  type ViewRangeTimeUpdate,
+} from '../../TraceTimelineViewer/types';
+import { type Trace, type TraceSpan } from '../../types/trace';
 import { getServiceColorKey } from '../../utils/service-name';
 
 import CanvasSpanGraph from './CanvasSpanGraph';

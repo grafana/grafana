@@ -1,19 +1,24 @@
 import { useCallback } from 'react';
 
-import { DataFrame, TimeRange } from '@grafana/data';
+import { type DataFrame, type TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
-import { hasVisibleLegendSeries, PlotLegend, UPlotConfigBuilder } from '@grafana/ui/internal';
+import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
+import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 
-import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
+import { GraphNG, type GraphNGProps, type PropDiffFn } from '../GraphNG/GraphNG';
 
 import { getXAxisConfig, preparePlotConfigBuilder } from './utils';
 
 const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'annotationLanes', 'theme'];
 
-type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'>;
+type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme' | 'legend'> & {
+  legend: TimeSeriesLegendOptions;
+  onPinnedToSidebarChange?: (pinned: boolean) => void;
+};
 
 export function TimeSeries(props: TimeSeriesProps) {
-  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames } = props;
+  const { timeZone, options, renderers, tweakAxis, tweakScale, legend, frames, onPinnedToSidebarChange } = props;
   const theme = useTheme2();
 
   const prepConfig = useCallback(
@@ -36,14 +41,25 @@ export function TimeSeries(props: TimeSeriesProps) {
   );
 
   const renderLegend = useCallback(
-    (config: UPlotConfigBuilder) => {
-      if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
+    (uPlotConfig: UPlotConfigBuilder) => {
+      if (!uPlotConfig || (legend && !legend.showLegend) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
         return null;
       }
 
-      return <PlotLegend data={frames} config={config} {...legend} />;
+      const enableFacetedFilter = config.featureToggles.vizLegendFacetedFilter && legend?.enableFacetedFilter;
+      const facetedFilterPinned = config.featureToggles.vizLegendFacetedFilter && legend?.facetedFilterPinned;
+      return (
+        <PlotLegend
+          data={frames}
+          config={uPlotConfig}
+          {...legend}
+          enableFacetedFilter={enableFacetedFilter}
+          facetedFilterPinned={facetedFilterPinned}
+          onPinnedToSidebarChange={onPinnedToSidebarChange}
+        />
+      );
     },
-    [legend, frames]
+    [legend, frames, onPinnedToSidebarChange]
   );
 
   return (

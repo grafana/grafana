@@ -1,0 +1,10 @@
+{
+  "name": "Visual Refresh (Light)",
+  "id": "visual_refresh_light",
+  "colors": {
+    "mode": "light",
+    "background": {
+      "canvas": "#ff0000"
+    }
+  }
+}

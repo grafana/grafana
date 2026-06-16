@@ -1,12 +1,12 @@
 import { act, waitFor, renderHook } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { stringify } from 'querystring';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataQuery, DataSourceApi, UrlQueryMap } from '@grafana/data';
-import { HistoryWrapper, setDataSourceSrv, DataSourceSrv } from '@grafana/runtime';
+import { type DataQuery, type DataSourceApi, type UrlQueryMap } from '@grafana/data';
+import { HistoryWrapper, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';

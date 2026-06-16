@@ -1,6 +1,6 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { DB, SQLOptions, SqlQueryModel } from '../types';
+import { type DB, type SQLOptions, type SqlQueryModel } from '../types';
 import { makeVariable } from '../utils/testHelpers';
 
 import { SqlDatasource } from './SqlDatasource';

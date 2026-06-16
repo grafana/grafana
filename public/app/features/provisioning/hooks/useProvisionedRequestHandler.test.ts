@@ -1,17 +1,12 @@
 import { renderHook } from '@testing-library/react';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
-import { ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { setAppEvents } from '@grafana/runtime';
+import { type Dashboard } from '@grafana/schema';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
+import { type appEvents } from 'app/core/app_events';
 
-import { useProvisionedRequestHandler, RequestHandlers } from './useProvisionedRequestHandler';
-
-jest.mock('@grafana/runtime', () => ({
-  getAppEvents: jest.fn(),
-}));
-
-const mockGetAppEvents = jest.mocked(getAppEvents);
+import { useProvisionedRequestHandler, type RequestHandlers } from './useProvisionedRequestHandler';
 
 const mockDispatch = jest.fn();
 jest.mock('react-redux', () => {
@@ -134,7 +129,46 @@ describe('useProvisionedRequestHandler', () => {
       expect(mockPublish).not.toHaveBeenCalledWith(expect.objectContaining({ type: AppEvents.alertSuccess.name }));
     });
 
-    it('should show push success with branch link when repository info is available', () => {
+    it('should show push success with branch link pointing to configured path', () => {
+      const { request, handlers } = setup({
+        requestOverrides: {
+          isError: false,
+          isSuccess: true,
+          data: createMockResourceWrapper({
+            urls: { repositoryURL: 'https://github.com/org/repo' },
+          }),
+        },
+      });
+
+      renderHook(() =>
+        useProvisionedRequestHandler({
+          request,
+          workflow: 'write',
+          resourceType: 'dashboard',
+          repository: {
+            type: 'github',
+            name: 'test-repo',
+            target: 'folder',
+            title: 'Test Repository',
+            workflows: [],
+            branch: 'main',
+            url: 'https://github.com/org/repo',
+            path: 'dashboards',
+          },
+          handlers,
+        })
+      );
+
+      const component = mockDispatch.mock.calls[0][0].payload.component;
+      expect(component.props).toEqual(
+        expect.objectContaining({
+          branch: 'main',
+          url: 'https://github.com/org/repo/tree/main/dashboards',
+        })
+      );
+    });
+
+    it('should fall back to repositoryURL when no path is configured', () => {
       const { request, handlers } = setup({
         requestOverrides: {
           isError: false,
@@ -163,11 +197,11 @@ describe('useProvisionedRequestHandler', () => {
         })
       );
 
-      expect(mockDispatch).toHaveBeenCalledWith(
+      const component = mockDispatch.mock.calls[0][0].payload.component;
+      expect(component.props).toEqual(
         expect.objectContaining({
-          payload: expect.objectContaining({
-            component: expect.anything(),
-          }),
+          branch: 'main',
+          url: 'https://github.com/org/repo',
         })
       );
     });
@@ -298,9 +332,7 @@ function setup({
 } = {}) {
   const mockPublish = jest.fn();
 
-  mockGetAppEvents.mockReturnValue({
-    publish: mockPublish,
-  } as unknown as ReturnType<typeof getAppEvents>);
+  setAppEvents({ publish: mockPublish } as unknown as typeof appEvents);
 
   const request = {
     isError: false,

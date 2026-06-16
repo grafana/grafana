@@ -38,9 +38,10 @@ func TestIntegrationShortURL(t *testing.T) {
 
 	t.Run("default setup with k8s flag turned off (legacy APIs)", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true, // do not start extra port 6443
-			DisableAnonymous:     true,
-			EnableFeatureToggles: []string{}, // legacy APIs only
+			AppModeProduction:     true, // do not start extra port 6443
+			DisableAnonymous:      true,
+			EnableFeatureToggles:  []string{}, // legacy APIs only
+			DisableFeatureToggles: []string{featuremgmt.FlagKubernetesShortURLs},
 		})
 		// In this setup, K8s APIs are not available - legacy APIs only
 		doLegacyOnlyTests(t, helper)
@@ -78,9 +79,7 @@ func TestIntegrationShortURL(t *testing.T) {
 	t.Run("modes", func(t *testing.T) {
 		for _, mode := range []grafanarest.DualWriterMode{
 			grafanarest.Mode1,
-			grafanarest.Mode2,
-			grafanarest.Mode3,
-			grafanarest.Mode4,
+			grafanarest.Mode5,
 		} {
 			t.Run(fmt.Sprintf("dual write (unified storage, mode %d)", mode), func(t *testing.T) {
 				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{

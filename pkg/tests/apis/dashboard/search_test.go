@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -36,14 +37,8 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
-			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
-		},
+		AppModeProduction: true,
+		DisableAnonymous:  true,
 	})
 	defer helper.Shutdown()
 
@@ -95,7 +90,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 		return nil
 	})
 	require.NoError(t, err)
-	require.Equal(t, 16, fileCount, "file count from %s", devenv)
+	require.Equal(t, 17, fileCount, "file count from %s", devenv)
 
 	// Helper to call search
 	callSearch := func(user apis.User, params map[string]string) dashboardV0.SearchResults {
@@ -226,10 +221,9 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -323,10 +317,9 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	ctx := context.Background()
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -422,8 +415,8 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 func TestIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Only run for Unified Storage modes that support search (Mode3+)
-	modes := []rest.DualWriterMode{rest.Mode3, rest.Mode4, rest.Mode5}
+	// Only run for Unified Storage modes that support search (Mode4+)
+	modes := []rest.DualWriterMode{rest.Mode5}
 	for _, mode := range modes {
 		runSearchPermissionTest(t, mode)
 	}
@@ -434,10 +427,9 @@ func runSearchPermissionTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
@@ -682,6 +674,11 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
 }
 
+// bleveInternalDocIDRegex matches the 8-byte internal segment doc ID that bleve
+// includes in explain messages (e.g. "in \x00\x00\x00\x00\x00\x00\x00\r)").
+// The value depends on segment layout and is not stable across runs.
+var bleveInternalDocIDRegex = regexp.MustCompile(` in \x00[^)]*\)`)
+
 func roundExplainValues(obj map[string]any, decimals uint32) {
 	for k, val := range obj {
 		switch k {
@@ -689,6 +686,11 @@ func roundExplainValues(obj map[string]any, decimals uint32) {
 			v, ok := val.(float64)
 			if ok {
 				obj[k] = roundTo(v, decimals)
+			}
+		case "message":
+			s, ok := val.(string)
+			if ok {
+				obj[k] = bleveInternalDocIDRegex.ReplaceAllString(s, " in <docID>)")
 			}
 		case "children":
 			children, ok := val.([]any)

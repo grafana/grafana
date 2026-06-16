@@ -1,7 +1,7 @@
-import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
+import { type DataFrame, DataFrameView, type TraceSpanRow } from '@grafana/data';
 
 import transformTraceData from '../components/model/transform-trace-data';
-import { Trace, TraceProcess, TraceResponse } from '../components/types/trace';
+import { type Trace, type TraceProcess, type TraceResponse } from '../components/types/trace';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {
@@ -31,7 +31,7 @@ export function transformTraceDataFrame(frame: DataFrame): TraceResponse | null 
       processes[span.spanID] = {
         serviceName: span.serviceName,
         serviceNamespace: span.serviceNamespace,
-        tags: span.serviceTags,
+        tags: Array.isArray(span.serviceTags) ? span.serviceTags : [],
       };
     }
   }

@@ -11,10 +11,12 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,6 +72,11 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
 		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
 		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
+		common.NewGroupResourceTuple("user:19", common.RelationGetPermissions, userGroup, userResource, ""),
+		common.NewResourceTuple("team:ctx-check#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-check-dashboard"),
+		common.NewResourceTuple("team:ctx-list#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-list-dashboard"),
+		common.NewResourceTuple("team:ctx-batch#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-batch-dashboard"),
+		common.NewResourceTuple("team:ctx-1000#member", common.RelationGet, dashboardGroup, dashboardResource, "", "ctx-1000-dashboard"),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
@@ -91,7 +98,10 @@ func setupOpenFGAServer(t *testing.T) *Server {
 		}
 	}
 
-	srv, err := NewEmbeddedZanzanaServer(cfg, testStore, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil)
+	store, err := zStore.NewEmbeddedStore(cfg, testStore, log.NewNopLogger())
+	require.NoError(t, err)
+
+	srv, err := NewEmbeddedZanzanaServer(cfg, store, log.NewNopLogger(), tracing.NewNoopTracerService(), prometheus.NewRegistry(), nil, nil, leaderelection.NewDefaultElector())
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { EmptyState, FilterInput, Stack } from '@grafana/ui';
-import { Connection } from 'app/api/clients/provisioning/v0alpha1';
+import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 
 import { ConnectionListItem } from './ConnectionListItem';
 

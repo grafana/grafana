@@ -1,12 +1,12 @@
-import { Action } from 'redux';
+import { type Action } from 'redux';
 
-import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
-import { DataSourcePluginCategory } from 'app/types/datasources';
-import { StoreState, useDispatch, useSelector } from 'app/types/store';
+import { type DataSourcePluginCategory } from 'app/types/datasources';
+import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { ROUTES } from '../../connections/constants';
 import { DataSourceCategories } from '../components/DataSourceCategories';
@@ -38,7 +38,7 @@ export function NewDataSource() {
   );
 }
 
-export type ViewProps = {
+type ViewProps = {
   dataSources: DataSourcePluginMeta[];
   dataSourceCategories: DataSourcePluginCategory[];
   searchQuery: string;
@@ -47,7 +47,7 @@ export type ViewProps = {
   onSetSearchQuery: (q: string) => Action;
 };
 
-export function NewDataSourceView({
+function NewDataSourceView({
   dataSources,
   dataSourceCategories,
   searchQuery,

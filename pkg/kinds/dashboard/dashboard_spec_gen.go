@@ -363,6 +363,8 @@ func NewDataTransformerConfig() *DataTransformerConfig {
 type MatcherConfig struct {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	Id string `json:"id"`
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	Scope *MatcherScope `json:"scope,omitempty"`
 	// The matcher options. This is specific to the matcher implementation.
 	Options any `json:"options,omitempty"`
 }
@@ -373,6 +375,15 @@ func NewMatcherConfig() *MatcherConfig {
 		Id: "",
 	}
 }
+
+type MatcherScope string
+
+const (
+	MatcherScopeSeries     MatcherScope = "series"
+	MatcherScopeNested     MatcherScope = "nested"
+	MatcherScopeAnnotation MatcherScope = "annotation"
+	MatcherScopeExemplar   MatcherScope = "exemplar"
+)
 
 // A library panel is a reusable panel that you can use in any dashboard.
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
@@ -846,6 +857,8 @@ type VariableModel struct {
 	Multi *bool `json:"multi,omitempty"`
 	// Allow custom values to be entered in the variable
 	AllowCustomValue *bool `json:"allowCustomValue,omitempty"`
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	EnableGroupBy *bool `json:"enableGroupBy,omitempty"`
 	// Options that can be selected for a variable.
 	Options []VariableOption `json:"options,omitempty"`
 	// Options to config when to refresh a variable
@@ -875,6 +888,7 @@ func NewVariableModel() *VariableModel {
 		SkipUrlSync:      (func(input bool) *bool { return &input })(false),
 		Multi:            (func(input bool) *bool { return &input })(false),
 		AllowCustomValue: (func(input bool) *bool { return &input })(true),
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 		IncludeAll:       (func(input bool) *bool { return &input })(false),
 		ValuesFormat:     (func(input VariableModelValuesFormat) *VariableModelValuesFormat { return &input })(VariableModelValuesFormatCsv),
 	}

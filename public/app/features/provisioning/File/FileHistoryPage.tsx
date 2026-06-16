@@ -12,7 +12,7 @@ import { useUrlParams } from 'app/core/navigation/hooks';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { PROVISIONING_URL } from '../constants';
-import { HistoryListResponse } from '../types';
+import { type HistoryListResponse } from '../types';
 import { formatTimestamp } from '../utils/time';
 
 import { isFileHistorySupported } from './utils';
@@ -56,8 +56,14 @@ export default function FileHistoryPage() {
             </TextLink>
           </EmptyState>
         ) : (
-          //@ts-expect-error TODO fix history response types
-          <div>{history.data ? <HistoryView history={history.data} path={path} repo={name} /> : <Spinner />}</div>
+          <div>
+            {history.data ? (
+              //@ts-expect-error TODO fix history response types
+              <HistoryView history={history.data} path={path} repo={name} repoType={repoType ?? undefined} />
+            ) : (
+              <Spinner />
+            )}
+          </div>
         )}
       </Page.Contents>
     </Page>
@@ -68,9 +74,10 @@ interface Props {
   history: HistoryListResponse;
   path: string;
   repo: string;
+  repoType?: string;
 }
 
-function HistoryView({ history, path, repo }: Props) {
+function HistoryView({ history, path, repo, repoType }: Props) {
   if (!history.items) {
     return <Trans i18nKey="provisioning.history-view.not-found">Not found</Trans>;
   }
@@ -78,31 +85,59 @@ function HistoryView({ history, path, repo }: Props) {
   return (
     <Stack direction={'column'}>
       {history.items.map((item) => (
-        <Card noMargin href={`${PROVISIONING_URL}/${repo}/file/${path}?ref=${item.ref}`} key={item.ref}>
+        <Card
+          noMargin
+          href={`${PROVISIONING_URL}/${encodeURIComponent(repo)}/file/${path}?${new URLSearchParams({ ref: item.ref }).toString()}`}
+          key={item.ref}
+        >
           <Card.Heading>{item.message}</Card.Heading>
           <Card.Meta>
             <span>{formatTimestamp(item.createdAt)}</span>
           </Card.Meta>
           <Card.Description>
             <Stack>
-              {item.authors.map((a) => (
-                <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {a.avatarURL && (
-                    <UserIcon
-                      userView={{
-                        user: { name: a.name, avatarUrl: a.avatarURL },
-                        lastActiveAt: new Date().toISOString(),
-                      }}
-                      showTooltip={false}
-                    />
-                  )}
-                  <a href={`https://github.com/${a.username}`}>{a.name}</a>
-                </span>
-              ))}
+              {item.authors.map((a) => {
+                const profileUrl = getAuthorProfileUrl(repoType, a.username);
+                return (
+                  <span key={a.username} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {a.avatarURL && (
+                      <UserIcon
+                        userView={{
+                          user: { name: a.name, avatarUrl: a.avatarURL },
+                          lastActiveAt: new Date().toISOString(),
+                        }}
+                        showTooltip={false}
+                      />
+                    )}
+                    {profileUrl ? (
+                      <TextLink href={profileUrl} external>
+                        {a.name}
+                      </TextLink>
+                    ) : (
+                      <Text>{a.name}</Text>
+                    )}
+                  </span>
+                );
+              })}
             </Stack>
           </Card.Description>
         </Card>
       ))}
     </Stack>
   );
+}
+
+export function getAuthorProfileUrl(repoType: string | undefined, username: string): string | undefined {
+  const encoded = encodeURIComponent(username);
+  switch (repoType) {
+    case 'github':
+    case 'githubEnterprise':
+      return `https://github.com/${encoded}`;
+    case 'gitlab':
+      return `https://gitlab.com/${encoded}`;
+    case 'bitbucket':
+      return `https://bitbucket.org/${encoded}`;
+    default:
+      return undefined;
+  }
 }

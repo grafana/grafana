@@ -1,7 +1,7 @@
 import { Component, createRef } from 'react';
-import uPlot, { AlignedData, Options } from 'uplot';
+import uPlot, { type AlignedData, type Options } from 'uplot';
 
-import { PlotProps } from './types';
+import { type PlotProps } from './types';
 import { pluginLog } from './utils';
 
 import 'uplot/dist/uPlot.min.css';

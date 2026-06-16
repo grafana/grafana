@@ -1,18 +1,21 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneComponentProps } from '@grafana/scenes';
+import { type SceneComponentProps } from '@grafana/scenes';
 import { Spinner, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../../scene/NavToolbarActions';
-import { PanelEditor } from '../PanelEditor';
+import { LibraryPanelEditModals } from '../LibraryPanelEditModals';
+import { type PanelEditor } from '../PanelEditor';
 import { scrollReflowMediaCondition } from '../useScrollReflowLimit';
 
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { usePanelEditorShell } from './hooks';
 
+// v2 panel editor (PanelEditNext). The classic ../PanelEditorRenderer.tsx renders the same
+// PanelEditor scene, so keep user-facing features in sync across both until v1 is removed.
 export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEditor>) {
   const { dashboard, optionsPane, splitter } = usePanelEditorShell(model);
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } = splitter;
@@ -22,6 +25,7 @@ export function PanelEditorRendererNext({ model }: SceneComponentProps<PanelEdit
   return (
     <div className={styles.container}>
       <NavToolbarActions dashboard={dashboard} />
+      <LibraryPanelEditModals model={model} />
       <div
         {...containerProps}
         className={cx(containerProps.className, styles.content)}

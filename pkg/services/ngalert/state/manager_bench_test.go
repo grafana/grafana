@@ -45,7 +45,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	var ans []state.StateTransition
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels, nil)
 	}
 

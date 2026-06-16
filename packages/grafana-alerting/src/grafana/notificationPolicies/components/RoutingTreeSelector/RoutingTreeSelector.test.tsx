@@ -1,3 +1,4 @@
+import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
@@ -10,7 +11,7 @@ import {
   simpleRoutingTreesListScenario,
   singleDefaultTreeList,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const server = setupMockServer();
 
@@ -19,18 +20,7 @@ beforeEach(() => {
 });
 
 beforeAll(() => {
-  // Required for testing combobox
-  const mockGetBoundingClientRect = jest.fn(() => ({
-    width: 120,
-    height: 120,
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
-  }));
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: mockGetBoundingClientRect,
-  });
+  mockComboboxRect();
 });
 
 describe('listing routing trees', () => {

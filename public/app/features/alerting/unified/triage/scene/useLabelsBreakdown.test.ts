@@ -1,4 +1,68 @@
-import { computeLabelStats } from './useLabelsBreakdown';
+import { computeLabelStats, deduplicateSeries } from './useLabelsBreakdown';
+
+describe('deduplicateSeries', () => {
+  it('should return empty array for empty input', () => {
+    expect(deduplicateSeries([])).toEqual([]);
+  });
+
+  it('should return series unchanged when there is no overlap between states', () => {
+    const series = [
+      { alertstate: 'firing', team: 'infra' },
+      { alertstate: 'pending', team: 'platform' },
+    ];
+    expect(deduplicateSeries(series)).toEqual(expect.arrayContaining(series));
+    expect(deduplicateSeries(series)).toHaveLength(2);
+  });
+
+  it('should keep only the firing entry when the same instance appears as both firing and pending', () => {
+    const firing = { alertstate: 'firing', team: 'infra', env: 'prod' };
+    const pending = { alertstate: 'pending', team: 'infra', env: 'prod' };
+    const result = deduplicateSeries([firing, pending]);
+    expect(result).toHaveLength(1);
+    expect(result[0].alertstate).toBe('firing');
+  });
+
+  it('should treat grafana_alertstate as a state label (ignored in fingerprint)', () => {
+    const firing = { alertstate: 'firing', grafana_alertstate: 'Alerting', team: 'infra' };
+    const pending = { alertstate: 'pending', grafana_alertstate: 'Pending', team: 'infra' };
+    const result = deduplicateSeries([firing, pending]);
+    expect(result).toHaveLength(1);
+    expect(result[0].alertstate).toBe('firing');
+  });
+
+  it('should keep the pending entry when there is no corresponding firing series', () => {
+    const series = [{ alertstate: 'pending', team: 'infra' }];
+    const result = deduplicateSeries(series);
+    expect(result).toHaveLength(1);
+    expect(result[0].alertstate).toBe('pending');
+  });
+
+  it('should deduplicate independently per instance fingerprint', () => {
+    const series = [
+      { alertstate: 'firing', team: 'infra' },
+      { alertstate: 'pending', team: 'infra' },
+      { alertstate: 'pending', team: 'platform' },
+    ];
+    const result = deduplicateSeries(series);
+    // infra: firing wins; platform: only pending, kept
+    expect(result).toHaveLength(2);
+    const infra = result.find((s) => s.team === 'infra');
+    expect(infra?.alertstate).toBe('firing');
+    const platform = result.find((s) => s.team === 'platform');
+    expect(platform?.alertstate).toBe('pending');
+  });
+
+  it('should keep multiple firing entries for the same fingerprint if Prometheus returns them', () => {
+    const series = [
+      { alertstate: 'firing', team: 'infra' },
+      { alertstate: 'firing', team: 'infra' },
+      { alertstate: 'pending', team: 'infra' },
+    ];
+    const result = deduplicateSeries(series);
+    expect(result).toHaveLength(2);
+    expect(result.every((s) => s.alertstate === 'firing')).toBe(true);
+  });
+});
 
 describe('computeLabelStats', () => {
   it('should return empty array for empty series', () => {

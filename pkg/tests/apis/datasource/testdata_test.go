@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"maps"
@@ -12,15 +13,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -41,8 +44,10 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
+			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
+			featuremgmt.FlagDatasourcesChunkedQueryStreaming,           // enable chunked streaming responses for queries
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -80,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -100,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -126,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
@@ -162,6 +170,65 @@ func TestIntegrationTestDatasource(t *testing.T) {
 				}`, string(jj))
 	})
 
+	t.Run("health", func(t *testing.T) {
+		t.Run("health endpoint returns 404 for non-existent datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/health",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode, "expected 404 for non-existent datasource, got %d: %s", raw.Response.StatusCode, string(raw.Body))
+		})
+		t.Run("user with datasources:query on datasource can call health", func(t *testing.T) {
+			userWithQuery := helper.CreateUser("health-query-user", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           []string{datasources.ActionQuery},
+					Resource:          datasources.ScopeRoot,
+					ResourceID:        "test",
+					ResourceAttribute: "uid",
+				},
+			})
+			var healthResult datasourceV0alpha1.HealthCheckResult
+			raw := apis.DoRequest(helper, apis.RequestParams{
+				User:   userWithQuery,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, &healthResult)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "user with datasources:query should be allowed: %s", string(raw.Body))
+			require.Equal(t, "OK", healthResult.Status)
+		})
+		t.Run("user without datasources:query on datasource gets 403", func(t *testing.T) {
+			userWithoutQuery := helper.CreateUser("health-no-query-user", apis.Org1, org.RoleNone, nil)
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   userWithoutQuery,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusForbidden, raw.Response.StatusCode, "user without datasources:query should get 403: %s", string(raw.Body))
+		})
+		t.Run("unauthenticated request returns 403", func(t *testing.T) {
+			var healthResult datasourceV0alpha1.HealthCheckResult
+			raw := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.None,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, &healthResult)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusForbidden, raw.Response.StatusCode)
+		})
+		t.Run("cross-org access denied", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.OrgB.Admin,
+				Method: "GET",
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/health",
+			}, nil)
+			require.NotNil(t, raw.Status)
+			require.Equal(t, int32(http.StatusForbidden), raw.Status.Code)
+		})
+	})
+
 	t.Run("query", func(t *testing.T) {
 		adminClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
 			Group:   "grafana-testdata-datasource.datasource.grafana.app",
@@ -172,7 +239,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		  { "refId": "A",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
-			},{ 
+			},{
 			  "refId": "B",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
@@ -192,9 +259,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Equal(t, 1, frame.Fields[1].Len())
 			require.Equal(t, 1, frame.Fields[2].Len())
 
-			require.Equal(t, ptr.To(int64(1)), frame.Fields[0].At(0))
-			require.Equal(t, ptr.To("two"), frame.Fields[1].At(0))
-			require.Equal(t, ptr.To(false), frame.Fields[2].At(0))
+			require.Equal(t, new(int64(1)), frame.Fields[0].At(0))
+			require.Equal(t, new("two"), frame.Fields[1].At(0))
+			require.Equal(t, new(false), frame.Fields[2].At(0))
 		}
 
 		// The standard JSON request/response
@@ -219,6 +286,101 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
+		})
+
+		t.Run("chunked", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("datasources").
+				Name("test"). // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				SetHeader("Accept", chunked.CONTENT_TYPE). // <<< get a chunked response
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			// Read JSON lines
+			qdr, err := chunked.AccumulateJSONLines(bytes.NewReader(raw))
+			require.NoError(t, err)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+
+		// Use the deprecated connections path
+		// NOTE: remove after this is deployed to hosted grafana
+		t.Run("deprecated connections path", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("connections"). // <<<<< should rewrite to datasources
+				Name("test").            // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			qdr := &backend.QueryDataResponse{}
+			err = json.Unmarshal(raw, qdr)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+	})
+
+	t.Run("resources", func(t *testing.T) {
+		const base = "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resources/"
+
+		// The testdata plugin's /test/json route echoes the request back, so we
+		// can confirm the method, path and body are forwarded to the plugin.
+		t.Run("echo endpoint reflects the forwarded request", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   base + "test/json",
+				Body:   []byte(`{"hello":"world"}`),
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+
+			body := string(raw.Body)
+			require.Contains(t, body, `"method":"POST"`, "echoed method")
+			require.Contains(t, body, "test/json", "echoed forwarded path")
+			require.Contains(t, body, `"hello":"world"`, "echoed request body")
+		})
+
+		// A forwarded sub path that itself contains "/resources" must be passed
+		// through intact (it falls through to the catch-all handler).
+		t.Run("forwards a sub path containing /resources", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   base + "nested/resources/path",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+			require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		})
+
+		t.Run("returns 404 for an unknown datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources/test/json",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode)
 		})
 	})
 

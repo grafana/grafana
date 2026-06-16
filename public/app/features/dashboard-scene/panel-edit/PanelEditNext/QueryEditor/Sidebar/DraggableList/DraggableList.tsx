@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, DropResult } from '@hello-pangea/dnd';
-import { ReactNode } from 'react';
+import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type ReactNode } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
@@ -16,6 +16,7 @@ interface DraggableListProps<T> {
   renderItem: (item: T) => ReactNode;
   onDragStart?: () => void;
   onDragEnd: (result: DropResult) => void;
+  isDragDisabled?: boolean;
 }
 
 export function DraggableList<T>({
@@ -25,6 +26,7 @@ export function DraggableList<T>({
   renderItem,
   onDragStart,
   onDragEnd,
+  isDragDisabled = false,
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -57,12 +59,13 @@ export function DraggableList<T>({
             {items.map((item, index) => {
               const key = keyExtractor(item);
               return (
-                <Draggable key={key} draggableId={key} index={index}>
+                <Draggable key={key} draggableId={key} index={index} isDragDisabled={isDragDisabled}>
                   {(dragProvided, dragSnapshot) => (
                     <div
                       ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
+                      tabIndex={-1}
                       className={styles.draggableItem}
                       data-is-dragging={dragSnapshot.isDragging || undefined}
                     >

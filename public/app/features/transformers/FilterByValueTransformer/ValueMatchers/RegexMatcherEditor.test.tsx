@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-import { FieldType, TypedVariableModel } from '@grafana/data';
+import { FieldType, type TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { regexMatcherEditor } from './RegexMatcherEditor';

@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-import { SwitchVariableModel } from '@grafana/data';
+import { type SwitchVariableModel } from '@grafana/data';
 
 import { initialVariablesState } from '../state/types';
 import { initialVariableModelState } from '../types';
@@ -28,7 +28,7 @@ export const initialSwitchVariableModelState: SwitchVariableModel = {
   ],
 };
 
-export const switchVariableSlice = createSlice({
+const switchVariableSlice = createSlice({
   name: 'templating/switch',
   initialState: initialVariablesState,
   reducers: {},

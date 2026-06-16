@@ -11,7 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
+	inmemory "github.com/grafana/grafana/pkg/registry/apis/iam/globalrole/inmemory"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -28,18 +31,18 @@ import (
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
 	noopstorage.ProvideStorageBackend,
-	wire.Bind(new(iam.CoreRoleStorageBackend), new(*noopstorage.StorageBackendImpl)),
 	iam.ProvideNoopRoleApiInstaller,
-	iam.ProvideNoopGlobalRoleApiInstaller,
+	inmemory.ProvideInMemoryGlobalRoleApiInstaller,
 	iam.ProvideNoopTeamLBACApiInstaller,
 	iam.ProvideNoopExternalGroupMappingApiInstaller,
-	wire.Bind(new(iam.RoleBindingStorageBackend), new(*noopstorage.StorageBackendImpl)),
+	iam.ProvideNoopRoleBindingApiInstaller,
 
-	externalgroupmapping.ProvideNoopTeamGroupsREST,
-	wire.Bind(new(externalgroupmapping.TeamGroupsHandler), new(*externalgroupmapping.NoopTeamGroupsREST)),
+	externalgroupmapping.ProvideNoopTeamGroupsHandlerProvider,
 
 	externalgroupmapping.ProvideNoopSearchREST,
 	wire.Bind(new(externalgroupmapping.SearchHandler), new(*externalgroupmapping.NoopSearchREST)),
+
+	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
 	// Auditing Options
 	auditing.ProvideNoopBackend,
@@ -58,16 +61,21 @@ var provisioningExtras = wire.NewSet(
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
-	// read-only datasource abstractions
+	// plugin abstractions
 	plugincontext.ProvideService,
 	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
+	wire.Bind(new(appplugin.PluginContextWrapper), new(*plugincontext.Provider)),
 	datasource.ProvideDefaultPluginConfigs,
+	datasource.ProvideProxyDependencies,
 
 	// Secrets
 	secret.RegisterDependencies,
 	// Provisioning
 	provisioning.RegisterDependencies,
 	provisioningExtras,
+
+	// Resource Permission
+	resourcepermission.ProvideMappersRegistry,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,

@@ -1,11 +1,23 @@
-import { Observable } from 'rxjs';
+import { type Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars, AppEvents } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv, getAppEvents } from '@grafana/runtime';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceRef,
+  getDataSourceRef,
+  type ScopedVars,
+  AppEvents,
+} from '@grafana/data';
+import {
+  type BackendDataSourceResponse,
+  type FetchResponse,
+  getBackendSrv,
+  type TemplateSrv,
+  getAppEvents,
+} from '@grafana/runtime';
 
-import { Dimensions } from '../dataquery.gen';
+import { type Dimensions } from '../dataquery.gen';
 import memoizedDebounce from '../memoizedDebounce';
-import { CloudWatchJsonData, MetricRequest, MultiFilters } from '../types';
+import { type CloudWatchJsonData, type MetricRequest, type MultiFilters } from '../types';
 import { getVariableName } from '../utils/templateVariableUtils';
 
 export abstract class CloudWatchRequest {

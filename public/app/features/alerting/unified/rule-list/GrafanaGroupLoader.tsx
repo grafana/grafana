@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
-import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { type GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { prometheusApi } from '../api/prometheusApi';
 import { useContinuousPagination } from '../hooks/usePagination';

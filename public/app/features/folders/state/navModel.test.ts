@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
-import { FolderDTO } from 'app/types/folders';
+import { type FolderDTO } from 'app/types/folders';
 
 import { buildNavModel, getAlertingTabID } from './navModel';
 

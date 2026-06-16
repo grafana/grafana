@@ -14,7 +14,7 @@ permissions: {}
 jobs:
   deploy-storybook-preview:
     name: Deploy Storybook preview
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     # Don't run from forks for the moment. If we find this useful we can do the workflow_run dance
     # to make it work for forks.
     if: github.event.pull_request.head.repo.fork == false
@@ -85,5 +85,5 @@ jobs:
         env:
           STORYBOOK_URL: ${{ steps.storybook-url.outputs.url }}
         run: |
-          echo "## Storybook preview deployed! 🚀" >> $GITHUB_STEP_SUMMARY
-          echo "Check it out at ${STORYBOOK_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "## Storybook preview deployed! 🚀" >> "$GITHUB_STEP_SUMMARY"
+          echo "Check it out at ${STORYBOOK_URL}" >> "$GITHUB_STEP_SUMMARY"

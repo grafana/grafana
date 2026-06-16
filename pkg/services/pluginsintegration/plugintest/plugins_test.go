@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
 	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -44,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -150,7 +148,6 @@ func TestIntegrationPluginManager(t *testing.T) {
 	am := azuremonitor.ProvideService(hcp)
 	cw := cloudwatch.ProvideService()
 	cm := cloudmonitoring.ProvideService(hcp)
-	es := elasticsearch.ProvideService(hcp)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp)
 	lk := loki.ProvideService(hcp, tracer)
@@ -164,9 +161,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 	graf := grafanads.ProvideService(nil, features)
 	pyroscope := pyroscope.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
-	zipkin := zipkin.ProvideService(hcp)
 	jaeger := jaeger.ProvideService(hcp)
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, zipkin, jaeger)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), am, cw, cm, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, pyroscope, parca, jaeger)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
@@ -236,14 +232,12 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"trend":          {},
 		"welcome":        {},
 		"xychart":        {},
-		"datagrid":       {},
 	}
 
 	expDataSources := map[string]struct{}{
 		"cloudwatch":                       {},
 		"grafana-azure-monitor-datasource": {},
 		"stackdriver":                      {},
-		"elasticsearch":                    {},
 		"graphite":                         {},
 		"influxdb":                         {},
 		"loki":                             {},
@@ -259,7 +253,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"dashboard":                        {},
 		"jaeger":                           {},
 		"mixed":                            {},
-		"zipkin":                           {},
 		"grafana-pyroscope-datasource":     {},
 		"parca":                            {},
 	}

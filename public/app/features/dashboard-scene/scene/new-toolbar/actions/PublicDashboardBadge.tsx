@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
-import { ToolbarActionProps } from '../types';
+import { type ToolbarActionProps } from '../types';
 
 export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
   if (!dashboard.state.uid || !config.publicDashboardsEnabled) {

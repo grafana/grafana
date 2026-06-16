@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame } from '@grafana/data';
+import { type DataFrame } from '@grafana/data';
 import { Pagination } from '@grafana/ui';
 import { makeFramePerSeries } from 'app/core/components/TimelineChart/utils';
 

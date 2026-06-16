@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';
@@ -12,8 +12,9 @@ import { getModKey } from 'app/core/utils/browser';
 import { useScopesServices } from '../ScopesContextProvider';
 
 import { ScopesInput } from './ScopesInput';
-import { ScopesSelectorServiceState } from './ScopesSelectorService';
+import { type ScopesSelectorServiceState } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
+import { useRecentScopes } from './useRecentScopes';
 
 export const ScopesSelector = () => {
   const styles = useStyles2(getStyles);
@@ -25,6 +26,10 @@ export const ScopesSelector = () => {
     services?.scopesSelectorService.stateObservable ?? new Observable(),
     services?.scopesSelectorService.state
   );
+
+  // Must be called before any conditional returns (rules of hooks)
+  const appliedScopeIds = selectorServiceState?.appliedScopes.map((s) => s.scopeId) ?? [];
+  const recentScopes = useRecentScopes(appliedScopeIds);
 
   // Keyboard shortcut for closing and applying
   useEffect(() => {
@@ -56,9 +61,7 @@ export const ScopesSelector = () => {
   } = selectorServiceState;
   const { scopesService, scopesSelectorService } = services;
   const { readOnly, loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset, getRecentScopes } = scopesSelectorService;
-
-  const recentScopes = getRecentScopes();
+  const { open, removeAllScopes, closeAndApply, closeAndReset } = scopesSelectorService;
 
   return (
     <>
@@ -102,8 +105,8 @@ export const ScopesSelector = () => {
                           recentScopes={recentScopes}
                           selectedScopes={selectedScopes}
                           scopeNodes={nodes}
-                          onRecentScopesSelect={(scopeIds: string[], parentNodeId?: string, scopeNodeId?: string) => {
-                            scopesSelectorService.changeScopes(scopeIds, parentNodeId, scopeNodeId);
+                          onRecentScopesSelect={(scopeIds: string[], scopeNodeId?: string) => {
+                            scopesSelectorService.changeScopes(scopeIds, undefined, scopeNodeId);
                             scopesSelectorService.closeAndReset();
                           }}
                         />

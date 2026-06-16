@@ -1,20 +1,19 @@
 import { css } from '@emotion/css';
-import { SyntheticEvent } from 'react';
+import { type SyntheticEvent } from 'react';
 
 import {
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
+  type DataSourcePluginOptionsEditorProps,
+  type GrafanaTheme2,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
-  SelectableValue,
+  type SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
-import { NumberInput } from '@grafana/sql/src/components/configuration/NumberInput';
+import { ConnectionLimits, NumberInput, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Alert,
   FieldSet,
@@ -33,9 +32,9 @@ import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {
   MSSQLAuthenticationType,
   MSSQLEncryptOptions,
-  MssqlOptions,
-  AzureAuthConfigType,
-  MssqlSecureOptions,
+  type MssqlOptions,
+  type AzureAuthConfigType,
+  type MssqlSecureOptions,
 } from '../types';
 
 import { KerberosConfig, KerberosAdvancedSettings, UsernameMessage } from './Kerberos';

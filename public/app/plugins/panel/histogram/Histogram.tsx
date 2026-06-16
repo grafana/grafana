@@ -1,20 +1,26 @@
 import * as React from 'react';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { type AlignedData } from 'uplot';
 
 import {
-  DataFrame,
+  type DataFrame,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldSeriesColor,
-  GrafanaTheme2,
+  type GrafanaTheme2,
   roundDecimals,
   histogramBucketSizes,
   histogramFrameBucketMaxFieldName,
 } from '@grafana/data';
-import { VizLegendOptions, ScaleDistribution, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
 import {
-  Themeable2,
+  type VizLegendOptions,
+  ScaleDistribution,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+} from '@grafana/schema';
+import {
+  type Themeable2,
   UPlotConfigBuilder,
   UPlotChart,
   VizLayout,
@@ -24,7 +30,7 @@ import {
 } from '@grafana/ui';
 import { getStackingGroups, preparePlotData2 } from '@grafana/ui/internal';
 
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
+import { defaultFieldConfig, type FieldConfig, type Options } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -54,7 +60,7 @@ export function getBucketSize(frame: DataFrame) {
     : roundDecimals(frame.fields[1].values[0] - frame.fields[0].values[0], 9);
 }
 
-export function getBucketSize1(frame: DataFrame) {
+function getBucketSize1(frame: DataFrame) {
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
   return frame.fields[0].type === FieldType.string
     ? 1

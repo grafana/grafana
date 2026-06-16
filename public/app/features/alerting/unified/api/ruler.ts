@@ -1,9 +1,9 @@
 import { lastValueFrom } from 'rxjs';
 
 import { isObject } from '@grafana/data';
-import { FetchResponse, getBackendSrv } from '@grafana/runtime';
-import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { type FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { type RulerDataSourceConfig } from 'app/types/unified-alerting';
+import { type RulerRuleGroupDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { containsPathSeparator } from '../components/rule-editor/util';
 import { RULER_NOT_SUPPORTED_MSG } from '../utils/constants';
@@ -23,12 +23,16 @@ export interface RulerRequestUrl {
 
 const QUERY_NAMESPACE_TAG = 'QUERY_NAMESPACE';
 const QUERY_GROUP_TAG = 'QUERY_GROUP';
+export const RULER_CONFIG_API_PROBE_NAMESPACE = '__grafana_alerting_ruler_probe__';
+export const RULER_CONFIG_API_PROBE_GROUP = '__grafana_alerting_ruler_probe__';
+
+export type RulerApiSubtype = 'cortex' | 'mimir';
 
 export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
   const rulerPath = getRulerPath(rulerConfig);
   const queryDetailsProvider = getQueryDetailsProvider(rulerConfig);
 
-  const subtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
+  const subtype: RulerApiSubtype = rulerConfig.apiVersion === 'legacy' ? 'cortex' : 'mimir';
 
   return {
     rules: (filter?: FetchRulerRulesFilter): RulerRequestUrl => ({
@@ -134,20 +138,20 @@ export async function fetchRulerRules(rulerConfig: RulerDataSourceConfig, filter
   return rulerGetRequest<RulerRulesConfigDTO>(url, {}, params);
 }
 
-// fetch rule groups for a particular namespace
-// will throw with { status: 404 } if namespace does not exist
-export async function fetchRulerRulesNamespace(rulerConfig: RulerDataSourceConfig, namespace: string) {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
-  const result = await rulerGetRequest<Record<string, RulerRuleGroupDTO[]>>(path, {}, params);
-  return result[namespace] || [];
-}
-
 // fetch a particular rule group
 // will throw with { status: 404 } if rule group does not exist
-export async function fetchTestRulerRulesGroup(dataSourceName: string): Promise<RulerRuleGroupDTO | null> {
+export async function fetchTestRulerRulesGroup(
+  dataSourceName: string,
+  subtype?: RulerApiSubtype
+): Promise<RulerRuleGroupDTO | null> {
+  const params = subtype ? { subtype } : undefined;
+  const namespace = encodeURIComponent(RULER_CONFIG_API_PROBE_NAMESPACE);
+  const group = encodeURIComponent(RULER_CONFIG_API_PROBE_GROUP);
+
   return rulerGetRequest<RulerRuleGroupDTO | null>(
-    `/api/ruler/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules/test/test`,
-    null
+    `/api/ruler/${getDatasourceAPIUid(dataSourceName)}/api/v1/rules/${namespace}/${group}`,
+    null,
+    params
   );
 }
 

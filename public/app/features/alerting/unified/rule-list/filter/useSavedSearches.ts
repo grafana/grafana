@@ -1,12 +1,12 @@
 import {
-  UseGenericSavedSearchesResult,
+  type UseGenericSavedSearchesResult,
   createAppliedTracker,
   createAutoApplyTracker,
   createDefaultLoader,
   useGenericSavedSearches,
 } from '../../hooks/useGenericSavedSearches';
 
-export const RULES_SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
+const RULES_SAVED_SEARCHES_STORAGE_KEY = 'savedSearches';
 
 export interface UseSavedSearchesResult extends UseGenericSavedSearchesResult {}
 

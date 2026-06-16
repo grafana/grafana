@@ -1,7 +1,7 @@
 import { each } from 'lodash';
 
 import * as dateMath from './datemath';
-import { dateTime, DurationUnit, DateTime } from './moment_wrapper';
+import { dateTime, type DurationUnit, type DateTime } from './moment_wrapper';
 
 describe('DateMath', () => {
   const spans: DurationUnit[] = ['s', 'm', 'h', 'd', 'w', 'M', 'y'];
@@ -171,6 +171,7 @@ describe('DateMath', () => {
       ['-2d-1d', [2014, 1, 5], [2014, 1, 2]],
       ['-1h-30m', [2014, 1, 5, 12, 0], [2014, 1, 5, 10, 30]],
       ['-1d-1h-30m', [2014, 1, 5, 12, 0], [2014, 1, 4, 10, 30]],
+      ['-0d+8h+30m+30s', [2014, 1, 5, 12, 0], [2014, 1, 5, 20, 30, 30]],
       ['+1d-6h', [2014, 1, 5], [2014, 1, 5, 18]],
       ['-1w-1d', [2014, 1, 14], [2014, 1, 6]],
       ['-1w/w', [2014, 1, 21], [2014, 1, 9]],
@@ -181,6 +182,16 @@ describe('DateMath', () => {
 
     it('should return false when invalid expression', () => {
       const date = dateMath.parseDateMath('2', dateTime([2014, 1, 5]));
+      expect(date).toEqual(undefined);
+    });
+
+    it('should return false when numeric token is too large', () => {
+      const date = dateMath.parseDateMath('-12345678901h', dateTime([2014, 1, 5]));
+      expect(date).toEqual(undefined);
+    });
+
+    it('should return false when a complex expression has an oversized token', () => {
+      const date = dateMath.parseDateMath('-1d+12345678901h', dateTime([2014, 1, 5]));
       expect(date).toEqual(undefined);
     });
 

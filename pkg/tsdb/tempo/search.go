@@ -241,25 +241,28 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.
 
 		nestedFrames := []json.RawMessage{}
 
+		// Collect the union of dynamic-attribute fields across every span set on this
+		// trace before building any subframe. Consumers like the Table visualization
+		// require every frame nested under one cell to share the same schema, so each
+		// subframe must declare the same fields in the same order even when individual
+		// span sets only carry a subset of those attributes.
+		var spanSets []*tempopb.SpanSet
 		if trace.SpanSet != nil {
-			subFrame := transformTraceSearchResponseSubFrame(trace, trace.SpanSet, pCtx)
+			spanSets = []*tempopb.SpanSet{trace.SpanSet}
+		} else if len(trace.SpanSets) > 0 {
+			spanSets = trace.SpanSets
+		}
+
+		spanDynamicAttributes, spanAttributeNames, hasNameAttribute := collectSpanSetsSchema(spanSets)
+
+		for _, spanSet := range spanSets {
+			subFrame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx, spanAttributeNames, spanDynamicAttributes, hasNameAttribute)
 			subFrameJSON, err := json.Marshal(subFrame)
 			if err != nil {
 				backend.Logger.Error("Failed to marshal subFrame", "error", err)
 				nestedFrames = append(nestedFrames, json.RawMessage("{}"))
 			} else {
 				nestedFrames = append(nestedFrames, json.RawMessage(subFrameJSON))
-			}
-		} else if len(trace.SpanSets) > 0 {
-			for _, spanSet := range trace.SpanSets {
-				subFrame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx)
-				subFrameJSON, err := json.Marshal(subFrame)
-				if err != nil {
-					backend.Logger.Error("Failed to marshal subFrame", "error", err)
-					nestedFrames = append(nestedFrames, json.RawMessage("{}"))
-				} else {
-					nestedFrames = append(nestedFrames, json.RawMessage(subFrameJSON))
-				}
 			}
 		}
 
@@ -277,27 +280,34 @@ func transformTraceSearchResponse(pCtx backend.PluginContext, response *tempopb.
 	return []*data.Frame{tracesFrame}, nil
 }
 
-func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, spanSet *tempopb.SpanSet, pCtx backend.PluginContext) *data.Frame {
+// collectSpanSetsSchema walks every span set (and every span within them) and
+// returns the union of dynamic-attribute fields keyed by attribute name, the
+// stable sorted list of those names, and whether any span carries a name. The
+// caller passes this back into transformTraceSearchResponseSubFrame so every
+// subframe nested under a single trace row exposes the same fields in the same
+// order — required for the Table visualization's nestedFrames contract.
+func collectSpanSetsSchema(spanSets []*tempopb.SpanSet) (map[string]*DataFrameField, []string, bool) {
 	spanDynamicAttributes := make(map[string]*DataFrameField)
 	hasNameAttribute := false
 
-	for _, attribute := range spanSet.Attributes {
-		spanDynamicAttributes[attribute.Key] = &DataFrameField{
-			Name:   attribute.Key,
-			Type:   getTypeForAttribute(attribute),
-			Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
-		}
-	}
-
-	for _, span := range spanSet.Spans {
-		if span.Name != "" {
-			hasNameAttribute = true
-		}
-		for _, attribute := range span.Attributes {
+	for _, spanSet := range spanSets {
+		for _, attribute := range spanSet.Attributes {
 			spanDynamicAttributes[attribute.Key] = &DataFrameField{
 				Name:   attribute.Key,
 				Type:   getTypeForAttribute(attribute),
 				Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+			}
+		}
+		for _, span := range spanSet.Spans {
+			if span.Name != "" {
+				hasNameAttribute = true
+			}
+			for _, attribute := range span.Attributes {
+				spanDynamicAttributes[attribute.Key] = &DataFrameField{
+					Name:   attribute.Key,
+					Type:   getTypeForAttribute(attribute),
+					Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
+				}
 			}
 		}
 	}
@@ -308,6 +318,17 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 	}
 	sort.Strings(spanAttributeNames)
 
+	return spanDynamicAttributes, spanAttributeNames, hasNameAttribute
+}
+
+func transformTraceSearchResponseSubFrame(
+	trace *tempopb.TraceSearchMetadata,
+	spanSet *tempopb.SpanSet,
+	pCtx backend.PluginContext,
+	spanAttributeNames []string,
+	spanDynamicAttributes map[string]*DataFrameField,
+	hasNameAttribute bool,
+) *data.Frame {
 	frame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
 	frame.Fields = append(frame.Fields, data.NewField("traceIdHidden", nil, []string{}).SetConfig(&data.FieldConfig{
@@ -377,40 +398,16 @@ func transformTraceSearchResponseSubFrame(trace *tempopb.TraceSearchMetadata, sp
 }
 
 func transformSpanSearchResponse(pCtx backend.PluginContext, response *tempopb.SearchResponse) ([]*data.Frame, error) {
-	spanDynamicAttributes := make(map[string]*DataFrameField)
-	hasNameAttribute := false
-
+	// Aggregate every span set across every trace into one flat list so the schema
+	// is the union over the whole response — a single Spans frame must declare one
+	// stable set of dynamic-attribute columns for all rows it emits below.
+	var allSpanSets []*tempopb.SpanSet
 	if response != nil {
 		for _, trace := range response.Traces {
-			for _, spanSet := range trace.SpanSets {
-				for _, attribute := range spanSet.Attributes {
-					spanDynamicAttributes[attribute.Key] = &DataFrameField{
-						Name:   attribute.Key,
-						Type:   getTypeForAttribute(attribute),
-						Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
-					}
-				}
-				for _, span := range spanSet.Spans {
-					if span.Name != "" {
-						hasNameAttribute = true
-					}
-					for _, attribute := range span.Attributes {
-						spanDynamicAttributes[attribute.Key] = &DataFrameField{
-							Name:   attribute.Key,
-							Type:   getTypeForAttribute(attribute),
-							Config: data.FieldConfig{DisplayNameFromDS: attribute.Key},
-						}
-					}
-				}
-			}
+			allSpanSets = append(allSpanSets, trace.SpanSets...)
 		}
 	}
-
-	spanAttributeNames := make([]string, 0, len(spanDynamicAttributes))
-	for name := range spanDynamicAttributes {
-		spanAttributeNames = append(spanAttributeNames, name)
-	}
-	sort.Strings(spanAttributeNames)
+	spanDynamicAttributes, spanAttributeNames, hasNameAttribute := collectSpanSetsSchema(allSpanSets)
 
 	spansFrame := data.NewFrame("Spans")
 	panelsState := data.ExplorePanelsState(map[string]interface{}{"trace": map[string]interface{}{"spanId": "${__value.raw}"}})
@@ -539,8 +536,10 @@ func transformSpanToTraceData(span *tempopb.Span, spanSet *tempopb.SpanSet, trac
 			val := attribute.Value.GetStringValue()
 			attributes[attribute.Key] = &val
 		case *v1.AnyValue_IntValue:
-			val := attribute.Value.GetIntValue()
-			attributes[attribute.Key] = &val
+			// Use float64 for int tags so dynamic columns stay consistent when the same key
+			// appears as IntValue on some spans and DoubleValue on others (see getTypeForAttribute).
+			v := float64(attribute.Value.GetIntValue())
+			attributes[attribute.Key] = &v
 		case *v1.AnyValue_DoubleValue:
 			val := attribute.Value.GetDoubleValue()
 			attributes[attribute.Key] = &val
@@ -571,7 +570,9 @@ func getTypeForAttribute(attribute *v1.KeyValue) interface{} {
 	case *v1.AnyValue_StringValue:
 		return []*string{}
 	case *v1.AnyValue_IntValue:
-		return []*int64{}
+		// Match transformSpanToTraceData: ints are stored as *float64 so one column can
+		// hold both OTLP integer and double values for the same attribute key.
+		return []*float64{}
 	case *v1.AnyValue_DoubleValue:
 		return []*float64{}
 	case *v1.AnyValue_BoolValue:

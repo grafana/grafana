@@ -2,6 +2,7 @@ name: Check Frontend Test Coverage
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths:
       - '**/*.js'
@@ -16,6 +17,7 @@ permissions: {}
 jobs:
   setup:
     name: Setup opted-in teams
+    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     outputs:
       # NOTE: Only checks test coverage for opted-in codeowners.
@@ -25,7 +27,8 @@ jobs:
         [
           "@grafana/datapro",
           "@grafana/dataviz-squad",
-          "@grafana/grafana-operator-experience-squad"
+          "@grafana/grafana-operator-experience-squad",
+          "@grafana/grafana-frontend-navigation"
         ]
     steps:
       - name: Define opted-in teams
@@ -33,20 +36,32 @@ jobs:
 
   detect-changes:
     name: Detect changed files
+    if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-x64-small
     permissions:
       contents: read
     outputs:
       changed-files: ${{ steps.changed-files.outputs.all_changed_files }}
+      main-sha: ${{ steps.get-main-sha.outputs.sha }}
     steps:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true
-          fetch-depth: 2
+          fetch-depth: 0
+
+      - name: Get main SHA
+        id: get-main-sha
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "$BASE_REF"
+          MAIN_SHA=$(git rev-parse "origin/$BASE_REF")
+          echo "sha=$MAIN_SHA" >> "$GITHUB_OUTPUT"
+          echo "Main branch SHA: $MAIN_SHA"
 
       - name: Detect changed files
         id: changed-files
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
         with:
           separator: ' '
 
@@ -69,23 +84,15 @@ jobs:
       matrix:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
     steps:
-      - name: Get Vault secrets
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate GitHub App token
+      - name: Get GitHub App token
         id: generate_token
-        uses: actions/create-github-app-token@v1
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - name: Delete coverage comment for ${{ matrix.codeowner }}
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
+        if: steps.generate_token.outcome == 'success'
         with:
           header: coverage-report-${{ matrix.codeowner }}
           delete: true
@@ -100,20 +107,11 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - name: Get Vault secrets
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate GitHub App token
+      - name: Get GitHub App token
         id: generate_token
-        uses: actions/create-github-app-token@v1
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - name: Generate skip message
         id: skip-message
@@ -148,20 +146,11 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - name: Get Vault secrets
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate GitHub App token
+      - name: Get GitHub App token
         id: generate_token
-        uses: actions/create-github-app-token@v1
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          github_app: grafana-pr-automation
 
       - name: Delete skip warning comment
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2.9.4
@@ -171,91 +160,10 @@ jobs:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
   coverage:
-    name: Coverage ${{ matrix.branch }} - ${{ matrix.codeowner }}
+    name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
+    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') && github.event.pull_request.head.repo.fork == false"
     runs-on: ubuntu-x64-large
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
-        branch: [pr, main]
-    steps:
-      - name: Checkout PR branch
-        uses: actions/checkout@v5
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js for manifest generation
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies for manifest generation
-        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
-
-      - name: Generate codeowners manifest
-        run: yarn codeowners-manifest
-
-      - name: Check if codeowner affected by changes
-        id: check-affected
-        run: |
-          AFFECTED=$(node scripts/check-codeowner-affected.js "${{ matrix.codeowner }}" "${{ needs.detect-changes.outputs.changed-files }}")
-          echo "affected=$AFFECTED" >> "$GITHUB_OUTPUT"
-          echo "Codeowner ${{ matrix.codeowner }} affected: $AFFECTED"
-
-      - name: Checkout target branch
-        if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ matrix.branch == 'main' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
-          persist-credentials: false
-
-      - name: Setup Node.js
-        if: steps.check-affected.outputs.affected == 'true'
-        uses: ./.github/actions/setup-node
-
-      - name: Install dependencies
-        if: steps.check-affected.outputs.affected == 'true'
-        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
-
-      - name: Get codeowner slug
-        if: steps.check-affected.outputs.affected == 'true'
-        id: codeowner-slug
-        run: |
-          SLUG=$(node -e "
-            const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
-            console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
-          ")
-          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
-
-      - name: Run coverage for ${{ matrix.codeowner }}
-        if: steps.check-affected.outputs.affected == 'true'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
-        env:
-          SHOULD_OPEN_COVERAGE_REPORT: 'false'
-          CI: 'true'
-          GITHUB_SHA: ${{ matrix.branch == 'main' && github.event.pull_request.base.sha || github.event.pull_request.head.sha }}
-
-      - name: Upload coverage summary
-        if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/upload-artifact@v5
-        with:
-          name: coverage-${{ matrix.branch }}-${{ steps.codeowner-slug.outputs.slug }}
-          path: coverage-summary.json
-          retention-days: 1
-
-  compare-and-report:
-    name: Compare & Report - ${{ matrix.codeowner }}
-    needs: [setup, detect-changes, coverage]
-    if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
-    runs-on: ubuntu-x64-small
     permissions:
       contents: read
       pull-requests: write
@@ -265,45 +173,39 @@ jobs:
       matrix:
         codeowner: ${{ fromJSON(needs.setup.outputs.opted-in-teams) }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout PR branch
+        uses: actions/checkout@v5
         with:
+          path: './pr'
           persist-credentials: false
 
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
+      - name: Setup Node.js for manifest generation
+        uses: ./pr/.github/actions/setup-node
+        with:
+          cwd: './pr'
 
-      - name: Install dependencies for manifest and comparison
-        run: yarn install --immutable # TODO: switch to ./.github/actions/yarn-install for better caching
-        env:
-          PUPPETEER_SKIP_DOWNLOAD: true
-          CYPRESS_INSTALL_BINARY: 0
+      - name: Install dependencies for manifest generation
+        uses: ./pr/.github/actions/yarn-install
+        with:
+          cwd: './pr'
 
       - name: Generate codeowners manifest
+        working-directory: './pr'
         run: yarn codeowners-manifest
-
-      - name: Get Vault secrets
-        if: github.event.pull_request.head.repo.fork == false
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            GITHUB_APP_ID=grafana_pr_automation_app:app_id
-            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
-
-      - name: Generate GitHub App token
-        if: github.event.pull_request.head.repo.fork == false
-        id: generate_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
       - name: Check if codeowner affected by changes
         id: check-affected
+        working-directory: './pr'
         run: |
           AFFECTED=$(node scripts/check-codeowner-affected.js "${{ matrix.codeowner }}" "${{ needs.detect-changes.outputs.changed-files }}")
           echo "affected=$AFFECTED" >> "$GITHUB_OUTPUT"
           echo "Codeowner ${{ matrix.codeowner }} affected: $AFFECTED"
+
+      - name: Get GitHub App token
+        id: generate_token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
 
       - name: Delete old coverage comment if not affected
         if: steps.check-affected.outputs.affected == 'false' && github.event.pull_request.head.repo.fork == false
@@ -313,36 +215,86 @@ jobs:
           delete: true
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-      - name: Get codeowner slug
+      - name: Checkout main branch
         if: steps.check-affected.outputs.affected == 'true'
-        id: codeowner-slug
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.detect-changes.outputs.main-sha }}
+          path: './main'
+          persist-credentials: false
+
+      - name: Setup Node.js for main branch
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: ./pr/.github/actions/setup-node
+        with:
+          cwd: './main'
+
+      - name: Install dependencies for main branch
+        if: steps.check-affected.outputs.affected == 'true'
+        uses: ./pr/.github/actions/yarn-install
+        with:
+          cwd: './main'
+
+      - name: Run coverage for main branch
+        if: steps.check-affected.outputs.affected == 'true'
+        working-directory: './main'
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+          GITHUB_SHA: ${{ needs.detect-changes.outputs.main-sha }}
+
+      - name: Save main coverage summary
+        if: steps.check-affected.outputs.affected == 'true'
+        run: mkdir -p ./coverage-main && cp ./main/coverage-summary.json ./coverage-main/coverage-summary.json
+
+      - name: Run coverage for PR branch
+        if: steps.check-affected.outputs.affected == 'true'
+        working-directory: './pr'
+        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        env:
+          SHOULD_OPEN_COVERAGE_REPORT: 'false'
+          CI: 'true'
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha }}
+
+      - name: Save PR coverage summary
+        if: steps.check-affected.outputs.affected == 'true'
+        run: mkdir -p ./coverage-pr && cp ./pr/coverage-summary.json ./coverage-pr/coverage-summary.json
+
+      - name: Get codeowner coverage directory slug
+        if: steps.check-affected.outputs.affected == 'true'
+        id: coverage-dir
         run: |
           SLUG=$(node -e "
-            const { createCodeownerSlug } = require('./scripts/codeowners-manifest/utils.js');
+            const {createCodeownerSlug} = require('./pr/scripts/codeowners-manifest/utils.js');
             console.log(createCodeownerSlug('${{ matrix.codeowner }}'));
           ")
-          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+          echo "slug=${SLUG}" >> "$GITHUB_OUTPUT"
+          PATH=$(node -e "
+            const {buildCodeownerDirectoryPath} = require('./pr/scripts/codeowners-manifest/utils.js');
+            console.log(buildCodeownerDirectoryPath('${{ matrix.codeowner }}'));
+          ")
+          echo "path=${PATH}" >> "$GITHUB_OUTPUT"
 
-      - name: Download PR coverage
+      - name: Upload PR HTML coverage report
         if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/download-artifact@v6
+        id: upload-coverage
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage-pr-${{ steps.codeowner-slug.outputs.slug }}
-          path: ./coverage-pr
-
-      - name: Download main coverage
-        if: steps.check-affected.outputs.affected == 'true'
-        uses: actions/download-artifact@v6
-        with:
-          name: coverage-main-${{ steps.codeowner-slug.outputs.slug }}
-          path: ./coverage-main
+          name: frontend-coverage-${{ steps.coverage-dir.outputs.slug }}
+          path: ./pr/coverage/by-team/${{ steps.coverage-dir.outputs.path }}/html
+          retention-days: 7
 
       - name: Compare coverage
         if: steps.check-affected.outputs.affected == 'true'
         id: compare
+        env:
+          COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
-          # Run comparison and capture exit code
-          if node scripts/compare-coverage-by-codeowner.js; then
+          # Run comparison from workspace root where coverage-main/ and coverage-pr/ live
+          if node ./pr/scripts/compare-coverage-by-codeowner.js; then
             echo "passed=true" >> "$GITHUB_OUTPUT"
           else
             echo "passed=false" >> "$GITHUB_OUTPUT"
@@ -371,14 +323,17 @@ jobs:
 
   all-coverage-checks-pass:
     name: All coverage checks pass
-    needs: [setup, compare-and-report]
+    needs: [setup, coverage]
     if: always()
     runs-on: ubuntu-x64-small
     steps:
       - name: Check if skipped
         id: check-skip
         run: |
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
+          if [[ "${{ github.event.pull_request.head.repo.fork }}" == "true" ]]; then
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            echo "⏭️ Coverage checks skipped for fork PR"
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage') }}" == "true" ]]; then
             echo "skipped=true" >> "$GITHUB_OUTPUT"
             echo "✅ Coverage checks skipped due to 'no-check-frontend-test-coverage' label"
           else
@@ -389,7 +344,7 @@ jobs:
       - name: Verify all checks passed
         if: steps.check-skip.outputs.skipped == 'false'
         run: |
-          if [[ "${{ needs.compare-and-report.result }}" != "success" ]]; then
+          if [[ "${{ needs.coverage.result }}" != "success" ]]; then
             echo "❌ Coverage checks failed for one or more teams"
             exit 1
           fi

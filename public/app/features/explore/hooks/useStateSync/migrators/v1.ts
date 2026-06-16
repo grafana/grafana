@@ -1,11 +1,11 @@
-import { ExploreUrlState } from '@grafana/data';
+import { type ExploreUrlState } from '@grafana/data';
 import { ID_ALPHABET, generateExploreId } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/constants';
 
 import { hasKey } from '../../utils';
 
-import { BaseExploreURL, MigrationHandler } from './types';
-import { ExploreURLV0 } from './v0';
+import { type BaseExploreURL, type MigrationHandler } from './types';
+import { type ExploreURLV0 } from './v0';
 
 export interface ExploreURLV1 extends BaseExploreURL {
   schemaVersion: 1;

@@ -6,29 +6,29 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestGetTemplates(t *testing.T) {
 	orgID := int64(1)
 	revision := &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			TemplateFiles: map[string]string{
+		Config: &v1.AMConfigV1{
+			Templates: generateTemplates(map[string]string{
 				"template1": "test1",
 				"template2": "test2",
 				"template3": "test3",
-			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			}, v1.TemplateKindGrafana),
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
 					Identifier: "1234",
 					TemplateFiles: map[string]string{
@@ -54,30 +54,30 @@ func TestGetTemplates(t *testing.T) {
 		result, err := sut.GetTemplates(context.Background(), orgID)
 		require.NoError(t, err)
 
-		expected := []definitions.NotificationTemplate{
-			newNotificationTemplate(
+		expected := []v1.TemplateGroup{
+			v1.NewTemplateGroup(
 				"template1",
 				"test1",
+				v1.TemplateKindGrafana,
 				models.ProvenanceAPI,
-				definition.GrafanaTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template2",
 				"test2",
+				v1.TemplateKindGrafana,
 				models.ProvenanceFile,
-				definition.GrafanaTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template3",
 				"test3",
+				v1.TemplateKindGrafana,
 				models.ProvenanceNone,
-				definition.GrafanaTemplateKind,
 			),
 		}
 
 		require.EqualValues(t, expected, result)
 
-		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&v1.TemplateGroup{}).ResourceType())
 		prov.AssertExpectations(t)
 	})
 
@@ -85,7 +85,7 @@ func TestGetTemplates(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{},
+				Config: &v1.AMConfigV1{},
 			}, nil
 		}
 
@@ -111,42 +111,42 @@ func TestGetTemplates(t *testing.T) {
 		result, err := sut.GetTemplates(context.Background(), orgID)
 		require.NoError(t, err)
 
-		expected := []definitions.NotificationTemplate{
-			newNotificationTemplate(
+		expected := []v1.TemplateGroup{
+			v1.NewTemplateGroup(
 				"template1",
 				"test1",
+				v1.TemplateKindGrafana,
 				models.ProvenanceAPI,
-				definition.GrafanaTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template2",
 				"test2",
+				v1.TemplateKindGrafana,
 				models.ProvenanceFile,
-				definition.GrafanaTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template3",
 				"test3",
+				v1.TemplateKindGrafana,
 				models.ProvenanceNone,
-				definition.GrafanaTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template1",
 				"imported-test1",
+				v1.TemplateKindMimir,
 				models.ProvenanceConvertedPrometheus,
-				definition.MimirTemplateKind,
 			),
-			newNotificationTemplate(
+			v1.NewTemplateGroup(
 				"template4",
 				"imported-test4",
+				v1.TemplateKindMimir,
 				models.ProvenanceConvertedPrometheus,
-				definition.MimirTemplateKind,
 			),
 		}
 
 		require.EqualValues(t, expected, result)
 
-		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&definitions.NotificationTemplate{}).ResourceType())
+		prov.AssertCalled(t, "GetProvenances", mock.Anything, orgID, (&v1.TemplateGroup{}).ResourceType())
 		prov.AssertExpectations(t)
 	})
 
@@ -191,11 +191,11 @@ func TestGetTemplate(t *testing.T) {
 	importedTemplateName := "template2"
 	importedTemplateContent := "imported"
 	revision := &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			TemplateFiles: map[string]string{
+		Config: &v1.AMConfigV1{
+			Templates: generateTemplates(map[string]string{
 				templateName: templateContent,
-			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			}, v1.TemplateKindGrafana),
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
 					Identifier: "1234",
 					TemplateFiles: map[string]string{
@@ -217,17 +217,17 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.GetTemplate(context.Background(), orgID, templateName)
 		require.NoError(t, err)
 
-		expected := newNotificationTemplate(
+		expected := v1.NewTemplateGroup(
 			templateName,
 			templateContent,
+			v1.TemplateKindGrafana,
 			models.ProvenanceAPI,
-			definition.GrafanaTemplateKind,
 		)
 
 		require.Equal(t, expected, result)
 
-		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-			return t.Name == expected.Name
+		prov.AssertCalled(t, "GetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == expected.Title
 		}), orgID)
 		prov.AssertExpectations(t)
 	})
@@ -250,14 +250,14 @@ func TestGetTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		result, err := sut.GetTemplate(context.Background(), orgID, templateUID(definition.GrafanaTemplateKind, templateName))
+		result, err := sut.GetTemplate(context.Background(), orgID, string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)))
 		require.NoError(t, err)
 
-		expected := newNotificationTemplate(
+		expected := v1.NewTemplateGroup(
 			templateName,
 			templateContent,
+			v1.TemplateKindGrafana,
 			models.ProvenanceNone,
-			definition.GrafanaTemplateKind,
 		)
 		require.Equal(t, expected, result)
 	})
@@ -269,7 +269,7 @@ func TestGetTemplate(t *testing.T) {
 			return revision, nil
 		}
 
-		uid := templateUID(definition.MimirTemplateKind, importedTemplateName)
+		uid := string(v1.TemplateUID(v1.TemplateKindMimir, importedTemplateName))
 		t.Run("should be not found without flag enabled", func(t *testing.T) {
 			_, err := sut.GetTemplate(context.Background(), orgID, uid)
 			require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -278,11 +278,11 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.WithIncludeImported().GetTemplate(context.Background(), orgID, uid)
 		require.NoError(t, err)
 
-		expected := newNotificationTemplate(
+		expected := v1.NewTemplateGroup(
 			importedTemplateName,
 			importedTemplateContent,
+			v1.TemplateKindMimir,
 			models.ProvenanceConvertedPrometheus,
-			definition.MimirTemplateKind,
 		)
 		require.Equal(t, expected, result)
 		prov.AssertExpectations(t)
@@ -335,11 +335,12 @@ func TestUpsertTemplate(t *testing.T) {
 	templateName := "template1"
 	currentTemplateContent := "test1"
 	amConfigToken := util.GenerateShortUID()
+	currentTemplate := v1.NewTemplateGroup(templateName, currentTemplateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
-				TemplateFiles: map[string]string{
-					templateName: currentTemplateContent,
+			Config: &v1.AMConfigV1{
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					currentTemplate.UID: currentTemplate,
 				},
 			},
 			ConcurrencyToken: amConfigToken,
@@ -351,7 +352,7 @@ func TestUpsertTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config:           &definitions.PostableUserConfig{},
+				Config:           &v1.AMConfigV1{},
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
@@ -363,22 +364,24 @@ func TestUpsertTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
-		tmpl := definitions.NotificationTemplate{
-			Name:            "new-template",
-			Template:        "{{ define \"test\"}} test {{ end }}",
-			Provenance:      definitions.Provenance(models.ProvenanceAPI),
-			ResourceVersion: "",
-			Kind:            definition.GrafanaTemplateKind,
+		tmpl := v1.TemplateGroup{
+			Title:   "new-template",
+			Content: "{{ define \"test\"}} test {{ end }}",
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: models.ProvenanceAPI,
+				Version:    "",
+			},
+			Kind: v1.TemplateKindGrafana,
 		}
 
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, newNotificationTemplate(
-			tmpl.Name,
-			tmpl.Template,
-			models.Provenance(tmpl.Provenance),
+		require.Equal(t, v1.NewTemplateGroup(
+			tmpl.Title,
+			tmpl.Content,
 			tmpl.Kind,
+			tmpl.Provenance,
 		), result)
 
 		require.Len(t, store.Calls, 2)
@@ -386,11 +389,11 @@ func TestUpsertTemplate(t *testing.T) {
 		require.Equal(t, "Save", store.Calls[1].Method)
 		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-		assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-		assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+		assert.Contains(t, saved.Config.Templates, result.UID)
+		assert.Equal(t, result, saved.Config.Templates[result.UID])
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-			return t.Name == tmpl.Name
+		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == tmpl.Title
 		}), orgID, models.ProvenanceAPI)
 	})
 
@@ -405,30 +408,32 @@ func TestUpsertTemplate(t *testing.T) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
-			tmpl := definitions.NotificationTemplate{
-				Name:            templateName,
-				Template:        "{{ define \"test\"}} test {{ end }}",
-				Provenance:      definitions.Provenance(models.ProvenanceAPI),
-				ResourceVersion: calculateTemplateFingerprint("test1"),
-				Kind:            definition.GrafanaTemplateKind,
+			tmpl := v1.TemplateGroup{
+				Title:   templateName,
+				Content: "{{ define \"test\"}} test {{ end }}",
+				ResourceMetadata: v1.ResourceMetadata{
+					Provenance: models.ProvenanceAPI,
+					Version:    currentTemplate.Version,
+				},
+				Kind: v1.TemplateKindGrafana,
 			}
 
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, newNotificationTemplate(
-				tmpl.Name,
-				tmpl.Template,
-				models.Provenance(tmpl.Provenance),
+			assert.Equal(t, v1.NewTemplateGroup(
+				tmpl.Title,
+				tmpl.Content,
 				tmpl.Kind,
+				tmpl.Provenance,
 			), result)
 
 			require.Len(t, store.Calls, 2)
 			require.Equal(t, "Save", store.Calls[1].Method)
 			saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 			assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-			assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-			assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+			assert.Contains(t, saved.Config.Templates, result.UID)
+			assert.Equal(t, result, saved.Config.Templates[result.UID])
 
 			prov.AssertExpectations(t)
 		})
@@ -442,28 +447,30 @@ func TestUpsertTemplate(t *testing.T) {
 				assertInTransaction(t, ctx)
 			}).Return(nil)
 
-			tmpl := definitions.NotificationTemplate{
-				Name:            templateName,
-				Template:        "{{ define \"test\"}} test {{ end }}",
-				Provenance:      definitions.Provenance(models.ProvenanceAPI),
-				ResourceVersion: "",
+			tmpl := v1.TemplateGroup{
+				Title:   templateName,
+				Content: "{{ define \"test\"}} test {{ end }}",
+				ResourceMetadata: v1.ResourceMetadata{
+					Provenance: models.ProvenanceAPI,
+					Version:    "",
+				},
 			}
 
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 			require.NoError(t, err)
-			assert.Equal(t, newNotificationTemplate(
-				tmpl.Name,
-				tmpl.Template,
-				models.Provenance(tmpl.Provenance),
-				definition.GrafanaTemplateKind,
+			assert.Equal(t, v1.NewTemplateGroup(
+				tmpl.Title,
+				tmpl.Content,
+				v1.TemplateKindGrafana,
+				tmpl.Provenance,
 			), result)
 
 			require.Equal(t, "Save", store.Calls[1].Method)
 			saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 			assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-			assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-			assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+			assert.Contains(t, saved.Config.Templates, result.UID)
+			assert.Equal(t, result, saved.Config.Templates[result.UID])
 		})
 	})
 
@@ -476,22 +483,24 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 		prov.EXPECT().SaveSucceeds()
 
-		tmpl := definitions.NotificationTemplate{
-			Name:            templateName,
-			Template:        "content",
-			Provenance:      definitions.Provenance(models.ProvenanceNone),
-			ResourceVersion: calculateTemplateFingerprint(currentTemplateContent),
-			Kind:            definition.GrafanaTemplateKind,
+		tmpl := v1.TemplateGroup{
+			Title:   templateName,
+			Content: "content",
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: models.ProvenanceNone,
+				Version:    currentTemplate.Version,
+			},
+			Kind: v1.TemplateKindGrafana,
 		}
 
 		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 
 		expectedContent := fmt.Sprintf("{{ define \"%s\" }}\n  content\n{{ end }}", templateName)
-		require.Equal(t, newNotificationTemplate(
-			tmpl.Name,
+		require.Equal(t, v1.NewTemplateGroup(
+			tmpl.Title,
 			expectedContent,
-			models.Provenance(tmpl.Provenance),
 			tmpl.Kind,
+			tmpl.Provenance,
 		), result)
 	})
 
@@ -504,9 +513,9 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 		prov.EXPECT().SaveSucceeds()
 
-		tmpl := definitions.NotificationTemplate{
-			Name:     "name",
-			Template: "{{ .NotAField }}",
+		tmpl := v1.TemplateGroup{
+			Title:   "name",
+			Content: "{{ .NotAField }}",
 		}
 		_, err := sut.UpsertTemplate(context.Background(), 1, tmpl)
 
@@ -517,18 +526,18 @@ func TestUpsertTemplate(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 
 		t.Run("empty content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "",
 			}
 			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("invalid content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "{{ .MyField }",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "{{ .MyField }",
 			}
 			_, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
@@ -547,17 +556,17 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
 		}
 
-		template := definitions.NotificationTemplate{
-			Name:     "template1",
-			Template: "asdf-new",
+		template := v1.TemplateGroup{
+			Title:   "template1",
+			Content: "asdf-new",
 		}
-		template.Provenance = definitions.Provenance(models.ProvenanceNone)
+		template.Provenance = models.ProvenanceNone
 
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 
@@ -571,11 +580,13 @@ func TestUpsertTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		template := definitions.NotificationTemplate{
-			Name:            "template1",
-			Template:        "asdf-new",
-			ResourceVersion: "bad-version",
-			Provenance:      definitions.Provenance(models.ProvenanceNone),
+		template := v1.TemplateGroup{
+			Title:   "template1",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				Version:    "bad-version",
+				Provenance: models.ProvenanceNone,
+			},
 		}
 
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
@@ -589,11 +600,13 @@ func TestUpsertTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
 		}
-		template := definitions.NotificationTemplate{
-			Name:            "template2",
-			Template:        "asdf-new",
-			ResourceVersion: "version",
-			Provenance:      definitions.Provenance(models.ProvenanceNone),
+		template := v1.TemplateGroup{
+			Title:   "template2",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				Version:    "version",
+				Provenance: models.ProvenanceNone,
+			},
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -604,11 +617,13 @@ func TestUpsertTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
 		}
-		template := definitions.NotificationTemplate{
-			UID:        "new-template",
-			Name:       "template2",
-			Template:   "asdf-new",
-			Provenance: definitions.Provenance(models.ProvenanceNone),
+		template := v1.TemplateGroup{
+			Title:   "template2",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        "new-template",
+				Provenance: models.ProvenanceNone,
+			},
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -619,21 +634,25 @@ func TestUpsertTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return revision(), nil
 		}
-		template := definitions.NotificationTemplate{
-			Name:       "template2",
-			Template:   "asdf-new",
-			Provenance: definitions.Provenance(models.ProvenanceNone),
-			Kind:       definition.MimirTemplateKind,
+		template := v1.TemplateGroup{
+			Title:   "template2",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: models.ProvenanceNone,
+			},
+			Kind: v1.TemplateKindMimir,
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateInvalid)
 	})
 
 	t.Run("propagates errors", func(t *testing.T) {
-		tmpl := definitions.NotificationTemplate{
-			Name:       templateName,
-			Template:   "content",
-			Provenance: definitions.Provenance(models.ProvenanceNone),
+		tmpl := v1.TemplateGroup{
+			Title:   templateName,
+			Content: "content",
+			ResourceMetadata: v1.ResourceMetadata{
+				Provenance: models.ProvenanceNone,
+			},
 		}
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut, store, _ := createTemplateServiceSut()
@@ -698,16 +717,18 @@ func TestCreateTemplate(t *testing.T) {
 	orgID := int64(1)
 	amConfigToken := util.GenerateShortUID()
 
-	tmpl := definitions.NotificationTemplate{
-		Name:       "new-template",
-		Template:   "{{ define \"test\"}} test {{ end }}",
-		Provenance: definitions.Provenance(models.ProvenanceAPI),
-		Kind:       definition.GrafanaTemplateKind,
+	tmpl := v1.TemplateGroup{
+		Title:   "new-template",
+		Content: "{{ define \"test\"}} test {{ end }}",
+		ResourceMetadata: v1.ResourceMetadata{
+			Provenance: models.ProvenanceAPI,
+		},
+		Kind: v1.TemplateKindGrafana,
 	}
 
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config:           &definitions.PostableUserConfig{},
+			Config:           &v1.AMConfigV1{},
 			ConcurrencyToken: amConfigToken,
 		}
 	}
@@ -729,11 +750,11 @@ func TestCreateTemplate(t *testing.T) {
 		result, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		require.Equal(t, newNotificationTemplate(
-			tmpl.Name,
-			tmpl.Template,
-			models.Provenance(tmpl.Provenance),
+		require.Equal(t, v1.NewTemplateGroup(
+			tmpl.Title,
+			tmpl.Content,
 			tmpl.Kind,
+			tmpl.Provenance,
 		), result)
 
 		require.Len(t, store.Calls, 2)
@@ -741,11 +762,11 @@ func TestCreateTemplate(t *testing.T) {
 		require.Equal(t, "Save", store.Calls[1].Method)
 		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-		assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-		assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+		assert.Contains(t, saved.Config.Templates, result.UID)
+		assert.Equal(t, result, saved.Config.Templates[result.UID])
 
-		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-			return t.Name == tmpl.Name
+		prov.AssertCalled(t, "SetProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == tmpl.Title
 		}), orgID, models.ProvenanceAPI)
 	})
 
@@ -754,9 +775,9 @@ func TestCreateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
-					TemplateFiles: map[string]string{
-						tmpl.Name: "test",
+				Config: &v1.AMConfigV1{
+					Templates: map[v1.ResourceUID]v1.TemplateGroup{
+						tmpl.UID: tmpl,
 					},
 				},
 				ConcurrencyToken: amConfigToken,
@@ -772,28 +793,28 @@ func TestCreateTemplate(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 
 		t.Run("empty content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "",
 			}
 			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("invalid content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "{{ .MyField }",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "{{ .MyField }",
 			}
 			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("invalid kind", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "new-template",
-				Template: "{{ define \"test\"}} test {{ end }}",
-				Kind:     "unknown",
+			tmpl := v1.TemplateGroup{
+				Title:   "new-template",
+				Content: "{{ define \"test\"}} test {{ end }}",
+				Kind:    "unknown",
 			}
 			_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
@@ -806,10 +827,10 @@ func TestCreateTemplate(t *testing.T) {
 	t.Run("rejects templates with mimir kind", func(t *testing.T) {
 		sut, _, _ := createTemplateServiceSut()
 
-		tmpl := definitions.NotificationTemplate{
-			Name:     "new-template",
-			Template: "{{ define \"test\"}} test {{ end }}",
-			Kind:     definition.MimirTemplateKind,
+		tmpl := v1.TemplateGroup{
+			Title:   "new-template",
+			Content: "{{ define \"test\"}} test {{ end }}",
+			Kind:    v1.TemplateKindMimir,
 		}
 
 		_, err := sut.CreateTemplate(context.Background(), orgID, tmpl)
@@ -864,21 +885,23 @@ func TestUpdateTemplate(t *testing.T) {
 	orgID := int64(1)
 	currentTemplateContent := "test1"
 
-	tmpl := definitions.NotificationTemplate{
-		Name:            "template1",
-		Template:        "{{ define \"test\"}} test {{ end }}",
-		Provenance:      definitions.Provenance(models.ProvenanceAPI),
-		ResourceVersion: "",
-		Kind:            definition.GrafanaTemplateKind,
+	tmpl := v1.TemplateGroup{
+		Title:   "template1",
+		Content: "{{ define \"test\"}} test {{ end }}",
+		ResourceMetadata: v1.ResourceMetadata{
+			Provenance: models.ProvenanceAPI,
+			Version:    "",
+		},
+		Kind: v1.TemplateKindGrafana,
 	}
 
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
-				TemplateFiles: map[string]string{
-					tmpl.Name: currentTemplateContent,
-				},
+			Config: &v1.AMConfigV1{
+				Templates: generateTemplates(map[string]string{
+					tmpl.Title: currentTemplateContent,
+				}, v1.TemplateKindGrafana),
 			},
 			ConcurrencyToken: amConfigToken,
 		}
@@ -889,7 +912,7 @@ func TestUpdateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config:           &definitions.PostableUserConfig{},
+				Config:           &v1.AMConfigV1{},
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
@@ -906,11 +929,11 @@ func TestUpdateTemplate(t *testing.T) {
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			assert.Equal(t, orgID, org)
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
-					TemplateFiles: map[string]string{
+				Config: &v1.AMConfigV1{
+					Templates: generateTemplates(map[string]string{
 						"not-found": "test", // create a template with name that matches UID to make sure we do not search by name
-						tmpl.Name:   "test",
-					},
+						tmpl.Title:  "test",
+					}, v1.TemplateKindGrafana),
 				},
 				ConcurrencyToken: amConfigToken,
 			}, nil
@@ -927,7 +950,7 @@ func TestUpdateTemplate(t *testing.T) {
 
 	testcases := []struct {
 		name        string
-		templateUid string
+		templateUid v1.ResourceUID
 	}{
 		{
 			name:        "by name",
@@ -935,7 +958,7 @@ func TestUpdateTemplate(t *testing.T) {
 		},
 		{
 			name:        "by uid",
-			templateUid: templateUID(tmpl.Kind, tmpl.Name),
+			templateUid: v1.TemplateUID(tmpl.Kind, tmpl.Title),
 		},
 	}
 
@@ -955,19 +978,19 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, newNotificationTemplate(
-					tmpl.Name,
-					tmpl.Template,
-					models.Provenance(tmpl.Provenance),
+				assert.Equal(t, v1.NewTemplateGroup(
+					tmpl.Title,
+					tmpl.Content,
 					tmpl.Kind,
+					tmpl.Provenance,
 				), result)
 
 				require.Len(t, store.Calls, 2)
 				require.Equal(t, "Save", store.Calls[1].Method)
 				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-				assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+				assert.Contains(t, saved.Config.Templates, result.UID)
+				assert.Equal(t, result, saved.Config.Templates[result.UID])
 
 				prov.AssertExpectations(t)
 			})
@@ -984,18 +1007,18 @@ func TestUpdateTemplate(t *testing.T) {
 				result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 				require.NoError(t, err)
-				assert.Equal(t, newNotificationTemplate(
-					tmpl.Name,
-					tmpl.Template,
-					models.Provenance(tmpl.Provenance),
+				assert.Equal(t, v1.NewTemplateGroup(
+					tmpl.Title,
+					tmpl.Content,
 					tmpl.Kind,
+					tmpl.Provenance,
 				), result)
 
 				require.Equal(t, "Save", store.Calls[1].Method)
 				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-				assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
+				assert.Contains(t, saved.Config.Templates, result.UID)
+				assert.Equal(t, result, saved.Config.Templates[result.UID])
 			})
 		})
 	}
@@ -1013,30 +1036,30 @@ func TestUpdateTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
-		oldName := tmpl.Name
+		oldName := tmpl.Title
 		tmpl := tmpl
-		tmpl.UID = templateUID(tmpl.Kind, tmpl.Name) // UID matches the current template
-		tmpl.Name = "new-template-name"              // but name is different
+		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title) // UID matches the current template
+		tmpl.Title = "new-template-name"                 // but name is different
 		result, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.NoError(t, err)
-		assert.Equal(t, newNotificationTemplate(
-			tmpl.Name,
-			tmpl.Template,
-			models.Provenance(tmpl.Provenance),
+		assert.Equal(t, v1.NewTemplateGroup(
+			tmpl.Title,
+			tmpl.Content,
 			tmpl.Kind,
+			tmpl.Provenance,
 		), result)
 
 		require.Len(t, store.Calls, 2)
 		require.Equal(t, "Save", store.Calls[1].Method)
 		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-		assert.Contains(t, saved.Config.TemplateFiles, tmpl.Name)
-		assert.Equal(t, tmpl.Template, saved.Config.TemplateFiles[tmpl.Name])
-		assert.NotContains(t, saved.Config.TemplateFiles, oldName)
+		assert.Contains(t, saved.Config.Templates, result.UID)
+		assert.Equal(t, result, saved.Config.Templates[result.UID])
+		assert.NotContains(t, saved.Config.Templates, v1.TemplateUID(tmpl.Kind, oldName))
 
-		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-			return t.Name == oldName
+		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == oldName
 		}), mock.Anything)
 		prov.AssertExpectations(t)
 	})
@@ -1046,19 +1069,19 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
-					TemplateFiles: map[string]string{
-						tmpl.Name:           currentTemplateContent,
+				Config: &v1.AMConfigV1{
+					Templates: generateTemplates(map[string]string{
+						tmpl.Title:          currentTemplateContent,
 						"new-template-name": "test",
-					},
+					}, v1.TemplateKindGrafana),
 				},
 				ConcurrencyToken: amConfigToken,
 			}, nil
 		}
 
 		tmpl := tmpl
-		tmpl.UID = templateUID(tmpl.Kind, tmpl.Name) // UID matches the current template
-		tmpl.Name = "new-template-name"              // but name matches another existing template
+		tmpl.UID = v1.TemplateUID(tmpl.Kind, tmpl.Title) // UID matches the current template
+		tmpl.Title = "new-template-name"                 // but name matches another existing template
 		_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 
 		require.ErrorIs(t, err, ErrTemplateExists)
@@ -1070,28 +1093,28 @@ func TestUpdateTemplate(t *testing.T) {
 		sut, store, prov := createTemplateServiceSut()
 
 		t.Run("empty content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "",
 			}
 			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("invalid content", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "{{ .MyField }",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "{{ .MyField }",
 			}
 			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
 		})
 
 		t.Run("invalid kind", func(t *testing.T) {
-			tmpl := definitions.NotificationTemplate{
-				Name:     "",
-				Template: "",
-				Kind:     "unknown",
+			tmpl := v1.TemplateGroup{
+				Title:   "",
+				Content: "",
+				Kind:    "unknown",
 			}
 			_, err := sut.UpdateTemplate(context.Background(), orgID, tmpl)
 			require.ErrorIs(t, err, ErrTemplateInvalid)
@@ -1110,17 +1133,17 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
 		}
 
-		template := definitions.NotificationTemplate{
-			Name:     "template1",
-			Template: "asdf-new",
+		template := v1.TemplateGroup{
+			Title:   "template1",
+			Content: "asdf-new",
 		}
-		template.Provenance = definitions.Provenance(models.ProvenanceNone)
+		template.Provenance = models.ProvenanceNone
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
 
@@ -1134,11 +1157,13 @@ func TestUpdateTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		template := definitions.NotificationTemplate{
-			Name:            "template1",
-			Template:        "asdf-new",
-			ResourceVersion: "bad-version",
-			Provenance:      definitions.Provenance(models.ProvenanceNone),
+		template := v1.TemplateGroup{
+			Title:   "template1",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				Version:    "bad-version",
+				Provenance: models.ProvenanceNone,
+			},
 		}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
@@ -1154,12 +1179,15 @@ func TestUpdateTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		template := definitions.NotificationTemplate{
-			Name:            "template1",
-			Template:        "asdf-new",
-			ResourceVersion: "bad-version",
-			Provenance:      definitions.Provenance(models.ProvenanceNone),
-			Kind:            definition.MimirTemplateKind,
+		template := v1.TemplateGroup{
+			Title:   "template1",
+			Content: "asdf-new",
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.TemplateUID(v1.TemplateKindGrafana, "template1"),
+				Version:    "bad-version",
+				Provenance: models.ProvenanceNone,
+			},
+			Kind: v1.TemplateKindMimir,
 		}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
@@ -1232,13 +1260,14 @@ func TestDeleteTemplate(t *testing.T) {
 	orgID := int64(1)
 	templateName := "template1"
 	templateContent := "test-1"
-	templateVersion := calculateTemplateFingerprint(templateContent)
+	tmplToDelete := v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+	templateVersion := tmplToDelete.Version
 	amConfigToken := util.GenerateShortUID()
 	revision := func() *legacy_storage.ConfigRevision {
 		return &legacy_storage.ConfigRevision{
-			Config: &definitions.PostableUserConfig{
-				TemplateFiles: map[string]string{
-					templateName: templateContent,
+			Config: &v1.AMConfigV1{
+				Templates: map[v1.ResourceUID]v1.TemplateGroup{
+					tmplToDelete.UID: tmplToDelete,
 				},
 			},
 			ConcurrencyToken: amConfigToken,
@@ -1255,7 +1284,7 @@ func TestDeleteTemplate(t *testing.T) {
 		},
 		{
 			name:              "by uid",
-			templateNameOrUid: templateUID(definition.GrafanaTemplateKind, templateName),
+			templateNameOrUid: string(tmplToDelete.UID),
 		},
 	}
 	for _, tt := range testCase {
@@ -1270,7 +1299,7 @@ func TestDeleteTemplate(t *testing.T) {
 					assertInTransaction(t, ctx)
 				}).Return(nil)
 
-				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, definitions.Provenance(models.ProvenanceFile), templateVersion)
+				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, templateVersion)
 
 				require.NoError(t, err)
 
@@ -1279,10 +1308,10 @@ func TestDeleteTemplate(t *testing.T) {
 				require.Equal(t, "Save", store.Calls[1].Method)
 				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.NotContains(t, saved.Config.TemplateFiles, templateName)
+				assert.NotContains(t, saved.Config.Templates, tmplToDelete.UID)
 
-				prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-					return t.Name == templateName
+				prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+					return t.Title == templateName
 				}), orgID)
 
 				prov.AssertExpectations(t)
@@ -1298,7 +1327,7 @@ func TestDeleteTemplate(t *testing.T) {
 					assertInTransaction(t, ctx)
 				}).Return(nil)
 
-				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, definitions.Provenance(models.ProvenanceFile), "")
+				err := sut.DeleteTemplate(context.Background(), orgID, tt.templateNameOrUid, models.ProvenanceFile, "")
 
 				require.NoError(t, err)
 				require.Len(t, store.Calls, 2)
@@ -1306,10 +1335,10 @@ func TestDeleteTemplate(t *testing.T) {
 				require.Equal(t, "Save", store.Calls[1].Method)
 				saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 				assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-				assert.NotContains(t, saved.Config.TemplateFiles, templateName)
+				assert.NotContains(t, saved.Config.Templates, tmplToDelete.UID)
 
-				prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-					return t.Name == templateName
+				prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+					return t.Title == templateName
 				}), orgID)
 
 				prov.AssertExpectations(t)
@@ -1318,14 +1347,16 @@ func TestDeleteTemplate(t *testing.T) {
 	}
 
 	t.Run("should look by name before uid", func(t *testing.T) {
-		expectedToDelete := templateUID(definition.GrafanaTemplateKind, templateName)
+		expectedToKeep := v1.NewTemplateGroup(templateName, templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
+		// This template has a name that is the UID of expectedToKeep.
+		expectedToDelete := v1.NewTemplateGroup(string(v1.TemplateUID(v1.TemplateKindGrafana, templateName)), templateContent, v1.TemplateKindGrafana, models.ProvenanceNone)
 		sut, store, prov := createTemplateServiceSut()
 		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
 			return &legacy_storage.ConfigRevision{
-				Config: &definitions.PostableUserConfig{
-					TemplateFiles: map[string]string{
-						templateName:     templateContent,
-						expectedToDelete: templateContent,
+				Config: &v1.AMConfigV1{
+					Templates: map[v1.ResourceUID]v1.TemplateGroup{
+						expectedToKeep.UID:   expectedToKeep,
+						expectedToDelete.UID: expectedToDelete,
 					},
 				},
 				ConcurrencyToken: amConfigToken,
@@ -1336,7 +1367,7 @@ func TestDeleteTemplate(t *testing.T) {
 			assertInTransaction(t, ctx)
 		}).Return(nil)
 
-		err := sut.DeleteTemplate(context.Background(), orgID, expectedToDelete, definitions.Provenance(models.ProvenanceFile), templateVersion)
+		err := sut.DeleteTemplate(context.Background(), orgID, expectedToDelete.Title, models.ProvenanceFile, templateVersion)
 
 		require.NoError(t, err)
 
@@ -1345,11 +1376,11 @@ func TestDeleteTemplate(t *testing.T) {
 		require.Equal(t, "Save", store.Calls[1].Method)
 		saved := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 		assert.Equal(t, amConfigToken, saved.ConcurrencyToken)
-		assert.NotContains(t, saved.Config.TemplateFiles, expectedToDelete)
-		assert.Contains(t, saved.Config.TemplateFiles, templateName)
+		assert.NotContains(t, saved.Config.Templates, expectedToDelete.UID)
+		assert.Contains(t, saved.Config.Templates, expectedToKeep.UID)
 
-		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *definitions.NotificationTemplate) bool {
-			return t.Name == expectedToDelete
+		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(t *v1.TemplateGroup) bool {
+			return t.Title == expectedToDelete.Title
 		}), orgID)
 
 		prov.AssertExpectations(t)
@@ -1361,7 +1392,7 @@ func TestDeleteTemplate(t *testing.T) {
 			return revision(), nil
 		}
 
-		err := sut.DeleteTemplate(context.Background(), orgID, "not-found", definitions.Provenance(models.ProvenanceNone), "")
+		err := sut.DeleteTemplate(context.Background(), orgID, "not-found", models.ProvenanceNone, "")
 
 		require.NoError(t, err)
 
@@ -1376,13 +1407,13 @@ func TestDeleteTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		expectedErr := errors.New("test")
-		sut.validator = func(from, to models.Provenance) error {
+		sut.validator = func(_ context.Context, from, to models.Provenance) error {
 			assert.Equal(t, models.ProvenanceAPI, from)
 			assert.Equal(t, models.ProvenanceNone, to)
 			return expectedErr
 		}
 
-		err := sut.DeleteTemplate(context.Background(), 1, templateName, definitions.Provenance(models.ProvenanceNone), "")
+		err := sut.DeleteTemplate(context.Background(), 1, templateName, models.ProvenanceNone, "")
 
 		require.ErrorIs(t, err, expectedErr)
 
@@ -1396,7 +1427,7 @@ func TestDeleteTemplate(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		err := sut.DeleteTemplate(context.Background(), 1, templateName, definitions.Provenance(models.ProvenanceNone), "bad-version")
+		err := sut.DeleteTemplate(context.Background(), 1, templateName, models.ProvenanceNone, "bad-version")
 
 		require.ErrorIs(t, err, ErrVersionConflict)
 	})
@@ -1409,7 +1440,7 @@ func TestDeleteTemplate(t *testing.T) {
 				return nil, expectedErr
 			}
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, definitions.Provenance(models.ProvenanceNone), templateVersion)
+			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1424,7 +1455,7 @@ func TestDeleteTemplate(t *testing.T) {
 			expectedErr := errors.New("test")
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, expectedErr)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, definitions.Provenance(models.ProvenanceNone), templateVersion)
+			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1440,7 +1471,7 @@ func TestDeleteTemplate(t *testing.T) {
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(expectedErr)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, definitions.Provenance(models.ProvenanceNone), templateVersion)
+			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 
@@ -1458,7 +1489,7 @@ func TestDeleteTemplate(t *testing.T) {
 			}
 			prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-			err := sut.DeleteTemplate(context.Background(), orgID, templateName, definitions.Provenance(models.ProvenanceNone), templateVersion)
+			err := sut.DeleteTemplate(context.Background(), orgID, templateName, models.ProvenanceNone, templateVersion)
 
 			require.ErrorIs(t, err, expectedErr)
 		})
@@ -1474,5 +1505,219 @@ func createTemplateServiceSut() (*TemplateService, *legacy_storage.AlertmanagerC
 		xact:            newNopTransactionManager(),
 		log:             log.NewNopLogger(),
 		validator:       validation.ValidateProvenanceRelaxed,
+		limitsProvider:  &NoopLimitsProvider{},
 	}, store, provStore
+}
+
+func TestTemplateService_LimitsValidation(t *testing.T) {
+	orgID := int64(1)
+	amConfigToken := util.GenerateShortUID()
+
+	newTmpl := v1.NewTemplateGroup("new-template", "{{ define \"test\"}} test {{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+
+	revision := func(existingCount int) *legacy_storage.ConfigRevision {
+		templates := make(map[v1.ResourceUID]v1.TemplateGroup, existingCount)
+		for i := 0; i < existingCount; i++ {
+			tmpl := v1.NewTemplateGroup(fmt.Sprintf("existing-%d", i), "content", v1.TemplateKindGrafana, models.ProvenanceNone)
+			templates[tmpl.UID] = tmpl
+		}
+		return &legacy_storage.ConfigRevision{
+			Config: &v1.AMConfigV1{
+				Templates: templates,
+			},
+			ConcurrencyToken: amConfigToken,
+		}
+	}
+
+	t.Run("CreateTemplate fails when template count limit exceeded", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    5,
+					MaxTemplateSizeBytes: 0, // unlimited
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(5), nil // Already at the limit
+		}
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+
+		require.ErrorIs(t, err, ErrTemplateLimitExceeded)
+	})
+
+	t.Run("CreateTemplate fails when template size limit exceeded", func(t *testing.T) {
+		sut, store, _ := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    0, // unlimited
+					MaxTemplateSizeBytes: 10,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(0), nil
+		}
+
+		largeTmpl := newTmpl
+		largeTmpl.Content = "{{ define \"test\"}} this is a very long template content {{ end }}"
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, largeTmpl)
+
+		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
+	})
+
+	t.Run("CreateTemplate succeeds when under limits", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    10,
+					MaxTemplateSizeBytes: 1000,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(5), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits are nil", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: nil,
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits are zero (unlimited)", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    0, // unlimited
+					MaxTemplateSizeBytes: 0, // unlimited
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("CreateTemplate succeeds when limits provider returns error (fail open)", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		sut.limitsProvider = &mockLimitsProvider{
+			err: errors.New("failed to fetch limits"),
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(100), nil
+		}
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		_, err := sut.CreateTemplate(context.Background(), orgID, newTmpl)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("UpdateTemplate fails when template size limit exceeded", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		existingTemplateName := "existing-template"
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    100, // Should not matter for updates
+					MaxTemplateSizeBytes: 10,
+				},
+			},
+		}
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return &legacy_storage.ConfigRevision{
+				Config: &v1.AMConfigV1{
+					Templates: generateTemplates(map[string]string{
+						existingTemplateName: "short",
+					}, v1.TemplateKindGrafana),
+				},
+				ConcurrencyToken: amConfigToken,
+			}, nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+
+		largeTmpl := v1.TemplateGroup{
+			Title:   existingTemplateName,
+			Content: "{{ define \"test\"}} this is a very long template content that exceeds the limit {{ end }}",
+		}
+
+		_, err := sut.UpdateTemplate(context.Background(), orgID, largeTmpl)
+
+		require.ErrorIs(t, err, ErrTemplateSizeExceeded)
+	})
+
+	t.Run("UpdateTemplate does not check count limit", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		existingTemplateName := "existing-1"
+		sut.limitsProvider = &mockLimitsProvider{
+			limits: &client.TenantLimits{
+				Templates: &client.TemplateLimits{
+					MaxTemplatesCount:    1, // Way under current count
+					MaxTemplateSizeBytes: 10000,
+				},
+			},
+		}
+		// Create a revision with many templates (over the count limit)
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return revision(99), nil
+		}
+		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
+		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+		updateTmpl := v1.TemplateGroup{
+			Title:   existingTemplateName,
+			Content: "{{ define \"test\"}} updated content {{ end }}",
+		}
+
+		// Update should succeed because count limit doesn't apply to updates
+		_, err := sut.UpdateTemplate(context.Background(), orgID, updateTmpl)
+
+		require.NoError(t, err)
+	})
+}
+
+// mockLimitsProvider is a test implementation of LimitsProvider
+type mockLimitsProvider struct {
+	limits *client.TenantLimits
+	err    error
+}
+
+func (m *mockLimitsProvider) GetLimits(_ context.Context) (*client.TenantLimits, error) {
+	return m.limits, m.err
+}
+
+func generateTemplates(templates map[string]string, kind v1.TemplateKind) map[v1.ResourceUID]v1.TemplateGroup {
+	templatesUIDs := make(map[v1.ResourceUID]v1.TemplateGroup, len(templates))
+	for name, content := range templates {
+		tmpl := v1.NewTemplateGroup(name, content, kind, models.ProvenanceNone)
+		templatesUIDs[tmpl.UID] = tmpl
+	}
+	return templatesUIDs
 }

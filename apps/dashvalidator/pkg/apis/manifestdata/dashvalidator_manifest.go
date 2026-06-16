@@ -20,6 +20,7 @@ import (
 
 var appManifestData = app.ManifestData{
 	AppName:          "dashvalidator",
+	AppDisplayName:   "dashvalidator",
 	Group:            "dashvalidator.grafana.app",
 	PreferredVersion: "v1alpha1",
 	Versions: []app.ManifestVersion{

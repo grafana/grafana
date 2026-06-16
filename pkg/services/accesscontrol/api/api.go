@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -21,14 +22,22 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/api")
+var logger = log.New("accesscontrol.api")
 
-func NewAccessControlAPI(router routing.RouteRegister, accesscontrol ac.AccessControl, service ac.Service, userSvc user.Service) *AccessControlAPI {
-	return &AccessControlAPI{
+func NewAccessControlAPI(
+	router routing.RouteRegister,
+	accesscontrol ac.AccessControl,
+	service ac.Service,
+	userSvc user.Service,
+) *AccessControlAPI {
+	api := &AccessControlAPI{
 		RouteRegister: router,
 		Service:       service,
 		userSvc:       userSvc,
 		AccessControl: accesscontrol,
 	}
+
+	return api
 }
 
 type AccessControlAPI struct {
@@ -110,7 +119,17 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
-	// Compute metadata
+	logger.Debug("users permissions search request",
+		"orgId", c.GetOrgID(),
+		"callerUserId", c.UserID,
+		"namespacedId", c.Query("namespacedId"),
+		"userId", searchOptions.UserID,
+		"action", searchOptions.Action,
+		"actionPrefix", searchOptions.ActionPrefix,
+		"scope", searchOptions.Scope,
+	)
+
+	// Always query legacy as the baseline — not all permissions are migrated to Zanzana yet.
 	permissions, err := api.Service.SearchUsersPermissions(ctx, c.SignedInUser, searchOptions)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)

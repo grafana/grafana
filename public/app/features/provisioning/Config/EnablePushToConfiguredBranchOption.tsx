@@ -1,4 +1,4 @@
-import { FieldValues, UseFormRegister, Path } from 'react-hook-form';
+import { type FieldValues, type UseFormRegister, type Path } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';

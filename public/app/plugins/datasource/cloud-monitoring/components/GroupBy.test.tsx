@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { openMenu, select } from 'react-select-event';
 
 import { createMockTimeSeriesList } from '../mocks/cloudMonitoringQuery';
-import { MetricDescriptor } from '../types/types';
+import { type MetricDescriptor } from '../types/types';
 
-import { GroupBy, Props } from './GroupBy';
+import { GroupBy, type Props } from './GroupBy';
 
 const props: Props = {
   onChange: jest.fn(),

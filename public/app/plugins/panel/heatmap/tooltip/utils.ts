@@ -1,7 +1,7 @@
-import { DataFrame, DataFrameType, Field } from '@grafana/data';
+import { type DataFrame, DataFrameType, type Field } from '@grafana/data';
 import { isHeatmapCellsDense } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { HeatmapData } from '../fields';
+import { type HeatmapData } from '../fields';
 
 type BucketsMinMax = {
   xBucketMin: number;

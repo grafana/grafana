@@ -1,22 +1,22 @@
-import { ReactElement, useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import * as React from 'react';
 
-import { DisplayValue, formattedValueToString } from '@grafana/data';
+import { type DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
-import { TableStyles } from '../TableRT/styles';
-import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
+import { type TableStyles } from '../TableRT/styles';
 import {
-  DataLinksActionsTooltipCoords,
+  type DataLinksActionsTooltipCoords,
   getCellColors,
   getCellOptions,
   getDataLinksActionsTooltipUtils,
   tooltipOnClickHandler,
-} from '../utils';
+} from '../cellUtils';
+import { type TableCellProps, type CustomCellRendererProps, type TableCellOptions } from '../types';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame, rowStyled, rowExpanded, textWrapped, height } = props;

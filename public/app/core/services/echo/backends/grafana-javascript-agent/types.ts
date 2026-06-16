@@ -1,17 +1,8 @@
-import { BuildInfo, CurrentUserDTO } from '@grafana/data';
-import { InternalLoggerLevel } from '@grafana/faro-web-sdk';
-import { EchoEvent, EchoEventType } from '@grafana/runtime';
-
-export interface BaseTransport {
-  sendEvent(event: EchoEvent): PromiseLike<Response>;
-}
+import { type BuildInfo } from '@grafana/data';
+import { type InternalLoggerLevel } from '@grafana/faro-web-sdk';
+import { type EchoEvent, type EchoEventType } from '@grafana/runtime';
 
 export type GrafanaJavascriptAgentEchoEvent = EchoEvent<EchoEventType.GrafanaJavascriptAgent>;
-
-export interface User extends Pick<CurrentUserDTO, 'email'> {
-  id: string;
-  orgId?: number;
-}
 
 export interface GrafanaJavascriptAgentBackendOptions {
   apiKey?: string;

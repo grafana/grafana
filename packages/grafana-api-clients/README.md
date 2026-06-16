@@ -12,6 +12,31 @@ The clients are auto-generated [RTK Query](https://redux-toolkit.js.org/rtk-quer
 yarn add @grafana/api-clients
 ```
 
+## TypeScript configuration
+
+This package uses [subpath exports](https://nodejs.org/api/packages.html#subpath-exports), which require `moduleResolution` to be set to `"bundler"` in your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+If you use ts-node, add the following to your `tsconfig.json`:
+
+```json
+{
+  "ts-node": {
+    "compilerOptions": {
+      "module": "es2020",
+      "moduleResolution": "Bundler"
+    }
+  }
+}
+```
+
 ## Usage
 
 Each API client is available as a separate subpath export, scoped by group and version:
@@ -69,4 +94,41 @@ Run `yarn generate:api-client` and follow the prompts. See [API Client Generator
 
 ## Updating generated clients
 
-To update the existing clients, for example, when the OpenAPI spec has changed, run `go test ./pkg/tests/apis -run TestIntegrationOpenAPIs`, followed by `yarn generate-apis`. This will regenerate all the clients based on the current OpenAPI snapshots.
+Use this flow when an existing API changes and you need to regenerate the API types, OpenAPI specs, and RTK Query endpoints.
+
+1. Update the source API schema or types.
+   - If the API is generated from `kinds/`, run `make gen-cue` after changing the CUE definitions.
+   - If the API is defined as Go types in an app platform API package (e.g. `pkg/apis/<group>/<version>/`), update the types and then run `./hack/update-codegen.sh` to regenerate `zz_generated.deepcopy.go` and `zz_generated.openapi.go`. This is also included in `make gen-apps`.
+2. Check that [openapi_test.go](../../pkg/tests/apis/openapi_test.go) includes the target `Group` and `Version`.
+   - Add a new entry to the `groups` list if the API group/version is not present.
+   - Add any required feature toggle to `EnableFeatureToggles` so the API is registered during the test.
+3. Generate or update the OpenAPI snapshot:
+
+   ```bash
+   go test ./pkg/tests/apis -run TestIntegrationOpenAPIs
+   ```
+
+   This updates files in [openapi_snapshots](../../pkg/tests/apis/openapi_snapshots).
+
+4. Regenerate the processed OpenAPI specs and RTK Query endpoints:
+
+   ```bash
+   yarn generate-apis
+   ```
+
+   This processes snapshots into `packages/grafana-openapi/src/apis/*.json` and regenerates `endpoints.gen.ts` files under `packages/grafana-api-clients/src/clients/rtkq/`.
+
+5. Review the generated diff. A typical update includes:
+   - Source API type or schema files.
+   - `pkg/tests/apis/openapi_snapshots/<group>.grafana.app-<version>.json`.
+   - `packages/grafana-openapi/src/apis/<group>.grafana.app-<version>.json`.
+   - `packages/grafana-api-clients/src/clients/rtkq/<group>/<version>/endpoints.gen.ts`.
+
+You can also run `yarn generate:api-client` and select an existing API group/version.
+The generator will offer to update the existing client by running the endpoint generation step without modifying the client config or Redux wiring.
+
+### Troubleshooting generated client updates
+
+- If the OpenAPI snapshot is missing, check the `Group`, `Version`, and feature toggles in `pkg/tests/apis/openapi_test.go`.
+- If the processed spec in `packages/grafana-openapi/src/apis/` does not change, verify that `TestIntegrationOpenAPIs` changed the snapshot first.
+- If `endpoints.gen.ts` does not change, verify that `packages/grafana-api-clients/src/scripts/generate-rtk-apis.ts` includes the API group/version.

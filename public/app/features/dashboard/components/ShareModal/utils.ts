@@ -1,10 +1,10 @@
-import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
+import { dateTime, locationUtil, type TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { contextSrv } from '../../../../core/services/context_srv';
-import { PanelModel } from '../../state/PanelModel';
+import { type PanelModel } from '../../state/PanelModel';
 
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
@@ -92,7 +92,7 @@ export async function buildShareUrl(
   return shareUrl;
 }
 
-export function buildSoloUrl(
+function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
@@ -163,7 +163,7 @@ export function buildIframeHtml(
   return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
-export function getLocalTimeZone() {
+function getLocalTimeZone() {
   const utcOffset = '&tz=UTC' + encodeURIComponent(dateTime().format('Z'));
 
   // Older browser does not the internationalization API

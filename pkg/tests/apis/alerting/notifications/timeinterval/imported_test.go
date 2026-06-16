@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -28,11 +28,12 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})
 
-	client, err := v0alpha1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	cliCfg := helper.Org1.Admin.NewRestConfig()
@@ -42,12 +43,10 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-imported-time-intervals"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 	var amConfig apimodels.AlertmanagerUserConfig
 	require.NoError(t, yaml.Unmarshal(configYaml, &amConfig))
@@ -61,7 +60,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	require.GreaterOrEqual(t, len(timeIntervals.Items), 2, "should have at least 2 imported time intervals")
 
 	// Find our imported intervals
-	var businessHours, weekends *v0alpha1.TimeInterval
+	var businessHours, weekends *v1beta1.TimeInterval
 	for i := range timeIntervals.Items {
 		switch name := timeIntervals.Items[i].Spec.Name; name {
 		case "business-hours":
@@ -80,8 +79,8 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	})
 
 	t.Run("should have correct canUse annotation", func(t *testing.T) {
-		assert.Equal(t, "false", businessHours.Annotations[v0alpha1.CanUseAnnotationKey])
-		assert.Equal(t, "false", weekends.Annotations[v0alpha1.CanUseAnnotationKey])
+		assert.Equal(t, "false", businessHours.Annotations[v1beta1.CanUseAnnotationKey])
+		assert.Equal(t, "false", weekends.Annotations[v1beta1.CanUseAnnotationKey])
 	})
 
 	t.Run("should not be able to update", func(t *testing.T) {
@@ -101,15 +100,15 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 
 	t.Run("should allow duplicate names across Grafana and imported intervals", func(t *testing.T) {
 		// Create a Grafana time interval with the same name as an imported one
-		interval := v0alpha1.TimeInterval{
+		interval := v1beta1.TimeInterval{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "default",
 			},
-			Spec: v0alpha1.TimeIntervalSpec{
+			Spec: v1beta1.TimeIntervalSpec{
 				Name: "business-hours",
-				TimeIntervals: []v0alpha1.TimeIntervalInterval{
+				TimeIntervals: []v1beta1.TimeIntervalInterval{
 					{
-						Times: []v0alpha1.TimeIntervalTimeRange{
+						Times: []v1beta1.TimeIntervalTimeRange{
 							{
 								StartTime: "10:00",
 								EndTime:   "16:00",

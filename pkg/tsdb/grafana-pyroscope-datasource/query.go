@@ -8,21 +8,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/annotation"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/exemplar"
+	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/heatmap"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
-
+	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
 	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 )
 
@@ -41,6 +44,7 @@ const (
 	queryTypeBoth    = string(dataquery.PyroscopeQueryTypeBoth)
 
 	exemplarsFeatureToggle = "profilesExemplars"
+	heatmapFeatureToggle   = "profilesHeatmap"
 )
 
 var identityTransformation = func(value float64) float64 { return value }
@@ -81,11 +85,28 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 				parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 				if err != nil {
 					parsedInterval = time.Second * 15
-					logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+					d.logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 				}
 			}
+
+			// Heatmap handling
+			if qm.IncludeHeatmap && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
+				const maxHeatmapPoints = 64
+				timeRangeSec := query.TimeRange.To.Sub(query.TimeRange.From).Seconds()
+				minStepFromRange := timeRangeSec / maxHeatmapPoints
+				stepDuration := math.Max(math.Max(query.Interval.Seconds(), parsedInterval.Seconds()), minStepFromRange)
+				frames, err := d.queryHeatmap(gCtx, span, profileTypeId, labelSelector, query, qm, stepDuration, pCtx.DataSourceInstanceSettings.UID)
+				if err != nil {
+					return err
+				}
+				responseMutex.Lock()
+				defer responseMutex.Unlock()
+				response.Frames = append(response.Frames, frames...)
+				return nil
+			}
+
 			exemplarType := typesv1.ExemplarType_EXEMPLAR_TYPE_NONE
-			if qm.IncludeExemplars && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
+			if qm.IncludeExemplars && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle) {
 				exemplarType = typesv1.ExemplarType_EXEMPLAR_TYPE_INDIVIDUAL
 			}
 			seriesResp, err := d.client.GetSeries(
@@ -102,22 +123,23 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				d.logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			// add the frames to the response.
 			responseMutex.Lock()
+			defer responseMutex.Unlock()
 			withAnnotations := qm.Annotations != nil && *qm.Annotations
 			stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
 			frames, err := seriesToDataFrames(seriesResp, withAnnotations, stepDuration, profileTypeId)
 			if err != nil {
 				span.RecordError(err)
 				span.SetStatus(codes.Error, err.Error())
-				logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
+				d.logger.Error("Querying SelectSeries()", "err", err, "function", logEntrypoint())
 				return err
 			}
 			response.Frames = append(response.Frames, frames...)
-			responseMutex.Unlock()
+
 			return nil
 		})
 	}
@@ -126,22 +148,22 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 		g.Go(func() error {
 			var profileResp *ProfileResponse
 			if len(qm.SpanSelector) > 0 {
-				logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
+				d.logger.Debug("Calling GetSpanProfile", "queryModel", qm, "function", logEntrypoint())
 				prof, err := d.client.GetSpanProfile(gCtx, profileTypeId, labelSelector, qm.SpanSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
-					logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
+					d.logger.Error("Error GetSpanProfile()", "err", err, "function", logEntrypoint())
 					return err
 				}
 				profileResp = prof
 			} else {
-				logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
+				d.logger.Debug("Calling GetProfile", "queryModel", qm, "function", logEntrypoint())
 				prof, err := d.client.GetProfile(gCtx, profileTypeId, labelSelector, query.TimeRange.From.UnixMilli(), query.TimeRange.To.UnixMilli(), qm.MaxNodes, qm.ProfileIdSelector)
 				if err != nil {
 					span.RecordError(err)
 					span.SetStatus(codes.Error, err.Error())
-					logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
+					d.logger.Error("Error GetProfile()", "err", err, "function", logEntrypoint())
 					return err
 				}
 				profileResp = prof
@@ -162,11 +184,11 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 					parsedInterval, err = gtime.ParseDuration(dsJson.MinStep)
 					if err != nil {
 						parsedInterval = time.Second * 15
-						logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
+						d.logger.Error("Failed to parse the MinStep using default", "MinStep", dsJson.MinStep, "function", logEntrypoint())
 					}
 				}
 				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
-				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId)
+				frame = responseToDataFrames(profileResp, stepDuration, profileTypeId, d.logger)
 
 				// If query called with streaming on then return a channel
 				// to subscribe on a client-side and consume updates from a plugin.
@@ -200,11 +222,86 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 	return response
 }
 
+// queryHeatmap handles heatmap query execution and frame construction.
+func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span, profileTypeId string, labelSelector string, query backend.DataQuery, qm queryModel, stepDuration float64, datasourceUID string) ([]*data.Frame, error) {
+	heatmapType := querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_INDIVIDUAL
+	if qm.HeatmapType == "span" {
+		heatmapType = querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN
+	}
+
+	includeExemplars := qm.IncludeExemplars && config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(exemplarsFeatureToggle)
+
+	heatmapResp, err := d.client.GetHeatmap(
+		ctx,
+		profileTypeId,
+		labelSelector,
+		query.TimeRange.From.UnixMilli(),
+		query.TimeRange.To.UnixMilli(),
+		qm.GroupBy,
+		stepDuration,
+		heatmapType,
+		qm.Limit,
+		includeExemplars,
+	)
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		d.logger.Error("Querying SelectHeatmap()", "err", err, "function", logEntrypoint())
+		return nil, err
+	}
+
+	exemplarType := exemplar.ExemplarTypeProfile
+	if heatmapType == querierv1.HeatmapQueryType_HEATMAP_QUERY_TYPE_SPAN {
+		exemplarType = exemplar.ExemplarTypeSpan
+	}
+
+	frames := make([]*data.Frame, 0, len(heatmapResp.Series)*2)
+	for _, series := range heatmapResp.Series {
+		labels := make(map[string]string)
+		for _, label := range series.Labels {
+			labels[label.Name] = label.Value
+		}
+		slots := make([]*heatmap.Slot, len(series.Points))
+		exemplars := []*exemplar.Exemplar{}
+		for i, p := range series.Points {
+			slots[i] = &heatmap.Slot{
+				Timestamp: p.Timestamp,
+				YMin:      p.YMin,
+				Counts:    p.Counts,
+			}
+			for _, e := range p.Exemplars {
+				exemplarLabels := make(map[string]string)
+				for _, l := range e.Labels {
+					exemplarLabels[l.Name] = l.Value
+				}
+				exemplars = append(exemplars, &exemplar.Exemplar{
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
+					Value:     float64(e.Value),
+					Timestamp: e.Timestamp,
+					Labels:    exemplarLabels,
+				})
+			}
+		}
+		heatmapFrame := heatmap.CreateHeatmapFrame(labels, slots, heatmapResp.Units, stepDuration)
+		frames = append(frames, heatmapFrame)
+
+		if len(exemplars) > 0 {
+			exemplarFrame := exemplar.CreateExemplarFrame(labels, exemplars, exemplarType, heatmapResp.Units)
+			exemplarFrame.Meta.Custom = map[string]interface{}{
+				"datasourceUID": datasourceUID,
+			}
+			frames = append(frames, exemplarFrame)
+		}
+	}
+	return frames, nil
+}
+
 // responseToDataFrames turns Pyroscope response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names)
+func responseToDataFrames(resp *ProfileResponse, stepDurationSec float64, profileTypeID string, logger log.Logger) *data.Frame {
+	tree := levelsToTree(resp.Flamebearer.Levels, resp.Flamebearer.Names, logger)
 	return treeToNestedSetDataFrame(tree, resp.Units, stepDurationSec, profileTypeID)
 }
 
@@ -234,7 +331,7 @@ type ProfileTree struct {
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
 // dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Pyroscope API.
-func levelsToTree(levels []*Level, names []string) *ProfileTree {
+func levelsToTree(levels []*Level, names []string, logger log.Logger) *ProfileTree {
 	if len(levels) == 0 {
 		return nil
 	}
@@ -559,7 +656,8 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 					exemplarLabels[l.Name] = l.Value
 				}
 				exemplars = append(exemplars, &exemplar.Exemplar{
-					Id:        e.Id,
+					ProfileId: e.ProfileId,
+					SpanId:    e.SpanId,
 					Value:     transformation(float64(e.Value)),
 					Timestamp: e.Timestamp,
 					Labels:    exemplarLabels,
@@ -571,7 +669,8 @@ func seriesToDataFrames(resp *SeriesResponse, withAnnotations bool, stepDuration
 		frames = append(frames, frame)
 
 		if len(exemplars) > 0 {
-			frame := exemplar.CreateExemplarFrame(labels, exemplars, resp.Units)
+			// Series queries always use individual profiles
+			frame := exemplar.CreateExemplarFrame(labels, exemplars, exemplar.ExemplarTypeProfile, displayUnit)
 			frames = append(frames, frame)
 		}
 	}

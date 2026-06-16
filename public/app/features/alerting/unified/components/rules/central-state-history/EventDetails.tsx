@@ -2,11 +2,10 @@ import { css } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
-import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { type DataFrame, type DataFrameJSON, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { CombinedRule } from 'app/types/unified-alerting';
-import { GrafanaAlertState, mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
+import { type CombinedRule } from 'app/types/unified-alerting';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
@@ -19,9 +18,9 @@ import { AnnotationValue } from '../../rule-viewer/Details';
 import { ErrorMessageRow } from '../state-history/ErrorMessageRow';
 import { LogTimelineViewer } from '../state-history/LogTimelineViewer';
 import { useFrameSubset } from '../state-history/LokiStateHistory';
-import { LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
+import { type LogRecord, historyDataFrameToLogRecords } from '../state-history/common';
 
-import { EventState, FilterType, LIMIT_EVENTS } from './EventListSceneObject';
+import { EventState, type FilterType, LIMIT_EVENTS } from './EventListSceneObject';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { logRecordsToDataFrameForState } from './utils';
 
@@ -73,9 +72,7 @@ export function EventDetails({ record, addFilter, timeRange }: EventDetailsProps
         <StateTransition record={record} addFilter={addFilter} />
         <ValueInTransition record={record} />
       </Stack>
-      {mapStateWithReasonToBaseState(record.line.current) === GrafanaAlertState.Error && record.line.error && (
-        <ErrorMessageRow message={record.line.error} />
-      )}
+      {record.line.error && <ErrorMessageRow message={record.line.error} />}
       <Annotations rule={rule} />
       <StateVisualization ruleUID={ruleUID} timeRange={timeRange} labels={labelsInInstance ?? {}} />
     </Stack>

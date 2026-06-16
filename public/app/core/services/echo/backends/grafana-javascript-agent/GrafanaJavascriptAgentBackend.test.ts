@@ -1,9 +1,9 @@
-import { BuildInfo } from '@grafana/data';
+import { type BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
-import { Faro, Instrumentation } from '@grafana/faro-core';
+import { type Faro, type Instrumentation } from '@grafana/faro-core';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import {
-  BrowserConfig,
+  type BrowserConfig,
   FetchTransport,
   SessionInstrumentation,
   UserActionInstrumentation,
@@ -16,7 +16,7 @@ import { TracingInstrumentation } from '@grafana/faro-web-tracing';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, TRACKING_URLS } from './GrafanaJavascriptAgentBackend';
-import { GrafanaJavascriptAgentBackendOptions } from './types';
+import { type GrafanaJavascriptAgentBackendOptions } from './types';
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -88,14 +88,10 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   };
 
   it('will set up FetchTransport if customEndpoint is provided', () => {
-    // arrange
-    const constructorSpy = jest.spyOn(faroWebSdkModule, 'FetchTransport');
-
     //act
     new GrafanaJavascriptAgentBackend(options);
 
     //assert
-    expect(constructorSpy).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock).toHaveBeenCalledTimes(1);
     expect(initializeFaroMock.mock.calls[0][0].transports?.length).toEqual(2);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[0]).toBeInstanceOf(EchoSrvTransport);
@@ -106,6 +102,9 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
       /\/collect(?:\/[\w]*)?$/,
     ]);
     expect(initializeFaroMock.mock.calls[0][0].transports?.[1]).toBeInstanceOf(FetchTransport);
+    expect(initializeFaroMock.mock.calls[0][0].transports?.[1].getIgnoreUrls()).toEqual([
+      '/log-grafana-javascript-agent',
+    ]);
   });
 
   it('will initialize GrafanaJavascriptAgent and set user', async () => {

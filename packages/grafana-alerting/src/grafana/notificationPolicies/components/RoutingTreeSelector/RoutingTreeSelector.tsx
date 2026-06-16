@@ -1,10 +1,10 @@
-import { ComponentProps, useMemo } from 'react';
+import { type ComponentProps, useMemo } from 'react';
 
-import { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Alert, Combobox, ComboboxOption, MultiCombobox } from '@grafana/ui';
+import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
-import { CustomComboBoxProps } from '../../../common/ComboBox.types';
+import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { USER_DEFINED_TREE_NAME } from '../../consts';
 import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
 

@@ -11,7 +11,7 @@ labels:
     - oss
 title: Work with provisioned dashboards in Git Sync
 menuTitle: Work with provisioned dashboards
-weight: 450
+weight: 550
 canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/provision-resources/provisioned-dashboards/
 aliases:
   - ../../../observability-as-code/provision-resources/provisioned-dashboards/ # /docs/grafana/next/observability-as-code/provision-resources/provisioned-dashboards/
@@ -20,11 +20,11 @@ aliases:
 
 # Work with provisioned dashboards in Git Sync
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
-Git Sync is available in [public preview](https://grafana.com/docs/release-life-cycle/) for Grafana Cloud, and is an [experimental feature](https://grafana.com/docs/release-life-cycle/) in Grafana v12 for open source and Enterprise editions. Documentation and support is available **based on the different tiers** but might be limited to enablement, configuration, and some troubleshooting. No SLAs are provided.
+**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
-**Git Sync is under development.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for more information. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -101,6 +101,14 @@ You can remove a provisioned dashboard by deleting the dashboard from the reposi
 
 To restore a deleted dashboard, raise a PR directly in your GitHub repository. Restoring resources from the UI isn't possible at the moment.
 
+## Document folders with a README
+
+Document the contents or any other relevant piece of information of your provisioned folder in a `README.md` file stored alongside its resources in the repository. Grafana renders the README inline on the folder page, below the list of dashboards, so your team can see what's in the folder, how it's organized, and where to find the right dashboard without leaving Grafana.
+
+- When the folder contains a `README.md` file, Grafana renders its Markdown content. Relative links and images in the README resolve against the host repository.
+- If the folder has no `README.md`, or if the folder is empty, you'll be prompted to action with a **Add README** button.
+- You can edit the README any time. Select the edit pencil in the README header to open the file in your Git provider's editor and commit changes through your usual workflow.
+
 ## Best practices
 
 Follow these recommendations when working with provisioned dashboards:
@@ -109,3 +117,4 @@ Follow these recommendations when working with provisioned dashboards:
 - **Provide clear commit messages**: Describe your changes to help with tracking and collaboration
 - **Regularly sync your repository**: Keep Grafana up to date with the latest changes
 - **Review the Events tab**: Monitor sync status to ensure changes are applied correctly
+- **Add a folder README**: Document each folder's contents with a `README.md` so teammates can find the right dashboard quickly

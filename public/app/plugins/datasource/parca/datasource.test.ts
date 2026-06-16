@@ -1,9 +1,9 @@
-import { DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
+import { type DataSourceInstanceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { defaultParcaQueryType } from './dataquery.gen';
 import { ParcaDataSource } from './datasource';
-import { Query } from './types';
+import { type Query } from './types';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');

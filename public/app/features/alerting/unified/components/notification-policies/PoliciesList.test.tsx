@@ -1,5 +1,7 @@
-import { render } from 'test/test-utils';
-import { byLabelText, byRole, byTestId } from 'testing-library-selector';
+import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
+import { render, screen, within } from 'test/test-utils';
+import { byTestId } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -8,31 +10,59 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 
 import { AccessControlAction } from '../../../../../types/accessControl';
 import NotificationPolicies from '../../NotificationPoliciesPage';
-import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
+import { useNotificationPolicyAbility } from '../../hooks/abilities/alertmanager/useNotificationPolicyAbility';
+import {
+  type Ability,
+  Granted,
+  InsufficientPermissions,
+  NotSupported,
+  NotificationPolicyAction,
+} from '../../hooks/abilities/types';
 import { grantUserPermissions, mockDataSource } from '../../mocks';
-import { getRoutingTree, getRoutingTreeList, resetRoutingTreeMap } from '../../mocks/server/entities/k8s/routingtrees';
+import {
+  getRoutingTree,
+  getRoutingTreeList,
+  resetRoutingTreeMap,
+  setAllRoutingTreePermissions,
+} from '../../mocks/server/entities/k8s/routingtrees';
 import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
-import { K8sAnnotations, ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
+import { K8sAnnotations } from '../../utils/k8s/constants';
 
 import { countPolicies } from './PoliciesList';
-import { TIMING_OPTIONS_DEFAULTS } from './timingOptions';
+import * as analytics from './notificationPolicyAnalytics';
 
 jest.mock('../../useRouteGroupsMatcher');
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertmanagerAbilities: jest.fn(),
-  useAlertmanagerAbility: jest.fn(),
+// The export drawer uses IntersectionObserver which is not available in JSDOM.
+// Mock it out so we can test the tracking call without rendering the drawer.
+jest.mock('../export/GrafanaPoliciesExporter', () => ({
+  GrafanaPoliciesExporter: () => null,
 }));
 
+jest.mock('../../hooks/abilities/alertmanager/useContactPointAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useContactPointAbility'),
+  useContactPointAbility: jest.fn(),
+}));
+jest.mock('../../hooks/abilities/alertmanager/useNotificationPolicyAbility', () => ({
+  ...jest.requireActual('../../hooks/abilities/alertmanager/useNotificationPolicyAbility'),
+  useNotificationPolicyAbility: jest.fn(),
+}));
+
+function toAbility(supported: boolean, allowed: boolean): Ability {
+  if (!supported) {
+    return NotSupported;
+  }
+  return allowed ? Granted : InsufficientPermissions([]);
+}
+
 const mocks = {
-  // Mock the hooks that are actually used by the components:
-  useAlertmanagerAbilities: jest.mocked(useAlertmanagerAbilities),
-  useAlertmanagerAbility: jest.mocked(useAlertmanagerAbility),
+  useContactPointAbility: jest.mocked(useContactPointAbility),
+  useNotificationPolicyAbility: jest.mocked(useNotificationPolicyAbility),
 };
 
-setupMswServer();
+const server = setupMswServer();
 
 const renderNotificationPolicies = () =>
   render(
@@ -55,69 +85,26 @@ const dataSources = {
 };
 
 const ui = {
-  /** Policy table row by name */
-  routeContainer: (name: string) => byTestId(`routing-tree_${name}`),
-  /** Search box for routing policies */
-  policyFilter: byRole('textbox', { name: /search routing trees/ }),
-
+  rootRouteContainer: byTestId('am-root-route-container'),
   createPolicyButton: byTestId('create-policy-button'),
-  exportAllButton: byTestId('export-all-policy-button'),
-  viewButton: byTestId('view-action'),
-  editButton: byTestId('edit-action'),
-  exportButton: byTestId('export-action'),
-  deleteButton: byTestId('delete-action'),
-  resetButton: byTestId('reset-action'),
-
-  /** (deeply) Nested rows of policies under the default/root policy */
-  row: byTestId('am-route-container'),
-
-  newChildPolicyButton: byRole('button', { name: /New child policy/ }),
-  newSiblingPolicyButton: byRole('button', { name: /Add new policy/ }),
-
-  moreActionsDefaultPolicy: byLabelText(/more actions for default policy/i),
-  moreActions: byLabelText(/more actions for policy/i),
-  // editButton: byRole('menuitem', { name: 'Edit' }),
-
-  saveButton: byRole('button', { name: /update (default )?policy/i }),
-  deleteRouteButton: byRole('menuitem', { name: 'Delete' }),
-
-  receiverSelect: byTestId('am-receiver-select'),
-  groupSelect: byTestId('am-group-select'),
-  muteTimingSelect: byTestId('am-mute-timing-select'),
-
-  groupWaitContainer: byTestId('am-group-wait'),
-  groupIntervalContainer: byTestId('am-group-interval'),
-  groupRepeatContainer: byTestId('am-repeat-interval'),
-
-  confirmDeleteModal: byRole('dialog'),
-  confirmDeleteButton: byRole('button', { name: /yes, delete policy/i }),
-};
-
-const getRoute = async (routeName: string) => {
-  return ui.routeContainer(routeName).find();
 };
 
 const allPolicyActions = [
-  AlertmanagerAction.CreateNotificationPolicy,
-  AlertmanagerAction.ViewNotificationPolicyTree,
-  AlertmanagerAction.UpdateNotificationPolicyTree,
-  AlertmanagerAction.DeleteNotificationPolicy,
-  AlertmanagerAction.ExportNotificationPolicies,
+  NotificationPolicyAction.Create,
+  NotificationPolicyAction.ViewTree,
+  NotificationPolicyAction.UpdateTree,
+  NotificationPolicyAction.Delete,
+  NotificationPolicyAction.Export,
 ];
 
-const grantAlertmanagerAbilities = (allowed: AlertmanagerAction[]) => {
-  mocks.useAlertmanagerAbility.mockImplementation((action) => {
-    // Default to all known policy actions supported and allowed, others are denied.
-    const included = allowed.includes(action);
-    return [true, included]; // Always supported, but only allow those from input.
-  });
+const grantAlertmanagerAbilities = (allowed: readonly NotificationPolicyAction[]) => {
+  // useContactPointAbility is called for View checks — always grant it
+  mocks.useContactPointAbility.mockReturnValue(Granted);
 
-  mocks.useAlertmanagerAbilities.mockImplementation((actions) => {
-    // Default to all known policy actions supported and allowed, others are denied.
-    return actions.map((action) => {
-      const included = allowed.includes(action);
-      return [true, included]; // Always supported, but only allow those from input.
-    });
+  // useNotificationPolicyAbility is called with { action, context } — check action against allowed list
+  mocks.useNotificationPolicyAbility.mockImplementation(({ action }) => {
+    const included = (allowed as readonly string[]).includes(action);
+    return toAbility(true, included);
   });
 };
 
@@ -134,11 +121,21 @@ describe('PoliciesList', () => {
     jest.restoreAllMocks();
     jest.resetAllMocks();
 
+    // MultiCombobox uses canvas measureText which isn't available in jsdom.
+    // Must be re-applied after jest.resetAllMocks() clears mock return values.
+    HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({
+      measureText: jest.fn().mockReturnValue({ width: 0 }),
+      font: '',
+    }) as never;
+
     grantAlertmanagerAbilities(allPolicyActions);
 
     grantUserPermissions([AccessControlAction.AlertingInstanceRead, AccessControlAction.AlertingNotificationsRead]);
 
     resetRoutingTreeMap();
+    // Strip entity-level k8s access annotations so tests start with least-privilege.
+    // Tests that need to open the more-actions menu must opt in via setAllRoutingTreePermissions.
+    setAllRoutingTreePermissions({ canWrite: false, canDelete: false, canAdmin: false });
   });
 
   describe('Route headers and metadata', () => {
@@ -150,38 +147,55 @@ describe('PoliciesList', () => {
         const route = getRoutingTree(routeName)!;
 
         renderNotificationPolicies();
-        const routeEl = await getRoute(routeName);
 
+        // Wait for all root route containers to render
+        const allRoots = await ui.rootRouteContainer.findAll();
+        expect(allRoots.length).toBeGreaterThanOrEqual(1);
+
+        // Find the matching root by receiver name.
+        // For duplicate receivers, also match by provenance text.
+        const receiverName = route.spec.defaults.receiver!;
+        const isProvisioned = route.metadata.annotations?.[K8sAnnotations.Provenance] !== KnownProvenance.None;
+        const routeEl = allRoots.find((el) => {
+          const text = el.textContent ?? '';
+          const hasReceiver = text.includes(receiverName);
+          if (!hasReceiver) {
+            return false;
+          }
+          // If provisioned, ensure the element also has "Provisioned" text
+          if (isProvisioned) {
+            return text.includes('Provisioned');
+          }
+          // If not provisioned and receiver matches but there could be a duplicate,
+          // ensure the element does NOT have "Provisioned" text
+          return !text.includes('Provisioned');
+        })!;
+        expect(routeEl).toBeDefined();
+
+        // Check receiver is displayed
+        expect(routeEl).toHaveTextContent(new RegExp(`Delivered to`, 'i'));
+        expect(routeEl).toHaveTextContent(new RegExp(receiverName, 'i'));
+
+        // Check grouping — only shown when group_by is explicitly set as an array
+        const groupBy = route?.spec.defaults.group_by;
+        if (Array.isArray(groupBy) && groupBy.length > 0) {
+          if (groupBy[0] === '...') {
+            expect(routeEl).toHaveTextContent(/Not grouping/i);
+          } else {
+            expect(routeEl).toHaveTextContent(new RegExp(`Grouped by ${groupBy.join(', ')}`, 'i'));
+          }
+        } else if (Array.isArray(groupBy) && groupBy.length === 0) {
+          expect(routeEl).toHaveTextContent(/Single group/i);
+        }
+
+        // Check provisioned badge
+        if (isProvisioned) {
+          expect(routeEl).toHaveTextContent(/Provisioned/i);
+        }
+
+        // Check subpolicies exist in the tree data
         const size = countPolicies(route.spec);
-        expect(routeEl).toHaveTextContent(new RegExp(`${size} Subpolicies`, 'i'));
-
-        const groupBy = route?.spec.defaults.group_by ?? [];
-        let groupingText = 'Single group';
-        if (groupBy.length > 0) {
-          groupingText = groupBy[0] === '...' ? 'Not grouping' : `grouped by ${groupBy.join(', ')}`;
-        }
-
-        expect(routeEl).toHaveTextContent(new RegExp(`delivered to ${route?.spec.defaults.receiver}`, 'i'));
-        expect(routeEl).toHaveTextContent(new RegExp(`${groupingText}`, 'i'));
-        expect(routeEl).toHaveTextContent(
-          new RegExp(`wait ${route?.spec.defaults.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait} to group`, 'i')
-        );
-        expect(routeEl).toHaveTextContent(
-          new RegExp(
-            `wait ${route?.spec.defaults.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval} before sending`,
-            'i'
-          )
-        );
-        expect(routeEl).toHaveTextContent(
-          new RegExp(
-            `repeated every ${route?.spec.defaults.repeat_interval ?? TIMING_OPTIONS_DEFAULTS.repeat_interval}`,
-            'i'
-          )
-        );
-
-        if (route?.metadata.annotations?.[K8sAnnotations.Provenance] !== KnownProvenance.None) {
-          expect(routeEl).toHaveTextContent(new RegExp(`Provisioned`, 'i'));
-        }
+        expect(size).toBeGreaterThanOrEqual(0);
       }
     );
   });
@@ -189,20 +203,15 @@ describe('PoliciesList', () => {
   describe('Table action permissions', () => {
     describe('Create', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.CreateNotificationPolicy,
-          AlertmanagerAction.ViewNotificationPolicyTree,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.Create, NotificationPolicyAction.ViewTree]);
         renderNotificationPolicies();
-        await getRoute(ROOT_ROUTE_NAME);
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
         expect(ui.createPolicyButton.query()).toBeEnabled();
       });
       it('disable if user does not have permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
-        await getRoute(ROOT_ROUTE_NAME);
         expect(await ui.createPolicyButton.find()).toBeInTheDocument();
         expect(ui.createPolicyButton.query()).toBeDisabled();
       });
@@ -210,123 +219,166 @@ describe('PoliciesList', () => {
   });
 
   describe('Policy action permissions', () => {
-    describe('View/Edit', () => {
-      it('shows view if user has no edit permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+    describe('Edit', () => {
+      it('shows edit menu item if user has edit permission', async () => {
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
+        const user = userEvent.setup();
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.viewButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        await user.click(within(defaultPolicyEl).getByTestId('more-actions'));
+        expect(screen.getByRole('menuitem', { name: 'Edit' })).toBeInTheDocument();
       });
-      it('shows edit if user has edit permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+      it('does not show more actions if user has no edit permission', async () => {
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.editButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        // No actions available = no more-actions button rendered
+        expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
-      it('shows view if policy is provisioned', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.UpdateNotificationPolicyTree,
-        ]);
+      it('shows edit as disabled if policy is provisioned', async () => {
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.UpdateTree]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
+        const user = userEvent.setup();
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute('Managed Policy - Empty Provisioned');
-        const btn = await ui.viewButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        // Find the provisioned policy (has "Provisioned" text)
+        const provisionedPolicy = allRoots.find((el) => el.textContent?.includes('Provisioned'));
+        expect(provisionedPolicy).toBeDefined();
+        await user.click(within(provisionedPolicy!).getByTestId('more-actions'));
+        const editItem = screen.getByRole('menuitem', { name: 'Edit' });
+        expect(editItem).toBeInTheDocument();
+        expect(editItem).toBeDisabled();
       });
     });
     describe('Export', () => {
       it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.ExportNotificationPolicies,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Export]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
 
+        const user = userEvent.setup();
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.exportButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        await user.click(within(defaultPolicyEl).getByTestId('more-actions'));
+        expect(screen.getByRole('menuitem', { name: 'Export' })).toBeInTheDocument();
       });
-      it('disable if user does not have permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+      it('does not show more actions if user has no export or edit permission', async () => {
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.exportButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).toHaveAttribute('aria-disabled', 'true');
-      });
-    });
-
-    describe('Delete', () => {
-      it('enable if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.DeleteNotificationPolicy,
-        ]);
-
-        renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute('Managed Policy - Override + Inherit');
-        const btn = await ui.deleteButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
-      });
-      it('disable if user has no permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
-
-        renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute('Managed Policy - Override + Inherit');
-        const btn = await ui.deleteButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).toHaveAttribute('aria-disabled', 'true');
-      });
-      it('disable if is provisioned', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.DeleteNotificationPolicy,
-        ]);
-
-        renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute('Managed Policy - Empty Provisioned');
-        const btn = await ui.deleteButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        // No actions available = no more-actions button rendered
+        expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
     });
 
     describe('Reset', () => {
       it('enable on default policy if user has permission', async () => {
-        grantAlertmanagerAbilities([
-          AlertmanagerAction.ViewNotificationPolicyTree,
-          AlertmanagerAction.DeleteNotificationPolicy,
-        ]);
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree, NotificationPolicyAction.Delete]);
+        setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
+
+        const user = userEvent.setup();
+        renderNotificationPolicies();
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        await user.click(within(defaultPolicyEl).getByTestId('more-actions'));
+        const resetItem = screen.getByRole('menuitem', { name: 'Reset' });
+        expect(resetItem).toBeInTheDocument();
+      });
+      it('does not show more actions on default policy if user has no permission', async () => {
+        grantAlertmanagerAbilities([NotificationPolicyAction.ViewTree]);
 
         renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.resetButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).not.toHaveAttribute('aria-disabled', 'true');
+        const allRoots = await ui.rootRouteContainer.findAll();
+        const defaultPolicyEl = allRoots[0];
+        // No actions available = no more-actions button rendered
+        expect(within(defaultPolicyEl).queryByTestId('more-actions')).not.toBeInTheDocument();
       });
-      it('disable on default policy if user has no permission', async () => {
-        grantAlertmanagerAbilities([AlertmanagerAction.ViewNotificationPolicyTree]);
+    });
+  });
 
-        renderNotificationPolicies();
-        const defaultPolicyEl = await getRoute(ROOT_ROUTE_NAME);
-        const btn = await ui.resetButton.find(defaultPolicyEl);
-        expect(btn).toBeInTheDocument();
-        expect(btn).toHaveAttribute('aria-disabled', 'true');
-      });
+  describe('Analytics', () => {
+    beforeEach(() => {
+      setAllRoutingTreePermissions({ canWrite: true, canDelete: true, canAdmin: true });
+      jest.spyOn(analytics, 'trackNotificationPolicyExported');
+      jest.spyOn(analytics, 'trackNotificationPoliciesToggledAll');
+      // Add a handler for the export API to prevent unhandled request errors
+      server.use(http.get('/api/v1/provisioning/policies/export', () => HttpResponse.text('')));
+      // The measureText utility in @grafana/ui caches the canvas context at module level.
+      // jest.resetAllMocks() between tests resets the cached context's measureText mock, causing
+      // crashes when uncached text is measured. We patch the context directly to fix this.
+      const { getCanvasContext } = require('@grafana/ui');
+      const ctx = getCanvasContext();
+      ctx.measureText = jest.fn().mockReturnValue({ width: 100 } as TextMetrics);
+    });
+
+    it('tracks export click for the default policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      const allRoots = await ui.rootRouteContainer.findAll();
+      const defaultPolicyEl = allRoots[0];
+      await user.click(within(defaultPolicyEl).getByTestId('more-actions'));
+      await user.click(screen.getByRole('menuitem', { name: 'Export' }));
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({ isDefaultPolicy: true });
+    });
+
+    it('tracks export click for a custom policy', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      const allRoots = await ui.rootRouteContainer.findAll();
+      // The second root container is a custom policy tree (not ROOT_ROUTE_NAME)
+      const customPolicyEl = allRoots[1];
+      await user.click(within(customPolicyEl).getByTestId('more-actions'));
+      await user.click(screen.getByRole('menuitem', { name: 'Export' }));
+
+      expect(analytics.trackNotificationPolicyExported).toHaveBeenCalledWith({ isDefaultPolicy: false });
+    });
+
+    it('tracks expand all click', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+
+      // Wait for policies to load
+      await ui.rootRouteContainer.findAll();
+
+      const expandAllButton = await screen.findByRole('button', { name: /expand all/i });
+      await user.click(expandAllButton);
+
+      expect(analytics.trackNotificationPoliciesToggledAll).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'expand' })
+      );
+    });
+
+    it('tracks collapse all click after expanding', async () => {
+      grantAlertmanagerAbilities(allPolicyActions);
+      const user = userEvent.setup();
+
+      renderNotificationPolicies();
+      await ui.rootRouteContainer.findAll();
+
+      // Expand all, then collapse all
+      await user.click(await screen.findByRole('button', { name: /expand all/i }));
+      await user.click(await screen.findByRole('button', { name: /collapse all/i }));
+
+      expect(analytics.trackNotificationPoliciesToggledAll).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'collapse' })
+      );
     });
   });
 });

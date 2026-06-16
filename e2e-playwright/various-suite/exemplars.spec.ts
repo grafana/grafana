@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
@@ -49,7 +49,7 @@ test.describe(
       await page.goto('/');
     });
 
-    test('should be able to navigate to configured data source', async ({ page, selectors }) => {
+    test('should be able to navigate to configured data source', async ({ page, selectors, components }) => {
       // Mock API responses
       await page.route(/api\/ds\/query/, async (route) => {
         const postData = route.request().postDataJSON();
@@ -76,14 +76,7 @@ test.describe(
       await page.goto('/explore');
 
       // Select data source
-      const dataSourcePicker = page.getByTestId(selectors.components.DataSourcePicker.container);
-      await expect(dataSourcePicker).toBeVisible();
-      await dataSourcePicker.click();
-
-      const dataSourceOption = page.getByText(dataSourceName);
-      await dataSourceOption.scrollIntoViewIfNeeded();
-      await expect(dataSourceOption).toBeVisible();
-      await dataSourceOption.click();
+      await components.dataSourcePicker.set(dataSourceName);
 
       // Switch to code editor
       const codeRadioButton = page.getByTestId(selectors.components.RadioButton.container).filter({ hasText: 'Code' });

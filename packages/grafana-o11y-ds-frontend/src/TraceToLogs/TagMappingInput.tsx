@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { InlineLabel, SegmentInput, ToolbarButton, useStyles2 } from '@grafana/ui';
 
-import { TraceToLogsTag } from './TraceToLogsSettings';
+import { type TraceToLogsTag } from './TraceToLogsSettings';
 
 interface Props {
   values: TraceToLogsTag[];

@@ -5,8 +5,8 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -61,7 +61,14 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			// Create checks use an empty Name. For a subfolder, Folder is the parent;
+			// permission must be evaluated on the parent folder (can_create), not on "general".
+			if resource.folder != "" {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && resource.folder == "" {
 			resource.folder = accesscontrol.GeneralFolderUID
 		}
@@ -101,7 +108,12 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			if resource.folder != "" {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && resource.folder == "" {
 			resource.folder = accesscontrol.GeneralFolderUID
 		}
@@ -152,7 +164,9 @@ func (r ResourceInfo) GroupResourceIdent() string {
 }
 
 func (r ResourceInfo) ResourceIdent() string {
-	if r.name == "" {
+	// Treat "*" the same as "". Wildcard access ("can access all resources of this type")
+	// is handled at the group-resource level.
+	if r.name == "" || r.name == "*" {
 		return ""
 	}
 

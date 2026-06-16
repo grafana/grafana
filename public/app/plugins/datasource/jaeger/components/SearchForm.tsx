@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 
-import { SelectableValue, toOption } from '@grafana/data';
+import { type SelectableValue, toOption } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { fuzzyMatch, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
-import { JaegerDatasource } from '../datasource';
-import { JaegerQuery } from '../types';
+import { type JaegerDatasource } from '../datasource';
+import { type JaegerQuery } from '../types';
 
 const durationPlaceholder = 'e.g. 1.2s, 100ms, 500us';
 
@@ -17,7 +17,7 @@ type Props = {
   onChange: (value: JaegerQuery) => void;
 };
 
-export const ALL_OPERATIONS_KEY = 'All';
+const ALL_OPERATIONS_KEY = 'All';
 const allOperationsOption: SelectableValue<string> = {
   label: ALL_OPERATIONS_KEY,
   value: undefined,
@@ -213,5 +213,3 @@ export function SearchForm({ datasource, query, onChange }: Props) {
     </>
   );
 }
-
-export default SearchForm;

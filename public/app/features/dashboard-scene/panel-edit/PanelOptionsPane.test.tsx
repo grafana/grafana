@@ -1,11 +1,18 @@
-import { PanelPlugin } from '@grafana/data';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
+
+import { type PanelPlugin } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 import * as utils from '../utils/utils';
 
@@ -14,12 +21,39 @@ import { testDashboard } from './testfiles/testDashboard';
 
 jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({}));
 
+const pluginWithFieldConfig = getPanelPlugin({
+  id: 'TestPanel',
+}).useFieldConfig({
+  useCustomConfig: (b) => {
+    b.addBooleanSwitch({
+      name: 'CustomBool',
+      path: 'CustomBool',
+    });
+  },
+});
+
 let pluginToLoad: PanelPlugin | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginImportUtils: () => ({
-    getPanelPluginFromCache: jest.fn(() => pluginToLoad),
+    getPanelPluginFromCache: jest.fn(() => pluginToLoad ?? pluginWithFieldConfig),
+  }),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useListedPanelPluginMetas: jest.fn().mockReturnValue({
+    loading: false,
+    error: undefined,
+    value: [
+      {
+        id: 'TestPanel',
+        name: 'Test Panel',
+        sort: 0,
+        info: { logos: { small: '' } },
+      },
+    ],
   }),
 }));
 
@@ -172,8 +206,96 @@ describe('PanelOptionsPane', () => {
       expect(mergedConfig.overrides[0].matcher).toEqual({ id: 'byName', options: 'A-series' });
       expect(mergedConfig.overrides[0].properties[0].id).toBe('displayName');
 
-      // Should use the new fieldConfig defaults
-      expect(mergedConfig.defaults.unit).toBe('percent');
+      // Should preserve the user's existing standard options
+      expect(mergedConfig.defaults.unit).toBe('bytes');
+    });
+
+    it('Should use plugin preferred color when suggestion has no color', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { custom: { someProp: true } },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should adapt color to preferred scheme even for same-plugin suggestions', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      expect(panel.state.fieldConfig.defaults.color?.mode).toBe('palette-classic');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: panel.state.pluginId,
+        fieldConfig: {
+          defaults: { custom: {} },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should use plugin preferred color over any current user color when suggestion has no color', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      panel.setState({
+        fieldConfig: {
+          defaults: { ...panel.state.fieldConfig.defaults, color: { mode: 'fixed', fixedColor: 'blue' } },
+          overrides: [],
+        },
+      });
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { custom: {} },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
+    });
+
+    it('Should apply color from suggestion fieldConfig when explicitly provided', () => {
+      const { optionsPane, panel } = setupTest('panel-1');
+
+      const mockOnFieldConfigChange = jest.fn();
+      panel.onFieldConfigChange = mockOnFieldConfigChange;
+
+      optionsPane.onChangePanel({
+        pluginId: 'table',
+        fieldConfig: {
+          defaults: { color: { mode: 'thresholds' } },
+          overrides: [],
+        },
+      });
+
+      expect(mockOnFieldConfigChange).toHaveBeenCalled();
+      const mergedConfig = mockOnFieldConfigChange.mock.calls[0][0];
+
+      expect(mergedConfig.defaults.color?.mode).toBe('thresholds');
     });
 
     it('Should not call onFieldConfigChange when no fieldConfig provided', () => {
@@ -182,13 +304,45 @@ describe('PanelOptionsPane', () => {
       const mockOnFieldConfigChange = jest.fn();
       panel.onFieldConfigChange = mockOnFieldConfigChange;
 
-      // Call without fieldConfig
       optionsPane.onChangePanel({
         pluginId: 'table',
         options: { showHeader: false },
       });
 
       expect(mockOnFieldConfigChange).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Show only overrides button', () => {
+    it('Should set aria-pressed correctly when toggling', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'TestPanel',
+        title: 'Test',
+        fieldConfig: { defaults: {}, overrides: [] },
+      });
+
+      new DashboardGridItem({ body: panel });
+
+      const optionsPane = new PanelOptionsPane({
+        panelRef: panel.getRef(),
+        searchQuery: '',
+        listMode: OptionFilter.All,
+      });
+
+      activateFullSceneTree(optionsPane);
+      panel.activate();
+
+      render(<optionsPane.Component model={optionsPane} />);
+
+      const overridesButton = screen.getByRole('button', { name: 'Show only overrides' });
+      expect(overridesButton).toHaveAttribute('aria-pressed', 'false');
+
+      await userEvent.click(overridesButton);
+      expect(overridesButton).toHaveAttribute('aria-pressed', 'true');
+
+      await userEvent.click(overridesButton);
+      expect(overridesButton).toHaveAttribute('aria-pressed', 'false');
     });
   });
 });

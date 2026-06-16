@@ -1,4 +1,4 @@
-import { Props } from './LogRow';
+import { type Props } from './LogRow';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 
 const emptyFn = () => {};

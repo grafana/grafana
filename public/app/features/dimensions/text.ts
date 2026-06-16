@@ -1,7 +1,7 @@
-import { DataFrame, Field, FieldType, formattedValueToString } from '@grafana/data';
-import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
+import { type DataFrame, type Field, FieldType, formattedValueToString } from '@grafana/data';
+import { type TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { type DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -13,10 +13,7 @@ export function getTextDimension(frame: DataFrame | undefined, config: TextDimen
   return getTextDimensionForField(field, config);
 }
 
-export function getTextDimensionForField(
-  field: Field | undefined,
-  config: TextDimensionConfig
-): DimensionSupplier<string> {
+function getTextDimensionForField(field: Field | undefined, config: TextDimensionConfig): DimensionSupplier<string> {
   let v = config.fixed;
   const mode = config.mode ?? TextDimensionMode.Fixed;
   if (mode === TextDimensionMode.Fixed) {

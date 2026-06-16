@@ -1,16 +1,18 @@
-import { MouseEvent, useCallback, useMemo, useRef } from 'react';
+import { type MouseEvent, useCallback, useMemo, useRef } from 'react';
 
-import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { type LogRowContextOptions, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataQuery } from '@grafana/schema';
+import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
-import { LogLineStyles } from './LogLine';
+import { type LogLineStyles } from './LogLine';
 import { useLogIsPinned, useLogListContext } from './LogListContext';
-import { LogListModel } from './processing';
+import { getLogAsJSON } from './export';
+import { type LogListModel } from './processing';
 
 export type GetRowContextQueryFn = (
   row: LogRowModel,
@@ -53,7 +55,13 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
 
   const copyLogLine = useCallback(() => {
     copyText(log.entry, menuRef);
+    reportInteraction('logs_log_line_menu_header_copy_clicked');
   }, [log.entry]);
+
+  const copyLogLineAsJson = useCallback(async () => {
+    copyText(await getLogAsJSON(log), menuRef);
+    reportInteraction('logs_log_line_menu_header_copy_json_clicked');
+  }, [log]);
 
   const copyLinkToLogLine = useCallback(() => {
     onPermalinkClick?.(log);
@@ -108,7 +116,11 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
           <Menu.Item onClick={togglePinning} label={t('logs.log-line-menu.unpin-from-outline', 'Unpin log')} />
         )}
         {showFirstDivider && <Menu.Divider />}
-        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log', 'Copy log line')} />
+        <Menu.Item onClick={copyLogLine} label={t('logs.log-line-menu.copy-log-message', 'Copy log line message')} />
+        <Menu.Item
+          onClick={copyLogLineAsJson}
+          label={t('logs.log-line-menu.copy-log-contents', 'Copy log line contents as JSON')}
+        />
         {onPermalinkClick && log.rowId !== undefined && log.uid && (
           <Menu.Item onClick={copyLinkToLogLine} label={t('logs.log-line-menu.copy-link', 'Copy link to log line')} />
         )}
@@ -136,6 +148,7 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
     [
       copyLinkToLogLine,
       copyLogLine,
+      copyLogLineAsJson,
       detailsDisplayed,
       enableLogDetails,
       isAssistantAvailable,

@@ -5,7 +5,7 @@
  * and a trimmed elements map (title, description, vizConfig.group only).
  */
 
-import { z } from 'zod';
+import { type z } from 'zod';
 
 import type { Element, PanelKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -14,7 +14,7 @@ import { getElements } from '../../serialization/layoutSerializers/utils';
 import { payloads } from './schemas';
 import { requiresNewDashboardLayoutsReadOnly, type MutationCommand } from './types';
 
-export const getLayoutPayloadSchema = payloads.getLayout;
+const getLayoutPayloadSchema = payloads.getLayout;
 
 export type GetLayoutPayload = z.infer<typeof getLayoutPayloadSchema>;
 

@@ -1,4 +1,4 @@
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 
 import { getNextRefId } from './refId';
 

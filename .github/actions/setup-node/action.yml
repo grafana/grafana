@@ -18,4 +18,4 @@ runs:
       with:
         node-version-file: '${{ inputs.cwd }}/.nvmrc'
         cache: ${{ inputs.cache == 'true' && 'yarn' || '' }}
-        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/yarn.lock', inputs.cwd) || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/yarn.lock', inputs.cwd) || 'false' }}

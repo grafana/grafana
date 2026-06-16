@@ -18,7 +18,7 @@ jobs:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -27,7 +27,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -49,18 +50,15 @@ jobs:
           persist-credentials: false
 
       - name: Cache backend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-backend-${{ runner.os }}-${{ hashFiles('**/go.mod', '**/go.sum', 'go.work', 'go.work.sum', 'pkg/**/*.go', 'apps/**/*.go', '!**_test.go', 'Makefile', 'embed.go') }}"
           path: bin
 
       - name: Setup Go
-        uses: actions/setup-go@v6.3.0
+        uses: ./.github/actions/setup-go
         if: steps.cache.outputs.cache-hit != 'true'
-        with:
-          go-version-file: 'go.mod'
-          cache: true
 
       - name: Build backend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -88,7 +86,7 @@ jobs:
           persist-credentials: false
 
       - name: Cache frontend build
-        uses: actions/cache@v5
+        uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
           key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
@@ -232,12 +230,15 @@ jobs:
 
       - name: Wait for Grafana server to start
         run: |
-          timeout=180
+          timeout=60
           elapsed=0
           printf "Waiting for Grafana to start"
           while ! curl -s -f http://localhost:3001/health > /dev/null 2>&1; do
             if [ $elapsed -ge $timeout ]; then
-              printf "\nTimeout after %d seconds waiting for Grafana\n" "$timeout"
+              printf "\n\n--- Grafana server logs ---\n"
+              cat grafana-server/grafana.log
+              printf "\n--- End of Grafana server logs ---\n\n"
+              printf "Timeout after %d seconds waiting for Grafana\n" "$timeout"
               exit 1
             fi
             printf "."
@@ -290,7 +291,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -365,7 +366,7 @@ jobs:
     steps:
       - name: Download blob reports from GitHub Actions Artifacts
         if: needs.run-playwright-tests.result != 'skipped'
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         with:
           path: blobs
           pattern: playwright-blob-*
@@ -420,7 +421,7 @@ jobs:
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:
-          GRAFANA_MISC_STATS_API_KEY: ${{ env.GRAFANA_MISC_STATS_API_KEY}}
+          GRAFANA_MISC_STATS_API_KEY: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GRAFANA_MISC_STATS_API_KEY }}
 
   # 'All E2E tests complete' is still a required check. To help with this transition, we keep
   # a placeholder job to avoid needing to remove the required check from github yet.
@@ -430,7 +431,7 @@ jobs:
     if: always()
 
     name: All E2E tests complete
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     steps:
     - name: Placeholder step
       run: echo "This step is intentionally left blank. Check playwright-required-tests job for the actual test results."

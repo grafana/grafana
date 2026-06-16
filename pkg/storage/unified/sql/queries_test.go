@@ -149,6 +149,17 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						LatestRv:    20000,
 					},
 				},
+				{
+					Name: "cross-namespace",
+					Data: &sqlResourceListModifiedSinceRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "",
+						Group:       "group",
+						Resource:    "res",
+						SinceRv:     10000,
+						LatestRv:    20000,
+					},
+				},
 			},
 			sqlResourceHistoryGarbageGetCandidates: {
 				{
@@ -287,6 +298,44 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlResourceHistoryInsertBulk: {
+				{
+					Name: "insert bulk into resource_history",
+					Data: &sqlBulkResourceHistoryInsertRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Rows: []sqlResourceRequest{
+							{
+								Generation:      789,
+								ResourceVersion: 1001,
+								WriteEvent: resource.WriteEvent{
+									Key: &resourcepb.ResourceKey{
+										Namespace: "nn",
+										Group:     "gg",
+										Resource:  "rr",
+										Name:      "name-1",
+									},
+									PreviousRV: 1234,
+								},
+								Folder: "fldr-1",
+							},
+							{
+								Generation:      790,
+								ResourceVersion: 1002,
+								WriteEvent: resource.WriteEvent{
+									Key: &resourcepb.ResourceKey{
+										Namespace: "nn",
+										Group:     "gg",
+										Resource:  "rr",
+										Name:      "name-2",
+									},
+									PreviousRV: 1235,
+								},
+								Folder: "fldr-2",
+							},
+						},
+					},
+				},
+			},
 
 			sqlResourceHistoryGet: {
 				{
@@ -359,6 +408,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						HistoryLimit:          1,
 					},
 				},
+				{
+					Name: "cluster-scoped",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "",
+							Group:     "cluster.example.io",
+							Resource:  "clusterresources",
+							Name:      "my-cluster-resource",
+						},
+						HistoryLimit: 10,
+					},
+				},
 			},
 
 			rvmanager.SqlResourceVersionGet: {
@@ -427,8 +489,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlStatsRequest{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "default",
-						Folder:      "folder",
+						Folders:     []string{"folder"},
 						MinCount:    10, // Not yet used in query (only response filter)
+					},
+				},
+				{
+					Name: "folders",
+					Data: &sqlStatsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "default",
+						Folders:     []string{"a", "b", "c"},
 					},
 				},
 				{

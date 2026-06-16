@@ -1,9 +1,9 @@
-import { DataSourceInstanceSettings } from '@grafana/data';
-import { PromQuery } from '@grafana/prometheus';
-import { DataQuery } from '@grafana/schema';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
-import { CombinedRule } from 'app/types/unified-alerting';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type PromQuery } from '@grafana/prometheus';
+import { type DataQuery } from '@grafana/schema';
+import { type LokiQuery } from 'app/plugins/datasource/loki/types';
+import { type CombinedRule } from 'app/types/unified-alerting';
+import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { isCloudRulesSource, isSupportedExternalRulesSourceType } from './datasource';
 import { rulerRuleType } from './rules';
@@ -28,7 +28,7 @@ export function alertRuleToQueries(combinedRule: CombinedRule | undefined | null
   return [];
 }
 
-export function dataQueryToAlertQuery(dataQuery: DataQuery, dataSourceUid: string): AlertQuery {
+function dataQueryToAlertQuery(dataQuery: DataQuery, dataSourceUid: string): AlertQuery {
   return {
     refId: dataQuery.refId,
     datasourceUid: dataSourceUid,

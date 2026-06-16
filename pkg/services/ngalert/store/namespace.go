@@ -39,7 +39,7 @@ func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64
 		return nil, err
 	}
 	if len(f) == 0 {
-		return nil, dashboards.ErrFolderAccessDenied
+		return nil, folder.ErrAccessDenied
 	}
 	return f[0], nil
 }

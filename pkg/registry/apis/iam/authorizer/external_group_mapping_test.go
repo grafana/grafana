@@ -173,7 +173,7 @@ func TestExternalGroupMapping_BeforeUpdate(t *testing.T) {
 	authz := NewExternalGroupMappingAuthorizer(accessClient)
 	ctx := types.WithAuthInfo(context.Background(), user)
 
-	err := authz.BeforeUpdate(ctx, mapping)
+	err := authz.BeforeUpdate(ctx, mapping, mapping)
 	require.Error(t, err)
 	require.True(t, apierrors.IsMethodNotSupported(err))
 	require.Contains(t, err.Error(), "PUT/PATCH")

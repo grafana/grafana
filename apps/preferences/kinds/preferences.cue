@@ -13,24 +13,23 @@ preferencesV1alpha1: {
 	}
 	schema: {
 		spec: {
+			// Explicit home URL (NOTE: this can only be modified in the system settings)
+			homeURL?: string
+
 			// UID for the home dashboard
 			homeDashboardUID?: string
 
 			// The timezone selection
-			// TODO: this should use the timezone defined in common
 			timezone?: string
 
 			// day of the week (sunday, monday, etc)
 			weekStart?: string
 
-			// light, dark, empty is default
+			// user interface theme
 			theme?: string
 
-			// Selected language (beta)
+			// Selected language
 			language?: string
-
-			// Selected locale (beta)
-			regionalFormat?: string
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
@@ -46,6 +45,6 @@ preferencesV1alpha1: {
 
 		#NavbarPreference: {
 			bookmarkUrls: [...string]
-		} 
+		}
 	}
 }

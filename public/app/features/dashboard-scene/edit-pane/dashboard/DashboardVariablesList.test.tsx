@@ -1,22 +1,21 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
-import { ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
-import { openAddVariablePane } from '../../settings/variables/VariableAddEditableElement';
-import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import {
+  DashboardVariablesList,
   partitionVariablesByDisplay,
   partitionVariablesByEditability,
-  DashboardVariablesList,
 } from './DashboardVariablesList';
 
-jest.mock('../../settings/variables/VariableAddEditableElement', () => ({
+jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
   openAddVariablePane: jest.fn(),
 }));
 
@@ -33,7 +32,10 @@ jest.mock('react-use', () => ({
   useLocalStorage: () => [{}, () => {}],
 }));
 
-function renderVariablesList(variables: SceneVariable[] = []) {
+function renderVariablesList(
+  variables: SceneVariable[] = [],
+  options?: { includeAdHoc?: boolean; topPlacementLabel?: string }
+) {
   const user = userEvent.setup();
 
   const variableSet = new SceneVariableSet({ variables });
@@ -44,17 +46,23 @@ function renderVariablesList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.editPane, 'selectObject');
 
-  const renderResult = render(<DashboardVariablesList set={variableSet} />);
+  const renderResult = render(
+    <DashboardVariablesList
+      sourceVariableSet={variableSet}
+      topPlacementLabel={options?.topPlacementLabel}
+      includeAdHoc={options?.includeAdHoc}
+    />
+  );
 
   return {
     ...renderResult,
     user,
     elements: {
       dashboardScene,
-      aboveListItems: () => renderResult.getAllByTestId('variables-list-visible-variable-name'),
-      controlsMenuListItems: () => renderResult.getAllByTestId('variables-list-controls-menu-variable-name'),
-      hiddenListItems: () => renderResult.getAllByTestId('variables-list-hidden-variable-name'),
-      addVariableButton: () => renderResult.getByRole('button', { name: /add variable/i }),
+      aboveListItems: () => within(renderResult.getByTestId('variables-list-visible')).getAllByTestId('variable-name'),
+      controlsMenuListItems: () =>
+        within(renderResult.getByTestId('variables-list-controls-menu')).getAllByTestId('variable-name'),
+      hiddenListItems: () => within(renderResult.getByTestId('variables-list-hidden')).getAllByTestId('variable-name'),
     },
   };
 }
@@ -70,7 +78,7 @@ function buildTestVariables() {
 }
 
 describe('<DashboardVariablesList />', () => {
-  test('renders 3 sections (one per variable display type) and an "Add variable" button', () => {
+  test('renders 3 sections (one per variable display type)', () => {
     const { visibleVar1, visibleVar2, controlsMenuVar1, hiddenVar1 } = buildTestVariables();
     const { getByRole, elements } = renderVariablesList([hiddenVar1, controlsMenuVar1, visibleVar2, visibleVar1]);
 
@@ -86,8 +94,13 @@ describe('<DashboardVariablesList />', () => {
 
     const hiddenNames = Array.from(elements.hiddenListItems()).map((item) => item.textContent);
     expect(hiddenNames).toEqual(['ninjaVar1']);
+  });
 
-    expect(elements.addVariableButton()).toBeInTheDocument();
+  test('uses custom top placement label when provided', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const { getByRole } = renderVariablesList([visibleVar1], { topPlacementLabel: 'Top of row' });
+
+    expect(getByRole('heading', { name: /top of row/i })).toBeInTheDocument();
   });
 
   test('always renders all 3 section titles even when some are empty', () => {
@@ -107,28 +120,7 @@ describe('<DashboardVariablesList />', () => {
 
         await user.click(getByText(visibleVar1.state.name));
 
-        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(
-          visibleVar1,
-          visibleVar1.state.key
-        );
-      });
-    });
-
-    describe('when the "Add variable" button is clicked', () => {
-      test('opens the add variable pane', async () => {
-        const { user, elements } = renderVariablesList([]);
-
-        await user.click(elements.addVariableButton());
-
-        expect(openAddVariablePane).toHaveBeenCalledWith(elements.dashboardScene);
-      });
-
-      test('calls DashboardInteractions.addVariableButtonClicked ', async () => {
-        const { user, elements } = renderVariablesList([]);
-
-        await user.click(elements.addVariableButton());
-
-        expect(DashboardInteractions.addVariableButtonClicked).toHaveBeenCalledWith({ source: 'edit_pane' });
+        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleVar1);
       });
     });
 
@@ -170,6 +162,35 @@ describe('<DashboardVariablesList />', () => {
         const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
         expect(aboveNames).toEqual(['visibleVar2', 'visibleVar1']);
       });
+    });
+  });
+
+  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    test('excludes adhoc variables from the rendered list', () => {
+      const { visibleVar1 } = buildTestVariables();
+      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+      const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
+
+      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+      expect(aboveNames).toEqual(['visibleVar1']);
+      expect(queryByText('adhocFilter')).not.toBeInTheDocument();
+    });
+
+    test('includes adhoc variables when includeAdHoc is true', () => {
+      const { visibleVar1 } = buildTestVariables();
+      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+      const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
+
+      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+      expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
     });
   });
 });

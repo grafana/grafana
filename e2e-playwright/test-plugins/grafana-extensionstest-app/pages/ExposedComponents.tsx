@@ -26,6 +26,7 @@ export function ExposedComponents() {
           <h3>Save to dashboard (exposed form)</h3>
           <AddToDashboardForm
             // Create a recognizable panel for assertion
+            // @ts-expect-error - the exposed component accepts a partial Props, so we don't have to provide all the fields here
             buildPanel={() => ({
               type: 'timeseries',
               title: 'E2E Add to Dashboard Panel',

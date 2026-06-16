@@ -2,16 +2,22 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
-import { DataFrame, DataQueryRequest, DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import {
+  type DataFrame,
+  type DataQueryRequest,
+  type DataSourceApi,
+  type GrafanaTheme2,
+  type TimeRange,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
-import { SearchTableType, TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
+import { SearchTableType, type TempoQuery } from 'app/plugins/datasource/tempo/dataquery.gen';
 
 import { useLogListContext } from './LogListContext';
-import { EmbeddedInternalLink } from './links';
+import { getTraceIdFromTraceQlQuery, type EmbeddedInternalLink } from './links';
 
 interface Props {
   traceRef: EmbeddedInternalLink;
@@ -43,14 +49,16 @@ export const LogLineDetailsTrace = ({ timeRange, timeZone, traceRef }: Props) =>
       return;
     }
     setDataFrames(undefined);
+    // Tempo only returns renderable trace spans for a bare trace ID, so unwrap `{ trace:id = "..." }` lookups.
+    const traceQuery = getTraceIdFromTraceQlQuery(traceRef.query) ?? traceRef.query;
     const request: DataQueryRequest<TempoQuery> = {
       app,
-      requestId: `log-details-trace-${traceRef.query}`,
+      requestId: `log-details-trace-${traceQuery}`,
       targets: [
         {
-          query: traceRef.query,
+          query: traceQuery,
           queryType: 'traceql',
-          refId: `log-details-trace-${traceRef.query}`,
+          refId: `log-details-trace-${traceQuery}`,
           tableType: SearchTableType.Traces,
           filters: [],
         },

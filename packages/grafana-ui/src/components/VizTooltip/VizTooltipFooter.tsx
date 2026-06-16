@@ -1,7 +1,13 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { ActionModel, Field, GrafanaTheme2, LinkModel, ThemeSpacingTokens } from '@grafana/data';
+import {
+  type ActionModel,
+  type Field,
+  type GrafanaTheme2,
+  type LinkModel,
+  type ThemeSpacingTokens,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 
@@ -11,8 +17,8 @@ import { Button } from '../Button/Button';
 import { DataLinkButton } from '../DataLinks/DataLinkButton';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
-import { ResponsiveProp } from '../Layout/utils/responsiveness';
-import { AdHocFilterItem } from '../Table/TableNG/types';
+import { type ResponsiveProp } from '../Layout/utils/responsiveness';
+import { type AdHocFilterItem } from '../Table/TableNG/types';
 
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
@@ -31,7 +37,7 @@ interface VizTooltipFooterProps {
   annotate?: () => void;
 }
 
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
+const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 type RenderOneClickTrans = (title: string) => React.ReactNode;
 type RenderItem<T extends LinkModel | ActionModel> = (

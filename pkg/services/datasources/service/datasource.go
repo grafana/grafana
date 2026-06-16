@@ -50,7 +50,7 @@ var (
 type Service struct {
 	SQLStore                  Store
 	SecretsStore              kvstore.SecretsKVStore
-	SecretsService            secrets.Service
+	SecretsService            secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	cfg                       *setting.Cfg
 	features                  featuremgmt.FeatureToggles
 	permissionsService        accesscontrol.DatasourcePermissionsService
@@ -75,7 +75,9 @@ type cachedRoundTripper struct {
 }
 
 func ProvideService(
-	db db.DB, secretsService secrets.Service, secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
+	db db.DB,
+	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
@@ -214,7 +216,29 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 		}
 		query.AliasIDs = p.AliasIDs
 	}
-	return s.SQLStore.GetDataSourcesByType(ctx, query)
+
+	all, err := s.SQLStore.GetDataSourcesByType(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	// System/background callers have no requester in context — return all values.
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		return all, nil
+	}
+
+	filtered := make([]*datasources.DataSource, 0, len(all))
+	for _, ds := range all {
+		// Skip datasources they can not see
+		evaluator := accesscontrol.EvalPermission(datasources.ActionRead,
+			datasources.ScopeProvider.GetResourceScopeUID(ds.UID))
+		if ok, _ := s.ac.Evaluate(ctx, user, evaluator); !ok {
+			continue
+		}
+		filtered = append(filtered, ds)
+	}
+	return filtered, nil
 }
 
 // ListConnections implements v0alpha1.DataSourceConnectionProvider.
@@ -263,10 +287,16 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
 	} else if query.Plugin != "" {
-		dss, err = s.GetDataSourcesByType(ctx, &datasources.GetDataSourcesByTypeQuery{
+		q := &datasources.GetDataSourcesByTypeQuery{
 			OrgID: ns.OrgID,
-			Type:  query.Plugin, // will support alias
-		})
+			Type:  query.Plugin,
+		}
+		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
+		if !found {
+			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
+		}
+		q.AliasIDs = p.AliasIDs
+		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,
@@ -820,7 +850,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	}
 
 	if ds.JsonData != nil {
-		opts.CustomOptions = ds.JsonData.MustMap()
+		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {

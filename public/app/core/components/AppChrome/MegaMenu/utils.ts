@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -132,7 +132,7 @@ export const getActiveItem = (
   return undefined;
 };
 
-export function getEditionAndUpdateLinks(): NavModelItem[] {
+function getEditionAndUpdateLinks(): NavModelItem[] {
   const { buildInfo, licenseInfo } = config;
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
   const links: NavModelItem[] = [];

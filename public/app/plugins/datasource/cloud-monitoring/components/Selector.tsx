@@ -1,10 +1,10 @@
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/plugin-ui';
 import { Select } from '@grafana/ui';
 
 import { SELECTORS } from '../constants';
-import { SLOQuery } from '../dataquery.gen';
-import CloudMonitoringDatasource from '../datasource';
+import { type SLOQuery } from '../dataquery.gen';
+import type CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
   refId: string;

@@ -298,6 +298,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					JwtTokenAuth: &plugins.JWTTokenAuth{
 						Url:    "https://jwt.example.com/token",
 						Scopes: []string{"read"},
+						// #nosec G101 -- test fixture, not a real credential
 						Params: map[string]string{
 							"token_uri":    "https://jwt.example.com/token",
 							"client_email": "client@example.com",
@@ -541,7 +542,7 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 		child := grafanaComChildPluginVersion{
 			Slug: "child-plugin",
 			Path: "child-plugin",
-			JSON: pluginsv0alpha1.MetaJSONData{Id: "child-plugin", Name: "Child Plugin"},
+			JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "child-plugin", Name: "Child Plugin"}},
 		}
 
 		meta, err := grafanaComChildPluginVersionToMetaSpec(&logging.NoOpLogger{}, child, parent)
@@ -558,7 +559,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		gcomMeta := grafanaComPluginVersionMeta{
 			PluginSlug:          "test-plugin",
 			Version:             "1.0.0",
-			JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Name: "Test Plugin"},
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin", Name: "Test Plugin"}},
 			SignatureType:       "grafana",
 			SignedByOrg:         "grafana",
 			CDNURL:              "https://cdn.grafana.com/plugins/test-plugin/1.0.0",
@@ -602,7 +603,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 				gcomMeta := grafanaComPluginVersionMeta{
 					PluginSlug:          "test-plugin",
 					Version:             "1.0.0",
-					JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+					JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
 					SignatureType:       tc.sigType,
 					CDNURL:              "https://cdn.grafana.com",
 					CreatePluginVersion: "2023-01-01",
@@ -623,7 +624,7 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		gcomMeta := grafanaComPluginVersionMeta{
 			PluginSlug:          "test-plugin",
 			Version:             "1.0.0",
-			JSON:                pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+			JSON:                grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"}},
 			CDNURL:              "https://cdn.grafana.com",
 			CreatePluginVersion: "2023-01-01",
 			Manifest: grafanaComPluginManifest{
@@ -635,6 +636,52 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, meta.Module)
 		assert.Nil(t, meta.Module.Hash)
+	})
+
+	t.Run("extracts aliasIDs from JSON field", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug: "grafana-postgresql-datasource",
+			Version:    "5.0.0",
+			JSON: grafanaComPluginVersionMetaJSON{
+				MetaJSONData: pluginsv0alpha1.MetaJSONData{
+					Id:   "grafana-postgresql-datasource",
+					Name: "PostgreSQL",
+					Type: pluginsv0alpha1.MetaJSONDataTypeDatasource,
+				},
+				AliasIDs: []string{"postgres"},
+			},
+			SignatureType:       "grafana",
+			CDNURL:              "https://cdn.grafana.com/plugins/grafana-postgresql-datasource/5.0.0",
+			CreatePluginVersion: "2023-01-01",
+			Manifest: grafanaComPluginManifest{
+				Files: map[string]string{"module.js": "hash123"},
+			},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "")
+		require.NoError(t, err)
+		assert.Equal(t, "grafana-postgresql-datasource", meta.PluginJson.Id)
+		assert.Equal(t, []string{"postgres"}, meta.AliasIds)
+	})
+
+	t.Run("handles empty aliasIDs gracefully", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{
+			PluginSlug: "test-plugin",
+			Version:    "1.0.0",
+			JSON: grafanaComPluginVersionMetaJSON{
+				MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "test-plugin"},
+				AliasIDs:     []string{},
+			},
+			CDNURL:              "https://cdn.grafana.com",
+			CreatePluginVersion: "2023-01-01",
+			Manifest: grafanaComPluginManifest{
+				Files: map[string]string{"module.js": "hash123"},
+			},
+		}
+
+		meta, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "")
+		require.NoError(t, err)
+		assert.Empty(t, meta.AliasIds)
 	})
 }
 

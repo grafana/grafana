@@ -1,5 +1,5 @@
 import { useId } from '@react-aria/utils';
-import { ChangeEvent, PropsWithChildren, ReactElement } from 'react';
+import { type ChangeEvent, type PropsWithChildren, type ReactElement } from 'react';
 import * as React from 'react';
 
 import { Checkbox } from '@grafana/ui';

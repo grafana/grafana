@@ -2,6 +2,7 @@ package pluginconfig
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -484,28 +485,89 @@ func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 }
 
 func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
-	t.Run("backend datasource with aws settings", func(t *testing.T) {
-		tcs := []struct {
-			name             string
-			pluginID         string
-			forwardToPlugins []string
-			expected         []string
-		}{
-			{
-				name:             "Will generate AWS env vars for plugin as long as is in the forwardToPlugins list",
-				forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
-				pluginID:         "cloudwatch",
-				expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+	tcs := []struct {
+		name             string
+		pluginID         string
+		forwardToPlugins []string
+		hostEnvVars      map[string]string
+		expected         []string
+		unexpectedKeys   []string
+	}{
+		{
+			name:             "generates AWS auth settings for whitelisted plugin",
+			forwardToPlugins: []string{"foobar-datasource", "cloudwatch", "prometheus"},
+			pluginID:         "cloudwatch",
+			expected:         []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"},
+		},
+		{
+			name:             "does not generate AWS env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
+			pluginID:         "prometheus",
+			expected:         []string{"GF_VERSION="},
+		},
+		{
+			name:             "forwards AWS SDK credential chain env vars for whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN":                           "arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE":            "/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI": "/v2/credentials/uuid",
+				"AWS_REGION":                             "us-east-1",
 			},
-			{
-				name:             "Will not generate AWS env vars for plugin as long as is in not the forwardToPlugins list",
-				forwardToPlugins: []string{"cloudwatch", "foobar-datasource"},
-				pluginID:         "prometheus",
-				expected:         []string{"GF_VERSION="},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_ROLE_ARN=arn:aws:iam::123456789012:role/test-role",
+				"AWS_WEB_IDENTITY_TOKEN_FILE=/var/run/secrets/token",
+				"AWS_CONTAINER_CREDENTIALS_RELATIVE_URI=/v2/credentials/uuid",
+				"AWS_REGION=us-east-1",
 			},
-		}
+		},
+		{
+			name:             "does not forward AWS SDK credential chain env vars for non-whitelisted plugin",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "some-other-plugin",
+			hostEnvVars: map[string]string{
+				"AWS_ROLE_ARN": "arn:aws:iam::123456789012:role/test-role",
+				"AWS_REGION":   "us-east-1",
+			},
+			expected:       []string{"GF_VERSION="},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_REGION"},
+		},
+		{
+			name:             "only forwards AWS SDK env vars that are set in the host environment",
+			forwardToPlugins: []string{"cloudwatch"},
+			pluginID:         "cloudwatch",
+			hostEnvVars: map[string]string{
+				"AWS_REGION": "eu-west-1",
+			},
+			expected: []string{
+				"GF_VERSION=",
+				"AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys",
+				"AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100",
+				"AWS_REGION=eu-west-1",
+			},
+			unexpectedKeys: []string{"AWS_ROLE_ARN", "AWS_WEB_IDENTITY_TOKEN_FILE", "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"},
+		},
+	}
 
-		for _, tc := range tcs {
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing AWS host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range awsHostEnvVarNames {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					t.Setenv(envVarName, "")
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+
+			for k, v := range tc.hostEnvVars {
+				t.Setenv(k, v)
+			}
+
 			p := &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: tc.pluginID,
@@ -524,8 +586,13 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{})
 			envVars := provider.PluginEnvVars(context.Background(), p)
 			assert.ElementsMatch(t, tc.expected, envVars)
-		}
-	})
+
+			for _, key := range tc.unexpectedKeys {
+				_, ok := getEnvVarWithExists(envVars, key)
+				assert.False(t, ok, "env var %s should not be present", key)
+			}
+		})
+	}
 }
 
 func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
@@ -717,4 +784,161 @@ func TestPluginEnvVarsProvider_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_FEDERATED_CREDENTIAL_AUDIENCE=override_user_identity_federated_credential_audience",
 		}, envVars)
 	})
+}
+
+func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
+	tcs := []struct {
+		name                    string
+		pluginID                string
+		forwardSettingsPlugins  []string
+		managedIdentityEnabled  bool
+		workloadIdentityEnabled bool
+		hostEnvVars             map[string]string
+		expectedKeys            []string
+		unexpectedKeys          []string
+	}{
+		{
+			name:                   "forwards managed identity host vars when MSI enabled and plugin allowlisted",
+			pluginID:               "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins: []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost:42356/msi/token",
+				"IDENTITY_HEADER":   "header-value",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost:42356/msi/token",
+				"IDENTITY_HEADER=header-value",
+			},
+		},
+		{
+			name:                    "forwards workload identity host vars when WI enabled and plugin allowlisted",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"AZURE_TENANT_ID":            "tenant",
+				"AZURE_CLIENT_ID":            "client",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/secrets/azure/tokens/azure-identity-token",
+				"AZURE_AUTHORITY_HOST":       "https://login.microsoftonline.com/",
+			},
+			expectedKeys: []string{
+				"AZURE_TENANT_ID=tenant",
+				"AZURE_CLIENT_ID=client",
+				"AZURE_FEDERATED_TOKEN_FILE=/var/run/secrets/azure/tokens/azure-identity-token",
+				"AZURE_AUTHORITY_HOST=https://login.microsoftonline.com/",
+			},
+		},
+		{
+			name:                    "forwards both sets when both auth modes enabled",
+			pluginID:                "grafana-azure-monitor-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-monitor-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT":          "http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE=/var/run/token",
+			},
+		},
+		{
+			name:                   "does not forward MSI host vars when MSI disabled even if plugin allowlisted",
+			pluginID:               "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins: []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled: false,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost/msi",
+				"IDENTITY_HEADER":   "header",
+			},
+			unexpectedKeys: []string{"IDENTITY_ENDPOINT", "IDENTITY_HEADER"},
+		},
+		{
+			name:                    "does not forward workload identity host vars when WI disabled",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			workloadIdentityEnabled: false,
+			hostEnvVars: map[string]string{
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+				"AZURE_CLIENT_ID":            "client",
+			},
+			unexpectedKeys: []string{"AZURE_FEDERATED_TOKEN_FILE", "AZURE_CLIENT_ID"},
+		},
+		{
+			name:                    "does not forward to plugins not in azure forward_settings_to_plugins",
+			pluginID:                "some-other-plugin",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT":          "http://localhost/msi",
+				"AZURE_FEDERATED_TOKEN_FILE": "/var/run/token",
+			},
+			unexpectedKeys: []string{"IDENTITY_ENDPOINT", "AZURE_FEDERATED_TOKEN_FILE"},
+		},
+		{
+			name:                    "only forwards host vars that are actually set",
+			pluginID:                "grafana-azure-data-explorer-datasource",
+			forwardSettingsPlugins:  []string{"grafana-azure-data-explorer-datasource"},
+			managedIdentityEnabled:  true,
+			workloadIdentityEnabled: true,
+			hostEnvVars: map[string]string{
+				"IDENTITY_ENDPOINT": "http://localhost/msi",
+				"AZURE_CLIENT_ID":   "client",
+			},
+			expectedKeys: []string{
+				"IDENTITY_ENDPOINT=http://localhost/msi",
+				"AZURE_CLIENT_ID=client",
+			},
+			unexpectedKeys: []string{
+				"IDENTITY_HEADER", "MSI_ENDPOINT", "MSI_SECRET", "IMDS_ENDPOINT",
+				"AZURE_TENANT_ID", "AZURE_FEDERATED_TOKEN_FILE", "AZURE_AUTHORITY_HOST",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			// Clear any pre-existing Azure host env vars (e.g., from CI) that aren't
+			// explicitly set by this test case, so they don't leak into results.
+			for _, envVarName := range append(append([]string{}, azureManagedIdentityHostEnvVarNames...), azureWorkloadIdentityHostEnvVarNames...) {
+				if _, ok := tc.hostEnvVars[envVarName]; !ok {
+					require.NoError(t, os.Unsetenv(envVarName))
+				}
+			}
+			for k, v := range tc.hostEnvVars {
+				t.Setenv(k, v)
+			}
+
+			p := &plugins.Plugin{
+				JSONData: plugins.JSONData{
+					ID: tc.pluginID,
+				},
+			}
+			cfg := &setting.Cfg{
+				Raw: ini.Empty(),
+				Azure: &azsettings.AzureSettings{
+					ManagedIdentityEnabled:  tc.managedIdentityEnabled,
+					WorkloadIdentityEnabled: tc.workloadIdentityEnabled,
+					ForwardSettingsPlugins:  tc.forwardSettingsPlugins,
+				},
+			}
+
+			pCfg, err := ProvidePluginInstanceConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+			require.NoError(t, err)
+
+			provider := NewEnvVarsProvider(pCfg, nil, &fakeSSOSettingsProvider{})
+			envVars := provider.PluginEnvVars(context.Background(), p)
+
+			for _, expected := range tc.expectedKeys {
+				assert.Contains(t, envVars, expected, "expected env var %s to be forwarded", expected)
+			}
+			for _, key := range tc.unexpectedKeys {
+				_, ok := getEnvVarWithExists(envVars, key)
+				assert.False(t, ok, "env var %s should not be forwarded", key)
+			}
+		})
+	}
 }

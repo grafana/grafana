@@ -15,6 +15,13 @@ type RepositorySpecApplyConfiguration struct {
 	Title *string `json:"title,omitempty"`
 	// Repository description
 	Description *string `json:"description,omitempty"`
+	// Commit message options. Currently only contains the template used by
+	// single-resource UI operations; future siblings (bulk, sync) can live here.
+	Commit *CommitOptionsApplyConfiguration `json:"commit,omitempty"`
+	// Branch naming options. Only meaningful when Workflows includes "branch".
+	Branch *BranchOptionsApplyConfiguration `json:"branch,omitempty"`
+	// Pull request options. Only meaningful when Workflows includes "branch".
+	PullRequest *PullRequestOptionsApplyConfiguration `json:"pullRequest,omitempty"`
 	// UI driven Workflow that allow changes to the contends of the repository.
 	// The order is relevant for defining the precedence of the workflows.
 	// When empty, the repository does not support any edits (eg, readonly)
@@ -23,12 +30,19 @@ type RepositorySpecApplyConfiguration struct {
 	Sync *SyncOptionsApplyConfiguration `json:"sync,omitempty"`
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type *provisioningv0alpha1.RepositoryType `json:"type,omitempty"`
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfigApplyConfiguration `json:"local,omitempty"`
 	// The repository on GitHub.
 	// Mutually exclusive with local | github | git.
 	GitHub *GitHubRepositoryConfigApplyConfiguration `json:"github,omitempty"`
+	// The repository on a self-managed GitHub Enterprise Server (GHES).
+	// Mutually exclusive with local | github | git.
+	GitHubEnterprise *GitHubEnterpriseRepositoryConfigApplyConfiguration `json:"githubEnterprise,omitempty"`
 	// The repository on Git.
 	// Mutually exclusive with local | github | git.
 	Git *GitRepositoryConfigApplyConfiguration `json:"git,omitempty"`
@@ -65,6 +79,30 @@ func (b *RepositorySpecApplyConfiguration) WithDescription(value string) *Reposi
 	return b
 }
 
+// WithCommit sets the Commit field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Commit field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithCommit(value *CommitOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Commit = value
+	return b
+}
+
+// WithBranch sets the Branch field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Branch field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithBranch(value *BranchOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Branch = value
+	return b
+}
+
+// WithPullRequest sets the PullRequest field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the PullRequest field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithPullRequest(value *PullRequestOptionsApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.PullRequest = value
+	return b
+}
+
 // WithWorkflows adds the given value to the Workflows field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Workflows field.
@@ -91,6 +129,14 @@ func (b *RepositorySpecApplyConfiguration) WithType(value provisioningv0alpha1.R
 	return b
 }
 
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithWebhook(value *WebhookConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.Webhook = value
+	return b
+}
+
 // WithLocal sets the Local field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Local field is set to the value of the last call.
@@ -104,6 +150,14 @@ func (b *RepositorySpecApplyConfiguration) WithLocal(value *LocalRepositoryConfi
 // If called multiple times, the GitHub field is set to the value of the last call.
 func (b *RepositorySpecApplyConfiguration) WithGitHub(value *GitHubRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
 	b.GitHub = value
+	return b
+}
+
+// WithGitHubEnterprise sets the GitHubEnterprise field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the GitHubEnterprise field is set to the value of the last call.
+func (b *RepositorySpecApplyConfiguration) WithGitHubEnterprise(value *GitHubEnterpriseRepositoryConfigApplyConfiguration) *RepositorySpecApplyConfiguration {
+	b.GitHubEnterprise = value
 	return b
 }
 

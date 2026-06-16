@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -53,19 +54,6 @@ type sqlStatsService struct {
 	unifiedStorage resource.ResourceClient
 }
 
-func (ss *sqlStatsService) getDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	count := int64(0)
-	for _, org := range orgs {
-		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
-		dashsCount, err := ss.dashSvc.CountDashboardsInOrg(ctx, org.ID)
-		if err != nil {
-			return 0, err
-		}
-		count += dashsCount
-	}
-	return count, nil
-}
-
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
 	total := 0
 	for _, org := range orgs {
@@ -82,15 +70,15 @@ func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) 
 	return int64(total), nil
 }
 
-func (ss *sqlStatsService) getFolderCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
-	total := int64(0)
+func (ss *sqlStatsService) getProvisionedDashboardCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
+	var total int64
 	for _, org := range orgs {
 		ctx, _ = identity.WithServiceIdentity(ctx, org.ID)
-		folderCount, err := ss.folderSvc.CountFoldersInOrg(ctx, org.ID)
+		n, err := ss.dashSvc.CountProvisionedDashboardsInOrg(ctx, org.ID)
 		if err != nil {
 			return 0, err
 		}
-		total += folderCount
+		total += n
 	}
 	return total, nil
 }
@@ -113,13 +101,6 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 		}
 	}
 	return totals, nil
-}
-
-func (ss *sqlStatsService) playlistsSQL() string {
-	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode == rest.Mode5 {
-		return `0 AS playlists,`
-	}
-	return `(SELECT COUNT(*) FROM ` + ss.db.GetDialect().Quote("playlist") + `) AS playlists,`
 }
 
 func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) (result []*stats.NotifierUsageStats, err error) {
@@ -166,7 +147,6 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `) AS users,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_source") + `) AS datasources,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("star") + `) AS stars,`)
-		sb.Write(ss.playlistsSQL())
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("alert") + `) AS alerts,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("correlation") + `) AS correlations,`)
 
@@ -182,9 +162,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		monthlyActiveUserDeadlineDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 		sb.Write(`(SELECT COUNT(*) FROM `+dialect.Quote("user")+` WHERE `+
 			notServiceAccount(dialect)+` AND last_seen_at > ?) AS monthly_active_users,`, monthlyActiveUserDeadlineDate)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_version") + `) AS dashboard_versions,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
@@ -223,34 +201,26 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	}
 	result.Orgs = int64(len(orgs))
 
-	// for services in unified storage, get the stats through the service rather than the db directly
-	dashCount, err := ss.getDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
-	}
-	result.Dashboards = dashCount
-
-	folderCount, err := ss.getFolderCount(ctx, orgs)
-	if err != nil {
-		return result, err
-	}
-	result.Folders = folderCount
-
+	// for resources in unified storage
 	kindRepository := provisioningv1.GROUP + "/" + provisioningv1.RepositoryResourceInfo.GroupResource().Resource
 	kindPlaylist := playlistv1.APIGroup + "/playlists"
-	unifiedKinds := []string{kindRepository}
-	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode >= rest.Mode3 {
-		unifiedKinds = append(unifiedKinds, kindPlaylist)
-	}
-
+	kindFolder := folderv1.APIGroup + "/folders"
+	kindDashboard := dashboardv1.APIGroup + "/dashboards"
+	unifiedKinds := []string{kindRepository, kindPlaylist, kindFolder, kindDashboard}
 	resourceCounts, err := ss.getResourceCounts(ctx, orgs, unifiedKinds)
 	if err != nil {
 		return result, err
 	}
 	result.Repositories = resourceCounts[kindRepository]
-	if count, ok := resourceCounts[kindPlaylist]; ok {
-		result.Playlists = count
+	result.Playlists = resourceCounts[kindPlaylist]
+	result.Folders = resourceCounts[kindFolder]
+	result.Dashboards = resourceCounts[kindDashboard]
+
+	provisioned, err := ss.getProvisionedDashboardCount(ctx, orgs)
+	if err != nil {
+		return result, err
 	}
+	result.ProvisionedDashboards = provisioned
 
 	return result, err
 }
@@ -296,7 +266,6 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("data_source") + `
 		) AS datasources,
-		` + ss.playlistsSQL() + `
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("star") + `
@@ -347,27 +316,22 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 	}
 	result.Orgs = int64(len(orgs))
 
-	// for services in unified storage, get the stats through the service rather than the db directly
-	dashCount, err := ss.getDashboardCount(ctx, orgs)
-	if err != nil {
-		return result, err
-	}
-	result.Dashboards = dashCount
-
+	// tags are on the dashboard itself, need to search through unified storage to find the stats
 	tagCount, err := ss.getTagCount(ctx, orgs)
 	if err != nil {
 		return result, err
 	}
 	result.Tags = tagCount
 
-	if ss.cfg.UnifiedStorageConfig(setting.PlaylistResource).DualWriterMode == rest.Mode5 {
-		kindPlaylist := playlistv1.APIGroup + "/playlists"
-		resourceCounts, err := ss.getResourceCounts(ctx, orgs, []string{kindPlaylist})
-		if err != nil {
-			return result, err
-		}
-		result.Playlists = resourceCounts[kindPlaylist]
+	// resources in unified storage
+	kindPlaylist := playlistv1.APIGroup + "/playlists"
+	kindDashboard := dashboardv1.APIGroup + "/dashboards"
+	resourceCounts, err := ss.getResourceCounts(ctx, orgs, []string{kindPlaylist, kindDashboard})
+	if err != nil {
+		return result, err
 	}
+	result.Playlists = resourceCounts[kindPlaylist]
+	result.Dashboards = resourceCounts[kindDashboard]
 
 	return result, err
 }

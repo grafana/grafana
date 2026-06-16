@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -31,7 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -46,8 +47,8 @@ const (
 )
 
 var SharedWithMeFolderPermission = accesscontrol.Permission{
-	Action: dashboards.ActionFoldersRead,
-	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
+	Action: folder.ActionFoldersRead,
+	Scope:  folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
 var OSSRolesPrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
@@ -56,7 +57,7 @@ func ProvideService(
 	cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
-	lock *serverlock.ServerLockService,
+	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -71,13 +72,25 @@ func ProvideService(
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
-	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
+	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
 		return nil, err
 	}
 
 	// Migrating to remove deprecated permissions from the database
 	if err := migrator.MigrateRemoveDeprecatedPermissions(db, service.log); err != nil {
 		return nil, err
+	}
+
+	// Clean up plugin RBAC data for configured plugins
+	if len(cfg.RBAC.PluginsCleanup) > 0 {
+		if err := service.CleanupPluginRBAC(context.Background(), cfg.RBAC.PluginsCleanup...); err != nil {
+			return nil, err
+		}
+	}
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
+		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 
 	return service, nil
@@ -110,20 +123,22 @@ func ProvideOSSService(
 
 // Service is the service implementing role based access control.
 type Service struct {
-	actionResolver accesscontrol.ActionResolver
-	cache          *localcache.CacheService
-	cfg            *setting.Cfg
-	features       featuremgmt.FeatureToggles
-	log            log.Logger
-	registrations  accesscontrol.RegistrationList
-	rolesMu        sync.RWMutex
-	roles          map[string]*accesscontrol.RoleDTO
-	store          accesscontrol.Store
-	seeder         *seeding.Seeder
-	permRegistry   permreg.PermissionRegistry
-	isInitialized  bool
-	sql            db.DB
-	serverLock     *serverlock.ServerLockService
+	actionResolver  accesscontrol.ActionResolver
+	cache           *localcache.CacheService
+	cfg             *setting.Cfg
+	features        featuremgmt.FeatureToggles
+	log             log.Logger
+	registrations   accesscontrol.RegistrationList
+	rolesMu         sync.RWMutex
+	roles           map[string]*accesscontrol.RoleDTO
+	store           accesscontrol.Store
+	seeder          *seeding.Seeder
+	permRegistry    permreg.PermissionRegistry
+	isInitialized   bool
+	sql             db.DB
+	serverLock      *serverlock.ServerLockService
+	singleFlight    singleflight.Group
+	zanzanaResolver *ZanzanaPermissionResolver
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -140,11 +155,20 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	var permissions []accesscontrol.Permission
+	var err error
+
 	if !s.cfg.RBAC.PermissionCache || !user.HasUniqueId() {
-		return s.getUserPermissions(ctx, user, options)
+		permissions, err = s.getUserPermissions(ctx, user, options)
+	} else {
+		permissions, err = s.getCachedUserPermissions(ctx, user, options)
 	}
 
-	return s.getCachedUserPermissions(ctx, user, options)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.zanzanaResolver.MergeCurrentUser(ctx, user, permissions, s.log), nil
 }
 
 func (s *Service) getUserPermissions(ctx context.Context, user identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -268,23 +292,52 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.getCachedUserPermissions")
 	defer span.End()
 
-	permissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+	assemble := func() ([]accesscontrol.Permission, error) {
+		basicPermissions, err := s.getCachedBasicRolesPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
+		if err != nil {
+			return nil, err
+		}
+
+		// Single allocation and copy to avoid repeated realloc when appending large slices
+		n := len(basicPermissions) + len(teamsPermissions) + len(userManagedPermissions)
+		permissions := make([]accesscontrol.Permission, 0, n)
+		permissions = append(permissions, basicPermissions...)
+		permissions = append(permissions, teamsPermissions...)
+		permissions = append(permissions, userManagedPermissions...)
+		span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
+
+		return permissions, nil
+	}
+
+	// Skip deduplication when the caller explicitly wants a fresh load.
+	if options.ReloadCache {
+		return assemble()
+	}
+
+	// Deduplicate concurrent permission assemblies for the same user.
+	// Without this, concurrent requests for the same user each independently
+	// re-assemble from sub-caches on cache expiry, amplifying DB load.
+	res, err, _ := s.singleFlight.Do(user.GetCacheKey(), func() (any, error) {
+		return assemble()
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	teamsPermissions, err := s.getCachedTeamsPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
+	permissions, ok := res.([]accesscontrol.Permission)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type returned from singleFlight: %T", res)
 	}
-	permissions = append(permissions, teamsPermissions...)
-
-	userManagedPermissions, err := s.getCachedUserDirectPermissions(ctx, user, options)
-	if err != nil {
-		return nil, err
-	}
-	permissions = append(permissions, userManagedPermissions...)
-	span.SetAttributes(attribute.Int("num_permissions", len(permissions)))
 
 	return permissions, nil
 }
@@ -611,6 +664,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
+
+	var res map[int64][]accesscontrol.Permission
+
 	if options.UserID > 0 {
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
@@ -618,99 +674,99 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		if err != nil {
 			return nil, err
 		}
-		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
-	}
+		res = map[int64][]accesscontrol.Permission{options.UserID: userPerms}
+	} else {
+		timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
+		defer timer.ObserveDuration()
 
-	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
-	defer timer.ObserveDuration()
-
-	// Filter ram permissions
-	basicPermissions := map[string][]accesscontrol.Permission{}
-	s.rolesMu.RLock()
-	for role, basicRole := range s.roles {
-		for i := range basicRole.Permissions {
-			if PermissionMatchesSearchOptions(basicRole.Permissions[i], &options) {
-				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+		// Filter ram permissions
+		basicPermissions := map[string][]accesscontrol.Permission{}
+		s.rolesMu.RLock()
+		for role, basicRole := range s.roles {
+			for i := range basicRole.Permissions {
+				if PermissionMatchesSearchOptions(basicRole.Permissions[i], &options) {
+					basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
+				}
 			}
 		}
-	}
-	s.rolesMu.RUnlock()
+		s.rolesMu.RUnlock()
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
-	if err != nil {
-		return nil, err
-	}
-
-	options.ActionSets = s.actionResolver.ResolveAction(options.Action)
-	options.ActionSets = append(options.ActionSets,
-		s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
-
-	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
-	if err != nil {
-		return nil, err
-	}
-
-	// helper to filter out permissions the signed in users cannot see
-	canView := func() func(userID int64) bool {
-		siuPermissions := usr.GetPermissions()
-		if len(siuPermissions) == 0 {
-			return func(_ int64) bool { return false }
-		}
-		scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
-		if !ok {
-			return func(_ int64) bool { return false }
+		usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
+		if err != nil {
+			return nil, err
 		}
 
-		ids := map[int64]bool{}
-		for i := range scopes {
-			if strings.HasSuffix(scopes[i], "*") {
-				return func(_ int64) bool { return true }
+		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
+		options.ActionSets = append(options.ActionSets,
+			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
+
+		// Get managed permissions (DB)
+		usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
+		if err != nil {
+			return nil, err
+		}
+
+		// helper to filter out permissions the signed in users cannot see
+		canView := func() func(userID int64) bool {
+			siuPermissions := usr.GetPermissions()
+			if len(siuPermissions) == 0 {
+				return func(_ int64) bool { return false }
 			}
-			parts := strings.Split(scopes[i], ":")
-			if len(parts) != 3 {
-				continue
-			}
-			id, err := strconv.ParseInt(parts[2], 10, 64)
-			if err != nil {
-				continue
-			}
-			ids[id] = true
-		}
-
-		return func(userID int64) bool { return ids[userID] }
-	}()
-
-	// Merge stored (DB) and basic role permissions (RAM)
-	// Assumes that all users with stored permissions have org roles
-	res := map[int64][]accesscontrol.Permission{}
-	for userID, roles := range usersRoles {
-		if !canView(userID) {
-			continue
-		}
-		perms := []accesscontrol.Permission{}
-		for i := range roles {
-			basicPermission, ok := basicPermissions[roles[i]]
+			scopes, ok := siuPermissions[accesscontrol.ActionUsersPermissionsRead]
 			if !ok {
+				return func(_ int64) bool { return false }
+			}
+
+			ids := map[int64]bool{}
+			for i := range scopes {
+				if strings.HasSuffix(scopes[i], "*") {
+					return func(_ int64) bool { return true }
+				}
+				parts := strings.Split(scopes[i], ":")
+				if len(parts) != 3 {
+					continue
+				}
+				id, err := strconv.ParseInt(parts[2], 10, 64)
+				if err != nil {
+					continue
+				}
+				ids[id] = true
+			}
+
+			return func(userID int64) bool { return ids[userID] }
+		}()
+
+		// Merge stored (DB) and basic role permissions (RAM)
+		// Assumes that all users with stored permissions have org roles
+		res = map[int64][]accesscontrol.Permission{}
+		for userID, roles := range usersRoles {
+			if !canView(userID) {
 				continue
 			}
-			perms = append(perms, basicPermission...)
+			perms := []accesscontrol.Permission{}
+			for i := range roles {
+				basicPermission, ok := basicPermissions[roles[i]]
+				if !ok {
+					continue
+				}
+				perms = append(perms, basicPermission...)
+			}
+			if dbPerms, ok := usersPermissions[userID]; ok {
+				perms = append(perms, dbPerms...)
+			}
+			if len(perms) > 0 {
+				res[userID] = perms
+			}
 		}
-		if dbPerms, ok := usersPermissions[userID]; ok {
-			perms = append(perms, dbPerms...)
-		}
-		if len(perms) > 0 {
-			res[userID] = perms
+
+		if len(options.ActionSets) > 0 {
+			for id, perms := range res {
+				res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
+			}
 		}
 	}
 
-	if len(options.ActionSets) > 0 {
-		for id, perms := range res {
-			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
-		}
-	}
-
-	return res, nil
+	return s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log), nil
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
@@ -857,6 +913,11 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 
 func (s *Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
 	return nil
+}
+
+// CleanupPluginRBAC removes all RBAC data (roles, permissions, assignments) for the given plugin IDs.
+func (s *Service) CleanupPluginRBAC(ctx context.Context, pluginIDs ...string) error {
+	return s.store.CleanupPluginRBAC(ctx, pluginIDs)
 }
 
 func (s *Service) GetStaticRoles(ctx context.Context) map[string]*accesscontrol.RoleDTO {

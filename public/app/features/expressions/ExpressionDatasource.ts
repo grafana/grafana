@@ -1,31 +1,31 @@
-import { from, lastValueFrom, map, mergeMap, Observable } from 'rxjs';
+import { from, lastValueFrom, map, mergeMap, type Observable } from 'rxjs';
 
 import {
-  DataFrame,
-  DataQueryRequest,
-  DataQueryResponse,
-  DataSourceInstanceSettings,
-  DataSourcePluginMeta,
+  type DataFrame,
+  type DataQueryRequest,
+  type DataQueryResponse,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
   PluginType,
-  ScopedVars,
-  TimeRange,
+  type ScopedVars,
+  type TimeRange,
 } from '@grafana/data';
-import { SQLQuery } from '@grafana/plugin-ui';
+import { type SQLQuery } from '@grafana/plugin-ui';
 import {
-  BackendDataSourceResponse,
+  type BackendDataSourceResponse,
   DataSourceWithBackend,
-  FetchResponse,
+  type FetchResponse,
   getBackendSrv,
   getDataSourceSrv,
   getTemplateSrv,
   toDataQueryResponse,
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { DataQuery } from '@grafana/schema';
+import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -50,7 +50,7 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
 
   query(request: DataQueryRequest<ExpressionQuery>): Observable<DataQueryResponse> {
     let targets = request.targets.map(async (query: ExpressionQuery): Promise<ExpressionQuery> => {
-      const ds = await getDataSourceSrv().get(query.datasource);
+      const ds = await getDataSourceSrv().get(query.datasource, request.scopedVars);
 
       if (!ds.interpolateVariablesInQueries) {
         return query;

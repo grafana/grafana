@@ -64,6 +64,19 @@ const (
 	// JobActionFixFolderMetadata is a placeholder job that will eventually regenerate folder metadata files.
 	// Currently a no-op to unblock frontend development.
 	JobActionFixFolderMetadata JobAction = "fixFolderMetadata"
+
+	// JobActionReleaseResources removes ownership annotations from all resources
+	// managed by a repository that no longer exists or is stuck in Terminating state.
+	// Resources remain in Grafana but become unmanaged.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionReleaseResources JobAction = "releaseResources"
+
+	// JobActionDeleteResources deletes all resources managed by a repository
+	// that no longer exists or is stuck in Terminating state.
+	// This action has inverted validation: it is only allowed when the repository
+	// does not exist or has a DeletionTimestamp set.
+	JobActionDeleteResources JobAction = "deleteResources"
 )
 
 // +enum
@@ -96,6 +109,13 @@ type JobSpec struct {
 	// The the repository reference (for now also in labels)
 	// This value is required, but will be popuplated from the job making the request
 	Repository string `json:"repository,omitempty"`
+
+	// Commit message for this job. Applies to job actions that produce
+	// commits (delete, move, migrate, push, fixFolderMetadata).
+	// When empty, the backend falls back to the action-specific message
+	// field (ExportJobOptions.Message, MigrateJobOptions.Message) for
+	// backwards compatibility, then to a built-in default.
+	Message string `json:"message,omitempty"`
 
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
@@ -151,7 +171,9 @@ func (SyncJobOptions) OpenAPIModelName() string {
 }
 
 type ExportJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
 
 	// The source folder (or empty) to export
@@ -164,6 +186,12 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -171,8 +199,18 @@ func (ExportJobOptions) OpenAPIModelName() string {
 }
 
 type MigrateJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
+
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

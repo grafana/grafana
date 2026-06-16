@@ -1,28 +1,26 @@
 import { isEqual, uniqWith } from 'lodash';
 
 import { matchLabelsSet } from '@grafana/alerting/unstable';
-import { SelectableValue } from '@grafana/data';
+import { type SelectableValue } from '@grafana/data';
 import {
-  AlertManagerCortexConfig,
-  Matcher,
+  type AlertManagerCortexConfig,
+  type Matcher,
   MatcherOperator,
-  ObjectMatcher,
-  Route,
-  TimeInterval,
-  TimeRange,
+  type ObjectMatcher,
+  type Route,
+  type TimeInterval,
+  type TimeRange,
 } from 'app/plugins/datasource/alertmanager/types';
-import { Labels } from 'app/types/unified-alerting-dto';
+import { type Labels } from 'app/types/unified-alerting-dto';
 
-import { MatcherFieldValue } from '../types/silence-form';
+import { type MatcherFieldValue } from '../types/silence-form';
 
-import { getAllDataSources } from './config';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { objectLabelsToArray } from './labels';
 import {
-  MatcherFormatter,
+  type MatcherFormatter,
   convertObjectMatcherToAlertingPackageMatcher,
   parsePromQLStyleMatcherLooseSafe,
-  unquoteWithUnescape,
 } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
@@ -61,10 +59,6 @@ export function renameTimeInterval(newName: string, oldName: string, route: Rout
   };
 }
 
-export function unescapeObjectMatchers(matchers: ObjectMatcher[]): ObjectMatcher[] {
-  return matchers.map(([name, operator, value]) => [name, operator, unquoteWithUnescape(value)]);
-}
-
 export function matcherToOperator(matcher: Matcher): MatcherOperator {
   if (matcher.isEqual) {
     if (matcher.isRegex) {
@@ -79,7 +73,7 @@ export function matcherToOperator(matcher: Matcher): MatcherOperator {
   }
 }
 
-export function matcherOperatorToValue(operator: MatcherOperator) {
+function matcherOperatorToValue(operator: MatcherOperator) {
   switch (operator) {
     case MatcherOperator.equal:
       return { isEqual: true, isRegex: false };
@@ -146,14 +140,6 @@ export function combineMatcherStrings(...matcherStrings: string[]): string {
 
 export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
   return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'unquote';
-}
-
-export function getAllAlertmanagerDataSources() {
-  return getAllDataSources().filter((ds) => ds.type === DataSourceType.Alertmanager);
-}
-
-export function getAlertmanagerByUid(uid?: string) {
-  return getAllAlertmanagerDataSources().find((ds) => uid === ds.uid);
 }
 
 export function timeIntervalToString(timeInterval: TimeInterval): string {

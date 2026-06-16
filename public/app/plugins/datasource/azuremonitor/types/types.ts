@@ -1,13 +1,19 @@
-import { EntityGroup, Function, ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
+import { type EntityGroup, type Function, type ScalarParameter, type TabularParameter } from '@kusto/monaco-kusto';
 
-import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
-import { DataSourceInstanceSettings, DataSourceSettings, PanelData, SelectableValue, TimeRange } from '@grafana/data';
+import { type AzureDataSourceJsonData, type AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
+import {
+  type DataSourceInstanceSettings,
+  type DataSourceSettings,
+  type PanelData,
+  type SelectableValue,
+  type TimeRange,
+} from '@grafana/data';
 
-import { ResultFormat } from '../dataquery.gen';
-import Datasource from '../datasource';
+import { type ResultFormat } from '../dataquery.gen';
+import type Datasource from '../datasource';
 
-import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
-import { AzureMonitorQuery } from './query';
+import { type AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
+import { type AzureMonitorQuery } from './query';
 
 export type AzureMonitorDataSourceSettings = DataSourceSettings<
   AzureMonitorDataSourceJsonData,
@@ -59,7 +65,7 @@ export interface AzureMonitorMetricsMetadataResponse {
   value: AzureMonitorMetricMetadataItem[];
 }
 
-export interface AzureMonitorMetricMetadataItem {
+interface AzureMonitorMetricMetadataItem {
   id: string;
   resourceId: string;
   primaryAggregationType: string;
@@ -117,7 +123,7 @@ export interface EngineSchema {
   globalTabularParameters?: TabularParameter[];
 }
 
-export interface Database {
+interface Database {
   name: string;
   tables: AzureLogAnalyticsMetadataTable[];
   functions: Function[];
@@ -191,23 +197,23 @@ export type GetMetricNamespacesQuery = AzureGetMetricNamespacesQuery | LegacyAzu
 export type GetMetricNamesQuery = AzureGetMetricNamesQuery | LegacyAzureGetMetricNamesQuery;
 export type GetMetricMetadataQuery = AzureGetMetricMetadataQuery | LegacyAzureGetMetricMetadataQuery;
 
-export interface AzureGetMetricNamespacesQuery {
+interface AzureGetMetricNamespacesQuery {
   resourceUri: string;
 }
-export interface LegacyAzureGetMetricNamespacesQuery {
+interface LegacyAzureGetMetricNamespacesQuery {
   subscription: string;
   resourceGroup: string;
   metricNamespace?: string;
   resourceName?: string;
 }
 
-export interface AzureGetMetricNamesQuery {
+interface AzureGetMetricNamesQuery {
   resourceUri: string;
   metricNamespace?: string;
   customNamespace?: string;
 }
 
-export interface LegacyAzureGetMetricNamesQuery {
+interface LegacyAzureGetMetricNamesQuery {
   subscription: string;
   resourceGroup: string;
   resourceName: string;
@@ -215,14 +221,14 @@ export interface LegacyAzureGetMetricNamesQuery {
   customNamespace?: string;
 }
 
-export interface AzureGetMetricMetadataQuery {
+interface AzureGetMetricMetadataQuery {
   resourceUri: string;
   metricNamespace: string;
   customNamespace?: string;
   metricName: string;
 }
 
-export interface LegacyAzureGetMetricMetadataQuery {
+interface LegacyAzureGetMetricMetadataQuery {
   subscription: string;
   resourceGroup: string;
   resourceName: string;
@@ -250,7 +256,7 @@ export interface AzureMonitorProvidersResponse {
   resourceTypes: ProviderResourceType[];
 }
 
-export interface ProviderResourceType {
+interface ProviderResourceType {
   resourceType: string;
   locations: string[];
   apiVersions: string[];
@@ -265,15 +271,6 @@ export interface AzureAPIResponse<T> {
   };
   status?: number;
   statusText?: string;
-}
-
-export interface AzureLogAnalyticsTable {
-  name: string;
-  description: string;
-}
-
-export interface MetadataResponse {
-  tables: AzureLogAnalyticsTable[];
 }
 
 export interface Location {
@@ -329,34 +326,6 @@ export interface Workspace {
   type: string;
   location: string;
   tags: Record<string, string>;
-}
-
-export interface Resource {
-  changedTime: string;
-  createdTime: string;
-  extendedLocation: { name: string; type: string };
-  id: string;
-  identity: { principalId: string; tenantId: string; type: string; userAssignedIdentities: string[] };
-  kind: string;
-  location: string;
-  managedBy: string;
-  name: string;
-  plan: { name: string; product: string; promotionCode: string; publisher: string; version: string };
-  properties: Record<string, string>;
-  provisioningState: string;
-  sku: { capacity: number; family: string; model: string; name: string; size: string; tier: string };
-  tags: Record<string, string>;
-  type: string;
-}
-
-export interface ResourceGroup {
-  id: string;
-  location: string;
-  managedBy: string;
-  name: string;
-  properties: { provisioningState: string };
-  tags: object;
-  type: string;
 }
 
 export interface MetricNamespace {
@@ -429,49 +398,6 @@ export type CheatsheetQueries = {
 export type DropdownCategories = {
   [key: string]: boolean;
 };
-
-export enum QueryEditorPropertyType {
-  Number = 'number',
-  String = 'string',
-  Boolean = 'boolean',
-  DateTime = 'datetime',
-  TimeSpan = 'timeSpan',
-  Function = 'function',
-  Interval = 'interval',
-}
-
-export interface QueryEditorProperty {
-  type: QueryEditorPropertyType;
-  name: string;
-}
-
-export type QueryEditorOperatorType = string | boolean | number | SelectableValue<string>;
-export type QueryEditorOperatorValueType = QueryEditorOperatorType | QueryEditorOperatorType[];
-
-export interface QueryEditorOperator<T = QueryEditorOperatorValueType> {
-  name: string;
-  value: T;
-  labelValue?: string;
-}
-
-export interface QueryEditorOperatorDefinition {
-  value: string;
-  supportTypes: QueryEditorPropertyType[];
-  multipleValues: boolean;
-  booleanValues: boolean;
-  label?: string;
-  description?: string;
-}
-
-export enum AggregateFunctions {
-  Sum = 'sum',
-  Avg = 'avg',
-  Count = 'count',
-  Dcount = 'dcount',
-  Max = 'max',
-  Min = 'min',
-  Percentile = 'percentile',
-}
 
 export enum TablePlan {
   Analytics = 'Analytics',

@@ -1,4 +1,4 @@
-import { TraceProcess } from '../types/trace';
+import { type TraceProcess } from '../types/trace';
 
 /**
  * Returns a display-friendly service identifier that includes the namespace when present.

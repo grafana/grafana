@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import { SetupStep } from '../types';
+import { type SetupStep } from '../types';
 
 import { DocsCard } from './DocsCard';
 import { TutorialCard } from './TutorialCard';

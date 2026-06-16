@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -28,7 +27,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SecretsConsolidatorClient interface {
 	// Consolidates secrets and returns success or error message.
-	Consolidate(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SecretsConsolidateResponse, error)
+	Consolidate(ctx context.Context, in *SecretsConsolidateRequest, opts ...grpc.CallOption) (*SecretsConsolidateResponse, error)
 }
 
 type secretsConsolidatorClient struct {
@@ -39,7 +38,7 @@ func NewSecretsConsolidatorClient(cc grpc.ClientConnInterface) SecretsConsolidat
 	return &secretsConsolidatorClient{cc}
 }
 
-func (c *secretsConsolidatorClient) Consolidate(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SecretsConsolidateResponse, error) {
+func (c *secretsConsolidatorClient) Consolidate(ctx context.Context, in *SecretsConsolidateRequest, opts ...grpc.CallOption) (*SecretsConsolidateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SecretsConsolidateResponse)
 	err := c.cc.Invoke(ctx, SecretsConsolidator_Consolidate_FullMethodName, in, out, cOpts...)
@@ -54,14 +53,14 @@ func (c *secretsConsolidatorClient) Consolidate(ctx context.Context, in *emptypb
 // for forward compatibility
 type SecretsConsolidatorServer interface {
 	// Consolidates secrets and returns success or error message.
-	Consolidate(context.Context, *emptypb.Empty) (*SecretsConsolidateResponse, error)
+	Consolidate(context.Context, *SecretsConsolidateRequest) (*SecretsConsolidateResponse, error)
 }
 
 // UnimplementedSecretsConsolidatorServer should be embedded to have forward compatible implementations.
 type UnimplementedSecretsConsolidatorServer struct {
 }
 
-func (UnimplementedSecretsConsolidatorServer) Consolidate(context.Context, *emptypb.Empty) (*SecretsConsolidateResponse, error) {
+func (UnimplementedSecretsConsolidatorServer) Consolidate(context.Context, *SecretsConsolidateRequest) (*SecretsConsolidateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Consolidate not implemented")
 }
 
@@ -77,7 +76,7 @@ func RegisterSecretsConsolidatorServer(s grpc.ServiceRegistrar, srv SecretsConso
 }
 
 func _SecretsConsolidator_Consolidate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+	in := new(SecretsConsolidateRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -89,7 +88,7 @@ func _SecretsConsolidator_Consolidate_Handler(srv interface{}, ctx context.Conte
 		FullMethod: SecretsConsolidator_Consolidate_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SecretsConsolidatorServer).Consolidate(ctx, req.(*emptypb.Empty))
+		return srv.(SecretsConsolidatorServer).Consolidate(ctx, req.(*SecretsConsolidateRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
