@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -193,14 +194,20 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 	return false
 }
 
-// IsNonRetryableError indicates whether an error is considered persistent and not worth performing evaluation retries.
-// Currently it is true if err is `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
+// IsNonRetryableError reports whether an error is persistent and not worth retrying within an
+// evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
 func IsNonRetryableError(err error) bool {
 	var nonRetryableError *invalidEvalResultFormatError
 	if errors.As(err, &nonRetryableError) {
 		return true
 	}
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {
+		return true
+	}
+	if errors.Is(err, expr.ErrQueryLimit) {
+		return true
+	}
+	if errors.Is(err, writer.ErrNonRetryableWrite) {
 		return true
 	}
 	return false

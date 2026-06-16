@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Klasör meta verilerini düzeltme işi başlatılamadı. Lütfen tekrar deneyin.",
       "error-title": "Klasör meta verileri düzeltilirken hata oluştu",
-      "loading": "Depo yükleniyor...",
       "read-only-message": "Klasör meta verileri otomatik olarak düzeltilemez.",
       "submit": "Klasör kimliklerini düzelt",
       "submitting": "Düzeltiliyor...",

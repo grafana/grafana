@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Falha ao iniciar a tarefa de correção de metadados da pasta. Tente novamente.",
       "error-title": "Erro ao corrigir os metadados da pasta",
-      "loading": "A carregar o repositório...",
       "read-only-message": "Não é possível corrigir automaticamente os metadados da pasta.",
       "submit": "Corrigir ID de pastas",
       "submitting": "A corrigir...",

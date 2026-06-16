@@ -45,7 +45,7 @@ require (
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
-	github.com/aws/aws-sdk-go v1.55.7 // indirect
+	github.com/aws/aws-sdk-go v1.55.8 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.9 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.25 // indirect
@@ -122,7 +122,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260601143310-62c199acc7fc // indirect
+	github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754 // indirect
 	github.com/grafana/authlib v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect

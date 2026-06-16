@@ -225,13 +225,13 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 // handleDirectoryListing handles GET requests for directory listing.
 func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, responder rest.Responder) {
 	if err := c.authorizeListFiles(ctx, name); err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
 	files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 	if err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 

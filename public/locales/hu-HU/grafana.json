@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Nem sikerült elindítani a mappa metaadatainak javítására irányuló feladatot. Próbálkozzon újra.",
       "error-title": "Hiba történt a mappa metaadatainak javítása közben",
-      "loading": "Adattár betöltése…",
       "read-only-message": "A mappa metaadatai nem javíthatók automatikusan.",
       "submit": "Mappaazonosítók javítása",
       "submitting": "Javítás…",
