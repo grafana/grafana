@@ -117,6 +117,44 @@ describe('Modal', () => {
     expect(onDismiss).not.toHaveBeenCalled();
   });
 
+  it('clicking inside a [data-dismiss-ignore] region does not call onDismiss', async () => {
+    const onDismiss = jest.fn();
+
+    render(
+      <>
+        {/* Stands in for globally-floating UI (e.g. a toast) that renders above the modal but outside
+            its DOM subtree. Clicking it should not be treated as a backdrop press. */}
+        <div data-dismiss-ignore>
+          <button data-testid="toast-close">Close toast</button>
+        </div>
+        <Modal title="Some Title" isOpen onDismiss={onDismiss}>
+          <div data-testid="modal-content">Content</div>
+        </Modal>
+      </>
+    );
+
+    await userEvent.click(screen.getByTestId('toast-close'));
+
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+
+  it('clicking an outside element without the attribute still calls onDismiss', async () => {
+    const onDismiss = jest.fn();
+
+    render(
+      <>
+        <button data-testid="outside-button">Outside</button>
+        <Modal title="Some Title" isOpen onDismiss={onDismiss}>
+          <div data-testid="modal-content">Content</div>
+        </Modal>
+      </>
+    );
+
+    await userEvent.click(screen.getByTestId('outside-button'));
+
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
   it('closeOnEscape={false} prevents dismiss on escape key', async () => {
     const onDismiss = jest.fn();
 
