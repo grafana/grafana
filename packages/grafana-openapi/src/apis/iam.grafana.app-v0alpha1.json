@@ -5630,6 +5630,23 @@
           }
         ]
       },
+      "UserAuthLabel": {
+        "type": "object",
+        "required": ["module", "authID"],
+        "properties": {
+          "authID": {
+            "type": "string",
+            "default": ""
+          },
+          "externalUID": {
+            "type": "string"
+          },
+          "module": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
       "UserList": {
         "type": "object",
         "required": ["metadata", "items"],
@@ -5674,6 +5691,17 @@
         "type": "object",
         "required": ["disabled", "email", "emailVerified", "grafanaAdmin", "login", "title", "provisioned", "role"],
         "properties": {
+          "authLabels": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UserAuthLabel"
+                }
+              ]
+            }
+          },
           "disabled": {
             "type": "boolean",
             "default": false
