@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -9,22 +9,19 @@ import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0al
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { getSelectedFolderUIDs } from 'app/features/browse-dashboards/components/BrowseActions/utils';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import {
   RepoViewStatus,
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
-import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { type StepStatusInfo } from '../../Wizard/types';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { type StatusInfo } from '../../types';
 import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch } from '../defaults';
 
+import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
 import { type BulkActionFormData, type BulkActionProvisionResourceProps, getBulkActionInitialValues } from './utils';
 
@@ -37,8 +34,9 @@ interface FormProps extends BulkActionProvisionResourceProps {
 function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   // States
   const [job, setJob] = useState<Job>();
-  const [jobError, setJobError] = useState<string | StatusInfo>();
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  // Captured at submit time so the success message matches the workflow the job used.
+  const submittedViaBranchWorkflow = useRef(false);
 
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
@@ -60,6 +58,8 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       folderCount,
       dashboardCount,
     });
+
+    submittedViaBranchWorkflow.current = data.workflow === 'branch';
 
     // Create the delete job spec. The Grafana-saved-by trailer rides through
     // JobSpec.Message to the resulting git commit.
@@ -95,21 +95,23 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   const disableBtn =
     isCreatingJob || job?.status?.state === 'working' || job?.status?.state === 'pending' || hasSubmitted;
 
-  const onStatusChange = useCallback((statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'error' && statusInfo.error) {
-      setJobError(statusInfo.error);
-    }
-  }, []);
-
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(handleSubmitForm)}>
         <Stack direction="column" gap={2}>
           {hasSubmitted && job ? (
-            <>
-              <ProvisioningAlert error={jobError} />
-              <JobStatus watch={job} jobType="delete" onStatusChange={onStatusChange} />
-            </>
+            <BulkActionJobStatus
+              job={job}
+              jobType="delete"
+              successTitle={
+                submittedViaBranchWorkflow.current
+                  ? t(
+                      'browse-dashboards.bulk-delete-resources-form.success-title-branch',
+                      'Requested changes were pushed to a branch'
+                    )
+                  : t('browse-dashboards.bulk-delete-resources-form.success-title', 'Resources deleted successfully')
+              }
+            />
           ) : (
             <>
               <AffectedFolderContents
