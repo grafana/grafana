@@ -4,8 +4,8 @@ import { type ManagerStats, type ResourceStats } from 'app/api/clients/provision
 import { ManagerKind } from 'app/features/apiserver/types';
 
 // `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
-export const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
-export const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
+const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
+const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
 
 /**
  * Classify a stats entry into the dashboard or folder bucket, keyed by BOTH
