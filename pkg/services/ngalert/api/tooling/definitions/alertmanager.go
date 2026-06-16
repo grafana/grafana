@@ -307,6 +307,9 @@ type TestTemplatesConfigBodyParams struct {
 
 	// Name of the template file.
 	Name string `json:"name"`
+
+	// Kind of template to test. Either "grafana" or "mimir". Default is "grafana".
+	Kind definition.TemplateKind `json:"kind,omitempty"`
 }
 
 // swagger:model
