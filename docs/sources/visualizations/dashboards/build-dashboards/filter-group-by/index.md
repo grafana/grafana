@@ -120,7 +120,7 @@ Hover the cursor over any panel using the data source of the filter to show the 
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-panel-groupby-v13.0.png" max-width="550px" alt="Group by control on a panel" >}}
 
-This can be helpful when you're working with a panel that's far away from the dashboard controls.
+The panel-level **Group by** control only includes keys available in the panel's query. This is in contrast with the dashaboard-level control that includes all available keys for the dashboard.
 Your selection is applied to all the panels in the dashboard with the same data source.
 
 You can also further filter a time series panel, which allows you to drill down further into your data.
