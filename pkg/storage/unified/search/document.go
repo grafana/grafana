@@ -20,12 +20,6 @@ func ProvideDocumentBuilders(sql db.DB, sprinkles builders.DashboardStats) resou
 	return &StandardDocumentBuilders{sql, sprinkles}
 }
 
-// withDashboardStats returns a copy of the supplier that uses the given stats
-// source for the dashboard document builder.
-func (s *StandardDocumentBuilders) withDashboardStats(ds builders.DashboardStats) *StandardDocumentBuilders {
-	return &StandardDocumentBuilders{sql: s.sql, sprinkles: ds}
-}
-
 // MaybeUseUnifiedStorageStats swaps the dashboard stats source to read from
 // unified storage KV when [unified_storage] usage_stats_enabled is set and a KV
 // store is available. Otherwise it returns docs unchanged (legacy source). This
@@ -39,7 +33,11 @@ func MaybeUseUnifiedStorageStats(cfg *setting.Cfg, docs resource.DocumentBuilder
 	if !ok {
 		return docs
 	}
-	return sdb.withDashboardStats(stats.NewKVDashboardStats(stats.NewStore(kvStore)))
+	// Copy the supplier, replacing only the stats source with the KV reader.
+	return &StandardDocumentBuilders{
+		sql:       sdb.sql,
+		sprinkles: stats.NewKVDashboardStats(stats.NewStore(kvStore)),
+	}
 }
 
 func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
