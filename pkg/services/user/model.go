@@ -53,6 +53,14 @@ type User struct {
 	LastSeenAt time.Time
 
 	IsProvisioned bool `xorm:"is_provisioned"`
+
+	AuthLabels []AuthLabelInfo `xorm:"-" json:"-"`
+}
+
+type AuthLabelInfo struct {
+	Module      string
+	AuthID      string
+	ExternalUID string
 }
 
 type CreateUserCommand struct {
@@ -71,6 +79,7 @@ type CreateUserCommand struct {
 	DefaultOrgRole   string
 	IsServiceAccount bool
 	IsProvisioned    bool
+	AuthLabels       []AuthLabelInfo
 }
 
 type GetUserByLoginQuery struct {
@@ -96,10 +105,11 @@ type UpdateUserCommand struct {
 	// If old password is included it will be validated against users current password.
 	OldPassword *Password `json:"-"`
 	// If OrgID is included update current org for user
-	OrgID         *int64      `json:"-"`
-	HelpFlags1    *HelpFlags1 `json:"-"`
-	IsProvisioned *bool       `json:"-"`
-	OrgRole       *string     `json:"-"`
+	OrgID         *int64          `json:"-"`
+	HelpFlags1    *HelpFlags1     `json:"-"`
+	IsProvisioned *bool           `json:"-"`
+	OrgRole       *string         `json:"-"`
+	AuthLabels    []AuthLabelInfo `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -177,6 +187,8 @@ type UserProfileDTO struct {
 	AvatarURL                      string          `json:"avatarUrl"`
 	AccessControl                  map[string]bool `json:"accessControl,omitempty"`
 	IsProvisioned                  bool            `json:"isProvisioned"`
+
+	AuthModules []string `json:"-"`
 }
 
 // implement Conversion interface to define custom field mapping (xorm feature)

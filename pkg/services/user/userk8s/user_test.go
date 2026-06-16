@@ -120,6 +120,52 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
+			name:           "maps auth labels into the user spec",
+			requesterOrgID: 1,
+			cmd: &user.CreateUserCommand{
+				Login: "jdoe",
+				Email: "jdoe@example.com",
+				AuthLabels: []user.AuthLabelInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				var sent v0alpha1.User
+				_ = json.NewDecoder(r.Body).Decode(&sent)
+				if assert.Len(t, sent.Spec.AuthLabels, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.AuthLabels[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.AuthLabels[0].AuthID)
+					assert.Nil(t, sent.Spec.AuthLabels[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.AuthLabels[1].Module)
+					if assert.NotNil(t, sent.Spec.AuthLabels[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.AuthLabels[1].ExternalUID)
+					}
+				}
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       sent.Spec,
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectUser: &user.User{
+				UID:   "some-uid",
+				OrgID: 1,
+				Login: "jdoe",
+				Email: "jdoe@example.com",
+				AuthLabels: []user.AuthLabelInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
+			},
+		},
+		{
 			name:           "uses provided UID when set",
 			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
@@ -295,6 +341,7 @@ func TestUserK8sService_Create(t *testing.T) {
 			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
 			assert.Equal(t, tt.expectUser.IsProvisioned, result.IsProvisioned)
 			assert.Equal(t, tt.expectUser.Created.UTC(), result.Created.UTC())
+			assert.Equal(t, tt.expectUser.AuthLabels, result.AuthLabels)
 		})
 	}
 }
@@ -1125,6 +1172,63 @@ func TestUserK8sService_Update(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
 					Spec:       v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+		},
+		{
+			name:           "updates auth labels",
+			requesterOrgID: 1,
+			cmd: &user.UpdateUserCommand{
+				UserID: 7,
+				AuthLabels: []user.AuthLabelInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					resp := v0alpha1.User{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "some-uid",
+							Namespace: "org-1",
+							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						},
+						Spec: v0alpha1.UserSpec{Login: "user7"},
+					}
+					list := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{resp},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(list)
+					return
+				}
+				var sent v0alpha1.User
+				_ = json.NewDecoder(r.Body).Decode(&sent)
+				if assert.Len(t, sent.Spec.AuthLabels, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.AuthLabels[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.AuthLabels[0].AuthID)
+					assert.Nil(t, sent.Spec.AuthLabels[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.AuthLabels[1].Module)
+					if assert.NotNil(t, sent.Spec.AuthLabels[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.AuthLabels[1].ExternalUID)
+					}
+				}
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       sent.Spec,
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)

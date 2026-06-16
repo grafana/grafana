@@ -144,6 +144,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 			EmailVerified: cmd.EmailVerified,
 			Provisioned:   cmd.IsProvisioned,
 			Role:          role,
+			AuthLabels:    toAuthLabels(cmd.AuthLabels),
 		},
 	}
 
@@ -429,6 +430,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	}
 	if cmd.OrgRole != nil {
 		existing.Spec.Role = *cmd.OrgRole
+	}
+	if cmd.AuthLabels != nil {
+		existing.Spec.AuthLabels = toAuthLabels(cmd.AuthLabels)
 	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
@@ -794,6 +798,7 @@ func toUserProfileDTO(u *iamv0alpha1.User, orgID int64) *user.UserProfileDTO {
 		IsProvisioned:  u.Spec.Provisioned,
 		UpdatedAt:      u.GetUpdateTimestamp(),
 		CreatedAt:      u.CreationTimestamp.Time,
+		AuthModules:    authModules(u.Spec.AuthLabels),
 	}
 }
 
@@ -813,5 +818,48 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
 		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
+		AuthLabels:    fromAuthLabels(u.Spec.AuthLabels),
 	}
+}
+
+func toAuthLabels(in []user.AuthLabelInfo) []iamv0alpha1.UserAuthLabel {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]iamv0alpha1.UserAuthLabel, 0, len(in))
+	for _, l := range in {
+		label := iamv0alpha1.UserAuthLabel{Module: l.Module, AuthID: l.AuthID}
+		if l.ExternalUID != "" {
+			externalUID := l.ExternalUID
+			label.ExternalUID = &externalUID
+		}
+		out = append(out, label)
+	}
+	return out
+}
+
+func fromAuthLabels(in []iamv0alpha1.UserAuthLabel) []user.AuthLabelInfo {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]user.AuthLabelInfo, 0, len(in))
+	for _, l := range in {
+		info := user.AuthLabelInfo{Module: l.Module, AuthID: l.AuthID}
+		if l.ExternalUID != nil {
+			info.ExternalUID = *l.ExternalUID
+		}
+		out = append(out, info)
+	}
+	return out
+}
+
+func authModules(in []iamv0alpha1.UserAuthLabel) []string {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(in))
+	for _, l := range in {
+		out = append(out, l.Module)
+	}
+	return out
 }
