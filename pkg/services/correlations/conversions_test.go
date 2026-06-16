@@ -57,7 +57,8 @@ func TestConversion(t *testing.T) {
 						Name:  "target",
 					},
 					Config: correlationsV0.CorrelationConfigSpec{
-						Field: "test-field",
+						Field:     "test-field",
+						TimeRange: nil,
 					},
 				},
 			},
