@@ -23,7 +23,7 @@ export function BulkActionJobStatus({ job, jobType, committedTitle, pushedToBran
   const [status, setStatus] = useState<StepStatusInfo>();
 
   const onStatusChange = useCallback((info: StepStatusInfo) => {
-    if (info.status === 'error' || info.status === 'warning' || info.status === 'success') {
+    if (['error', 'warning', 'success'].includes(info.status)) {
       setStatus((prev) => prev ?? info);
     }
   }, []);
