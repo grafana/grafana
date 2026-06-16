@@ -107,7 +107,7 @@ Parca template variable support has the following limitations:
 
 - **No query variable support:** You can't use Parca as a data source for populating variable options. Define values manually with custom variables or use another data source.
 - **Label selector only:** Variables are interpolated in the label selector field. The profile type drop-down doesn't support variables.
-- **No free-form filters:** Parca doesn't support [free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+- **No free-form filters:** Parca doesn't support free-form [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Next steps
 
