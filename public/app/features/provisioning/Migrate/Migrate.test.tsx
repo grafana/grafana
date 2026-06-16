@@ -1,11 +1,10 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useRepositoryList } from '../hooks/useRepositoryList';
 import { createRepository } from '../mocks/factories';
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -16,28 +15,28 @@ setupProvisioningMswServer();
 
 // The folder list is fed by the unified searcher (not an HTTP endpoint), so we
 // mock the hook here and exercise its own logic in useFolderMigrationData.test.
+// useRepositoryList is left real so it's covered; repositories come from MSW.
 jest.mock('./hooks/useFolderMigrationData', () => ({
   useFolderMigrationData: jest.fn(),
 }));
-jest.mock('../hooks/useRepositoryList', () => ({
-  useRepositoryList: jest.fn(),
-}));
 
 const mockUseFolderMigrationData = jest.mocked(useFolderMigrationData);
-const mockUseRepositoryList = jest.mocked(useRepositoryList);
 
 function mockFolders(data: FolderRow[] = []) {
   mockUseFolderMigrationData.mockReturnValue({ data, isLoading: false, isError: false });
+}
+
+function respondWithRepositories(
+  items = [createRepository({ metadata: { name: 'repo-1' }, spec: { workflows: ['write'] } })]
+) {
+  server.use(http.get(`${BASE}/repositories`, () => HttpResponse.json({ items })));
 }
 
 beforeEach(() => {
   mockFolders();
   // One connected repository (able to push to its configured branch) by default
   // so the migrate actions are enabled.
-  mockUseRepositoryList.mockReturnValue([
-    [createRepository({ metadata: { name: 'repo-1' }, spec: { workflows: ['write'] } })],
-    false,
-  ]);
+  respondWithRepositories();
 });
 
 // 100 dashboards total, 40 managed by Git Sync, 10 by Terraform => 50 managed,
@@ -169,7 +168,10 @@ describe('Migrate', () => {
 
       // Select-all flips the action to the explicit "Migrate all" everything flow.
       await user.click(await screen.findByRole('checkbox', { name: /select all/i }));
-      await user.click(screen.getByRole('button', { name: /migrate all \(1\)/i }));
+      const migrateAll = await screen.findByRole('button', { name: /migrate all \(1\)/i });
+      // The repository list loads async; wait until the action is enabled.
+      await waitFor(() => expect(migrateAll).toBeEnabled());
+      await user.click(migrateAll);
 
       // The drawer opens in the everything mode, not the selective summary.
       expect(await screen.findByText(/all folders and resources will be migrated/i)).toBeInTheDocument();
@@ -231,7 +233,10 @@ describe('Migrate', () => {
 
       // Picking just one folder cascades to its two dashboards.
       await user.click(await screen.findByRole('checkbox', { name: /select folder team a/i }));
-      await user.click(screen.getByRole('button', { name: /migrate selected \(1\)/i }));
+      const migrateSelected = await screen.findByRole('button', { name: /migrate selected \(1\)/i });
+      // The repository list loads async; wait until the action is enabled.
+      await waitFor(() => expect(migrateSelected).toBeEnabled());
+      await user.click(migrateSelected);
 
       // The drawer opens in selective mode summarizing the two resources.
       expect(await screen.findByText(/2 selected resources/i)).toBeInTheDocument();

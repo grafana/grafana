@@ -19,9 +19,9 @@ import {
 import { type FolderRow } from './hooks/useFolderMigrationData';
 import { isMigratableFolder } from './selection';
 
-type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
+export type SortKey = 'count-desc' | 'count-asc' | 'title-asc' | 'title-desc';
 
-function compareFolders(a: FolderRow, b: FolderRow, key: SortKey): number {
+export function compareFolders(a: FolderRow, b: FolderRow, key: SortKey): number {
   switch (key) {
     case 'count-desc':
       if (b.dashboardCount !== a.dashboardCount) {

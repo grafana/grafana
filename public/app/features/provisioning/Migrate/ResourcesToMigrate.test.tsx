@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { ResourcesToMigrate } from './ResourcesToMigrate';
+import { compareFolders, ResourcesToMigrate } from './ResourcesToMigrate';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 
 const folders: FolderRow[] = [
@@ -134,5 +134,102 @@ describe('ResourcesToMigrate', () => {
     setup({ folders: [folders[1]] });
 
     expect(screen.getByText('All folders are already managed.')).toBeInTheDocument();
+  });
+
+  describe('search, sort and expansion', () => {
+    const twoFolders: FolderRow[] = [
+      {
+        uid: 'alpha',
+        title: 'Alpha',
+        dashboardCount: 2,
+        directDashboards: [
+          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
+          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
+        ],
+        subfolders: [],
+        allDashboards: [
+          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
+          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
+        ],
+      },
+      {
+        uid: 'beta',
+        title: 'Beta',
+        dashboardCount: 5,
+        directDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
+        subfolders: [],
+        allDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
+      },
+    ];
+
+    const folderTitleOrder = () => screen.getAllByText(/^(Alpha|Beta)$/).map((el) => el.textContent);
+
+    it('filters by folder title and by dashboard title', async () => {
+      const { user } = setup({ folders: twoFolders });
+      const input = screen.getByPlaceholderText(/search folders and resources/i);
+
+      await user.type(input, 'Alpha');
+      expect(screen.getByText('Alpha')).toBeInTheDocument();
+      expect(screen.queryByText('Beta')).not.toBeInTheDocument();
+
+      await user.clear(input);
+      await user.type(input, 'Beta One'); // matches a dashboard inside the Beta folder
+      expect(screen.getByText('Beta')).toBeInTheDocument();
+      expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+    });
+
+    it('defaults to most-dashboards-first ordering', () => {
+      setup({ folders: twoFolders });
+
+      // Default sort key is count-desc: Beta (5) before Alpha (2).
+      expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
+    });
+
+    it('hints to migrate the folder when its dashboards live only in subfolders', async () => {
+      const subfoldersOnly: FolderRow = {
+        uid: 'parent',
+        title: 'Parent',
+        dashboardCount: 3,
+        directDashboards: [],
+        subfolders: [{ uid: 'child', title: 'Child', dashboardCount: 3 }],
+        allDashboards: [{ uid: 'c1', title: 'C1', url: '/d/c1' }],
+      };
+      const { user } = setup({ folders: [subfoldersOnly] });
+
+      await user.click(screen.getByRole('button', { name: /expand parent/i }));
+
+      expect(screen.getByText(/live in subfolders/i)).toBeInTheDocument();
+    });
+
+    it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {
+      const { user } = setup({ selectedFolderUids: new Set(['team-a']) });
+
+      await user.click(screen.getByRole('button', { name: /expand team a/i }));
+
+      const dashboard = screen.getByRole('checkbox', { name: 'Dashboard One' });
+      expect(dashboard).toBeChecked();
+      expect(dashboard).toBeDisabled();
+    });
+  });
+
+  describe('compareFolders', () => {
+    const big = folders[0]; // Team A, 2 dashboards
+    const small: FolderRow = { ...big, uid: 'z', title: 'Zeta', dashboardCount: 1 };
+
+    it('orders by dashboard count descending then ascending', () => {
+      expect(compareFolders(big, small, 'count-desc')).toBeLessThan(0);
+      expect(compareFolders(big, small, 'count-asc')).toBeGreaterThan(0);
+    });
+
+    it('breaks count ties by title', () => {
+      const tie: FolderRow = { ...big, uid: 'a-tie', title: 'AAA' };
+      expect(compareFolders(big, tie, 'count-desc')).toBeGreaterThan(0); // "Team A" after "AAA"
+      expect(compareFolders(big, tie, 'count-asc')).toBeGreaterThan(0);
+    });
+
+    it('orders by title ascending and descending', () => {
+      expect(compareFolders(big, small, 'title-asc')).toBeLessThan(0); // Team A before Zeta
+      expect(compareFolders(big, small, 'title-desc')).toBeGreaterThan(0);
+    });
   });
 });
