@@ -34,14 +34,16 @@ async function openRecentQueriesModal(page: Page): Promise<Locator> {
   return modal;
 }
 
-test('should show Recent queries button and hide Query history button', async ({ page, selectors, dashboardPage }) => {
+test('should show Recent queries button alongside Query history button', async ({ page, selectors, dashboardPage }) => {
   await page.goto('/explore');
 
   const exploreContainer = dashboardPage.getByGrafanaSelector(selectors.pages.Explore.General.container);
   await expect(exploreContainer).toBeVisible();
 
+  // The Query history button is intentionally kept visible during the deprecation period,
+  // even when the recentQueriesUI flag is enabled.
   await expect(page.getByRole('button', { name: 'Recent queries' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Query history' })).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Query history' })).toBeVisible();
 });
 
 test('should open modal and display a recently run query', async ({ page, selectors, dashboardPage }) => {
