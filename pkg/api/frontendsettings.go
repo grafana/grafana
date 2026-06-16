@@ -197,31 +197,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.FeatureToggles["topnav"] = true
 
 	hideVersion := hs.Cfg.Anonymous.HideVersion && !c.IsSignedIn
-	version := setting.BuildVersion
-	commit := setting.BuildCommit
-	commitShort := getShortCommitHash(setting.BuildCommit, 10)
-	buildstamp := setting.BuildStamp
-	versionString := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort)
-
 	if hideVersion {
-		version = ""
-		versionString = setting.ApplicationName
-		commit = ""
-		commitShort = ""
-		buildstamp = 0
-	}
-
-	frontendSettings.BuildInfo = dtos.FrontendSettingsBuildInfoDTO{
-		HideVersion:   hideVersion,
-		Version:       version,
-		VersionString: versionString,
-		Commit:        commit,
-		CommitShort:   commitShort,
-		Buildstamp:    buildstamp,
-		Edition:       hs.License.Edition(),
-		LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
-		HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-		Env:           hs.Cfg.Env,
+		frontendSettings.BuildInfo.Version = ""
+		frontendSettings.BuildInfo.VersionString = setting.ApplicationName
+		frontendSettings.BuildInfo.Commit = ""
+		frontendSettings.BuildInfo.CommitShort = ""
+		frontendSettings.BuildInfo.Buildstamp = 0
 	}
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)

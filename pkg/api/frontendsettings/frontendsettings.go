@@ -4,6 +4,7 @@
 package frontendsettings
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,16 +13,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GetBaseFrontendSettings returns the JSON object with all the settings needed for
 // front end initialisation.
-func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg) (*dtos.FrontendSettingsDTO, error) {
+func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, license licensing.Licensing) (*dtos.FrontendSettingsDTO, error) {
 	defaultDS := "-- Grafana --"
 
 	trustedTypesDefaultPolicyEnabled := (cfg.CSPEnabled && strings.Contains(cfg.CSPTemplate, "require-trusted-types-for")) || (cfg.CSPReportOnlyEnabled && strings.Contains(cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 	isCloudMigrationTarget := cfg.CloudMigration.Enabled && cfg.CloudMigration.IsTarget
+
+	version := setting.BuildVersion
+	commitShort := getShortCommitHash(setting.BuildCommit, 10)
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                    defaultDS,
@@ -104,7 +109,16 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg) 
 		DefaultDatasourceManageAlertsUIToggle:          cfg.DefaultDatasourceManageAlertsUIToggle,
 		DefaultAllowRecordingRulesTargetAlertsUIToggle: cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle,
 
-		// [todo] Restore BuildInfo in frontend-service
+		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
+			HideVersion:   false,
+			Version:       version,
+			VersionString: fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, version, commitShort),
+			Commit:        setting.BuildCommit,
+			CommitShort:   commitShort,
+			Buildstamp:    setting.BuildStamp,
+			Edition:       license.Edition(),
+			Env:           cfg.Env,
+		},
 
 		// [TODO] Restore LicenseInfo in frontend-service
 
@@ -217,4 +231,11 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg) 
 
 func isSupportBundlesEnabled(cfg *setting.Cfg) bool {
 	return cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+func getShortCommitHash(commitHash string, maxLength int) string {
+	if len(commitHash) > maxLength {
+		return commitHash[:maxLength]
+	}
+	return commitHash
 }
