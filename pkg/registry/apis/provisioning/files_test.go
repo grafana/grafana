@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -155,6 +156,38 @@ func TestCheckQuota(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A missing ref surfaces from the git layer as ErrRefNotFound wrapped by fmt.Errorf
+// (a *fmt.wrapError, not an APIStatus). The directory-listing handler must unwrap it so
+// the client gets a 404 instead of a 500 + UnhandledError log.
+func TestHandleDirectoryListing_RefNotFoundMapsTo404(t *testing.T) {
+	mockAccess := auth.NewMockAccessChecker(t)
+	mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	wrappedErr := fmt.Errorf("ref not found: %s: %w", "refs/heads/test-panel", repository.ErrRefNotFound)
+	mockReadWriter := repository.NewMockReaderWriter(t)
+	mockReadWriter.EXPECT().ReadTree(mock.Anything, "test-panel").Return([]repository.FileTreeEntry(nil), wrappedErr)
+
+	connector := &filesConnector{access: mockAccess}
+	responder := &fakeResponder{}
+
+	connector.handleDirectoryListing(
+		context.Background(),
+		"test-repo",
+		resources.DualWriteOptions{Path: "", Ref: "test-panel"},
+		mockReadWriter,
+		responder,
+	)
+
+	require.Error(t, responder.err)
+	// The responder must receive a concrete *StatusError (an APIStatus), not a wrapped
+	// error — otherwise the generic apiserver maps it to 500 + UnhandledError. errors.As /
+	// IsNotFound would unwrap and pass either way, so assert the concrete type the
+	// responder actually gets.
+	statusErr, ok := responder.err.(*apierrors.StatusError)
+	require.True(t, ok, "responder must receive a *StatusError, got %T", responder.err)
+	require.True(t, apierrors.IsNotFound(statusErr), "expected a 404 NotFound, got %#v", statusErr)
 }
 
 func TestHandleMethodRequest_FolderMetadataGuard(t *testing.T) {
