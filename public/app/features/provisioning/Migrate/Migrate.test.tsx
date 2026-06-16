@@ -1,7 +1,8 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { getCustomSearchHandler, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -9,21 +10,21 @@ import { createRepository } from '../mocks/factories';
 import { setupProvisioningMswServer } from '../mocks/server';
 
 import { Migrate } from './Migrate';
-import { type FolderRow, useFolderMigrationData } from './hooks/useFolderMigrationData';
 
 setupProvisioningMswServer();
 
-// The folder list is fed by the unified searcher (not an HTTP endpoint), so we
-// mock the hook here and exercise its own logic in useFolderMigrationData.test.
-// useRepositoryList is left real so it's covered; repositories come from MSW.
-jest.mock('./hooks/useFolderMigrationData', () => ({
-  useFolderMigrationData: jest.fn(),
-}));
+// The folder list, the repository list and the stats are all served through MSW
+// so the page runs against the real hooks.
+function folderHit(name: string, title: string, parent = ''): DashboardHit {
+  return { resource: 'folders', name, title, folder: parent, field: {} };
+}
 
-const mockUseFolderMigrationData = jest.mocked(useFolderMigrationData);
+function dashboardHit(name: string, title: string, parent: string): DashboardHit {
+  return { resource: 'dashboards', name, title, folder: parent, field: {} };
+}
 
-function mockFolders(data: FolderRow[] = []) {
-  mockUseFolderMigrationData.mockReturnValue({ data, isLoading: false, isError: false });
+function respondWithSearch(hits: DashboardHit[] = []) {
+  server.use(getCustomSearchHandler(hits));
 }
 
 function respondWithRepositories(
@@ -33,7 +34,8 @@ function respondWithRepositories(
 }
 
 beforeEach(() => {
-  mockFolders();
+  // Empty folder list by default; table tests provide their own hits.
+  respondWithSearch();
   // One connected repository (able to push to its configured branch) by default
   // so the migrate actions are enabled.
   respondWithRepositories();
@@ -147,21 +149,10 @@ describe('Migrate', () => {
     });
 
     it('migrates everything via select-all and the Migrate all button', async () => {
-      mockFolders([
-        {
-          uid: 'team-a',
-          title: 'Team A',
-          dashboardCount: 2,
-          directDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-          subfolders: [],
-          allDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-        },
+      respondWithSearch([
+        folderHit('team-a', 'Team A'),
+        dashboardHit('d1', 'Dashboard One', 'team-a'),
+        dashboardHit('d2', 'Dashboard Two', 'team-a'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -178,55 +169,27 @@ describe('Migrate', () => {
     });
 
     it('lists unmanaged folders in the Resources to migrate table', async () => {
-      mockFolders([
-        {
-          uid: 'team-a',
-          title: 'Team A',
-          dashboardCount: 2,
-          directDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-          subfolders: [],
-          allDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-        },
+      respondWithSearch([
+        folderHit('team-a', 'Team A'),
+        dashboardHit('d1', 'Dashboard One', 'team-a'),
+        dashboardHit('d2', 'Dashboard Two', 'team-a'),
       ]);
 
       render(<Migrate />);
 
       expect(await screen.findByText('Resources to migrate')).toBeInTheDocument();
-      expect(screen.getByText('Team A')).toBeInTheDocument();
+      expect(await screen.findByText('Team A')).toBeInTheDocument();
     });
 
     it('opens the drawer scoped to the selection when migrating selected folders', async () => {
       // Two folders so picking one is a partial selection ("Migrate selected"),
       // not the everything flow.
-      mockFolders([
-        {
-          uid: 'team-a',
-          title: 'Team A',
-          dashboardCount: 2,
-          directDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-          subfolders: [],
-          allDashboards: [
-            { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-            { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-          ],
-        },
-        {
-          uid: 'team-b',
-          title: 'Team B',
-          dashboardCount: 1,
-          directDashboards: [{ uid: 'd3', title: 'Dashboard Three', url: '/d/d3' }],
-          subfolders: [],
-          allDashboards: [{ uid: 'd3', title: 'Dashboard Three', url: '/d/d3' }],
-        },
+      respondWithSearch([
+        folderHit('team-a', 'Team A'),
+        dashboardHit('d1', 'Dashboard One', 'team-a'),
+        dashboardHit('d2', 'Dashboard Two', 'team-a'),
+        folderHit('team-b', 'Team B'),
+        dashboardHit('d3', 'Dashboard Three', 'team-b'),
       ]);
 
       const { user } = render(<Migrate />);
@@ -261,7 +224,7 @@ describe('Migrate', () => {
       ],
     });
     // No migratable folders, so the table shows its all-managed empty state.
-    mockFolders([]);
+    respondWithSearch([]);
 
     render(<Migrate />);
 

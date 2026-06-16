@@ -1,116 +1,74 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+
+import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { useFolderMigrationData } from './useFolderMigrationData';
 
-jest.mock('app/features/search/service/searcher', () => ({
-  getGrafanaSearcher: jest.fn(),
-}));
+setupProvisioningMswServer();
 
-jest.mock('app/features/search/service/utils', () => ({
-  extractManagerKind: jest.fn((managedBy) => (typeof managedBy === 'string' ? managedBy : managedBy?.kind)),
-  queryResultToViewItem: jest.fn((item) => ({
-    uid: item.uid,
-    title: item.name,
-    url: item.url,
-    managedBy: typeof item.managedBy === 'string' ? item.managedBy : item.managedBy?.kind,
-  })),
-}));
-
-const mockGetGrafanaSearcher = getGrafanaSearcher as jest.MockedFunction<typeof getGrafanaSearcher>;
-
-interface FakeFolder {
-  uid: string;
-  name: string;
-  /**
-   * Immediate parent folder UID, or empty for root. Mirrors the unified
-   * searcher's `DashboardHit.folder`/`item.location` semantics — *not* a
-   * slash-separated ancestor path, just the immediate parent.
-   */
-  location: string;
-  managedBy?: string;
+// The hook fans out to the unified searcher (folders + dashboards). Drive it
+// through the real search endpoint with MSW; getCustomSearchHandler filters the
+// supplied hits by the `type` query param, so one list serves both calls.
+function mockSearch(hits: DashboardHit[]) {
+  server.use(getCustomSearchHandler(hits));
 }
 
-interface FakeDashboard {
-  uid: string;
-  name: string;
-  url?: string;
-  /** Immediate parent folder UID; same semantics as FakeFolder.location. */
-  location: string;
-  managedBy?: string;
+function folder(name: string, parent = '', managedBy?: ManagerKind): DashboardHit {
+  return {
+    resource: 'folders',
+    name,
+    title: name,
+    folder: parent,
+    field: {},
+    ...(managedBy ? { managedBy: { kind: managedBy } } : {}),
+  };
 }
 
-interface MockArgs {
-  folders: FakeFolder[];
-  dashboards: FakeDashboard[];
-}
-
-function mockSearcherWith({ folders, dashboards }: MockArgs) {
-  // The hook fires two `searcher.search` calls — one with `kind: ['folder']`,
-  // one with `kind: ['dashboard']`. Branch on the kind so the mock returns the
-  // right fixture for each.
-  mockGetGrafanaSearcher.mockReturnValue({
-    search: jest.fn(async (req: { kind?: string[] }) => {
-      const kind = req?.kind?.[0];
-      const isFolder = kind === 'folder';
-      const rows: Array<FakeFolder | FakeDashboard> = isFolder ? folders : dashboards;
-      return {
-        view: {
-          toArray: () => rows,
-        },
-        loadMoreItems: jest.fn(),
-        isItemLoaded: () => true,
-        totalRows: rows.length,
-      };
-    }),
-  } as unknown as ReturnType<typeof getGrafanaSearcher>);
+function dashboard(name: string, parent = '', managedBy?: ManagerKind): DashboardHit {
+  return {
+    resource: 'dashboards',
+    name,
+    title: name,
+    folder: parent,
+    field: {},
+    ...(managedBy ? { managedBy: { kind: managedBy } } : {}),
+  };
 }
 
 describe('useFolderMigrationData', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
   it('builds folder rows with recursive dashboard counts', async () => {
-    mockSearcherWith({
-      folders: [
-        { uid: 'parent', name: 'Parent', location: '' },
-        { uid: 'child', name: 'Child', location: 'parent' },
-      ],
-      // d2's `location` is just `child`, not `parent/child`. The hook walks
-      // the folder→parent map itself to find the full ancestor chain.
-      dashboards: [
-        { uid: 'd1', name: 'D1', url: '/d/d1', location: 'parent' },
-        { uid: 'd2', name: 'D2', url: '/d/d2', location: 'child' },
-      ],
-    });
+    // d2 lives in `child`; the hook walks the folder→parent map so `parent`'s
+    // recursive count picks it up even though the searcher only reports the
+    // immediate parent.
+    mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Parent's recursive count includes D2 which lives in the child folder.
     const parent = result.current.data.find((f) => f.uid === 'parent');
     expect(parent?.dashboardCount).toBe(2);
     expect(parent?.directDashboards).toHaveLength(1);
     expect(parent?.allDashboards).toHaveLength(2);
 
-    // Child only sees its own dashboard.
     const child = result.current.data.find((f) => f.uid === 'child');
     expect(child?.dashboardCount).toBe(1);
   });
 
   it('rolls root-level dashboards into a synthetic General row', async () => {
-    mockSearcherWith({
-      folders: [{ uid: 'a', name: 'A', location: '' }],
-      dashboards: [
-        // Root dashboard — searcher returns the literal "general" UID.
-        { uid: 'r1', name: 'Root one', url: '/d/r1', location: 'general' },
-        { uid: 'r2', name: 'Root two', url: '/d/r2', location: '' },
-        { uid: 'a1', name: 'In A', url: '/d/a1', location: 'a' },
-      ],
-    });
+    mockSearch([
+      folder('a'),
+      // Root dashboards: the searcher reports either the literal "general" UID
+      // or an empty folder.
+      dashboard('r1', 'general'),
+      dashboard('r2', ''),
+      dashboard('a1', 'a'),
+    ]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -118,46 +76,33 @@ describe('useFolderMigrationData', () => {
     const general = result.current.data.find((f) => f.uid === 'general');
     expect(general).toBeDefined();
     expect(general?.dashboardCount).toBe(2);
-    // Folder A's count should not include the root dashboards.
     const a = result.current.data.find((f) => f.uid === 'a');
     expect(a?.dashboardCount).toBe(1);
   });
 
   it('orders unmanaged folders first, then by dashboard count desc', async () => {
-    mockSearcherWith({
-      folders: [
-        { uid: 'managed-big', name: 'Managed Big', location: '', managedBy: ManagerKind.Repo },
-        { uid: 'unmanaged-small', name: 'Unmanaged Small', location: '' },
-        { uid: 'unmanaged-big', name: 'Unmanaged Big', location: '' },
-      ],
-      dashboards: [
-        { uid: 'd1', name: 'd1', url: '/d/1', location: 'managed-big' },
-        { uid: 'd2', name: 'd2', url: '/d/2', location: 'managed-big' },
-        { uid: 'd3', name: 'd3', url: '/d/3', location: 'managed-big' },
-        { uid: 'd4', name: 'd4', url: '/d/4', location: 'unmanaged-small' },
-        { uid: 'd5', name: 'd5', url: '/d/5', location: 'unmanaged-big' },
-        { uid: 'd6', name: 'd6', url: '/d/6', location: 'unmanaged-big' },
-      ],
-    });
+    mockSearch([
+      folder('managed-big', '', ManagerKind.Repo),
+      folder('unmanaged-small'),
+      folder('unmanaged-big'),
+      dashboard('d1', 'managed-big'),
+      dashboard('d2', 'managed-big'),
+      dashboard('d3', 'managed-big'),
+      dashboard('d4', 'unmanaged-small'),
+      dashboard('d5', 'unmanaged-big'),
+      dashboard('d6', 'unmanaged-big'),
+    ]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Two unmanaged folders ahead of the managed one; among the unmanaged the
-    // bigger one comes first.
     const order = result.current.data.map((f) => f.uid);
     expect(order.indexOf('unmanaged-big')).toBeLessThan(order.indexOf('unmanaged-small'));
     expect(order.indexOf('unmanaged-small')).toBeLessThan(order.indexOf('managed-big'));
   });
 
   it('marks the synthetic General row as managed when every root dashboard agrees', async () => {
-    mockSearcherWith({
-      folders: [],
-      dashboards: [
-        { uid: 'r1', name: 'r1', url: '/d/r1', location: '', managedBy: ManagerKind.Repo },
-        { uid: 'r2', name: 'r2', url: '/d/r2', location: '', managedBy: ManagerKind.Repo },
-      ],
-    });
+    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '', ManagerKind.Repo)]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -167,13 +112,7 @@ describe('useFolderMigrationData', () => {
   });
 
   it('leaves the General row unmanaged when only some root dashboards are managed', async () => {
-    mockSearcherWith({
-      folders: [],
-      dashboards: [
-        { uid: 'r1', name: 'r1', url: '/d/r1', location: '', managedBy: ManagerKind.Repo },
-        { uid: 'r2', name: 'r2', url: '/d/r2', location: '' },
-      ],
-    });
+    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '')]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -183,16 +122,7 @@ describe('useFolderMigrationData', () => {
   });
 
   it('leaves the General row unmanaged when root dashboards are managed by different tools', async () => {
-    // Mix of repo-managed + terraform-managed dashboards under the root: even
-    // though every dashboard has *some* manager, they don't agree on which
-    // one — the row stays unmanaged so the user can consolidate it.
-    mockSearcherWith({
-      folders: [],
-      dashboards: [
-        { uid: 'r1', name: 'r1', url: '/d/r1', location: '', managedBy: ManagerKind.Repo },
-        { uid: 'r2', name: 'r2', url: '/d/r2', location: '', managedBy: ManagerKind.Terraform },
-      ],
-    });
+    mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '', ManagerKind.Terraform)]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -202,22 +132,15 @@ describe('useFolderMigrationData', () => {
   });
 
   it('excludes already-managed dashboards from a folder’s migratable counts and lists', async () => {
-    // The parent folder is unmanaged, but two of its descendants are already
-    // managed by Git Sync. Cascading the folder selection to allDashboards
-    // would otherwise push managed dashboards into the migrate job — which the
-    // backend rejects — so the hook strips them here.
-    mockSearcherWith({
-      folders: [
-        { uid: 'parent', name: 'Parent', location: '' },
-        { uid: 'managed-sub', name: 'Managed sub', location: 'parent' },
-      ],
-      dashboards: [
-        { uid: 'd1', name: 'D1', url: '/d/d1', location: 'parent' },
-        // Two managed dashboards inside the parent's subtree.
-        { uid: 'm1', name: 'M1', url: '/d/m1', location: 'parent', managedBy: ManagerKind.Repo },
-        { uid: 'm2', name: 'M2', url: '/d/m2', location: 'managed-sub', managedBy: ManagerKind.Repo },
-      ],
-    });
+    // The parent is unmanaged but two descendants are already managed; cascading
+    // the folder would otherwise push managed dashboards into the migrate job.
+    mockSearch([
+      folder('parent'),
+      folder('managed-sub', 'parent'),
+      dashboard('d1', 'parent'),
+      dashboard('m1', 'parent', ManagerKind.Repo),
+      dashboard('m2', 'managed-sub', ManagerKind.Repo),
+    ]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -228,12 +151,8 @@ describe('useFolderMigrationData', () => {
     expect(parent?.allDashboards.map((d) => d.uid)).toEqual(['d1']);
   });
 
-  it('sets isError when the searcher rejects', async () => {
-    mockGetGrafanaSearcher.mockReturnValue({
-      search: jest.fn(async () => {
-        throw new Error('boom');
-      }),
-    } as unknown as ReturnType<typeof getGrafanaSearcher>);
+  it('sets isError when the search request fails', async () => {
+    server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
