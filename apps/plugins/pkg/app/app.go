@@ -73,13 +73,12 @@ type PluginAppInstallerConfig struct {
 	Logger              logging.Logger
 	Authorizer          authorizer.Authorizer
 	MetaProviderManager *meta.ProviderManager
-	// DecoratePluginStorageHookProvider, if non-nil, wraps the default
-	// PluginStorageHookProvider (built around the resolved storage) with
-	// additional behavior — e.g. recording installs in an external system. It
-	// receives the default provider and returns the provider to install; return
-	// the default unchanged to opt out, or a different provider entirely. If nil,
-	// the default is used.
-	DecoratePluginStorageHookProvider func(base PluginStorageHookProvider) PluginStorageHookProvider
+	// WrapPluginStorageAfterHooks, if non-nil, wraps the default
+	// PluginStorageAfterHookProvider (built around the resolved storage) with
+	// additional behavior, e.g. recording installs in an external system. Begin
+	// hooks always use the default provider so pre-commit storage mutations stay
+	// owned by this app.
+	WrapPluginStorageAfterHooks func(base PluginStorageAfterHookProvider) PluginStorageAfterHookProvider
 }
 
 func NewPluginsAppInstaller(
@@ -155,7 +154,7 @@ func (p *PluginAppInstaller) InstallAPIs(
 	}
 	wrappedStorage := map[schema.GroupVersionResource]func(rest.Storage) (rest.Storage, error){
 		pluginGVR: func(storage rest.Storage) (rest.Storage, error) {
-			return newPluginStorage(storage, p.config.Logger, p.config.MetaProviderManager, p.config.DecoratePluginStorageHookProvider)
+			return newPluginStorage(storage, p.config.Logger, p.config.MetaProviderManager, p.config.WrapPluginStorageAfterHooks)
 		},
 	}
 	wrappedServer := &customStorageWrapper{

@@ -364,36 +364,40 @@ func TestPluginStorage_WrapperRejectsIncompleteStorage(t *testing.T) {
 }
 
 func TestPluginStorage_DecoratorWrapsDefaultProvider(t *testing.T) {
-	provider := &recordingPluginStorageHookProvider{}
-	var gotBase PluginStorageHookProvider
-	decorate := func(base PluginStorageHookProvider) PluginStorageHookProvider {
+	provider := &recordingPluginStorageAfterHookProvider{}
+	var gotBase PluginStorageAfterHookProvider
+	decorate := func(base PluginStorageAfterHookProvider) PluginStorageAfterHookProvider {
 		gotBase = base
 		return provider
 	}
-	storage, err := newPluginStorage(&genericregistry.Store{}, &logging.NoOpLogger{}, meta.NewProviderManager(&fakeMetaProvider{}), decorate)
+	storage, err := newPluginStorage(&genericregistry.Store{}, &logging.NoOpLogger{}, meta.NewProviderManager(&fakeMetaProvider{
+		children: map[string][]string{
+			"parent:1.0.0": {"child"},
+		},
+	}), decorate)
 	require.NoError(t, err)
 
-	// The decorator receives the default provider, built around the store.
+	// The decorator receives the default after provider, built around the store.
 	require.IsType(t, &pluginStorageHookProvider{}, gotBase)
 
 	store := storage.(*genericregistry.Store)
-	finish, err := store.BeginCreate(context.Background(), plugin("default", "parent", "1.0.0", ""), &metav1.CreateOptions{})
+	parent := plugin("default", "parent", "1.0.0", "")
+	finish, err := store.BeginCreate(context.Background(), parent, &metav1.CreateOptions{})
 	require.NoError(t, err)
 	finish(context.Background(), true)
-	store.AfterCreate(plugin("default", "parent", "1.0.0", ""), &metav1.CreateOptions{})
+	require.Equal(t, "child", parent.Annotations[appliedChildrenAnnotation])
+	store.AfterCreate(parent, &metav1.CreateOptions{})
 
-	finish, err = store.BeginUpdate(context.Background(), plugin("default", "parent", "1.0.0", ""), plugin("default", "parent", "0.9.0", ""), &metav1.UpdateOptions{})
+	updated := plugin("default", "parent", "1.0.0", "")
+	finish, err = store.BeginUpdate(context.Background(), updated, plugin("default", "parent", "0.9.0", ""), &metav1.UpdateOptions{})
 	require.NoError(t, err)
 	finish(context.Background(), true)
-	store.AfterUpdate(plugin("default", "parent", "1.0.0", ""), &metav1.UpdateOptions{})
-	store.AfterDelete(plugin("default", "parent", "1.0.0", ""), &metav1.DeleteOptions{})
+	require.Equal(t, "child", updated.Annotations[appliedChildrenAnnotation])
+	store.AfterUpdate(updated, &metav1.UpdateOptions{})
+	store.AfterDelete(updated, &metav1.DeleteOptions{})
 
 	require.Equal(t, []string{
-		"beginCreate",
-		"finishCreate",
 		"afterCreate",
-		"beginUpdate",
-		"finishUpdate",
 		"afterUpdate",
 		"afterDelete",
 	}, provider.calls)
@@ -750,35 +754,21 @@ type partialPluginRESTStorage struct{}
 func (s *partialPluginRESTStorage) New() runtime.Object { return &pluginsv0alpha1.Plugin{} }
 func (s *partialPluginRESTStorage) Destroy()            {}
 
-type recordingPluginStorageHookProvider struct {
+type recordingPluginStorageAfterHookProvider struct {
 	calls []string
 }
 
-func (p *recordingPluginStorageHookProvider) BeginCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
-	p.calls = append(p.calls, "beginCreate")
-	return func(context.Context, bool) {
-		p.calls = append(p.calls, "finishCreate")
-	}, nil
-}
-
-func (p *recordingPluginStorageHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
+func (p *recordingPluginStorageAfterHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
 	p.calls = append(p.calls, "afterCreate")
 	return nil
 }
 
-func (p *recordingPluginStorageHookProvider) BeginUpdate(context.Context, *pluginsv0alpha1.Plugin, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
-	p.calls = append(p.calls, "beginUpdate")
-	return func(context.Context, bool) {
-		p.calls = append(p.calls, "finishUpdate")
-	}, nil
-}
-
-func (p *recordingPluginStorageHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
+func (p *recordingPluginStorageAfterHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
 	p.calls = append(p.calls, "afterUpdate")
 	return nil
 }
 
-func (p *recordingPluginStorageHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {
+func (p *recordingPluginStorageAfterHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {
 	p.calls = append(p.calls, "afterDelete")
 	return nil
 }

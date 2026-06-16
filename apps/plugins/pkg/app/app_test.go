@@ -8,27 +8,26 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 )
 
-func TestNewPluginsAppInstaller_DecoratePluginStorageHookProvider(t *testing.T) {
-	sentinel := &appTestPluginStorageHookProvider{}
-	decorate := func(base PluginStorageHookProvider) PluginStorageHookProvider {
+func TestNewPluginsAppInstaller_WrapPluginStorageAfterHooks(t *testing.T) {
+	sentinel := &appTestPluginStorageAfterHookProvider{}
+	wrap := func(base PluginStorageAfterHookProvider) PluginStorageAfterHookProvider {
 		return sentinel
 	}
 
 	installer, err := NewPluginsAppInstaller(PluginAppInstallerConfig{
-		Logger:                            &logging.NoOpLogger{},
-		MetaProviderManager:               meta.NewProviderManager(&appTestMetaProvider{}),
-		DecoratePluginStorageHookProvider: decorate,
+		Logger:                      &logging.NoOpLogger{},
+		MetaProviderManager:         meta.NewProviderManager(&appTestMetaProvider{}),
+		WrapPluginStorageAfterHooks: wrap,
 	})
 	require.NoError(t, err)
-	require.NotNil(t, installer.config.DecoratePluginStorageHookProvider)
-	// The decorator we passed is the one stored: invoking it returns our sentinel.
-	require.Same(t, sentinel, installer.config.DecoratePluginStorageHookProvider(nil))
+	require.NotNil(t, installer.config.WrapPluginStorageAfterHooks)
+	// The wrapper we passed is the one stored: invoking it returns our sentinel.
+	require.Same(t, sentinel, installer.config.WrapPluginStorageAfterHooks(nil))
 }
 
 type appTestMetaProvider struct{}
@@ -41,24 +40,16 @@ func (p *appTestMetaProvider) GetMeta(context.Context, meta.PluginRef) (*meta.Re
 	return &meta.Result{TTL: time.Minute}, nil
 }
 
-type appTestPluginStorageHookProvider struct{}
+type appTestPluginStorageAfterHookProvider struct{}
 
-func (p *appTestPluginStorageHookProvider) BeginCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
-	return nil, nil
-}
-
-func (p *appTestPluginStorageHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
+func (p *appTestPluginStorageAfterHookProvider) AfterCreate(context.Context, *pluginsv0alpha1.Plugin, *metav1.CreateOptions) error {
 	return nil
 }
 
-func (p *appTestPluginStorageHookProvider) BeginUpdate(context.Context, *pluginsv0alpha1.Plugin, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) (genericregistry.FinishFunc, error) {
-	return nil, nil
-}
-
-func (p *appTestPluginStorageHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
+func (p *appTestPluginStorageAfterHookProvider) AfterUpdate(context.Context, *pluginsv0alpha1.Plugin, *metav1.UpdateOptions) error {
 	return nil
 }
 
-func (p *appTestPluginStorageHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {
+func (p *appTestPluginStorageAfterHookProvider) AfterDelete(context.Context, *pluginsv0alpha1.Plugin, *metav1.DeleteOptions) error {
 	return nil
 }

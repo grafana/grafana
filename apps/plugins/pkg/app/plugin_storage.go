@@ -42,16 +42,27 @@ type pluginStorage interface {
 	rest.GracefulDeleter
 }
 
-// PluginStorageHookProvider receives plugin storage lifecycle callbacks.
-// After* hooks run post-commit; mutations to the plugin they receive are not
-// persisted, so they can only return an error (which is logged, never
-// surfaced to the API caller).
-type PluginStorageHookProvider interface {
+// PluginStorageBeginHookProvider receives pre-commit plugin storage lifecycle
+// callbacks. Mutations made in these hooks are persisted with the storage
+// operation when it succeeds.
+type PluginStorageBeginHookProvider interface {
 	BeginCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) (genericregistry.FinishFunc, error)
-	AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) error
 	BeginUpdate(ctx context.Context, plugin, oldPlugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) (genericregistry.FinishFunc, error)
+}
+
+// PluginStorageAfterHookProvider receives post-commit plugin storage lifecycle
+// callbacks. Mutations to the plugin they receive are not persisted, so they
+// can only return an error (which is logged, never surfaced to the API caller).
+type PluginStorageAfterHookProvider interface {
+	AfterCreate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.CreateOptions) error
 	AfterUpdate(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.UpdateOptions) error
 	AfterDelete(ctx context.Context, plugin *pluginsv0alpha1.Plugin, options *metav1.DeleteOptions) error
+}
+
+// PluginStorageHookProvider is the full default hook provider shape.
+type PluginStorageHookProvider interface {
+	PluginStorageBeginHookProvider
+	PluginStorageAfterHookProvider
 }
 
 type pluginStorageHookProvider struct {
@@ -65,17 +76,19 @@ func newPluginStorage(
 	wrapped rest.Storage,
 	logger logging.Logger,
 	metaManager *meta.ProviderManager,
-	decorate func(base PluginStorageHookProvider) PluginStorageHookProvider,
+	wrapAfter func(base PluginStorageAfterHookProvider) PluginStorageAfterHookProvider,
 ) (rest.Storage, error) {
 	store, ok := wrapped.(*genericregistry.Store)
 	if !ok {
 		return nil, fmt.Errorf("plugin storage must be *genericregistry.Store, got %T", wrapped)
 	}
 	hookProvider := NewDefaultPluginStorageHookProvider(store, logger, metaManager)
-	if decorate != nil {
-		hookProvider = decorate(hookProvider)
+	beginHooks := PluginStorageBeginHookProvider(hookProvider)
+	afterHooks := PluginStorageAfterHookProvider(hookProvider)
+	if wrapAfter != nil {
+		afterHooks = wrapAfter(afterHooks)
 	}
-	registerPluginStorageHooks(store, logger, hookProvider)
+	registerPluginStorageHooks(store, logger, beginHooks, afterHooks)
 	return store, nil
 }
 
@@ -87,7 +100,7 @@ func NewDefaultPluginStorageHookProvider(storage pluginStorage, logger logging.L
 	}
 }
 
-func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Logger, hooks PluginStorageHookProvider) {
+func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Logger, beginHooks PluginStorageBeginHookProvider, afterHooks PluginStorageAfterHookProvider) {
 	beginCreate := store.BeginCreate
 	store.BeginCreate = func(ctx context.Context, obj runtime.Object, options *metav1.CreateOptions) (genericregistry.FinishFunc, error) {
 		finish := finishNoOp
@@ -101,7 +114,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 		hookFinish := finishNoOp
 		if plugin, ok := pluginFromRuntimeObject(obj); ok {
 			var err error
-			hookFinish, err = hooks.BeginCreate(ctx, plugin, options)
+			hookFinish, err = beginHooks.BeginCreate(ctx, plugin, options)
 			if err != nil {
 				// The original begin already succeeded; per the FinishFunc
 				// contract its finish must still run with success=false.
@@ -129,7 +142,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			return
 		}
 		ctx, finish := newPluginStorageHookContext(plugin.Namespace, "pluginStorage.afterCreate", logger)
-		finish(hooks.AfterCreate(ctx, plugin, options))
+		finish(afterHooks.AfterCreate(ctx, plugin, options))
 	}
 
 	beginUpdate := store.BeginUpdate
@@ -146,7 +159,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 		if plugin, ok := pluginFromRuntimeObject(obj); ok {
 			oldPlugin, _ := pluginFromRuntimeObject(old)
 			var err error
-			hookFinish, err = hooks.BeginUpdate(ctx, plugin, oldPlugin, options)
+			hookFinish, err = beginHooks.BeginUpdate(ctx, plugin, oldPlugin, options)
 			if err != nil {
 				// The original begin already succeeded; per the FinishFunc
 				// contract its finish must still run with success=false.
@@ -174,7 +187,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			return
 		}
 		ctx, finish := newPluginStorageHookContext(plugin.Namespace, "pluginStorage.afterUpdate", logger)
-		finish(hooks.AfterUpdate(ctx, plugin, options))
+		finish(afterHooks.AfterUpdate(ctx, plugin, options))
 	}
 
 	afterDelete := store.AfterDelete
@@ -187,7 +200,7 @@ func registerPluginStorageHooks(store *genericregistry.Store, logger logging.Log
 			return
 		}
 		ctx, finish := newPluginStorageHookContext(plugin.Namespace, "pluginStorage.afterDelete", logger)
-		err := hooks.AfterDelete(ctx, plugin, options)
+		err := afterHooks.AfterDelete(ctx, plugin, options)
 		finish(err)
 	}
 }
