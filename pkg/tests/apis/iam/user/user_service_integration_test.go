@@ -374,10 +374,12 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 	}
 
 	type searchUserHit struct {
-		UID   string `json:"uid"`
-		Name  string `json:"name"`
-		Login string `json:"login"`
-		Email string `json:"email"`
+		ID      int64     `json:"id"`
+		UID     string    `json:"uid"`
+		Name    string    `json:"name"`
+		Login   string    `json:"login"`
+		Email   string    `json:"email"`
+		Created time.Time `json:"created"`
 	}
 
 	type searchUsersResponse struct {
@@ -462,6 +464,8 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Equal(t, alphaUser.Result.UID, hit.UID)
 				require.Equal(t, "Alpha User", hit.Name)
 				require.Equal(t, "alpha@example.com", hit.Email)
+				require.Equal(t, alphaUser.Result.ID, hit.ID)
+				require.False(t, hit.Created.IsZero(), "created timestamp should be populated")
 			})
 
 			t.Run("should filter results by query", func(t *testing.T) {
