@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	notifymerge "github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 )
 
@@ -66,29 +67,40 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 		return nil, err
 	}
 
-	var templates []v1.TemplateGroup
-	if len(revision.Config.Templates) > 0 {
-		provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
-		if err != nil {
-			return nil, err
-		}
-		templates = make([]v1.TemplateGroup, 0, len(revision.Config.Templates))
+	allTemplates := revision.Config.Templates
+	var importedUIDs []v1.ResourceUID
 
-		for _, tmpl := range revision.Config.Templates {
-			provenance, ok := provenances[tmpl.ResourceID()]
-			if !ok {
-				provenance = models.ProvenanceNone
-			}
-
-			tmpl.Provenance = provenance
-			templates = append(templates, tmpl)
+	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 && len(revision.Config.ExtraConfigs[0].TemplateFiles) > 0 {
+		extraCfg := revision.Config.ExtraConfigs[0]
+		var mergeErr error
+		allTemplates, _, importedUIDs, mergeErr = notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		if mergeErr != nil {
+			return nil, mergeErr
 		}
 	}
 
-	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 && len(revision.Config.ExtraConfigs[0].TemplateFiles) > 0 {
-		for name, content := range revision.Config.ExtraConfigs[0].TemplateFiles {
-			templates = append(templates, v1.NewTemplateGroup("", name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus))
+	if len(allTemplates) == 0 {
+		return nil, nil
+	}
+
+	provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
+	if err != nil {
+		return nil, err
+	}
+
+	imported := make(map[v1.ResourceUID]struct{}, len(importedUIDs))
+	for _, uid := range importedUIDs {
+		imported[uid] = struct{}{}
+	}
+
+	templates := make([]v1.TemplateGroup, 0, len(allTemplates))
+	for _, tmpl := range allTemplates {
+		if _, isImported := imported[tmpl.UID]; isImported {
+			tmpl.Provenance = models.ProvenanceConvertedPrometheus
+		} else {
+			tmpl.Provenance = provenances[tmpl.ResourceID()]
 		}
+		templates = append(templates, tmpl)
 	}
 
 	// Sort templates by kind then name.
@@ -359,15 +371,6 @@ func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legac
 }
 
 func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (v1.TemplateGroup, bool, error) {
-	find := func(templates map[string]string, uid v1.ResourceUID, kind v1.TemplateKind) (string, string, bool) {
-		for n, tmpl := range templates {
-			if v1.TemplateUID(kind, n) == uid {
-				return n, tmpl, true
-			}
-		}
-		return "", "", false
-	}
-
 	if tmpl, ok := revision.Config.Templates[v1.ResourceUID(uid)]; ok {
 		provenance, err := t.provenanceStore.GetProvenance(ctx, &tmpl, orgID)
 		if err != nil {
@@ -378,8 +381,15 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 	}
 
 	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
-		if name, content, ok := find(revision.Config.ExtraConfigs[0].TemplateFiles, v1.ResourceUID(uid), v1.TemplateKindMimir); ok {
-			return v1.NewTemplateGroup("", name, content, v1.TemplateKindMimir, models.ProvenanceConvertedPrometheus), true, nil
+		extraCfg := revision.Config.ExtraConfigs[0]
+		// add Grafana templates to make sure the template UID does not conflict with it.
+		merged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		if err != nil {
+			return v1.TemplateGroup{}, false, err
+		}
+		if tmpl, ok := merged[v1.ResourceUID(uid)]; ok {
+			tmpl.Provenance = models.ProvenanceConvertedPrometheus
+			return tmpl, true, nil
 		}
 	}
 

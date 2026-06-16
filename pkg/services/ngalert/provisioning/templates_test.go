@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
+	notifymerge "github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/util"
@@ -111,6 +112,21 @@ func TestGetTemplates(t *testing.T) {
 		result, err := sut.GetTemplates(context.Background(), orgID)
 		require.NoError(t, err)
 
+		// Compute the UIDs that MergeTemplates assigns for imported templates so the expected
+		// values stay in sync with the production UID scheme without hardcoding hash strings.
+		extraCfg := revision.Config.ExtraConfigs[0]
+		importedMerged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		require.NoError(t, err)
+		importedUID := func(name string) v1.ResourceUID {
+			for uid, tmpl := range importedMerged {
+				if tmpl.Kind == v1.TemplateKindMimir && tmpl.Title == name {
+					return uid
+				}
+			}
+			t.Fatalf("imported template %q not found in merged map", name)
+			return ""
+		}
+
 		expected := []v1.TemplateGroup{
 			v1.NewTemplateGroup("",
 				"template1",
@@ -130,13 +146,13 @@ func TestGetTemplates(t *testing.T) {
 				v1.TemplateKindGrafana,
 				models.ProvenanceNone,
 			),
-			v1.NewTemplateGroup("",
+			v1.NewTemplateGroup(importedUID("template1"),
 				"template1",
 				"imported-test1",
 				v1.TemplateKindMimir,
 				models.ProvenanceConvertedPrometheus,
 			),
-			v1.NewTemplateGroup("",
+			v1.NewTemplateGroup(importedUID("template4"),
 				"template4",
 				"imported-test4",
 				v1.TemplateKindMimir,
@@ -269,7 +285,19 @@ func TestGetTemplate(t *testing.T) {
 			return revision, nil
 		}
 
-		uid := string(v1.TemplateUID(v1.TemplateKindMimir, importedTemplateName))
+		// Compute the UID that MergeTemplates assigns so the lookup matches production.
+		extraCfg := revision.Config.ExtraConfigs[0]
+		importedMerged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
+		require.NoError(t, err)
+		var uid string
+		for u, tmpl := range importedMerged {
+			if tmpl.Kind == v1.TemplateKindMimir && tmpl.Title == importedTemplateName {
+				uid = string(u)
+				break
+			}
+		}
+		require.NotEmpty(t, uid, "imported template UID should not be empty")
+
 		t.Run("should be not found without flag enabled", func(t *testing.T) {
 			_, err := sut.GetTemplate(context.Background(), orgID, uid)
 			require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -278,7 +306,7 @@ func TestGetTemplate(t *testing.T) {
 		result, err := sut.WithIncludeImported().GetTemplate(context.Background(), orgID, uid)
 		require.NoError(t, err)
 
-		expected := v1.NewTemplateGroup("",
+		expected := v1.NewTemplateGroup(v1.ResourceUID(uid),
 			importedTemplateName,
 			importedTemplateContent,
 			v1.TemplateKindMimir,
