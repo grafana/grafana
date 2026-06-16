@@ -47,6 +47,10 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 				return
 			}
 
+			if fullFrontendSettingsEnabled && requestConfig.FullFrontendSettings != nil {
+				requestConfig.FullFrontendSettings.Namespace = request.NamespaceValue(ctx)
+			}
+
 			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
 			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
 
