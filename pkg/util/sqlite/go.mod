@@ -2,7 +2,7 @@ module github.com/grafana/grafana/pkg/util/sqlite
 
 go 1.26.4
 
-require modernc.org/sqlite v1.50.1
+require modernc.org/sqlite v1.51.0
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
