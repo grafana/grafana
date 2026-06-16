@@ -29,7 +29,7 @@
       "add-label": "Engedély hozzáadása",
       "loading": "Engedélyek betöltése…",
       "no-permissions": "Nincsenek engedélyek",
-      "permissions-change-warning": "Ez módosítja ennek a mappának és minden almappájának az engedélyeit. Összességében ez a következőket érinti:",
+      "permissions-change-warning": "",
       "role": "Szerepkör",
       "serviceaccount": "Szolgáltatási fiók",
       "team": "Csapat",
@@ -4224,13 +4224,9 @@
       "cancel-button": "Mégse",
       "confirmation-text": "Törlés",
       "delete-button": "Törlés",
-      "delete-modal-invalid-text": "Egy vagy több mappa könyvtárpaneleket vagy riasztási szabályokat tartalmaz. A folytatáshoz először törölje ezeket.",
-      "delete-modal-invalid-title": "Nem lehet törölni a mappát",
       "delete-modal-restore-dashboards-common": "A törölt irányítópultok legfeljebb 12 hónapig érhetők el az előzményekben. A törlési engedéllyel rendelkező felhasználók visszaállíthatják az általuk törölt irányítópultokat, a rendszergazdák pedig visszaállíthatják a bármely felhasználó által törölt irányítópultokat. Az előzmények 1000 irányítópultra korlátozódnak – a régebbiek korábban is törlődhetnek a korlát elérése esetén.",
       "delete-modal-restore-dashboards-prefix-folder": "Ez a művelet azonnal törli a kijelölt mappákat.",
       "delete-modal-restore-dashboards-suffix-folder": "A mappák nem állíthatók vissza.",
-      "delete-modal-text": "Ez a művelet törli a következő tartalmat:",
-      "delete-modal-text-one-folder": "Ez a művelet törli a(z) „<1>{{ folderName }}</1>” mappát és a következő tartalmat:",
       "delete-modal-title": "Törlés",
       "delete-provisioned-folder": "Kiépített mappa törlése",
       "deleting": "Törlés...",
@@ -4238,8 +4234,6 @@
       "move-button": "Áthelyezés",
       "move-modal-alert": "Az elem áthelyezésével megváltozhatnak az engedélyei.",
       "move-modal-field-label": "Mappa neve",
-      "move-modal-text": "Ez a művelet áthelyezi a következő tartalmat:",
-      "move-modal-text-one-folder": "Ez a művelet áthelyezi a(z) „<1>{{ folderName }}</1>” mappát és a következő tartalmat:",
       "move-modal-title": "Áthelyezés",
       "move-provisioned-folder": "Kiépített mappa áthelyezése",
       "moving": "Áthelyezés...",
@@ -4249,11 +4243,18 @@
       "new-folder-owner-selector-checkbox": "Tulajdonos hozzárendelése a mappához",
       "rename-provisioned-folder": "Kiépített mappa átnevezése",
       "selected-mix-resources-modal-text": "Kiépített és nem kiépített erőforrásokat is kijelölt. Ezeket nem lehet egyszerre feldolgozni. Kérjük, válasszon csak kiépített vagy csak nem kiépített erőforrásokat, majd próbálja újra.",
-      "selected-mix-resources-modal-title": "Vegyes erőforrástípusok lettek kiválasztva"
+      "selected-mix-resources-modal-title": "Vegyes erőforrástípusok lettek kiválasztva",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Nemrég törölt"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "A mappa nem található",
       "title-ruler-namespace-error": "Nem lehet betölteni a szabályokat"
@@ -4268,13 +4269,19 @@
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés…",
-      "delete-warning": "Ezzel a művelettel törli a kijelölt mappákat és minden almappájukat. Összességében ez a következőket érinti:",
-      "error-deleting-resources": "Hiba történt az erőforrások törlésekor"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Hiba történt az erőforrások törlésekor",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Mégse",
       "button-move": "Áthelyezés",
       "button-moving": "Áthelyezés...",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Ha közvetlen hozzáféréssel rendelkezik a célhelyhez, kérjük, végezze el a módosításokat közvetlenül a célhely adattárában.",
         "read-only-saving-message": "Az adattár csak olvasható, és gitben van konfigurálva. {{readOnlyMessage}}",
@@ -4285,22 +4292,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Hiba történt az erőforrások áthelyezésekor",
       "error-no-target-folder-path": "A célmappa elérési útvonala érvénytelen vagy üres. Kérjük, válassza ki újra.",
-      "move-total": "Összességében ez a következőket érinti:",
       "move-warning": "Ezzel a művelettel áthelyezi a kijelölt mappákat és minden almappájukat. A célmappák elérhetősége a kiválasztott erőforrásoktól függ.",
       "move-warning-tooltip": "A kiépített erőforrásokat csak a kiépített mappájukon belül, a helyi erőforrásokat pedig csak a helyi mappákba helyezheti át.",
-      "target-folder": "Célmappa"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} riasztási szabály",
-      "alertRule_other": "{{count}} riasztási szabály",
-      "dashboard_one": "{{count}} irányítópult",
-      "dashboard_other": "{{count}} irányítópult",
-      "folder_one": "{{count}} mappa",
-      "folder_other": "{{count}} mappa",
-      "libraryPanel_one": "{{count}} könyvtárpanel",
-      "libraryPanel_other": "{{count}} könyvtárpanel",
-      "total_one": "{{count}} tétel",
-      "total_other": "{{count}} tétel"
+      "target-folder": "Célmappa",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4329,12 +4325,11 @@
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
       "button-deleting": "Törlés…",
-      "delete-warning": "Ez törli ezt a mappát és minden almappáját. Összességében ez a következőket érinti:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Hiányzó kötelező mezők",
       "success-message": "A mappa törlése sikeres"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Nem lehet lekérni a leszármazott adatokat"
     },
     "empty-state": {
       "button-title": "Irányítópult létrehozása",
@@ -5239,10 +5234,6 @@
       },
       "pane-header": "Hozzáadás"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "„Panel hozzáadása” widget bezárása",
-      "tooltip-close-widget": "Widget bezárása"
-    },
     "add-menu": {
       "import": "Importálás könyvtárból",
       "paste-panel": "Panel beillesztése",
@@ -6035,9 +6026,6 @@
       "placeholder-search-options": "Keresési beállítások",
       "visualization-button-tooltip": "Keresési beállítások"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Nyers adatok"
-    },
     "panel-links": {
       "aria-label-panel-links": "Panelhivatkozások"
     },
@@ -6078,18 +6066,6 @@
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
       "confirmText-restore-version": "Igen, visszaállítás erre a verzióra: {{version}}",
       "title-restore-version": "Verzió visszaállítása"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Sorbeállítások"
-    },
-    "row-options-form": {
-      "cancel": "Mégse",
-      "label-repeat-for": "Ismétlés száma:",
-      "label-title": "Cím",
-      "update": "Frissítés"
-    },
-    "row-options-modal": {
-      "title-row-options": "Sorbeállítások"
     },
     "rows-layout": {
       "cancel": "Mégse",
@@ -6450,16 +6426,6 @@
       "changes": "Menti a módosításokat?",
       "discard": "Elvetés",
       "title-unsaved-changes": "Nem mentett változtatások"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Az ebben a sorban lévő panelek a(z) {{SHARED_DASHBOARD_QUERY}} adatforrást használják. Ezek a panelek az eredeti sorban lévő panelre hivatkoznak, nem az ismétlődő sorokban lévőkre."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Sor törlése",
-      "learn-more": "További információk",
-      "title": {
-        "delete-row": "Sor törlése"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
@@ -8947,6 +8913,11 @@
     },
     "sql-expr": {
       "button-run-query": "Lekérdezés futtatása"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "Hiba",
@@ -12175,8 +12146,10 @@
       "undock": "Menü dokkolásának feloldása"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Szakasz összecsukása: {{sectionName}}",
-      "expand-aria-label": "Szakasz kibontása: {{sectionName}}"
+      "expand-aria-label": "Szakasz kibontása: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Szervezet módosítása"
@@ -13082,7 +13055,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Adattár beállításai mentve",
@@ -13113,13 +13093,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Saját konfiguráció"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Felülbírálja a webhookok regisztrálásához automatikusan észlelt URL-címet.",
-      "description-webhook-url-learn-more": "További információk",
-      "label-git-hub-features": "GitHub-funkciók",
-      "label-webhook-url": "Webhook URL-címe",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13269,28 +13242,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Hozzáadja az irányítópult változásainak előnézetét a lekérésekben. A Grafana-irányítópultok képei meg lesznek osztva a Git-tárban, és bárki számára láthatóak lesznek, aki hozzáféréssel rendelkezik az adattárhoz.",
-      "description-generate-dashboard-previews": "Előnézeti hivatkozások létrehozása az összefésülési kérelmekhez",
       "description-image-rendering": "Képalkotást igényel. <2>Állítsa be a képalkotást</2>",
-      "description-preview-requirements": "(<2>képalkotás</2> és nyilvános hozzáférés engedélyezése szükséges)",
       "description-read-only": "Az erőforrások nem módosíthatók a Grafanán keresztül.",
       "description-sync-interval": "Az adattárbeli változások szinkronizálásának gyakorisága",
-      "description-webhook-url": "Felülbírálja a webhookok regisztrálásához automatikusan észlelt URL-címet.",
       "error-sync-interval-required": "A szinkronizálási intervallum megadása kötelező",
       "label-enable-previews": "Az irányítópult előnézeteinek engedélyezése a lekérésekben",
-      "label-generate-dashboard-previews": "Irányítópult-előnézetek generálása",
       "label-read-only": "Csak olvasható",
-      "label-sync-interval": "Szinkronizálási intervallum (másodperc)",
-      "label-webhook-url": "Webhook URL-címe",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Szinkronizálási intervallum (másodperc)"
     },
     "fix-folder-metadata": {
       "button": "Mappaazonosítók javítása"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Mégse",
+      "default-commit-message": "",
       "error-message": "Nem sikerült elindítani a mappa metaadatainak javítására irányuló feladatot. Próbálkozzon újra.",
       "error-title": "Hiba történt a mappa metaadatainak javítása közben",
-      "loading": "Adattár betöltése…",
       "read-only-message": "A mappa metaadatai nem javíthatók automatikusan.",
       "submit": "Mappaazonosítók javítása",
       "submitting": "Javítás…",
@@ -13695,11 +13662,24 @@
     "shared": {
       "branch-description": "A kiépítéshez használandó ág",
       "branch-label": "Ág",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Nem kötelező. A szinkronizálni kívánt erőforrásokat tartalmazó alkönyvtár elérési útja.",
       "path-label": "Útvonal",
       "progress-bar": {
         "aria-label": "Folyamatjelző sáv"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Felhasználónév",
       "url-label": "Adattár URL-címe",
       "url-pattern": "Érvényes adattári URL-címnek kell lennie (https://hostname/owner/repo)"
@@ -13767,6 +13747,13 @@
     "watch-stream": {
       "error-description": "A valós idejű frissítéseket nem sikerült elindítani. Frissítse az oldalt a legfrissebb adatok megtekintéséhez.",
       "error-title": "Az élő frissítések nem érhetők el"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Kérjük, vegye figyelembe a következő korlátozásokat. További részletekért tekintse meg a <2>Git-szinkronizálás dokumentációját</2>.",
@@ -14073,7 +14060,6 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
@@ -14082,6 +14068,7 @@
       "disable-all-tooltip": "",
       "enable-all": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
