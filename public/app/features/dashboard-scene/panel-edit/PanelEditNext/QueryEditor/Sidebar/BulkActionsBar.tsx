@@ -117,8 +117,8 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
         }
         toggleTooltip={
           allHidden
-            ? t('query-editor-next.bulk-actions.show-all-tooltip', 'Show all selected')
-            : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide all selected')
+            ? t('query-editor-next.bulk-actions.show-all-tooltip', 'Show selected')
+            : t('query-editor-next.bulk-actions.hide-all-tooltip', 'Hide selected')
         }
         onToggle={() => bulkToggleQueriesHide(selectedQueryRefIds, !allHidden)}
         compact={compact}
@@ -197,13 +197,13 @@ function BulkTransformationActions({ barWidth }: BulkTransformationActionsProps)
         compact={compact}
         toggleLabel={
           allDisabled
-            ? t('query-editor-next.bulk-actions.enable-all', 'Enable all')
-            : t('query-editor-next.bulk-actions.disable-all', 'Disable all')
+            ? t('query-editor-next.bulk-actions.enable', 'Enable')
+            : t('query-editor-next.bulk-actions.disable', 'Disable')
         }
         toggleTooltip={
           allDisabled
-            ? t('query-editor-next.bulk-actions.enable-all-tooltip', 'Enable all selected')
-            : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable all selected')
+            ? t('query-editor-next.bulk-actions.enable-all-tooltip', 'Enable selected')
+            : t('query-editor-next.bulk-actions.disable-all-tooltip', 'Disable selected')
         }
         onToggle={() => bulkToggleTransformationsDisabled(selectedTransformationIds, !allDisabled)}
       />

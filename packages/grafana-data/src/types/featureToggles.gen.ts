@@ -1286,11 +1286,6 @@ export interface FeatureToggles {
   */
   pieChartGradientColorScheme?: boolean;
   /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
-  */
-  preventPanelChromeOverflow?: boolean;
-  /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
   */
