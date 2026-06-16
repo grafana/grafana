@@ -126,7 +126,11 @@ For more information, refer to [Data sources](https://grafana.com/docs/grafana/<
 ### Query editors
 
 {{< admonition type="note" >}}
-The new query editor experience...etc
+The screenshots of the panel query editor on this page show the new query editing experience, currently in public preview.
+For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
+
+Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
+To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
 {{< /admonition >}}
 
 Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
@@ -220,10 +224,6 @@ To access your saved queries, click the blue plus icon in the sidebar and select
 
 {{< figure src="add-save-reuse-query-temp.png" max-width="750px" alt="Access saved queries" >}}
 
-{{< admonition type="note" >}}
-The new query editor experience...etc
-{{< /admonition >}}
-
 Clicking **Add saved query** adds an additional query, while clicking **Replace** updates your configured query.
 
 {{< admonition type="tip">}}
@@ -253,10 +253,6 @@ To save a query you've created:
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
    {{< figure src="save-query-temp.png" max-width="750px" alt="Save a query" >}}
-
-   {{< admonition type="note" >}}
-   The new query editor experience...etc
-   {{< /admonition >}}
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
@@ -291,7 +287,11 @@ In Explore, you can map variables to custom values.
 ## Navigate the query editor
 
 {{< admonition type="note" >}}
-The new query editor experience...etc
+The screenshots of the panel query editor on this page show the new query editing experience, currently in public preview.
+For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
+
+Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
+To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
 {{< /admonition >}}
 
 A panel's query editor has the following elements.
@@ -312,10 +312,6 @@ For pipelines with many queries, expressions, or transformations, you can expand
 {{< figure src="expanded-sidebar-temp.png" max-width="750px" alt="Expanded sidebar" >}}
 
 ## Add a query
-
-{{< admonition type="note" >}}
-The new query editor experience...etc
-{{< /admonition >}}
 
 A query returns data that Grafana visualizes in dashboard panels.
 When you create a panel, Grafana automatically selects the default data source.
@@ -356,7 +352,7 @@ The following table describes actions you can take for each query:
 <!-- prettier-ignore-start -->
 | Icon    | Description                                  |
 | ------- | -------------------------------------------- |
-| {{< figure src="/media/docs/grafana/panels-visualizations/replace-query-icon-v13.1.png" max-width="30px" max-height="30px" alt="Help icon" >}} | Replace the configured query with a saved query. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
+| {{< figure src="/media/docs/grafana/panels-visualizations/replace-query-icon-v13.1.png" max-width="30px" max-height="30px" alt="Replace query icon" >}} | Replace the configured query with a saved query. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
 | {{< figure src="/media/docs/grafana/panels-visualizations/save-to-query-icon.png" max-width="30px" max-height="30px" alt="Save query icon" >}} | Save query. Saves the query so it can be reused. Access saved queries by clicking **Replace**. For more information, refer to [Saved queries](#saved-queries) (Enterprise and Cloud only). |
 | {{< figure src="/media/docs/grafana/panels-visualizations/create-recorded-query-icon.png" max-width="30px" max-height="30px" alt="Create recorded query icon" >}} | Create [recorded queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/) so you can see trends over time by taking a snapshot of a data point on a set interval (Enterprise and Cloud only). |
 | {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" max-width="30px" max-height="30px" alt="Hide icon" >}} | Hides a query. Grafana does not send hidden queries to the data source. |
