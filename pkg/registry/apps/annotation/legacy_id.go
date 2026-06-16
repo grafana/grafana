@@ -11,9 +11,9 @@ import (
 // while the platform migrates to Kubernetes-native naming.
 const LabelKeyLegacyID = "grafana.app/legacyID"
 
-// getLegacyID reads the legacy numeric ID from the object's labels.
+// GetLegacyID reads the legacy numeric ID from the object's labels.
 // Returns 0 if the label is absent or unparseable.
-func getLegacyID(obj metav1.Object) int64 {
+func GetLegacyID(obj metav1.Object) int64 {
 	labels := obj.GetLabels()
 	if labels == nil {
 		return 0
@@ -29,8 +29,8 @@ func getLegacyID(obj metav1.Object) int64 {
 	return id
 }
 
-// setLegacyID writes the legacy numeric ID label on the object.
-func setLegacyID(obj metav1.Object, id int64) {
+// SetLegacyID writes the legacy numeric ID label on the object.
+func SetLegacyID(obj metav1.Object, id int64) {
 	labels := obj.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string, 1)

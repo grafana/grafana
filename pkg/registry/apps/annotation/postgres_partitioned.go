@@ -182,7 +182,7 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 	createdAt := time.Now().UTC().UnixMilli()
 
 	var legacyID *int64
-	if id := getLegacyID(anno); id > 0 {
+	if id := GetLegacyID(anno); id > 0 {
 		legacyID = &id
 	}
 
@@ -443,7 +443,7 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 
 	// Populate the legacy ID label if the column has a value
 	if legacyID != nil && *legacyID != 0 {
-		setLegacyID(anno, *legacyID)
+		SetLegacyID(anno, *legacyID)
 	}
 
 	return anno
