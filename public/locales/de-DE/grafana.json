@@ -13258,7 +13258,6 @@
       "default-commit-message": "",
       "error-message": "Der Auftrag zum Korrigieren der Ordner-Metadaten konnte nicht gestartet werden. Bitte versuchen Sie es erneut.",
       "error-title": "Fehler beim Korrigieren der Ordner-Metadaten",
-      "loading": "Repository wird geladen …",
       "read-only-message": "Ordner-Metadaten können nicht automatisch korrigiert werden.",
       "submit": "Ordner-IDs korrigieren",
       "submitting": "Wird korrigiert …",
