@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { Badge, Divider, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { RecentQueriesLayout } from './RecentQueriesLayout';
@@ -40,10 +40,13 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
   const modalTitle = (
     <div className={styles.titleColumn}>
       <div className={styles.titleRow}>
-        <TabsBar className={styles.tabsBar}>
+        <TabsBar className={styles.tabsBar} hideBorder>
           <Tab label={t('recent-queries.modal.tabs.recent', 'Recent queries')} active={true} onChangeTab={() => {}} />
           <Tooltip
-            content={t('recent-queries.modal.tabs.saved-tooltip', 'Saved queries is available in Cloud and Enterprise')}
+            content={t(
+              'recent-queries.modal.tabs.saved-tooltip',
+              'Saved queries are available in Cloud and Enterprise.'
+            )}
             placement="bottom"
           >
             <Tab
@@ -71,7 +74,6 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
           "Recent queries are queries that you've run in Explore within the past two weeks"
         )}
       </Text>
-      <Divider spacing={0} />
     </div>
   );
 
@@ -101,8 +103,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
         flexGrow: 0,
         marginLeft: theme.spacing(2),
       },
-      paddingTop: theme.spacing(1),
-      paddingBottom: 0,
+      paddingTop: theme.spacing(3),
+      paddingBottom: theme.spacing(3),
     },
   }),
   content: css({
@@ -116,7 +118,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
-    gap: theme.spacing(2),
+    gap: theme.spacing(3),
   }),
   titleRow: css({
     display: 'flex',
@@ -124,7 +126,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'flex-end',
   }),
   tabsBar: css({
-    borderBottom: 'none',
     marginBottom: 0,
   }),
   cloudBadge: css({
