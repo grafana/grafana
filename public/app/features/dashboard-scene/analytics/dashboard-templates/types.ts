@@ -40,6 +40,10 @@ export interface SaveTemplateInfoCompletedProperties extends EventProperty {
   /** Whether the user filled in a description for the template. */
   hasDescription: boolean;
 }
+export interface SaveTemplateInfoConflictShownProperties extends EventProperty {
+  /** UID of the template resource where the conflict was detected. */
+  templateUid: string;
+}
 export interface SaveTemplateInfoFailedProperties extends EventProperty {
   /** UID of the template resource that failed to modify. */
   templateUid: string;

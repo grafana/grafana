@@ -16,6 +16,7 @@ import {
   type SaveTemplateInfoCompletedProperties,
   type SaveTemplateInfoFailedProperties,
   type DeleteCompletedProperties,
+  SaveTemplateInfoConflictShownProperties,
 } from './types';
 
 const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboard_template');
@@ -43,6 +44,10 @@ export const CustomDashboardTemplateInteractions = {
     createCustomTemplateEvent<SaveTemplateInfoCompletedProperties>('save_template_info_completed'),
   /** Fired when saving changes to the template info fails. */
   saveTemplateInfoFailed: createCustomTemplateEvent<SaveTemplateInfoFailedProperties>('save_template_info_failed'),
+  /** Fired when the user saves changes to the template info and a version conflict is detected (HTTP 409). */
+  saveTemplateInfoConflictShown: createCustomTemplateEvent<SaveTemplateInfoConflictShownProperties>(
+    'save_template_info_conflict_shown'
+  ),
   /** Fired when the template save form surfaces a version conflict (HTTP 409) to the user. */
   saveConflictShown: createCustomTemplateEvent<SaveConflictShownProperties>('save_conflict_shown'),
   /** Fired when the user successfully deletes a template. */
