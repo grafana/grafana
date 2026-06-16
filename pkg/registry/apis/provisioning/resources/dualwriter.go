@@ -462,7 +462,7 @@ func (r *DualReadWriter) createResourceAndNewFolderMetadata(ctx context.Context,
 	}
 }
 
-// moveResourceAndNewFolderMetadata returns a staged write that moves a file to
+// moveResourceAndCreateNewFolderMetadata returns a staged write that moves a file to
 // opts.Path together with any missing ancestor _folder.json files, so a move
 // into a newly-created folder lands in a single commit. When new content is
 // provided the original is deleted and recreated at the destination; otherwise
@@ -488,7 +488,7 @@ func (r *DualReadWriter) moveResourceAndCreateNewFolderMetadata(ctx context.Cont
 	}
 }
 
-// writeNewFoldersMetadata walks the directories of filePath andwrites a _folder.json
+// writeNewFoldersMetadata walks the directories of filePath and writes a _folder.json
 // with a stable UID for any folder that does not exist in the repository yet.
 // Folders that already exist (with or without metadata) are left untouched —
 // we never backfill metadata for pre-existing folders. Reads and writes go

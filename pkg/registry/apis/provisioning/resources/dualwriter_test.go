@@ -1485,7 +1485,7 @@ func TestWriteNewFoldersMetadata(t *testing.T) {
 	})
 }
 
-func TestMoveResourceAndNewFolderMetadata(t *testing.T) {
+func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 	data := []byte("saved-resource")
 
 	t.Run("content move into new folder writes _folder.json then deletes and recreates", func(t *testing.T) {
