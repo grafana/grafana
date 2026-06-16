@@ -76,7 +76,7 @@ func PostableAPIConfigToNotificationsConfiguration(
 		RoutingTree:   RouteToAPI(cfg.AlertmanagerConfig.Route),
 		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
 		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals, cfg.AlertmanagerConfig.MuteTimeIntervals),
-		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates(false)), // templates are already merged.
+		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates()), // templates are already merged.
 		Receivers:     receivers,
 		Limits:        limits,
 	}, nil
