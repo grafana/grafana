@@ -233,9 +233,19 @@ After deciding on these options, you can chose to configure a verified account w
 
 ### Advanced commit options
 
-Starting in Grafana 13.1.0, you can set up and **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
+Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
 Follow the UI wizard to set up any of these options, and refer to the example below for more details.
+
+#### Pre-requirements
+
+In order to implement signed commits, make sure that you set up a specific verification account in your Git provider. You'll need the account's signing key, name and email to set up verification.
+
+{{< admonition type="note" >}}
+
+Git Sync doesn't support verification of individual accounts for the moment.
+
+{{< /admonition >}}
 
 #### Example: Sign your commits with an SSH key
 
