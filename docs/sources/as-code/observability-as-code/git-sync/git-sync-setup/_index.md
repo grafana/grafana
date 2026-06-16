@@ -229,11 +229,27 @@ You can also select these optional settings:
 - Check **Generate dashboards previews** to create preview links for pull requests. This option requires using image rendering and activating public access.
 - Enter a **Webhook URL** to override the auto-detected URL to register webhooks.
 
+After deciding on these options, you can chose to configure a verified account with the **Commit options**. Alternatively, if you want your your commits to remain unsigned, click **Save** to continue.
+
 ### Advanced commit options
 
-Starting in Grafana 13.1.0, Git Sync allows you to enforce signed commits with your user's signing key, so your Git provider can mark them as _Verified_. If you don't configure a signing key, commits stay unsigned, same as before.
+Starting in Grafana 13.1.0, you can set up and **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
-GPG, SSH, and S/MIME keys are supported. Follow the UI wizard to set up any of these options.
+Follow the UI wizard to set up any of these options, and refer to the example below for more details.
+
+#### Example: Sign your commits with an SSH key
+
+To enforce signed commits using an SSH key follow these steps:
+
+1. Open the **Commit options (advanced)** menu.
+1. Under **Commit signing**, select **SSH**.
+1. Fill in the following fields:
+   - The signing key for the account to verify.
+   - The signer name to be displayed in your Git provider.
+   - The signer's e-mail address, which must match the one in the signing key.
+1. Click **Save**.
+
+After completing the key configuration, any commits your users make to the provisioned folder will appear as **Verified**.
 
 ## Verify your dashboards in Grafana
 
