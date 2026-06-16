@@ -288,7 +288,7 @@ In Explore, you can map variables to custom values.
 ## Navigate the query editor
 
 {{< admonition type="note" >}}
-The screenshots of the panel query editor on this page show the new query editing experience, currently in public preview.
+The screenshots of the panel query editor on this page reflect the new query editing experience, currently in public preview.
 For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
 
 Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
