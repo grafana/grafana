@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { Button, ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
+import { Button, ConfirmModal, type IconName, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import { trackMultiSelectToggle } from '../../tracking';
@@ -229,7 +229,10 @@ export function getBulkActionsVisibility({
   return {
     hasQueryActions,
     hasTransformationActions,
-    shouldRender: hasQueryActions || hasTransformationActions,
+    // The bar stays mounted for the whole multi-select session — including when the selection is
+    // empty — so the exit control is always reachable and the visible checkboxes never strand the
+    // user without a way back. The action buttons themselves are gated on having a selection.
+    shouldRender: multiSelectMode,
   };
 }
 
@@ -249,6 +252,11 @@ export function BulkActionsBar() {
     return null;
   }
 
+  // Multi-select is allowed to be empty (the user can uncheck every card). When nothing is
+  // selected there are no actions to offer, so show a hint in their place while keeping the
+  // exit control available.
+  const hasSelection = hasQueryActions || hasTransformationActions;
+
   const handleClear = () => {
     trackMultiSelectToggle('exit');
     setMultiSelectMode(false);
@@ -264,6 +272,11 @@ export function BulkActionsBar() {
       <div className={styles.actionsScroll}>
         {hasQueryActions && <BulkQueryActions barWidth={barWidth} />}
         {hasTransformationActions && <BulkTransformationActions barWidth={barWidth} />}
+        {!hasSelection && (
+          <Text variant="bodySmall" color="secondary">
+            {t('query-editor-next.bulk-actions.empty-hint', 'Select items to apply actions')}
+          </Text>
+        )}
       </div>
       <div className={styles.clearButtonWrapper}>
         <Button

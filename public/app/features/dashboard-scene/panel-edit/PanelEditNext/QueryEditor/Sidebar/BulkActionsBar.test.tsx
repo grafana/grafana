@@ -69,11 +69,17 @@ describe('BulkActionsBar', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders nothing when multi-select mode is on but nothing is selected', () => {
-      const { container } = renderBar({
+    it('renders the bar with an exit control and a hint, but no action buttons, when multi-select mode is on but nothing is selected', () => {
+      // An empty selection is a valid multi-select state: the bar stays so the user can exit, but
+      // there is nothing to act on so only the hint is shown.
+      renderBar({
         uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
-      expect(container).toBeEmptyDOMElement();
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByText('Select items to apply actions')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /exit multi-select/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /hide/i })).not.toBeInTheDocument();
     });
 
     it('renders the query action buttons when at least one query is selected in multi-select mode', () => {
