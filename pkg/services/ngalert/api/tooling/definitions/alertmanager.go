@@ -717,15 +717,6 @@ type PostableUserConfig struct {
 	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
 }
 
-// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
-func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
-	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
-	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
-		return out
-	}
-	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
-}
-
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {
 	type plain PostableUserConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
