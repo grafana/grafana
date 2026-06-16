@@ -122,21 +122,12 @@ jobs:
       issues: write
       id-token: write
     steps:
-        - name: "Get vault secrets"
-          id: vault-secrets
-          uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0 # zizmor: ignore[unpinned-uses]
-          with:
-            # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
-            repo_secrets: |
-              GITHUB_APP_ID=plugins_platform_issue_triager_github_bot:app_id
-              GITHUB_APP_PRIVATE_KEY=plugins_platform_issue_triager_github_bot:app_pem
         - name: Generate token
           id: generate_token
-          uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+          uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
           with:
-            app-id: ${{ env.GITHUB_APP_ID }}
-            private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
-            permission-members: read
+            github_app: grafana-pr-automation
+            permission_set: auto-label-internal
         - name: Check if member of grafana org
           id: check-if-grafana-org-member
           continue-on-error: true
