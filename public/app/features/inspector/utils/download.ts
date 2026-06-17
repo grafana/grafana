@@ -59,9 +59,11 @@ export function downloadDataFrameAsCsv(
   title: string,
   csvConfig?: CSVConfig,
   transformId: DataTransformerID = DataTransformerID.noop,
-  excelCompatibilityMode = false
+  excelCompatibilityMode = false,
+  trailingNewline = false
 ) {
   let blob;
+  const newline = trailingNewline ? (csvConfig?.newline ?? '\r\n') : '';
 
   if (excelCompatibilityMode) {
     /**
@@ -73,13 +75,13 @@ export function downloadDataFrameAsCsv(
      *
      * When excel opens a utf16le csv file it will no longer try to use the system list separator, and instead use \t as the separator.
      */
-    const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' });
+    const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' }) + newline;
     const utf16le = new Uint16Array(Array.from('\ufeff' + dataFrameCsv).map((char) => char.charCodeAt(0)));
     blob = new Blob([utf16le], {
       type: 'text/csv;charset=utf-16le',
     });
   } else {
-    const dataFrameCsv = toCSV([dataFrame], csvConfig);
+    const dataFrameCsv = toCSV([dataFrame], csvConfig) + newline;
     blob = new Blob([dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
     });
