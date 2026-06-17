@@ -21,22 +21,6 @@ jobs:
       id-token: write
     steps:
 
-      - name: Checkout Actions
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-
-      - name: Setup Node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
-        with:
-          node-version: '24'
-
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
-
       # give issue-openers a chance to add labels after submit
       - name: Sleep for 2 minutes
         run: sleep 2m
@@ -49,7 +33,7 @@ jobs:
           github_app: grafana-pr-automation
 
       - name: Run Commands
-        uses: ./actions/commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: "issue-opened"
