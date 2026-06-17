@@ -1,11 +1,11 @@
 import { DataSourceVariable, QueryVariable, sceneGraph } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
-import { getQueryRunnerFor } from './utils';
 
 function deduplicateDatasourceRefsByType(refs: Array<DataSourceRef | null | undefined>): DataSourceRef[] {
   const dsByType: Record<string, DataSourceRef> = {};

@@ -8,6 +8,7 @@ import {
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, type VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
@@ -15,7 +16,6 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { AnnotationSettingsEdit } from './annotations/AnnotationSettingsEdit';

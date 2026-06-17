@@ -28,6 +28,11 @@ import {
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+import { calculateGridItemDimensions } from 'app/features/dashboard-scene/utils/calculateGridItemDimensions';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/getLibraryPanelBehavior';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/isLibraryPanel';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -46,13 +51,6 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import {
-  calculateGridItemDimensions,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';

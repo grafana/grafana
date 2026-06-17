@@ -7,10 +7,10 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { Drawer } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ExportAsImage } from '../ExportButton/ExportAsImage';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';

@@ -10,6 +10,7 @@ import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/G
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { dashboardEditActions } from '../edit-pane/shared';
@@ -18,7 +19,6 @@ import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelStylesSection } from './PanelStylesSection';
 

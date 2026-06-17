@@ -4,10 +4,10 @@ import { useCallback, useMemo } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { PanelInspectDrawer } from '../../../../inspect/PanelInspectDrawer';
-import { getDashboardSceneFor } from '../../../../utils/utils';
 import { FOOTER_HEIGHT, TIME_OPTION_PLACEHOLDER } from '../../constants';
 import { trackQueryMenuAction, trackQueryOptionsToggle } from '../../tracking';
 import {

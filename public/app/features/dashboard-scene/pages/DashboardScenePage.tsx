@@ -19,6 +19,7 @@ import {
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
+import { useScenesFlickeringFix } from 'app/features/dashboard-scene/utils/useScenesFlickeringFix';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -27,7 +28,6 @@ import { DashboardConversionWarningBanner } from '../components/DashboardConvers
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
-import { useScenesFlickeringFix } from '../utils/utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';

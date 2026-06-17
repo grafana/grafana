@@ -4,10 +4,10 @@ import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRe
 import { useLocalStorage } from 'react-use';
 
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../../edit-pane/shared';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';

@@ -1,7 +1,6 @@
 import { type SceneComponentProps, SceneObjectBase, VizPanel, sceneGraph } from '@grafana/scenes';
 import { PanelHeaderNotices } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderNotices';
-
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 
 export class PanelNotices extends SceneObjectBase {
   static Component = PanelNoticesRenderer;

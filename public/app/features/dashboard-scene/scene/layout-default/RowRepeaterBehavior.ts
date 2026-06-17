@@ -11,9 +11,9 @@ import {
   VariableDependencyConfig,
   type VariableValueSingle,
 } from '@grafana/scenes';
+import { getMultiVariableValues } from 'app/features/dashboard-scene/utils/getMultiVariableValues';
 
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
-import { getMultiVariableValues } from '../../utils/utils';
 
 interface RowRepeaterBehaviorState extends SceneObjectState {
   variableName: string;

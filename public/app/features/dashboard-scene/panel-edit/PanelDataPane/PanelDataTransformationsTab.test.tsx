@@ -15,12 +15,12 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../../utils/DashboardModelCompatibilityWrapper';
-import { findVizPanelByKey } from '../../utils/utils';
 import { testDashboard } from '../testfiles/testDashboard';
 
 import { PanelDataTransformationsTab, PanelDataTransformationsTabRendered } from './PanelDataTransformationsTab';

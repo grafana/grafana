@@ -25,13 +25,13 @@ import {
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { findVizPanelByPathId } from '../utils/pathId';
-import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';

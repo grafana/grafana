@@ -19,6 +19,7 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 import * as libpanels from 'app/features/library-panels/state/api';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -29,7 +30,6 @@ import { type DashboardGridItem } from '../scene/layout-default/DashboardGridIte
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
 

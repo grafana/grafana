@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { Page } from 'app/core/components/Page/Page';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -10,7 +11,6 @@ import { DashboardLinkForm } from '../settings/links/DashboardLinkForm';
 import { DashboardLinkList } from '../settings/links/DashboardLinkList';
 import { ProvisionedLinksSection } from '../settings/links/ProvisionedLinksSection';
 import { NEW_LINK, isLinkEditable } from '../settings/links/utils';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { type DashboardEditView, type DashboardEditListViewState, useDashboardEditPageNav } from './utils';

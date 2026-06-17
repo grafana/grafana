@@ -5,10 +5,10 @@ import { VariableHide } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { openAddFilterForm } from '../add-new/AddFilters';
 
 import { partitionVariablesByDisplay } from './DashboardVariablesList';

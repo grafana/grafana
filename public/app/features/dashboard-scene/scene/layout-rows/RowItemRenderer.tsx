@@ -9,10 +9,11 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { useDashboardState } from 'app/features/dashboard-scene/utils/useDashboardState';
+import { useInterpolatedTitle } from 'app/features/dashboard-scene/utils/useInterpolatedTitle';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { SectionVariableControls } from '../VariableControls';

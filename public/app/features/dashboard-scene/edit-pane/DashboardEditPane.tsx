@@ -7,11 +7,13 @@ import {
   type ElementSelectionOnSelectOptions,
 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getDefaultVizPanel } from 'app/features/dashboard-scene/utils/getDefaultVizPanel';
+import { getLayoutForObject } from 'app/features/dashboard-scene/utils/getLayoutForObject';
 
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';

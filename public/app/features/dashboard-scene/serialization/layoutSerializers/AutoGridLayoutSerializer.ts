@@ -3,6 +3,7 @@ import {
   defaultAutoGridLayoutSpec,
   type AutoGridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { getGridItemKeyForPanelId } from 'app/features/dashboard-scene/utils/getGridItemKeyForPanelId';
 
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
@@ -16,7 +17,6 @@ import {
   AutoGridLayoutManager,
 } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { getGridItemKeyForPanelId } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel, getConditionalRendering } from './utils';
 

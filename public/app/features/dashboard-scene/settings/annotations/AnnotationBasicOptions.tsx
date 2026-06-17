@@ -6,10 +6,11 @@ import { type VizPanel } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema';
 import { Checkbox, Combobox, type ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 
 import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';

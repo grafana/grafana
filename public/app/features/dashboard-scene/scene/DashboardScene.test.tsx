@@ -29,6 +29,9 @@ import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/getLibraryPanelBehavior';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/isLibraryPanel';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -42,7 +45,6 @@ import * as DashboardTemplateExtensionModule from '../settings/enterprise-compon
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { findVizPanelByKey, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';

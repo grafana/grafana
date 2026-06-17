@@ -46,6 +46,13 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel, type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
+import { getClosestVizPanel } from 'app/features/dashboard-scene/utils/getClosestVizPanel';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getDefaultVizPanel } from 'app/features/dashboard-scene/utils/getDefaultVizPanel';
+import { getLayoutForObject } from 'app/features/dashboard-scene/utils/getLayoutForObject';
+import { getLayoutManagerFor } from 'app/features/dashboard-scene/utils/getLayoutManagerFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
+import { hasActualSaveChanges } from 'app/features/dashboard-scene/utils/hasActualSaveChanges';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
@@ -92,15 +99,6 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
-import {
-  getClosestVizPanel,
-  getDashboardSceneFor,
-  getDefaultVizPanel,
-  getLayoutForObject,
-  getLayoutManagerFor,
-  getPanelIdForVizPanel,
-  hasActualSaveChanges,
-} from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { type DashboardControls } from './DashboardControls';

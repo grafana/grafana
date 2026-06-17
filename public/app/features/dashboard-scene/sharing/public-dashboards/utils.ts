@@ -1,10 +1,10 @@
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { supportedDatasources } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { getQueryRunnerFor } from '../../utils/utils';
 
 export const getUnsupportedDashboardDatasources = async (types: string[]): Promise<string[]> => {
   let unsupportedDS = new Set<string>();

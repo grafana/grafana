@@ -10,6 +10,7 @@ import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@gra
 import { Page } from 'app/core/components/Page/Page';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
 import { type DashboardDataDTO, type SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -26,7 +27,6 @@ import { type DashboardScene, type DashboardSceneState } from '../scene/Dashboar
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';

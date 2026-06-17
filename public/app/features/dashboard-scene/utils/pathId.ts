@@ -1,6 +1,5 @@
 import { type SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
-
-import { getVizPanelKeyForPanelId } from './utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 
 export function findVizPanelByPathId(scene: SceneObject, pathId: string): VizPanel | null {
   // Check if pathId is just an old legacy panel id

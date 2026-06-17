@@ -22,6 +22,8 @@ import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 import { type configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -29,7 +31,6 @@ import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alert
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import * as utils from '../../utils/utils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
 

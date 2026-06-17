@@ -14,13 +14,13 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardSidebarPane } from '../../edit-pane/types';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 
 import {
   type EditableVariableType,

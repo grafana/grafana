@@ -5,8 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Alert, Button, ClipboardButton, IconButton, Modal, Sidebar, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
-import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { applyJsonToDashboard, getDashboardJsonText, getDashboardResourceText } from './codePaneUtils';

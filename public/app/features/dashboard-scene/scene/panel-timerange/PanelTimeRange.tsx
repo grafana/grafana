@@ -23,8 +23,7 @@ import {
 } from '@grafana/scenes';
 import { Icon, PanelChrome, Stack, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
-
-import { getDashboardSceneFor } from '../../utils/utils';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
 import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';

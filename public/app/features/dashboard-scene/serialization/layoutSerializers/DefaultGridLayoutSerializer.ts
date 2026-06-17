@@ -9,12 +9,13 @@ import {
   type PanelKind,
   type LibraryPanelKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { calculateGridItemDimensions } from 'app/features/dashboard-scene/utils/calculateGridItemDimensions';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/isLibraryPanel';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { getIsLazy } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
 
 import { buildLibraryPanel, buildVizPanel } from './utils';
 

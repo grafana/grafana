@@ -7,13 +7,13 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 import * as utils from '../utils/utils';
 
 import { PanelOptionsPane } from './PanelOptionsPane';

@@ -8,16 +8,13 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/getLibraryPanelBehavior';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getQueryRunnerFor,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
 import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';

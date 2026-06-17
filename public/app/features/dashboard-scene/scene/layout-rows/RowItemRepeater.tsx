@@ -9,11 +9,12 @@ import {
   type VariableValueSingle,
 } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
+import { getMultiVariableValues } from 'app/features/dashboard-scene/utils/getMultiVariableValues';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
-import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
+import { dashboardLog } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
 import { type RowItem } from './RowItem';

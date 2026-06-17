@@ -6,6 +6,7 @@ import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { useElementSelection, usePanelContext } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -90,7 +91,7 @@ const mockLocationServicePartial = locationService.partial as jest.Mock;
 const mockSceneGraphGetTimeRange = sceneGraph.getTimeRange as jest.Mock;
 // findVizPanelByKey is imported inside tests to keep the reference in sync with the mock
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const mockFindVizPanelByKey: jest.Mock = require('../utils/utils').findVizPanelByKey;
+const mockFindVizPanelByKey: jest.Mock = findVizPanelByKey;
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

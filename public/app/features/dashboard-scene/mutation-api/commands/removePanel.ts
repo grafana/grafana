@@ -6,8 +6,10 @@
 
 import { type z } from 'zod';
 
+import { getLayoutManagerFor } from 'app/features/dashboard-scene/utils/getLayoutManagerFor';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
+
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';

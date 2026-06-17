@@ -27,7 +27,7 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
-import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';

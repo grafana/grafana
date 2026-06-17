@@ -22,11 +22,11 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';

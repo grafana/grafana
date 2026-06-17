@@ -15,10 +15,11 @@ import {
 } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { getDefaultVizPanel } from 'app/features/dashboard-scene/utils/getDefaultVizPanel';
+import { getLayoutForObject } from 'app/features/dashboard-scene/utils/getLayoutForObject';
 
 import { dashboardEditActions, DashboardStateChangedEvent, ObjectsReorderedOnCanvasEvent } from '../edit-pane/shared';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';

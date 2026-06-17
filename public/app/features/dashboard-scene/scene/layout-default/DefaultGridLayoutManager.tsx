@@ -22,6 +22,13 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import { forceRenderChildren } from 'app/features/dashboard-scene/utils/forceRenderChildren';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getGridItemKeyForPanelId } from 'app/features/dashboard-scene/utils/getGridItemKeyForPanelId';
+import { getLayoutOrchestratorFor } from 'app/features/dashboard-scene/utils/getLayoutOrchestratorFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
+import { useDashboard } from 'app/features/dashboard-scene/utils/useDashboard';
 
 import {
   dashboardEditActions,
@@ -33,17 +40,7 @@ import { serializeDefaultGridLayout } from '../../serialization/layoutSerializer
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
-import {
-  forceRenderChildren,
-  getPanelIdForVizPanel,
-  NEW_PANEL_HEIGHT,
-  NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
-  useDashboard,
-  getLayoutOrchestratorFor,
-  getDashboardSceneFor,
-} from '../../utils/utils';
+import { NEW_PANEL_HEIGHT, NEW_PANEL_WIDTH } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';

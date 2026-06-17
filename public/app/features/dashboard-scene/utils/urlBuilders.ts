@@ -3,9 +3,9 @@ import { locationService } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
-import { getQueryRunnerFor } from './utils';
 
 export function getEditPanelUrl(panelId: number) {
   return locationUtil.getUrlForPartial(locationService.getLocation(), { editPanel: panelId, viewPanel: undefined });

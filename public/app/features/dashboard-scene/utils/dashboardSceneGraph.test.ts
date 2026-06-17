@@ -1,5 +1,6 @@
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel, behaviors } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
@@ -10,7 +11,6 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
-import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
   describe('getPanelLinks', () => {

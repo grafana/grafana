@@ -8,13 +8,14 @@
 
 import { type z } from 'zod';
 
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
+
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { buildVizPanel, getElements } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { serializeResultLayoutItem } from './panelSerialization';

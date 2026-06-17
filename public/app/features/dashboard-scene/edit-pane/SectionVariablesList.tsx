@@ -3,11 +3,11 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableTypeSelectionPane';
 import { getTopPlacementLabel } from '../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardVariablesList } from './dashboard/DashboardVariablesList';

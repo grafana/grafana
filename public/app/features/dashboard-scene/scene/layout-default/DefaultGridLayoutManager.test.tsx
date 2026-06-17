@@ -7,8 +7,9 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
-import { findVizPanelByKey, getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';

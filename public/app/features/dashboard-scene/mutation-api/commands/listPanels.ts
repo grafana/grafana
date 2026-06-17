@@ -15,9 +15,9 @@ import { type z } from 'zod';
 
 import { type DataFrame, LoadingState } from '@grafana/data';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';

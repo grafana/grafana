@@ -1,7 +1,7 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { getLegacySlugForRowOrTab } from 'app/features/dashboard-scene/utils/getLegacySlugForRowOrTab';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';

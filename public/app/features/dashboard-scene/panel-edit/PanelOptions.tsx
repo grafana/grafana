@@ -9,9 +9,10 @@ import {
   getLibraryVizPanelOptionsCategory,
   getVisualizationOptions2,
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/getLibraryPanelBehavior';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/isLibraryPanel';
 
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 

@@ -16,12 +16,13 @@ import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { hasLibraryPanelsInV1Dashboard } from 'app/features/dashboard-scene/utils/hasLibraryPanelsInV1Dashboard';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, hasLibraryPanelsInV1Dashboard } from '../utils/utils';
 
 import { ResourceExport } from './ExportButton/ResourceExport';
 import { type SceneShareTabState, type ShareView } from './types';
