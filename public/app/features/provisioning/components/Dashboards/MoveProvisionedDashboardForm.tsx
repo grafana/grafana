@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useState } from 'react';
-import { FormProvider, useForm, useFormState } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
@@ -74,12 +74,11 @@ export function MoveProvisionedDashboardForm({
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { dirtyFields } = useFormState({ control: methods.control });
   const { locked } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
-    isCommentDirty: Boolean(dirtyFields.comment),
+    isCommentDirty: Boolean(methods.formState.dirtyFields.comment),
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 

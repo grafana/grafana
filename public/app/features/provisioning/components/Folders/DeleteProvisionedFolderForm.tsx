@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormProvider, useForm, useFormState } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -62,12 +62,11 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     title: parentFolder?.title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { dirtyFields } = useFormState({ control: methods.control });
   const { locked } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
-    isCommentDirty: Boolean(dirtyFields.comment),
+    isCommentDirty: Boolean(methods.formState.dirtyFields.comment),
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormProvider, useForm, useFormState } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -52,12 +52,11 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     title: title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { dirtyFields } = useFormState({ control: methods.control });
   const { locked } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
-    isCommentDirty: Boolean(dirtyFields.comment),
+    isCommentDirty: Boolean(formState.dirtyFields.comment),
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
