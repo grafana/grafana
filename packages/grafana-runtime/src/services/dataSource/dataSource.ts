@@ -1,8 +1,10 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { getExpressionDataSourceInstance } from './expressionDs';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -33,6 +35,16 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  if (isExpressionReference(ref)) {
+    const expressionDs = getExpressionDataSourceInstance();
+    if (!expressionDs) {
+      throw new Error(
+        'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
+      );
+    }
+    return expressionDs;
+  }
+
   const settings = await getDataSourceInstanceSettings(ref, scopedVars);
   if (!settings) {
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
