@@ -58,7 +58,7 @@ export function AddNewConnectionLegacy() {
   const location = useLocation();
   const history = useHistory();
   const locationSearch = locationSearchToObject(location.search);
-  const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
+  const sortBy = Object.values(Sorters).find((s) => s === locationSearch.sortBy) ?? Sorters.nameAsc;
   const filterBy = locationSearch.filterBy?.toString() || 'all';
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const styles = useStyles2(getStyles);
@@ -159,13 +159,13 @@ export function AddNewConnectionLegacy() {
 
       <div className={styles.searchContainer}>
         <HorizontalGroup wrap>
-          <Field label={t('common.search', 'Search')} htmlFor={searchId}>
+          <Field noMargin label={t('common.search', 'Search')} htmlFor={searchId}>
             <SearchField id={searchId} value={searchTerm} onSearch={handleSearchChange} />
           </Field>
           <HorizontalGroup className={styles.actionBar}>
             {/* Filter by installed / all */}
             {remotePluginsAvailable ? (
-              <Field label={t('plugins.filter.state', 'State')}>
+              <Field noMargin label={t('plugins.filter.state', 'State')}>
                 <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
               </Field>
             ) : (
@@ -177,7 +177,7 @@ export function AddNewConnectionLegacy() {
                 placement="top"
               >
                 <div>
-                  <Field label={t('plugins.filter.state', 'State')}>
+                  <Field noMargin label={t('plugins.filter.state', 'State')}>
                     <RadioButtonGroup
                       disabled={true}
                       value={filterBy}
@@ -190,7 +190,7 @@ export function AddNewConnectionLegacy() {
             )}
 
             {/* Sorting */}
-            <Field label={t('plugins.filter.sort', 'Sort')}>
+            <Field noMargin label={t('plugins.filter.sort', 'Sort')}>
               <Combobox
                 id={sortId}
                 aria-label={t('plugins.filter.sort-list', 'Sort Plugins List')}
@@ -223,7 +223,7 @@ export function AddNewConnectionLegacy() {
           <LoadingPlaceholder text={t('common.loading', 'Loading...')} />
         ) : !!error ? (
           <Trans i18nKey="alerting.policies.update-errors.error-code" values={{ error: error.message }}>
-            Error message: "{{ error: error.message }}"
+            Error message: &quot;{{ error: error.message }}&quot;
           </Trans>
         ) : (
           <>

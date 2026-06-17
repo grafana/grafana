@@ -136,7 +136,7 @@ function AddNewConnectionWithSidebar() {
   const sidebar = useSidebar({
     hasOpenPane: isPaneOpen,
     position: 'right',
-    persistanceKey: 'connections-sidebar',
+    persistenceKey: 'connections-sidebar',
     defaultToCompact: true,
     defaultToDocked: true,
     onClosePane: () => setIsPaneOpen(false),
