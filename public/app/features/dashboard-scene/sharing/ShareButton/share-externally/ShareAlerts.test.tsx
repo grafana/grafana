@@ -12,8 +12,8 @@ import {
 } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { ShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 

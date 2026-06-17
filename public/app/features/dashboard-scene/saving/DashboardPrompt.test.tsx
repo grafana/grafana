@@ -6,8 +6,8 @@ import { type ObjectMeta } from 'app/features/apiserver/types';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
-import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 import { ignoreChanges, isEmptyDashboard } from './DashboardPrompt';

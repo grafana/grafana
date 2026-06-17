@@ -13,9 +13,9 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { DashboardEditActionEvent } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { type DashboardSceneState } from '../types/dashboard';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { type DashboardSceneState } from '../types/dashboard';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';

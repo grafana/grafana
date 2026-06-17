@@ -16,8 +16,8 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { getEditableElementFor } from './shared';
+import { type DashboardEditPaneLike } from './types';
 import { useOutlineRename } from './useOutlineRename';
-import { DashboardEditPaneLike } from './types';
 
 interface DashboardOutlineState extends SceneObjectState {
   collapsedState: Map<string, boolean>;

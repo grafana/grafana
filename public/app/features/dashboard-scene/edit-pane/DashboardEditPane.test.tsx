@@ -28,7 +28,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardOutline } from './DashboardOutline';
 import { dashboardEditActions } from './shared';
-import { DashboardEditPaneLike } from './types';
+import { type DashboardEditPaneLike } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

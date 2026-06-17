@@ -1,7 +1,8 @@
-import { SceneObjectState, type SceneObject } from '@grafana/scenes';
-import { ElementSelectionContextState, ElementSelectionOnSelectOptions } from '@grafana/ui';
-import { DashboardEditActionEvent, DashboardEditActionEventPayload } from './events';
-import { DashboardOutline } from './DashboardOutline';
+import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
+import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
+
+import { type DashboardOutline } from './DashboardOutline';
+import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selectionContext: ElementSelectionContextState;

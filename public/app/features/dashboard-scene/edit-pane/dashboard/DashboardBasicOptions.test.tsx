@@ -8,9 +8,9 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
+import { type DashboardEditPaneLike } from '../types';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
-import { DashboardEditPaneLike } from '../types';
 
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
