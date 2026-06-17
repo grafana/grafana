@@ -54,6 +54,71 @@ function defaultTimeseries(): DataFrame[] {
   ];
 }
 
+export function simulateGithubQuery(sql: string): DataFrame[] {
+  const lower = sql.toLowerCase();
+
+  if (/issues/.test(lower)) {
+    return githubIssuesResult();
+  }
+  if (/commits/.test(lower)) {
+    return githubCommitsResult();
+  }
+  if (/workflow_runs/.test(lower)) {
+    return githubWorkflowResult();
+  }
+  return githubPrsByRepoResult();
+}
+
+function githubPrsByRepoResult(): DataFrame[] {
+  const repos = ['grafana/grafana', 'grafana/loki', 'grafana/tempo', 'grafana/mimir', 'grafana/oncall'];
+  const openPrs = [47, 23, 31, 18, 12];
+  const avgComments = [3.4, 2.1, 4.7, 1.8, 2.9];
+  const latestDates = ['2026-06-10', '2026-06-09', '2026-06-10', '2026-06-08', '2026-06-07'];
+  const frame = new MutableDataFrame({ name: 'pr_summary', fields: [] });
+  frame.addField({ name: 'repo', type: FieldType.string, values: repos });
+  frame.addField({ name: 'open_prs', type: FieldType.number, values: openPrs });
+  frame.addField({ name: 'avg_comments', type: FieldType.number, values: avgComments });
+  frame.addField({ name: 'latest_pr_date', type: FieldType.string, values: latestDates });
+  return [frame];
+}
+
+function githubIssuesResult(): DataFrame[] {
+  const repos = ['grafana/grafana', 'grafana/loki', 'grafana/tempo', 'grafana/mimir', 'grafana/oncall'];
+  const openIssues = [312, 98, 74, 55, 41];
+  const avgComments = [5.2, 3.8, 2.9, 4.1, 3.3];
+  const frame = new MutableDataFrame({ name: 'issue_summary', fields: [] });
+  frame.addField({ name: 'repo', type: FieldType.string, values: repos });
+  frame.addField({ name: 'open_issues', type: FieldType.number, values: openIssues });
+  frame.addField({ name: 'avg_comments', type: FieldType.number, values: avgComments });
+  return [frame];
+}
+
+function githubCommitsResult(): DataFrame[] {
+  const authors = ['torkel', 'matyax', 'ivanahuckova', 'yavortsvetkov', 'bergquist'];
+  const commits = [142, 118, 97, 84, 76];
+  const additions = [18420, 14230, 9870, 11340, 8910];
+  const deletions = [9210, 7840, 5430, 6720, 4380];
+  const frame = new MutableDataFrame({ name: 'commit_summary', fields: [] });
+  frame.addField({ name: 'author', type: FieldType.string, values: authors });
+  frame.addField({ name: 'commits', type: FieldType.number, values: commits });
+  frame.addField({ name: 'additions', type: FieldType.number, values: additions });
+  frame.addField({ name: 'deletions', type: FieldType.number, values: deletions });
+  return [frame];
+}
+
+function githubWorkflowResult(): DataFrame[] {
+  const workflows = ['CI / build', 'CI / test', 'Lint', 'E2E', 'Release'];
+  const successRates = [98.2, 94.7, 99.1, 87.3, 100.0];
+  const avgDurationSec = [312, 487, 145, 924, 1820];
+  const runsLast7d = [84, 84, 84, 21, 3];
+  const frame = new MutableDataFrame({ name: 'workflow_summary', fields: [] });
+  frame.addField({ name: 'workflow', type: FieldType.string, values: workflows });
+  frame.addField({ name: 'success_rate_pct', type: FieldType.number, values: successRates });
+  frame.addField({ name: 'avg_duration_sec', type: FieldType.number, values: avgDurationSec });
+  frame.addField({ name: 'runs_last_7d', type: FieldType.number, values: runsLast7d });
+  return [frame];
+}
+
 export function simulateQuery(sql: string): DataFrame[] {
   const lower = sql.toLowerCase();
 

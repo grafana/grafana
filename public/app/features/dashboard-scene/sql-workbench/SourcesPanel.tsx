@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { FilterInput, Icon, Text, useStyles2 } from '@grafana/ui';
@@ -9,13 +9,21 @@ import { type DatasourceDef, type TableDef, mockSchema } from './schema';
 interface Props {
   onTableClick: (tableName: string) => void;
   onColumnClick?: (tableName: string, columnName: string) => void;
+  schema?: DatasourceDef[];
 }
 
-export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
+export function SourcesPanel({ onTableClick, onColumnClick, schema = mockSchema }: Props) {
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
   const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
-  const [expandedDatasources, setExpandedDatasources] = useState<Set<string>>(new Set(['Prometheus']));
+  const [expandedDatasources, setExpandedDatasources] = useState<Set<string>>(
+    () => new Set(schema.length > 0 ? [schema[0].name] : [])
+  );
+
+  useEffect(() => {
+    setExpandedTables(new Set());
+    setExpandedDatasources(new Set(schema.length > 0 ? [schema[0].name] : []));
+  }, [schema]);
 
   const toggleTable = (tableName: string) => {
     setExpandedTables((prev) => {
@@ -54,7 +62,7 @@ export function SourcesPanel({ onTableClick, onColumnClick }: Props) {
         <FilterInput placeholder="Search tables…" value={search} onChange={setSearch} />
       </div>
       <div className={styles.tree}>
-        {mockSchema.map((ds) => {
+        {schema.map((ds) => {
           const filteredTables = filterTables(ds);
           const isOpen = expandedDatasources.has(ds.name);
           return (

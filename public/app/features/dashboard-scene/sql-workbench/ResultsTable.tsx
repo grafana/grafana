@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type DataFrame, type GrafanaTheme2 } from '@grafana/data';
 import { Button, RadioButtonGroup, Spinner, Text, useStyles2 } from '@grafana/ui';
 
-import { simulateQuery } from './queryResults';
+import { simulateGithubQuery, simulateQuery } from './queryResults';
 
 type ViewMode = 'table' | 'viz';
 
@@ -18,9 +18,10 @@ interface Props {
   autoRun?: boolean;
   viewMode?: ViewMode;
   onViewModeChange?: (mode: ViewMode) => void;
+  datasource?: 'prometheus' | 'github';
 }
 
-export function ResultsTable({ sql, autoRun = false, viewMode = 'table', onViewModeChange }: Props) {
+export function ResultsTable({ sql, autoRun = false, viewMode = 'table', onViewModeChange, datasource = 'prometheus' }: Props) {
   const styles = useStyles2(getStyles);
   const [results, setResults] = useState<DataFrame[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +37,7 @@ export function ResultsTable({ sql, autoRun = false, viewMode = 'table', onViewM
       if (id !== runCountRef.current) {
         return;
       }
-      setResults(simulateQuery(sql));
+      setResults(datasource === 'github' ? simulateGithubQuery(sql) : simulateQuery(sql));
       setIsLoading(false);
       setHasRun(true);
     }, delay);
@@ -121,7 +122,9 @@ function DataFrameTable({ frames }: { frames: DataFrame[] }) {
                   typeof raw === 'number'
                     ? field.name === 'time'
                       ? new Date(raw).toLocaleTimeString()
-                      : raw.toFixed(4)
+                      : Number.isInteger(raw)
+                        ? String(raw)
+                        : raw.toFixed(4)
                     : String(raw ?? '');
                 return (
                   <td key={ci} className={styles.td}>

@@ -22,6 +22,83 @@ const prometheusLabels: ColumnDef[] = [
   { name: 'job', type: 'label', description: 'Job name that scraped this metric' },
 ];
 
+export const githubSchema: DatasourceDef[] = [
+  {
+    name: 'GitHub',
+    type: 'github',
+    tables: [
+      {
+        name: 'repositories',
+        columns: [
+          { name: 'id', type: 'number' },
+          { name: 'name', type: 'label', description: 'Full repo name (org/repo)' },
+          { name: 'owner', type: 'label', description: 'Owner login' },
+          { name: 'language', type: 'label', description: 'Primary language' },
+          { name: 'stargazers_count', type: 'number' },
+          { name: 'forks_count', type: 'number' },
+          { name: 'open_issues_count', type: 'number' },
+          { name: 'created_at', type: 'timestamp' },
+        ],
+      },
+      {
+        name: 'pull_requests',
+        columns: [
+          { name: 'id', type: 'number' },
+          { name: 'repository_id', type: 'number' },
+          { name: 'title', type: 'label', description: 'PR title' },
+          { name: 'state', type: 'label', description: 'open | closed | merged' },
+          { name: 'author', type: 'label', description: 'GitHub login of the author' },
+          { name: 'review_comments', type: 'number' },
+          { name: 'additions', type: 'number' },
+          { name: 'deletions', type: 'number' },
+          { name: 'created_at', type: 'timestamp' },
+          { name: 'merged_at', type: 'timestamp' },
+        ],
+      },
+      {
+        name: 'issues',
+        columns: [
+          { name: 'id', type: 'number' },
+          { name: 'repository_id', type: 'number' },
+          { name: 'title', type: 'label' },
+          { name: 'state', type: 'label', description: 'open | closed' },
+          { name: 'author', type: 'label' },
+          { name: 'labels', type: 'label', description: 'Comma-separated label names' },
+          { name: 'comments', type: 'number' },
+          { name: 'created_at', type: 'timestamp' },
+          { name: 'closed_at', type: 'timestamp' },
+        ],
+      },
+      {
+        name: 'commits',
+        columns: [
+          { name: 'id', type: 'number' },
+          { name: 'repository_id', type: 'number' },
+          { name: 'sha', type: 'label', description: '40-char commit SHA' },
+          { name: 'author', type: 'label' },
+          { name: 'message', type: 'label', description: 'First line of commit message' },
+          { name: 'additions', type: 'number' },
+          { name: 'deletions', type: 'number' },
+          { name: 'committed_at', type: 'timestamp' },
+        ],
+      },
+      {
+        name: 'workflow_runs',
+        columns: [
+          { name: 'id', type: 'number' },
+          { name: 'repository_id', type: 'number' },
+          { name: 'workflow_name', type: 'label' },
+          { name: 'status', type: 'label', description: 'queued | in_progress | completed' },
+          { name: 'conclusion', type: 'label', description: 'success | failure | cancelled | skipped' },
+          { name: 'run_number', type: 'number' },
+          { name: 'created_at', type: 'timestamp' },
+          { name: 'updated_at', type: 'timestamp' },
+        ],
+      },
+    ],
+  },
+];
+
 export const mockSchema: DatasourceDef[] = [
   {
     name: 'Prometheus',
