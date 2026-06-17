@@ -315,6 +315,12 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		},
 	}
 
+	urls, err := getFolderURLs(ctx, opts.Path, opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+	wrap.URLs = urls
+
 	if r.shouldUpdateGrafanaDB(opts, nil) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)

@@ -1388,6 +1388,96 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				assert.Nil(t, result.Resource.Upsert.Object, "Upsert should be nil when sync is disabled")
 			},
 		},
+		{
+			name: "repo with URL support: URLs field is populated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				existingData := makeExistingData(t)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
+					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+				rw.On("Update", mock.Anything, "myfolder/_folder.json", "feature", mock.Anything, "update title").Return(nil)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
+					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
+
+				urlRepo := &mockReaderWriterWithURLs{
+					MockReaderWriter: rw,
+					resourceURLsFn: func(_ context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+						return &provisioning.RepositoryURLs{
+							SourceURL:         "https://github.com/org/repo/blob/feature/myfolder/_folder.json",
+							NewPullRequestURL: "https://github.com/org/repo/compare/main...feature",
+						}, nil
+					},
+				}
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{
+					repo:                  urlRepo,
+					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false),
+					folderMetadataEnabled: true,
+				}
+				return dw, DualWriteOptions{
+					Path:    "myfolder/",
+					Ref:     "feature",
+					Message: "update title",
+					Data:    makeSubmitBody(t, existingUID, "New Title"),
+				}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				require.NotNil(t, result.URLs, "URLs should be populated for repos with URL support")
+				assert.Equal(t, "https://github.com/org/repo/blob/feature/myfolder/_folder.json", result.URLs.SourceURL)
+				assert.Equal(t, "https://github.com/org/repo/compare/main...feature", result.URLs.NewPullRequestURL)
+			},
+		},
+		{
+			name: "repo without URL support: URLs field is nil",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				existingData := makeExistingData(t)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
+					Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+				rw.On("Update", mock.Anything, "myfolder/_folder.json", "feature", mock.Anything, "update title").Return(nil)
+				rw.On("Read", mock.Anything, "myfolder/_folder.json", "feature").
+					Return(&repository.FileInfo{Data: []byte("{}"), Hash: "branch-hash"}, nil).Once()
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{
+					repo:                  rw,
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					folderMetadataEnabled: true,
+				}
+				return dw, DualWriteOptions{
+					Path:    "myfolder/",
+					Ref:     "feature",
+					Message: "update title",
+					Data:    makeSubmitBody(t, existingUID, "New Title"),
+				}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Nil(t, result.URLs, "URLs should be nil for repos without URL support")
+			},
+		},
 	}
 
 	for _, tt := range tests {
