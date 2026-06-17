@@ -3896,6 +3896,9 @@
           "url": {
             "description": "The connection URL",
             "type": "string"
+          },
+          "webhook": {
+            "description": "Webhook configuration for this connection"
           }
         }
       },
@@ -3932,6 +3935,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          }
+        }
+      },
+      "ConnectionWebhookConfig": {
+        "type": "object",
+        "properties": {
+          "disabled": {
+            "description": "Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+            "type": "boolean"
           }
         }
       },
@@ -4130,10 +4142,6 @@
             "description": "GitHub App installation ID",
             "type": "string",
             "default": ""
-          },
-          "webhookDisabled": {
-            "description": "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
-            "type": "boolean"
           }
         }
       },

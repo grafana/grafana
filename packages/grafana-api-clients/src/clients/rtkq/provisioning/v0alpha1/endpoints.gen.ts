@@ -1463,8 +1463,6 @@ export type GitHubConnectionConfig = {
   appID: string;
   /** GitHub App installation ID */
   installationID: string;
-  /** WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
-  webhookDisabled?: boolean;
 };
 export type GitHubEnterpriseConnectionConfig = {
   /** GitHub App ID */
@@ -1477,6 +1475,10 @@ export type GitHubEnterpriseConnectionConfig = {
 export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
+};
+export type ConnectionWebhookConfig = {
+  /** Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
 };
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
@@ -1501,6 +1503,8 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
+  /** Webhook configuration for this connection */
+  webhook?: ConnectionWebhookConfig;
 };
 export type Condition = {
   /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
