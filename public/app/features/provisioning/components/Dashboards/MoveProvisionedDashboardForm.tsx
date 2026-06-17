@@ -205,6 +205,7 @@ export function MoveProvisionedDashboardForm({
     const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'move' as const,
+      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
       move: {
         ref: effectiveRef,
         targetPath: targetFolderPath,

@@ -142,6 +142,7 @@ export function DeleteProvisionedDashboardForm({
     const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'delete' as const,
+      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
       delete: {
         ref: effectiveRef,
         resources: [

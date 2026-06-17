@@ -123,6 +123,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     // Write workflow: use Job API
     const jobSpec = {
       action: 'delete' as const,
+      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
       delete: {
         ref: undefined,
         resources: [
