@@ -28,8 +28,8 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Use filters
 
-Elasticsearch supports the **Filters** variable type.
-You can use this variable type to specify any number of key/value filters, and Grafana applies them automatically to all of your Elasticsearch queries.
+Elasticsearch supports the use of filters.
+You can use them to specify any number of key/value filters, and Grafana applies them automatically to all of your Elasticsearch queries.
 
 Filters support the following operators:
 
@@ -42,7 +42,7 @@ Filters support the following operators:
 | `>`      | Greater than. Adds `AND field:>value` to the query.           |
 | `<`      | Less than. Adds `AND field:<value` to the query.              |
 
-For more information, refer to [Add Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
+For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Choose a variable syntax
 

@@ -1283,6 +1283,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/release-comms.yml @grafana/grafana-backend-services-squad
 /.github/workflows/migrate-prs.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-next-release-branch.yml @grafana/grafana-backend-services-squad
+/.github/workflows/create-release-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/create-security-branch.yml @grafana/grafana-backend-services-squad
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/commands.yml @torkelo
