@@ -70,12 +70,11 @@ describe('NestedFolderPicker', () => {
 
     useGetStarredFoldersMock.mockImplementation((options?: { skip: boolean }) => {
       if (options?.skip) {
-        return { folders: [], isLoading: false, error: undefined };
+        return { folders: [], error: undefined };
       }
 
       return {
         folders: [{ kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' }],
-        isLoading: false,
         error: undefined,
       };
     });

@@ -61,6 +61,12 @@ export function reapplyVirtualFolderPrefix(parentUID: string, childUID: string):
   return prefix ? prefix + stripVirtualFolderPrefix(childUID) : childUID;
 }
 
+// Virtual roots that must never be selected, plus starred-folder children (the starred view is
+// read-only; the same folders stay selectable under the real "Dashboards" tree).
+export function isNonSelectableVirtualFolder(uid: string): boolean {
+  return isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid) || isUnderStarredFolders(uid);
+}
+
 // Single gate for the starred-folders feature: the OpenFeature flag plus the hard dependency on the
 // collections stars API (legacy stars are dashboard-only and cannot represent starred folders).
 export function starredFoldersEnabled(): boolean {

@@ -9,6 +9,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
+import { resolveStarredFolders } from 'app/features/stars/folders';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
@@ -243,29 +244,13 @@ export async function listStarredFolders(): Promise<DashboardViewItem[]> {
     )
   ).unwrap();
 
-  const items = stars?.items ?? [];
-  const folderUids = items.length
-    ? (items[0].spec.resource.find((r) => r.group === 'folder.grafana.app' && r.kind === 'Folder')?.names ?? [])
-    : [];
-  if (folderUids.length === 0) {
-    return [];
-  }
-
-  const results = await getGrafanaSearcher().search({
-    kind: ['folder'],
-    name: folderUids,
-    limit: folderUids.length,
-  });
-
-  return results.view.toArray().map((item) => {
-    const viewItem = queryResultToViewItem(item, results.view);
-    return {
-      kind: 'folder' as const,
-      // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.
-      uid: addStarredFolderPrefix(viewItem.uid),
-      title: viewItem.title,
-      parentUID: STARRED_FOLDERS_UID,
-      url: getFolderURL(viewItem.uid),
-    };
-  });
+  const folders = await resolveStarredFolders(stars);
+  return folders.map((folder) => ({
+    kind: 'folder' as const,
+    // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.
+    uid: addStarredFolderPrefix(folder.uid),
+    title: folder.title,
+    parentUID: STARRED_FOLDERS_UID,
+    url: getFolderURL(folder.uid),
+  }));
 }

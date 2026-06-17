@@ -4,12 +4,7 @@ import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features
 
 import { isRootFolderUID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
-import {
-  isSharedWithMe,
-  isUnderStarredFolders,
-  isVirtualStarredFolder,
-  isVirtualTeamFolder,
-} from '../utils/dashboards';
+import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
 import { type fetchNextChildrenPage, type refetchChildren } from './actions';
 import { findItem } from './utils';
@@ -97,12 +92,7 @@ export function setItemSelectionState(
   const { item, isSelected } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme/teamfolders from being selected
-  if (
-    isSharedWithMe(item.uid) ||
-    isVirtualTeamFolder(item.uid) ||
-    isVirtualStarredFolder(item.uid) ||
-    isUnderStarredFolders(item.uid)
-  ) {
+  if (isNonSelectableVirtualFolder(item.uid)) {
     return;
   }
 
@@ -155,13 +145,7 @@ export function setAllSelection(
 
   // If we're in the folder view for sharedwithme or teamfolders (currently not supported)
   // bail and don't select anything
-  if (
-    folderUIDArg &&
-    (isSharedWithMe(folderUIDArg) ||
-      isVirtualTeamFolder(folderUIDArg) ||
-      isVirtualStarredFolder(folderUIDArg) ||
-      isUnderStarredFolders(folderUIDArg))
-  ) {
+  if (folderUIDArg && isNonSelectableVirtualFolder(folderUIDArg)) {
     return;
   }
 
@@ -177,13 +161,7 @@ export function setAllSelection(
     // Recursively select the children of the folder in view
     function selectChildrenOfFolder(folderUID: string | undefined) {
       // Don't descend into the sharedwithme or teamfolders folder
-      if (
-        folderUID &&
-        (isSharedWithMe(folderUID) ||
-          isVirtualTeamFolder(folderUID) ||
-          isVirtualStarredFolder(folderUID) ||
-          isUnderStarredFolders(folderUID))
-      ) {
+      if (folderUID && isNonSelectableVirtualFolder(folderUID)) {
         return;
       }
 
@@ -196,12 +174,7 @@ export function setAllSelection(
 
       for (const child of collection.items) {
         // Don't traverse into the sharedwithme or teamfolders folder
-        if (
-          isSharedWithMe(child.uid) ||
-          isVirtualTeamFolder(child.uid) ||
-          isVirtualStarredFolder(child.uid) ||
-          isUnderStarredFolders(child.uid)
-        ) {
+        if (isNonSelectableVirtualFolder(child.uid)) {
           continue;
         }
 

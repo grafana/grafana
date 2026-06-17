@@ -9,20 +9,11 @@ import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/d
 
 import { findItem } from './utils';
 
-async function listTeamFoldersSafe() {
+async function listSafe(label: string, load: () => Promise<DashboardViewItem[]>): Promise<DashboardViewItem[]> {
   try {
-    return await listTeamFolders();
+    return await load();
   } catch (error) {
-    console.error('Failed to load team folders', error);
-    return [];
-  }
-}
-
-async function listStarredFoldersSafe() {
-  try {
-    return await listStarredFolders();
-  } catch (error) {
-    console.error('Failed to load starred folders', error);
+    console.error(`Failed to load ${label}`, error);
     return [];
   }
 }
@@ -84,12 +75,12 @@ export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
-      const children = await listTeamFoldersSafe();
+      const children = await listSafe('team folders', listTeamFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
     if (parentUID === STARRED_FOLDERS_UID) {
-      const children = await listStarredFoldersSafe();
+      const children = await listSafe('starred folders', listStarredFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -146,7 +137,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children = await listTeamFoldersSafe();
+      const children = await listSafe('team folders', listTeamFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -156,7 +147,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children = await listStarredFoldersSafe();
+      const children = await listSafe('starred folders', listStarredFolders);
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
