@@ -3,8 +3,15 @@
   "id": "visual_refresh_dark",
   "colors": {
     "mode": "dark",
-    "background": {
-      "canvas": "#ff0000"
+    "primary": {
+      "main": "palette.ink100"
+    },
+    "accent": {
+      "main": "palette.orange400",
+      "text": "palette.orange400"
+    },
+    "text": {
+      "link": "palette.orange400"
     }
   }
 }
