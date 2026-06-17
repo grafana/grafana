@@ -34,8 +34,8 @@ export interface ShareLinkConfiguration {
 interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
+  absoluteImageUrl: string;
   isBuildUrlLoading: boolean;
-  useAbsoluteImageUrl: boolean;
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements ShareView {
@@ -51,8 +51,8 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       selectedTheme: state.selectedTheme ?? 'current',
       shareUrl: '',
       imageUrl: '',
+      absoluteImageUrl: '',
       isBuildUrlLoading: false,
-      useAbsoluteImageUrl: state.useAbsoluteImageUrl ?? true,
     });
 
     this.addActivationHandler(() => {
@@ -66,13 +66,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
 
   buildUrl = async (queryOptions?: UrlQueryMap) => {
     this.setState({ isBuildUrlLoading: true });
-    const {
-      panelRef,
-      useLockedTime: useAbsoluteTimeRange,
-      useShortUrl,
-      selectedTheme,
-      useAbsoluteImageUrl,
-    } = this.state;
+    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
     const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 
@@ -105,13 +99,14 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
-      absolute: useAbsoluteImageUrl,
+      absolute: false,
       soloRoute: true,
       render: true,
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),
     });
+    const absoluteImageUrl = config.appUrl + imageUrl.replace(/^\//, '');
 
-    this.setState({ shareUrl, imageUrl, isBuildUrlLoading: false });
+    this.setState({ shareUrl, imageUrl, absoluteImageUrl, isBuildUrlLoading: false });
   };
 
   public getTabLabel() {
@@ -159,7 +154,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
   const timeRange = sceneGraph.getTimeRange(panel ?? dashboard);
   const isRelativeTime = timeRange.state.to === 'now' ? true : false;
 
-  const { useLockedTime, useShortUrl, selectedTheme, shareUrl, imageUrl } = state;
+  const { useLockedTime, useShortUrl, selectedTheme, shareUrl, absoluteImageUrl } = state;
 
   const selectors = e2eSelectors.pages.SharePanelModal;
   const isDashboardSaved = Boolean(dashboard.state.uid);
@@ -209,7 +204,7 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
         <>
           {isDashboardSaved && (
             <div className="gf-form">
-              <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
+              <a href={absoluteImageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                 <Icon name="camera" />
                 &nbsp;
                 <Trans i18nKey="share-modal.link.rendered-image">Direct link rendered image</Trans>

@@ -5,17 +5,12 @@ import { Alert, ClipboardButton, Divider, Stack, Text, TextLink } from '@grafana
 
 import { getDashboardSceneFor } from '../../utils/utils';
 import ShareInternallyConfiguration from '../ShareInternallyConfiguration';
-import { ShareLinkTab, type ShareLinkTabState } from '../ShareLinkTab';
+import { ShareLinkTab } from '../ShareLinkTab';
 
 import { SharePanelPreview } from './SharePanelPreview';
 
 export class SharePanelInternally extends ShareLinkTab {
   static Component = SharePanelInternallyRenderer;
-
-  constructor(state: Partial<ShareLinkTabState>) {
-    // Panel image actions should call Grafana through the same-origin render endpoint.
-    super({ ...state, useAbsoluteImageUrl: false });
-  }
 
   public getTabLabel() {
     return t('share-panel.drawer.share-link-title', 'Link settings');
@@ -23,7 +18,8 @@ export class SharePanelInternally extends ShareLinkTab {
 }
 
 function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelInternally>) {
-  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, panelRef } = model.useState();
+  const { useLockedTime, useShortUrl, selectedTheme, isBuildUrlLoading, imageUrl, absoluteImageUrl, panelRef } =
+    model.useState();
 
   const panelTitle = panelRef?.resolve().state.title;
   const dashboard = getDashboardSceneFor(model);
@@ -86,6 +82,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
           title={panelTitle || ''}
           buildUrl={model.buildUrl}
           imageUrl={imageUrl}
+          absoluteImageUrl={absoluteImageUrl}
           disabled={!isDashboardSaved}
           theme={selectedTheme}
         />
