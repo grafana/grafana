@@ -287,46 +287,13 @@ func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Comm
 	return ret, nil
 }
 
-func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error) {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
-		return r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
-	}
-
-	hooks, err := paginatedList(
-		ctx,
-		listFn,
-		defaultListOptions(maxWebhooks),
-	)
-	if errors.Is(err, repo.ErrTooManyItems) {
-		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
-	}
-	if err != nil {
-		return nil, translateGitHubError(err)
-	}
-
-	// Pre-allocate the result slice
-	ret := make([]WebhookConfig, 0, len(hooks))
-	for _, h := range hooks {
-		contentType := h.GetConfig().GetContentType()
-		if contentType == "" {
-			contentType = "form"
-		}
-
-		ret = append(ret, WebhookConfig{
-			ID:          h.GetID(),
-			Events:      h.Events,
-			Active:      h.GetActive(),
-			URL:         h.GetConfig().GetURL(),
-			ContentType: contentType,
-			// Intentionally not setting Secret.
-		})
-	}
-	return ret, nil
-}
-
-func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error) {
-	if cfg.ContentType == "" {
-		cfg.ContentType = "form"
+func (r *githubClient) CreateWebhook(ctx context.Context, url string, events []string, secret string) (repo.WebhookConfig, error) {
+	cfg := webhookConfig{
+		URL:         url,
+		Events:      events,
+		Secret:      secret,
+		Active:      true,
+		ContentType: "json",
 	}
 
 	hook := &github.Hook{
@@ -342,10 +309,10 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (We
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, r.owner, r.repo, hook)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		return nil, translateGitHubError(err)
 	}
 
-	return WebhookConfig{
+	return &webhookConfig{
 		ID: createdHook.GetID(),
 		// events is not returned by GitHub.
 		Events:      cfg.Events,
@@ -357,10 +324,10 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (We
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error) {
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		return nil, translateGitHubError(err)
 	}
 
 	contentType := hook.GetConfig().GetContentType()
@@ -370,7 +337,7 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (Webhook
 		contentType = "json"
 	}
 
-	return WebhookConfig{
+	return &webhookConfig{
 		ID:          hook.GetID(),
 		Events:      hook.Events,
 		Active:      hook.GetActive(),
@@ -388,12 +355,17 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error
 	return nil
 }
 
-func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error {
+func (r *githubClient) EditWebhook(ctx context.Context, hook repo.WebhookConfig) error {
+	cfg, ok := hook.(*webhookConfig)
+	if !ok {
+		return fmt.Errorf("unexpected webhook type %T", hook)
+	}
+
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
 
-	hook := &github.Hook{
+	ghHook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
 		Active: &cfg.Active,
@@ -403,7 +375,7 @@ func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error
 			URL:         &cfg.URL,
 		},
 	}
-	_, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, cfg.ID, hook)
+	_, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, cfg.ID, ghHook)
 	if err != nil {
 		return translateGitHubError(err)
 	}

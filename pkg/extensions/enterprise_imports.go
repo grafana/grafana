@@ -609,6 +609,7 @@ import (
 	_ "github.com/testcontainers/testcontainers-go/network"
 	_ "github.com/testcontainers/testcontainers-go/wait"
 	_ "github.com/urfave/cli/v2"
+	_ "gitlab.com/gitlab-org/api/client-go/v2"
 	_ "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	_ "go.opentelemetry.io/otel"
 	_ "go.opentelemetry.io/otel/attribute"

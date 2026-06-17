@@ -199,6 +199,14 @@ type WebhookSecretRotator interface {
 	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
 }
 
+//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
+type WebhookClient interface {
+	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
+	EditWebhook(ctx context.Context, hook WebhookConfig) error
+	DeleteWebhook(ctx context.Context, webhookID int64) error
+}
+
 type FileAction string
 
 const (
