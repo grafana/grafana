@@ -6,36 +6,27 @@ name: Run commands when issues are opened
 on:
   issues:
     types: [opened]
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max number of unlabeled open issues to triage (keep small to avoid rate limits)"
+        required: false
+        default: "10"
+        type: string
 
 concurrency:
-  group: issue-opened-${{ github.event.issue.number }}
+  group: issue-opened-${{ github.event.issue.number || github.run_id }}
 
 permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-arm64-small
-    if: github.repository == 'grafana/grafana'
+    if: github.repository == 'grafana/grafana' && github.event_name == 'issues'
     permissions:
       contents: read
       id-token: write
     steps:
-
-      - name: Checkout Actions
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          repository: "grafana/grafana-github-actions"
-          path: ./actions
-          ref: main
-          persist-credentials: false
-
-      - name: Setup Node
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
-        with:
-          node-version: '24'
-
-      - name: Install Actions
-        run: npm install --production --prefix ./actions
 
       # give issue-openers a chance to add labels after submit
       - name: Sleep for 2 minutes
@@ -49,7 +40,7 @@ jobs:
           github_app: grafana-pr-automation
 
       - name: Run Commands
-        uses: ./actions/commands
+        uses: grafana/grafana-github-actions/commands@main
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
           configPath: "issue-opened"
@@ -148,3 +139,95 @@ jobs:
             GH_REPO: ${{ github.repository }}
             NUMBER: ${{ github.event.issue.number }}
             LABELS: internal
+
+  # Manual backfill: fetch a limited set of open issues with no label and run
+  # the auto triager over each of them. Only runs on workflow_dispatch.
+  list-unlabeled-issues:
+    if: github.repository == 'grafana/grafana' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      issues: ${{ steps.list.outputs.issues }}
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: auto-triage
+      - name: List unlabeled open issues
+        id: list
+        run: |
+          issues=$(gh issue list --repo "$GH_REPO" --state open --search "no:label" --limit "$LIMIT" --json number --jq '[.[].number]')
+          echo "Found unlabeled issues: $issues"
+          echo "issues=$issues" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          LIMIT: ${{ inputs.limit }}
+
+  backfill-triage:
+    needs: [list-unlabeled-issues]
+    if: needs.list-unlabeled-issues.outputs.issues != '[]'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      # Keep it sequential to stay well within GitHub/OpenAI rate limits.
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        issue: ${{ fromJSON(needs.list-unlabeled-issues.outputs.issues) }}
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v2.0.0 # zizmor: ignore[unpinned-uses]
+        with:
+          # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
+          repo_secrets: |
+            AUTOTRIAGER_OPENAI_API_KEY=plugins_platform_issue_triager:AUTOTRIAGER_OPENAI_API_KEY
+            AUTOTRIAGER_SLACK_WEBHOOK_URL=plugins_platform_issue_triager:AUTOTRIAGER_SLACK_WEBHOOK_URL
+
+      - name: Generate token
+        id: generate_token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-pr-automation
+          permission_set: auto-triage
+
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            .github/workflows/auto-triager
+
+      - name: Send issue to the auto triager action
+        id: auto_triage
+        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          issue_number: ${{ matrix.issue }}
+          openai_api_key: ${{ fromJSON(steps.vault-secrets.outputs.secrets).AUTOTRIAGER_OPENAI_API_KEY }}
+          add_labels: true
+          labels_file: ${{ github.workspace }}/.github/workflows/auto-triager/labels.txt
+          types_file: ${{ github.workspace }}/.github/workflows/auto-triager/types.txt
+          prompt_file: ${{ github.workspace }}/.github/workflows/auto-triager/prompt.txt
+
+      - name: "Send Slack notification"
+        if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
+        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
+        with:
+          payload: >
+            {
+              "icon_emoji": ":robocto:",
+              "username": "Auto Triager",
+              "type": "mrkdwn",
+              "text": "Auto triager found the following labels: ${{ steps.auto_triage.outputs.triage_labels }} for issue https://github.com/${{ github.repository }}/issues/${{ matrix.issue }}",
+              "channel": "#triage-automation-ci"
+            }
+        env:
+          SLACK_WEBHOOK_URL:  ${{ fromJSON(steps.vault-secrets.outputs.secrets).AUTOTRIAGER_SLACK_WEBHOOK_URL }}
