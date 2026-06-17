@@ -40,8 +40,9 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: _pluginInstanceState,
+      currentOptions: options,
+      currentFieldConfig: fieldConfig,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, panel, options, fieldConfig, _pluginInstanceState]);
 
   const libraryPanelOptions = useMemo(() => {
@@ -68,7 +69,6 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           panel.onFieldConfigChange(newConfig, true);
         }
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [data, searchQuery, panel, fieldConfig]
   );
 
