@@ -186,9 +186,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   controlWrapper: css({
     width: '100%',
-    '& > div': {
-      width: '100% !important',
-    },
   }),
   comboboxWrapper: css({
     '& input[disabled]': {
