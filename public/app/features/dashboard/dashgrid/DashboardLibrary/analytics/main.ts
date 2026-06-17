@@ -71,17 +71,6 @@ export const NewTemplateDashboardInteractions = {
 };
 
 /**
- * Dashboard Library events scoped to the Custom Dashboard Templates variant.
- *
- * Reuses the dashboard_library namespace because the gallery surface, search, and
- * item-click funnel are shared with the other variants — events are differentiated
- * by `contentKind: 'custom_dashboard_template'` rather than by event name.
- */
-export const NewCustomDashboardTemplateInteractions = {
-  ...NewDashboardLibraryInteractions,
-};
-
-/**
  * Dashboard Library events scoped to the Suggested Dashboards variant.
  */
 export const NewSuggestedDashboardInteractions = {

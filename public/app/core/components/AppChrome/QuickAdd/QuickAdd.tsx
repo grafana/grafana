@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
+import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -26,6 +27,8 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaOrgDashboardTemplates();
+
   const theme = useTheme2();
 
   const actionGroups = useMemo(() => {
@@ -42,11 +45,17 @@ export const QuickAdd = ({}: Props) => {
             isAnalyticsFrameworkEnabled
               ? NewDashboardLibraryInteractions.entryPointClicked({
                   entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKinds: isCustomDashboardTemplatesEnabled
+                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                 })
               : DashboardLibraryInteractions.entryPointClicked({
                   entryPoint: SOURCE_ENTRY_POINTS.QUICK_ADD_BUTTON,
-                  contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKind: isCustomDashboardTemplatesEnabled ? undefined : CONTENT_KINDS.TEMPLATE_DASHBOARD,
+                  contentKinds: isCustomDashboardTemplatesEnabled
+                    ? [CONTENT_KINDS.CUSTOM_DASHBOARD_TEMPLATE, CONTENT_KINDS.TEMPLATE_DASHBOARD]
+                    : [CONTENT_KINDS.TEMPLATE_DASHBOARD],
                 });
           },
         };
@@ -60,7 +69,7 @@ export const QuickAdd = ({}: Props) => {
     }
 
     return groups;
-  }, [isAnalyticsFrameworkEnabled, navBarTree]);
+  }, [isAnalyticsFrameworkEnabled, isCustomDashboardTemplatesEnabled, navBarTree]);
 
   const showQuickAdd = actionGroups.some((g) => g.items.length > 0);
 
