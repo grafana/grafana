@@ -18,12 +18,25 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/model/labels"
 
 	"github.com/grafana/grafana/pkg/util/httpclient"
 )
+
+// Hash returns a stable, deterministic hash over the alert's label set.
+// Extension: replaces upstream's Labels.Hash() (xxhash, non-stable across runs) with
+// model.LabelSet.Fingerprint() (FNV-1A over sorted label pairs), matching the fingerprint
+// used by Prometheus Alertmanager so that ruler and AM logs can be correlated directly.
+func (a *Alert) Hash() uint64 {
+	ls := make(model.LabelSet, a.Labels.Len())
+	a.Labels.Range(func(l labels.Label) {
+		ls[model.LabelName(l.Name)] = model.LabelValue(l.Value)
+	})
+	return uint64(ls.Fingerprint())
+}
 
 // String constants for instrumentation.
 const (
@@ -152,6 +165,19 @@ func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Heade
 		if oldAmSet, ok := configToAlertmanagers[hash]; ok {
 			ams.ams = oldAmSet.ams
 			ams.droppedAms = oldAmSet.droppedAms
+			// Extension: If the dataSourceUID changed while the config hash stayed the same
+			// (e.g. datasource recreated at the same URL), delete the old UID's series now.
+			// sync() only deletes via the current dataSourceUID, so the old series would
+			// otherwise leak until process restart.
+			newUID := dataSourceUIDs[k]
+			if oldAmSet.dataSourceUID != newUID {
+				for _, am := range oldAmSet.ams {
+					us := am.url().String()
+					n.metrics.latency.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+					n.metrics.sent.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+					n.metrics.errors.DeleteLabelValues(us, oldAmSet.dataSourceUID)
+				}
+			}
 		}
 
 		// Extension: set the headers to the alertmanager set.
@@ -337,6 +363,13 @@ func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []b
 
 	// Any HTTP status 2xx is OK.
 	if resp.StatusCode/100 != 2 {
+		// Extension: include the response body for 400 Bad Request to aid debugging invalid payloads.
+		if resp.StatusCode == http.StatusBadRequest {
+			body, readErr := io.ReadAll(io.LimitReader(resp.Body, 1024))
+			if readErr == nil {
+				return fmt.Errorf("bad response status %s: %s", resp.Status, body)
+			}
+		}
 		return fmt.Errorf("bad response status %s", resp.Status)
 	}
 

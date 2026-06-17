@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
 func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
-	baseConfig := func() *definitions.PostableUserConfig {
-		return &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "default"},
+	baseConfig := func() *v1.AMConfigV1 {
+		return &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "default"},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{Receiver: definition.Receiver{Name: "default"}},
 				},
 			},
@@ -27,7 +27,7 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		mutate      func(cfg *definitions.PostableUserConfig)
+		mutate      func(cfg *v1.AMConfigV1)
 		policy      string
 		expectError bool
 		errorType   error // nil means just check expectError
@@ -39,16 +39,16 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "managed route is available",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ManagedRoutes = definitions.ManagedRoutes{"custom-route": nil}
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ManagedRoutes = v1.ManagedRoutes{"custom-route": nil}
 			},
 			policy:      "custom-route",
 			expectError: false,
 		},
 		{
 			name: "second managed route is available",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ManagedRoutes = definitions.ManagedRoutes{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ManagedRoutes = v1.ManagedRoutes{
 					"route-a": nil,
 					"route-b": nil,
 				}
@@ -64,8 +64,8 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "first extra config identifier is available",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
 			},
@@ -74,8 +74,8 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "only first extra config is added as route",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 					{Identifier: "extra-2"},
 				}
@@ -92,9 +92,9 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "managed route available alongside extra config",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ManagedRoutes = definitions.ManagedRoutes{"managed-1": nil}
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
 			},
@@ -103,9 +103,9 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "extra config route available alongside managed routes",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ManagedRoutes = definitions.ManagedRoutes{"managed-1": nil}
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
 			},
@@ -114,9 +114,9 @@ func TestNewNotificationSettingsValidator_Routes(t *testing.T) {
 		},
 		{
 			name: "unknown route fails even when other sources exist",
-			mutate: func(cfg *definitions.PostableUserConfig) {
-				cfg.ManagedRoutes = definitions.ManagedRoutes{"managed-1": nil}
-				cfg.ExtraConfigs = []definitions.ExtraConfiguration{
+			mutate: func(cfg *v1.AMConfigV1) {
+				cfg.ManagedRoutes = v1.ManagedRoutes{"managed-1": nil}
+				cfg.ExtraConfigs = []v1.ExtraConfiguration{
 					{Identifier: "extra-1"},
 				}
 			},

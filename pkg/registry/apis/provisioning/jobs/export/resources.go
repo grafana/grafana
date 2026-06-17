@@ -27,26 +27,28 @@ type conversionShim = func(ctx context.Context, item *unstructured.Unstructured)
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start resource export")
-	for _, kind := range resources.SupportedProvisioningResources {
-		// skip from folders as we do them first... so only dashboards
-		if kind == resources.FolderResource {
+	for _, supported := range clients.SupportedResources() {
+		// skip folders as we do them first... so only non-folder kinds here
+		if supported.GroupKind == resources.FolderKind.GroupKind() {
 			continue
 		}
 
-		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-		client, _, err := clients.ForResource(ctx, kind)
+		// Resolve the preferred version + plural resource via discovery.
+		client, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
 		if err != nil {
-			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
+			return fmt.Errorf("get client for %s: %w", supported.Kind, err)
 		}
+
+		progress.SetMessage(ctx, fmt.Sprintf("export %s", gvr.Resource))
 
 		// When requesting dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
 		var shim conversionShim
-		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
-			shim = newDashboardConversionShim(kind, clients)
+		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+			shim = newDashboardConversionShim(gvr, clients)
 		}
 
 		if err := exportResource(ctx, options, client, shim, repositoryResources, progress, generateNewUIDs); err != nil {
-			return fmt.Errorf("export %s: %w", kind.Resource, err)
+			return fmt.Errorf("export %s: %w", gvr.Resource, err)
 		}
 	}
 
@@ -58,72 +60,53 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // (manager-identity skip, conversion shim, UID regeneration) but resolves
 // items via Get rather than listing the namespace.
 //
-// Two ref kinds are supported:
-//   - Dashboard: a single dashboard fetched by UID. Its ancestor folder chain
-//     is materialized in the repository so the dashboard's natural path
-//     resolves; unrelated folders are NOT emitted.
+// Two kinds of reference are handled:
 //   - Folder: the folder itself, every descendant folder, and every unmanaged
-//     dashboard inside the subtree. The folder's own ancestor chain is
-//     materialized so the subtree lands at its natural path rather than the
-//     repository root.
+//     folder-scoped resource inside the subtree. The folder's own ancestor
+//     chain is materialized so the subtree lands at its natural path rather
+//     than the repository root.
+//   - Any other configured kind (dashboard, playlist, …): a single resource
+//     fetched by UID and resolved against its own kind/group via discovery.
+//     Its ancestor folder chain is materialized so it lands at its natural
+//     path; unrelated folders are NOT emitted.
 //
-// The admission validator restricts Resources to those two kinds; anything
-// else surfaces as a per-resource error so a misconfigured caller fails the
-// job rather than silently dropping the reference.
+// A reference whose kind cannot be resolved is recorded as a failed item so a
+// misconfigured caller surfaces in the job summary rather than silently
+// failing.
 func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
-	dashboardRefs, folderRefs, unsupportedRefs := splitExportRefs(options.Resources)
-
-	for _, ref := range unsupportedRefs {
-		// Leave the action unset: the recorder treats FileActionIgnored
-		// results as non-fatal, and we want the caller's bad reference to
-		// escalate the job state.
-		result := jobs.NewGroupKindResult(ref.Name, ref.Group, ref.Kind).
-			WithError(fmt.Errorf("resource kind %q is not supported for export", ref.Kind))
-		progress.Record(ctx, result.Build())
-		if err := progress.TooManyErrors(); err != nil {
-			return err
-		}
-	}
-
-	if len(dashboardRefs) == 0 && len(folderRefs) == 0 {
+	folderRefs, otherRefs := splitFolderRefs(options.Resources)
+	if len(folderRefs) == 0 && len(otherRefs) == 0 {
 		return nil
 	}
 
-	dashboardGVK := schema.GroupVersionKind{
-		Group: resources.DashboardKind.Group,
-		Kind:  resources.DashboardKind.Kind,
-	}
-	dashClient, dashGVR, err := clients.ForKind(ctx, dashboardGVK)
-	if err != nil {
-		return fmt.Errorf("get dashboard client: %w", err)
-	}
-	shim := newDashboardConversionShim(dashGVR, clients)
-
-	// Load the unmanaged folder tree once: dashboard refs use it to walk
-	// their ancestor chain, folder refs use it to compute the descendant
-	// subtree. Managed folders are filtered out so we never try to write
-	// over a folder owned by another repository.
+	// Load the unmanaged folder tree once: non-folder refs use it to walk their
+	// ancestor chain, folder refs use it to compute the descendant subtree.
+	// Managed folders are filtered out so we never write over a folder owned by
+	// another repository.
 	progress.SetMessage(ctx, "load folder tree for selective export")
 	folderTree, err := loadUnmanagedFolderTree(ctx, folderClient)
 	if err != nil {
 		return err
 	}
 
-	// Resolve dashboard refs into items. Failures are recorded per-ref and
-	// the rest of the export proceeds; ancestor folders of resolved
-	// dashboards are tracked so the materialization step below covers them.
-	dashboardItems, requiredFolders, err := resolveDashboardRefs(ctx, dashboardRefs, folderTree, dashClient, progress)
+	requiredFolders := make(map[string]struct{})
+
+	// Resolve non-folder refs into items (any configured kind, via discovery).
+	// Each resolved item's ancestor folder chain is added to requiredFolders so
+	// the materialization step covers its natural path; seen tracks the resolved
+	// identities so the folder-subtree scan below does not re-export them.
+	resolvedItems, seen, err := resolveResourceRefs(ctx, otherRefs, clients, folderTree, progress, requiredFolders)
 	if err != nil {
 		return err
 	}
 
-	// Resolve folder refs into root UIDs. Each ref is verified to exist and
-	// to be unmanaged. The ancestor chain of every accepted root is added to
+	// Resolve folder refs into root UIDs. Each ref is verified to exist and to
+	// be unmanaged. The ancestor chain of every accepted root is added to
 	// requiredFolders so the subtree materializes at its natural path; the
 	// subtree itself is collected via CollectSubtreeIDs and tracked separately
-	// so the dashboard scan can filter by membership.
+	// so the resource scan can filter by membership.
 	folderRootIDs, err := resolveFolderRefs(ctx, folderRefs, folderTree, folderClient, progress, requiredFolders)
 	if err != nil {
 		return err
@@ -157,46 +140,16 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		}
 	}
 
-	// Write resolved dashboard refs and remember their UIDs so the folder-scan
-	// pass below does not re-export them. Without this dedupe a request that
-	// mixes a Dashboard ref and a Folder ref containing that same dashboard
-	// would write the dashboard twice — and with generateNewUIDs=true each
-	// pass would generate a different metadata.name, producing two distinct
-	// repository files for the same source dashboard.
-	exportedDashboardUIDs := make(map[string]struct{}, len(dashboardItems))
-	for _, item := range dashboardItems {
-		exportedDashboardUIDs[item.GetName()] = struct{}{}
-		if err := exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
+	// Write the resolved non-folder refs.
+	for _, ri := range resolvedItems {
+		if err := exportItem(ctx, ri.item, options, ri.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
 			return err
 		}
 	}
 
-	// Walk all dashboards once and write any whose folder annotation lands in
-	// a requested subtree. Skip UIDs already written via an explicit Dashboard
-	// ref above so the subtree pass cannot duplicate or shadow them.
+	// Export every folder-scoped resource inside the requested subtrees.
 	if len(folderRootIDs) > 0 {
-		progress.SetMessage(ctx, "export dashboards in selected folders")
-		if err := resources.ForEach(ctx, dashClient, func(item *unstructured.Unstructured) error {
-			if _, already := exportedDashboardUIDs[item.GetName()]; already {
-				return nil
-			}
-			meta, err := utils.MetaAccessor(item)
-			if err != nil {
-				// Mirror exportItem's MetaAccessor handling: record the
-				// failure on the job summary as an Ignored action and keep
-				// going. Returning the error here would abort ForEach and
-				// fail the entire export over a single malformed dashboard.
-				result := jobs.NewGVKResult(item.GetName(), item.GroupVersionKind()).
-					WithAction(repository.FileActionIgnored).
-					WithError(fmt.Errorf("extract meta accessor for dashboard %s: %w", item.GetName(), err))
-				progress.Record(ctx, result.Build())
-				return nil
-			}
-			if _, in := subtreeIDs[meta.GetFolder()]; !in {
-				return nil
-			}
-			return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true)
-		}); err != nil {
+		if err := exportSubtreeResources(ctx, clients, subtreeIDs, seen, options, repositoryResources, progress, generateNewUIDs); err != nil {
 			return err
 		}
 	}
@@ -204,19 +157,14 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 	return nil
 }
 
-// splitExportRefs partitions Resources into dashboard, folder, and
-// unsupported buckets. The validator should reject unsupported kinds before
-// admission, but we still classify them here so a request that bypasses
-// admission produces a recorded error rather than a panic or silent skip.
-func splitExportRefs(refs []provisioning.ResourceRef) (dashboards, folders, unsupported []provisioning.ResourceRef) {
+// splitFolderRefs partitions Resources into Folder refs (handled recursively)
+// and everything else (resolved individually against their own kind).
+func splitFolderRefs(refs []provisioning.ResourceRef) (folders, others []provisioning.ResourceRef) {
 	for _, ref := range refs {
-		switch ref.Kind {
-		case resources.DashboardKind.Kind:
-			dashboards = append(dashboards, ref)
-		case resources.FolderKind.Kind:
+		if ref.Kind == resources.FolderKind.Kind {
 			folders = append(folders, ref)
-		default:
-			unsupported = append(unsupported, ref)
+		} else {
+			others = append(others, ref)
 		}
 	}
 	return
@@ -246,40 +194,68 @@ func loadUnmanagedFolderTree(ctx context.Context, folderClient dynamic.ResourceI
 	return tree, nil
 }
 
-// resolveDashboardRefs Get-fetches every Dashboard ref. Items that fail to
-// resolve (not found, transport error, mismatched group) are recorded as
-// non-Ignored errors so the job state escalates. For each resolved dashboard
-// the ancestor folder chain is added to the requiredFolders set so the
-// materialization step covers the dashboard's natural path.
-func resolveDashboardRefs(ctx context.Context,
-	refs []provisioning.ResourceRef,
-	folderTree resources.FolderTree,
-	dashClient dynamic.ResourceInterface,
-	progress jobs.JobProgressRecorder,
-) ([]*unstructured.Unstructured, map[string]struct{}, error) {
-	requiredFolders := make(map[string]struct{})
-	resolved := make([]*unstructured.Unstructured, 0, len(refs))
-	for _, ref := range refs {
-		result := jobs.NewGroupKindResult(ref.Name, resources.DashboardKind.Group, resources.DashboardKind.Kind)
+// resolvedItem pairs an item resolved from an explicit reference with the
+// conversion shim (if any) needed to write it in its stored apiVersion.
+type resolvedItem struct {
+	item *unstructured.Unstructured
+	shim conversionShim
+}
 
-		// Defense in depth: admission rejects mismatched kind/group pairs, but
-		// a request that bypasses admission must not be silently processed
-		// against the wrong resource type.
-		if ref.Group != "" && ref.Group != resources.DashboardResource.Group {
-			result.WithError(fmt.Errorf("dashboard ref %q has group %q; expected %q", ref.Name, ref.Group, resources.DashboardResource.Group))
-			progress.Record(ctx, result.Build())
-			if err := progress.TooManyErrors(); err != nil {
-				return nil, nil, err
+// resolveResourceRefs resolves each non-folder reference against its own
+// kind/group via discovery, caching the per-kind client and (for dashboards)
+// the conversion shim so repeated references to the same kind don't re-run
+// discovery. Items that fail to resolve (unknown kind, not found, transport
+// error) are recorded as non-Ignored errors so the job state escalates.
+//
+// For each resolved item the ancestor folder chain is added to requiredFolders
+// so the materialization step covers its natural path. The returned seen set
+// (keyed by group/kind/name) lets the folder-subtree scan skip resources that
+// were already written via an explicit reference.
+func resolveResourceRefs(ctx context.Context,
+	refs []provisioning.ResourceRef,
+	clients resources.ResourceClients,
+	folderTree resources.FolderTree,
+	progress jobs.JobProgressRecorder,
+	requiredFolders map[string]struct{},
+) ([]resolvedItem, map[string]struct{}, error) {
+	type resolvedKind struct {
+		client dynamic.ResourceInterface
+		gvr    schema.GroupVersionResource
+		shim   conversionShim
+	}
+	clientsByKind := make(map[schema.GroupVersionKind]resolvedKind)
+	items := make([]resolvedItem, 0, len(refs))
+	seen := make(map[string]struct{}, len(refs))
+
+	for _, ref := range refs {
+		result := jobs.NewGroupKindResult(ref.Name, ref.Group, ref.Kind)
+		gvk := schema.GroupVersionKind{Group: ref.Group, Kind: ref.Kind}
+
+		rk, ok := clientsByKind[gvk]
+		if !ok {
+			client, gvr, err := clients.ForKind(ctx, gvk)
+			if err != nil {
+				result.WithError(fmt.Errorf("resolve client for kind %q: %w", kindLabel(ref.Kind), err))
+				progress.Record(ctx, result.Build())
+				if err := progress.TooManyErrors(); err != nil {
+					return nil, nil, err
+				}
+				continue
 			}
-			continue
+			rk = resolvedKind{client: client, gvr: gvr}
+			// Dashboards may need their original apiVersion preserved on export.
+			if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+				rk.shim = newDashboardConversionShim(gvr, clients)
+			}
+			clientsByKind[gvk] = rk
 		}
 
-		item, err := dashClient.Get(ctx, ref.Name, metav1.GetOptions{})
+		item, err := rk.client.Get(ctx, ref.Name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				result.WithError(fmt.Errorf("dashboard %q not found", ref.Name))
+				result.WithError(fmt.Errorf("%s %q not found", kindLabel(ref.Kind), ref.Name))
 			} else {
-				result.WithError(fmt.Errorf("get dashboard %q: %w", ref.Name, err))
+				result.WithError(fmt.Errorf("get %s %q: %w", kindLabel(ref.Kind), ref.Name, err))
 			}
 			progress.Record(ctx, result.Build())
 			if err := progress.TooManyErrors(); err != nil {
@@ -288,18 +264,19 @@ func resolveDashboardRefs(ctx context.Context,
 			continue
 		}
 
-		resolved = append(resolved, item)
-		meta, mErr := utils.MetaAccessor(item)
-		if mErr != nil {
-			// MetaAccessor failure during ancestor collection is non-fatal:
-			// exportItem will surface it on the write attempt.
-			continue
-		}
-		for _, id := range resources.CollectAncestorIDs(folderTree, meta.GetFolder()) {
-			requiredFolders[id] = struct{}{}
+		items = append(items, resolvedItem{item: item, shim: rk.shim})
+		seen[resourceKey(rk.gvr.Group, ref.Kind, item.GetName())] = struct{}{}
+
+		// Collect the ancestor folder chain so the materialization step writes
+		// the directories the item's natural path depends on. A MetaAccessor
+		// failure here is non-fatal: exportItem surfaces it on the write.
+		if meta, mErr := utils.MetaAccessor(item); mErr == nil {
+			for _, id := range resources.CollectAncestorIDs(folderTree, meta.GetFolder()) {
+				requiredFolders[id] = struct{}{}
+			}
 		}
 	}
-	return resolved, requiredFolders, nil
+	return items, seen, nil
 }
 
 // resolveFolderRefs verifies each Folder ref against the loaded tree and via
@@ -386,9 +363,65 @@ func resolveFolderRefs(ctx context.Context,
 	return rootIDs, nil
 }
 
+// exportSubtreeResources walks every folder-scoped supported resource kind and
+// exports each item whose folder annotation lands inside one of the requested
+// subtrees. Items already written via an explicit ref (in seen) are skipped so
+// a resource named both directly and via its folder is not exported twice.
+func exportSubtreeResources(ctx context.Context,
+	clients resources.ResourceClients,
+	subtreeIDs map[string]struct{},
+	seen map[string]struct{},
+	options provisioning.ExportJobOptions,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	generateNewUIDs bool,
+) error {
+	progress.SetMessage(ctx, "export resources in selected folders")
+	for _, supported := range clients.SupportedResources() {
+		// Folders themselves are materialized via the scoped tree; only their
+		// folder-scoped contents are exported here.
+		if supported.GroupKind == resources.FolderKind.GroupKind() || !supported.IsFolderScoped() {
+			continue
+		}
+
+		client, gvr, err := clients.ForKind(ctx, schema.GroupVersionKind{Group: supported.Group, Kind: supported.Kind})
+		if err != nil {
+			return fmt.Errorf("get client for %s: %w", supported.Kind, err)
+		}
+		var shim conversionShim
+		if gvr.GroupResource() == resources.DashboardResource.GroupResource() {
+			shim = newDashboardConversionShim(gvr, clients)
+		}
+
+		if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				// Mirror exportItem's MetaAccessor handling: record the failure
+				// as an Ignored result and keep going. Returning the error here
+				// would abort the scan over a single malformed resource.
+				result := jobs.NewGVKResult(item.GetName(), item.GroupVersionKind()).
+					WithAction(repository.FileActionIgnored).
+					WithError(fmt.Errorf("extract meta accessor for %s %s: %w", kindLabel(supported.Kind), item.GetName(), err))
+				progress.Record(ctx, result.Build())
+				return nil
+			}
+			if _, in := subtreeIDs[meta.GetFolder()]; !in {
+				return nil
+			}
+			if _, already := seen[resourceKey(supported.Group, supported.Kind, item.GetName())]; already {
+				return nil
+			}
+			return exportItem(ctx, item, options, shim, repositoryResources, progress, generateNewUIDs, true)
+		}); err != nil {
+			return fmt.Errorf("export %s in selected folders: %w", gvr.Resource, err)
+		}
+	}
+	return nil
+}
+
 // materializeScopedFolders writes only the folders in requiredFolders to the
 // repository (and registers them in the FolderManager's tree so subsequent
-// dashboard writes resolve their paths). Each folder write is recorded via
+// resource writes resolve their paths). Each folder write is recorded via
 // progress; a write failure escalates the job through the standard
 // TooManyErrors path.
 func materializeScopedFolders(ctx context.Context,
@@ -420,6 +453,22 @@ func materializeScopedFolders(ctx context.Context,
 	return nil
 }
 
+// resourceKey builds the dedupe key shared between the explicit-ref pass and
+// the folder-subtree scan: group + kind + name uniquely identifies a resource.
+func resourceKey(group, kind, name string) string {
+	return group + "/" + kind + "/" + name
+}
+
+// kindLabel returns a human-readable label for a resource kind, falling back to
+// a generic noun when the kind is unset so user-facing messages still read
+// correctly.
+func kindLabel(kind string) string {
+	if kind == "" {
+		return "resource"
+	}
+	return kind
+}
+
 func exportResource(ctx context.Context,
 	options provisioning.ExportJobOptions,
 	client dynamic.ResourceInterface,
@@ -437,7 +486,7 @@ func exportResource(ctx context.Context,
 
 // exportItem writes a single resource to the repository, applying the shared
 // ignore/shim/UID-regen rules. When explicitlyRequested is true, a managed
-// resource produces an error: the caller named a dashboard that cannot be
+// resource produces an error: the caller named a resource that cannot be
 // exported, so the job should surface that failure rather than silently
 // dropping it. The bulk path keeps the quiet ignore since encountering
 // managed resources is expected when iterating the whole namespace.
@@ -454,6 +503,10 @@ func exportItem(ctx context.Context,
 	name := item.GetName()
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(repository.FileActionCreated)
 
+	// Derive a human name from the item's kind so user-facing messages read
+	// correctly for any exported resource, not just dashboards.
+	kindName := kindLabel(gvk.Kind)
+
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		metaError := fmt.Errorf("extracting meta accessor for resource %s: %w", name, err)
@@ -467,7 +520,7 @@ func exportItem(ctx context.Context,
 		if explicitlyRequested {
 			// Leave the default action in place: the recorder discards errors
 			// on FileActionIgnored results, and we want this failure to count.
-			resultBuilder.WithError(fmt.Errorf("dashboard %q is managed by %q and cannot be exported", name, manager.Identity))
+			resultBuilder.WithError(fmt.Errorf("%s %q is managed by %q and cannot be exported", kindName, name, manager.Identity))
 			progress.Record(ctx, resultBuilder.Build())
 			return progress.TooManyErrors()
 		}

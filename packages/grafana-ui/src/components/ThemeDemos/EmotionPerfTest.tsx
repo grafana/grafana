@@ -27,7 +27,7 @@ export function EmotionPerfTest() {
   );
 }
 
-export const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
+const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
   const [render, setRender] = useState(0);
 
   return (

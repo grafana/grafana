@@ -136,7 +136,7 @@ func getInstanceAttributeValue(attributeName string, instance ec2types.Instance)
 		attributePath := strings.Split(attributeName, ".")
 		v := reflect.ValueOf(instance)
 		for _, key := range attributePath {
-			if v.Kind() == reflect.Ptr {
+			if v.Kind() == reflect.Pointer {
 				if v.IsNil() {
 					return "", false, nil
 				}
@@ -151,7 +151,7 @@ func getInstanceAttributeValue(attributeName string, instance ec2types.Instance)
 			}
 		}
 
-		if v.Kind() == reflect.Ptr && v.IsNil() {
+		if v.Kind() == reflect.Pointer && v.IsNil() {
 			return "", false, nil
 		}
 		if v.Kind() == reflect.String {
@@ -165,7 +165,7 @@ func getInstanceAttributeValue(attributeName string, instance ec2types.Instance)
 			data = attr.String()
 		} else if _, ok := v.Interface().(*bool); ok {
 			data = fmt.Sprint(v.Elem().Bool())
-		} else if v.Kind() == reflect.Ptr && v.Elem().CanInt() {
+		} else if v.Kind() == reflect.Pointer && v.Elem().CanInt() {
 			data = fmt.Sprint(v.Elem().Int())
 		} else {
 			return "", false, errors.New("cannot parse attribute")

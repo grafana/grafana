@@ -24,6 +24,8 @@ import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -66,7 +68,7 @@ export function SaveProvisionedDashboardForm({
     register,
     setValue,
     getValues,
-    formState: { dirtyFields },
+    formState: { dirtyFields, isSubmitting, isValidating },
   } = methods;
 
   const path = watch('path');
@@ -233,7 +235,15 @@ export function SaveProvisionedDashboardForm({
     //   ref = loadedFromRef;
     // }
 
-    const message = comment || `Save dashboard: ${dashboard.state.title}`;
+    const message = getSingleResourceCommitMessage({
+      comment,
+      repository,
+      action: isNew ? 'create' : 'update',
+      resourceKind: 'dashboard',
+      resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+      title: dashboard.state.title ?? '',
+      ...getCurrentCommitUser(),
+    });
 
     const body = rawDashboardJSON
       ? dashboard.getSaveResourceFromSpec(rawDashboardJSON)
@@ -361,8 +371,12 @@ export function SaveProvisionedDashboardForm({
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
-              {request.isLoading
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+            >
+              {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
             </Button>

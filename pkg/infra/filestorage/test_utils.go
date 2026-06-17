@@ -145,7 +145,7 @@ type queryListFolders struct {
 }
 
 func interfaceName(myvar interface{}) string {
-	if t := reflect.TypeOf(myvar); t.Kind() == reflect.Ptr {
+	if t := reflect.TypeOf(myvar); t.Kind() == reflect.Pointer {
 		return "*" + t.Elem().Name()
 	} else {
 		return t.Name()

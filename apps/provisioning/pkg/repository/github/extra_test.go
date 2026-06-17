@@ -21,6 +21,8 @@ type mockSecureValues struct {
 	tokenErr      error
 	webhookSecret common.RawSecureValue
 	webhookErr    error
+	signingKey    common.RawSecureValue
+	signingErr    error
 }
 
 func (m *mockSecureValues) Token(_ context.Context) (common.RawSecureValue, error) {
@@ -31,8 +33,12 @@ func (m *mockSecureValues) WebhookSecret(_ context.Context) (common.RawSecureVal
 	return m.webhookSecret, m.webhookErr
 }
 
+func (m *mockSecureValues) CommitSigningKey(_ context.Context) (common.RawSecureValue, error) {
+	return m.signingKey, m.signingErr
+}
+
 func TestExtra_Type(t *testing.T) {
-	e := github.Extra(nil, nil, nil, false)
+	e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false)
 	assert.Equal(t, provisioning.GitHubRepositoryType, e.Type())
 }
 
@@ -163,6 +169,37 @@ func TestExtra_Build(t *testing.T) {
 			},
 		},
 		{
+			name: "skip webhook setup when webhookDisabled is true",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:             "https://github.com/test/repo",
+						Branch:          "main",
+						WebhookDisabled: true,
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token: common.RawSecureValue("test-token"),
+					}
+				}
+			},
+			// The builder must not be called when webhookDisabled is set, so no expectations.
+			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
+				return github.NewMockWebhookURLBuilder(t)
+			},
+			validateResult: func(t *testing.T, repo repository.Repository) {
+				assert.NotNil(t, repo)
+			},
+		},
+		{
 			name: "skip webhook setup when URL is empty",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -224,6 +261,68 @@ func TestExtra_Build(t *testing.T) {
 			expectedError: "decrypt webhookSecret",
 		},
 		{
+			name: "error decrypting signing key",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Commit: &provisioning.CommitOptions{
+						SigningMethod: provisioning.SSHSigningMethod,
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token:      common.RawSecureValue("test-token"),
+						signingErr: errors.New("signing key decryption failed"),
+					}
+				}
+			},
+			setupWebhook:  func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder { return nil },
+			expectedError: "unable to decrypt signing key",
+		},
+		{
+			name: "success with commit signing",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Commit: &provisioning.CommitOptions{
+						SigningMethod: provisioning.SSHSigningMethod,
+					},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token:      common.RawSecureValue("test-token"),
+						signingKey: common.RawSecureValue("ssh-key"),
+					}
+				}
+			},
+			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
+				return nil
+			},
+			validateResult: func(t *testing.T, repo repository.Repository) {
+				assert.NotNil(t, repo)
+			},
+		},
+		{
 			name: "success with custom path",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
@@ -263,7 +362,7 @@ func TestExtra_Build(t *testing.T) {
 			webhookBuilder := tt.setupWebhook(t, tt.repo)
 			factory := github.ProvideFactory()
 
-			e := github.Extra(decrypter, factory, webhookBuilder, false)
+			e := github.Extra(decrypter, factory, webhookBuilder, repository.IncrementalSyncPolicy{}, false)
 
 			result, err := e.Build(ctx, tt.repo)
 
@@ -393,7 +492,7 @@ func TestExtra_Mutate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			e := github.Extra(nil, nil, nil, false)
+			e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false)
 
 			err := e.Mutate(ctx, tt.obj)
 

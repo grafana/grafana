@@ -16,8 +16,10 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 import { joinPath } from '../utils/path';
@@ -145,7 +147,15 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       ref,
       name: repoName,
       path,
-      message: comment || `Create folder: ${title}`,
+      message: getSingleResourceCommitMessage({
+        comment,
+        repository,
+        action: 'create',
+        resourceKind: 'folder',
+        resourceID: '',
+        title,
+        ...getCurrentCommitUser(),
+      }),
       body: folderModel,
     });
   };
@@ -230,35 +240,33 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 }
 
 export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
-  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData(
-    {
+  const { canPushToConfiguredBranch, repository, folder, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
+    useProvisionedFolderFormData({
       folderUid: parentFolder?.uid,
       title: '', // Empty title for new folders
-    }
-  );
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.new-folder.read-only-message',
-          'To create this folder, please add the resource in your repository directly.'
-        )}
-      />
-    );
-  }
+    });
 
   return (
-    <FormContent
-      parentFolder={parentFolder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-      folder={folder}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.new-folder.read-only-message',
+        'To create this folder, please add the resource in your repository directly.'
+      )}
+    >
+      {initialValues && (
+        <FormContent
+          parentFolder={parentFolder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+          folder={folder}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }
 

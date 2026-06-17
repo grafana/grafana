@@ -275,13 +275,27 @@ export function mockDashboardApi(server: SetupServer) {
         (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
       );
 
-      server.use(
-        http.get(`/api/search`, () => HttpResponse.json(results)),
-        getCustomSearchHandler([...folderHits, ...dashboards])
-      );
+      server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
     dashboard: (response: DashboardDTO) => {
-      server.use(http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)));
+      const k8sResponse = {
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardWithAccessInfo',
+        metadata: {
+          name: response.dashboard.uid ?? '',
+          generation: response.dashboard.version ?? 1,
+          creationTimestamp: new Date().toISOString(),
+        },
+        access: response.meta,
+        spec: response.dashboard,
+      };
+      server.use(
+        http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)),
+        http.get(
+          `/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/${response.dashboard.uid}/dto`,
+          () => HttpResponse.json(k8sResponse)
+        )
+      );
     },
   };
 }

@@ -12,14 +12,16 @@ import (
 	"k8s.io/apiserver/pkg/authentication/user"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/resources"
 )
 
 func TestValidateJob(t *testing.T) {
 	tests := []struct {
-		name          string
-		job           *provisioning.Job
-		wantErr       bool
-		validateError func(t *testing.T, err error)
+		name               string
+		job                *provisioning.Job
+		supportedResources []provisioning.SupportedResource
+		wantErr            bool
+		validateError      func(t *testing.T, err error)
 	}{
 		{
 			name: "valid pull job",
@@ -458,7 +460,8 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            false,
 		},
 		{
 			name: "migrate action with unsupported kind",
@@ -475,8 +478,7 @@ func TestValidateJob(t *testing.T) {
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.migrate.resources[0].kind")
-				require.Contains(t, err.Error(), "Dashboard")
-				require.Contains(t, err.Error(), "Folder")
+				require.Contains(t, err.Error(), "kind is not supported for export")
 			},
 		},
 		{
@@ -726,7 +728,8 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            false,
 		},
 		{
 			name: "push action with Folder kind without explicit group",
@@ -740,7 +743,8 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            false,
 		},
 		{
 			name: "push action with mixed Dashboard and Folder refs",
@@ -757,7 +761,8 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            false,
 		},
 		{
 			name: "push action with Folder kind and dashboard group is rejected",
@@ -771,10 +776,11 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.push.resources[0].group")
-				require.Contains(t, err.Error(), "folder.grafana.app")
+				require.Contains(t, err.Error(), "is not supported for kind Folder")
 			},
 		},
 		{
@@ -789,9 +795,11 @@ func TestValidateJob(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			supportedResources: dashboardAndFolderResources(),
+			wantErr:            true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "kind is not supported for export")
 				require.Contains(t, err.Error(), "Dashboard")
 				require.Contains(t, err.Error(), "Folder")
 			},
@@ -811,6 +819,104 @@ func TestValidateJob(t *testing.T) {
 			wantErr: true,
 			validateError: func(t *testing.T, err error) {
 				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+			},
+		},
+		{
+			name: "push action with configured non-dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "pl-1", Kind: "Playlist"},
+							{Name: "pl-2", Kind: "Playlist", Group: "playlist.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate action with configured non-dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with kind absent from configured set",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1", Kind: "Dashboard"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "kind is not supported for export")
+			},
+		},
+		{
+			name: "push action with disabled supported kind is rejected",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist", Disabled: true},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+			},
+		},
+		{
+			name: "migrate action with wrong group for configured kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist", Group: "wrong.grafana.app"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].group")
 			},
 		},
 		{
@@ -887,7 +993,7 @@ func TestValidateJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateJob(tt.job)
+			err := ValidateJob(tt.job, tt.supportedResources)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.validateError != nil {
@@ -897,6 +1003,17 @@ func TestValidateJob(t *testing.T) {
 				require.NoError(t, err)
 			}
 		})
+	}
+}
+
+// dashboardAndFolderResources is the supported-resource set used by the
+// folder-export validation cases: both Dashboard and Folder are active, each
+// registered under its own group. Mirrors the production default in
+// resources.SupportedProvisioningResources.
+func dashboardAndFolderResources() []provisioning.SupportedResource {
+	return []provisioning.SupportedResource{
+		{Group: resources.DashboardResource.Group, Kind: resources.DashboardKind.Kind},
+		{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind},
 	}
 }
 
@@ -966,7 +1083,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator()
+			v := NewAdmissionValidator(nil)
 
 			var obj runtime.Object
 			if tt.obj != nil {

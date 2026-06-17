@@ -288,6 +288,14 @@ func (s *Service) handleTagValues(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	for _, segment := range strings.Split(tag, "/") {
+		if segment == "." || segment == ".." {
+			s.logger.Error("Invalid tag parameter", "tag", tag)
+			http.Error(rw, "Invalid 'tag' parameter", http.StatusBadRequest)
+			return
+		}
+	}
+
 	tempoPath := fmt.Sprintf("api/v2/search/tag/%s/values", tag)
 	s.proxyToTempo(rw, req, tempoPath)
 }
@@ -346,7 +354,7 @@ func (s *Service) proxyToTempo(rw http.ResponseWriter, req *http.Request, tempoP
 	}
 
 	// Make the request to Tempo
-	resp, err := dsInfo.HTTPClient.Do(httpReq)
+	resp, err := dsInfo.HTTPClient.Do(httpReq) // #nosec G704 -- datasource client targets operator-configured URL
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
   type SceneObject,
@@ -18,6 +18,7 @@ import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardSidebarPane } from '../../edit-pane/types';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -50,11 +51,10 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
   }
 }
 
-export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
-  const dashboard = getDashboardSceneFor(model);
-
+function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
+      const dashboard = getDashboardSceneFor(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
       const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
@@ -71,18 +71,16 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
       } else {
-        DashboardInteractions.sectionVariableTypeSelected({ type });
+        const sectionOwnerType = isRowItem(sectionOwner) ? 'row' : isTabItem(sectionOwner) ? 'tab' : undefined;
+        DashboardInteractions.sectionVariableTypeSelected({ type, sectionOwner: sectionOwnerType });
       }
     },
-    [model, dashboard]
+    [model]
   );
 
   return (
     <>
-      <Sidebar.PaneHeader
-        title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')}
-        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onAddVariable} />
       </Box>
@@ -113,11 +111,11 @@ export function openChangeVariableTypePane(variable: SceneVariable) {
 
 function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableTypeChangePane>) {
   const variable = model.state.variableRef.resolve();
-  const dashboard = getDashboardSceneFor(variable);
 
   const onChangeVariableType = useCallback(
     (type: EditableVariableType) => {
       const variableSet = variable.parent;
+      const dashboard = getDashboardSceneFor(variable);
 
       if (!(variableSet instanceof SceneVariableSet)) {
         return;
@@ -142,15 +140,12 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
 
       DashboardInteractions.variableTypeChanged({ old: variable.state.type, new: newVariable.state.type });
     },
-    [variable, dashboard]
+    [variable]
   );
 
   return (
     <>
-      <Sidebar.PaneHeader
-        title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')}
-        onGoBack={dashboard.state.editPane.getOnGetBackCallback()}
-      />
+      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onChangeVariableType} />
       </Box>
@@ -158,15 +153,12 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   );
 }
 
-export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
+function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={0}>
-      <Box paddingBottom={1} display={'flex'}>
-        <Trans i18nKey="dashboard.edit-pane.variables.select-type">Choose variable type</Trans>
-      </Box>
       <Stack direction="column" gap={1}>
         {options.map((option) => (
           <Card

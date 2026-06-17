@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export interface ExploreProps extends Themeable2 {
+interface ExploreProps extends Themeable2 {
   exploreId: string;
   theme: GrafanaTheme2;
   eventBus: EventBus;

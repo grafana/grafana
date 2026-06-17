@@ -1,12 +1,7 @@
 import { type MetricFindValue, type TimeRange } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  type AdHocFilterWithLabels,
-  type AdHocFiltersVariable,
-  type GroupByVariable,
-  sceneGraph,
-} from '@grafana/scenes';
+import { type AdHocFilterWithLabels, type AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 
 import { COMBINED_FILTER_LABEL_KEYS, DATASOURCE_UID, METRIC_NAME } from '../constants';
 
@@ -24,6 +19,13 @@ const GROUPBY_PROMOTED: MetricFindValue[] = [
   { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
   { value: 'cluster', text: 'Cluster', group: COMMON_GROUP },
   { value: 'namespace', text: 'Namespace', group: COMMON_GROUP },
+];
+
+/** Labels promoted to the top of the ad-hoc Filters dropdown (aligned with triage sidebar copy) */
+const FILTERS_PROMOTED: MetricFindValue[] = [
+  { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
+  { value: 'alertstate', text: 'State', group: COMMON_GROUP },
+  { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
 ];
 
 /** Labels that should never appear in dropdowns */
@@ -91,21 +93,21 @@ async function buildTagKeysResult(
 }
 
 /**
- * Provider for the GroupBy variable.
+ * Provider for the groupBy keys inside the unified AdHocFiltersVariable.
  * Shows promoted labels first, then remaining datasource labels alphabetically.
  */
-export function getGroupByTagKeysProvider(variable: GroupByVariable, _currentKey: string | null) {
+export function getGroupByTagKeysProvider(variable: AdHocFiltersVariable, _currentKey?: string | null) {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;
   return buildTagKeysResult(timeRange, GROUPBY_PROMOTED);
 }
 
 /**
  * Provider for the AdHoc Filters variable.
- * Returns datasource labels under the "All" group.
+ * Shows promoted labels first, then remaining datasource labels alphabetically under "All".
  */
 export function getAdHocTagKeysProvider(variable: AdHocFiltersVariable, _currentKey: string | null) {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;
-  return buildTagKeysResult(timeRange);
+  return buildTagKeysResult(timeRange, FILTERS_PROMOTED);
 }
 
 /**

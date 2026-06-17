@@ -11,33 +11,24 @@ type SetupFixtures = Pick<Parameters<Parameters<typeof test>[2]>[0], 'gotoDashbo
 
 async function setupGeomapWithAirportsGeoJSON({ gotoDashboardPage, selectors, page }: SetupFixtures) {
   const dashboardPage = await gotoDashboardPage({});
-  await dashboardPage.addPanel();
+  const editPage = await dashboardPage.addPanel();
 
   // Select Geomap visualization — handle case where viz picker may be auto-opened
-  const vizPicker = dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.toggleVizPicker);
-  if (await vizPicker.filter({ hasText: 'Back' }).isVisible()) {
-    await vizPicker.click({ force: true });
-  }
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Visualizations')).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.PluginVisualization.item('Geomap')).click();
-  await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header)).toHaveText(
-    'Geomap',
-    { timeout: 10000 }
-  );
+  await editPage.setVisualization('Geomap');
 
   // Switch the map layer type to GeoJSON
-  const layerTypeField = dashboardPage.getByGrafanaSelector(
+  const layerTypeField = editPage.getByGrafanaSelector(
     selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_TYPE)
   );
   const layerTypeInput = layerTypeField.locator('input');
   await layerTypeInput.fill('GeoJSON');
   await layerTypeInput.press('Enter');
   await expect(
-    dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
+    editPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
   ).toBeVisible();
 
   // Select airports.geojson as the data source (contains Point features)
-  const geojsonUrlInput = dashboardPage
+  const geojsonUrlInput = editPage
     .getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
     .locator('input');
   await geojsonUrlInput.fill(AIRPORTS_GEOJSON_URL);
@@ -90,8 +81,8 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(MAP_LAYERS_GEOJSON))
       ).toBeVisible();
 
-      // Open Street Map
-      await input.fill('Open Street Map');
+      // OpenStreetMap
+      await input.fill('OpenStreetMap');
       await input.press('Enter');
       await expect(page.locator('[data-testid="layer-drag-drop-list"]')).toContainText('osm-standard');
       await expect(

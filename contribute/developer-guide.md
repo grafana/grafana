@@ -63,6 +63,20 @@ make lefthook-uninstall
 
 > We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
 
+### Knip
+
+We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
+
+```sh
+yarn knip
+```
+
+In some cases, fixes can be automatically applied:
+
+```sh
+yarn knip:fix
+```
+
 ## Build Grafana
 
 When building Grafana, be aware that it consists of two components:
@@ -105,7 +119,6 @@ If you want to contribute to any of the plugins listed below (that are found wit
 - mysql
 - parca
 - tempo
-- zipkin
 - loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
@@ -193,7 +206,7 @@ make build
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
 
-Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 

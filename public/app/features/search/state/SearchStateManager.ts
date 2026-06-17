@@ -36,7 +36,7 @@ export const initialState: SearchState = {
   createdBy: undefined,
 };
 
-export const defaultQueryParams: SearchQueryParams = {
+const defaultQueryParams: SearchQueryParams = {
   sort: null,
   starred: null,
   query: null,
@@ -231,10 +231,12 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onLayoutChange = (layout: SearchLayout) => {
     store.set(this.layoutStorageKey, layout);
 
-    if (this.state.sort && layout === SearchLayout.Folders) {
+    if (layout === SearchLayout.Folders) {
+      // Folders never has sort. Stash current sort so List can restore it later.
       this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
     } else {
-      this.setStateAndDoSearch({ layout, sort: this.state.prevSort });
+      // List: keep current sort if set, otherwise restore prevSort.
+      this.setStateAndDoSearch({ layout, sort: this.state.sort ?? this.state.prevSort });
     }
   };
 
@@ -354,7 +356,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
 let stateManager: SearchStateManager;
 
-export function getSearchStateManager() {
+function getSearchStateManager() {
   if (!stateManager) {
     const layout = getLayoutFromStore(SEARCH_SELECTED_LAYOUT);
 

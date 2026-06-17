@@ -58,8 +58,6 @@ export {
   replaceCachedPromise,
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
-export { defineFeatureEvents } from './analyticsFramework/main';
-export type { EventProperty, Event } from './analyticsFramework/types';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
@@ -71,3 +69,17 @@ export {
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
+export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
+export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
+
+export {
+  initDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
+  getDataSourceInstanceSettingsList,
+} from '../services/dataSource/settings';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export {
+  useDataSourceInstanceSettingsList,
+  type UseDataSourceInstanceSettingsListResult,
+} from '../services/dataSource/hooks';

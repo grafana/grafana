@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   detect-changes:
     name: Detect whether code changed
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v5
         with:
           persist-credentials: true # required to get more history in the changed-files action
-          fetch-depth: 2
+          fetch-depth: 0
+          filter: blob:none
       - name: Detect changes
         id: detect-changes
         uses: ./.github/actions/change-detection
@@ -39,7 +40,7 @@ jobs:
     # the `lint-frontend-prettier-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -58,17 +59,22 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.prettier == 'true'
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - name: Setup Node.js
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
@@ -82,7 +88,7 @@ jobs:
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
@@ -102,7 +108,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
@@ -111,10 +117,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
@@ -127,7 +138,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck (TSGO/TS7)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     env:
       NODE_OPTIONS: --max-old-space-size=8192
     steps:
@@ -136,10 +147,15 @@ jobs:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck:tsgo
@@ -151,7 +167,7 @@ jobs:
     # the `lint-frontend-api-clients-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Verify API clients
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -174,12 +190,15 @@ jobs:
             exit 1
         fi
   lint-frontend-openapi:
-    # Run this workflow for OSS only
+    needs: detect-changes
+    # Run this workflow for OSS only, and only when frontend code or this workflow
+    # file has changed (skips unrelated .github/** changes).
+    if: needs.detect-changes.outputs.changed == 'true'
     permissions:
       contents: read
       id-token: write
     name: Verify OpenAPI specs
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
@@ -215,17 +234,22 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Verify API clients (enterprise)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
     - name: Setup Node
       uses: ./.github/actions/setup-node
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
     - name: Setup Enterprise
       uses: ./.github/actions/setup-enterprise
       with:
-        github-app-name: 'grafana-ci-bot'
+        token: ${{ steps.get-github-app-token.outputs.token }}
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Generate API clients
@@ -246,9 +270,9 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
       uses: actions/checkout@v5
@@ -271,7 +295,7 @@ jobs:
       id-token: write
     if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.changed == 'true'
     name: Check circular dependencies
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64
     steps:
     - name: Checkout build commit
       uses: actions/checkout@v5
@@ -331,12 +355,40 @@ jobs:
           diff -u /tmp/main-circular-clean.txt /tmp/pr-circular-clean.txt || true
           exit 1
         fi
+  lint-knip:
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+      id-token: write
+    needs:
+      - detect-changes
+    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        persist-credentials: false
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+      with:
+        github_app: grafana-ci-bot
+    - name: Setup Enterprise
+      uses: ./.github/actions/setup-enterprise
+      with:
+        token: ${{ steps.get-github-app-token.outputs.token }}
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
+    - name: Install yarn dependencies
+      uses: ./.github/actions/yarn-install
+    - name: Run knip
+      run: yarn run knip
 
   yarn-install-validation:
     needs:
       - detect-changes
     if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64
     name: Validate yarn install
     permissions:
       contents: read
@@ -352,3 +404,12 @@ jobs:
       run: yarn install --immutable --check-cache
       env:
         YARN_ENABLE_HARDENED_MODE: 1
+
+    - name: Check yarn.lock is deduplicated
+      id: yarn-dedupe
+      run: yarn dedupe --check
+    - name: Report yarn dedupe failure
+      if: failure() && steps.yarn-dedupe.outcome == 'failure'
+      run: |
+        echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1

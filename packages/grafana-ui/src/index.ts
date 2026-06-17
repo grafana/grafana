@@ -120,7 +120,7 @@ export {
   type TableJsonViewCellOptions,
 } from './components/Table/types';
 
-export { TableInputCSV } from './components/TableInputCSV/TableInputCSV';
+export { TableInputCSV } from './graveyard/TableInputCSV/TableInputCSV';
 export { TabsBar } from './components/Tabs/TabsBar';
 export { Tab, type TabProps } from './components/Tabs/Tab';
 export { VerticalTab } from './components/Tabs/VerticalTab';
@@ -129,13 +129,13 @@ export { Counter } from './components/Tabs/Counter';
 export { RenderUserContentAsHTML } from './components/RenderUserContentAsHTML/RenderUserContentAsHTML';
 
 // Visualizations
+export { BigValue } from './components/BigValue/BigValue';
 export {
-  BigValue,
   BigValueColorMode,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
-} from './components/BigValue/BigValue';
+} from './components/BigValue/BigValueTypes';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
 export { BarGauge } from './components/BarGauge/BarGauge';
@@ -200,6 +200,7 @@ export {
   DataLinksContextMenu,
   type DataLinksContextMenuProps,
   type DataLinksContextMenuApi,
+  type DataLinksMenuTriggerProps,
 } from './components/DataLinks/DataLinksContextMenu';
 export { SeriesIcon } from './components/VizLegend/SeriesIcon';
 export { InfoBox } from './components/InfoBox/InfoBox';

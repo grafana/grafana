@@ -41,9 +41,9 @@ import {
   DeprecatedInternalId,
   type ManagerKind,
 } from '../../../../features/apiserver/types';
-import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
+import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren, refreshParents } from '../../../../features/browse-dashboards/state/actions';
-import { GENERAL_FOLDER_UID } from '../../../../features/search/constants';
+import { isRootFolderUID } from '../../../../features/search/constants';
 import { deletedDashboardsCache } from '../../../../features/search/service/deletedDashboardsCache';
 import { useDispatch } from '../../../../types/store';
 
@@ -83,23 +83,32 @@ export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
 
+function resolveDisplayName(userKey: string | undefined, userDisplay?: DisplayList): string {
+  const anonymous = t('folders.api.anonymous-user', 'Anonymous');
+  if (!userKey) {
+    return anonymous;
+  }
+  const idx = userDisplay?.keys?.indexOf(userKey) ?? -1;
+  if (idx < 0) {
+    return anonymous;
+  }
+  return userDisplay?.display?.[idx]?.displayName || anonymous;
+}
+
 const combineFolderResponses = (
   folder: Folder,
   legacyFolder: FolderDTO,
   parents: FolderInfo[],
   userDisplay?: DisplayList
 ) => {
-  const updatedBy = folder.metadata.annotations?.[AnnoKeyUpdatedBy];
-  const createdBy = folder.metadata.annotations?.[AnnoKeyCreatedBy];
-
   const newData: CombinedFolder = {
     canAdmin: legacyFolder.canAdmin,
     canDelete: legacyFolder.canDelete,
     canEdit: legacyFolder.canEdit,
     canSave: legacyFolder.canSave,
     accessControl: legacyFolder.accessControl,
-    createdBy: (createdBy && userDisplay?.display[userDisplay?.keys.indexOf(createdBy)]?.displayName) || 'Anonymous',
-    updatedBy: (updatedBy && userDisplay?.display[userDisplay?.keys.indexOf(updatedBy)]?.displayName) || 'Anonymous',
+    createdBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyCreatedBy], userDisplay),
+    updatedBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyUpdatedBy], userDisplay),
     ...appPlatformFolderToLegacyFolder(folder),
     ownerReferences: folder.metadata.ownerReferences || [],
   };
@@ -120,7 +129,10 @@ const combineFolderResponses = (
 };
 
 export async function getFolderByUidFacade(uid: string) {
-  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  // Root-parented requests carry "" or "general" — serve the virtual root
+  // folder for either rather than fetching a folder resource that doesn't exist.
+  const isRoot = isRootFolderUID(uid);
+  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
 
   // We need the legacy API call regardless, for now
@@ -135,7 +147,7 @@ export async function getFolderByUidFacade(uid: string) {
   if (shouldUseAppPlatformAPI) {
     let virtualFolderResponse;
     if (isVirtualFolder) {
-      virtualFolderResponse = GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder;
+      virtualFolderResponse = isRoot ? rootFolder : sharedWithMeFolder;
     }
 
     const responses = await Promise.all([
@@ -191,7 +203,10 @@ export async function getFolderByUidFacade(uid: string) {
  */
 export function useGetFolderQueryFacade(uid?: string) {
   const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
-  const isVirtualFolder = uid && [GENERAL_FOLDER_UID, config.sharedWithMeFolderUID].includes(uid);
+  // "" / undefined and "general" both mean the synthetic root folder —
+  // neither is a real folder resource.
+  const isRoot = isRootFolderUID(uid);
+  const isVirtualFolder = uid && (isRoot || uid === config.sharedWithMeFolderUID);
   const params = !uid ? skipToken : { name: uid };
 
   // This may look weird that we call the legacy folder anyway all the time, but the issue is we don't have good API
@@ -234,8 +249,8 @@ export function useGetFolderQueryFacade(uid?: string) {
       isSuccess: true,
       isLoading: false,
       isFetching: false,
-      data: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
-      currentData: GENERAL_FOLDER_UID === uid ? rootFolder : sharedWithMeFolder,
+      data: isRoot ? rootFolder : sharedWithMeFolder,
+      currentData: isRoot ? rootFolder : sharedWithMeFolder,
     };
   }
 
@@ -537,9 +552,9 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
   const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
   const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
 
-  // TODO: Remove constant condition here once we have a solution for the app platform counts
-  // As of now, the counts are not calculated recursively, so we need to use the legacy API
-  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
+  // nested folders but both are good enough to report whether folder is empty or not.
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {
@@ -592,9 +607,8 @@ const appPlatformFolderToLegacyFolder = (
     id: parseInt(labels?.[DeprecatedInternalId] || '0', 10) || 0,
     uid: name,
     title,
-    // general folder does not come with url
-    // see https://github.com/grafana/grafana/blob/8a05378ef3ae5545c6f7429eae5c174d3c0edbfe/pkg/services/folder/folderimpl/folder_unifiedstorage.go#L88
-    url: name === GENERAL_FOLDER_UID ? '' : getFolderUrl(name, title),
+    // the root folder has no url — the backend leaves it blank
+    url: isRootFolderUID(name) ? '' : getFolderUrl(name, title),
     created: creationTimestamp || '0001-01-01T00:00:00Z',
     updated: annotations?.[AnnoKeyUpdatedTimestamp] || '0001-01-01T00:00:00Z',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

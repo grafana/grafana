@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -174,7 +173,7 @@ func TestQueryAPI(t *testing.T) {
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
 				},
-				instanceProvider: mockClient{
+				instanceProvider: mockInstanceProvider{
 					stubbedFrame: tc.stubbedFrame,
 				},
 				tracer:                 tracing.InitializeTracerForTest(),
@@ -193,27 +192,19 @@ func TestQueryAPI(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			ctx := context.Background()
-			mr := &mockResponder{}
-			qr := newQueryREST(builder)
-
-			handler, err := qr.Connect(ctx, "name", nil, mr)
-			require.NoError(t, err)
 			rr := httptest.NewRecorder()
-			handler.ServeHTTP(rr, req)
-
+			builder.QueryDatasources(rr, req)
 			result := rr.Result()
+
 			defer func() {
 				_ = result.Body.Close()
 			}()
-
-			require.False(t, mr.used, "Responder should be unused")
 
 			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
 
 			// Verify the response is the expected type
 			qdr := &queryapi.QueryDataResponse{}
-			err = json.NewDecoder(result.Body).Decode(qdr)
+			err := json.NewDecoder(result.Body).Decode(qdr)
 			require.NoError(t, err, "Failed to decode response body")
 
 			require.NotNil(t, qdr.Responses, "Should have responses")
@@ -254,51 +245,39 @@ func TestQueryAPI(t *testing.T) {
 	}
 }
 
-type mockResponder struct {
-	used       bool
-	statusCode int
-	response   runtime.Object
-	err        error
+type mockInstanceProvider struct {
+	stubbedFrame *data.Frame
 }
 
-// Object writes the provided object to the response. Invoking this method multiple times is undefined.
-func (m *mockResponder) Object(statusCode int, obj runtime.Object) {
-	m.statusCode = statusCode
-	m.response = obj
-	m.used = true
-}
-
-// Error writes the provided error to the response. This method may only be invoked once.
-func (m *mockResponder) Error(err error) {
-	m.err = err
-	m.used = true
-}
-
-type mockClient struct {
+type mockInstance struct {
 	stubbedFrame *data.Frame
 	logger       log.Logger
 }
 
-func (m mockClient) GetInstance(ctx context.Context, logger log.Logger, headers map[string]string) (clientapi.Instance, error) {
-	mclient := mockClient{
+type mockClient struct {
+	stubbedFrame *data.Frame
+}
+
+func (m mockInstanceProvider) GetInstance(ctx context.Context, logger log.Logger, headers map[string]string) (clientapi.Instance, error) {
+	instance := mockInstance{
 		stubbedFrame: m.stubbedFrame,
 		logger:       logger,
 	}
-	return mclient, nil
+	return instance, nil
 }
 
-func (m mockClient) GetMode() string {
+func (m mockInstanceProvider) GetMode() string {
 	return "testing"
 }
 
-func (m mockClient) ReportMetrics() {
+func (m mockInstance) ReportMetrics() {
 }
 
-func (m mockClient) GetLogger() log.Logger {
+func (m mockInstance) GetLogger() log.Logger {
 	return m.logger
 }
 
-func (m mockClient) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
+func (m mockInstance) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
 	}
@@ -321,15 +300,7 @@ func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest)
 	}, nil
 }
 
-func (m mockClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	return nil
-}
-
-func (m mockClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	return nil, nil
-}
-
-func (m mockClient) GetSettings() clientapi.InstanceConfigurationSettings {
+func (m mockInstance) GetSettings() clientapi.InstanceConfigurationSettings {
 	return clientapi.InstanceConfigurationSettings{
 		ExpressionsEnabled: true,
 		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),

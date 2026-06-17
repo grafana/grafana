@@ -2,6 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
+import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
 
@@ -11,24 +12,35 @@ import { DEBOUNCE_TIME_MS } from './useOptions';
 
 describe('MultiCombobox', () => {
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 120,
-      height: 120,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    mockComboboxRect();
   });
 
   let user: UserEvent;
 
   beforeEach(() => {
     user = userEvent.setup();
+  });
+
+  it('keeps the caret position when typing in the middle of the input', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+      { label: 'C', value: 'c' },
+    ];
+
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+    const input = screen.getByRole<HTMLInputElement>('combobox');
+
+    await user.click(input);
+    await user.type(input, 'hello');
+
+    input.setSelectionRange(3, 3);
+
+    await user.keyboard('X');
+
+    expect(input).toHaveValue('helXlo');
+    expect(input.selectionStart).toBe(4);
+    expect(input.selectionEnd).toBe(4);
   });
 
   it('should render with options', async () => {
@@ -239,6 +251,21 @@ describe('MultiCombobox', () => {
     const clearAllButton = await screen.findByTitle('Clear all');
     await user.click(clearAllButton);
     expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('should open the menu when clicking the toggle button', async () => {
+    const options = [
+      { label: 'Option 1', value: 'a' },
+      { label: 'Option 2', value: 'b' },
+      { label: 'Option 3', value: 'c' },
+    ];
+    render(<MultiCombobox options={options} value={[]} onChange={jest.fn()} />);
+
+    const toggleIcon = screen.getByTestId('icon-angle-down'); // the input element is the interactive element in the a11y tree - this is just decoration
+    await userEvent.click(toggleIcon);
+
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
   });
 
   describe('all option', () => {

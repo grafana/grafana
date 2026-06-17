@@ -1,27 +1,27 @@
 package legacy_storage
 
 import (
-	"maps"
-	"slices"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func WithManagedInhibitionRules(inhibitionRules []definitions.InhibitRule, managedInhibitionRules map[string]*definitions.InhibitionRule) []definitions.InhibitRule {
-	if len(managedInhibitionRules) == 0 {
-		// If there are no managed routes, we just return the original root.
-		return inhibitionRules
+func (rev *ConfigRevision) HasInhibitionRule(uid v1.ResourceUID) bool {
+	if len(rev.Config.InhibitionRules) == 0 {
+		return false
 	}
+	_, ok := rev.Config.InhibitionRules[uid]
+	return ok
+}
 
-	res := make([]definitions.InhibitRule, 0, len(inhibitionRules)+len(managedInhibitionRules))
-	for _, k := range slices.Sorted(maps.Keys(managedInhibitionRules)) {
-		mir := managedInhibitionRules[k]
-		if mir == nil {
-			continue
-		}
-		res = append(res, mir.InhibitRule)
+func (rev *ConfigRevision) SetInhibitionRule(rule v1.InhibitionRule) v1.InhibitionRule {
+	if rev.Config.InhibitionRules == nil {
+		rev.Config.InhibitionRules = make(map[v1.ResourceUID]v1.InhibitionRule)
 	}
-	res = append(res, inhibitionRules...)
+	// Ensure Version is set.
+	rule.Version = v1.InhibitionRuleFingerprint(rule)
+	rev.Config.InhibitionRules[rule.UID] = rule
+	return rule
+}
 
-	return res
+func (rev *ConfigRevision) DeleteInhibitionRule(uid v1.ResourceUID) {
+	delete(rev.Config.InhibitionRules, uid)
 }

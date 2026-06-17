@@ -35,6 +35,10 @@ var (
 const (
 	bulkHistoryInsertSQLiteMaxRows  = 8
 	bulkHistoryInsertDefaultMaxRows = 1000
+
+	// analyzeResourceHistoryRowThreshold is the number of rows bulk-loaded into
+	// resource_history to trigger an ANALYZE before the resource backfill.
+	analyzeResourceHistoryRowThreshold = 10000
 )
 
 // noRollbackTx wraps a db.Tx but makes Rollback() a no-op.
@@ -294,6 +298,11 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		}
 	}
 
+	// Refresh planner stats so syncCollection's self-join avoids a nested-loop plan.
+	if err := b.analyzeResourceHistoryForBackfill(ctx, tx, rsp.Processed); err != nil {
+		return rollbackWithError(err)
+	}
+
 	// Now update the resource table from history
 	for _, key := range setting.Collection {
 		k := fmt.Sprintf("%s/%s/%s", key.Namespace, key.Group, key.Resource)
@@ -339,6 +348,22 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	return nil
 }
 
+// analyzeResourceHistoryForBackfill exists because syncCollection's self-join would otherwise
+// run against stale statistics: resource_history was just bulk-loaded in this same transaction,
+// so the planner still sees it as empty and picks an O(n^2) nested-loop plan that never finishes
+// on large rebuilds.
+func (b *backend) analyzeResourceHistoryForBackfill(ctx context.Context, tx db.ContextExecer, processed int64) error {
+	if b.dialect.DialectName() != "postgres" || processed < int64(b.analyzeBulkRowThreshold) {
+		return nil
+	}
+	table, err := b.dialect.Ident("resource_history")
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "ANALYZE "+table)
+	return err
+}
+
 func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, batch []*resourcepb.BulkRequest, rv *bulkRV, rsp *resourcepb.BulkResponse) error {
 	rows := make([]sqlResourceRequest, 0, len(batch))
 	payloadBytes := 0
@@ -363,7 +388,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
 				Action: req.Action,
-				Error:  "unable to unmarshal json",
+				Error:  fmt.Sprintf("unable to unmarshal json (bulk): %s", err.Error()),
 			})
 			continue
 		}

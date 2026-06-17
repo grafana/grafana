@@ -856,6 +856,9 @@ var (
 	// Bulk backwards compatibility templates
 	sqlKVDeleteLegacyResourceCollection  = mustTemplate("sqlkv_delete_legacy_resource_collection.sql")
 	sqlKVInsertLegacyResourceFromHistory = mustTemplate("sqlkv_insert_legacy_resource_from_history.sql")
+
+	// SQLBackend has case insensitive names with MySQL. This query is a workaround to support that while in compat mode
+	sqlKVLookupCanonicalName = mustTemplate("sqlkv_lookup_canonical_name.sql")
 )
 
 // TODO: remove when backwards compatibility is no longer needed.
@@ -1102,9 +1105,77 @@ func (d *dataStore) syncLegacyResourceFromHistory(ctx context.Context, execer db
 	return nil
 }
 
-// IsSnowflake returns whether the argument passed is a snowflake ID (new) or a microsecond timestamp (old).
-// Snowflake IDs always have 19 digits. A 19-digit microsecond timestamp (10^18 µs) would correspond
-// to year ~33658, so any number with fewer than 19 digits is unambiguously a legacy microsecond timestamp.
+// TODO: remove when sql/backend backwards compatibility is no longer needed.
+type sqlKVLookupCanonicalNameRequest struct {
+	sqltemplate.SQLTemplate
+	Group     string
+	Resource  string
+	Namespace string
+	Name      string
+	Response  *sqlKVLookupCanonicalNameResponse
+}
+
+func (r *sqlKVLookupCanonicalNameRequest) Validate() error { return nil }
+
+func (r *sqlKVLookupCanonicalNameRequest) Results() (*sqlKVLookupCanonicalNameResponse, error) {
+	return &sqlKVLookupCanonicalNameResponse{Name: r.Response.Name}, nil
+}
+
+// TODO: remove when sql/backend backwards compatibility is no longer needed.
+type sqlKVLookupCanonicalNameResponse struct {
+	Name string
+}
+
+// lookupCanonicalName queries the legacy `resource` table for the stored name
+// of a resource matching (group, resource, namespace, name). MySQL's
+// case-insensitive collation on `name` makes this a case-insensitive lookup,
+// which lets us resolve rows the case-sensitive key_path lookup would miss.
+// Returns ("", nil) when no row matches; only meaningful when the underlying
+// KV is *kvpkg.SqlKV.
+//
+// TODO: remove when sql/backend backwards compatibility is no longer needed.
+func (d *dataStore) lookupCanonicalName(
+	ctx context.Context,
+	execer db.ContextExecer,
+	group, resource, namespace, name string,
+) (string, error) {
+	if _, isSQLKV := d.kv.(*kvpkg.SqlKV); !isSQLKV {
+		return "", nil
+	}
+
+	ctx, span := tracer.Start(ctx, "resource.dataStore.lookupCanonicalName")
+	defer span.End()
+
+	res, err := dbutil.Query(ctx, execer, sqlKVLookupCanonicalName, &sqlKVLookupCanonicalNameRequest{
+		SQLTemplate: sqltemplate.New(d.legacyDialect),
+		Group:       group,
+		Resource:    resource,
+		Namespace:   namespace,
+		Name:        name,
+		Response:    &sqlKVLookupCanonicalNameResponse{},
+	})
+	if err != nil {
+		return "", fmt.Errorf("compatibility layer: lookup canonical name: %w", err)
+	}
+	if len(res) == 0 {
+		return "", nil
+	}
+	return res[0].Name, nil
+}
+
+// snowflakeRVThreshold separates snowflake RVs (new) from legacy microsecond-timestamp
+// RVs (old). The two encodings occupy disjoint numeric bands for any realistic resource
+// timestamp: a snowflake is (ms_since_2010_epoch << 22), so its <<22 shift lifts it ~150x
+// above the microsecond form of the same instant. For resources dated 2013–2030, micro-RVs
+// span ~1.4e15–1.9e15 while snowflakes span ~2.9e17–2.5e18, leaving an empty gap between them.
+//
+// The cut sits in that gap. 1e17 as a UnixMicros timestamp is year ~5138, so no real
+// micro-RV reaches it; the smallest snowflake we can emit is ~1e16 (epoch + a few days),
+// and any snowflake from a post-2011 timestamp is well above 1e17.
+const snowflakeRVThreshold = int64(1e17)
+
+// IsSnowflake returns whether the argument is a snowflake ID (new) or a microsecond
+// timestamp (old).
 func IsSnowflake(rv int64) bool {
-	return rv >= 1e18
+	return rv >= snowflakeRVThreshold
 }

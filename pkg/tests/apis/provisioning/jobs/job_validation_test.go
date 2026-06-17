@@ -152,7 +152,22 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 			expectedErr: "spec.migrate: Required value: migrate options required for migrate action",
 		},
 		{
-			name: "push job with Dashboard kind and folder group",
+			// Playlist is declared but disabled in the default config, so it is not part of
+			// the active supported set and must be rejected for export.
+			name: "push job with disabled resource kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "playlist-1", "kind": "Playlist"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Playlist\": kind is not supported for export",
+		},
+		{
+			name: "push job with wrong group for supported kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
 				"repository": repo,
@@ -162,7 +177,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": only dashboard.grafana.app is supported for Dashboard export",
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": group \"folder.grafana.app\" is not supported for kind Dashboard",
 		},
 		{
 			name: "push job with Folder kind and dashboard group",
@@ -175,7 +190,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].group: Invalid value: \"dashboard.grafana.app\": only folder.grafana.app is supported for Folder export",
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"dashboard.grafana.app\": group \"dashboard.grafana.app\" is not supported for kind Folder",
 		},
 		{
 			name: "push job with resource missing name",
@@ -224,13 +239,14 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 				"push": map[string]interface{}{
 					"resources": []map[string]interface{}{
 						{"name": "dash-1", "kind": "Dashboard"},
-						{"name": "panel-1", "kind": "LibraryPanel"},
+						{"name": "playlist-1", "kind": "Playlist"},
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[1].kind: Invalid value: \"LibraryPanel\": only Dashboard and Folder are supported for export",
+			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Playlist\": kind is not supported for export",
 		},
 		{
+			// Kind matching is case-sensitive: "dashboard" does not match the supported "Dashboard".
 			name: "push job with lowercase dashboard kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
@@ -241,9 +257,10 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": only Dashboard and Folder are supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": kind is not supported for export",
 		},
 		{
+			// LibraryPanel is declared but disabled in the default config.
 			name: "push job with LibraryPanel kind",
 			jobSpec: map[string]interface{}{
 				"action":     string(provisioning.JobActionPush),
@@ -254,7 +271,7 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": only Dashboard and Folder are supported for export",
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": kind is not supported for export",
 		},
 	}
 

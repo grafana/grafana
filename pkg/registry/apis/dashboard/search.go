@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -345,8 +345,6 @@ func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	s.write(w, sortable)
 }
 
-const rootFolder = "general"
-
 var errEmptyResults = fmt.Errorf("empty results")
 
 func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction string, folderAction string) {
@@ -639,12 +637,16 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		// hijacks the "name" query param to only search for shared dashboard UIDs
 		names = append(names, dashboardUIDs...)
 	} else if folder != "" {
-		if folder == rootFolder {
-			folder = "" // root folder is empty in the search index
-		}
+		// Collapse the canonical "general" root sentinel to the legacy empty
+		// value before querying. A search backend on the same version expands
+		// "" back to both root sentinels, but the backend is deployed separately
+		// and may lag this API server; an un-upgraded backend only matches the
+		// "" that root-parented resources are still indexed with, so normalizing
+		// here keeps root search working across the rollout skew.
+		folder = foldermodel.ToLegacyFolderUID(folder)
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
 			Key:      "folder",
-			Operator: "=",
+			Operator: string(selection.Equals),
 			Values:   []string{folder},
 		})
 	}
@@ -746,11 +748,13 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
-	// populate list of unique folder UIDs in the list of dashboards user has read permissions
+	// populate list of unique folder UIDs in the list of dashboards user has read permissions.
+	// Root-parented dashboards have no parent folder to check, and the apistore may report root
+	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
 	for _, dash := range dashboardResult.Results.Rows {
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(allFolders, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
 			allFolders = append(allFolders, folderUid)
 		}
 	}
@@ -779,11 +783,12 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
 	}
 
-	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder
+	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
+	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
 	for _, dash := range dashboardResult.Results.Rows {
 		dashboardUid := dash.Key.Name
 		folderUid := string(dash.Cells[folderUidIdx])
-		if folderUid != "" && !slices.Contains(foldersWithAccess, folderUid) {
+		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
 			sharedDashboards = append(sharedDashboards, dashboardUid)
 		}
 	}

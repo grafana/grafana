@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationSearchToObject } from '@grafana/runtime';
+import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -34,8 +35,7 @@ import {
   useAddedFunctionsRegistry,
 } from '../extensions/ExtensionRegistriesContext';
 import { pluginImporter } from '../importer/pluginImporter';
-import { getPluginSettings } from '../pluginSettings';
-import { buildPluginSectionNav, pluginsLogger } from '../utils';
+import { buildPluginSectionNav } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
@@ -59,7 +59,7 @@ interface State {
 
 const initialState: State = { loading: true, loadingError: false, pluginNav: null, plugin: null };
 
-export function AppRootPage({ pluginId, pluginNavSection }: Props) {
+function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const { pluginId: pluginIdParam = '' } = useParams();
   pluginId = pluginId || pluginIdParam;
   const addedLinksRegistry = useAddedLinksRegistry();
@@ -248,12 +248,12 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
     const error = err instanceof Error ? err : new Error(getMessageFromError(err));
-    pluginsLogger.logError(error);
+    getLogger('features.plugins').logError(error);
     console.error(error);
   }
 }
 
-export function getAppPluginPageError(meta: AppPluginMeta) {
+function getAppPluginPageError(meta: AppPluginMeta) {
   if (!meta) {
     return 'Unknown Plugin';
   }

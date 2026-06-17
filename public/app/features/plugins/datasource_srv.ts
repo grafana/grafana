@@ -3,7 +3,6 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceRef,
-  PluginType,
   type ScopedVars,
   isObject,
   matchPluginId,
@@ -26,6 +25,7 @@ import {
   logPluginMetaError,
   logPluginMetaWarning,
   refetchDatasourcePluginMetas,
+  syncDataSourceInstanceSettings,
   UserStorage,
 } from '@grafana/runtime/internal';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
@@ -234,7 +234,7 @@ export class DatasourceSrv implements DataSourceService {
       if (!meta) {
         logPluginMetaWarning(
           `Plugin meta for datasource ${key} (pluginId: ${pluginId}) was not found, falling back to instanceSettings.meta`,
-          PluginType.datasource
+          { pluginId, key }
         );
         meta = instanceSettings.meta;
       }
@@ -395,6 +395,12 @@ export class DatasourceSrv implements DataSourceService {
     config.datasources = settings.datasources;
     config.defaultDatasource = settings.defaultDatasource;
     this.init(settings.datasources, settings.defaultDatasource);
+    // Keep the new async instance-settings cache in sync with the legacy srv during the
+    // transition where both exist. Reuses the payload just fetched — no extra request.
+    syncDataSourceInstanceSettings({
+      datasources: settings.datasources,
+      defaultDatasource: settings.defaultDatasource,
+    });
     // Refresh the deduplicated plugin metadata cache in the background.
     // This does not need to block reload since init() already has the full data.
     refetchDatasourcePluginMetas(settings).catch((error) => {
@@ -412,7 +418,7 @@ export function getNameOrUid(ref?: string | DataSourceRef | null): string | unde
   return isString ? ref : ref?.uid;
 }
 
-export function variableInterpolation<T>(value: T | T[]) {
+function variableInterpolation<T>(value: T | T[]) {
   if (Array.isArray(value)) {
     return value[0];
   }

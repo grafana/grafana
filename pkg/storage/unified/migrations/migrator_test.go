@@ -45,6 +45,7 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
 		testcases.NewStarsTestCase(),
+		testcases.NewPreferencesTestCase(),
 	}
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
@@ -56,9 +57,10 @@ func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 
 // TestIntegrationMigrations verifies that legacy storage data is correctly migrated to unified storage.
 // The test follows a multi-step process:
-// Step 1: inserts legacy data (migration disabled at startup)
-// Step 2: verifies that the data is not in unified storage
-// Step 3: migration runs at startup, and the test verifies that the data is in unified storage
+// Step 1: inserts legacy data (migration disabled at startup).
+// Step 2: verifies the data is not in unified storage when migrations are opted out, and that the migration log table records no entries.
+// Step 3: migrations enabled by default run at startup; verifies their data is in unified storage.
+// Step 4: opts in the remaining migrations and verifies all data is in unified storage.
 func TestIntegrationMigrations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	runMigrationTestSuite(t, defaultMigrationTestCases(), migrationTestOptions{})
@@ -201,18 +203,23 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 	})
 
-	// Step 2: Verify data is NOT in unified storage before the migration
+	// Step 2: Verify data is NOT in unified storage and the migration log is empty
+	// when migrations are opted out. Combines the previously separate "data not migrated"
+	// and "opted-out resources are not migrated" verifications — both use Mode5 with
+	// EnableMigration=false, and the assertions on per-resource state are identical.
 	func() {
-		// Build unified storage config for Mode5
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
 		for _, tc := range testCases {
 			for _, gvr := range tc.Resources() {
 				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					DualWriterMode: grafanarest.Mode5,
+					DualWriterMode:  grafanarest.Mode5,
+					EnableMigration: false,
 				}
 			}
 		}
+		// Keep enforcement off for default-on resources outside the test scope, so
+		// the migration log stays empty even if MigratedUnifiedResources grows.
 		disableMigrationsForDefaultResources(unifiedConfig)
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
@@ -231,52 +238,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name()+"/Step 2: Verify data is NOT in unified storage before the migration", func(t *testing.T) {
-				// Verify resources don't exist in unified storage yet
-				state.tc.Verify(t, helper, false)
-			})
-		}
-	}()
-
-	// Step 3: verify that opted-out resources are not migrated
-	func() {
-		// Build unified storage config for Mode5
-		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
-		for _, tc := range testCases {
-			for _, gvr := range tc.Resources() {
-				resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
-				unifiedConfig[resourceKey] = setting.UnifiedStorageConfig{
-					DualWriterMode:  grafanarest.Mode5,
-					EnableMigration: false,
-				}
-			}
-		}
-
-		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: unifiedConfig,
-				EnableFeatureToggles: featureToggles,
-				EnableSQLKVBackend:   opts.enableSQLKVBackend,
-			},
-			Org1Users: org1,
-			OrgBUsers: orgB,
-		})
-		defer helper.Shutdown()
-
-		for _, state := range testStates {
-			t.Run(state.tc.Name()+"/Step 3: verify that opted-out resources are not migrated", func(t *testing.T) {
-				// Verify resources don't exist in unified storage yet
+			t.Run(state.tc.Name()+"/Step 2: Verify data is NOT in unified storage and opted-out resources are not migrated", func(t *testing.T) {
 				state.tc.Verify(t, helper, false)
 			})
 		}
 		verifyRegisteredMigrations(t, helper, false, true, opts.extraMigrationIDs)
 	}()
 
-	// Step 4: verify data is migrated to unified storage
+	// Step 3: verify data is migrated to unified storage
 	func() {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
@@ -294,7 +263,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name()+"/Step 4: verify data is migrated to unified storage", func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 3: verify data is migrated to unified storage", func(t *testing.T) {
 				for _, gvr := range state.tc.Resources() {
 					resourceKey := fmt.Sprintf("%s.%s", gvr.Resource, gvr.Group)
 					// Only verify resources that are expected to be migrated by default.
@@ -313,7 +282,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		verifyRegisteredMigrations(t, helper, true, false, opts.extraMigrationIDs)
 	}()
 
-	// Step 5: verify data is migrated for all migrations
+	// Step 4: verify data is migrated for all migrations
 	func() {
 		// Trigger migrations that are not enabled by default
 		unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
@@ -341,7 +310,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		defer helper.Shutdown()
 
 		for _, state := range testStates {
-			t.Run(state.tc.Name()+"/Step 5: verify data is migrated for all migrations", func(t *testing.T) {
+			t.Run(state.tc.Name()+"/Step 4: verify data is migrated for all migrations", func(t *testing.T) {
 				// Verify resources still exist in unified storage after restart
 				state.tc.Verify(t, helper, true)
 			})
@@ -366,6 +335,7 @@ const (
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
 	starsID                = "stars migration"
+	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
 )
 
@@ -375,6 +345,7 @@ var migrationIDsToDefault = map[string]bool{
 	shorturlsID:            false,
 	datasourceID:           false,
 	starsID:                false,
+	preferencesID:          false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {

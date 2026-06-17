@@ -1,0 +1,107 @@
+route:
+    receiver: grafana-default-email
+    group_by:
+        - test
+        - test2
+    group_wait: 1m
+    group_interval: 1m
+    repeat_interval: 1m
+    routes:
+        - receiver: test-webhook
+          group_by:
+            - teste
+            - test2f
+          object_matchers:
+            - - team
+              - =
+              - teamC
+          mute_time_intervals:
+            - mti-1
+          active_time_intervals:
+            - ti-1
+          group_wait: 0s
+          group_interval: 1m
+          repeat_interval: 1m
+time_intervals:
+    - name: mti-1
+      time_intervals:
+        - times:
+            - start_time: "00:00"
+              end_time: "12:00"
+    - name: ti-1
+      time_intervals:
+        - weekdays:
+          - saturday
+          - sunday
+    - name: mti-2
+      time_intervals:
+        - times:
+            - start_time: "00:00"
+              end_time: "12:00"
+    - name: ti-2
+      time_intervals:
+        - weekdays:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+receivers:
+    - name: grafana-default-email
+      grafana_managed_receiver_configs:
+        - uid: uxwfZvtnz
+          type: email
+          disableResolveMessage: false
+          settings:
+            addresses: <example@example.com>
+    - name: test-webhook
+      grafana_managed_receiver_configs:
+        - uid: "12345"
+          type: webhook
+          disableResolveMessage: false
+          settings:
+            url: http://localhost/api/v1/alerts
+    - name: recv
+      grafana_managed_receiver_configs:
+        - uid: eeae77c45c45175d
+          name: recv
+          type: email
+          version: v0mimir1
+          disableResolveMessage: false
+          settings:
+            send_resolved: false
+            to: recv
+            from: email@example.com
+            hello: localhost
+            smarthost: smtp.example.org:587
+            html: '{{ template "email.default.html" . }}'
+            require_tls: true
+            tls_config:
+              insecure_skip_verify: false
+    - name: recv2
+      grafana_managed_receiver_configs:
+        - uid: 93fe2d5b1c9b65ac
+          name: recv2
+          type: webhook
+          version: v0mimir1
+          disableResolveMessage: false
+          settings:
+            send_resolved: true
+            http_config:
+              enable_http2: true
+              follow_redirects: true
+              proxy_url: null
+              tls_config:
+                insecure_skip_verify: false
+            max_alerts: 0
+            timeout: 0s
+            url: http://localhost
+inhibit_rules:
+    - source_matchers:
+        - alertname="test"
+        - cluster="test1"
+      target_matchers:
+        - alertname="test2"
+        - cluster="test1"
+      equal:
+        - namespace

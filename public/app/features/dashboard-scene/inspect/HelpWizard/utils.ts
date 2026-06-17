@@ -20,7 +20,7 @@ import { getQueryRunnerFor, isLibraryPanel } from '../../utils/utils';
 
 import { type Randomize, randomizeData } from './randomizer';
 
-export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
+function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
   if (data?.series) {
     for (const f of data.series) {

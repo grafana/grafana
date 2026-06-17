@@ -1,7 +1,7 @@
 package builders
 
 import (
-	"context"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -32,38 +32,37 @@ var ExternalGroupMappingTableColumnDefinitions = map[string]*resourcepb.Resource
 	},
 }
 
+// ExternalGroupMappingSearchFields declares paths and types for each external
+// group mapping search field. The standard document builder uses these to
+// extract spec values from the raw JSON, avoiding a custom builder.
+var ExternalGroupMappingSearchFields = []resource.SearchFieldDefinition{
+	{Name: EXTERNAL_GROUP_MAPPING_TEAM, Path: "spec.teamRef.name", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	{Name: EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP, Path: "spec.externalGroupId", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+}
+
 func GetExternalGroupMappingBuilder() (resource.DocumentBuilderInfo, error) {
 	values := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(ExternalGroupMappingTableColumnDefinitions))
 	for _, v := range ExternalGroupMappingTableColumnDefinitions {
 		values = append(values, v)
 	}
-
 	fields, err := resource.NewSearchableDocumentFields(values)
+	if err != nil {
+		return resource.DocumentBuilderInfo{}, err
+	}
+
+	gvr := iamv0.ExternalGroupMappingResourceInfo.GroupVersionResource()
+	provider := resource.NewMapProvider(
+		map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+			gvr: ExternalGroupMappingSearchFields,
+		},
+		map[schema.GroupResource]string{
+			gvr.GroupResource(): gvr.Version,
+		},
+	)
+
 	return resource.DocumentBuilderInfo{
 		GroupResource: iamv0.ExternalGroupMappingResourceInfo.GroupResource(),
 		Fields:        fields,
-		Builder:       new(extGroupMappingDocumentBuilder),
-	}, err
-}
-
-var _ resource.DocumentBuilder = new(extGroupMappingDocumentBuilder)
-
-type extGroupMappingDocumentBuilder struct{}
-
-// BuildDocument implements resource.DocumentBuilder.
-func (u *extGroupMappingDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	extGroupMapping := &iamv0.ExternalGroupMapping{}
-	doc, err := NewIndexableDocumentFromValue(key, rv, value, extGroupMapping, iamv0.ExternalGroupMappingKind())
-	if err != nil {
-		return nil, err
-	}
-
-	if extGroupMapping.Spec.TeamRef.Name != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_TEAM] = extGroupMapping.Spec.TeamRef.Name
-	}
-	if extGroupMapping.Spec.ExternalGroupId != "" {
-		doc.Fields[EXTERNAL_GROUP_MAPPING_EXTERNAL_GROUP] = extGroupMapping.Spec.ExternalGroupId
-	}
-
-	return doc, nil
+		Builder:       resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+	}, nil
 }

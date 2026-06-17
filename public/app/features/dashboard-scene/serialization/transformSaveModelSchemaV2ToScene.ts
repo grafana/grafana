@@ -20,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -77,6 +78,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -377,6 +379,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
+      $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -407,6 +410,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
+    const refresh = config.publicDashboardAccessToken
+      ? VariableRefresh.never
+      : transformVariableRefreshToEnumV1(variable.spec.refresh);
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -414,7 +420,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       query: getDataQueryForVariable(variable),
       datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
-      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
+      refresh,
       regex: variable.spec.regex,
       regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
@@ -548,7 +554,7 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
     : variable.spec.query.spec;
 }
 
-export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
+function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
   // Handle missing current object or value
   const currentValue = variable.spec.current?.value;
   const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
@@ -577,7 +583,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
   return intervals[0];
 }
 
-export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
+function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
   const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
@@ -611,6 +617,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -630,7 +637,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

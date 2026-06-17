@@ -205,8 +205,8 @@ func TestExportSpecificResources_Success(t *testing.T) {
 		Path:   "grafana",
 		Branch: "feature/branch",
 		Resources: []provisioningV0.ResourceRef{
-			{Name: "dash-1", Kind: "Dashboard"},
-			{Name: "dash-2", Kind: "Dashboard"},
+			{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group},
+			{Name: "dash-2", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 		},
 	}
 
@@ -240,7 +240,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
@@ -270,7 +270,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
@@ -298,7 +298,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
@@ -327,7 +327,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, true)
@@ -336,23 +336,68 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
 }
 
-// TestExportSpecificResources_UnsupportedKindIsErroredAndSkipped pins the
-// behavior for kinds outside the validator's allow-list (admission would
-// normally reject them, but a request that bypasses admission still escalates
-// the job rather than silently dropping the ref).
-func TestExportSpecificResources_UnsupportedKindIsErroredAndSkipped(t *testing.T) {
+// TestExportSpecificResources_NonDashboardKindIsExported covers main's
+// generalized selective export: a supported non-dashboard, non-folder kind
+// (here a Playlist) is resolved against its own kind/group and exported through
+// the shared write path, without the dashboard conversion shim.
+func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
+	playlistGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Kind: "Playlist"}
+	playlistGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	playlist := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   map[string]any{"name": "playlist-1"},
+		},
+	}
+	playlistClient := &mockGetByName{items: map[string]*unstructured.Unstructured{"playlist-1": playlist}}
+
 	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, playlistGVK).
+		Return(playlistClient, playlistGVR, nil)
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "playlist-1" && obj.GetKind() == "Playlist"
+	}), mock.Anything).Return("playlist-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "playlist-1" && r.Action() == repository.FileActionCreated && r.Error() == nil
+	})).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
+	require.NoError(t, err)
+}
+
+func TestExportSpecificResources_UnresolvableKindRecordsError(t *testing.T) {
+	// A kind that discovery cannot resolve (e.g. a typo or a disabled resource
+	// that slipped past admission) fails the item so the job surfaces the bad
+	// input rather than silently dropping it.
+	unknownGVK := schema.GroupVersionKind{Group: "unknown.grafana.app", Kind: "Mystery"}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, unknownGVK).
+		Return(nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group unknown.grafana.app"))
+
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Name() == "panel-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+		return r.Name() == "mystery-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
 	})).Return()
-	progress.On("TooManyErrors").Return(nil).Once()
+	progress.On("TooManyErrors").Return(nil)
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "panel-1", Kind: "LibraryPanel"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
@@ -388,6 +433,7 @@ func TestExportSpecificResources_FolderRefExportsSubtree(t *testing.T) {
 	resourceClients := resources.NewMockResourceClients(t)
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
+	resourceClients.On("SupportedResources").Return(resources.SupportedProvisioningResources)
 
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -428,19 +474,14 @@ func TestExportSpecificResources_FolderRefExportsSubtree(t *testing.T) {
 // TestExportSpecificResources_FolderRefNotFound asserts that a folder ref the
 // API does not know about is recorded as an error so the job escalates.
 func TestExportSpecificResources_FolderRefNotFound(t *testing.T) {
-	dashClient := &dashGetListClient{
-		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{}},
-		lister: &mockListClient{},
-	}
-
 	folderClient := &folderClientStub{
 		listClient: &mockListClient{},
 		getClient:  &mockGetByName{items: map[string]*unstructured.Unstructured{}, notFoundGR: folderNotFoundGR()},
 	}
 
+	// The folder ref fails to resolve, so no subtree scan runs and no client
+	// is resolved — no ForKind / SupportedResources expectations.
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(dashClient, resources.DashboardResource, nil)
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
@@ -471,14 +512,10 @@ func TestExportSpecificResources_FolderRefManagedRecordsError(t *testing.T) {
 			"managed-folder": &managedFolder,
 		}},
 	}
-	dashClient := &dashGetListClient{
-		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{}},
-		lister: &mockListClient{},
-	}
 
+	// The managed folder is rejected, so no subtree scan runs and no client is
+	// resolved — no ForKind / SupportedResources expectations.
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(dashClient, resources.DashboardResource, nil)
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
@@ -522,6 +559,7 @@ func TestExportSpecificResources_FolderRefManagedDashboardEscalates(t *testing.T
 	resourceClients := resources.NewMockResourceClients(t)
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
+	resourceClients.On("SupportedResources").Return(resources.SupportedProvisioningResources)
 
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -569,6 +607,7 @@ func TestExportSpecificResources_MixedDashboardAndFolderRefs(t *testing.T) {
 	resourceClients := resources.NewMockResourceClients(t)
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
+	resourceClients.On("SupportedResources").Return(resources.SupportedProvisioningResources)
 
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -591,7 +630,7 @@ func TestExportSpecificResources_MixedDashboardAndFolderRefs(t *testing.T) {
 
 	options := provisioningV0.ExportJobOptions{
 		Resources: []provisioningV0.ResourceRef{
-			{Name: "standalone-dash", Kind: "Dashboard"},
+			{Name: "standalone-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 			{Name: "team-folder", Kind: "Folder"},
 		},
 	}
@@ -641,7 +680,7 @@ func TestExportSpecificResources_DashboardRefMaterializesAncestorsOnly(t *testin
 	progress.On("TooManyErrors").Return(nil)
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "target-dash", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "target-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, folderClient, repoResources, progress, false)
@@ -664,12 +703,15 @@ func TestExportSpecificResources_DashboardRefMaterializesAncestorsOnly(t *testin
 // request that bypasses admission must still record an error and skip the
 // fetch rather than silently processing it as a Dashboard.
 func TestExportSpecificResources_DashboardRefWithMismatchedGroup(t *testing.T) {
-	dashGetClient := &mockGetByName{items: map[string]*unstructured.Unstructured{}}
-	dashClient := &dashGetListClient{getter: dashGetClient, lister: &mockListClient{}}
+	// A Dashboard ref carrying a non-dashboard group resolves to the
+	// {folder.grafana.app, Dashboard} GVK, which discovery cannot satisfy. The
+	// worker records the resolve failure rather than silently exporting it as a
+	// dashboard. Admission rejects this pairing too; this is defense in depth.
+	mismatchedGVK := schema.GroupVersionKind{Group: "folder.grafana.app", Kind: "Dashboard"}
 
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(dashClient, resources.DashboardResource, nil)
+	resourceClients.On("ForKind", mock.Anything, mismatchedGVK).
+		Return(nil, schema.GroupVersionResource{}, fmt.Errorf("no Dashboard kind in group folder.grafana.app"))
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
@@ -688,11 +730,6 @@ func TestExportSpecificResources_DashboardRefWithMismatchedGroup(t *testing.T) {
 	err := ExportSpecificResources(context.Background(), options, resourceClients, emptyFolderClient(), repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
-	// The Get path must not run when the group is wrong — the worker should
-	// reject before attempting to resolve the resource. (mockGetByName has no
-	// items here, so any successful Get would have triggered a NotFound error
-	// recorded with a different message; the assertion above on the recorded
-	// result body covers the rejection-before-fetch contract.)
 }
 
 // TestExportSpecificResources_FolderRefWithMismatchedGroup mirrors the
@@ -702,14 +739,10 @@ func TestExportSpecificResources_FolderRefWithMismatchedGroup(t *testing.T) {
 	folderClient := &mockListClient{items: []unstructured.Unstructured{
 		folderObject("real-folder", ""),
 	}}
-	dashClient := &dashGetListClient{
-		getter: &mockGetByName{items: map[string]*unstructured.Unstructured{}},
-		lister: &mockListClient{},
-	}
 
+	// resolveFolderRefs rejects the mismatched group before resolving any
+	// client, so no ForKind / SupportedResources expectations are set.
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(dashClient, resources.DashboardResource, nil)
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
@@ -756,6 +789,7 @@ func TestExportSpecificResources_DedupeExplicitDashboardInsideFolderRef(t *testi
 	resourceClients := resources.NewMockResourceClients(t)
 	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
 		Return(dashClient, resources.DashboardResource, nil)
+	resourceClients.On("SupportedResources").Return(resources.SupportedProvisioningResources)
 
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -781,7 +815,7 @@ func TestExportSpecificResources_DedupeExplicitDashboardInsideFolderRef(t *testi
 
 	options := provisioningV0.ExportJobOptions{
 		Resources: []provisioningV0.ResourceRef{
-			{Name: "shared-dash", Kind: "Dashboard"},
+			{Name: "shared-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 			{Name: "team-folder", Kind: "Folder"},
 		},
 	}

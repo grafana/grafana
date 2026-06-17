@@ -29,15 +29,6 @@ type SecretsManagerSettings struct {
 	// DataKeysRedisPrefix is the key prefix for DEK entries in that Redis.
 	DataKeysRedisPrefix string
 
-	// Whether to use a Redis cache for secure value metadata reads.
-	SecureValueMetadataCacheUseRedis bool
-	// The time to live for cached secure value metadata entries.
-	SecureValueMetadataCacheTTL time.Duration
-	// SecureValueMetadataCacheRedisURL is the Redis connection URL for the secure value metadata cache.
-	SecureValueMetadataCacheRedisURL string
-	// SecureValueMetadataCacheRedisPrefix is the key prefix for secure value metadata entries in Redis.
-	SecureValueMetadataCacheRedisPrefix string
-
 	// ConfiguredKMSProviders is a map of KMS providers found in the config file. The keys are in the format of <provider>.<keyName>, and the values are a map of the properties in that section
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 	ConfiguredKMSProviders map[string]map[string]string
@@ -60,6 +51,8 @@ type SecretsManagerSettings struct {
 	GCWorkerPollInterval time.Duration
 	// How long to wait for the process to clean up a secure value to complete.
 	GCWorkerPerSecureValueCleanupTimeout time.Duration
+	// Max number of times the worker tries to clean up a secure value before giving up on it.
+	GCWorkerMaxAttemptsPerSecureValue int
 
 	// Whether to register the MT CRUD API
 	RegisterAPIServer bool
@@ -90,6 +83,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GCWorkerMaxConcurrentCleanups = uint16(secretsMgmt.Key("gc_worker_max_concurrency").MustUint(16))
 	cfg.SecretsManagement.GCWorkerPollInterval = secretsMgmt.Key("gc_worker_poll_interval").MustDuration(1 * time.Minute)
 	cfg.SecretsManagement.GCWorkerPerSecureValueCleanupTimeout = secretsMgmt.Key("gc_worker_per_request_timeout").MustDuration(5 * time.Second)
+	cfg.SecretsManagement.GCWorkerMaxAttemptsPerSecureValue = int(secretsMgmt.Key("gc_worker_max_attempts_per_secure_value").MustUint(10))
 
 	cfg.SecretsManagement.RegisterAPIServer = secretsMgmt.Key("register_api_server").MustBool(true)
 	cfg.SecretsManagement.RunSecretsDBMigrations = secretsMgmt.Key("run_secrets_db_migrations").MustBool(true)
@@ -109,16 +103,6 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	if cfg.SecretsManagement.DataKeysCacheUseRedis && cfg.SecretsManagement.DataKeysCacheEncryptionKey == "" {
 		cfg.Logger.Error("DataKeysCacheEncryptionKey must be set when using Redis cache for data keys. Falling back to the OSS cache.")
 		cfg.SecretsManagement.DataKeysCacheUseRedis = false
-	}
-
-	cfg.SecretsManagement.SecureValueMetadataCacheUseRedis = secretsMgmt.Key("secure_value_metadata_cache_use_redis").MustBool(false)
-	cfg.SecretsManagement.SecureValueMetadataCacheTTL = secretsMgmt.Key("secure_value_metadata_cache_ttl").MustDuration(15 * time.Minute)
-	cfg.SecretsManagement.SecureValueMetadataCacheRedisURL = secretsMgmt.Key("secure_value_metadata_cache_redis_url").MustString("redis://127.0.0.1:6379/0")
-	cfg.SecretsManagement.SecureValueMetadataCacheRedisPrefix = secretsMgmt.Key("secure_value_metadata_cache_redis_prefix").MustString("gsm")
-
-	if cfg.SecretsManagement.SecureValueMetadataCacheUseRedis && cfg.SecretsManagement.SecureValueMetadataCacheTTL <= 0 {
-		cfg.Logger.Error("SecureValueMetadataCacheTTL must be > 0 when using Redis cache for secure value metadata. Disabling the cache.")
-		cfg.SecretsManagement.SecureValueMetadataCacheUseRedis = false
 	}
 
 	// Extract available KMS providers from configuration sections

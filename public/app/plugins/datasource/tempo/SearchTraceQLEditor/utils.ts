@@ -32,7 +32,7 @@ export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: Scoped
 
 const isRegExpOperator = (operator: string) => operator === '=~' || operator === '!~';
 
-export const valueHelper = (f: TraceqlFilter) => {
+const valueHelper = (f: TraceqlFilter) => {
   let value = f.value;
 
   if (Array.isArray(value) && !f.isCustomValue) {
@@ -52,7 +52,7 @@ export const valueHelper = (f: TraceqlFilter) => {
   return value;
 };
 
-export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
+const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   // Intrinsic fields don't have a scope
   if (lp.getIntrinsics().find((t) => t === f.tag)) {
     return '';
@@ -68,7 +68,7 @@ export const scopeHelper = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
   );
 };
 
-export const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
+const tagHelper = (f: TraceqlFilter, filters: TraceqlFilter[]) => {
   if (f.tag === 'duration') {
     const durationType = filters.find((f) => f.id === 'duration-type');
     if (durationType) {
@@ -87,10 +87,6 @@ export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[],
   }
 
   return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
-};
-
-export const getTagWithoutScope = (tag: string) => {
-  return tag.replace(/^(event|instrumentation|link|resource|span)\./, '');
 };
 
 export const filterScopedTag = (f: TraceqlFilter, lp: TempoLanguageProvider) => {
