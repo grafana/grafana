@@ -27,7 +27,7 @@ type Client interface {
 	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Webhooks
-	ListWebhooks(ctx context.Context) ([]repository.WebhookConfig, error)
+	ListWebhooks(ctx context.Context) ([]repository.Webhook, error)
 
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)

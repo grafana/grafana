@@ -14,21 +14,20 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// WebhookConfig is the provider-agnostic representation of a git provider webhook.
-type WebhookConfig struct {
+// Webhook is the provider-agnostic representation of a git provider webhook.
+type Webhook struct {
 	// The ID of the webhook. Can be 0 on creation.
 	ID int64
 	// The events which this webhook shall contact the URL for.
 	Events []string
-	// Is the webhook enabled?
-	Active bool
 	// The URL the provider should contact on events.
 	URL string
-	// The content type the provider should send deliveries as.
-	ContentType string
 	// The secret used to authenticate webhook deliveries.
 	// Empty when fetched from the provider, as it is never returned.
 	Secret string
+	// Extra holds provider-specific webhook fields, passed through untouched
+	// by the manager between the provider client's reads and writes.
+	Extra map[string]any
 }
 
 // WebhookManager implements the provider-agnostic webhook lifecycle (registration,
@@ -161,39 +160,35 @@ func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]
 	return statusPatches(hook.ID, hook.URL, hook.Events, hook.Secret), nil
 }
 
-func (m *WebhookManager) createWebhook(ctx context.Context) (WebhookConfig, error) {
+func (m *WebhookManager) createWebhook(ctx context.Context) (Webhook, error) {
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
+		return Webhook{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
-	cfg := WebhookConfig{
-		URL:         m.webhookURL,
-		Secret:      secret.String(),
-		ContentType: "json",
-		Events:      m.events,
-		Active:      true,
-	}
-
-	hook, err := m.client.CreateWebhook(ctx, cfg)
+	hook, err := m.client.CreateWebhook(ctx, Webhook{
+		URL:    m.webhookURL,
+		Secret: secret.String(),
+		Events: m.events,
+	})
 	if err != nil {
-		return WebhookConfig{}, err
+		return Webhook{}, err
 	}
 
 	// The provider does not return the secret, so we set it manually.
-	hook.Secret = cfg.Secret
+	hook.Secret = secret.String()
 
-	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
+	logging.FromContext(ctx).Info("webhook created", "url", hook.URL, "id", hook.ID)
 	return hook, nil
 }
 
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
-func (m *WebhookManager) updateWebhook(ctx context.Context) (WebhookConfig, bool, error) {
+func (m *WebhookManager) updateWebhook(ctx context.Context) (Webhook, bool, error) {
 	if m.config.Status.Webhook == nil || m.config.Status.Webhook.ID == 0 {
 		hook, err := m.createWebhook(ctx)
 		if err != nil {
-			return WebhookConfig{}, false, err
+			return Webhook{}, false, err
 		}
 		return hook, true, nil
 	}
@@ -203,11 +198,11 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (WebhookConfig, bool
 	case errors.Is(err, ErrFileNotFound):
 		hook, err := m.createWebhook(ctx)
 		if err != nil {
-			return WebhookConfig{}, false, err
+			return Webhook{}, false, err
 		}
 		return hook, true, nil
 	case err != nil:
-		return WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
+		return Webhook{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
 	var mustUpdate bool
@@ -230,11 +225,11 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (WebhookConfig, bool
 	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
+		return Webhook{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
 	if err := m.client.EditWebhook(ctx, hook); err != nil {
-		return WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
+		return Webhook{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
 	return hook, true, nil

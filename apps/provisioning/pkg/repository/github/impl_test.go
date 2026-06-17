@@ -369,7 +369,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 		mockHandler  *http.Client
 		owner        string
 		repository   string
-		wantWebhooks []WebhookConfig
+		wantWebhooks []repo.Webhook
 		wantErr      error
 	}{
 		{
@@ -405,20 +405,18 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			wantWebhooks: []WebhookConfig{
+			wantWebhooks: []repo.Webhook{
 				{
-					ID:          1,
-					Events:      []string{"push", "pull_request"},
-					Active:      true,
-					URL:         "https://example.com/webhook1",
-					ContentType: "json",
+					ID:     1,
+					Events: []string{"push", "pull_request"},
+					URL:    "https://example.com/webhook1",
+					Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
 				},
 				{
-					ID:          2,
-					Events:      []string{"issues"},
-					Active:      false,
-					URL:         "https://example.com/webhook2",
-					ContentType: "form", // Default value when empty
+					ID:     2,
+					Events: []string{"issues"},
+					URL:    "https://example.com/webhook2",
+					Extra:  webhookExtra{Active: false, ContentType: "form"}.toMap(),
 				},
 			},
 			wantErr: nil,
@@ -437,7 +435,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			),
 			owner:        "test-owner",
 			repository:   "test-repo",
-			wantWebhooks: []WebhookConfig{},
+			wantWebhooks: []repo.Webhook{},
 			wantErr:      nil,
 		},
 		{
@@ -551,8 +549,8 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		config      WebhookConfig
-		want        WebhookConfig
+		config      repo.Webhook
+		want        repo.Webhook
 		wantErr     error
 	}{
 		{
@@ -593,14 +591,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				Events:      []string{"push", "pull_request"},
 				Active:      true,
 				URL:         "https://example.com/webhook",
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			want: WebhookConfig{
+			want: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push", "pull_request"},
 				Active:      true,
@@ -642,14 +640,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				Events: []string{"push"},
 				Active: true,
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
 				// ContentType intentionally omitted
 			},
-			want: WebhookConfig{
+			want: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -677,14 +675,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				Events:      []string{"push"},
 				Active:      true,
 				URL:         "https://example.com/webhook",
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			want:    WebhookConfig{},
+			want:    repo.Webhook{},
 			wantErr: repo.ErrServerUnavailable,
 		},
 		{
@@ -705,14 +703,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				Events:      []string{"push"},
 				Active:      true,
 				URL:         "https://example.com/webhook",
 				ContentType: "json",
 				Secret:      "secret123",
 			},
-			want:    WebhookConfig{},
+			want:    repo.Webhook{},
 			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
@@ -756,7 +754,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 		owner       string
 		repository  string
 		webhookID   int64
-		want        WebhookConfig
+		want        repo.Webhook
 		wantErr     error
 	}{
 		{
@@ -783,7 +781,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want: WebhookConfig{
+			want: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push", "pull_request"},
 				Active:      true,
@@ -816,7 +814,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  456,
-			want: WebhookConfig{
+			want: repo.Webhook{
 				ID:          456,
 				Events:      []string{"push"},
 				Active:      true,
@@ -844,7 +842,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  999,
-			want:       WebhookConfig{},
+			want:       repo.Webhook{},
 			wantErr:    repo.ErrFileNotFound,
 		},
 		{
@@ -866,7 +864,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want:       WebhookConfig{},
+			want:       repo.Webhook{},
 			wantErr:    repo.ErrServerUnavailable,
 		},
 		{
@@ -888,7 +886,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			owner:      "test-owner",
 			repository: "test-repo",
 			webhookID:  123,
-			want:       WebhookConfig{},
+			want:       repo.Webhook{},
 			wantErr:    errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
 	}
@@ -1070,7 +1068,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 		mockHandler *http.Client
 		owner       string
 		repository  string
-		config      WebhookConfig
+		config      repo.Webhook
 		wantErr     error
 	}{
 		{
@@ -1111,7 +1109,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push", "pull_request", "issues"},
 				Active:      true,
@@ -1160,7 +1158,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -1188,7 +1186,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
@@ -1216,7 +1214,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			),
 			owner:      "test-owner",
 			repository: "test-repo",
-			config: WebhookConfig{
+			config: repo.Webhook{
 				ID:          123,
 				Events:      []string{"push"},
 				Active:      true,
