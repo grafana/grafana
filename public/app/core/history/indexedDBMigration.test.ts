@@ -143,6 +143,16 @@ describe('migrateToIndexedDB', () => {
     expect(settings.activeDatasourcesOnly).toBe(true);
   });
 
+  it('should default retention to the IndexedDB default when no legacy retention was set', async () => {
+    store.setObject(RICH_HISTORY_KEY, [validEntry1]);
+    // retentionPeriod key intentionally left unset (cleared in beforeEach)
+
+    await migrateToIndexedDB(indexedDBStorage);
+
+    const settings = await indexedDBStorage.getSettings();
+    expect(settings.retentionPeriod).toBe(14);
+  });
+
   it('should use legacy activeDatasourceOnly key when new key is not set', async () => {
     store.setObject(RICH_HISTORY_KEY, [validEntry1]);
     store.setObject(RICH_HISTORY_SETTING_KEYS.legacyActiveDatasourceOnly, true);

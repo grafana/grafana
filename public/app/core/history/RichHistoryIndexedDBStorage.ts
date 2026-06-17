@@ -27,7 +27,7 @@ const METADATA_STORE = 'metadata';
 const DEFAULT_ITEM_COUNT_WARNING_THRESHOLD = 50_000;
 const MS_PER_DAY = 86_400_000;
 
-const DEFAULT_SETTINGS: RichHistorySettings = {
+export const DEFAULT_SETTINGS: RichHistorySettings = {
   retentionPeriod: 14,
   starredTabAsFirstTab: false,
   activeDatasourcesOnly: false,

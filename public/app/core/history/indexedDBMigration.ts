@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { type DataQuery, generateUUID, store } from '@grafana/data';
 import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
-import type { IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';
+import { DEFAULT_SETTINGS, type IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';
 import { RICH_HISTORY_KEY, type RichHistoryLocalStorageDTO } from './RichHistoryLocalStorage';
 import { RICH_HISTORY_SETTING_KEYS } from './richHistoryLocalStorageUtils';
 
@@ -372,8 +372,11 @@ async function fetchRemotePage(page: number): Promise<RemoteQueryHistoryResponse
 }
 
 async function migrateSettings(indexedDBStorage: IndexedDBMigrationAccess): Promise<void> {
-  const rawRetention = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
-  const retentionPeriod = typeof rawRetention === 'number' ? rawRetention : 7;
+  // Only carry over an explicitly-set legacy retention. When the old localStorage value was never
+  // set, seed the IndexedDB default rather than the legacy localStorage default (which was 7) so the
+  // new backend's intended default of 14 applies. The legacy localStorage settings are left untouched.
+  const rawRetention = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod);
+  const retentionPeriod = typeof rawRetention === 'number' ? rawRetention : DEFAULT_SETTINGS.retentionPeriod;
   const starredTabAsFirstTab = store.getBool(RICH_HISTORY_SETTING_KEYS.starredTabAsFirstTab, false);
 
   // Check both the new key and the legacy key for activeDatasourcesOnly
