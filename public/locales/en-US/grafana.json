@@ -4269,6 +4269,7 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
+      "default-commit-message": "Delete resources",
       "delete-warning": "This will delete selected folders and their descendants.",
       "error-deleting-resources": "Error deleting resources",
       "folder-empty_one": "Selected folder is empty",
@@ -4280,6 +4281,7 @@
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
+      "default-commit-message": "Move resources",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -6023,9 +6025,6 @@
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
-    },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
     },
     "panel-links": {
       "aria-label-panel-links": "Panel links"
@@ -8915,6 +8914,11 @@
     "sql-expr": {
       "button-run-query": "Run query"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": "SQL expression editor"
+      }
+    },
     "sql-schema": {
       "error-title": "Error",
       "loading": "Loading schema information...",
@@ -10654,10 +10658,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
+      "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
+    },
+    "firing-alerts-card": {
+      "critical-count_one": "{{count}} critical",
+      "critical-count_other": "{{count}} critical",
+      "empty": "You have no firing alerts.",
+      "empty-teams": "No firing alerts for your teams.",
+      "error-title": "Could not load firing alerts",
+      "high-count_one": "{{count}} high",
+      "high-count_other": "{{count}} high",
+      "retry": "Retry",
+      "severity-critical": "Critical",
+      "severity-high": "High",
+      "severity-low": "Low",
+      "severity-minor": "Minor",
+      "severity-unknown": "Unknown severity",
+      "title": "Firing alerts",
+      "view-all": "View all firing alerts"
     },
     "home-page": {
       "edition": {
@@ -10672,6 +10696,11 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "most-used-dashboards-tab": {
+      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
+      "error-title": "Could not load most viewed dashboards",
+      "loading": "Loading most viewed dashboards..."
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10679,15 +10708,13 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading recently viewed dashboards..."
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
-      "loading": "Loading starred dashboards...",
-      "retry": "Retry"
+      "loading": "Loading starred dashboards..."
     }
   },
   "import-overview": {
@@ -12142,8 +12169,10 @@
       "undock": "Undock menu"
     },
     "megamenu-item": {
+      "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13249,9 +13278,9 @@
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Cancel",
+      "default-commit-message": "Fix folder metadata",
       "error-message": "Failed to start folder metadata fix job. Please try again.",
       "error-title": "Error fixing folder metadata",
-      "loading": "Loading repository...",
       "read-only-message": "Folder metadata cannot be fixed automatically.",
       "submit": "Fix folder IDs",
       "submitting": "Fixing...",
@@ -13414,9 +13443,26 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "all-managed": "All of your dashboards and folders are already managed in Git.",
+      "all-resources": "All resources",
+      "dashboards": "Dashboards",
+      "drawer-cancel": "Cancel",
+      "drawer-description": "All dashboards and folders will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-title": "Migrate to GitOps",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
-      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step."
+      "loading": "Loading stats...",
+      "migrate-button": "Migrate everything",
+      "migrate-button-disabled-tooltip": "Select a target repository first",
+      "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "repo-description": "The repository your dashboards and folders will be migrated into.",
+      "repo-label": "Target repository",
+      "repo-placeholder": "Select a repository",
+      "selective-coming-soon": "Migrating only selected dashboards and folders is coming soon.",
+      "start-button": "Start migration"
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -14054,7 +14100,6 @@
     },
     "bulk-actions": {
       "change-datasource": "Change data source for selected queries",
-      "clear-selection": "Clear selection",
       "datasource": "Data source",
       "delete": "Delete",
       "delete-confirm-body": "This action cannot be undone.",
@@ -14063,14 +14108,16 @@
       "delete-tooltip": "Delete selected",
       "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
-      "disable-all": "Disable all",
-      "disable-all-tooltip": "Disable all selected",
-      "enable-all": "Enable all",
-      "enable-all-tooltip": "Enable all selected",
+      "disable": "Disable",
+      "disable-all-tooltip": "Disable selected",
+      "empty-hint": "Select items to apply actions",
+      "enable": "Enable",
+      "enable-all-tooltip": "Enable selected",
+      "exit-multi-select": "Exit multi-select",
       "hide": "Hide",
-      "hide-all-tooltip": "Hide all selected",
+      "hide-all-tooltip": "Hide selected",
       "show": "Show",
-      "show-all-tooltip": "Show all selected",
+      "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
     },
     "delete-modal": {

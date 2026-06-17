@@ -1,6 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { ID_PREFIX, navTreeReducer, setStarred, updateDashboardName } from './navBarTree';
+import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
 
 function buildState(starredChildren: NavModelItem[] = []): NavModelItem[] {
   return [
@@ -58,6 +58,69 @@ describe('navBarTree reducer', () => {
       const starred = next.find((n) => n.id === 'starred');
       const names = starred?.children?.map((c) => c.text);
       expect(names).toEqual(['Beta', 'Charlie', 'Zulu']);
+    });
+  });
+
+  describe('setStarredItems', () => {
+    it('replaces children with sorted items', () => {
+      const state = buildState([{ id: ID_PREFIX + 'old', text: 'Old Dash', url: '/d/old' }]);
+      const next = navTreeReducer(
+        state,
+        setStarredItems({
+          uids: ['c', 'a', 'b'],
+          items: [
+            { id: 'c', title: 'Charlie', url: '/d/c' },
+            { id: 'a', title: 'Alpha', url: '/d/a' },
+            { id: 'b', title: 'Beta', url: '/d/b' },
+          ],
+        })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children).toHaveLength(3);
+      expect(starred?.children?.map((c) => c.text)).toEqual(['Alpha', 'Beta', 'Charlie']);
+      expect(starred?.children?.map((c) => c.id)).toEqual(['starred/a', 'starred/b', 'starred/c']);
+    });
+
+    it('clears previous children', () => {
+      const state = buildState([
+        { id: ID_PREFIX + 'x', text: 'X', url: '/d/x' },
+        { id: ID_PREFIX + 'y', text: 'Y', url: '/d/y' },
+      ]);
+      const next = navTreeReducer(state, setStarredItems({ uids: [], items: [] }));
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children).toEqual([]);
+    });
+
+    it('keeps the existing child for a starred uid missing from the search response', () => {
+      const state = buildState([{ id: ID_PREFIX + 'fresh', text: 'Fresh Dash', url: '/d/fresh' }]);
+      const next = navTreeReducer(
+        state,
+        setStarredItems({
+          uids: ['a', 'fresh'],
+          items: [{ id: 'a', title: 'Alpha', url: '/d/a' }],
+        })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['Alpha', 'Fresh Dash']);
+    });
+
+    it('drops unstarred uids even when search misses them', () => {
+      const state = buildState([{ id: ID_PREFIX + 'gone', text: 'Gone Dash', url: '/d/gone' }]);
+      const next = navTreeReducer(
+        state,
+        setStarredItems({ uids: ['a'], items: [{ id: 'a', title: 'Alpha', url: '/d/a' }] })
+      );
+      const starred = next.find((n) => n.id === 'starred');
+      expect(starred?.children?.map((c) => c.text)).toEqual(['Alpha']);
+    });
+
+    it('no-ops when starred section is missing', () => {
+      const state = [{ id: 'home', text: 'Home', url: '/' }];
+      const next = navTreeReducer(
+        state,
+        setStarredItems({ uids: ['a'], items: [{ id: 'a', title: 'A', url: '/d/a' }] })
+      );
+      expect(next).toEqual(state);
     });
   });
 });

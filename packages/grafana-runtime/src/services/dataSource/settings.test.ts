@@ -1,19 +1,25 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
   getDataSourceInstanceSettingsList,
   getDataSourceInstanceSettings,
   initDataSourceInstanceSettings,
-  setExpressionDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
+
+// The expression singleton retains its full instance settings as a public
+// field; the runtime APIs read settings off the registered instance.
+function expressionInstance(settings: DataSourceInstanceSettings): DataSourceApi {
+  return { instanceSettings: settings } as unknown as DataSourceApi;
+}
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -160,6 +166,7 @@ describe('instanceSettings', () => {
 
     it('resolves expression references by uid, name, and legacy id', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       const byUid = await getDataSourceInstanceSettings('__expr__');
       const byName = await getDataSourceInstanceSettings('Expression');
       const byLegacyId = await getDataSourceInstanceSettings('-100');
@@ -233,12 +240,14 @@ describe('instanceSettings', () => {
     describe('expression references in object form', () => {
       it('resolves a DataSourceRef with the new expression type (__expr__)', async () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
         const result = await getDataSourceInstanceSettings({ type: '__expr__' });
         expect(result?.uid).toBe('__expr__');
       });
 
       it('resolves a DataSourceRef with the legacy expression type (-100)', async () => {
         initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
         const result = await getDataSourceInstanceSettings({ type: '-100' });
         expect(result?.uid).toBe('__expr__');
       });
@@ -647,7 +656,7 @@ describe('instanceSettings', () => {
     });
 
     it('preserves a built-in datasource and keeps it out of the list', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Sync a payload that does not include the expression datasource.
@@ -668,40 +677,46 @@ describe('instanceSettings', () => {
     });
   });
 
-  describe('setExpressionDataSourceInstanceSettings', () => {
+  describe('setExpressionDataSourceInstance', () => {
     it('makes the expression datasource available by uid after init', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('__expr__');
       expect(result?.uid).toBe('__expr__');
     });
 
     it('resolves by name via isExpressionReference path', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('Expression');
       expect(result?.uid).toBe('__expr__');
     });
 
     it('resolves by legacy id -100 via isExpressionReference path', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings({}, '');
       const result = await getDataSourceInstanceSettings('-100');
       expect(result?.uid).toBe('__expr__');
     });
 
-    it('is not returned by getDataSourceInstanceSettingsList (byUid-only, matching legacy)', async () => {
-      // Set via the expression setter, but do NOT include it in the init map — it
-      // must only live in byUid so list results are unaffected.
+    it('returns undefined for an expression ref when no instance is registered', async () => {
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('__expr__');
+      expect(result).toBeUndefined();
+    });
+
+    it('is not returned by getDataSourceInstanceSettingsList (matching legacy)', async () => {
+      // The expression datasource lives only on the registered instance, never
+      // in the name/uid maps the list is built from.
       const { Expression: _expr, ...withoutExpression } = fixtures;
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(withoutExpression, 'Bravo');
       const items = await getDataSourceInstanceSettingsList({ all: true });
       expect(items.some((x) => x.uid === '__expr__')).toBe(false);
     });
 
     it('survives a cache repopulate via no-arg reload', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(fixtures, 'Bravo');
 
       // Reload with a payload that does not include the expression datasource.
@@ -713,26 +728,8 @@ describe('instanceSettings', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
     });
 
-    it('throws when called a second time outside of tests', () => {
-      const originalNodeEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
-      try {
-        setExpressionDataSourceInstanceSettings(fixtures.Expression);
-        expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).toThrow(
-          'setExpressionDataSourceInstanceSettings() function should only be called once'
-        );
-      } finally {
-        process.env.NODE_ENV = originalNodeEnv;
-      }
-    });
-
-    it('allows being called multiple times in tests', () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
-      expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
-    });
-
     it('coexists with a runtime datasource and both survive a repopulate', async () => {
-      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const runtime = ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' });
       upsertRuntimeDataSourceInstanceSettings(runtime);
