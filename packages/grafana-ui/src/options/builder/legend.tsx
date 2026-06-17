@@ -81,7 +81,7 @@ export function addLegendOptions<T extends OptionsWithLegend>(
     })
     .addRadio({
       path: 'legend.overflow',
-      name: t('grafana-ui.builder.legend.name-overflow', 'Name overflow'),
+      name: t('grafana-ui.builder.legend.name-overflow', 'Overflow'),
       category,
       description: '',
       defaultValue: 'ellipsis',
