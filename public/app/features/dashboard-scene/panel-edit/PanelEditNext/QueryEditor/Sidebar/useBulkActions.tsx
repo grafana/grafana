@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 
-import { type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isExpressionReference } from '@grafana/runtime';
-import { ConfirmModal, type IconName } from '@grafana/ui';
+import { ConfirmModal, type IconName, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
 
 import {
@@ -26,6 +27,27 @@ export interface BulkActionGroup {
   key: string;
   actions: BulkAction[];
   modals: ReactNode;
+}
+
+interface DeleteConfirmDescriptionProps {
+  items: Array<{ id: string; label: string }>;
+}
+
+// Lists exactly what will be deleted so the user can confirm the destructive action against the
+// concrete set, rather than a bare count. Used by both the query and transformation modals.
+function DeleteConfirmDescription({ items }: DeleteConfirmDescriptionProps) {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Stack direction="column" gap={1}>
+      <ul className={styles.itemList}>
+        {items.map(({ id, label }) => (
+          <li key={id}>{label}</li>
+        ))}
+      </ul>
+      <span>{t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}</span>
+    </Stack>
+  );
 }
 
 export function useBulkQueryActions(): BulkActionGroup {
@@ -102,7 +124,9 @@ export function useBulkQueryActions(): BulkActionGroup {
           defaultValue_other: 'Delete {{count}} items?',
         })}
         body={undefined}
-        description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+        description={
+          <DeleteConfirmDescription items={selectedQueries.map(({ refId }) => ({ id: refId, label: refId }))} />
+        }
         confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
         onConfirm={handleConfirmedDelete}
         onDismiss={() => setShowDeleteConfirm(false)}
@@ -163,7 +187,14 @@ export function useBulkTransformationActions(): BulkActionGroup {
         defaultValue_other: 'Delete {{count}} transformations?',
       })}
       body={undefined}
-      description={t('query-editor-next.bulk-actions.delete-confirm-body', 'This action cannot be undone.')}
+      description={
+        <DeleteConfirmDescription
+          items={selectedTransformations.map((transformation) => ({
+            id: transformation.transformId,
+            label: transformation.registryItem?.name || transformation.transformConfig.id,
+          }))}
+        />
+      }
       confirmText={t('query-editor-next.bulk-actions.delete', 'Delete')}
       onConfirm={handleConfirmedDelete}
       onDismiss={() => setShowDeleteConfirm(false)}
@@ -172,3 +203,12 @@ export function useBulkTransformationActions(): BulkActionGroup {
 
   return { key: 'transformations', actions, modals };
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  itemList: css({
+    margin: 0,
+    paddingLeft: theme.spacing(2.5),
+    maxHeight: 200,
+    overflowY: 'auto',
+  }),
+});
