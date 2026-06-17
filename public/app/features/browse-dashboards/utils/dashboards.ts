@@ -34,10 +34,6 @@ export function addTeamFolderPrefix(uid: string) {
 
 const STARRED_FOLDER_PREFIX = STARRED_FOLDERS_UID + '/';
 
-export function isUnderStarredFolders(uid: string) {
-  return uid.startsWith(STARRED_FOLDER_PREFIX);
-}
-
 export function addStarredFolderPrefix(uid: string) {
   return STARRED_FOLDER_PREFIX + uid;
 }
@@ -64,7 +60,12 @@ export function reapplyVirtualFolderPrefix(parentUID: string, childUID: string):
 // Virtual roots that must never be selected, plus starred-folder children (the starred view is
 // read-only; the same folders stay selectable under the real "Dashboards" tree).
 export function isNonSelectableVirtualFolder(uid: string): boolean {
-  return isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid) || isUnderStarredFolders(uid);
+  return (
+    isSharedWithMe(uid) ||
+    isVirtualTeamFolder(uid) ||
+    isVirtualStarredFolder(uid) ||
+    uid.startsWith(STARRED_FOLDER_PREFIX)
+  );
 }
 
 // Single gate for the starred-folders feature: the OpenFeature flag plus the hard dependency on the
