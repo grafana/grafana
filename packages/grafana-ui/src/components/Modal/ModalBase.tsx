@@ -45,7 +45,14 @@ export function ModalBase({
 
   const dismiss = useDismiss(context, {
     escapeKey: closeOnEscape,
-    outsidePress: () => {
+    outsidePress: (event) => {
+      // Globally-floating UI such as toast notifications renders above the modal but outside its DOM
+      // subtree, so floating-ui counts a click on it as an outside press. Elements that opt out with
+      // data-dismiss-ignore must not be treated as a backdrop click.
+      const target = event.target;
+      if (target instanceof Element && target.closest('[data-dismiss-ignore]')) {
+        return false;
+      }
       if (onClickBackdrop) {
         onClickBackdrop();
         return false;
