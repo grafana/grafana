@@ -2,15 +2,11 @@ package github
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
-	"slices"
-	"time"
 
 	"github.com/google/go-github/v82/github"
-	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -32,14 +28,10 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
-	config            *provisioning.Repository
-	owner             string
-	repo              string
-	secret            common.RawSecureValue
-	gh                Client
-	webhookURL        string
-	incrementalPolicy repository.IncrementalSyncPolicy
-	replayCache       *replayCache
+	*repository.WebhookManager
+	owner       string
+	repo        string
+	replayCache *replayCache
 }
 
 func NewGithubWebhookRepository(
@@ -54,30 +46,27 @@ func NewGithubWebhookRepository(
 	if replay == nil {
 		replay = newReplayCache(defaultReplayCacheTTL)
 	}
+	cfg := basic.Config()
 	return &githubWebhookRepository{
-		GithubRepository:  basic,
-		config:            basic.Config(),
-		owner:             basic.Owner(),
-		repo:              basic.Repo(),
-		gh:                basic.Client(),
-		webhookURL:        webhookURL,
-		secret:            secret,
-		incrementalPolicy: incrementalPolicy,
-		replayCache:       replay,
+		GithubRepository: basic,
+		WebhookManager:   repository.NewWebhookManager(basic.Client(), cfg, webhookURL, subscribedEvents, secret, incrementalPolicy),
+		owner:            basic.Owner(),
+		repo:             basic.Repo(),
+		replayCache:      replay,
 	}
 }
 
 // Webhook implements Repository.
 func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	if r.config.Status.Webhook == nil {
+	if r.Config().Status.Webhook == nil {
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
-	if r.secret.IsZero() {
+	if r.Secret().IsZero() {
 		return nil, fmt.Errorf("missing webhook secret")
 	}
 
-	payload, err := github.ValidatePayload(req, []byte(r.secret))
+	payload, err := github.ValidatePayload(req, []byte(r.Secret()))
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
@@ -144,13 +133,13 @@ func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *git
 	}
 
 	// No need to sync if not enabled
-	if !r.config.Spec.Sync.Enabled {
+	if !r.Config().Spec.Sync.Enabled {
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
-	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
+	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.Config().Spec.GitHub.Branch) {
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
@@ -161,12 +150,12 @@ func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *git
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := r.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges)
+	incremental := r.CanUseIncrementalSync(deletedPaths, totalChanges)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
-			Repository: r.config.GetName(),
+			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPull,
 			Pull: &provisioning.SyncJobOptions{
 				Incremental: incremental,
@@ -179,7 +168,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in pull request event")
 	}
-	cfg := r.config.Spec.GitHub
+	cfg := r.Config().Spec.GitHub
 	if cfg == nil {
 		return nil, fmt.Errorf("missing GitHub config")
 	}
@@ -194,7 +183,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != r.config.Spec.GitHub.Branch {
+	if pr.GetBase().GetRef() != r.Config().Spec.GitHub.Branch {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", pr.GetBase().GetRef()),
@@ -214,280 +203,13 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
 		Job: &provisioning.JobSpec{
-			Repository: r.config.GetName(),
+			Repository: r.Config().GetName(),
 			Action:     provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.PullRequestJobOptions{
 				URL:  pr.GetHTMLURL(),
 				PR:   pr.GetNumber(),
 				Ref:  pr.GetHead().GetRef(),
 				Hash: pr.GetHead().GetSHA(),
-			},
-		},
-	}, nil
-}
-
-// CommentPullRequest adds a comment to a pull request.
-func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	ctx, _ = r.logger(ctx, "")
-	return r.gh.CreatePullRequestComment(ctx, prNumber, comment)
-}
-
-func (r *githubWebhookRepository) createWebhook(ctx context.Context) (WebhookConfig, error) {
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return WebhookConfig{}, fmt.Errorf("could not generate secret: %w", err)
-	}
-
-	cfg := WebhookConfig{
-		URL:         r.webhookURL,
-		Secret:      secret.String(),
-		ContentType: "json",
-		Events:      subscribedEvents,
-		Active:      true,
-	}
-
-	hook, err := r.gh.CreateWebhook(ctx, cfg)
-	if err != nil {
-		return WebhookConfig{}, err
-	}
-
-	// HACK: GitHub does not return the secret, so we need to update it manually
-	hook.Secret = cfg.Secret
-
-	logging.FromContext(ctx).Info("webhook created", "url", cfg.URL, "id", hook.ID)
-	return hook, nil
-}
-
-// updateWebhook checks if the webhook needs to be updated and updates it if necessary.
-// if the webhook does not exist, it will create it.
-func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookConfig, bool, error) {
-	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
-		hook, err := r.createWebhook(ctx)
-		if err != nil {
-			return WebhookConfig{}, false, err
-		}
-		return hook, true, nil
-	}
-
-	hook, err := r.gh.GetWebhook(ctx, r.config.Status.Webhook.ID)
-	switch {
-	case errors.Is(err, repository.ErrFileNotFound):
-		hook, err := r.createWebhook(ctx)
-		if err != nil {
-			return WebhookConfig{}, false, err
-		}
-		return hook, true, nil
-	case err != nil:
-		return WebhookConfig{}, false, fmt.Errorf("get webhook: %w", err)
-	}
-
-	var mustUpdate bool
-
-	if hook.URL != r.webhookURL {
-		mustUpdate = true
-		hook.URL = r.webhookURL
-	}
-
-	slices.Sort(hook.Events) // consistent order for comparison
-	if !slices.Equal(hook.Events, subscribedEvents) {
-		mustUpdate = true
-		hook.Events = subscribedEvents
-	}
-
-	if !mustUpdate {
-		return hook, false, nil
-	}
-
-	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
-	}
-	hook.Secret = secret.String()
-	if err := r.gh.EditWebhook(ctx, hook); err != nil {
-		return WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
-	}
-
-	return hook, true, nil
-}
-
-func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
-	logger := logging.FromContext(ctx)
-	if r.config.Status.Webhook == nil {
-		return fmt.Errorf("webhook not found")
-	}
-
-	id := r.config.Status.Webhook.ID
-
-	err := r.gh.DeleteWebhook(ctx, id)
-	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
-		return fmt.Errorf("delete webhook: %w", err)
-	}
-	if errors.Is(err, repository.ErrFileNotFound) {
-		logger.Warn("webhook no longer exists", "url", r.config.Status.Webhook.URL, "id", id)
-		return nil
-	}
-	if errors.Is(err, repository.ErrUnauthorized) {
-		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", r.config.Status.Webhook.URL, "id", id)
-		return nil
-	}
-
-	logger.Info("webhook deleted", "url", r.config.Status.Webhook.URL, "id", id)
-	return nil
-}
-
-func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
-	if len(r.webhookURL) == 0 {
-		return nil, nil
-	}
-
-	// extra.Build never wraps a repository with spec.webhook.disabled in a GithubWebhookRepository,
-	// so reaching here with the flag set would be a bug. Guard anyway to be safe.
-	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
-		logging.FromContext(ctx).Warn("webhook hooks invoked while spec.webhook.disabled is true; skipping")
-		return nil, nil
-	}
-
-	if len(r.config.Spec.Workflows) == 0 {
-		return nil, nil
-	}
-
-	ctx, _ = r.logger(ctx, "")
-	hook, err := r.createWebhook(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return []map[string]interface{}{
-		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               hook.ID,
-				URL:              hook.URL,
-				SubscribedEvents: hook.Events,
-				LastRotated:      time.Now().UnixMilli(),
-			},
-		},
-		{
-			"op":   "replace",
-			"path": "/secure/webhookSecret",
-			"value": map[string]string{
-				"create": hook.Secret,
-			},
-		},
-	}, nil
-}
-
-func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
-	if len(r.webhookURL) == 0 {
-		return nil, nil
-	}
-
-	// See OnCreate for the reasoning behind this guard.
-	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
-		return nil, nil
-	}
-
-	if len(r.config.Spec.Workflows) == 0 {
-		if r.config.Status.Webhook != nil {
-			ctx, _ = r.logger(ctx, "")
-			if err := r.deleteWebhook(ctx); err != nil {
-				return nil, err
-			}
-			return []map[string]any{{
-				"op":    "replace",
-				"path":  "/status/webhook",
-				"value": nil,
-			}}, nil
-		}
-		return nil, nil
-	}
-
-	ctx, _ = r.logger(ctx, "")
-	hook, changed, err := r.updateWebhook(ctx)
-	if err != nil || !changed {
-		return nil, err
-	}
-
-	// update the webhook and secret
-	return []map[string]any{{
-		"op":   "replace",
-		"path": "/status/webhook",
-		"value": &provisioning.WebhookStatus{
-			ID:               hook.ID,
-			URL:              hook.URL,
-			SubscribedEvents: hook.Events,
-			LastRotated:      time.Now().UnixMilli(),
-		},
-	}, {
-		"op":   "replace",
-		"path": "/secure/webhookSecret",
-		"value": map[string]string{
-			"create": hook.Secret,
-		},
-	}}, nil
-}
-
-func (r *githubWebhookRepository) OnDelete(ctx context.Context) error {
-	if r.config.Status.Webhook == nil {
-		return nil
-	}
-
-	return r.deleteWebhook(ctx)
-}
-
-// RotateWebhookSecret generates a new HMAC secret for the repository's GitHub
-// webhook and updates it via the API. If the remote webhook no longer exists
-// (404), the Status.Webhook entry is cleared so the next reconcile re-creates
-// it via processHooks, and an error is returned so the failure is surfaced in
-// logs.
-func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
-	if r.config.Status.Webhook == nil || r.config.Status.Webhook.ID == 0 {
-		return nil, nil
-	}
-
-	ctx, logger := r.logger(ctx, "")
-	logger.Info("rotating webhook secret", "trigger", "rotation")
-
-	hook, err := r.gh.GetWebhook(ctx, r.config.Status.Webhook.ID)
-	switch {
-	case errors.Is(err, repository.ErrFileNotFound):
-		return []map[string]any{{
-			"op":    "replace",
-			"path":  "/status/webhook",
-			"value": nil,
-		}}, fmt.Errorf("webhook %d not found on remote during rotation: %w", r.config.Status.Webhook.ID, err)
-	case err != nil:
-		return nil, fmt.Errorf("get webhook for rotation: %w", err)
-	}
-
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("generate rotation secret: %w", err)
-	}
-	hook.Secret = secret.String()
-
-	if err := r.gh.EditWebhook(ctx, hook); err != nil {
-		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
-	}
-
-	logger.Info("webhook secret rotated successfully")
-	return []map[string]any{
-		{
-			"op":   "replace",
-			"path": "/status/webhook",
-			"value": &provisioning.WebhookStatus{
-				ID:               hook.ID,
-				URL:              hook.URL,
-				SubscribedEvents: hook.Events,
-				LastRotated:      time.Now().UnixMilli(),
-			},
-		},
-		{
-			"op":   "replace",
-			"path": "/secure/webhookSecret",
-			"value": map[string]string{
-				"create": hook.Secret,
 			},
 		},
 	}, nil
@@ -503,7 +225,7 @@ func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (conte
 	}
 
 	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
+		ref = r.Config().Spec.GitHub.Branch
 	}
 
 	logger = logger.With(slog.Group("github_repository", "owner", r.owner, "name", r.repo, "ref", ref))

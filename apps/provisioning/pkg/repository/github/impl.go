@@ -324,17 +324,15 @@ func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error
 	return ret, nil
 }
 
-func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error) {
-	if cfg.ContentType == "" {
-		cfg.ContentType = "form"
-	}
-
+func (r *githubClient) CreateWebhook(ctx context.Context, cfg repo.WebhookConfig) (repo.WebhookConfig, error) {
+	contentType := "json"
+	active := true
 	hook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
-		Active: &cfg.Active,
+		Active: &active,
 		Config: &github.HookConfig{
-			ContentType: &cfg.ContentType,
+			ContentType: &contentType,
 			Secret:      &cfg.Secret,
 			URL:         &cfg.URL,
 		},
@@ -342,40 +340,29 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (We
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, r.owner, r.repo, hook)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		return repo.WebhookConfig{}, translateGitHubError(err)
 	}
 
-	return WebhookConfig{
+	return repo.WebhookConfig{
 		ID: createdHook.GetID(),
 		// events is not returned by GitHub.
-		Events:      cfg.Events,
-		Active:      createdHook.GetActive(),
-		URL:         createdHook.GetConfig().GetURL(),
-		ContentType: createdHook.GetConfig().GetContentType(),
+		Events: cfg.Events,
+		URL:    createdHook.GetConfig().GetURL(),
 		// Secret is not returned by GitHub.
 		Secret: cfg.Secret,
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error) {
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.WebhookConfig, error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
-		return WebhookConfig{}, translateGitHubError(err)
+		return repo.WebhookConfig{}, translateGitHubError(err)
 	}
 
-	contentType := hook.GetConfig().GetContentType()
-	if contentType == "" {
-		// FIXME: Not sure about the value of the contentType
-		// we default to form in the other ones but to JSON here
-		contentType = "json"
-	}
-
-	return WebhookConfig{
-		ID:          hook.GetID(),
-		Events:      hook.Events,
-		Active:      hook.GetActive(),
-		URL:         hook.GetConfig().GetURL(),
-		ContentType: contentType,
+	return repo.WebhookConfig{
+		ID:     hook.GetID(),
+		Events: hook.Events,
+		URL:    hook.GetConfig().GetURL(),
 		// Intentionally not setting Secret.
 	}, nil
 }
@@ -388,17 +375,15 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error
 	return nil
 }
 
-func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error {
-	if cfg.ContentType == "" {
-		cfg.ContentType = "form"
-	}
-
+func (r *githubClient) EditWebhook(ctx context.Context, cfg repo.WebhookConfig) error {
+	contentType := "json"
+	active := true
 	hook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
-		Active: &cfg.Active,
+		Active: &active,
 		Config: &github.HookConfig{
-			ContentType: &cfg.ContentType,
+			ContentType: &contentType,
 			Secret:      &cfg.Secret,
 			URL:         &cfg.URL,
 		},
@@ -409,6 +394,7 @@ func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error
 	}
 	return nil
 }
+
 
 func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
@@ -436,12 +422,12 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]
 	return ret, nil
 }
 
-func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
+func (r *githubClient) CreatePullRequestComment(ctx context.Context, prNumber int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
 
-	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, number, comment); err != nil {
+	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, prNumber, comment); err != nil {
 		return translateGitHubError(err)
 	}
 

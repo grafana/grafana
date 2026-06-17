@@ -5,10 +5,15 @@ package github
 import (
 	"context"
 	"time"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
+	// Webhook lifecycle and pull request comments (provider-agnostic contract).
+	repository.ProviderClient
+
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)
 
@@ -23,14 +28,9 @@ type Client interface {
 
 	// Webhooks
 	ListWebhooks(ctx context.Context) ([]WebhookConfig, error)
-	CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
-	DeleteWebhook(ctx context.Context, webhookID int64) error
-	EditWebhook(ctx context.Context, cfg WebhookConfig) error
 
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, number int, body string) error
 }
 
 type Repository struct {
