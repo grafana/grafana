@@ -1,19 +1,15 @@
-import { useMemo } from 'react';
+import { useAsync } from 'react-use';
 
-import { getDataSourceSrv, isExpressionReference } from '@grafana/runtime';
+import { isExpressionReference } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
 export function useAlertQueriesStatus(queries: AlertQuery[]) {
-  const allDataSourcesAvailable = useMemo(
-    () =>
-      queries
-        .filter((query) => !isExpressionReference(query.datasourceUid))
-        .every((query) => {
-          const instanceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-          return Boolean(instanceSettings);
-        }),
-    [queries]
-  );
+  const { loading, value, error } = useAsync(async () => {
+    const dsQueries = queries.filter((query) => !isExpressionReference(query.datasourceUid));
+    const results = await Promise.all(dsQueries.map((query) => getDataSourceInstanceSettings(query.datasourceUid)));
+    return results.every(Boolean);
+  }, [queries]);
 
-  return { allDataSourcesAvailable };
+  return { allDataSourcesAvailable: value ?? false, isLoading: loading, error };
 }
