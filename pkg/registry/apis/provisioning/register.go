@@ -543,20 +543,28 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "files":
 		return authorizer.DecisionAllow, "", nil
 
-	// refs subresource - editors need to see branches to push changes
+	// refs subresource - editors need to see branches to push changes.
+	// We check repositories:write (an admin-only RBAC action) rather than
+	// repositories:read, because repositories:read is granted to Viewer and
+	// would let viewers read branches too. Editors pass through the Editor
+	// fallback role; admins satisfy either check.
 	case "refs":
 		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only)
+	// Read-only subresources: resources, history, status (admin only).
+	// We check repositories:write (an admin-only RBAC action) rather than
+	// repositories:read, because repositories:read is granted to Viewer and
+	// would let viewers/editors read these admin-only views. The fallback role
+	// still allows admins whose RBAC isn't explicitly set up.
 	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
