@@ -153,6 +153,22 @@ describe('FilterList', () => {
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
 
+    it('shows "No values" and does not fall back to regex when expression is invalid', () => {
+      render(
+        <FilterList
+          options={[
+            { value: '1', label: 'foo' },
+            { value: '2', label: 'foobar' },
+          ]}
+          values={[]}
+          onChange={jest.fn()}
+          searchFilter="foo"
+          operator={op(FilterOperator.EXPRESSION)}
+        />
+      );
+      expect(screen.getByText('No values')).toBeInTheDocument();
+    });
+
     it('returns false when option.value is undefined', () => {
       const options: SelectableValue[] = [{ label: 'no-value' }];
       render(

@@ -66,9 +66,9 @@ export const FilterList = ({
       return null;
     }
     if (operator.value === XPR_OPERATOR.value) {
-      return parseExpression(searchFilter);
+      return parseExpression(searchFilter) ?? (() => false);
     }
-    return parseExpression(`$ ${operator.value} ${searchFilter}`);
+    return parseExpression(`$ ${operator.value} ${searchFilter}`) ?? (() => false);
   }, [showOperators, searchFilter, operator]);
 
   const items = useMemo(

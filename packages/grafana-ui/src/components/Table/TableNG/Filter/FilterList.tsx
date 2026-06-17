@@ -34,9 +34,9 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
       return null;
     }
     if (operator.value === FilterOperator.EXPRESSION) {
-      return parseExpression(searchFilter);
+      return parseExpression(searchFilter) ?? (() => false);
     }
-    return parseExpression(`$ ${operator.value} ${searchFilter}`);
+    return parseExpression(`$ ${operator.value} ${searchFilter}`) ?? (() => false);
   }, [searchFilter, operator]);
 
   const items = useMemo(

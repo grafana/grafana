@@ -142,6 +142,19 @@ describe('FilterList (TableRT)', () => {
       renderFilterList({ options, showOperators: true, searchFilter: '$ > 0', operator: XPR_OPERATOR });
       expect(screen.getByText('No values')).toBeInTheDocument();
     });
+
+    it('shows "No values" and does not fall back to regex when expression is invalid', () => {
+      renderFilterList({
+        options: [
+          { value: '1', label: 'foo' },
+          { value: '2', label: 'foobar' },
+        ],
+        showOperators: true,
+        searchFilter: 'foo',
+        operator: XPR_OPERATOR,
+      });
+      expect(screen.getByText('No values')).toBeInTheDocument();
+    });
   });
 
   describe('select all / deselect all', () => {
