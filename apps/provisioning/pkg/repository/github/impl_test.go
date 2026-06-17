@@ -2104,8 +2104,8 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			ctx := context.Background()
 			client := &githubClient{
 				gh:    github.NewClient(tt.mockHandler),
-				owner: "test-owner",
-				repo:  "test-repo",
+				owner: tt.owner,
+				repo:  tt.repository,
 			}
 
 			got, err := client.GetRulesets(ctx, tt.branch)

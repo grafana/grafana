@@ -35,11 +35,6 @@ func NewGithubWebhookRepository(
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	replay *repository.ReplayCache,
 ) GithubWebhookRepository {
-	// Defensive: callers should pass the factory-owned cache, but never leave
-	// Webhook with a nil cache to dereference.
-	if replay == nil {
-		replay = repository.NewReplayCache(repository.DefaultReplayCacheTTL)
-	}
 	cfg := basic.Config()
 	slug := fmt.Sprintf("%s/%s", basic.Owner(), basic.Repo())
 	return &githubWebhookRepository{

@@ -91,7 +91,7 @@ type Webhook[E any] struct {
 }
 
 // WebhookManager implements the provider-agnostic webhook lifecycle (registration,
-// reconciliation, secret rotation and teardown) on top of a ProviderClient. It also
+// reconciliation, secret rotation and teardown) on top of a WebhookClient. It also
 // holds the shared webhook state (config, secret, incremental sync policy) that the
 // provider-specific inbound handlers read.
 type WebhookManager[E any] struct {
@@ -108,6 +108,9 @@ type WebhookManager[E any] struct {
 }
 
 func NewWebhookManager[E any](client WebhookClient[E], parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager[E] {
+	if replay == nil {
+		replay = NewReplayCache(DefaultReplayCacheTTL)
+	}
 	return &WebhookManager[E]{
 		client:            client,
 		parser:            parser,
