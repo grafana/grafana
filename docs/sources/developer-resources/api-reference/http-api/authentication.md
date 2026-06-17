@@ -15,7 +15,7 @@ labels:
     - oss
 title: Authentication options for the HTTP API
 menuTitle: Authentication
-weight: 110
+weight: 03
 aliases:
   - ../../../../developers/http_api/authentication/ # /docs/grafana/next/developers/http_api/authentication/
   - ../../../developer-resources/api-reference/http-api/api-legacy/authentication/ #legacy folder

@@ -16,7 +16,7 @@ labels:
     - cloud
 title: Migrate to the new APIs
 menuTitle: Migrate to new APIs
-weight: 01
+weight: 02
 ---
 
 # Migrate to the new Grafana APIs
