@@ -287,7 +287,7 @@ func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Comm
 	return ret, nil
 }
 
-func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error) {
+func (r *githubClient) ListWebhooks(ctx context.Context) ([]repo.WebhookConfig, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
 		return r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
 	}
@@ -305,14 +305,14 @@ func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error
 	}
 
 	// Pre-allocate the result slice
-	ret := make([]WebhookConfig, 0, len(hooks))
+	ret := make([]repo.WebhookConfig, 0, len(hooks))
 	for _, h := range hooks {
 		contentType := h.GetConfig().GetContentType()
 		if contentType == "" {
 			contentType = "form"
 		}
 
-		ret = append(ret, WebhookConfig{
+		ret = append(ret, repo.WebhookConfig{
 			ID:          h.GetID(),
 			Events:      h.Events,
 			Active:      h.GetActive(),
@@ -325,14 +325,16 @@ func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error
 }
 
 func (r *githubClient) CreateWebhook(ctx context.Context, cfg repo.WebhookConfig) (repo.WebhookConfig, error) {
-	contentType := "json"
-	active := true
+	if cfg.ContentType == "" {
+		cfg.ContentType = "form"
+	}
+
 	hook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
-		Active: &active,
+		Active: &cfg.Active,
 		Config: &github.HookConfig{
-			ContentType: &contentType,
+			ContentType: &cfg.ContentType,
 			Secret:      &cfg.Secret,
 			URL:         &cfg.URL,
 		},
@@ -346,8 +348,10 @@ func (r *githubClient) CreateWebhook(ctx context.Context, cfg repo.WebhookConfig
 	return repo.WebhookConfig{
 		ID: createdHook.GetID(),
 		// events is not returned by GitHub.
-		Events: cfg.Events,
-		URL:    createdHook.GetConfig().GetURL(),
+		Events:      cfg.Events,
+		Active:      createdHook.GetActive(),
+		URL:         createdHook.GetConfig().GetURL(),
+		ContentType: createdHook.GetConfig().GetContentType(),
 		// Secret is not returned by GitHub.
 		Secret: cfg.Secret,
 	}, nil
@@ -359,10 +363,19 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.We
 		return repo.WebhookConfig{}, translateGitHubError(err)
 	}
 
+	contentType := hook.GetConfig().GetContentType()
+	if contentType == "" {
+		// FIXME: Not sure about the value of the contentType
+		// we default to form in the other ones but to JSON here
+		contentType = "json"
+	}
+
 	return repo.WebhookConfig{
-		ID:     hook.GetID(),
-		Events: hook.Events,
-		URL:    hook.GetConfig().GetURL(),
+		ID:          hook.GetID(),
+		Events:      hook.Events,
+		Active:      hook.GetActive(),
+		URL:         hook.GetConfig().GetURL(),
+		ContentType: contentType,
 		// Intentionally not setting Secret.
 	}, nil
 }
@@ -376,14 +389,16 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error
 }
 
 func (r *githubClient) EditWebhook(ctx context.Context, cfg repo.WebhookConfig) error {
-	contentType := "json"
-	active := true
+	if cfg.ContentType == "" {
+		cfg.ContentType = "form"
+	}
+
 	hook := &github.Hook{
 		URL:    &cfg.URL,
 		Events: cfg.Events,
-		Active: &active,
+		Active: &cfg.Active,
 		Config: &github.HookConfig{
-			ContentType: &contentType,
+			ContentType: &cfg.ContentType,
 			Secret:      &cfg.Secret,
 			URL:         &cfg.URL,
 		},
@@ -394,7 +409,6 @@ func (r *githubClient) EditWebhook(ctx context.Context, cfg repo.WebhookConfig) 
 	}
 	return nil
 }
-
 
 func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
@@ -422,12 +436,12 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]
 	return ret, nil
 }
 
-func (r *githubClient) CreatePullRequestComment(ctx context.Context, prNumber int, body string) error {
+func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
 
-	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, prNumber, comment); err != nil {
+	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, number, comment); err != nil {
 		return translateGitHubError(err)
 	}
 

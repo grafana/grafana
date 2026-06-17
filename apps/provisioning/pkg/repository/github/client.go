@@ -27,7 +27,7 @@ type Client interface {
 	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Webhooks
-	ListWebhooks(ctx context.Context) ([]WebhookConfig, error)
+	ListWebhooks(ctx context.Context) ([]repository.WebhookConfig, error)
 
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
@@ -59,24 +59,6 @@ type CommitFile interface {
 	GetFilename() string
 	GetPreviousFilename() string
 	GetStatus() string
-}
-
-type WebhookConfig struct {
-	// The ID of the webhook.
-	// Can be 0 on creation.
-	ID int64
-	// The events which this webhook shall contact the URL for.
-	Events []string
-	// Is the webhook enabled?
-	Active bool
-	// The URL GitHub should contact on events.
-	URL string
-	// The content type GitHub should send to the URL.
-	// If not specified, this is "form".
-	ContentType string
-	// The secret to use when sending events to the URL.
-	// If fetched from GitHub, this is empty as it contains no useful information.
-	Secret string
 }
 
 // BranchProtection holds the subset of GitHub branch protection rules

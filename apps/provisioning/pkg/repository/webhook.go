@@ -20,8 +20,12 @@ type WebhookConfig struct {
 	ID int64
 	// The events which this webhook shall contact the URL for.
 	Events []string
+	// Is the webhook enabled?
+	Active bool
 	// The URL the provider should contact on events.
 	URL string
+	// The content type the provider should send deliveries as.
+	ContentType string
 	// The secret used to authenticate webhook deliveries.
 	// Empty when fetched from the provider, as it is never returned.
 	Secret string
@@ -164,9 +168,11 @@ func (m *WebhookManager) createWebhook(ctx context.Context) (WebhookConfig, erro
 	}
 
 	cfg := WebhookConfig{
-		URL:    m.webhookURL,
-		Secret: secret.String(),
-		Events: m.events,
+		URL:         m.webhookURL,
+		Secret:      secret.String(),
+		ContentType: "json",
+		Events:      m.events,
+		Active:      true,
 	}
 
 	hook, err := m.client.CreateWebhook(ctx, cfg)
