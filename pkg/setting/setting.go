@@ -1060,7 +1060,11 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	cfg.AnnotationAppPlatform = loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg.Raw)
+	if err != nil {
+		return err
+	}
+	cfg.AnnotationAppPlatform = annotationAppPlatformSettings
 
 	switch {
 	case cfg.AnnotationMaximumTagsLength > 4096:
@@ -1144,15 +1148,21 @@ type AnnotationAppPlatformSettings struct {
 	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
 	// for new annotations.
 	EnableLegacyID bool
+
+	// MaxScopeCount caps how many scopes may be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected at load time. Default 5.
+	MaxScopeCount int
 }
 
-func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
+func loadAnnotationAppPlatformSettings(cfg *ini.File) (AnnotationAppPlatformSettings, error) {
 	appPlatformSection := cfg.Section("annotations.app_platform")
-	return AnnotationAppPlatformSettings{
+	settings := AnnotationAppPlatformSettings{
 		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
 		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
 		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
 		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:  appPlatformSection.Key("max_scope_count").MustInt(5),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -1167,6 +1177,12 @@ func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSetti
 		PostgresTagCacheTTL:      appPlatformSection.Key("postgres_tag_cache_ttl").MustDuration(60 * time.Second),
 		PostgresTagCacheSize:     appPlatformSection.Key("postgres_tag_cache_size").MustInt(1000),
 	}
+
+	if settings.MaxScopeCount < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
+	}
+
+	return settings, nil
 }
 
 // envNameFromIniName converts an ini-style name (section or key) to the

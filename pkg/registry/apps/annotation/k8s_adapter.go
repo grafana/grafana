@@ -78,6 +78,11 @@ type k8sRESTAdapter struct {
 
 	snowflakeNode *snowflake.Node
 
+	// maxScopeCount caps how many scopes may be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected by the settings loader.
+	maxScopeCount int
+
 	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
@@ -224,6 +229,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	}
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
+	}
+
+	if err := s.validateScopeCount(annotation); err != nil {
+		return nil, err
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -386,6 +395,14 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 		default:
 			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
+	}
+	return nil
+}
+
+func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
+	if len(a.Spec.Scopes) > s.maxScopeCount {
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
 	}
 	return nil
 }
