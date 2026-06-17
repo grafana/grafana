@@ -24,6 +24,7 @@ import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopov
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
 export function VariableControls({
   dashboard,
@@ -69,6 +70,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
+  const trackUserInteraction = {
+    onPointerDown: markUserInitiated,
+  };
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
@@ -109,6 +114,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          {...trackUserInteraction}
         >
           <div className={styles.switchControl}>
             <variable.Component model={variable} />
@@ -133,6 +139,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          {...trackUserInteraction}
         >
           <VariableLabel
             variable={variable}
@@ -154,6 +161,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        {...trackUserInteraction}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
         <variable.Component model={variable} />
