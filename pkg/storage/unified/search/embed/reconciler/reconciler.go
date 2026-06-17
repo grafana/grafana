@@ -14,7 +14,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -37,8 +36,6 @@ type Backfiller interface {
 }
 
 const DefaultInterval = time.Minute
-
-const pendingDeleteTTL = time.Minute
 
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. ~5 minutes at the default
@@ -92,8 +89,6 @@ type Options struct {
 	Backfiller        Backfiller
 	Interval          time.Duration
 	LockRetryInterval time.Duration
-	// PendingDelete is optional; nil disables the pending-delete filter.
-	PendingDelete embed.PendingDeleteChecker
 	// Metrics is optional; when nil the reconciler runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -105,17 +100,15 @@ type Options struct {
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage            resource.StorageBackend
-	vectorBackend      vector.VectorBackend
-	batchEmbedder      *embedder.BatchEmbedder
-	builders           map[string]embed.Builder
-	backfiller         Backfiller
-	interval           time.Duration
-	lockRetryInterval  time.Duration
-	pendingDelete      embed.PendingDeleteChecker
-	pendingDeleteCache *expirable.LRU[string, bool]
-	log                log.Logger
-	metrics            *resource.VectorMetrics
+	storage           resource.StorageBackend
+	vectorBackend     vector.VectorBackend
+	batchEmbedder     *embedder.BatchEmbedder
+	builders          map[string]embed.Builder
+	backfiller        Backfiller
+	interval          time.Duration
+	lockRetryInterval time.Duration
+	log               log.Logger
+	metrics           *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -149,19 +142,17 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:            opts.Storage,
-		vectorBackend:      opts.VectorBackend,
-		batchEmbedder:      opts.BatchEmbedder,
-		builders:           builders,
-		backfiller:         opts.Backfiller,
-		interval:           opts.Interval,
-		lockRetryInterval:  opts.LockRetryInterval,
-		pendingDelete:      opts.PendingDelete,
-		pendingDeleteCache: expirable.NewLRU[string, bool](0, nil, pendingDeleteTTL),
-		log:                log.New("embeddings_reconciler"),
-		metrics:            opts.Metrics,
-		pending:            make(map[string]*pendingEvent),
-		ensuredResources:   make(map[string]struct{}),
+		storage:           opts.Storage,
+		vectorBackend:     opts.VectorBackend,
+		batchEmbedder:     opts.BatchEmbedder,
+		builders:          builders,
+		backfiller:        opts.Backfiller,
+		interval:          opts.Interval,
+		lockRetryInterval: opts.LockRetryInterval,
+		log:               log.New("embeddings_reconciler"),
+		metrics:           opts.Metrics,
+		pending:           make(map[string]*pendingEvent),
+		ensuredResources:  make(map[string]struct{}),
 	}, nil
 }
 
@@ -678,12 +669,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
 
-	// Don't embed resources belonging to a tenant marked for deletion.
-	// The tenant watcher's labeling pass emits a MODIFIED event for every
-	// resource in the tenant, so without this check marking a tenant
-	// pending-delete would re-embed its entire catalog. DELETED events
-	// above still go through so vectors get cleaned up.
-	if s.shouldSkipPendingDelete(ctx, ev.namespace) {
+	// Don't embed resources whose tenant is marked for deletion. The tenant
+	// watcher labels every resource in the tenant, so the MODIFIED events
+	// from that labeling pass carry the pending-delete label and get skipped
+	// here. On restore the watcher removes the label and emits a MODIFIED
+	// event whose value no longer has it, so the resource embeds again.
+	// DELETED events are handled above so vectors still get cleaned up.
+	if embed.HasPendingDeleteLabel(ev.value) {
 		statusLabel = "skipped_pending_delete"
 		return nil
 	}
@@ -738,30 +730,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("upsert: %w", err)
 	}
 	return nil
-}
-
-// shouldSkipPendingDelete returns true only when the checker definitively
-// reports the namespace's tenant as pending delete. Anything ambiguous
-// (nil checker, empty namespace, lookup error) returns false — embed it.
-// Successful lookups are cached per namespace until pendingDeleteTTL elapses;
-// errors are not, so transient failures retry on the next event.
-func (s *Reconciler) shouldSkipPendingDelete(ctx context.Context, namespace string) bool {
-	if s.pendingDelete == nil || namespace == "" {
-		return false
-	}
-	if pending, ok := s.pendingDeleteCache.Get(namespace); ok {
-		return pending
-	}
-	pending, err := s.pendingDelete.IsPendingDelete(ctx, namespace)
-	if err != nil {
-		s.log.Error("reconciler: pending delete check failed", "namespace", namespace, "err", err)
-		return false
-	}
-	s.pendingDeleteCache.Add(namespace, pending)
-	if pending {
-		s.log.FromContext(ctx).Debug("reconciler: skipping pending-delete namespace", "namespace", namespace)
-	}
-	return pending
 }
 
 // requeue is the catch-all path when we can't tell what's persisted

@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -37,27 +36,6 @@ type PendingDeleteStore struct {
 
 func newPendingDeleteStore(kv KV) *PendingDeleteStore {
 	return &PendingDeleteStore{kv: kv}
-}
-
-// NewPendingDeleteStore exposes the pending-delete records to other
-// subsystems (e.g. the vector backfiller and reconciler) that share the
-// same KV store.
-func NewPendingDeleteStore(kv KV) *PendingDeleteStore {
-	return newPendingDeleteStore(kv)
-}
-
-// IsPendingDelete reports whether the tenant has a pending-delete record.
-// Records in any state count — once a record exists the tenant is either
-// awaiting deletion or already deleted.
-func (s *PendingDeleteStore) IsPendingDelete(ctx context.Context, name string) (bool, error) {
-	_, err := s.Get(ctx, name)
-	if errors.Is(err, kvpkg.ErrNotFound) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	return true, nil
 }
 
 // Names streams tenant names that currently have pending-delete records.

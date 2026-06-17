@@ -230,21 +230,12 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 	batchEmbedder := embedder.NewBatchEmbedder(*opts.Embedder)
 	builders := []embed.Builder{dashboard.New()}
 
-	// The pending-delete filter shares the KV backend's store; on other
-	// backends the checker stays nil and the filter is disabled (the
-	// tenant watcher only runs on the KV backend anyway).
-	var pendingDelete embed.PendingDeleteChecker
-	if kvBackend, ok := opts.Backend.(resource.KVBackend); ok {
-		pendingDelete = resource.NewPendingDeleteStore(kvBackend.KV())
-	}
-
 	backfiller, err := backfill.NewVectorBackfiller(backfill.Options{
 		Storage:        opts.Backend,
 		VectorBackend:  opts.VectorBackend,
 		BatchEmbedder:  batchEmbedder,
 		Builders:       builders,
 		DashboardStats: opts.DashboardStats,
-		PendingDelete:  pendingDelete,
 		Metrics:        resourceOpts.VectorMetrics,
 	})
 	if err != nil {
@@ -258,7 +249,6 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 		Builders:      builders,
 		Backfiller:    backfiller,
 		Interval:      opts.Cfg.VectorReconcilerInterval,
-		PendingDelete: pendingDelete,
 		Metrics:       resourceOpts.VectorMetrics,
 	})
 	if err != nil {

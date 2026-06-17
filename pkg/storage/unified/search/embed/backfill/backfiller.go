@@ -6,7 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -42,8 +41,6 @@ type Options struct {
 	Builders      []embed.Builder
 	// DashboardStats is optional; nil disables the views filter.
 	DashboardStats builders.DashboardStats
-	// PendingDelete is optional; nil disables the pending-delete filter.
-	PendingDelete embed.PendingDeleteChecker
 	// Metrics is optional; when nil the backfiller runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
@@ -60,18 +57,14 @@ type VectorBackfiller struct {
 	// sortedBuilders is builders sorted by Resource() so iteration order
 	// is stable across pod restarts. Precomputed because the set is
 	// immutable after construction.
-	sortedBuilders     []embed.Builder
-	dashboardStats     builders.DashboardStats
-	pendingDelete      embed.PendingDeleteChecker
-	pendingDeleteCache *expirable.LRU[string, bool]
-	log                log.Logger
-	metrics            *resource.VectorMetrics
-	interval           time.Duration
+	sortedBuilders []embed.Builder
+	dashboardStats builders.DashboardStats
+	log            log.Logger
+	metrics        *resource.VectorMetrics
+	interval       time.Duration
 }
 
 const defaultBackfillInterval = time.Minute
-
-const pendingDeleteTTL = time.Minute
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.Storage == nil {
@@ -111,17 +104,15 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	}
 
 	return &VectorBackfiller{
-		storage:            opts.Storage,
-		vectorBackend:      opts.VectorBackend,
-		batchEmbedder:      opts.BatchEmbedder,
-		builders:           builders,
-		sortedBuilders:     sorted,
-		dashboardStats:     opts.DashboardStats,
-		pendingDelete:      opts.PendingDelete,
-		pendingDeleteCache: expirable.NewLRU[string, bool](0, nil, pendingDeleteTTL),
-		log:                log.New("backfill"),
-		metrics:            opts.Metrics,
-		interval:           interval,
+		storage:        opts.Storage,
+		vectorBackend:  opts.VectorBackend,
+		batchEmbedder:  opts.BatchEmbedder,
+		builders:       builders,
+		sortedBuilders: sorted,
+		dashboardStats: opts.DashboardStats,
+		log:            log.New("backfill"),
+		metrics:        opts.Metrics,
+		interval:       interval,
 	}, nil
 }
 
@@ -359,7 +350,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	if b.shouldSkipPendingDelete(ctx, namespace) {
+	// Skip resources whose tenant is pending deletion — the tenant watcher
+	// labels them. Restore removes the label, so they embed again on the
+	// next pass.
+	if embed.HasPendingDeleteLabel(iter.Value()) {
 		statusLabel = "skipped_pending_delete"
 		return nil
 	}
@@ -397,30 +391,6 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
-}
-
-// shouldSkipPendingDelete returns true only when the checker definitively
-// reports the namespace's tenant as pending delete. Anything ambiguous
-// (nil checker, empty namespace, lookup error) returns false — embed it.
-// Successful lookups are cached per namespace until pendingDeleteTTL elapses;
-// errors are not, so transient failures retry on the next item.
-func (b *VectorBackfiller) shouldSkipPendingDelete(ctx context.Context, namespace string) bool {
-	if b.pendingDelete == nil || namespace == "" {
-		return false
-	}
-	if pending, ok := b.pendingDeleteCache.Get(namespace); ok {
-		return pending
-	}
-	pending, err := b.pendingDelete.IsPendingDelete(ctx, namespace)
-	if err != nil {
-		b.log.Error("backfill: pending delete check failed", "namespace", namespace, "err", err)
-		return false
-	}
-	b.pendingDeleteCache.Add(namespace, pending)
-	if pending {
-		b.log.FromContext(ctx).Debug("backfill: skipping pending-delete namespace", "namespace", namespace)
-	}
-	return pending
 }
 
 // shouldSkipForZeroViews returns true only when the stats provider
