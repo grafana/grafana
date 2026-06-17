@@ -74,15 +74,15 @@ export const FilterList = ({
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
+        if (predicate === null) {
           return option.label !== undefined && regex.test(option.label);
         }
-        if (option.value === undefined || predicate === null) {
+        if (option.value === undefined) {
           return false;
         }
         return predicate(comparableValue(option.value));
       }),
-    [options, regex, showOperators, operator, searchFilter, predicate]
+    [options, regex, predicate]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 

@@ -42,15 +42,15 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (!searchFilter || operator.value === FilterOperator.CONTAINS) {
+        if (predicate === null) {
           return option.label !== undefined && regex.test(option.label);
         }
-        if (option.value === undefined || predicate === null) {
+        if (option.value === undefined) {
           return false;
         }
         return predicate(comparableValue(option.value));
       }),
-    [options, regex, operator, searchFilter, predicate]
+    [options, regex, predicate]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
