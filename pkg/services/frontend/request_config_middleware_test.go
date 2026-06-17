@@ -14,6 +14,8 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -460,7 +462,11 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.AppURL = "https://grafana.example.com"
 
-		middleware := RequestConfigMiddleware(cfg, license, nil)
+		pluginsCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+		})
+
+		middleware := RequestConfigMiddleware(cfg, license, nil, pluginsCDN)
 
 		var capturedConfig FSRequestConfig
 		testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -483,6 +489,8 @@ func TestRequestConfigMiddleware(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com", capturedConfig.FullFrontendSettings.AppUrl)
 		// Namespace is taken from the request baggage when the flag is enabled.
 		assert.Equal(t, "stacks-123", capturedConfig.FullFrontendSettings.Namespace)
+		// The plugins CDN base URL is sourced from the plugins CDN service.
+		assert.Equal(t, "https://cdn.example.com", capturedConfig.FullFrontendSettings.PluginsCDNBaseURL)
 	})
 }
 
