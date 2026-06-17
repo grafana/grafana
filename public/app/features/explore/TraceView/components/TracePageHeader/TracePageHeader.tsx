@@ -328,6 +328,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
               <span
                 className={cx(
                   styles.metadataValue,
+                  'meticulous-ignore',
                   css({
                     gap: theme.spacing(0.5),
                   })
