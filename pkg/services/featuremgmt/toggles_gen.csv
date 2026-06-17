@@ -230,7 +230,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,kubernetesAuthzServiceAccountResourcePermissions,experimental,@grafana/identity-access-team,false,false,false
 2025-12-10,recentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-01-13,experimentRecentlyViewedDashboards,experimental,@grafana/grafana-frontend-navigation,false,false,true
-2026-05-22,createdByMeSearchFilter,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-06-06,alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertEnrichmentMultiStep,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
@@ -249,7 +248,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,restrictedPluginApis,GA,@grafana/grafana-catalog,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
-2025-07-31,newLogContext,experimental,@grafana/observability-logs,false,false,true
+2025-07-31,newLogContext,GA,@grafana/observability-logs,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2025-07-31,teamFolders,preview,@grafana/grafana-frontend-navigation,false,false,false
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
