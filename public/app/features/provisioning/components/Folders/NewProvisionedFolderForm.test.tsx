@@ -1,8 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { type FolderDTO } from 'app/types/folders';
@@ -455,5 +456,94 @@ describe('NewProvisionedFolderForm', () => {
     );
 
     expect(await screen.findByText('This repository is read only')).toBeInTheDocument();
+  });
+});
+
+describe('NewProvisionedFolderForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+        initialValues: { ...mockHookData.initialValues!, title: 'Reports' },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
+    expect(comment).not.toHaveAttribute('readonly');
+  });
+
+  it('renders Comment read-only when the template is enforced', async () => {
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: {
+            singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}',
+            enforceTemplate: true,
+          },
+        },
+        initialValues: { ...mockHookData.initialValues!, title: 'Reports' },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
+    expect(comment).toHaveAttribute('readonly');
+  });
+
+  it('re-renders Comment when the folder name input changes', async () => {
+    const { user } = setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    const folderName = await screen.findByRole('textbox', { name: /folder name/i });
+    await user.type(folderName, 'Reports');
+
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): create Reports'));
+  });
+
+  it('leaves Comment empty when the flag is off', async () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    setup(
+      {},
+      {
+        ...mockHookData,
+        repository: {
+          ...mockHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+        initialValues: { ...mockHookData.initialValues!, title: 'Reports' },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    expect(comment).toHaveValue('');
   });
 });

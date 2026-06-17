@@ -1,6 +1,8 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import {
   type RepositoryView,
   useCreateRepositoryJobsMutation,
@@ -179,7 +181,11 @@ function setup(
     onDismiss,
   };
 
-  const renderResult = render(<DeleteProvisionedFolderForm {...defaultProps} {...props} />);
+  const renderResult = render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <DeleteProvisionedFolderForm {...defaultProps} {...props} />
+    </OpenFeatureProvider>
+  );
 
   const clickDeleteButton = async () => {
     const deleteButton = screen.getByRole('button', { name: /delete/i });

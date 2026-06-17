@@ -4,6 +4,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { type Dashboard } from '@grafana/schema';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyFolder, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
@@ -1036,5 +1037,94 @@ describe('SaveProvisionedDashboardForm', () => {
     // getProvisionedRequestError -> extractErrorMessage surfaces error.message verbatim
     // as the ProvisioningAlert title.
     expect(await screen.findByText('boom')).toBeInTheDocument();
+  });
+});
+
+describe('SaveProvisionedDashboardForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
+    expect(comment).not.toHaveAttribute('readonly');
+  });
+
+  it('renders Comment read-only when the template is enforced', async () => {
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: {
+          singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}',
+          enforceTemplate: true,
+        },
+      },
+    });
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
+    expect(comment).toHaveAttribute('readonly');
+  });
+
+  it('re-renders Comment when the title input changes', async () => {
+    const { user } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Test Dashboard'));
+
+    const title = screen.getByRole('textbox', { name: /title/i });
+    await user.clear(title);
+    await user.type(title, 'Renamed');
+
+    await waitFor(() => expect(comment).toHaveValue('feat(dashboards): create Renamed'));
+  });
+
+  it('leaves Comment empty when the flag is off', async () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    expect(comment).toHaveValue('');
   });
 });

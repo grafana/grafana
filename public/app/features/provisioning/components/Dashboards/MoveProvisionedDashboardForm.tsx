@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useFormState } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents } from '@grafana/data';
@@ -20,10 +20,11 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -65,6 +66,22 @@ export function MoveProvisionedDashboardForm({
   const appEvents = getAppEvents();
 
   const [ref, workflow] = watch(['ref', 'workflow']);
+
+  const templateVars: CommitTemplateVars = {
+    action: 'move',
+    resourceKind: 'dashboard',
+    resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+    title: dashboard.state.title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { dirtyFields } = useFormState({ control: methods.control });
+  const { locked } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
 
   const { data: currentFileData, isLoading: isLoadingFileData } = useGetRepositoryFilesWithPathQuery({
     name: defaultValues.repo,
@@ -330,6 +347,7 @@ export function MoveProvisionedDashboardForm({
                 readOnly={readOnly}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
+                lockComment={locked}
               />
 
               <Stack gap={2}>

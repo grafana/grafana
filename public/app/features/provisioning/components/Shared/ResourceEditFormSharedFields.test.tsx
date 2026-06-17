@@ -57,6 +57,7 @@ interface SetupOptions {
   repository?: RepositoryView;
   canPushToConfiguredBranch?: boolean;
   allowPathEdit?: boolean;
+  lockComment?: boolean;
 }
 
 function setup(options: SetupOptions = {}) {
@@ -68,6 +69,7 @@ function setup(options: SetupOptions = {}) {
     workflow,
     repository,
     allowPathEdit,
+    lockComment,
   } = options;
 
   const defaultFormValues: Partial<ProvisionedDashboardFormData> = {
@@ -93,6 +95,7 @@ function setup(options: SetupOptions = {}) {
     workflow,
     repository,
     allowPathEdit,
+    lockComment,
   };
 
   return render(
@@ -143,6 +146,14 @@ describe('ResourceEditFormSharedFields', () => {
       setup({ readOnly: true, repository: mockRepo.github });
 
       expect(screen.queryByText('Workflow')).not.toBeInTheDocument();
+    });
+
+    it('should make comment field readonly but not disabled when lockComment is true', () => {
+      setup({ lockComment: true });
+
+      const commentTextarea = screen.getByRole('textbox', { name: /comment/i });
+      expect(commentTextarea).toHaveAttribute('readonly');
+      expect(commentTextarea).toBeEnabled();
     });
   });
 

@@ -23,8 +23,9 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -95,6 +96,21 @@ export function SaveProvisionedDashboardForm({
   useEffect(() => {
     reset(defaultValues);
   }, [defaultValues, reset]);
+
+  const templateVars: CommitTemplateVars = {
+    action: isNew ? 'create' : 'update',
+    resourceKind: 'dashboard',
+    resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+    title: title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+  });
 
   // Sync filename from title for new dashboards.
   // dirtyFields.path is false when only setValue() has updated the path (shouldDirty defaults to false),
@@ -357,6 +373,7 @@ export function SaveProvisionedDashboardForm({
             repository={repository}
             isNew={isNew}
             allowPathEdit={!isNew && !readOnly}
+            lockComment={locked}
           />
 
           {saveAsCopy && (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useFormState } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
@@ -16,10 +16,11 @@ import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -53,6 +54,22 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
+
+  const templateVars: CommitTemplateVars = {
+    action: 'delete',
+    resourceKind: 'folder',
+    resourceID: parentFolder?.uid ?? '',
+    title: parentFolder?.title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { dirtyFields } = useFormState({ control: methods.control });
+  const { locked } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
 
   const showError = (error: unknown) => {
     setError(
@@ -201,6 +218,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 isNew={false}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
+                lockComment={locked}
               />
 
               {error && <ProvisioningAlert error={error} />}

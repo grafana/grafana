@@ -30,10 +30,21 @@ interface DashboardEditFormSharedFieldsProps {
   repository?: RepositoryView;
   hiddenFields?: SharedFieldName[];
   allowPathEdit?: boolean;
+  /** When true, the comment field renders read-only (template enforcement). */
+  lockComment?: boolean;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
-  ({ readOnly = false, canPushToConfiguredBranch, repository, isNew, resourceType, hiddenFields, allowPathEdit }) => {
+  ({
+    readOnly = false,
+    canPushToConfiguredBranch,
+    repository,
+    isNew,
+    resourceType,
+    hiddenFields,
+    allowPathEdit,
+    lockComment = false,
+  }) => {
     const {
       control,
       register,
@@ -279,6 +290,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               id="provisioned-resource-form-comment"
               {...register('comment')}
               disabled={readOnly}
+              readOnly={lockComment}
               placeholder={t(
                 'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
                 'Add a note to describe your changes (optional)'

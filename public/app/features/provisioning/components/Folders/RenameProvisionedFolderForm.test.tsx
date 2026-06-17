@@ -1,8 +1,9 @@
 import { HttpResponse, delay, http } from 'msw';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -398,5 +399,94 @@ describe('RenameProvisionedFolderForm', () => {
         expect(screen.getByRole('button', { name: /^rename$/i })).toBeInTheDocument();
       });
     });
+  });
+});
+
+describe('RenameProvisionedFolderForm commit message template', () => {
+  beforeEach(() => {
+    setTestFlags({ 'provisioning.gitConventions': true });
+  });
+
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('pre-fills Comment from the repository template', async () => {
+    setup(
+      {},
+      {
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Test Folder'));
+    expect(comment).not.toHaveAttribute('readonly');
+  });
+
+  it('renders Comment read-only when the template is enforced', async () => {
+    setup(
+      {},
+      {
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: {
+            singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}',
+            enforceTemplate: true,
+          },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Test Folder'));
+    expect(comment).toHaveAttribute('readonly');
+  });
+
+  it('re-renders Comment when the folder name input changes', async () => {
+    const { user } = setup(
+      {},
+      {
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Test Folder'));
+
+    const folderName = screen.getByRole('textbox', { name: /folder name/i });
+    await user.clear(folderName);
+    await user.type(folderName, 'Renamed Folder');
+
+    await waitFor(() => expect(comment).toHaveValue('feat(folders): rename Renamed Folder'));
+  });
+
+  it('leaves Comment empty when the flag is off', async () => {
+    setTestFlags({ 'provisioning.gitConventions': false });
+    setup(
+      {},
+      {
+        ...defaultHookData,
+        repository: {
+          ...defaultHookData.repository!,
+          commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+        },
+      }
+    );
+
+    const comment = await screen.findByRole('textbox', { name: /comment/i });
+    expect(comment).toHaveValue('');
   });
 });

@@ -1,8 +1,10 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import {
   useCreateRepositoryFilesWithPathMutation,
@@ -98,7 +100,11 @@ function setup(props: Partial<Props> = {}) {
 
   return {
     user,
-    ...render(<MoveProvisionedDashboardForm {...defaultProps} />),
+    ...render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <MoveProvisionedDashboardForm {...defaultProps} />
+      </OpenFeatureProvider>
+    ),
     props: defaultProps,
   };
 }
