@@ -8,23 +8,17 @@ import { type CommitTemplateVars, renderCommitMessage } from '../utils/commitMes
 interface UseCommitMessageTemplateArgs {
   repository: RepositoryView | undefined;
   vars: CommitTemplateVars;
-  /** Current value of the form's `comment` field. */
   comment: string;
-  /** Whether the user has edited `comment` (react-hook-form dirty state). */
   isCommentDirty: boolean;
-  /** Sets the `comment` field without marking it dirty. */
+  /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
   setComment: (value: string) => void;
 }
 
 /**
- * Drives the Save-drawer "Comment" field from the repository commit message
- * template, gated behind the provisioning.gitConventions flag. Pre-fills on
- * mount, re-renders as `vars` change, locks the field when enforcement is on,
- * and stops overwriting once the user has edited it. Returns whether the field
- * must render read-only. Purely additive: it never touches submit logic.
+ * Drives the save-dialog "Comment" field from the repository commit message template.
  *
- * Takes plain values rather than the form object so it carries no generics or
- * type assertions; each caller wires its own concretely-typed `comment` field.
+ * Takes plain values rather than the form object so it stays free of generics and type
+ * assertions; each concretely-typed caller wires its own `comment` field.
  */
 export function useCommitMessageTemplate({
   repository,
@@ -37,8 +31,7 @@ export function useCommitMessageTemplate({
   const template = repository?.commit?.singleResourceMessageTemplate;
   const enforce = repository?.commit?.enforceTemplate ?? false;
 
-  // Active when the flag is on AND there's something to show: a configured
-  // template, or enforcement (which locks the field to the rendered default).
+  // Enforcement activates the field even without a template, locking it to the default.
   const active = flagEnabled && (Boolean(template?.trim()) || enforce);
   const locked = flagEnabled && enforce;
   const rendered = active ? renderCommitMessage(template, vars) : '';
@@ -47,12 +40,11 @@ export function useCommitMessageTemplate({
     if (!active) {
       return;
     }
-    // Non-enforced: once the user has edited the field, leave it alone.
+    // Once the user edits a non-enforced field, stop overwriting their text.
     if (!locked && isCommentDirty) {
       return;
     }
-    // `comment` is a dependency, so an external reset(defaultValues) that wipes
-    // the field re-runs this effect and re-fills it.
+    // `comment` stays in the deps so an external reset that clears it triggers a re-fill.
     if (comment !== rendered) {
       setComment(rendered);
     }
