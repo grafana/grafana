@@ -558,15 +558,15 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 		}, ""))
 
 	// Read-only subresources: resources, history, status (admin only).
-	// We check repositories:write (an admin-only RBAC action) rather than
-	// repositories:read, because repositories:read is granted to Viewer and
-	// would let viewers/editors read these admin-only views. The fallback role
-	// still allows admins whose RBAC isn't explicitly set up.
+	// These are reads, so we check the read action provisioning.stats:read
+	// (granted to Admin only) rather than repositories:read, which is granted
+	// to Viewer and would expose these admin-only views to viewers/editors.
+	// The fallback role still allows admins whose RBAC isn't explicitly set up.
 	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbUpdate,
+			Verb:      apiutils.VerbGet,
 			Group:     provisioning.GROUP,
-			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Resource:  "stats",
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
