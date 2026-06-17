@@ -5,7 +5,7 @@ import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { type LegendOverflow, type LegendPlacement } from '@grafana/schema';
+import { type LegendPlacement } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
@@ -139,7 +139,6 @@ export interface VizLayoutLegendProps {
   maxHeight?: string;
   maxWidth?: string;
   width?: number | string;
-  overflow?: LegendOverflow;
 }
 
 /**
