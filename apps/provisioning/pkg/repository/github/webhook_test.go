@@ -10,13 +10,10 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -106,25 +103,29 @@ func TestParseWebhooks(t *testing.T) {
 		}},
 	}
 
-	gh := &githubWebhookRepository{
-		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "unit-test-repo",
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "unit-test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{
+				Enabled: true, // required to accept sync job
 			},
-			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Enabled: true, // required to accept sync job
-				},
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL:    "https://github.com/grafana/git-ui-sync-demo",
-					Branch: "main",
+			GitHub: &provisioning.GitHubRepositoryConfig{
+				URL:    "https://github.com/grafana/git-ui-sync-demo",
+				Branch: "main",
 
-					GenerateDashboardPreviews: true,
-				},
+				GenerateDashboardPreviews: true,
 			},
 		},
-		owner: "grafana",
-		repo:  "git-ui-sync-demo",
+	}
+	mockRepo := NewMockGithubRepository(t)
+	mockRepo.EXPECT().Config().Return(cfg).Maybe()
+	gh := &githubWebhookRepository{
+		GithubRepository: mockRepo,
+		WebhookManager:   repo.NewWebhookManager(nil, cfg, "", subscribedEvents, "", repo.NewIncrementalSyncPolicy(false, 5)),
+		owner:            "grafana",
+		repo:             "git-ui-sync-demo",
 	}
 
 	for _, tt := range tests {
@@ -144,24 +145,27 @@ func TestParseWebhooks(t *testing.T) {
 }
 
 func TestParsePushEvent_LargeDiffForcesFullSync(t *testing.T) {
-	gh := &githubWebhookRepository{
-		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "unit-test-repo",
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "unit-test-repo",
+		},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{
+				Enabled: true,
 			},
-			Spec: provisioning.RepositorySpec{
-				Sync: provisioning.SyncOptions{
-					Enabled: true,
-				},
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL:    "https://github.com/grafana/git-ui-sync-demo",
-					Branch: "main",
-				},
+			GitHub: &provisioning.GitHubRepositoryConfig{
+				URL:    "https://github.com/grafana/git-ui-sync-demo",
+				Branch: "main",
 			},
 		},
-		owner:             "grafana",
-		repo:              "git-ui-sync-demo",
-		incrementalPolicy: repo.NewIncrementalSyncPolicy(false, 5),
+	}
+	mockRepo := NewMockGithubRepository(t)
+	mockRepo.EXPECT().Config().Return(cfg).Maybe()
+	gh := &githubWebhookRepository{
+		GithubRepository: mockRepo,
+		WebhookManager:   repo.NewWebhookManager(nil, cfg, "", subscribedEvents, "", repo.NewIncrementalSyncPolicy(false, 5)),
+		owner:            "grafana",
+		repo:             "git-ui-sync-demo",
 	}
 
 	// nolint:gosec
@@ -216,21 +220,24 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	}
 
 	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
-		return &githubWebhookRepository{
-			config: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-				Spec: provisioning.RepositorySpec{
-					GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
-					Sync:   provisioning.SyncOptions{Enabled: true},
-				},
-				Status: provisioning.RepositoryStatus{
-					Webhook: &provisioning.WebhookStatus{},
-				},
+		cfg := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioning.RepositorySpec{
+				GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
+				Sync:   provisioning.SyncOptions{Enabled: true},
 			},
-			owner:       "grafana",
-			repo:        "grafana",
-			secret:      common.RawSecureValue(secret),
-			replayCache: cache,
+			Status: provisioning.RepositoryStatus{
+				Webhook: &provisioning.WebhookStatus{},
+			},
+		}
+		mockRepo := NewMockGithubRepository(t)
+		mockRepo.EXPECT().Config().Return(cfg).Maybe()
+		return &githubWebhookRepository{
+			GithubRepository: mockRepo,
+			WebhookManager:   repo.NewWebhookManager(nil, cfg, "", subscribedEvents, common.RawSecureValue(secret), repo.NewIncrementalSyncPolicy(false, 5)),
+			owner:            "grafana",
+			repo:             "grafana",
+			replayCache:      cache,
 		}
 	}
 
@@ -1112,12 +1119,15 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create a GitHub repository with the test config. A fresh cache
 			// per subtest keeps replay state from leaking across cases.
+			mockRepo := NewMockGithubRepository(t)
+			mockRepo.EXPECT().Config().Return(tt.config).Maybe()
+			manager := repo.NewWebhookManager(nil, tt.config, "", subscribedEvents, common.RawSecureValue("webhook-secret"), repo.NewIncrementalSyncPolicy(false, 5))
 			repo := &githubWebhookRepository{
-				config:      tt.config,
-				owner:       "grafana",
-				repo:        "grafana",
-				secret:      common.RawSecureValue("webhook-secret"),
-				replayCache: newReplayCache(time.Hour),
+				GithubRepository: mockRepo,
+				WebhookManager:   manager,
+				owner:            "grafana",
+				repo:             "grafana",
+				replayCache:      newReplayCache(time.Hour),
 			}
 
 			// Call the Webhook method

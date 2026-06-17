@@ -17,7 +17,7 @@ import (
 
 var subscribedEvents = []string{"pull_request", "push"}
 
-func newTestWebhookManager(client ProviderClient, config *provisioning.Repository, webhookURL string) *WebhookManager {
+func newTestWebhookManager(client jointClient, config *provisioning.Repository, webhookURL string) *WebhookManager {
 	return NewWebhookManager(client, config, webhookURL, subscribedEvents, "", NewIncrementalSyncPolicy(false, 5))
 }
 
@@ -888,55 +888,4 @@ func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, ops)
 	})
-}
-
-func TestWebhookManager_CommentPullRequest(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func(m *MockProviderClient)
-		prNumber      int
-		comment       string
-		expectedError error
-	}{
-		{
-			name: "successfully comment on pull request",
-			setupMock: func(m *MockProviderClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 123, "Test comment").
-					Return(nil)
-			},
-			prNumber:      123,
-			comment:       "Test comment",
-			expectedError: nil,
-		},
-		{
-			name: "error commenting on pull request",
-			setupMock: func(m *MockProviderClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 456, "Error comment").
-					Return(fmt.Errorf("failed to create comment"))
-			},
-			prNumber:      456,
-			comment:       "Error comment",
-			expectedError: fmt.Errorf("failed to create comment"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockClient := NewMockProviderClient(t)
-			tt.setupMock(mockClient)
-
-			m := newTestWebhookManager(mockClient, &provisioning.Repository{}, "https://example.com/hook")
-
-			err := m.CommentPullRequest(context.Background(), tt.prNumber, tt.comment)
-
-			if tt.expectedError != nil {
-				require.Error(t, err)
-				require.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-
-			mockClient.AssertExpectations(t)
-		})
-	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"time"
 
@@ -35,7 +36,8 @@ type Webhook struct {
 // holds the shared webhook state (config, secret, incremental sync policy) that the
 // provider-specific inbound handlers read.
 type WebhookManager struct {
-	client            ProviderClient
+	whClient          WebhookClient
+	prClient          PullRequestClient
 	config            *provisioning.Repository
 	webhookURL        string
 	events            []string
@@ -43,9 +45,10 @@ type WebhookManager struct {
 	incrementalPolicy IncrementalSyncPolicy
 }
 
-func NewWebhookManager(client ProviderClient, config *provisioning.Repository, webhookURL string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
+func NewWebhookManager(client jointClient, config *provisioning.Repository, webhookURL string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
 	return &WebhookManager{
-		client:            client,
+		whClient:          client,
+		prClient:          client,
 		config:            config,
 		webhookURL:        webhookURL,
 		events:            events,
@@ -54,25 +57,12 @@ func NewWebhookManager(client ProviderClient, config *provisioning.Repository, w
 	}
 }
 
-func (m *WebhookManager) disabled() bool {
-	return m.config.Spec.Webhook != nil && m.config.Spec.Webhook.Disabled
-}
 
 // Secret returns the webhook secret used to authenticate inbound deliveries.
 func (m *WebhookManager) Secret() common.RawSecureValue {
 	return m.secret
 }
 
-// CanUseIncrementalSync reports whether a push with the given changes may use an
-// incremental sync instead of a full one.
-func (m *WebhookManager) CanUseIncrementalSync(deletedPaths []string, totalChanges int) bool {
-	return m.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges)
-}
-
-// CommentPullRequest posts a comment to the given pull request.
-func (m *WebhookManager) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return m.client.CreatePullRequestComment(ctx, prNumber, comment)
-}
 
 func (m *WebhookManager) OnCreate(ctx context.Context) ([]map[string]any, error) {
 	if len(m.webhookURL) == 0 {
@@ -138,7 +128,7 @@ func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]
 	logger := logging.FromContext(ctx)
 	logger.Info("rotating webhook secret", "trigger", "rotation")
 
-	hook, err := m.client.GetWebhook(ctx, m.config.Status.Webhook.ID)
+	hook, err := m.whClient.GetWebhook(ctx, m.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, ErrFileNotFound):
 		return clearStatusPatch(), fmt.Errorf("webhook %d not found on remote during rotation: %w", m.config.Status.Webhook.ID, err)
@@ -152,12 +142,27 @@ func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]
 	}
 	hook.Secret = secret.String()
 
-	if err := m.client.EditWebhook(ctx, hook); err != nil {
+	if err := m.whClient.EditWebhook(ctx, hook); err != nil {
 		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
 	}
 
 	logger.Info("webhook secret rotated successfully")
 	return statusPatches(hook.ID, hook.URL, hook.Events, hook.Secret), nil
+}
+
+// PushSyncResponse builds the webhook response that enqueues a sync job for a
+// push, choosing an incremental or full sync from the given changes.
+func (m *WebhookManager) PushSyncResponse(deletedPaths []string, totalChanges int) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code: http.StatusAccepted,
+		Job: &provisioning.JobSpec{
+			Repository: m.config.GetName(),
+			Action:     provisioning.JobActionPull,
+			Pull: &provisioning.SyncJobOptions{
+				Incremental: m.incrementalPolicy.CanUseIncrementalSync(deletedPaths, totalChanges),
+			},
+		},
+	}
 }
 
 func (m *WebhookManager) createWebhook(ctx context.Context) (Webhook, error) {
@@ -166,7 +171,7 @@ func (m *WebhookManager) createWebhook(ctx context.Context) (Webhook, error) {
 		return Webhook{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
-	hook, err := m.client.CreateWebhook(ctx, Webhook{
+	hook, err := m.whClient.CreateWebhook(ctx, Webhook{
 		URL:    m.webhookURL,
 		Secret: secret.String(),
 		Events: m.events,
@@ -193,7 +198,7 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (Webhook, bool, erro
 		return hook, true, nil
 	}
 
-	hook, err := m.client.GetWebhook(ctx, m.config.Status.Webhook.ID)
+	hook, err := m.whClient.GetWebhook(ctx, m.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, ErrFileNotFound):
 		hook, err := m.createWebhook(ctx)
@@ -228,7 +233,7 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (Webhook, bool, erro
 		return Webhook{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
-	if err := m.client.EditWebhook(ctx, hook); err != nil {
+	if err := m.whClient.EditWebhook(ctx, hook); err != nil {
 		return Webhook{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
@@ -243,7 +248,7 @@ func (m *WebhookManager) deleteWebhook(ctx context.Context) error {
 
 	id := m.config.Status.Webhook.ID
 
-	err := m.client.DeleteWebhook(ctx, id)
+	err := m.whClient.DeleteWebhook(ctx, id)
 	if err != nil && !errors.Is(err, ErrFileNotFound) && !errors.Is(err, ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
@@ -258,6 +263,10 @@ func (m *WebhookManager) deleteWebhook(ctx context.Context) error {
 
 	logger.Info("webhook deleted", "url", m.config.Status.Webhook.URL, "id", id)
 	return nil
+}
+
+func (m *WebhookManager) disabled() bool {
+	return m.config.Spec.Webhook != nil && m.config.Spec.Webhook.Disabled
 }
 
 // statusPatches returns the JSON patch operations that persist a freshly

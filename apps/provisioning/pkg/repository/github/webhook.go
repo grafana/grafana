@@ -150,18 +150,7 @@ func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *git
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := r.CanUseIncrementalSync(deletedPaths, totalChanges)
-
-	return &provisioning.WebhookResponse{
-		Code: http.StatusAccepted,
-		Job: &provisioning.JobSpec{
-			Repository: r.Config().GetName(),
-			Action:     provisioning.JobActionPull,
-			Pull: &provisioning.SyncJobOptions{
-				Incremental: incremental,
-			},
-		},
-	}, nil
+	return r.PushSyncResponse(deletedPaths, totalChanges), nil
 }
 
 func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullRequestEvent) (*provisioning.WebhookResponse, error) {
