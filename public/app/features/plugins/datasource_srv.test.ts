@@ -13,10 +13,10 @@ import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   getDataSourceInstanceSettingsList,
-  setExpressionDataSourceInstanceSettings,
+  setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { instanceSettings as expressionInstanceSettings } from 'app/features/expressions/ExpressionDatasource';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
@@ -648,7 +648,7 @@ describe('datasource_srv', () => {
 
       it('should sync the new async instance-settings cache from the same fetched payload', async () => {
         // Mirror startup: the expression datasource is injected into the new cache.
-        setExpressionDataSourceInstanceSettings(expressionInstanceSettings);
+        setExpressionDataSourceInstance(expressionDatasource);
 
         getBackendSrvGetMock.mockReset();
         getBackendSrvGetMock.mockReturnValueOnce({

@@ -10,32 +10,29 @@ labels:
     - enterprise
     - oss
 title: Variables
-description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
+description: Add variables to metric queries, panel titles, links, and other dashboard elements to create interactive dashboards that viewers can adjust without editing panels.
 weight: 800
 ---
 
 # Variables
 
-A variable is a placeholder for a value.
-When you change the value, the element using the variable will change to reflect the new value.
+A variable is a placeholder for a value that you can use in dashboard queries, panel titles, links, and other dashboard elements.
+When you change the value of a variable, Grafana updates every dashboard element that uses that variable.
 
 Variables are displayed as drop-down lists (or in some cases text fields) at the top of the dashboard.
-These drop-down lists make it easy to update the variable value and thus change the data being displayed in your dashboard.
+These controls let viewers change what the dashboard displays without editing the dashboard.
 
-For example, if you needed to monitor several servers, you _could_ make a dashboard for each server.
+For example, if you need to monitor several servers, you _could_ make a dashboard for each server.
 Or you could create one dashboard and use panels with variables like this one, where you can change the server using the variable selector:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-selected-variables-v12.png" max-width="750px" alt="Variable drop-down open and two values selected" >}}
 
-Variables allow you to create more interactive dashboards.
-Instead of hard-coding things like server, application, and sensor names in your metric queries, you can use variables in their place.
-They're useful for administrators who want to allow Grafana viewers to adjust visualizations without giving them full editing permissions.
+Variables help you create interactive dashboards that adapt to different contexts.
+Instead of hard-coding values such as server, application, region, or sensor names, you can define a variable once and reuse it throughout the dashboard.
 
 Using variables also allows you to single-source dashboards.
 If you have multiple identical data sources or servers, you can make one dashboard and use variables to change what you are viewing.
-This simplifies maintenance and upkeep enormously.
-
-{{< youtube id="mMUJ3iwIYwc" >}}
+This reduces dashboard duplication and maintenance.
 
 You can use variables in:
 
@@ -98,6 +95,10 @@ groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'su
 The following image shows a panel in edit mode using the query:
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-template-query-v12.1.png" max-width="750px" alt="A panel using a template query" >}}
+
+{{< admonition type="note">}}
+Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
+{{< /admonition >}}
 
 ### Variables in URLs
 

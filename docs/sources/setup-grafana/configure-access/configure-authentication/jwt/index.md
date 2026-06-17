@@ -188,7 +188,7 @@ jwk_set_file = /path/to/jwks.json
 
 ### Verify token using a single key loaded from PEM-encoded file
 
-PEM-encoded key file in PKIX, PKCS #1, PKCS #8 or SEC 1 format.
+PEM-encoded public key file in PKIX or PKCS #1 format. Private keys are not accepted.
 
 ```ini
 key_file = /path/to/key.pem
