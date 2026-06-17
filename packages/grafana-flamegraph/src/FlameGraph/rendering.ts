@@ -386,8 +386,10 @@ function useColorFunction(
  * triggers:
  *   - Moving the browser window between a HiDPI and a standard display (matchMedia)
  *   - Browser zoom changes (visualViewport resize)
+ *
+ * Exported for testing — do not use directly outside this module.
  */
-function useDevicePixelRatio() {
+export function useDevicePixelRatio() {
   const [devicePixelRatio, setDevicePixelRatio] = useState(window.devicePixelRatio);
 
   useEffect(() => {
