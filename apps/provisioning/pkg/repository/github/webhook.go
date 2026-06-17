@@ -21,16 +21,14 @@ import (
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
 
-type WebhookRepository interface {
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
-
 type GithubWebhookRepository interface {
 	GithubRepository
 	repository.Hooks
 
-	WebhookRepository
+	repository.WebhookRepository
 }
+
+var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
@@ -343,6 +341,13 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 		return nil, nil
 	}
 
+	// extra.Build never wraps a webhookDisabled repository in a GithubWebhookRepository,
+	// so reaching here with the flag set would be a bug. Guard anyway to be safe.
+	if r.config.Spec.GitHub != nil && r.config.Spec.GitHub.WebhookDisabled {
+		logging.FromContext(ctx).Warn("webhook hooks invoked while webhookDisabled is true; skipping")
+		return nil, nil
+	}
+
 	if len(r.config.Spec.Workflows) == 0 {
 		return nil, nil
 	}
@@ -375,6 +380,11 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 
 func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
+		return nil, nil
+	}
+
+	// See OnCreate for the reasoning behind this guard.
+	if r.config.Spec.GitHub != nil && r.config.Spec.GitHub.WebhookDisabled {
 		return nil, nil
 	}
 

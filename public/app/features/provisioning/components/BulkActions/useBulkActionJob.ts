@@ -10,6 +10,8 @@ export interface ResourceRef {
 
 export interface DeleteJobSpec {
   action: 'delete';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   delete: {
     ref?: string;
     resources: ResourceRef[];
@@ -18,6 +20,8 @@ export interface DeleteJobSpec {
 
 export interface MoveJobSpec {
   action: 'move';
+  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  message?: string;
   move: {
     ref?: string;
     targetPath: string; // Must end with '/' slash

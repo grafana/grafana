@@ -29,7 +29,7 @@
       "add-label": "添加权限",
       "loading": "正在加载权限...",
       "no-permissions": "没有任何权限",
-      "permissions-change-warning": "这将更改此文件夹及其所有子文件夹的权限。总体而言，这将影响：",
+      "permissions-change-warning": "",
       "role": "角色",
       "serviceaccount": "服务帐户",
       "team": "团队",
@@ -4200,13 +4200,9 @@
       "cancel-button": "取消",
       "confirmation-text": "删除",
       "delete-button": "删除",
-      "delete-modal-invalid-text": "一个或多个文件夹包含库面板或警报规则。请首先删除这些以便继续。",
-      "delete-modal-invalid-title": "无法删除文件夹",
       "delete-modal-restore-dashboards-common": "已删除的数据面板将在历史记录中保留最多 12 个月。拥有删除权限的用户可以恢复自己删除的数据面板，管理员可以恢复任何用户删除的数据面板。历史记录最多保留 1000 个数据面板，达到此上限后，较早的数据面板可能会被提前移除。",
       "delete-modal-restore-dashboards-prefix-folder": "此操作将立即删除所选文件夹。",
       "delete-modal-restore-dashboards-suffix-folder": "文件夹无法恢复。",
-      "delete-modal-text": "此操作将删除以下内容：",
-      "delete-modal-text-one-folder": "此操作将删除文件夹“<1>{{ folderName }}</1>”和以下内容：",
       "delete-modal-title": "删除",
       "delete-provisioned-folder": "删除已预置的文件夹",
       "deleting": "正在删除...",
@@ -4214,8 +4210,6 @@
       "move-button": "移动",
       "move-modal-alert": "移动此项目可能会改变其权限。",
       "move-modal-field-label": "文件夹名称",
-      "move-modal-text": "此操作将移动以下内容：",
-      "move-modal-text-one-folder": "此操作将移动文件夹“<1>{{ folderName }}</1>”和以下内容：",
       "move-modal-title": "移动",
       "move-provisioned-folder": "移动已预置的文件夹",
       "moving": "正在移动...",
@@ -4225,11 +4219,15 @@
       "new-folder-owner-selector-checkbox": "为文件夹分配所有者",
       "rename-provisioned-folder": "重命名已预置的文件夹",
       "selected-mix-resources-modal-text": "您已选择了已预置和未预置的资源。这些资源无法一起处理。请仅选择已预置的资源或未预置的资源，然后重试。",
-      "selected-mix-resources-modal-title": "已选择混合资源类型"
+      "selected-mix-resources-modal-title": "已选择混合资源类型",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近删除"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "无法找到文件夹",
       "title-ruler-namespace-error": "无法加载规则"
@@ -4244,13 +4242,17 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除…",
-      "delete-warning": "此操作将删除所选文件夹及其子文件夹。总体而言，这将影响：",
-      "error-deleting-resources": "删除资源时出错"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "删除资源时出错",
+      "folder-empty_other": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "取消",
       "button-move": "移动",
       "button-moving": "正在移动…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "如果您可以直接访问目标，请直接在目标存储库中进行修改。",
         "read-only-saving-message": "存储库是只读的，并在 git 中预置。{{readOnlyMessage}}",
@@ -4261,17 +4263,10 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "移动资源时出错",
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
-      "move-total": "总体而言，这将影响：",
       "move-warning": "此操作将移动所选文件夹及其子文件夹。可用的目标文件夹取决于所选资源。",
       "move-warning-tooltip": "您只能在相应的预置文件夹内移动已预置的资源，而本地资源只能移动到本地文件夹中。",
-      "target-folder": "目标文件夹"
-    },
-    "counts": {
-      "alertRule_other": "{{count}} 条警告规则",
-      "dashboard_other": "{{count}} 个仪表板",
-      "folder_other": "{{count}} 个文件夹",
-      "libraryPanel_other": "{{count}} 个库面板",
-      "total_other": "{{count}} 个项目"
+      "target-folder": "目标文件夹",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4300,12 +4295,11 @@
       "button-cancel": "取消",
       "button-delete": "删除",
       "button-deleting": "正在删除…",
-      "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "缺少必填字段",
       "success-message": "文件夹已成功删除"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "无法检索后代信息"
     },
     "empty-state": {
       "button-title": "创建数据面板",
@@ -5207,10 +5201,6 @@
       },
       "pane-header": "添加"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "关闭“添加面板”小部件",
-      "tooltip-close-widget": "关闭小部件"
-    },
     "add-menu": {
       "import": "从库导入",
       "paste-panel": "粘贴面板",
@@ -6002,9 +5992,6 @@
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "原始数据"
-    },
     "panel-links": {
       "aria-label-panel-links": "面板关联"
     },
@@ -6045,18 +6032,6 @@
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "行选项"
-    },
-    "row-options-form": {
-      "cancel": "取消",
-      "label-repeat-for": "重复条件",
-      "label-title": "标题",
-      "update": "更新"
-    },
-    "row-options-modal": {
-      "title-row-options": "行选项"
     },
     "rows-layout": {
       "cancel": "取消",
@@ -6417,16 +6392,6 @@
       "changes": "是否保存更改？",
       "discard": "丢弃",
       "title-unsaved-changes": "未保存的更改"
-    },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "此行中的面板使用 {{SHARED_DASHBOARD_QUERY}} 数据源。这些面板将引用原始行中的面板，而不是重复行中的面板。"
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "刪除行",
-      "learn-more": "了解更多",
-      "title": {
-        "delete-row": "刪除行"
-      }
     },
     "validation": {
       "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
@@ -8898,6 +8863,11 @@
     "sql-expr": {
       "button-run-query": "运行查询"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "错误",
       "loading": "正在加载架构信息...",
@@ -10627,10 +10597,28 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_other": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10645,6 +10633,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10652,15 +10645,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -12107,8 +12098,10 @@
       "undock": "取消停靠菜单"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "收起部分：{{sectionName}}",
-      "expand-aria-label": "展开部分：{{sectionName}}"
+      "expand-aria-label": "展开部分：{{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "更改组织"
@@ -13008,7 +13001,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "存储库设置已保存",
@@ -13039,13 +13039,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "我的配置"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "覆盖自动检测到的用于注册 Webhook 的 URL。",
-      "description-webhook-url-learn-more": "了解更多",
-      "label-git-hub-features": "GitHub 功能",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13194,28 +13187,22 @@
     },
     "finish-step": {
       "description-enable-previews": "在拉取请求中添加数据面板更改的图像预览。Grafana 数据面板的图像将在 Git 存储库中共享，并对具有存储库访问权限的任何人可见。",
-      "description-generate-dashboard-previews": "创建拉取请求的预览链接",
       "description-image-rendering": "需要图像渲染。<2>设置图像渲染</2>",
-      "description-preview-requirements": "（需要启用<2>图像渲染</2>和公共访问权限）",
       "description-read-only": "无法通过 Grafana 修改资源。",
       "description-sync-interval": "从存储库同步更改的频率",
-      "description-webhook-url": "覆盖自动检测到的用于注册 Webhook 的 URL。",
       "error-sync-interval-required": "同步间隔为必填项",
       "label-enable-previews": "在拉取请求中启用数据面板预览",
-      "label-generate-dashboard-previews": "生成数据面板预览",
       "label-read-only": "只读",
-      "label-sync-interval": "间隔（秒）",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "间隔（秒）"
     },
     "fix-folder-metadata": {
       "button": "修复文件夹 ID"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "取消",
+      "default-commit-message": "",
       "error-message": "启动文件夹元数据修复作业失败。请再试一次。",
       "error-title": "修复文件夹元数据时出错",
-      "loading": "正在加载存储库...",
       "read-only-message": "文件夹元数据无法自动修复。",
       "submit": "修复文件夹 ID",
       "submitting": "正在修复…",
@@ -13376,9 +13363,26 @@
       "truncated": "消息已截断"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "无法验证此文件夹是否包含元数据文件。请稍后重试。",
@@ -13610,11 +13614,24 @@
     "shared": {
       "branch-description": "用于预置的分支",
       "branch-label": "分支",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "可选。包含要同步资源的子目录的路径。",
       "path-label": "路径",
       "progress-bar": {
         "aria-label": "进度条"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "用户名",
       "url-label": "存储库 URL",
       "url-pattern": "必须是有效的存储库 URL (https://hostname/owner/repo)"
@@ -13682,6 +13699,13 @@
     "watch-stream": {
       "error-description": "无法启动实时更新。请刷新页面以查看最新数据。",
       "error-title": "实时更新不可用"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "请注意以下限制。有关更多详细信息，请参阅 <2>Git 同步文档</2>。",
@@ -13987,15 +14011,16 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",

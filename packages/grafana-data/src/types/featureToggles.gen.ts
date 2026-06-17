@@ -1095,11 +1095,6 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
-  * Enables the created by me search filter on the browse dashboards page
-  * @default false
-  */
-  createdByMeSearchFilter?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1191,7 +1186,7 @@ export interface FeatureToggles {
   favoriteDatasources?: boolean;
   /**
   * New Log Context component
-  * @default false
+  * @default true
   */
   newLogContext?: boolean;
   /**
@@ -1285,11 +1280,6 @@ export interface FeatureToggles {
   * @default false
   */
   pieChartGradientColorScheme?: boolean;
-  /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
-  */
-  preventPanelChromeOverflow?: boolean;
   /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false

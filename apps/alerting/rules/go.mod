@@ -3,6 +3,7 @@ module github.com/grafana/grafana/apps/alerting/rules
 go 1.26.4
 
 require (
+	github.com/getkin/kin-openapi v0.138.0
 	github.com/grafana/grafana-app-sdk v0.56.0
 	github.com/grafana/grafana-app-sdk/logging v0.55.0
 	github.com/prometheus/common v0.68.0
@@ -21,12 +22,11 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
-	github.com/getkin/kin-openapi v0.138.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/jsonpointer v0.22.5 // indirect
-	github.com/go-openapi/jsonreference v0.21.5 // indirect
+	github.com/go-openapi/jsonpointer v0.23.1 // indirect
+	github.com/go-openapi/jsonreference v0.21.6 // indirect
 	github.com/go-openapi/swag v0.26.0 // indirect
 	github.com/go-openapi/swag/cmdutils v0.26.0 // indirect
 	github.com/go-openapi/swag/conv v0.26.0 // indirect
@@ -39,8 +39,7 @@ require (
 	github.com/go-openapi/swag/stringutils v0.26.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.26.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
-	github.com/go-openapi/testify/enable/yaml/v2 v2.5.0 // indirect
-	github.com/go-openapi/testify/v2 v2.5.0 // indirect
+	github.com/go-openapi/testify/enable/yaml/v2 v2.5.1 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect

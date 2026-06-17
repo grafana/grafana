@@ -1084,6 +1084,13 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 							Format:      "",
 						},
 					},
+					"webhookDisabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "WebhookDisabled disables webhook integration for this repository. When true, Grafana will not register or receive webhook events from GitHub and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
