@@ -216,6 +216,12 @@ async function initGrafana() {
     return Promise.reject({ redirect: bootData.redirect });
   }
 
+  // TODO: move grabbing user info behind the !window.__grafanaReduceBootdataAPI check once we have
+  // a MT-friendly substitute for it.
+  //
+  // When the __grafanaReduceBootdataAPI flag is enabled, we want to use as little of the boot data response
+  // as possible, and eventually not even call it. However there's no substitute for the user's auth state yet
+  // but we still want to test this codepath, so we keep the user info grabbing here for now.
   window.grafanaBootData.user = bootData.user;
 
   if (!window.__grafanaReduceBootdataAPI) {
