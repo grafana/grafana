@@ -148,7 +148,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     }),
     resizeHandlePill: css({
       height: '100%',
-      // width: 2,
       // Pill (::after) is 200px by default. Shrink to half when sidebar is tight.
       '@container (max-height: 250px)': {
         '&::after': {
