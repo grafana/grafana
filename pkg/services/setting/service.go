@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -27,6 +26,9 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -625,6 +627,7 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_duration_seconds",
 				Help:                        "Duration of remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
@@ -635,6 +638,7 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_result_size",
 				Help:                        "Number of settings returned by remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
 			},
 		),
 		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{

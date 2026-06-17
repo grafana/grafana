@@ -5,7 +5,7 @@ go 1.26.4
 require (
 	cuelang.org/go v0.11.1
 	github.com/dave/dst v0.27.4
-	github.com/grafana/codejen v0.0.4-0.20250428224353-8764ced07770
+	github.com/grafana/codejen v0.0.4
 	github.com/grafana/cog v0.1.13
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
@@ -20,16 +20,14 @@ require (
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/getkin/kin-openapi v0.138.0 // indirect
-	github.com/go-openapi/jsonpointer v0.22.5 // indirect
+	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.0 // indirect
-	github.com/go-openapi/testify/v2 v2.5.0 // indirect
+	github.com/go-openapi/testify/v2 v2.5.1 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang/glog v1.2.5 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -37,7 +35,7 @@ require (
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mpvl/unique v0.0.0-20150818121801-cbe035fff7de // indirect
