@@ -380,27 +380,25 @@ func TestAccessControlGroupResourceChecksUseEmptyName(t *testing.T) {
 
 	searchHandler.DoSearch(rr, req)
 	require.Equal(t, 200, rr.Code)
-	require.Len(t, batchRequests, 2, "expected separate per-user and group-resource batch checks")
+	require.Len(t, batchRequests, 1)
 
-	perUserNames := map[string]bool{}
 	groupResourceChecks := 0
-	for _, batchReq := range batchRequests {
-		for _, check := range batchReq.Checks {
-			if check.Group != iamv0.GROUP || check.Resource != "users" {
-				continue
-			}
-			switch check.Verb {
-			case utils.VerbCreate, utils.VerbGetPermissions:
-				require.Empty(t, check.Name, "group-resource check %q must use empty name", check.Verb)
-				groupResourceChecks++
-			case utils.VerbList, utils.VerbUpdate, utils.VerbDelete:
-				require.NotEmpty(t, check.Name, "per-user check %q must include the user name", check.Verb)
-				perUserNames[check.Name] = true
-			}
+	perUserNames := map[string]bool{}
+	for _, check := range batchRequests[0].Checks {
+		if check.Group != iamv0.GROUP || check.Resource != "users" {
+			continue
+		}
+		switch check.Verb {
+		case utils.VerbCreate, utils.VerbGetPermissions:
+			require.Empty(t, check.Name)
+			groupResourceChecks++
+		case utils.VerbList, utils.VerbUpdate, utils.VerbDelete:
+			require.NotEmpty(t, check.Name)
+			perUserNames[check.Name] = true
 		}
 	}
 
-	require.Equal(t, len(userGroupResourceAccessControlChecks), groupResourceChecks)
+	require.Equal(t, 2, groupResourceChecks)
 	require.Equal(t, map[string]bool{"user-1": true, "user-2": true}, perUserNames)
 }
 

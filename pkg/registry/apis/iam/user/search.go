@@ -42,32 +42,22 @@ import (
 // The RBAC authz server translates Group/Resource/Verb through the mapper
 // to resolve the underlying RBAC action.
 type accessControlCheck struct {
-	action   string // legacy RBAC action name returned to callers
-	group    string
-	resource string
-	verb     string
-	name     string // user UID of the resource being checked
+	action     string // legacy RBAC action name returned to callers
+	group      string
+	resource   string
+	verb       string
+	name       string // user UID of the resource being checked
+	groupScope bool   // evaluate once at group_resource level (empty name)
 }
 
-// Per-user checks use relations defined on the typed "user" FGA object (get/update/delete).
-var userPerResourceAccessControlChecks = []accessControlCheck{
+var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
+	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate, groupScope: true},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
+	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions, groupScope: true},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
-
-// Group-resource checks are evaluated once and stamped on every hit. Create and
-// get_permissions live on group_resource:iam.grafana.app/users, not on typed user.
-var userGroupResourceAccessControlChecks = []accessControlCheck{
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
-}
-
-var userAccessControlChecks = append(
-	append([]accessControlCheck{}, userPerResourceAccessControlChecks...),
-	userGroupResourceAccessControlChecks...,
-)
 
 type SearchHandler struct {
 	log          log.Logger
@@ -392,31 +382,16 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 
 func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0.GetSearchUsersUserHit) error {
 	namespace := requester.GetNamespace()
-	acMap := make(map[string]map[string]bool, len(hits))
 
-	if err := s.stampPerResourceAccessControl(ctx, namespace, hits, acMap); err != nil {
-		return err
-	}
-	if err := s.stampGroupResourceAccessControl(ctx, namespace, hits, acMap); err != nil {
-		return err
-	}
-
-	for i := range hits {
-		hits[i].AccessControl = acMap[hits[i].Name]
-	}
-
-	return nil
-}
-
-func (s *SearchHandler) stampPerResourceAccessControl(
-	ctx context.Context,
-	namespace string,
-	hits []iamv0.GetSearchUsersUserHit,
-	acMap map[string]map[string]bool,
-) error {
 	items := func(yield func(accessControlCheck) bool) {
-		for _, hit := range hits {
-			for _, c := range userPerResourceAccessControlChecks {
+		for _, c := range userAccessControlChecks {
+			if c.groupScope {
+				if !yield(c) {
+					return
+				}
+				continue
+			}
+			for _, hit := range hits {
 				c.name = hit.Name
 				if !yield(c) {
 					return
@@ -425,49 +400,6 @@ func (s *SearchHandler) stampPerResourceAccessControl(
 		}
 	}
 
-	return s.runAccessControlChecks(ctx, namespace, items, acMap)
-}
-
-func (s *SearchHandler) stampGroupResourceAccessControl(
-	ctx context.Context,
-	namespace string,
-	hits []iamv0.GetSearchUsersUserHit,
-	acMap map[string]map[string]bool,
-) error {
-	items := func(yield func(accessControlCheck) bool) {
-		for _, c := range userGroupResourceAccessControlChecks {
-			if !yield(c) {
-				return
-			}
-		}
-	}
-
-	groupAC := make(map[string]bool, len(userGroupResourceAccessControlChecks))
-	if err := s.runAccessControlChecks(ctx, namespace, items, map[string]map[string]bool{"": groupAC}); err != nil {
-		return err
-	}
-
-	for _, hit := range hits {
-		if len(groupAC) == 0 {
-			continue
-		}
-		if acMap[hit.Name] == nil {
-			acMap[hit.Name] = make(map[string]bool, len(userAccessControlChecks))
-		}
-		for action := range groupAC {
-			acMap[hit.Name][action] = true
-		}
-	}
-
-	return nil
-}
-
-func (s *SearchHandler) runAccessControlChecks(
-	ctx context.Context,
-	namespace string,
-	items func(func(accessControlCheck) bool),
-	acMap map[string]map[string]bool,
-) error {
 	extractFn := func(c accessControlCheck) authz.BatchCheckItem {
 		return authz.BatchCheckItem{
 			Verb:      c.verb,
@@ -480,14 +412,28 @@ func (s *SearchHandler) runAccessControlChecks(
 		}
 	}
 
+	acMap := make(map[string]map[string]bool, len(hits))
 	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
 		if err != nil {
 			return fmt.Errorf("access control check failed: %w", err)
+		}
+		if c.groupScope {
+			for _, hit := range hits {
+				if acMap[hit.Name] == nil {
+					acMap[hit.Name] = make(map[string]bool, len(userAccessControlChecks))
+				}
+				acMap[hit.Name][c.action] = true
+			}
+			continue
 		}
 		if acMap[c.name] == nil {
 			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))
 		}
 		acMap[c.name][c.action] = true
+	}
+
+	for i := range hits {
+		hits[i].AccessControl = acMap[hits[i].Name]
 	}
 
 	return nil
