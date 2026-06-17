@@ -441,6 +441,10 @@ function getStyles(
       paddingInline: theme.spacing(CHECKBOX_HIT_PADDING),
       cursor: 'pointer',
 
+      '& input': {
+        cursor: 'pointer',
+      },
+
       '&:hover input:not(:checked) + span': {
         borderColor: theme.components.input.borderHover,
       },
@@ -457,6 +461,7 @@ function getStyles(
         },
       },
     }),
+
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,
