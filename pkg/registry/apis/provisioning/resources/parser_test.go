@@ -811,6 +811,20 @@ func TestParsedResource_Run(t *testing.T) {
 		mc.AssertNumberOfCalls(t, "Update", 1)
 	})
 
+	t.Run("create AlreadyExists then existing fetch fails returns error without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetch fails with a non-NotFound error, which must surface
+		// instead of masquerading as a resourceVersion error on a blind update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, internalErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.ErrorContains(t, err, "get existing resource to carry resourceVersion into update")
+		mc.AssertNotCalled(t, "Update")
+	})
+
 	// --- Update path (no DryRun, fetches existing) ---
 
 	t.Run("update succeeds when existing resource found", func(t *testing.T) {

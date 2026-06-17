@@ -517,7 +517,16 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 	// object (e.g. we fell through here after a create returned AlreadyExists),
 	// fetch it now so we can carry its RV.
 	if f.Existing == nil {
-		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
+		existing, getErr := f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})
+		switch {
+		case getErr == nil:
+			f.Existing = existing
+		case apierrors.IsNotFound(getErr):
+			// Expected when the resource doesn't exist yet; the update→create
+			// fallback below handles it.
+		default:
+			return fmt.Errorf("get existing resource to carry resourceVersion into update: %w", getErr)
+		}
 	}
 
 	// on updates, clear the deprecated internal id, it will be set to the previous value by the storage layer
