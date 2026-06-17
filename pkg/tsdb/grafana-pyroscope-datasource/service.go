@@ -34,8 +34,6 @@ type Service struct {
 	logger log.Logger
 }
 
-var logger = backend.NewLoggerWith("logger", "tsdb.pyroscope")
-
 // Return the file, line, and (full-path) function name of the caller
 func getRunContext() (string, int, string) {
 	pc := make([]uintptr, 10)
@@ -64,15 +62,18 @@ func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginConte
 }
 
 func ProvideService(httpClientProvider *httpclient.Provider) *Service {
+	// Constructed here (not as a package-level var) so it picks up Grafana's
+	// in-process logger override installed during coreplugin init.
+	logger := backend.NewLoggerWith("logger", "tsdb.pyroscope")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, logger)),
 		logger: logger,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, logger log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return NewPyroscopeDatasource(ctx, *httpClientProvider, settings)
+		return NewPyroscopeDatasource(ctx, *httpClientProvider, settings, logger)
 	}
 }
 

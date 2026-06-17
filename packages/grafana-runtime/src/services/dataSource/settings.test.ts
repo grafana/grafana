@@ -1,6 +1,7 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { setBackendSrv } from '../backendSrv';
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import {
@@ -8,7 +9,9 @@ import {
   getDataSourceInstanceSettingsList,
   getDataSourceInstanceSettings,
   initDataSourceInstanceSettings,
+  setExpressionDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
   upsertRuntimeDataSourceInstanceSettings,
 } from './settings';
 
@@ -117,6 +120,8 @@ beforeAll(() => {
 beforeEach(() => {
   _resetForTests();
   backendGet.mockReset();
+  // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
 
 describe('instanceSettings', () => {
@@ -435,6 +440,147 @@ describe('instanceSettings', () => {
       expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
       const result = await getDataSourceInstanceSettings(null);
       expect(result?.name).toBe('Alpha');
+    });
+
+    it('delegates to DataSourceSrv.reload when a legacy srv is registered, without fetching directly', async () => {
+      const reload = jest.fn();
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      await reloadDataSourceInstanceSettings();
+
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(backendGet).not.toHaveBeenCalled();
+    });
+
+    it('coalesces concurrent reloads into a single underlying reload', async () => {
+      const reload = jest.fn().mockResolvedValue(undefined);
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      // Both calls start before the first settles, so they share one in-flight reload.
+      await Promise.all([reloadDataSourceInstanceSettings(), reloadDataSourceInstanceSettings()]);
+
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts a fresh reload once the previous one has settled', async () => {
+      const reload = jest.fn().mockResolvedValue(undefined);
+      setDataSourceSrv({ reload } as unknown as DataSourceSrv);
+
+      await reloadDataSourceInstanceSettings();
+      await reloadDataSourceInstanceSettings();
+
+      expect(reload).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('syncDataSourceInstanceSettings', () => {
+    it('populates the cache from a prefetched payload without fetching', async () => {
+      initDataSourceInstanceSettings({ Bravo: fixtures.Bravo }, 'Bravo');
+
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect(backendGet).not.toHaveBeenCalled();
+      const list = await getDataSourceInstanceSettingsList({ all: true });
+      expect(list.map((x) => x.name)).toEqual(['Alpha']);
+      expect((await getDataSourceInstanceSettings(null))?.name).toBe('Alpha');
+    });
+
+    it('preserves a built-in datasource and keeps it out of the list', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      // Sync a payload that does not include the expression datasource.
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+      const items = await getDataSourceInstanceSettingsList({ all: true });
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
+    });
+
+    it('preserves a runtime datasource', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      upsertRuntimeDataSourceInstanceSettings(ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' }));
+
+      syncDataSourceInstanceSettings({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+
+      expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
+    });
+  });
+
+  describe('setExpressionDataSourceInstanceSettings', () => {
+    it('makes the expression datasource available by uid after init', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('__expr__');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('resolves by name via isExpressionReference path', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('Expression');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('resolves by legacy id -100 via isExpressionReference path', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings({}, '');
+      const result = await getDataSourceInstanceSettings('-100');
+      expect(result?.uid).toBe('__expr__');
+    });
+
+    it('is not returned by getDataSourceInstanceSettingsList (byUid-only, matching legacy)', async () => {
+      // Set via the expression setter, but do NOT include it in the init map — it
+      // must only live in byUid so list results are unaffected.
+      const { Expression: _expr, ...withoutExpression } = fixtures;
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(withoutExpression, 'Bravo');
+      const items = await getDataSourceInstanceSettingsList({ all: true });
+      expect(items.some((x) => x.uid === '__expr__')).toBe(false);
+    });
+
+    it('survives a cache repopulate via no-arg reload', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      // Reload with a payload that does not include the expression datasource.
+      backendGet.mockResolvedValue({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await reloadDataSourceInstanceSettings();
+
+      const result = await getDataSourceInstanceSettings('__expr__');
+      expect(result?.uid).toBe('__expr__');
+      expect(backendGet).toHaveBeenCalledWith('/api/frontend/settings');
+    });
+
+    it('throws when called a second time outside of tests', () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      try {
+        setExpressionDataSourceInstanceSettings(fixtures.Expression);
+        expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).toThrow(
+          'setExpressionDataSourceInstanceSettings() function should only be called once'
+        );
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('allows being called multiple times in tests', () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      expect(() => setExpressionDataSourceInstanceSettings(fixtures.Expression)).not.toThrow();
+    });
+
+    it('coexists with a runtime datasource and both survive a repopulate', async () => {
+      setExpressionDataSourceInstanceSettings(fixtures.Expression);
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const runtime = ds({ uid: 'runtime-ds', name: 'Runtime', type: 'runtime' });
+      upsertRuntimeDataSourceInstanceSettings(runtime);
+
+      backendGet.mockResolvedValue({ datasources: { Alpha: fixtures.Alpha }, defaultDatasource: 'Alpha' });
+      await reloadDataSourceInstanceSettings();
+
+      expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+      expect((await getDataSourceInstanceSettings('runtime-ds'))?.name).toBe('Runtime');
     });
   });
 
