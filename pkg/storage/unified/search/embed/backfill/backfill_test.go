@@ -509,8 +509,6 @@ func TestShouldSkipForZeroViews_EmptyName_DoesNotConsult(t *testing.T) {
 	assert.Equal(t, 0, stats.calls)
 }
 
-// fakeNonDashboardBuilder satisfies embed.Builder with a non-dashboard
-// identity. Only used to exercise the builder-identity guard.
 type fakeNonDashboardBuilder struct{}
 
 func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
@@ -520,8 +518,6 @@ func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey,
 	return nil, nil
 }
 
-// labeledDashboardJSON wraps a dashboard in a k8s object carrying the
-// pending-delete label, mirroring what the tenant watcher writes.
 func labeledDashboardJSON(uid, title string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"metadata": map[string]any{
@@ -533,14 +529,10 @@ func labeledDashboardJSON(uid, title string) []byte {
 	return body
 }
 
-// makeLabeledListItem is makeListItem with the pending-delete label set.
 func makeLabeledListItem(ns, name string, rv int64) listItem {
 	return listItem{Namespace: ns, Name: name, RV: rv, Value: labeledDashboardJSON(name, name+"-title")}
 }
 
-// Integration: resources carrying the pending-delete label are filtered out
-// of the backfill pipeline while unlabeled resources still embed, and the job
-// completes.
 func TestRunBackfillJob_PendingDeleteLabel_SkipsLabeledResources(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{
@@ -559,8 +551,6 @@ func TestRunBackfillJob_PendingDeleteLabel_SkipsLabeledResources(t *testing.T) {
 	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
 }
 
-// Integration: the pending-delete check must run before the stats lookup so
-// labeled resources don't burn a usageinsights call.
 func TestRunBackfillJob_PendingDeleteLabel_RunsBeforeStatsLookup(t *testing.T) {
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeLabeledListItem("ns", "dash-a", 50)}
