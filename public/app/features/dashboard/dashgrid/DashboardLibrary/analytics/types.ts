@@ -43,6 +43,8 @@ export interface ItemClickedProperties extends EventProperty {
 }
 
 export interface SearchPerformedProperties extends EventProperty {
+  /** The categories of content being searched. */
+  contentKinds: ContentKind[];
   /** Plugin IDs of data sources used as search filters. */
   datasourceTypes: string[];
   /** The UI surface the user came from when they opened the library. */
@@ -56,6 +58,8 @@ export interface SearchPerformedProperties extends EventProperty {
 }
 
 export interface FiltersAppliedProperties extends EventProperty {
+  /** The categories of content being filtered. */
+  contentKinds: ContentKind[];
   /** The UI surface the user came from when they opened the library. */
   sourceEntryPoint: SourceEntryPoint;
   /** The specific UI location within the product where the filter changed. */
