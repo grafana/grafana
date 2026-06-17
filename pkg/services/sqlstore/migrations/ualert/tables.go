@@ -30,6 +30,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add column external_alertmanager_uid in ngalert_configuration", migrator.NewAddColumnMigration(migrator.Table{Name: "ngalert_configuration"}, &migrator.Column{
 		Name: "external_alertmanager_uid", Type: migrator.DB_NVarchar, Length: UIDMaxLength, Nullable: true,
 	}))
+	AddManagerPropertiesColumnsToProvenanceType(mg)
 	// End of migration log, add new migrations above this line.
 }
 
