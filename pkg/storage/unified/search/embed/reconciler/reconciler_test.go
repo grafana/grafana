@@ -970,8 +970,6 @@ func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
 	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
 }
 
-// labeledDashboard wraps a dashboard in a k8s object carrying the
-// pending-delete label, mirroring what the tenant watcher writes.
 func labeledDashboard(uid, title string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"metadata": map[string]any{
@@ -1009,9 +1007,6 @@ func TestReconciler_PendingDeleteLabel_DeleteEventStillProcessed(t *testing.T) {
 	require.Len(t, vec.deletes, 1, "deletes must still drop vectors regardless of labels")
 }
 
-// Restore: the tenant watcher removes the pending-delete label and emits a
-// MODIFIED event whose value no longer carries it, so the resource embeds
-// again — the labeling MODIFIED event is skipped, the unlabel one is not.
 func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
 	vec := newFakeVector()
 	s, _ := newReconciler(t, &fakeStorage{}, vec)
