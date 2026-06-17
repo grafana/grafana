@@ -14,8 +14,8 @@ import {
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import {
-  ColorIndicator,
-  ColorPlacement,
+  VizTooltipColorIndicator,
+  VizTooltipColorPlacement,
   TooltipDisplayMode,
   type VizTooltipItem,
   VizTooltipContent,
@@ -280,8 +280,8 @@ const HeatmapHoverCell = ({
         label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
         color: cellColor ?? '#FFF',
-        colorPlacement: ColorPlacement.trailing,
-        colorIndicator: ColorIndicator.value,
+        colorPlacement: VizTooltipColorPlacement.trailing,
+        colorIndicator: VizTooltipColorIndicator.value,
       },
       ...getContentLabels(),
       ...fromToInt,
@@ -307,8 +307,8 @@ const HeatmapHoverCell = ({
         label: val.label,
         value: val.value,
         color: val.color ?? '#FFF',
-        colorIndicator: ColorIndicator.value,
-        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: VizTooltipColorIndicator.value,
+        colorPlacement: VizTooltipColorPlacement.trailing,
         isActive: val.isActive,
       });
     });

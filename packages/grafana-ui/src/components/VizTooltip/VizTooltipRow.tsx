@@ -10,7 +10,7 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   value: string | number | null | ReactNode;
@@ -38,7 +38,7 @@ export const VizTooltipRow = ({
   value,
   color,
   colorIndicator,
-  colorPlacement = ColorPlacement.first,
+  colorPlacement = VizTooltipColorPlacement.first,
   justify,
   isActive = false,
   marginRight,
@@ -134,7 +134,7 @@ export const VizTooltipRow = ({
 
   return (
     <div className={styles.contentWrapper}>
-      {color && colorPlacement === ColorPlacement.first && (
+      {color && colorPlacement === VizTooltipColorPlacement.first && (
         <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
             color={color}
@@ -175,7 +175,7 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && colorPlacement === ColorPlacement.leading && (
+        {color && colorPlacement === VizTooltipColorPlacement.leading && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -207,7 +207,7 @@ export const VizTooltipRow = ({
           </>
         )}
 
-        {color && colorPlacement === ColorPlacement.trailing && (
+        {color && colorPlacement === VizTooltipColorPlacement.trailing && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}

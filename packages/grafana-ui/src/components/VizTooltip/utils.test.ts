@@ -2,7 +2,7 @@ import { type DataFrame, type Field, FieldType, type LinkModel } from '@grafana/
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator } from './types';
+import { VizTooltipColorIndicator } from './types';
 import {
   calculateTooltipPosition,
   getColorIndicatorClass,
@@ -568,15 +568,15 @@ describe('utils', () => {
     } satisfies ColorIndicatorStyles;
 
     it.each([
-      ColorIndicator.series,
-      ColorIndicator.value,
-      ColorIndicator.hexagon,
-      ColorIndicator.pie_1_4,
-      ColorIndicator.pie_2_4,
-      ColorIndicator.pie_3_4,
-      ColorIndicator.marker_sm,
-      ColorIndicator.marker_md,
-      ColorIndicator.marker_lg,
+      VizTooltipColorIndicator.series,
+      VizTooltipColorIndicator.value,
+      VizTooltipColorIndicator.hexagon,
+      VizTooltipColorIndicator.pie_1_4,
+      VizTooltipColorIndicator.pie_2_4,
+      VizTooltipColorIndicator.pie_3_4,
+      VizTooltipColorIndicator.marker_sm,
+      VizTooltipColorIndicator.marker_md,
+      VizTooltipColorIndicator.marker_lg,
     ])('returns correct class for %s indicator', (indicator) => {
       const expectedClass = mockStyles[indicator as keyof ColorIndicatorStyles];
       expect(getColorIndicatorClass(indicator, mockStyles)).toBe(expectedClass);

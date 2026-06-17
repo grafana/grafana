@@ -1,7 +1,7 @@
 import { type LineStyle } from '@grafana/schema';
 
 /** @alpha */
-export enum ColorIndicator {
+export enum VizTooltipColorIndicator {
   /** A colored line segment, used for time series and line charts. */
   series = 'series',
   /** A solid color swatch, used for by-value coloring modes. */
@@ -23,7 +23,7 @@ export enum ColorIndicator {
 }
 
 /** @alpha */
-export enum ColorPlacement {
+export enum VizTooltipColorPlacement {
   /** No color indicator is rendered. */
   hidden = 'hidden',
   /** Color indicator appears before the label. */
@@ -42,10 +42,10 @@ export interface VizTooltipItem {
   value: string;
   /** CSS color string used for the color indicator. */
   color?: string;
-  /** Shape of the color indicator. Defaults to `ColorIndicator.series`. */
-  colorIndicator?: ColorIndicator;
+  /** Shape of the color indicator. Defaults to `VizTooltipColorIndicator.series`. */
+  colorIndicator?: VizTooltipColorIndicator;
   /** Position of the color indicator relative to the label and value. */
-  colorPlacement?: ColorPlacement;
+  colorPlacement?: VizTooltipColorPlacement;
   /** Whether this row corresponds to the currently hovered series (highlights the row). */
   isActive?: boolean;
   /** Line style, used by time series panels to match the series line style in the indicator. */
@@ -61,4 +61,4 @@ export interface VizTooltipItem {
 }
 
 /** @alpha */
-export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;
+export const DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR = VizTooltipColorIndicator.series;

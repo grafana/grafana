@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { VizTooltipRow } from './VizTooltipRow';
-import { ColorIndicator, ColorPlacement } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement } from './types';
 
 const defaultProps = {
   label: 'My Label',
@@ -39,8 +39,8 @@ describe('VizTooltipRow', () => {
         <VizTooltipRow
           {...defaultProps}
           color="#ff0000"
-          colorIndicator={ColorIndicator.series}
-          colorPlacement={ColorPlacement.first}
+          colorIndicator={VizTooltipColorIndicator.series}
+          colorPlacement={VizTooltipColorPlacement.first}
         />
       );
       expect(screen.getByTestId('series-icon')).toBeInTheDocument();
@@ -51,8 +51,8 @@ describe('VizTooltipRow', () => {
         <VizTooltipRow
           {...defaultProps}
           color="#ff0000"
-          colorIndicator={ColorIndicator.series}
-          colorPlacement={ColorPlacement.leading}
+          colorIndicator={VizTooltipColorIndicator.series}
+          colorPlacement={VizTooltipColorPlacement.leading}
         />
       );
       expect(screen.getByTestId('series-icon')).toBeInTheDocument();
@@ -63,15 +63,15 @@ describe('VizTooltipRow', () => {
         <VizTooltipRow
           {...defaultProps}
           color="#ff0000"
-          colorIndicator={ColorIndicator.series}
-          colorPlacement={ColorPlacement.trailing}
+          colorIndicator={VizTooltipColorIndicator.series}
+          colorPlacement={VizTooltipColorPlacement.trailing}
         />
       );
       expect(screen.getByTestId('series-icon')).toBeInTheDocument();
     });
 
     it('does not render a color indicator when color is not provided', () => {
-      render(<VizTooltipRow {...defaultProps} colorPlacement={ColorPlacement.first} />);
+      render(<VizTooltipRow {...defaultProps} colorPlacement={VizTooltipColorPlacement.first} />);
       expect(screen.queryByTestId('series-icon')).not.toBeInTheDocument();
     });
 
@@ -80,8 +80,8 @@ describe('VizTooltipRow', () => {
         <VizTooltipRow
           {...defaultProps}
           color="#ff0000"
-          colorIndicator={ColorIndicator.series}
-          colorPlacement={ColorPlacement.hidden}
+          colorIndicator={VizTooltipColorIndicator.series}
+          colorPlacement={VizTooltipColorPlacement.hidden}
         />
       );
       expect(screen.queryByTestId('series-icon')).not.toBeInTheDocument();
@@ -111,8 +111,8 @@ describe('VizTooltipRow', () => {
         <VizTooltipRow
           {...defaultProps}
           color="#ff0000"
-          colorIndicator={ColorIndicator.series}
-          colorPlacement={ColorPlacement.first}
+          colorIndicator={VizTooltipColorIndicator.series}
+          colorPlacement={VizTooltipColorPlacement.first}
           isHiddenFromViz
         />
       );

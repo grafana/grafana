@@ -5,7 +5,12 @@ export { VizTooltipRow } from './VizTooltipRow';
 export { VizTooltipWrapper, type VizTooltipWrapperProps } from './VizTooltipWrapper';
 export { VizTooltipFooter, type AdHocFilterModel, type FilterByGroupedLabelsModel } from './VizTooltipFooter';
 export { VizTooltipHeader, type VizTooltipHeaderProps } from './VizTooltipHeader';
-export { ColorIndicator, ColorPlacement, type VizTooltipItem, DEFAULT_COLOR_INDICATOR } from './types';
+export {
+  VizTooltipColorIndicator,
+  VizTooltipColorPlacement,
+  type VizTooltipItem,
+  DEFAULT_VIZ_TOOLTIP_COLOR_INDICATOR,
+} from './types';
 export {
   getFieldDisplayItems,
   getFieldDisplayLinks,

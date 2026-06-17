@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 
 import { colorManipulator, type DataFrame, type Field, type InterpolateFunction, type LinkModel } from '@grafana/data';
 import {
-  ColorIndicator,
+  VizTooltipColorIndicator,
   type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
@@ -77,7 +77,7 @@ export const XYChartTooltip = ({
     label,
     value: '',
     color: seriesColor,
-    colorIndicator: ColorIndicator.marker_md,
+    colorIndicator: VizTooltipColorIndicator.marker_md,
   };
 
   const contentItems: VizTooltipItem[] = [];

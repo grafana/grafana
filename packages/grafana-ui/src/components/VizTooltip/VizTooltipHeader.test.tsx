@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { VizTooltipHeader } from './VizTooltipHeader';
-import { ColorIndicator, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, type VizTooltipItem } from './types';
 
 const makeItem = (overrides: Partial<VizTooltipItem> = {}): VizTooltipItem => ({
   label: 'Series A',
@@ -27,7 +27,7 @@ describe('VizTooltipHeader', () => {
   });
 
   it('renders a color indicator when color is provided', () => {
-    render(<VizTooltipHeader item={makeItem({ color: '#ff0000', colorIndicator: ColorIndicator.series })} />);
+    render(<VizTooltipHeader item={makeItem({ color: '#ff0000', colorIndicator: VizTooltipColorIndicator.series })} />);
     expect(screen.getByTestId('series-icon')).toBeInTheDocument();
   });
 

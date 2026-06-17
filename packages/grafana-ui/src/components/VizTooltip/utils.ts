@@ -15,7 +15,7 @@ export interface TooltipScrollableOptions {
 }
 
 import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator, ColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -60,23 +60,23 @@ export const calculateTooltipPosition = (
 
 export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndicatorStyles) => {
   switch (colorIndicator) {
-    case ColorIndicator.series:
+    case VizTooltipColorIndicator.series:
       return styles.series;
-    case ColorIndicator.value:
+    case VizTooltipColorIndicator.value:
       return styles.value;
-    case ColorIndicator.hexagon:
+    case VizTooltipColorIndicator.hexagon:
       return styles.hexagon;
-    case ColorIndicator.pie_1_4:
+    case VizTooltipColorIndicator.pie_1_4:
       return styles.pie_1_4;
-    case ColorIndicator.pie_2_4:
+    case VizTooltipColorIndicator.pie_2_4:
       return styles.pie_2_4;
-    case ColorIndicator.pie_3_4:
+    case VizTooltipColorIndicator.pie_3_4:
       return styles.pie_3_4;
-    case ColorIndicator.marker_sm:
+    case VizTooltipColorIndicator.marker_sm:
       return styles.marker_sm;
-    case ColorIndicator.marker_md:
+    case VizTooltipColorIndicator.marker_md:
       return styles.marker_md;
-    case ColorIndicator.marker_lg:
+    case VizTooltipColorIndicator.marker_lg:
       return styles.marker_lg;
     default:
       return styles.value;
@@ -259,12 +259,12 @@ export const getFieldDisplayLinks = (field: Field, rowIdx: number): Array<LinkMo
 const getIndicatorAndPlacement = (field: Field) => {
   const colorMode = getFieldColorModeForField(field);
 
-  let colorIndicator = ColorIndicator.series;
-  let colorPlacement = ColorPlacement.first;
+  let colorIndicator = VizTooltipColorIndicator.series;
+  let colorPlacement = VizTooltipColorPlacement.first;
 
   if (colorMode.isByValue) {
-    colorIndicator = ColorIndicator.value;
-    colorPlacement = ColorPlacement.trailing;
+    colorIndicator = VizTooltipColorIndicator.value;
+    colorPlacement = VizTooltipColorPlacement.trailing;
   }
 
   return { colorIndicator, colorPlacement };
