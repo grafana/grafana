@@ -9897,10 +9897,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Mode",
+        "name-overflow": "Overflow",
         "name-placement": "Placement",
         "name-values": "Values",
         "name-visibility": "Visibility",
         "name-width": "Width",
+        "overflow-options": {
+          "label-ellipsis": "Ellipsis",
+          "label-wrap": "Wrap"
+        },
+        "placeholder-width": "Auto, px, or % (e.g. 220 or 35%)",
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
