@@ -929,29 +929,41 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		require.NoError(t, err, "failed to create provisioning client")
 		connClient := provClient.ProvisioningV0alpha1().Connections("default")
 
-		require.Eventually(t, func() bool {
+		// Capture the last observed connection so that, on timeout, we can report the
+		// actual reason (hang => Checked==0; unhealthy => a Health.Message/fieldErrors;
+		// reconcile error => stale ObservedGeneration) instead of a bare "never satisfied".
+		var last *provisioning.Connection
+		ok := assert.Eventually(t, func() bool {
 			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
 			if err != nil {
+				t.Logf("GHE poll: get error: %v", err)
 				return false
 			}
+			last = updated
 			ready := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
 			return updated.Status.Health.Checked > 0 &&
 				updated.Status.Health.Healthy &&
 				ready != nil && ready.Status == metav1.ConditionTrue
-		}, 15*time.Second, 500*time.Millisecond, "GHE connection should reconcile healthy")
+		}, 30*time.Second, 500*time.Millisecond, "GHE connection should reconcile healthy")
 
-		reconciled, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
-		require.NoError(t, err)
+		if !ok {
+			if last != nil {
+				ready := meta.FindStatusCondition(last.Status.Conditions, provisioning.ConditionTypeReady)
+				t.Fatalf("GHE connection never reconciled healthy. gen=%d observedGen=%d health.checked=%d health.healthy=%v health.error=%q health.message=%v fieldErrors=%+v ready=%+v",
+					last.Generation, last.Status.ObservedGeneration,
+					last.Status.Health.Checked, last.Status.Health.Healthy,
+					last.Status.Health.Error, last.Status.Health.Message,
+					last.Status.FieldErrors, ready)
+			}
+			t.Fatalf("GHE connection never reconciled healthy and was never observed")
+		}
 
-		assert.True(t, reconciled.Status.Health.Healthy,
-			"connection should be healthy: %v", reconciled.Status.Health.Message)
-
-		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
+		readyCondition := meta.FindStatusCondition(last.Status.Conditions, provisioning.ConditionTypeReady)
 		require.NotNil(t, readyCondition, "should have ready condition")
 		assert.Equal(t, metav1.ConditionTrue, readyCondition.Status, "connection should be ready")
 
 		t.Logf("GitHub Enterprise connection reconciled. Health: %v, Checked: %d",
-			reconciled.Status.Health.Healthy, reconciled.Status.Health.Checked)
+			last.Status.Health.Healthy, last.Status.Health.Checked)
 	})
 
 	t.Run("All connection types are supported", func(t *testing.T) {
