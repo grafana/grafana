@@ -16,6 +16,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -349,6 +350,58 @@ func TestAccessControl(t *testing.T) {
 			tc.checkHits(t, resp.Hits)
 		})
 	}
+}
+
+func TestAccessControlGroupResourceChecksUseEmptyName(t *testing.T) {
+	var batchRequests []authlib.BatchCheckRequest
+	client := &mockAccessClient{
+		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+			batchRequests = append(batchRequests, req)
+			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+			for _, check := range req.Checks {
+				results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: true}
+			}
+			return authlib.BatchCheckResponse{Results: results}, nil
+		},
+	}
+
+	searchHandler := NewSearchHandler(
+		tracing.NewNoopTracerService(),
+		mockClientWithHits(),
+		featuremgmt.WithFeatures(),
+		&setting.Cfg{},
+		client,
+	)
+
+	rr := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/searchUsers?accesscontrol=true", nil)
+	req.Header.Add("content-type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+	searchHandler.DoSearch(rr, req)
+	require.Equal(t, 200, rr.Code)
+	require.Len(t, batchRequests, 2, "expected separate per-user and group-resource batch checks")
+
+	perUserNames := map[string]bool{}
+	groupResourceChecks := 0
+	for _, batchReq := range batchRequests {
+		for _, check := range batchReq.Checks {
+			if check.Group != iamv0.GROUP || check.Resource != "users" {
+				continue
+			}
+			switch check.Verb {
+			case utils.VerbCreate, utils.VerbGetPermissions:
+				require.Empty(t, check.Name, "group-resource check %q must use empty name", check.Verb)
+				groupResourceChecks++
+			case utils.VerbList, utils.VerbUpdate, utils.VerbDelete:
+				require.NotEmpty(t, check.Name, "per-user check %q must include the user name", check.Verb)
+				perUserNames[check.Name] = true
+			}
+		}
+	}
+
+	require.Equal(t, len(userGroupResourceAccessControlChecks), groupResourceChecks)
+	require.Equal(t, map[string]bool{"user-1": true, "user-2": true}, perUserNames)
 }
 
 type mockAccessClient struct {
