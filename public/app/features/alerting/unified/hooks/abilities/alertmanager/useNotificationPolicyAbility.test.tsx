@@ -257,7 +257,7 @@ describe('useNotificationPolicyAbility', () => {
     });
 
     it('should return NotSupported for Export on external Mimir alertmanager — provisioning export is Grafana AM only', () => {
-      const amSource = setupMimirAlertmanager({ name: 'grafanacloud-tiime-ngalertmanager' });
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingNotificationsExternalWrite]);
 
       const { result } = renderHook(
