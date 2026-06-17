@@ -4,11 +4,12 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Modal, Tab, TabsBar, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
 
 import { type OnSelectQueriesType } from '../QueryLibrary/types';
 
+import { RecentQueriesDescription } from './RecentQueriesDescription';
 import { RecentQueriesLayout } from './RecentQueriesLayout';
 
 type Props = {
@@ -69,12 +70,7 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
           </Tooltip>
         </TabsBar>
       </div>
-      <Text color="secondary">
-        {t(
-          'recent-queries.description',
-          "Recent queries are queries that you've run in Explore within the past two weeks"
-        )}
-      </Text>
+      <RecentQueriesDescription />
     </div>
   );
 

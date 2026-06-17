@@ -625,16 +625,14 @@ function SavedQueryButtons(props: {
   parentRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { renderSavedQueryButtons } = useQueryLibraryContext();
-  return renderSavedQueryButtons(
-    props.query,
-    props.app,
-    props.onUpdateSuccess,
-    props.onSelectQuery,
-    undefined,
-    props.parentRef,
-    undefined,
-    props.onSelectQueries
-  );
+  return renderSavedQueryButtons({
+    query: props.query,
+    app: props.app,
+    onUpdateSuccess: props.onUpdateSuccess,
+    onSelectQuery: props.onSelectQuery,
+    parentRef: props.parentRef,
+    onSelectQueries: props.onSelectQueries,
+  });
 }
 
 // Will render editing header only if query library is enabled

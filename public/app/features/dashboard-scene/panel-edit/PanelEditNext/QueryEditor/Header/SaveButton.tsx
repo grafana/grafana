@@ -96,17 +96,16 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
 
   const datasource = selectedQueryDsData?.datasource;
 
-  return renderSavedQueryButtons(
-    {
+  return renderSavedQueryButtons({
+    query: {
       ...selectedQuery,
       datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
     },
-    CoreApp.PanelEditor,
+    app: CoreApp.PanelEditor,
     onUpdateSuccess,
     onSelectQuery,
-    undefined,
     parentRef,
-    true,
-    onSelectQueries
-  );
+    showAsButtonHeader: true,
+    onSelectQueries,
+  });
 }

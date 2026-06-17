@@ -11,6 +11,18 @@ import {
   QueryLibraryTab,
 } from './types';
 
+export type RenderSavedQueryButtonsOptions = {
+  query: DataQuery;
+  app?: CoreApp | string;
+  onUpdateSuccess?: () => void;
+  onSelectQuery?: (query: DataQuery) => void;
+  datasourceFilters?: string[];
+  parentRef?: React.RefObject<HTMLDivElement | null>;
+  showAsButtonHeader?: boolean;
+  /** Multi-query selection used when replacing with a recent entry that ran several queries together. */
+  onSelectQueries?: OnSelectQueriesType;
+};
+
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
   onSelectQuery?: OnSelectQueryType;
@@ -57,17 +69,7 @@ export type QueryLibraryContextType = {
    * Returns both save and replace action buttons that can be used to save or replace a query to the library.
    * @param query
    */
-  renderSavedQueryButtons: (
-    query: DataQuery,
-    app?: CoreApp | string,
-    onUpdateSuccess?: () => void,
-    onSelectQuery?: (query: DataQuery) => void,
-    datasourceFilters?: string[],
-    parentRef?: React.RefObject<HTMLDivElement | null>,
-    showAsButtonHeader?: boolean,
-    // Multi-query selection used when replacing with a recent entry that ran several queries together.
-    onSelectQueries?: OnSelectQueriesType
-  ) => ReactNode;
+  renderSavedQueryButtons: (options: RenderSavedQueryButtonsOptions) => ReactNode;
 
   /**
    * Returns a header component for editing queries from the library.

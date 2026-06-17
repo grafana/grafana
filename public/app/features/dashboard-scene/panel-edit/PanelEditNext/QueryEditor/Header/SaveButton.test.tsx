@@ -17,18 +17,12 @@ jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
     queryLibraryEnabled: true,
     isEditingQuery: false,
     setIsEditingQuery: jest.fn(),
-    renderSavedQueryButtons: (
-      _query: DataQuery,
-      _app: unknown,
-      _onUpdateSuccess: unknown,
-      onSelectQuery: (query: DataQuery) => void,
-      _datasourceFilters: unknown,
-      _parentRef: unknown,
-      _showAsButtonHeader: unknown,
-      onSelectQueries?: (queries: DataQuery[]) => void
-    ) => {
-      capturedOnSelectQuery = onSelectQuery;
-      capturedOnSelectQueries = onSelectQueries;
+    renderSavedQueryButtons: (options: {
+      onSelectQuery: (query: DataQuery) => void;
+      onSelectQueries?: (queries: DataQuery[]) => void;
+    }) => {
+      capturedOnSelectQuery = options.onSelectQuery;
+      capturedOnSelectQueries = options.onSelectQueries;
       return <div data-testid="saved-query-buttons" />;
     },
   }),

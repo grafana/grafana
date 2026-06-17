@@ -41,16 +41,6 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
     [starQuery, onAnalyticsEvent]
   );
 
-  const handleSaveQuery = useMemo(
-    () =>
-      onSaveToLibrary
-        ? (query: RichHistoryQuery) => {
-            onSaveToLibrary(query);
-          }
-        : undefined,
-    [onSaveToLibrary]
-  );
-
   const handleClear = useCallback(() => {
     setFilters({
       searchQuery: '',
@@ -89,7 +79,7 @@ export function RecentQueriesLayout({ onSelectQuery, onClose, onSaveToLibrary, o
         sortOrder={filters.sortingOption.value ?? SortOrder.Descending}
         onSelectQuery={handleSelectQuery}
         onStarQuery={handleStarQuery}
-        onSaveQuery={handleSaveQuery}
+        onSaveQuery={onSaveToLibrary}
       />
     </div>
   );
