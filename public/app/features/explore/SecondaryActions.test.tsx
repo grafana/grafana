@@ -51,6 +51,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -68,6 +69,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -84,6 +86,7 @@ describe('SecondaryActions', () => {
         onClickQueryInspectorButton={noop}
         onSelectQueryFromLibrary={noop}
         onSelectQueriesFromLibrary={noop}
+        onReplaceQueriesFromLibrary={noop}
       />
     );
 
@@ -101,6 +104,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -124,6 +128,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={onClickQueryInspector}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -143,6 +148,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -158,6 +164,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -175,6 +182,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -194,6 +202,7 @@ describe('SecondaryActions', () => {
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
           onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );

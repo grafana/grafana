@@ -24,6 +24,7 @@ type Props = {
   onClickQueryInspectorButton: () => void;
   onSelectQueryFromLibrary: OnSelectQueryType;
   onSelectQueriesFromLibrary: OnSelectQueriesType;
+  onReplaceQueriesFromLibrary: OnSelectQueriesType;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -44,6 +45,7 @@ export function SecondaryActions({
   onClickQueryInspectorButton,
   onSelectQueryFromLibrary,
   onSelectQueriesFromLibrary,
+  onReplaceQueriesFromLibrary,
   queryInspectorButtonActive,
 }: Props) {
   const theme = useTheme2();
@@ -101,7 +103,7 @@ export function SecondaryActions({
               <RecentQueriesModal
                 isOpen={recentQueriesOpen}
                 onClose={() => setRecentQueriesOpen(false)}
-                onSelectQuery={onSelectQueriesFromLibrary}
+                onSelectQuery={onReplaceQueriesFromLibrary}
               />
             </>
           )}

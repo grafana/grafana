@@ -648,6 +648,26 @@ export class Explore extends PureComponent<Props, ExploreState> {
       }
     };
 
+    // Replace the current queries with the selected ones, matching Query history's behavior:
+    // switch to the entry's datasource (Mixed when the queries span several) and run that set.
+    const replaceQueriesFromLibrary = async (selectedQueries: DataQuery[]) => {
+      const { changeDatasource, setQueries } = this.props;
+      if (selectedQueries.length === 0) {
+        return;
+      }
+      const uniqueDatasources = new Set(
+        selectedQueries.map((q) => q.datasource?.uid).filter((uid): uid is string => !!uid)
+      );
+      const targetDatasourceUid =
+        uniqueDatasources.size > 1
+          ? MIXED_DATASOURCE_NAME
+          : selectedQueries.find((q) => q.datasource?.uid)?.datasource?.uid;
+      if (targetDatasourceUid && datasourceInstance?.uid !== targetDatasourceUid) {
+        await changeDatasource({ exploreId, datasource: { uid: targetDatasourceUid } });
+      }
+      setQueries(exploreId, selectedQueries);
+    };
+
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
@@ -708,6 +728,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
                           onSelectQueryFromLibrary={(query) => selectQueriesFromLibrary([query])}
                           onSelectQueriesFromLibrary={selectQueriesFromLibrary}
+                          onReplaceQueriesFromLibrary={replaceQueriesFromLibrary}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>
