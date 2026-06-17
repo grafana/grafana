@@ -29,6 +29,7 @@ declare module "@openfeature/core" {
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "newLogContext"
+    | "grafana.starredFolders"
     | "plugins.useMTPlugins"
     | "dashboardSectionVariables"
     | "globalDashboardVariables"

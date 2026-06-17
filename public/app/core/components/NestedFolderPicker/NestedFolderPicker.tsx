@@ -11,7 +11,8 @@ import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
@@ -22,6 +23,7 @@ import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
+import { useGetStarredFolders } from './useStarredFolder';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
@@ -101,7 +103,10 @@ export function NestedFolderPicker({
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
   // keep Team folders expanded by default so the UX matches when team folders were previously listed at top level
-  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({ [TEAM_FOLDERS_UID]: true });
+  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({
+    [TEAM_FOLDERS_UID]: true,
+    [STARRED_FOLDERS_UID]: true,
+  });
   const overlayId = useId();
 
   const lastSearchTimestamp = useRef<number>(0);
@@ -111,6 +116,8 @@ export function NestedFolderPicker({
     teamFolderOwnersByUid,
     error: teamFoldersError,
   } = useTeamFolders(foldersOpenState, value, onChange);
+
+  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -183,8 +190,8 @@ export function NestedFolderPicker({
     async (uid: string, newOpenState: boolean) => {
       setFoldersOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
-      // Team folders is a virtual folder, so don't trigger browse pagination for it
-      if (uid === TEAM_FOLDERS_UID) {
+      // Team / starred folders are virtual roots, so don't trigger browse pagination for them
+      if (uid === TEAM_FOLDERS_UID || uid === STARRED_FOLDERS_UID) {
         return;
       }
 
@@ -242,7 +249,7 @@ export function NestedFolderPicker({
       }
 
       // Only show team folders when browsing the full tree (no rootFolderUID scope)
-      const fullTree = rootFolderUID ? flatTree : [...teamFolderTreeItems, ...flatTree];
+      const fullTree = rootFolderUID ? flatTree : [...starredFolderTreeItems, ...teamFolderTreeItems, ...flatTree];
       // Add "Team folders" at the top of the tree list.
       return filterExcludedItems(fullTree, excludeUIDs);
     } else {
@@ -256,6 +263,7 @@ export function NestedFolderPicker({
     searchResults?.items,
     showRootFolder,
     teamFolderTreeItems,
+    starredFolderTreeItems,
     rootFolderUID,
   ]);
 
@@ -275,7 +283,7 @@ export function NestedFolderPicker({
   );
 
   const isLoading = isBrowseLoading || isFetchingSearchResults;
-  const displayError = teamFoldersError || browseError;
+  const displayError = teamFoldersError || starredFoldersError || browseError;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
@@ -464,6 +472,48 @@ function useTeamFolders(
     teamFolderOwnersByUid,
     error,
   };
+}
+
+function useStarredFolders(foldersOpenState: Record<string, boolean>) {
+  const { folders, error } = useGetStarredFolders({ skip: !starredFoldersEnabled() });
+
+  const starredFolderTreeItems = useMemo(() => {
+    if (folders.length === 0) {
+      return [];
+    }
+
+    // "Starred folders" is a virtual root, sibling to the "Dashboards" virtual root. The container
+    // itself is disabled (non-selectable); its children are real folders selectable by real UID.
+    const starredIsOpen = foldersOpenState[STARRED_FOLDERS_UID] ?? true;
+
+    const parentItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+      isOpen: starredIsOpen,
+      level: 0,
+      disabled: true,
+      item: {
+        kind: 'folder' as const,
+        title: t('browse-dashboards.folder-picker.starred-folders', 'Starred folders'),
+        uid: STARRED_FOLDERS_UID,
+        parentUID: undefined,
+      },
+    };
+
+    const children = folders.map((folder) => ({
+      isOpen: false,
+      level: 1,
+      parentUID: STARRED_FOLDERS_UID,
+      item: {
+        kind: 'folder' as const,
+        title: folder.title,
+        uid: folder.uid,
+        parentUID: STARRED_FOLDERS_UID,
+      },
+    }));
+
+    return starredIsOpen ? [parentItem, ...children] : [parentItem];
+  }, [folders, foldersOpenState]);
+
+  return { starredFolderTreeItems, error };
 }
 
 function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {

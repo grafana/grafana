@@ -4370,6 +4370,7 @@
       "root-title": "Dashboards",
       "search-placeholder": "Search folders",
       "shared-with-me": "Shared with me",
+      "starred-folders": "Starred folders",
       "team-folders": "Team folders",
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
@@ -4458,6 +4459,7 @@
       "view-folder": "View folder"
     },
     "shared-with-me": "Shared with me",
+    "starred-folders": "Starred folders",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
     "trash-state-manager": {
       "label": {

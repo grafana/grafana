@@ -1,9 +1,10 @@
 import { t } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
+import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
-import { TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
@@ -12,11 +13,14 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
 import {
+  addStarredFolderPrefix,
   addTeamFolderPrefix,
   getFolderURL,
   isSharedWithMe,
+  isVirtualStarredFolder,
   isVirtualTeamFolder,
   parseOwnerRef,
+  starredFoldersEnabled,
   teamOwnerRef,
 } from '../utils/dashboards';
 
@@ -75,6 +79,17 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
     });
   }
 
+  // Add starred folders virtual item after the other virtual roots so root order is
+  // [Shared with me, Team folders, Starred folders, ...real folders]
+  if (page === 1 && !parentUID && starredFoldersEnabled()) {
+    const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + (config.featureToggles.teamFolders ? 1 : 0);
+    folders.splice(insertIndex, 0, {
+      ...virtualFolderBase,
+      name: t('browse-dashboards.starred-folders', 'Starred folders'),
+      uid: STARRED_FOLDERS_UID,
+    });
+  }
+
   return folders.map<NestedFolderDTO>((item) => {
     return {
       uid: item.uid,
@@ -100,7 +115,7 @@ export async function listFolders(
   }
 
   return folders.map(({ uid, title, managedBy }) => {
-    const noUrl = isSharedWithMe(uid) || isVirtualTeamFolder(uid);
+    const noUrl = isSharedWithMe(uid) || isVirtualTeamFolder(uid) || isVirtualStarredFolder(uid);
     return {
       kind: 'folder',
       uid,
@@ -210,4 +225,47 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
     url: getFolderURL(hit.name),
     ownerReference: folderOwners.get(hit.name),
   }));
+}
+
+/**
+ * Reads the user's explicitly-starred folders from the collections stars API and resolves them to
+ * folder items directly under the virtual "Starred folders" root. Returns prefixed UIDs so the browse
+ * tree keeps independent expand/collapse state from the same folder elsewhere in the tree.
+ */
+export async function listStarredFolders(): Promise<DashboardViewItem[]> {
+  // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need requests
+  // here not to be cached.
+  const name = `user-${contextSrv.user.uid}`;
+  const stars = await dispatch(
+    collectionsAPIv1alpha1.endpoints.listStars.initiate(
+      { fieldSelector: `metadata.name=${name}` },
+      { forceRefetch: true }
+    )
+  ).unwrap();
+
+  const items = stars?.items ?? [];
+  const folderUids = items.length
+    ? (items[0].spec.resource.find((r) => r.group === 'folder.grafana.app' && r.kind === 'Folder')?.names ?? [])
+    : [];
+  if (folderUids.length === 0) {
+    return [];
+  }
+
+  const results = await getGrafanaSearcher().search({
+    kind: ['folder'],
+    name: folderUids,
+    limit: folderUids.length,
+  });
+
+  return results.view.toArray().map((item) => {
+    const viewItem = queryResultToViewItem(item, results.view);
+    return {
+      kind: 'folder' as const,
+      // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.
+      uid: addStarredFolderPrefix(viewItem.uid),
+      title: viewItem.title,
+      parentUID: STARRED_FOLDERS_UID,
+      url: getFolderURL(viewItem.uid),
+    };
+  });
 }

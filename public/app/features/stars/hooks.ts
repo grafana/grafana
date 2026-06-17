@@ -40,7 +40,10 @@ export const useStarItem = (group: string, kind: string) => {
         await removeStar(mutationArgs);
       }
 
-      updateStarred({ id, title }, newStarredState);
+      // The nav "Starred" section is dashboard-only; folders must not be added to it.
+      if (group === 'dashboard.grafana.app' && kind === 'Dashboard') {
+        updateStarred({ id, title }, newStarredState);
+      }
     };
   }
 

@@ -10,10 +10,12 @@ import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/fo
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { getFolderPermissions } from '../../permissions';
+import { starredFoldersEnabled } from '../../utils/dashboards';
 import CreateNewButton from '../CreateNewButton';
 import { FolderActionsButton } from '../FolderActionsButton';
 
@@ -33,6 +35,9 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
 
   return (
     <Stack alignItems="center">
+      {starredFoldersEnabled() && folderDTO && (
+        <StarToolbarButton group="folder.grafana.app" kind="Folder" id={folderDTO.uid} title={folderDTO.title} />
+      )}
       {canReadTeams && config.featureToggles.teamFolders && folderDTO && 'ownerReferences' in folderDTO && (
         <FolderOwners ownerReferences={folderDTO.ownerReferences} />
       )}

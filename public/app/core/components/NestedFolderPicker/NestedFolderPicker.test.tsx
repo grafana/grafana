@@ -2,11 +2,12 @@ import { fireEvent, render, screen, testWithFeatureToggles } from 'test/test-uti
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 import { useFoldersQuery } from './useFoldersQuery';
+import { useGetStarredFolders } from './useStarredFolder';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
@@ -27,10 +28,19 @@ jest.mock('./useTeamOwnedFolder', () => {
   };
 });
 
+jest.mock('./useStarredFolder', () => {
+  const actual = jest.requireActual('./useStarredFolder');
+  return {
+    ...actual,
+    useGetStarredFolders: jest.fn(),
+  };
+});
+
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   const useGetTeamFoldersMock = useGetTeamFolders as jest.Mock;
+  const useGetStarredFoldersMock = useGetStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
 
   beforeAll(() => {
@@ -53,6 +63,18 @@ describe('NestedFolderPicker', () => {
             folders: [{ name: 'team-folder-1', title: 'Team Folder One' }],
           },
         ],
+        isLoading: false,
+        error: undefined,
+      };
+    });
+
+    useGetStarredFoldersMock.mockImplementation((options?: { skip: boolean }) => {
+      if (options?.skip) {
+        return { folders: [], isLoading: false, error: undefined };
+      }
+
+      return {
+        folders: [{ kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' }],
         isLoading: false,
         error: undefined,
       };
@@ -328,6 +350,64 @@ describe('NestedFolderPicker', () => {
 
       expect(screen.queryByLabelText('Team folders')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Team Folder One')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when starredFolders is enabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer'] });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('shows the starred folders virtual root with its selectable children', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const starredContainer = await screen.findByLabelText('Starred folders');
+      const starredChild = await screen.findByLabelText('Starred Folder One');
+
+      expect(starredContainer).toBeInTheDocument();
+      expect(starredChild).toBeInTheDocument();
+      // The starred children sit one level below the virtual root container.
+      expect(Number(starredChild.getAttribute('aria-level'))).toBe(
+        Number(starredContainer.getAttribute('aria-level')) + 1
+      );
+    });
+
+    it('selects the real folder UID when a starred child is picked', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      await user.click(await screen.findByLabelText('Starred Folder One'));
+
+      expect(mockOnChange).toHaveBeenCalledWith('starred-folder-1', 'Starred Folder One');
+    });
+  });
+
+  describe('when starredFolders is enabled but starsFromAPIServer is disabled', () => {
+    testWithFeatureToggles({ disable: ['starsFromAPIServer'] });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('does not render starred folders (hard gate on the stars API)', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      // Anchor on a real folder to confirm the tree rendered before asserting starred absence.
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Starred Folder One')).not.toBeInTheDocument();
     });
   });
 });
