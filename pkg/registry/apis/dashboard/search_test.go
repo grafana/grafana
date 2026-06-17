@@ -71,9 +71,9 @@ func TestVectorSearch(t *testing.T) {
 		mockClient := &MockClient{
 			VectorSearchResponse: &resourcepb.VectorSearchResponse{
 				Results: []*resourcepb.VectorSearchResult{
-					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12},
-					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34},
-					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51},
+					{Name: "d1", Title: "CPU usage", Folder: "f1", Score: 0.12, Subresource: "panel/3", Content: "CPU usage\nTags: infra"},
+					{Name: "d2", Title: "Memory usage", Folder: "f2", Score: 0.34, Subresource: "panel/1", Content: "Memory usage"},
+					{Name: "d3", Title: "Disk I/O", Folder: "f1", Score: 0.51, Subresource: "panel/7", Content: "Disk I/O"},
 				},
 			},
 		}
@@ -105,6 +105,12 @@ func TestVectorSearch(t *testing.T) {
 		assert.Equal(t, "CPU usage", p.Hits[0].Title)
 		assert.Equal(t, "f1", p.Hits[0].Folder)
 		assert.Equal(t, "dashboards", p.Hits[0].Resource)
+
+		// Each hit carries its matched panel under Field.
+		require.NotNil(t, p.Hits[0].Field)
+		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
+		assert.Equal(t, "CPU usage\nTags: infra", p.Hits[0].Field.Object["snippet"])
+		assert.Equal(t, 0.12, p.Hits[0].Field.Object["score"])
 	})
 
 	t.Run("returns 501 and does not fall back when vector search is unimplemented", func(t *testing.T) {

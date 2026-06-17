@@ -25,6 +25,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -581,17 +582,28 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 }
 
 // vectorSearchResultsToSearchResults maps a VectorSearchResponse onto the DTO the
-// search endpoint already returns. Results are kept in backend order: Score is the
-// cosine distance (lower = closer), so the first hit is the best match.
+// search endpoint already returns. There is one hit per matching panel (subresource):
+// the same dashboard may appear multiple times, once per panel that matched. Each
+// hit's matched panel — its subresource id, distance and the embedded text snippet
+// that explains the match — is attached under the untyped Field bag.
+//
+// Results are kept in backend order: Score is the cosine distance (lower = closer),
+// so the first hit is the best match.
 func vectorSearchResultsToSearchResults(result *resourcepb.VectorSearchResponse) *dashboardv0alpha1.SearchResults {
 	hits := make([]dashboardv0alpha1.DashboardHit, 0, len(result.GetResults()))
 	for _, r := range result.GetResults() {
+		field := &commonv0.Unstructured{}
+		field.Set("subresource", r.GetSubresource())
+		field.Set("score", r.GetScore())
+		field.Set("snippet", r.GetContent())
+
 		hits = append(hits, dashboardv0alpha1.DashboardHit{
 			Resource: dashboardv0alpha1.DASHBOARD_RESOURCE,
 			Name:     r.GetName(),
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Field:    field,
 		})
 	}
 
