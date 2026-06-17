@@ -34,7 +34,7 @@ export const VizLegendTable = <T extends unknown>({
   limit = 0,
   filterAction,
   placement,
-  overflow
+  overflow,
 }: VizLegendTableProps<T>): JSX.Element => {
   const styles = useStyles2(getStyles, placement);
   const header: Record<string, string> = {
