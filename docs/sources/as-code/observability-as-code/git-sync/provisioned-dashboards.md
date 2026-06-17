@@ -50,22 +50,38 @@ If you want to add an existing dashboard to your provisioned resources, refer to
 
 {{< /admonition >}}
 
-You have two options for creating **new** dashboards or folders in Git Sync:
+You have the following options to add new dashboards in your Git Sync connection:
 
 - Create them directly within Git Sync-managed folders in the Grafana UI
 - Add them by committing JSON files to your Git repository
 
-When you create a new dashboard in a provisioned folder associated with a Git repository, you follow the same process you use for any new dashboard. Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
+### Add a new dashboard from the Grafana UI
+
+To add a new dashboard from the Grafana UI:
+
+1. Log in to your Grafana account that has the Grafana Admin flag set.
+1. Select **Administration > General > Provisioning**.
+1. Go to the **Repositories** tab, and click on the **Dashboards** button.
+1. On the **Dashboards** tab, click on **New** on the top right corner and chose one of these options:
+   - **New dashboard**. When you create a new dashboard in a provisioned folder associated with a Git repository, you follow the same process you use for any new dashboard. Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
+   - **Import dashboard**. Refer to [Add a dashboard using Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources##add-a-dashboard-using-import-dashboards) for more details.
+   - **Use template**. Create a dashboard using a Grafana template. 
 
 After you create the dashboard, follow these steps:
 
-1. Select **Save** to preserve the new dashboard.
-1. Enter a title for the dashboard and a description.
-1. Select the provisioned folder from the **Folder** drop-down list.
-1. In **Path**, provide the path for your repository, ending in a JSON or YAML file.
-1. For **Workflow**, select **Push to main** to make a Git commit directly to the repository or **Push to a new branch** to create a pull request.
-   - **Branch**: Specify the branch name in your Git provider (for example, main). This option only appears if you select **Push to a new branch**.
-1. Select **Save**.
+1. Click **Save dashboard**.
+1. On the **Provisioned dashboard** panel, choose the options you want to use:
+   - **Title**: The title of the dashboard.
+   - **Description**: Description of the dashboard.
+   - **Target folder**: The folder where you want to store the new dashboard.
+   - **Branch**: Specify the branch name in your Git provider (for example, main). 
+   - **Repository folder**: The folder inside the repository. Leave empty for the repository root.
+   - **Filename**: The name of the dashboard file.
+   - **Comment**: Add a comment describing your changes for you commit. 
+1. Optional: Select the **Changes** tab to view the differences between the updates you made and the original resource.
+1. Select **Save**, and the updated dashboard will load. 
+1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository. 
+1. Follow your usual Git workflow to save and merge the PR to your repository.
 
 ## Edit dashboards
 
@@ -73,24 +89,16 @@ When you edit a provisioned resource, you're prompted to save or discard those c
 
 To save dashboard changes:
 
-1. Select **Edit** to update a provisioned dashboard. Make your desired changes.
-
-1. Click **Save dashboard**.
-
+1. Select **Edit** to update a provisioned dashboard. 
+1. Make your desired changes, and click **Save dashboard**.
 1. On the **Provisioned dashboard** panel, choose the options you want to use:
-   - **Update default refresh value**: Check this box to make the current refresh the new default
-   - **Update default variable values**: Check this box to make the current values the new default
-   - **Path**: Provide the path for your repository, ending in a JSON or YAML file
-   - **Workflow:** Select **Push to main** to make a Git commit directly to the repository or **Push to a new branch** to create a pull request
-   - **Branch**: Specify the branch name in your Git provider (for example, main). This option only appears if you select **Push to a new branch**
-   - **Comment**: Add a comment describing your changes
-
+   - **Branch**: Specify the branch name in your Git provider (for example, main). 
+   - **Repository folder**: The folder inside the repository. Leave empty for the repository root.
+   - **Filename**: The name of the dashboard file.
+   - **Comment**: Add a comment describing your changes for your commit.
 1. Optional: Select the **Changes** tab to view the differences between the updates you made and the original resource.
-
-1. Select **Save**.
-
-1. If you chose **Push to a new branch**, select **Open a pull request in GitHub** to open a new PR to your repository. Git opens with your dashboard's code as the contents of the PR.
-
+1. Select **Save**, and the updated dashboard will load. 
+1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository. 
 1. Follow your usual Git workflow to save and merge the PR to your repository.
 
 ## Remove dashboards
