@@ -68,7 +68,7 @@ export function SaveProvisionedDashboardForm({
     register,
     setValue,
     getValues,
-    formState: { dirtyFields },
+    formState: { dirtyFields, isSubmitting, isValidating },
   } = methods;
 
   const path = watch('path');
@@ -371,8 +371,12 @@ export function SaveProvisionedDashboardForm({
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
-              {request.isLoading
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+            >
+              {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
             </Button>

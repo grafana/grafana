@@ -82,11 +82,17 @@ describe('BulkActionsBar', () => {
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('renders nothing when multi-select mode is on but nothing is selected', () => {
-      const { container } = renderBar({
+    it('renders the bar with an exit control and a hint, but no action buttons, when multi-select mode is on but nothing is selected', () => {
+      // An empty selection is a valid multi-select state: the bar stays so the user can exit, but
+      // there is nothing to act on so only the hint is shown.
+      renderBar({
         uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: [], selectedTransformationIds: [] },
       });
-      expect(container).toBeEmptyDOMElement();
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByText('Select items to apply actions')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /exit multi-select/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /hide/i })).not.toBeInTheDocument();
     });
 
     it('renders the query action buttons when at least one query is selected in multi-select mode', () => {
@@ -152,6 +158,19 @@ describe('BulkActionsBar', () => {
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
 
         expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      it('lists only the selected query refIds in the confirmation modal', async () => {
+        const { user } = renderBar({
+          uiStateOverrides: { multiSelectMode: true, selectedQueryRefIds: ['A', 'B'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        expect(within(dialog).getByText('A')).toBeInTheDocument();
+        expect(within(dialog).getByText('B')).toBeInTheDocument();
+        expect(within(dialog).queryByText('C')).not.toBeInTheDocument();
       });
 
       it('calls bulkDeleteQueries and exits multi-select mode after confirming delete', async () => {
@@ -305,6 +324,29 @@ describe('BulkActionsBar', () => {
 
         await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
         expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      it('lists transformation names in the confirmation modal, falling back to the transform id', async () => {
+        const transformations: Transformation[] = [
+          {
+            transformId: 'tx-0',
+            registryItem: { name: 'Organize fields' } as Transformation['registryItem'],
+            transformConfig: { id: 'organize', options: {} },
+          },
+          { transformId: 'tx-1', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
+        ];
+        const { user } = renderBar({
+          transformations,
+          uiStateOverrides: { multiSelectMode: true, selectedTransformationIds: ['tx-0', 'tx-1'] },
+        });
+
+        await user.click(screen.getAllByRole('button', { name: /delete/i })[0]);
+        const dialog = screen.getByRole('dialog');
+
+        // Uses the registry display name when present...
+        expect(within(dialog).getByText('Organize fields')).toBeInTheDocument();
+        // ...and falls back to the transform config id when there is no registry item.
+        expect(within(dialog).getByText('reduce')).toBeInTheDocument();
       });
 
       it('calls bulkDeleteTransformations and exits multi-select mode after confirming', async () => {
