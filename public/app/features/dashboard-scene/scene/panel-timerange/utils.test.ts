@@ -61,12 +61,38 @@ describe('panel-timerange/utils', () => {
       expect(result.to.toISOString()).toBe(expectedTo);
     });
 
-    it('should populate raw to match the shifted range', () => {
+    it('should populate raw to match the shifted range for absolute ranges', () => {
       // raw.from/to are typed `string | DateTime`; dateTime() normalizes either for ISO comparison.
       const result = getCompareTimeRange(baseRange, '1d')!;
 
       expect(dateTime(result.raw.from).toISOString()).toBe('2024-01-09T06:00:00.000Z');
       expect(dateTime(result.raw.to).toISOString()).toBe('2024-01-09T12:00:00.000Z');
+    });
+
+    it('should preserve relative raw strings so compare shifts on refresh', () => {
+      const relativeRange: TimeRange = {
+        from: dateTime('2024-01-10T06:00:00.000Z'),
+        to: dateTime('2024-01-10T12:00:00.000Z'),
+        raw: { from: 'now-6h', to: 'now' },
+      };
+
+      const result = getCompareTimeRange(relativeRange, '1d')!;
+
+      expect(result.raw.from).toBe('now-6h-1d');
+      expect(result.raw.to).toBe('now-1d');
+    });
+
+    it('should preserve relative raw strings for __previousPeriod', () => {
+      const relativeRange: TimeRange = {
+        from: dateTime('2024-01-10T06:00:00.000Z'),
+        to: dateTime('2024-01-10T12:00:00.000Z'),
+        raw: { from: 'now-6h', to: 'now' },
+      };
+
+      const result = getCompareTimeRange(relativeRange, '__previousPeriod')!;
+
+      expect(result.raw.from).toBe('now-6h-6h');
+      expect(result.raw.to).toBe('now-6h');
     });
   });
 
