@@ -12,7 +12,7 @@ import (
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
 	// Webhook lifecycle and pull request comments (provider-agnostic contract).
-	repository.WebhookClient
+	repository.WebhookClient[githubWebhookFields]
 
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)

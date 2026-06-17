@@ -415,14 +415,14 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Events: []string{"push", "pull_request"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			want: repo.Webhook{
 				ID:     123,
 				Events: []string{"push", "pull_request"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: nil,
 		},
@@ -462,7 +462,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true}.toMap(),
+				Extra:  webhookFields{Active: true}.toMap(),
 				// ContentType intentionally omitted
 			},
 			want: repo.Webhook{
@@ -470,7 +470,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: nil,
 		},
@@ -496,7 +496,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			want:    repo.Webhook{},
 			wantErr: repo.ErrServerUnavailable,
@@ -523,7 +523,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			want:    repo.Webhook{},
 			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
@@ -600,7 +600,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 				ID:     123,
 				Events: []string{"push", "pull_request"},
 				URL:    "https://example.com/webhook",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: nil,
 		},
@@ -632,7 +632,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 				ID:     456,
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook-empty-content",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: nil,
 		},
@@ -927,7 +927,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				Events: []string{"push", "pull_request", "issues"},
 				URL:    "https://example.com/webhook-updated",
 				Secret: "updated-secret",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: nil,
 		},
@@ -975,7 +975,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true}.toMap(), // empty content type should default to "form"
+				Extra:  webhookFields{Active: true}.toMap(), // empty content type should default to "form"
 			},
 			wantErr: nil,
 		},
@@ -1002,7 +1002,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: repo.ErrServerUnavailable,
 		},
@@ -1029,7 +1029,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 				Events: []string{"push"},
 				URL:    "https://example.com/webhook",
 				Secret: "secret123",
-				Extra:  webhookExtra{Active: true, ContentType: "json"}.toMap(),
+				Extra:  webhookFields{Active: true, ContentType: "json"}.toMap(),
 			},
 			wantErr: errors.New("GitHub API error (HTTP 500: Internal server error)"),
 		},
@@ -2103,9 +2103,7 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			client := &githubClient{
-				gh:    github.NewClient(tt.mockHandler),
-				owner: tt.owner,
-				repo:  tt.repository,
+				gh: github.NewClient(tt.mockHandler),
 			}
 
 			got, err := client.GetRulesets(ctx, tt.branch)

@@ -25,7 +25,7 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
-	*repository.WebhookManager
+	*repository.WebhookManager[githubWebhookFields]
 }
 
 func NewGithubWebhookRepository(

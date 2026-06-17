@@ -22,6 +22,54 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
+// CommentPullRequest provides a mock function with given fields: ctx, number, body
+func (_m *MockClient) CommentPullRequest(ctx context.Context, number int, body string) error {
+	ret := _m.Called(ctx, number, body)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CommentPullRequest")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, string) error); ok {
+		r0 = rf(ctx, number, body)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockClient_CommentPullRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CommentPullRequest'
+type MockClient_CommentPullRequest_Call struct {
+	*mock.Call
+}
+
+// CommentPullRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - number int
+//   - body string
+func (_e *MockClient_Expecter) CommentPullRequest(ctx interface{}, number interface{}, body interface{}) *MockClient_CommentPullRequest_Call {
+	return &MockClient_CommentPullRequest_Call{Call: _e.mock.On("CommentPullRequest", ctx, number, body)}
+}
+
+func (_c *MockClient_CommentPullRequest_Call) Run(run func(ctx context.Context, number int, body string)) *MockClient_CommentPullRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_CommentPullRequest_Call) Return(_a0 error) *MockClient_CommentPullRequest_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockClient_CommentPullRequest_Call) RunAndReturn(run func(context.Context, int, string) error) *MockClient_CommentPullRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Commits provides a mock function with given fields: ctx, path, branch
 func (_m *MockClient) Commits(ctx context.Context, path string, branch string) ([]Commit, error) {
 	ret := _m.Called(ctx, path, branch)
@@ -78,54 +126,6 @@ func (_c *MockClient_Commits_Call) Return(_a0 []Commit, _a1 error) *MockClient_C
 }
 
 func (_c *MockClient_Commits_Call) RunAndReturn(run func(context.Context, string, string) ([]Commit, error)) *MockClient_Commits_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreatePullRequestComment provides a mock function with given fields: ctx, prNumber, body
-func (_m *MockClient) CreatePullRequestComment(ctx context.Context, prNumber int, body string) error {
-	ret := _m.Called(ctx, prNumber, body)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreatePullRequestComment")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, string) error); ok {
-		r0 = rf(ctx, prNumber, body)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockClient_CreatePullRequestComment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePullRequestComment'
-type MockClient_CreatePullRequestComment_Call struct {
-	*mock.Call
-}
-
-// CreatePullRequestComment is a helper method to define mock.On call
-//   - ctx context.Context
-//   - prNumber int
-//   - body string
-func (_e *MockClient_Expecter) CreatePullRequestComment(ctx interface{}, prNumber interface{}, body interface{}) *MockClient_CreatePullRequestComment_Call {
-	return &MockClient_CreatePullRequestComment_Call{Call: _e.mock.On("CreatePullRequestComment", ctx, prNumber, body)}
-}
-
-func (_c *MockClient_CreatePullRequestComment_Call) Run(run func(ctx context.Context, prNumber int, body string)) *MockClient_CreatePullRequestComment_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockClient_CreatePullRequestComment_Call) Return(_a0 error) *MockClient_CreatePullRequestComment_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockClient_CreatePullRequestComment_Call) RunAndReturn(run func(context.Context, int, string) error) *MockClient_CreatePullRequestComment_Call {
 	_c.Call.Return(run)
 	return _c
 }

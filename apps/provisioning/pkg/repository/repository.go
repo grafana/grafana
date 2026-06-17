@@ -189,10 +189,11 @@ type WebhookSecretRotator interface {
 	RotateWebhookSecret(ctx context.Context) ([]map[string]any, error)
 }
 
-type WebhookClient interface {
-	CreateWebhook(ctx context.Context, hook Webhook) (Webhook, error)
-	GetWebhook(ctx context.Context, webhookID int64) (Webhook, error)
-	EditWebhook(ctx context.Context, hook Webhook) error
+//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
+type WebhookClient[E any] interface {
+	CreateWebhook(ctx context.Context, hook Webhook[E]) (Webhook[E], error)
+	GetWebhook(ctx context.Context, webhookID int64) (Webhook[E], error)
+	EditWebhook(ctx context.Context, hook Webhook[E]) error
 	DeleteWebhook(ctx context.Context, webhookID int64) error
 }
 

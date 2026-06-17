@@ -20,6 +20,11 @@ type githubClient struct {
 	repo  string
 }
 
+type githubWebhookFields struct {
+	Active      bool
+	ContentType string
+}
+
 func NewClient(client *github.Client, owner, repo string) Client {
 	return &githubClient{gh: client, owner: owner, repo: repo}
 }
@@ -287,7 +292,7 @@ func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Comm
 	return ret, nil
 }
 
-func (r *githubClient) CreateWebhook(ctx context.Context, hook repo.Webhook) (repo.Webhook, error) {
+func (r *githubClient) CreateWebhook(ctx context.Context, hook repo.Webhook[githubWebhookFields]) (repo.Webhook[githubWebhookFields], error) {
 	contentType := "json"
 	active := true
 
@@ -304,24 +309,24 @@ func (r *githubClient) CreateWebhook(ctx context.Context, hook repo.Webhook) (re
 
 	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, r.owner, r.repo, ghHook)
 	if err != nil {
-		return repo.Webhook{}, translateGitHubError(err)
+		return repo.Webhook[githubWebhookFields]{}, translateGitHubError(err)
 	}
 
-	return repo.Webhook{
+	return repo.Webhook[githubWebhookFields]{
 		ID: createdHook.GetID(),
 		// events is not returned by GitHub.
 		Events: hook.Events,
 		URL:    createdHook.GetConfig().GetURL(),
 		// Secret is not returned by GitHub.
 		Secret: hook.Secret,
-		Extra:  webhookExtra{Active: createdHook.GetActive(), ContentType: createdHook.GetConfig().GetContentType()}.toMap(),
+		Extra:  githubWebhookFields{Active: createdHook.GetActive(), ContentType: createdHook.GetConfig().GetContentType()},
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.Webhook, error) {
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.Webhook[githubWebhookFields], error) {
 	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
-		return repo.Webhook{}, translateGitHubError(err)
+		return repo.Webhook[githubWebhookFields]{}, translateGitHubError(err)
 	}
 
 	contentType := hook.GetConfig().GetContentType()
@@ -331,11 +336,11 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.We
 		contentType = "json"
 	}
 
-	return repo.Webhook{
+	return repo.Webhook[githubWebhookFields]{
 		ID:     hook.GetID(),
 		Events: hook.Events,
 		URL:    hook.GetConfig().GetURL(),
-		Extra:  webhookExtra{Active: hook.GetActive(), ContentType: contentType}.toMap(),
+		Extra:  githubWebhookFields{Active: hook.GetActive(), ContentType: contentType},
 		// Intentionally not setting Secret.
 	}, nil
 }
@@ -348,18 +353,17 @@ func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error
 	return nil
 }
 
-func (r *githubClient) EditWebhook(ctx context.Context, hook repo.Webhook) error {
-	extra := webhookExtra{}.fromMap(hook.Extra)
-	if extra.ContentType == "" {
-		extra.ContentType = "form"
+func (r *githubClient) EditWebhook(ctx context.Context, hook repo.Webhook[githubWebhookFields]) error {
+	if hook.Extra.ContentType == "" {
+		hook.Extra.ContentType = "form"
 	}
 
 	ghHook := &github.Hook{
 		URL:    &hook.URL,
 		Events: hook.Events,
-		Active: &extra.Active,
+		Active: &hook.Extra.Active,
 		Config: &github.HookConfig{
-			ContentType: &extra.ContentType,
+			ContentType: &hook.Extra.ContentType,
 			Secret:      &hook.Secret,
 			URL:         &hook.URL,
 		},
@@ -462,34 +466,4 @@ func paginatedList[T any](
 	}
 
 	return allItems, nil
-}
-
-type webhookExtra struct {
-	Active      bool
-	ContentType string
-}
-
-func (e webhookExtra) toMap() map[string]any {
-	return map[string]any{
-		"active":      e.Active,
-		"contentType": e.ContentType,
-	}
-}
-
-func (e webhookExtra) fromMap(m map[string]any) webhookExtra {
-	active, ok := m["active"]
-	if !ok {
-		active = false
-	}
-	if activeBool, ok := active.(bool); ok {
-		e.Active = activeBool
-	}
-	contentType, ok := m["contentType"]
-	if !ok {
-		contentType = ""
-	}
-	if contentTypeStr, ok := contentType.(string); ok {
-		e.ContentType = contentTypeStr
-	}
-	return e
 }
