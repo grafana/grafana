@@ -26,6 +26,12 @@ const (
 	WebhookEventPullRequest
 )
 
+const (
+	pullRequestActionOpened   = "opened"
+	pullRequestActionReopened = "reopened"
+	pullRequestActionUpdated  = "updated"
+)
+
 // WebhookEvent is the provider-agnostic form of an inbound webhook delivery.
 // A provider's WebhookParser normalizes its native event into this shape.
 type WebhookEvent struct {
@@ -48,12 +54,6 @@ type WebhookEvent struct {
 	// Message carries a human-readable note for ping/unsupported events.
 	Message string
 }
-
-const (
-	pullRequestActionOpened   = "opened"
-	pullRequestActionReopened = "reopened"
-	pullRequestActionUpdated  = "updated"
-)
 
 func watchedPullRequestAction(action string) bool {
 	switch action {
@@ -95,8 +95,7 @@ type Webhook struct {
 // holds the shared webhook state (config, secret, incremental sync policy) that the
 // provider-specific inbound handlers read.
 type WebhookManager struct {
-	whClient          WebhookClient
-	prClient          PullRequestClient
+	client            WebhookClient
 	parser            WebhookParser
 	replay            *ReplayCache
 	config            *provisioning.Repository
@@ -108,10 +107,9 @@ type WebhookManager struct {
 	incrementalPolicy IncrementalSyncPolicy
 }
 
-func NewWebhookManager(client jointClient, parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
+func NewWebhookManager(client WebhookClient, parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
 	return &WebhookManager{
-		whClient:          client,
-		prClient:          client,
+		client:            client,
 		parser:            parser,
 		replay:            replay,
 		config:            config,
@@ -189,10 +187,6 @@ func (m *WebhookManager) Webhook(ctx context.Context, req *http.Request) (*provi
 	default:
 		return &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: event.Message}, nil
 	}
-}
-
-func (m *WebhookManager) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return m.prClient.CreatePullRequestComment(ctx, prNumber, comment)
 }
 
 func (m *WebhookManager) pullRequestResponse(event WebhookEvent) *provisioning.WebhookResponse {
@@ -276,7 +270,7 @@ func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]
 	logger := logging.FromContext(ctx)
 	logger.Info("rotating webhook secret", "trigger", "rotation")
 
-	hook, err := m.whClient.GetWebhook(ctx, m.config.Status.Webhook.ID)
+	hook, err := m.client.GetWebhook(ctx, m.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, ErrFileNotFound):
 		return clearStatusPatch(), fmt.Errorf("webhook %d not found on remote during rotation: %w", m.config.Status.Webhook.ID, err)
@@ -290,7 +284,7 @@ func (m *WebhookManager) RotateWebhookSecret(ctx context.Context) ([]map[string]
 	}
 	hook.Secret = secret.String()
 
-	if err := m.whClient.EditWebhook(ctx, hook); err != nil {
+	if err := m.client.EditWebhook(ctx, hook); err != nil {
 		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
 	}
 
@@ -319,7 +313,7 @@ func (m *WebhookManager) createWebhook(ctx context.Context) (Webhook, error) {
 		return Webhook{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
-	hook, err := m.whClient.CreateWebhook(ctx, Webhook{
+	hook, err := m.client.CreateWebhook(ctx, Webhook{
 		URL:    m.webhookURL,
 		Secret: secret.String(),
 		Events: m.events,
@@ -346,7 +340,7 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (Webhook, bool, erro
 		return hook, true, nil
 	}
 
-	hook, err := m.whClient.GetWebhook(ctx, m.config.Status.Webhook.ID)
+	hook, err := m.client.GetWebhook(ctx, m.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, ErrFileNotFound):
 		hook, err := m.createWebhook(ctx)
@@ -381,7 +375,7 @@ func (m *WebhookManager) updateWebhook(ctx context.Context) (Webhook, bool, erro
 		return Webhook{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
-	if err := m.whClient.EditWebhook(ctx, hook); err != nil {
+	if err := m.client.EditWebhook(ctx, hook); err != nil {
 		return Webhook{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
@@ -396,7 +390,7 @@ func (m *WebhookManager) deleteWebhook(ctx context.Context) error {
 
 	id := m.config.Status.Webhook.ID
 
-	err := m.whClient.DeleteWebhook(ctx, id)
+	err := m.client.DeleteWebhook(ctx, id)
 	if err != nil && !errors.Is(err, ErrFileNotFound) && !errors.Is(err, ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}

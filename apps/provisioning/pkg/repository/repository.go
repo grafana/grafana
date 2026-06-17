@@ -196,15 +196,6 @@ type WebhookClient interface {
 	DeleteWebhook(ctx context.Context, webhookID int64) error
 }
 
-type PullRequestClient interface {
-	CreatePullRequestComment(ctx context.Context, prNumber int, body string) error
-}
-
-type jointClient interface {
-	WebhookClient
-	PullRequestClient
-}
-
 type FileAction string
 
 const (

@@ -17,7 +17,7 @@ import (
 
 var subscribedEvents = []string{"pull_request", "push"}
 
-func newTestWebhookManager(client jointClient, config *provisioning.Repository, webhookURL string) *WebhookManager {
+func newTestWebhookManager(client WebhookClient, config *provisioning.Repository, webhookURL string) *WebhookManager {
 	return NewWebhookManager(client, nil, nil, config, webhookURL, "", "", subscribedEvents, "", NewIncrementalSyncPolicy(false, 5))
 }
 

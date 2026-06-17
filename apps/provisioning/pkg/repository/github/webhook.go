@@ -50,6 +50,10 @@ func NewGithubWebhookRepository(
 	}
 }
 
+func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
+	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
+}
+
 // githubWebhookParser authenticates and normalizes GitHub webhook deliveries.
 type githubWebhookParser struct{}
 

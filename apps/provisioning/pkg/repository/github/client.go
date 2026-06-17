@@ -13,7 +13,6 @@ import (
 type Client interface {
 	// Webhook lifecycle and pull request comments (provider-agnostic contract).
 	repository.WebhookClient
-	repository.PullRequestClient
 
 	// Repositories
 	GetRepository(ctx context.Context) (Repository, error)
@@ -29,6 +28,7 @@ type Client interface {
 
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
 }
 
 type Repository struct {
