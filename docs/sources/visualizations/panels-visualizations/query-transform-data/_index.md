@@ -55,7 +55,7 @@ image_maps:
         content: |
           **Multi-select**
 
-          Click **Select...** in the sidebar footer to enter multi-select mode, then check the items you want to work with so you can take bulk actions. You can also press the `Shift` key while you click to select a range. If you select queries that all have the same data source, you can change the data source for all of them at once.
+          Click **Select...** in the sidebar footer to enter multi-select mode, then check the items you want to work with so you can take bulk actions. You can also press the `Shift` key while you click to select a range. If all items in your selection are queries, you can change the data source for all of them at once.
       - x_coord: 3.5
         y_coord: 25
         content: |
@@ -146,7 +146,7 @@ For details on a specific data source's unique query editor features, refer to i
 
 - For data sources included with Grafana, refer to [Built-in core data sources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#built-in-core-data-sources), which links to each core data source's documentation.
 - For data sources installed as plugins, refer to the documentation for the plugin.
-  - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
+  - Data source plugins in the Grafana [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
     For details about the plugin catalog, refer to [Plugin management](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/).
   - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
 
