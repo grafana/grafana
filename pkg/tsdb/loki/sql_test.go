@@ -123,10 +123,14 @@ func TestBuildLogQLExpr(t *testing.T) {
 func testDatasourceInfoServiceName(t *testing.T) *datasourceInfo {
 	t.Helper()
 	p := newTestSchemaProvider(t, func(req *http.Request) (int, string, []byte) {
-		if strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "" {
+		switch {
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && req.URL.Query().Get("query") == "":
 			return 200, "", []byte(`{"status":"success","data":["service_name"]}`)
+		case strings.HasSuffix(req.URL.Path, "/loki/api/v1/labels") && strings.Contains(req.URL.Query().Get("query"), `service_name="carts"`):
+			return 200, "", []byte(`{"status":"success","data":["env","service_name"]}`)
+		default:
+			t.Fatalf("unexpected request: %s %s", req.Method, req.URL.String())
 		}
-		t.Fatalf("unexpected request: %s %s", req.Method, req.URL.String())
 		return 0, "", nil
 	})
 	return &datasourceInfo{schemaProvider: p}
@@ -474,6 +478,72 @@ func TestNormalizeGrafanaSQLRequest(t *testing.T) {
 			expr:      logSelector,
 			queryType: lokiQueryTypeRange,
 		})
+	})
+}
+
+func TestNormalizeGrafanaSQLRequest_parser(t *testing.T) {
+	ds := testDatasourceInfoServiceName(t)
+	tr := normalizeGrafanaSQLTimeRange()
+
+	t.Run("json parser with mixed filters", func(t *testing.T) {
+		raw := marshalGrafanaSQLPayload(t, map[string]any{
+			"refId": "A", "grafanaSql": true, "table": "carts",
+			"tableHintValues": map[string]string{"PARSER": "json"},
+			"filters": []map[string]any{
+				{"name": "env", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "prod"}}},
+				{"name": "level", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "error"}}},
+			},
+		})
+		out, kinds, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
+		require.Empty(t, errs)
+		require.Equal(t, sqlKindLog, kinds["A"])
+		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
+			expr:      `{env="prod", service_name="carts"} | json | level = "error"`,
+			queryType: lokiQueryTypeRange,
+		})
+	})
+
+	t.Run("json unpack chain", func(t *testing.T) {
+		raw := marshalGrafanaSQLPayload(t, map[string]any{
+			"refId": "A", "grafanaSql": true, "table": "carts",
+			"tableHintValues": map[string]string{"PARSER": "json | unpack"},
+		})
+		out, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
+		require.Empty(t, errs)
+		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
+			expr:      `{service_name="carts"} | json | unpack`,
+			queryType: lokiQueryTypeRange,
+		})
+	})
+
+	t.Run("pattern parser with mixed filters", func(t *testing.T) {
+		raw := marshalGrafanaSQLPayload(t, map[string]any{
+			"refId": "A", "grafanaSql": true, "table": "carts",
+			"tableHintValues": map[string]string{
+				"PARSER": `pattern "<_> - - <_> \"<method> <path> <_>\" <status> <_>"`,
+			},
+			"filters": []map[string]any{
+				{"name": "env", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "prod"}}},
+				{"name": "status", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "500"}}},
+			},
+		})
+		out, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
+		require.Empty(t, errs)
+		assertNormalizedQuery(t, out.Queries[0], normalizedQueryExpect{
+			expr:      `{env="prod", service_name="carts"} | pattern "<_> - - <_> \"<method> <path> <_>\" <status> <_>" | status = "500"`,
+			queryType: lokiQueryTypeRange,
+		})
+	})
+
+	t.Run("parsed filter without parser hint", func(t *testing.T) {
+		raw := marshalGrafanaSQLPayload(t, map[string]any{
+			"refId": "A", "grafanaSql": true, "table": "carts",
+			"filters": []map[string]any{
+				{"name": "level", "conditions": []map[string]any{{"operator": string(schemas.OperatorEquals), "value": "error"}}},
+			},
+		})
+		_, _, errs := normalizeGrafanaSQLRequest(context.Background(), queryDataRequestWithDSAbstraction([]backend.DataQuery{{RefID: "A", JSON: raw, TimeRange: tr}}), ds)
+		require.ErrorContains(t, errs["A"], `column "level" requires a parser FOR hint`)
 	})
 }
 
