@@ -29,6 +29,7 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 type githubWebhookRepository struct {
 	GithubRepository
 	*repository.WebhookManager
+	config      *provisioning.Repository
 	owner       string
 	repo        string
 	replayCache *replayCache
@@ -50,6 +51,7 @@ func NewGithubWebhookRepository(
 	return &githubWebhookRepository{
 		GithubRepository: basic,
 		WebhookManager:   repository.NewWebhookManager(basic.Client(), cfg, webhookURL, subscribedEvents, secret, incrementalPolicy),
+		config:           cfg,
 		owner:            basic.Owner(),
 		repo:             basic.Repo(),
 		replayCache:      replay,
@@ -58,7 +60,7 @@ func NewGithubWebhookRepository(
 
 // Webhook implements Repository.
 func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	if r.Config().Status.Webhook == nil {
+	if r.config.Status.Webhook == nil {
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
 
@@ -133,13 +135,13 @@ func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *git
 	}
 
 	// No need to sync if not enabled
-	if !r.Config().Spec.Sync.Enabled {
+	if !r.config.Spec.Sync.Enabled {
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
 	// Skip silently if the event is not for the main/master branch
 	// as we cannot configure the webhook to only publish events for the main branch
-	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.Config().Spec.GitHub.Branch) {
+	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
 		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
 	}
 
@@ -157,7 +159,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in pull request event")
 	}
-	cfg := r.Config().Spec.GitHub
+	cfg := r.config.Spec.GitHub
 	if cfg == nil {
 		return nil, fmt.Errorf("missing GitHub config")
 	}
@@ -172,7 +174,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("expected PR in event")
 	}
 
-	if pr.GetBase().GetRef() != r.Config().Spec.GitHub.Branch {
+	if pr.GetBase().GetRef() != r.config.Spec.GitHub.Branch {
 		return &provisioning.WebhookResponse{
 			Code:    http.StatusOK,
 			Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", pr.GetBase().GetRef()),
@@ -192,7 +194,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		Code:    http.StatusAccepted, // Nothing needed
 		Message: fmt.Sprintf("pull request: %s", action),
 		Job: &provisioning.JobSpec{
-			Repository: r.Config().GetName(),
+			Repository: r.config.GetName(),
 			Action:     provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.PullRequestJobOptions{
 				URL:  pr.GetHTMLURL(),
@@ -214,7 +216,7 @@ func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (conte
 	}
 
 	if ref == "" {
-		ref = r.Config().Spec.GitHub.Branch
+		ref = r.config.Spec.GitHub.Branch
 	}
 
 	logger = logger.With(slog.Group("github_repository", "owner", r.owner, "name", r.repo, "ref", ref))
