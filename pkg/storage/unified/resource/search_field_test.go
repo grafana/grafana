@@ -268,3 +268,38 @@ func TestMapProvider_IndexAffectingHash(t *testing.T) {
 		assert.Equal(t, h, pSibling.IndexAffectingHash(group, resource))
 	})
 }
+
+// TestMapProvider_IndexAffectingHash_GoldenHash pins the hash output for a
+// fixed reference input. The hash is computed from json.Marshal of a
+// canonical struct payload; Go's encoding/json output for plain string,
+// bool, and []string fields is stable in practice but not explicitly
+// pinned by the language spec. If a Go release ever shifts the canonical
+// form (struct field encoding order, HTML-escape default, string escape
+// rules, etc.), this test fails immediately in CI rather than silently
+// reindexing every kind that registers a SearchFieldsProvider. When that
+// happens, update the literal and document the Go version that caused
+// the shift.
+func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
+	const (
+		group    = "example.test"
+		resource = "widgets"
+	)
+	v0 := schema.GroupVersionResource{Group: group, Version: "v0alpha1", Resource: resource}
+	v1 := schema.GroupVersionResource{Group: group, Version: "v1", Resource: resource}
+
+	p := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+		v0: {
+			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+			{Name: "disabled", Path: "spec.disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
+			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve, SearchCapabilitySort}, CopyFromStandard: StandardFieldCreated},
+			{Name: "members", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		},
+		v1: {
+			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		},
+	}, nil)
+
+	const expected = "d466508d55b135a18f8e2636815a459a3ae5f2011c5ca63749cf4d48dbe5db34"
+	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
+		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
+}
