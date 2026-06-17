@@ -117,6 +117,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
+| `queryEditorNext`                 | Enables next generation query editor experience                                                        |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 
