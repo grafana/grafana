@@ -195,8 +195,8 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
     expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
 
@@ -223,9 +223,9 @@ describe('QueryEditorContextWrapper - alert selection', () => {
     mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
-    // Populate bulk arrays via multi-select mode so the assertion is meaningful.
+    // Populate bulk arrays via multi-select mode so the assertion is meaningful. Entering
+    // multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
     expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
 
@@ -261,8 +261,8 @@ describe('QueryEditorContextWrapper - clearSelection', () => {
     mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
     expect(result.current.multiSelectMode).toBe(true);
     expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
@@ -370,14 +370,65 @@ describe('QueryEditorContextWrapper - selection toggles', () => {
     mockQueryRunnerQueries([{ refId: 'A' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    // Entering multi-select seeds the active card (A) into the bulk selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
     act(() => result.current.setMultiSelectMode(false));
 
     expect(result.current.multiSelectMode).toBe(false);
     expect(result.current.selectedQueryRefIds).toEqual([]);
+  });
+
+  it('keeps multi-select mode active with an empty selection when the last card is unchecked', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    // Entering multi-select seeds the active card (A).
+    act(() => result.current.setMultiSelectMode(true));
+    expect(result.current.selectedQueryRefIds).toEqual(['A']);
+
+    // Unchecking the only selected card empties the bulk set but stays in multi-select mode.
+    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    // The empty state is recoverable: checking another card resumes a normal selection.
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    expect(result.current.selectedQueryRefIds).toEqual(['B']);
+    expect(result.current.multiSelectMode).toBe(true);
+  });
+
+  it('keeps multi-select mode active with an empty transformation selection when the last card is unchecked', () => {
+    const reduce: Transformation = {
+      registryItem: undefined,
+      transformId: 'reduce-0',
+      transformConfig: { id: 'reduce', options: {} },
+    };
+    const organize: Transformation = {
+      registryItem: undefined,
+      transformId: 'organize-1',
+      transformConfig: { id: 'organize', options: {} },
+    };
+    const { useTransformations } = require('./hooks/useTransformations');
+    useTransformations.mockReturnValue([reduce, organize]);
+
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    // Activate a transformation so entering multi-select seeds it into the bulk set.
+    act(() => result.current.setSelectedTransformation(reduce));
+    act(() => result.current.setMultiSelectMode(true));
+    expect(result.current.selectedTransformationIds).toEqual(['reduce-0']);
+
+    // Unchecking the only selected card empties the bulk set but stays in multi-select mode.
+    act(() => result.current.toggleTransformationSelection(reduce, { multi: true }));
+    expect(result.current.selectedTransformationIds).toEqual([]);
+    expect(result.current.multiSelectMode).toBe(true);
+
+    // The empty state is recoverable: checking another card resumes a normal selection.
+    act(() => result.current.toggleTransformationSelection(organize, { multi: true }));
+    expect(result.current.selectedTransformationIds).toEqual(['organize-1']);
+    expect(result.current.multiSelectMode).toBe(true);
   });
 
   it('does not enter multi-select mode when there are no queries or transformations', () => {
@@ -504,8 +555,8 @@ describe('QueryEditorContextWrapper - delete actions', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithBothContexts(dataPane);
 
+    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.ui.setMultiSelectMode(true));
-    act(() => result.current.ui.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.ui.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
     expect(result.current.ui.multiSelectMode).toBe(true);
     expect(result.current.ui.selectedQueryRefIds).toEqual(['A', 'B']);
@@ -602,8 +653,8 @@ describe('QueryEditorContextWrapper - pending picker cancel preserves multi-sele
     mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
     expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
 
@@ -757,8 +808,8 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithWrapper(dataPane);
 
+    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
     act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
 
     expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);

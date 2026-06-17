@@ -96,6 +96,13 @@ export function getEditorBorderColor({
   return typeConfig[editorType].color;
 }
 
+export function getHiddenMaskStyles(theme: GrafanaTheme2) {
+  return {
+    opacity: theme.isDark ? 0.6 : 0.7,
+    filter: 'grayscale(0.8)',
+  };
+}
+
 export interface TransformerCategoryOption {
   slug: TransformerCategory;
   label: string;

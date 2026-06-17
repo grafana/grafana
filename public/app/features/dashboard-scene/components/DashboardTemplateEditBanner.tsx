@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 
@@ -14,6 +15,7 @@ import { getDashboardTemplateExtension } from '../settings/enterprise-components
 export function DashboardTemplateEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const location = useLocation();
+  const isCustomDashboardTemplateEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { meta, editview } = dashboard.useState();
 
   const dashboardTemplateUid = meta.dashboardTemplateUid;
@@ -21,6 +23,7 @@ export function DashboardTemplateEditBanner({ dashboard }: { dashboard: Dashboar
   // Hide the banner on Settings tabs — they have their own dedicated UI for template
   // editing, and the banner is redundant context there.
   const shouldRender =
+    isCustomDashboardTemplateEnabled &&
     location.pathname === DASHBOARD_LIBRARY_ROUTES.Template &&
     Boolean(meta.isDashboardTemplate) &&
     Boolean(dashboardTemplateUid) &&
