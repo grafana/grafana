@@ -253,6 +253,22 @@ describe('parseExpression', () => {
       expect(parseExpression('Math.random() > 0')).toBeNull();
     });
 
+    it('does not execute an IIFE injected via ||', () => {
+      expect(parseExpression('$ > 0 || (function(){ return true; })()')).toBeNull();
+    });
+
+    it('does not execute an IIFE injected via &&', () => {
+      expect(parseExpression('$ > 0 && (function(){ return true; })()')).toBeNull();
+    });
+
+    it('does not expose window globals', () => {
+      expect(parseExpression('window.SECRET')).toBeNull();
+    });
+
+    it('does not expose globalThis', () => {
+      expect(parseExpression('globalThis.fetch')).toBeNull();
+    });
+
     it('returns null when any clause in an && group is invalid', () => {
       expect(parseExpression('$ > 10 && invalid')).toBeNull();
     });
