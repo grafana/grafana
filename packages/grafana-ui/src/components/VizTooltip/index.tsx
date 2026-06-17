@@ -3,7 +3,12 @@ export { VizTooltipContainer } from './VizTooltipContainer';
 export { VizTooltipContent } from './VizTooltipContent';
 export { VizTooltipRow } from './VizTooltipRow';
 export { VizTooltipWrapper, type VizTooltipWrapperProps } from './VizTooltipWrapper';
-export { VizTooltipFooter, type AdHocFilterModel, type FilterByGroupedLabelsModel } from './VizTooltipFooter';
+export {
+  VizTooltipFooter,
+  type VizTooltipFooterProps,
+  type AdHocFilterModel,
+  type FilterByGroupedLabelsModel,
+} from './VizTooltipFooter';
 export { VizTooltipHeader, type VizTooltipHeaderProps } from './VizTooltipHeader';
 export {
   VizTooltipColorIndicator,

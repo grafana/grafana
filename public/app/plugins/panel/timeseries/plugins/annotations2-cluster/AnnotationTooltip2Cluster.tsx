@@ -118,7 +118,7 @@ export const AnnotationTooltip2Cluster = ({
         ))}
 
         {/* @todo move to inner cluster loop when annotation field overrides are supported https://github.com/grafana/grafana/issues/112685, https://github.com/grafana/grafana/issues/119619 */}
-        <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
+        <VizTooltipFooter actions={actions} dataLinks={links} />
       </ScrollContainer>
     </div>
   );

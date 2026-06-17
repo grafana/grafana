@@ -147,6 +147,7 @@ export {
   VizTooltipWrapper,
   type VizTooltipWrapperProps,
   VizTooltipFooter,
+  type VizTooltipFooterProps,
   type AdHocFilterModel,
   type FilterByGroupedLabelsModel,
   VizTooltipHeader,

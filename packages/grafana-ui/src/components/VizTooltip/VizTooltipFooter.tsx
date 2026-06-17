@@ -31,11 +31,17 @@ export interface FilterByGroupedLabelsModel {
   onFilterOutGroupedLabels?: () => void;
 }
 
-interface VizTooltipFooterProps {
-  dataLinks: Array<LinkModel<Field>>;
+/** @alpha */
+export interface VizTooltipFooterProps {
+  /** Data links to render as clickable buttons. Defaults to an empty array. */
+  dataLinks?: Array<LinkModel<Field>>;
+  /** Actions to render as clickable buttons. */
   actions?: Array<ActionModel<Field>>;
+  /** Ad hoc filter buttons, typically used to filter dashboards by a label/value pair. */
   adHocFilters?: AdHocFilterModel[];
+  /** Controls rendering of grouped label filter buttons (filter for / filter out). */
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
+  /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
 }
 
@@ -102,7 +108,7 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
 
 /** @alpha */
 export const VizTooltipFooter = ({
-  dataLinks,
+  dataLinks = [],
   actions = [],
   annotate,
   adHocFilters = [],

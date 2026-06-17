@@ -6,7 +6,6 @@ import { VizTooltipColorIndicator, VizTooltipColorPlacement } from './types';
 const defaultProps = {
   label: 'My Label',
   value: 'My Value',
-  isPinned: false,
 };
 
 describe('VizTooltipRow', () => {
@@ -90,7 +89,7 @@ describe('VizTooltipRow', () => {
 
   describe('pinned vs unpinned', () => {
     it('renders label as plain text when not pinned', () => {
-      render(<VizTooltipRow {...defaultProps} isPinned={false} />);
+      render(<VizTooltipRow {...defaultProps} />);
       expect(screen.getByText('My Label')).toBeInTheDocument();
     });
 

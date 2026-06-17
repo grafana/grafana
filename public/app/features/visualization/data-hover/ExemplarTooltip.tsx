@@ -33,7 +33,7 @@ export const ExemplarTooltip = ({ items, links, isPinned, maxHeight }: Props) =>
         maxHeight={maxHeight}
         scrollable={maxHeight != null}
       />
-      <VizTooltipFooter dataLinks={links ?? []} />
+      <VizTooltipFooter dataLinks={links} />
     </VizTooltipWrapper>
   );
 };

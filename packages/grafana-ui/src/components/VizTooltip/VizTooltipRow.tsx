@@ -13,12 +13,23 @@ import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipCo
 import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
+  /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
   value: string | number | null | ReactNode;
+  /** CSS `justify-content` value for the row layout. Defaults to `'start'`. */
   justify?: string;
-  isActive?: boolean; // for series list
+  /** Whether this row corresponds to the closest/hovered series — renders the label in bold. */
+  isActive?: boolean;
+  /** Right margin applied to the value cell, used to leave room for overlay elements such as the close button. */
   marginRight?: string;
-  isPinned: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
+   */
+  isPinned?: boolean;
+  /** When true the value cell becomes vertically scrollable up to a fixed max-height. */
   showValueScroll?: boolean;
+  /** When true the color indicator is rendered hollow, signalling the field is not shown in the visualization. */
   isHiddenFromViz?: boolean;
 }
 
@@ -42,7 +53,7 @@ export const VizTooltipRow = ({
   justify,
   isActive = false,
   marginRight,
-  isPinned,
+  isPinned = false,
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
