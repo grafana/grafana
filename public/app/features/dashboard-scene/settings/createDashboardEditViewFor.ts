@@ -24,7 +24,7 @@ export function createDashboardEditViewFor(editview: string) {
     case 'permissions':
       return new PermissionsEditView({});
     case 'template':
-      if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
         return new DashboardTemplateEditView({});
       }
       return new GeneralSettingsEditView({});

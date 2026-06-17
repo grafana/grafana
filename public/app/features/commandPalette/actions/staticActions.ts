@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
@@ -146,7 +146,7 @@ function getGlobalActions(): CommandPaletteAction[] {
 export function useStaticActions(): CommandPaletteAction[] {
   const navBarTree = useSelector((state) => state.navBarTree);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const isCustomDashboardTemplatesEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);

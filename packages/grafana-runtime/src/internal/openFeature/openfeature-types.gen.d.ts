@@ -21,7 +21,7 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
-    | "grafana.orgDashboardTemplates"
+    | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "newLogsPanel"

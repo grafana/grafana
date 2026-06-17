@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, reportInteraction, config } from '@grafana/runtime';
-import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
@@ -27,7 +27,7 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  const isCustomDashboardTemplatesEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
 
   const theme = useTheme2();
 

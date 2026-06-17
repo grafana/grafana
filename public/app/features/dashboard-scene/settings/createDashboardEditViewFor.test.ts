@@ -29,13 +29,13 @@ describe('createDashboardEditViewFor', () => {
   });
 
   describe('editview=template', () => {
-    it('returns DashboardTemplateEditView when grafana.orgDashboardTemplates is enabled', () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+    it('returns DashboardTemplateEditView when grafana.customDashboardTemplates is enabled', () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       expect(createDashboardEditViewFor('template')).toBeInstanceOf(DashboardTemplateEditView);
     });
 
-    it('falls back to GeneralSettingsEditView when grafana.orgDashboardTemplates is disabled', () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': false });
+    it('falls back to GeneralSettingsEditView when grafana.customDashboardTemplates is disabled', () => {
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
       expect(createDashboardEditViewFor('template')).toBeInstanceOf(GeneralSettingsEditView);
     });
   });

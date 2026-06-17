@@ -101,7 +101,7 @@ describe('SaveDashboard (toolbar)', () => {
       // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
       // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
       await act(async () => {
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
     });
 
@@ -146,7 +146,7 @@ describe('SaveDashboard (toolbar)', () => {
 
     it('is hidden when the feature flag is off', async () => {
       await act(async () => {
-        setTestFlags({ 'grafana.orgDashboardTemplates': false });
+        setTestFlags({ 'grafana.customDashboardTemplates': false });
       });
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
@@ -157,7 +157,7 @@ describe('SaveDashboard (toolbar)', () => {
 
     it('is hidden when the flag is on but no extension form is registered', async () => {
       await act(async () => {
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
       const scene = buildTestScene({ canSave: true });
       const { user } = render(<SaveDashboard dashboard={scene} />);
@@ -168,7 +168,7 @@ describe('SaveDashboard (toolbar)', () => {
 
     it('is visible and triggers openSaveDrawer when flag is on, canSave is true, and an extension form is registered', async () => {
       await act(async () => {
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
       registerSaveAsTemplateForm(() => null);
 
@@ -184,7 +184,7 @@ describe('SaveDashboard (toolbar)', () => {
 
     it('fires save_as_opened analytics when the menu item is clicked', async () => {
       await act(async () => {
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
       registerSaveAsTemplateForm(() => null);
 

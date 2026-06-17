@@ -129,7 +129,7 @@ describe('dashboard tracking', () => {
     });
 
     it('fires when on the template route with dashboardTemplateUid and the FF is enabled', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
@@ -141,7 +141,7 @@ describe('dashboard tracking', () => {
     });
 
     it('does not fire when the route is something other than /dashboard/template', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       setLocation('/d/abc/my-dash', '?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
@@ -150,7 +150,7 @@ describe('dashboard tracking', () => {
     });
 
     it('does not fire when dashboardTemplateUid is missing from the URL', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true });
       setLocation('/dashboard/template', '');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
@@ -159,7 +159,7 @@ describe('dashboard tracking', () => {
     });
 
     it('does not fire when the feature flag is disabled', async () => {
-      setTestFlags({ 'grafana.orgDashboardTemplates': false });
+      setTestFlags({ 'grafana.customDashboardTemplates': false });
       setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });

@@ -94,7 +94,7 @@ export async function trackDashboardSceneCreatedOrSaved(
         }),
   });
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
     const isOnTemplateRoute = window.location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
     const templateUid = new URLSearchParams(window.location.search).get('dashboardTemplateUid');
     if (isOnTemplateRoute && templateUid) {

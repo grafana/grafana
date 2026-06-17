@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Box, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
 import { GrafanaTemplatesTab } from './GrafanaTemplatesTab';
@@ -20,7 +20,7 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const DashboardTemplatesTab = getDashboardTemplatesTab();
-  const showCustomTemplates = useFlagGrafanaOrgDashboardTemplates() && DashboardTemplatesTab !== null;
+  const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && DashboardTemplatesTab !== null;
   const [activeTab, setActiveTab] = useState<TemplateTab>(showCustomTemplates ? 'custom' : 'grafana');
 
   // Guard the per-tab `loaded` events to fire once per open. Owned here (not in the tab
