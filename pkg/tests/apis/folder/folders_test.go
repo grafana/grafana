@@ -2685,6 +2685,19 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 	_, err = client.Resource.Get(ctx, rootUID, metav1.GetOptions{})
 	require.NoError(t, err, "root should still exist after the rejected non-force delete")
 
+	// Regression: a rejected delete must NOT have started the cascade. The API server validates
+	// before marking, so the subtree must be untouched. Give the poller a few ticks, then confirm
+	// every folder is still present, not terminating, and the dashboard still exists.
+	const terminatingLabel = "folder.grafana.app/terminating"
+	time.Sleep(3 * time.Second)
+	for _, uid := range all {
+		got, err := client.Resource.Get(ctx, uid, metav1.GetOptions{})
+		require.NoError(t, err, "%q must still exist after a rejected delete", uid)
+		require.Nil(t, got.GetDeletionTimestamp(), "%q must not be terminating after a rejected delete", uid)
+		require.NotContains(t, got.GetLabels(), terminatingLabel, "%q must not be marked terminating after a rejected delete", uid)
+	}
+	require.True(t, dashboardExists(), "dashboard must still exist after a rejected delete")
+
 	// Force-delete the (non-empty) root. This is opt-in via gracePeriodSeconds=0; the finalizer
 	// keeps the folder terminating until the watcher cascades the subtree.
 	zero := int64(0)

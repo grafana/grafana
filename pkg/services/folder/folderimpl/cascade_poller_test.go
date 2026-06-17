@@ -119,6 +119,9 @@ type recordingFolderMutator struct {
 	finalizerRemove []string
 	deleteErr       error
 	removeErr       error
+	// notTerminating makes RemoveCascadeFinalizer report the folder as not terminating (no deletion
+	// timestamp), simulating a delete interrupted before the timestamp was set.
+	notTerminating bool
 }
 
 func (m *recordingFolderMutator) Delete(_ context.Context, _ string, name string, gracePeriodSeconds *int64) error {
@@ -128,11 +131,14 @@ func (m *recordingFolderMutator) Delete(_ context.Context, _ string, name string
 	return m.deleteErr
 }
 
-func (m *recordingFolderMutator) RemoveCascadeFinalizer(_ context.Context, _ string, name string) error {
+func (m *recordingFolderMutator) RemoveCascadeFinalizer(_ context.Context, _ string, name string) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.notTerminating {
+		return false, m.removeErr
+	}
 	m.finalizerRemove = append(m.finalizerRemove, name)
-	return m.removeErr
+	return true, m.removeErr
 }
 
 func (m *recordingFolderMutator) deletedNames() []string {
@@ -184,9 +190,9 @@ func TestCascadePoller_finalizeTerminatingFolder_removesFinalizerWhenNoChildren(
 	require.Equal(t, []string{"leaf"}, mut.finalizerRemove)
 }
 
-func TestCascadePoller_finalizeTerminatingFolder_marksChildrenAndKeepsFinalizer(t *testing.T) {
-	// With children present, mark the not-yet-terminating ones (skip already-terminating) and keep
-	// this folder's finalizer until its subtree is gone.
+func TestCascadePoller_finalizeTerminatingFolder_marksUnmarkedChildThenFinalizes(t *testing.T) {
+	// The not-yet-terminating child is marked (the already-terminating one is skipped). Because the
+	// mark succeeds, the child is terminating synchronously, so the folder is finalized this tick.
 	mut := &recordingFolderMutator{}
 	w := &CascadePoller{
 		folderSearch:  childSearch(map[string]bool{"unmarked": false, "marked": true}),
@@ -196,12 +202,62 @@ func TestCascadePoller_finalizeTerminatingFolder_marksChildrenAndKeepsFinalizer(
 
 	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
 
-	// Only the not-yet-terminating child is marked; the already-terminating one is skipped.
+	// Only the not-yet-terminating child is marked, with a force (grace 0) delete.
 	require.Equal(t, []string{"unmarked"}, mut.deletedNames())
 	require.NotNil(t, mut.deleted[0].gracePeriod)
 	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
-	// Folder still has children, so its finalizer is NOT removed yet.
+	// All marks succeeded, so the folder is finalized in the same tick.
+	require.Equal(t, []string{"parent"}, mut.finalizerRemove)
+}
+
+func TestCascadePoller_finalizeTerminatingFolder_keepsFinalizerWhenChildMarkFails(t *testing.T) {
+	// If marking a child fails, the child is not guaranteed terminating, so the folder keeps its
+	// finalizer and retries next tick.
+	mut := &recordingFolderMutator{deleteErr: errors.New("boom")}
+	w := &CascadePoller{
+		folderSearch:  childSearch(map[string]bool{"unmarked": false}),
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
+
 	require.Empty(t, mut.finalizerRemove)
+}
+
+func TestCascadePoller_finalizeTerminatingFolder_removesFinalizerWhenAllChildrenTerminating(t *testing.T) {
+	// Children are present but all already marked terminating: the folder is finalized this tick
+	// (it does not wait for the children to be physically removed), and no new marks are issued.
+	mut := &recordingFolderMutator{}
+	w := &CascadePoller{
+		folderSearch:  childSearch(map[string]bool{"a": true, "b": true}),
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "parent")
+
+	require.Empty(t, mut.deletedNames(), "already-terminating children should not be re-marked")
+	require.Equal(t, []string{"parent"}, mut.finalizerRemove)
+}
+
+func TestCascadePoller_finalizeTerminatingFolder_resumesInterruptedDelete(t *testing.T) {
+	// The folder carries the terminating label but has no deletion timestamp (delete interrupted
+	// before the timestamp was set). The poller must not strand it: it resumes with a force delete
+	// rather than removing the finalizer.
+	mut := &recordingFolderMutator{notTerminating: true}
+	w := &CascadePoller{
+		folderSearch:  childSearch(map[string]bool{}),
+		folderMutator: mut,
+		log:           slog.Default(),
+	}
+
+	w.finalizeTerminatingFolder(context.Background(), 12, "org-12", "leaf")
+
+	require.Empty(t, mut.finalizerRemove, "finalizer must not be removed from a folder with no deletion timestamp")
+	require.Equal(t, []string{"leaf"}, mut.deletedNames(), "the interrupted delete should be resumed")
+	require.NotNil(t, mut.deleted[0].gracePeriod)
+	require.Equal(t, int64(0), *mut.deleted[0].gracePeriod)
 }
 
 type fakeContentsDeleter struct {
@@ -289,9 +345,9 @@ func (f *fakeOrgLister) Search(context.Context, *org.SearchOrgsQuery) ([]*org.Or
 }
 
 func TestCascadePoller_pollOnce(t *testing.T) {
-	// Discovery returns two terminating folders: "parent" (still has a terminating child) and
-	// "child" (a leaf). Bottom-up: only the leaf's finalizer is removed this tick; the parent keeps
-	// its finalizer until the child is gone.
+	// Discovery returns two terminating folders: "parent" (whose only child is already terminating)
+	// and "child" (a leaf). Both are finalized this tick: the parent does not wait for the child to
+	// be physically removed, only for it to be marked terminating.
 	term := []byte(folders.TerminatingLabelValue)
 	cols := []*resourcepb.ResourceTableColumnDefinition{
 		{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
@@ -330,7 +386,7 @@ func TestCascadePoller_pollOnce(t *testing.T) {
 
 	w.pollOnce(context.Background())
 
-	require.Equal(t, []string{"child"}, mut.finalizerRemove)
+	require.ElementsMatch(t, []string{"parent", "child"}, mut.finalizerRemove)
 	require.Empty(t, mut.deletedNames())
 }
 
@@ -355,12 +411,22 @@ func folderUnstructured(name string, finalizers ...string) *unstructured.Unstruc
 	return o
 }
 
+// terminatingFolder is a folderUnstructured with a deletion timestamp set, i.e. actually terminating.
+func terminatingFolder(name string, finalizers ...string) *unstructured.Unstructured {
+	o := folderUnstructured(name, finalizers...)
+	now := metav1.Now()
+	o.SetDeletionTimestamp(&now)
+	return o
+}
+
 func TestDynamicFolderMutator_RemoveCascadeFinalizer(t *testing.T) {
 	t.Run("removes only the cascade finalizer", func(t *testing.T) {
-		client := newFakeFolderClient(t, folderUnstructured("f", folders.CascadeDeleteFinalizer, "other.io/keep"))
+		client := newFakeFolderClient(t, terminatingFolder("f", folders.CascadeDeleteFinalizer, "other.io/keep"))
 		mut := &dynamicFolderMutator{client: client}
 
-		require.NoError(t, mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f"))
+		terminating, err := mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f")
+		require.NoError(t, err)
+		require.True(t, terminating)
 
 		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
 		require.NoError(t, err)
@@ -368,14 +434,31 @@ func TestDynamicFolderMutator_RemoveCascadeFinalizer(t *testing.T) {
 	})
 
 	t.Run("leaves other finalizers untouched when the cascade finalizer is absent", func(t *testing.T) {
-		client := newFakeFolderClient(t, folderUnstructured("f", "other.io/keep"))
+		client := newFakeFolderClient(t, terminatingFolder("f", "other.io/keep"))
 		mut := &dynamicFolderMutator{client: client}
 
-		require.NoError(t, mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f"))
+		terminating, err := mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f")
+		require.NoError(t, err)
+		require.True(t, terminating)
 
 		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, []string{"other.io/keep"}, got.GetFinalizers())
+	})
+
+	t.Run("keeps the cascade finalizer when the folder has no deletion timestamp", func(t *testing.T) {
+		// A folder carrying the terminating label but no deletion timestamp is an interrupted delete:
+		// removing its finalizer would strand it alive, so the gate must leave it in place.
+		client := newFakeFolderClient(t, folderUnstructured("f", folders.CascadeDeleteFinalizer, "other.io/keep"))
+		mut := &dynamicFolderMutator{client: client}
+
+		terminating, err := mut.RemoveCascadeFinalizer(context.Background(), "org-12", "f")
+		require.NoError(t, err)
+		require.False(t, terminating)
+
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{folders.CascadeDeleteFinalizer, "other.io/keep"}, got.GetFinalizers())
 	})
 }
 

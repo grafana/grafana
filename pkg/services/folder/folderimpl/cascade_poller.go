@@ -37,6 +37,9 @@ const (
 	// cascadeLockName is the serverlock action name guarding the sweep, so only one Grafana
 	// instance runs it per interval in an HA deployment.
 	cascadeLockName = "folder-cascade-delete"
+	// cascadePollIntervalKey is read from the folder resource's unified storage section
+	// ([unified_storage.folders.folder.grafana.app]), so it sits with the rest of that resource's config.
+	cascadePollIntervalKey = "cascade_delete_poll_interval"
 )
 
 // terminatingLabelField is the search return-field carrying the terminating label, so a child
@@ -56,7 +59,12 @@ type folderSearcher interface {
 // folderMutator deletes Folder CRs and removes the cascade finalizer once children are gone.
 type folderMutator interface {
 	Delete(ctx context.Context, namespace, name string, gracePeriodSeconds *int64) error
-	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error
+	// RemoveCascadeFinalizer removes the cascade finalizer, but only if the folder is actually
+	// terminating (has a deletion timestamp). It reports whether the folder was terminating: if
+	// false, the finalizer was deliberately left in place because the folder carries the terminating
+	// label but never had its deletion timestamp set (a crashed/interrupted delete), and removing the
+	// finalizer would strand it alive forever. The caller resumes the delete instead.
+	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) (terminating bool, err error)
 }
 
 // orgLister enumerates organizations; the poller searches each org once per tick.
@@ -75,9 +83,12 @@ type folderContentsDeleter interface {
 // of truth: every poll interval it enumerates orgs and, per org, searches for folders carrying the
 // terminating label. For each one it marks any not-yet-terminating direct child folders terminating
 // (so the mark always reaches the leaves even if the API server's async pass didn't finish), and
-// once a folder has no child folders left it deletes the folder's contained resources (dashboards,
-// library elements, alert rules) and then removes the finalizer so the folder can be
-// garbage-collected -- bottom-up, so a parent never outlives its subtree.
+// once every child folder is at least marked terminating it deletes the folder's contained resources
+// (dashboards, library elements, alert rules) and then removes the finalizer so the folder can be
+// garbage-collected. A folder is finalized as soon as its children are marked -- it does not wait for
+// them to be physically removed -- because every terminating folder is tracked by its label
+// independent of its parent. So once marking reaches the leaves the whole subtree drains in a single
+// tick rather than one level per tick.
 //
 // Discovery is a periodic poll, not a List+Watch: one search per org per tick, cheap when nothing
 // is terminating thanks to the label filter. The sweep is guarded by serverlock so only one
@@ -112,8 +123,8 @@ func ProvideCascadePoller(
 		resourceClient,
 	)
 
-	pollInterval := cfg.SectionWithEnvOverrides("unified_storage").
-		Key("folder_cascade_delete_poll_interval").MustDuration(defaultCascadePollInterval)
+	pollInterval := cfg.SectionWithEnvOverrides("unified_storage." + setting.FolderResource).
+		Key(cascadePollIntervalKey).MustDuration(defaultCascadePollInterval)
 
 	return &CascadePoller{
 		restConfig:      restConfig,
@@ -235,10 +246,18 @@ func (w *CascadePoller) reconcileOrg(ctx context.Context, orgID int64) {
 	}
 }
 
-// finalizeTerminatingFolder advances one terminating folder. If it still has children, the
-// not-yet-terminating ones are marked terminating and the folder keeps its finalizer. Only once it
-// has no children left is the finalizer removed, so a folder is never garbage-collected before its
-// subtree -- the tree drains bottom-up over successive ticks.
+// finalizeTerminatingFolder advances one terminating folder. Any not-yet-terminating direct child
+// folders are marked terminating first. A successful mark makes the child terminating synchronously
+// (the API server stamps the terminating label and deletion timestamp before returning), so once
+// every child is terminating -- already, or just marked without error -- the folder's contained
+// resources are deleted and its finalizer removed, all in the same tick. Only if a child cannot be
+// marked does the folder keep its finalizer and retry next tick.
+//
+// A folder is finalized as soon as its children are *marked* -- it does not wait for them to be
+// physically removed. That is safe because every terminating folder is tracked by its label
+// independent of its parent, so removing a parent before its terminating children are gone cannot
+// lose a child. The benefit is that a fully-marked subtree collapses in a single tick instead of one
+// level per tick.
 func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int64, namespace, name string) {
 	if w.folderMutator == nil {
 		return
@@ -250,28 +269,43 @@ func (w *CascadePoller) finalizeTerminatingFolder(ctx context.Context, orgID int
 		return
 	}
 
-	if len(children) == 0 {
-		// No child folders left: delete the folder's contained resources (dashboards, library
-		// elements, alert rules) before removing the finalizer, so they aren't orphaned by GC.
-		if err := w.deleteFolderContents(ctx, orgID, name); err != nil {
-			w.log.Warn("folder cascade poll: delete folder contents failed", "namespace", namespace, "name", name, "error", err)
-			return // keep the finalizer and retry next tick
-		}
-		if err := w.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name); err != nil && !apierrors.IsNotFound(err) {
-			w.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
-		}
-		return
-	}
-
-	// Still has children: mark the ones not already terminating so the mark reaches the leaves,
-	// and keep this folder's finalizer until its subtree is gone.
+	// Mark any not-yet-terminating child folders so the mark always reaches the leaves, even if the
+	// API server's async pass did not finish. A successful mark (or NotFound -- the child is already
+	// gone) leaves the child terminating synchronously, so it does not block finalizing this folder
+	// in the same tick. Only a real mark failure does.
 	zero := int64(0)
+	allChildrenTerminating := true
 	for _, child := range children {
 		if child.terminating {
 			continue
 		}
 		if err := w.folderMutator.Delete(ctx, namespace, child.name, &zero); err != nil && !apierrors.IsNotFound(err) {
 			w.log.Warn("folder cascade poll: mark child terminating failed", "namespace", namespace, "parent", name, "child", child.name, "error", err)
+			allChildrenTerminating = false
+		}
+	}
+
+	if !allChildrenTerminating {
+		return // a child could not be marked; keep the finalizer and retry next tick
+	}
+
+	// Every child folder is marked terminating: delete this folder's contained resources (dashboards,
+	// library elements, alert rules) before removing the finalizer, so they aren't orphaned by GC.
+	if err := w.deleteFolderContents(ctx, orgID, name); err != nil {
+		w.log.Warn("folder cascade poll: delete folder contents failed", "namespace", namespace, "name", name, "error", err)
+		return // keep the finalizer and retry next tick
+	}
+	terminating, err := w.folderMutator.RemoveCascadeFinalizer(ctx, namespace, name)
+	if err != nil && !apierrors.IsNotFound(err) {
+		w.log.Warn("folder cascade poll: remove finalizer failed", "namespace", namespace, "name", name, "error", err)
+		return
+	}
+	if !terminating {
+		// The folder carries the terminating label but has no deletion timestamp: its delete was
+		// interrupted before the timestamp was set. Resume it with a force delete so it is actually
+		// removed; next tick it has a deletion timestamp and the finalizer comes off normally.
+		if err := w.folderMutator.Delete(ctx, namespace, name, &zero); err != nil && !apierrors.IsNotFound(err) {
+			w.log.Warn("folder cascade poll: resume interrupted delete failed", "namespace", namespace, "name", name, "error", err)
 		}
 	}
 }
@@ -398,12 +432,23 @@ func (d *dynamicFolderMutator) Delete(ctx context.Context, namespace, name strin
 	return d.client.Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{GracePeriodSeconds: gracePeriodSeconds})
 }
 
-func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, namespace, name string) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, namespace, name string) (bool, error) {
+	terminating := false
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obj, err := d.client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
+
+		// Gate on the deletion timestamp: a folder can carry the terminating label without ever
+		// having had its deletion timestamp set (the delete was interrupted between stamping the
+		// label and the store delete). Removing its finalizer then would strand it alive forever, so
+		// leave the finalizer in place and report not-terminating; the caller resumes the delete.
+		if ts := obj.GetDeletionTimestamp(); ts == nil || ts.IsZero() {
+			terminating = false
+			return nil
+		}
+		terminating = true
 
 		finalizers := obj.GetFinalizers()
 		remaining := make([]string, 0, len(finalizers))
@@ -420,6 +465,7 @@ func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, names
 		_, err = d.client.Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
 		return err
 	})
+	return terminating, err
 }
 
 // IsDisabled implements registry.CanBeDisabled.

@@ -582,9 +582,9 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 	if opts.FolderCascadeDeletePollInterval != 0 {
-		section, err := getOrCreateSection("unified_storage")
+		section, err := getOrCreateSection("unified_storage.folders.folder.grafana.app")
 		require.NoError(t, err)
-		_, err = section.NewKey("folder_cascade_delete_poll_interval", opts.FolderCascadeDeletePollInterval.String())
+		_, err = section.NewKey("cascade_delete_poll_interval", opts.FolderCascadeDeletePollInterval.String())
 		require.NoError(t, err)
 	}
 	if opts.AppModeProduction {

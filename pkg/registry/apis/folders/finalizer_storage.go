@@ -46,17 +46,44 @@ func (s *finalizerStorage) Delete(
 	deleteValidation rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
-	if options == nil || !dryrun.IsDryRun(options.DryRun) {
-		// Mark this folder terminating synchronously, then mark its subtree asynchronously off
-		// the request path -- deleting a large tree must not block (or time out) the request. The
-		// cascade poller is the backstop: it completes any marking this best-effort pass does not
-		// finish and removes finalizers once a folder has no children left.
-		if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
+	// A dry-run must not mutate anything: pass straight through with the real validation.
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return s.Store.Delete(ctx, name, deleteValidation, options)
+	}
+
+	// Validate the delete BEFORE marking anything terminating. Marking stamps the terminating label
+	// and kicks off the asynchronous subtree marking, so a delete that admission rejects (e.g. a
+	// non-force delete of a non-empty folder) must not leave the tree half-cascaded. We run
+	// deleteValidation against the current object here and pass a no-op validator to the embedded
+	// store below so admission is evaluated exactly once.
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err
 		}
-		s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	}
-	return s.Store.Delete(ctx, name, deleteValidation, options)
+
+	// Stamp the terminating label and finalizer BEFORE the deletion timestamp, so the folder is
+	// always discoverable by the cascade poller (which searches on the label). If the process dies
+	// after this but before the deletion timestamp is set, the poller still finds the labeled folder,
+	// sees it has no deletion timestamp, and resumes the delete -- nothing is silently lost.
+	if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
+		return nil, false, err
+	}
+
+	// Set the target's deletion timestamp (the finalizer holds the object until the cascade
+	// completes), then mark its subtree asynchronously off the request path -- deleting a large tree
+	// must not block (or time out) the request. The cascade poller is the backstop: it completes any
+	// marking this best-effort pass does not finish and removes finalizers once children are gone.
+	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, options)
+	if err != nil {
+		return out, deleted, err
+	}
+	s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
+	return out, deleted, nil
 }
 
 // markSubtreeAsync launches a detached, best-effort DFS that marks every descendant of name
