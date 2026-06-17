@@ -90,7 +90,44 @@ type SearchFieldDefinition struct {
 
 	// Description is informational; not used for indexing decisions.
 	Description string
+
+	// EmitZeroIfAbsent makes the path extractor emit the type's zero value
+	// (false, 0, 0.0, "", or an empty array) when Path resolves to nil.
+	// Without it, missing paths are skipped and the field is absent from the
+	// indexed document. Set this when sort or range queries depend on every
+	// document having the field present.
+	EmitZeroIfAbsent bool
+
+	// CopyFromStandard copies a value from one of the IndexableDocument's
+	// standard top-level fields into doc.Fields[Name]. Used to expose a
+	// standard field (e.g. Created) under a resource-specific name in the
+	// per-kind fields.* sub-document, because some top-level fields lack a
+	// bleve FieldMapping and are otherwise unindexed / unretrievable.
+	//
+	// Mutually exclusive with Path: when CopyFromStandard is set, the
+	// extractor reads from the already-built IndexableDocument instead of
+	// from the raw JSON.
+	//
+	// This is a workaround for the current top-level mapping asymmetry.
+	// A planned follow-up promotes Created, Updated and similar fields to
+	// StandardSearchFieldDefinitions with their own top-level
+	// FieldMappings; once that lands, kinds can read those fields directly
+	// and the CopyFromStandard mirror becomes redundant.
+	CopyFromStandard StandardField
 }
+
+// StandardField identifies a top-level field of IndexableDocument that
+// CopyFromStandard can mirror into doc.Fields. The set is intentionally
+// closed; adding a new value requires extending the switch in document.go.
+type StandardField string
+
+const (
+	StandardFieldUnknown   StandardField = ""
+	StandardFieldCreated   StandardField = "Created"
+	StandardFieldUpdated   StandardField = "Updated"
+	StandardFieldCreatedBy StandardField = "CreatedBy"
+	StandardFieldUpdatedBy StandardField = "UpdatedBy"
+)
 
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
