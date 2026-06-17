@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { compareFolders, ResourcesToMigrate } from './ResourcesToMigrate';
+import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 
 const folders: FolderRow[] = [
@@ -198,7 +198,7 @@ describe('ResourcesToMigrate', () => {
 
       await user.click(screen.getByRole('button', { name: /expand parent/i }));
 
-      expect(screen.getByText(/live in subfolders/i)).toBeInTheDocument();
+      expect(screen.getByText(/in subfolders/i)).toBeInTheDocument();
     });
 
     it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {
@@ -209,27 +209,6 @@ describe('ResourcesToMigrate', () => {
       const dashboard = screen.getByRole('checkbox', { name: 'Dashboard One' });
       expect(dashboard).toBeChecked();
       expect(dashboard).toBeDisabled();
-    });
-  });
-
-  describe('compareFolders', () => {
-    const big = folders[0]; // Team A, 2 dashboards
-    const small: FolderRow = { ...big, uid: 'z', title: 'Zeta', dashboardCount: 1 };
-
-    it('orders by dashboard count descending then ascending', () => {
-      expect(compareFolders(big, small, 'count-desc')).toBeLessThan(0);
-      expect(compareFolders(big, small, 'count-asc')).toBeGreaterThan(0);
-    });
-
-    it('breaks count ties by title', () => {
-      const tie: FolderRow = { ...big, uid: 'a-tie', title: 'AAA' };
-      expect(compareFolders(big, tie, 'count-desc')).toBeGreaterThan(0); // "Team A" after "AAA"
-      expect(compareFolders(big, tie, 'count-asc')).toBeGreaterThan(0);
-    });
-
-    it('orders by title ascending and descending', () => {
-      expect(compareFolders(big, small, 'title-asc')).toBeLessThan(0); // Team A before Zeta
-      expect(compareFolders(big, small, 'title-desc')).toBeGreaterThan(0);
     });
   });
 });

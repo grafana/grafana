@@ -13476,7 +13476,7 @@
       "repo-placeholder": "Select a repository",
       "resources-collapse": "Collapse {{folder}}",
       "resources-expand": "Expand {{folder}}",
-      "resources-folder-only-subfolders": "Resources in this folder live in subfolders. Migrate the folder to bring them all in one go.",
+      "resources-folder-only-subfolders": "No resources directly here — they're in subfolders. Selecting this folder migrates everything inside it.",
       "resources-folder-summary_one": "{{count}} resource",
       "resources-folder-summary_other": "{{count}} resources",
       "resources-select-all": "Select all",
