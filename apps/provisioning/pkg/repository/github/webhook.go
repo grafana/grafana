@@ -45,13 +45,9 @@ func NewGithubWebhookRepository(
 	return &githubWebhookRepository{
 		GithubRepository: basic,
 		WebhookManager: repository.NewWebhookManager(
-			basic.Client(), githubWebhookParser{}, replay, cfg, webhookURL,
+			basic, githubWebhookParser{}, replay, cfg, webhookURL,
 			slug, cfg.Spec.GitHub.Branch, subscribedEvents, secret, incrementalPolicy),
 	}
-}
-
-func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
-	return r.Client().CreatePullRequestComment(ctx, prNumber, comment)
 }
 
 // githubWebhookParser authenticates and normalizes GitHub webhook deliveries.

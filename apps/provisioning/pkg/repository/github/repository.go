@@ -21,8 +21,8 @@ import (
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
+	Client // assumes github.com base URL
 	config *provisioning.Repository
-	gh     Client // assumes github.com base URL
 
 	owner string
 	repo  string
@@ -42,7 +42,7 @@ type GithubRepository interface {
 	repository.BranchHandler
 	Owner() string
 	Repo() string
-	Client() Client
+	Client
 }
 
 func NewRepository(
@@ -60,7 +60,7 @@ func NewRepository(
 	return &githubRepository{
 		config:        config,
 		GitRepository: gitRepo,
-		gh:            factory.New(ctx, owner, repo, token), // TODO, baseURL from config
+		Client:        factory.New(ctx, owner, repo, token), // TODO, baseURL from config
 		owner:         owner,
 		repo:          repo,
 	}, nil
@@ -74,12 +74,8 @@ func (r *githubRepository) Repo() string {
 	return r.repo
 }
 
-func (r *githubRepository) Client() Client {
-	return r.gh
-}
-
 func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
-	repo, err := r.gh.GetRepository(ctx)
+	repo, err := r.GetRepository(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository metadata: %w", err)
 	}
@@ -192,7 +188,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	var allReasons []string
 
 	// Check classic branch protection rules
-	bp, err := r.gh.GetBranchProtection(ctx, r.GetCurrentBranch())
+	bp, err := r.GetBranchProtection(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check branch protection - return error to user
 		return &provisioning.TestResults{
@@ -213,7 +209,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	}
 
 	// Check repository rulesets
-	rulesets, err := r.gh.GetRulesets(ctx, r.GetCurrentBranch())
+	rulesets, err := r.GetRulesets(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check rulesets - return error to user
 		return &provisioning.TestResults{
@@ -264,7 +260,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	commits, err := r.gh.Commits(ctx, finalPath, ref)
+	commits, err := r.Commits(ctx, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, repository.ErrFileNotFound

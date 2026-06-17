@@ -28,7 +28,7 @@ type Client interface {
 
 	// Pull requests
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, number int, body string) error
+	CommentPullRequest(ctx context.Context, number int, body string) error
 }
 
 type Repository struct {

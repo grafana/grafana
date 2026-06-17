@@ -397,7 +397,7 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]
 	return ret, nil
 }
 
-func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
+func (r *githubClient) CommentPullRequest(ctx context.Context, number int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
