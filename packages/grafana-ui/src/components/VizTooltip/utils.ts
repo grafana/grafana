@@ -123,7 +123,7 @@ export const getTooltipDisplayValue = (
  * @param mode - Whether to show only the hovered series (`Single`) or all series (`Multi`).
  * @param sortOrder - How to sort the output rows. Use `SortOrder.None` to preserve field order.
  * @param fieldFilter - Optional predicate to exclude specific fields. Defaults to including all fields.
- * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted.
+ * @param hideZeros - When `true`, rows whose value is exactly `0` are omitted. Defaults to `false`.
  * @param extraFields - Additional fields appended after the main rows as supplementary context (e.g. fields not shown in the visualization). These rows have `isHiddenFromViz: true` and are not sorted.
  */
 export const getFieldDisplayItems = (
