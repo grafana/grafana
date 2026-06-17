@@ -458,25 +458,23 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
-## Copy or duplicate dashboard elements
+## Copy, duplicate, or delete dashboard elements
 
-You can copy and paste or duplicate the following dashboard elements:
+You can copy and paste, duplicate, or delete any dashboard elements using the sidebar:
 
-- Panels
-- Rows
-- Tabs
-
-To copy or duplicate dashboard elements, follow these steps:
+To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
+1. Do one of the following:
 
-   If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+   - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
+   - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
 
-1. In the top-corner of the sidebar, click the **Copy or Duplicate** icon and do one of the following:
+1. In the top-corner of the sidebar, do one of the following:
    - Click **Copy**.
    - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
+   - Click **Delete** and then confirm you want to delete the control. Proceed to step 7.
 
 1. If you selected **Copy**, navigate to the part of the dashboard where you want to add the copied element, and click **Paste panel**, **Paste row**, or **Paste tab**.
 1. Update the copied or duplicated element if needed.
@@ -497,3 +495,5 @@ To make a copy of a dashboard, follow these steps:
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
 
 1. Click **Save**.
+
+You're now in the copied dashboard.
