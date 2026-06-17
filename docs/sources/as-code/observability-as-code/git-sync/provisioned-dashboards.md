@@ -65,7 +65,7 @@ To add a new dashboard from the Grafana UI:
 1. On the **Dashboards** tab, click on **New** on the top right corner and chose one of these options:
    - **New dashboard**. When you create a new dashboard in a provisioned folder associated with a Git repository, you follow the same process you use for any new dashboard. Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
    - **Import dashboard**. Refer to [Add a dashboard using Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources##add-a-dashboard-using-import-dashboards) for more details.
-   - **Use template**. Create a dashboard using a Grafana template. 
+   - **Use template**. Create a dashboard using a Grafana template.
 
 After you create the dashboard, follow these steps:
 
@@ -74,13 +74,13 @@ After you create the dashboard, follow these steps:
    - **Title**: The title of the dashboard.
    - **Description**: Description of the dashboard.
    - **Target folder**: The folder where you want to store the new dashboard.
-   - **Branch**: Specify the branch name in your Git provider (for example, main). 
+   - **Branch**: Specify the branch name in your Git provider (for example, main).
    - **Repository folder**: The folder inside the repository. Leave empty for the repository root.
    - **Filename**: The name of the dashboard file.
-   - **Comment**: Add a comment describing your changes for you commit. 
+   - **Comment**: Add a comment describing your changes for you commit.
 1. Optional: Select the **Changes** tab to view the differences between the updates you made and the original resource.
-1. Select **Save**, and the updated dashboard will load. 
-1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository. 
+1. Select **Save**, and the updated dashboard will load.
+1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository.
 1. Follow your usual Git workflow to save and merge the PR to your repository.
 
 ## Edit dashboards
@@ -89,16 +89,16 @@ When you edit a provisioned resource, you're prompted to save or discard those c
 
 To save dashboard changes:
 
-1. Select **Edit** to update a provisioned dashboard. 
+1. Select **Edit** to update a provisioned dashboard.
 1. Make your desired changes, and click **Save dashboard**.
 1. On the **Provisioned dashboard** panel, choose the options you want to use:
-   - **Branch**: Specify the branch name in your Git provider (for example, main). 
+   - **Branch**: Specify the branch name in your Git provider (for example, main).
    - **Repository folder**: The folder inside the repository. Leave empty for the repository root.
    - **Filename**: The name of the dashboard file.
    - **Comment**: Add a comment describing your changes for your commit.
 1. Optional: Select the **Changes** tab to view the differences between the updates you made and the original resource.
-1. Select **Save**, and the updated dashboard will load. 
-1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository. 
+1. Select **Save**, and the updated dashboard will load.
+1. On the prompt, select **Open a pull request in GitHub** to open a new PR to your repository.
 1. Follow your usual Git workflow to save and merge the PR to your repository.
 
 ## Remove dashboards
