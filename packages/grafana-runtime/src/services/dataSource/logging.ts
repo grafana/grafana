@@ -5,3 +5,7 @@ import { getLogger } from '../logging/registry';
 export function logDataSourceInstanceError(message: string, error: unknown, context?: LogContext): void {
   getLogger('grafana/runtime.plugins.datasource').logError(new Error(message, { cause: error }), context);
 }
+
+export function logDataSourceWarning(message: string, context?: LogContext): void {
+  getLogger('grafana/runtime.plugins.datasource').logWarning(message, context);
+}

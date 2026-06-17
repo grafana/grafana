@@ -1,9 +1,11 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
 import { RuntimeDataSource } from '../RuntimeDataSource';
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
+import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
 import {
   _resetForTests as resetPlugin,
   getDataSourceInstance,
@@ -56,19 +58,23 @@ function ds(overrides: Partial<DataSourceInstanceSettings> = {}): DataSourceInst
 }
 
 const logError = jest.fn();
+const logWarning = jest.fn();
 
 beforeEach(() => {
   resetInstanceSettings();
   resetPlugin();
   resetPluginCache();
   logError.mockClear();
+  logWarning.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
     logDebug: jest.fn(),
     logError,
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
-    logWarning: jest.fn(),
+    logWarning,
   });
+  // No legacy srv by default — the fallback should be inert.
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
 
 describe('plugin', () => {
@@ -428,6 +434,88 @@ describe('plugin', () => {
     it('throws if the singleton has not been registered', async () => {
       initDataSourceInstanceSettings({}, '');
       await expect(getDataSourceInstance('__expr__')).rejects.toThrow('Expression datasource has not been initialised');
+    });
+  });
+
+  describe('legacy DataSourceSrv fallback', () => {
+    it('falls back to the legacy srv and logs a warning when the new path cannot resolve the instance', async () => {
+      // Empty cache so the new path throws "not found".
+      initDataSourceInstanceSettings({}, '');
+      setDataSourcePluginImporter(jest.fn());
+
+      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const get = jest.fn().mockResolvedValue(legacyInstance);
+      // getInstanceSettings also misses, so the settings-level fallback stays silent and the
+      // instance-level fallback is what resolves the instance.
+      const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+      setDataSourceSrv({ get, getInstanceSettings } as unknown as DataSourceSrv);
+
+      const result = await getDataSourceInstance('unknown-uid');
+
+      expect(result).toBe(legacyInstance);
+      expect(get).toHaveBeenCalledWith('unknown-uid', undefined);
+      expect(logWarning).toHaveBeenCalledTimes(1);
+      expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: 'unknown-uid' });
+    });
+
+    it('rethrows the original error and does not log when the legacy srv also cannot resolve it', async () => {
+      initDataSourceInstanceSettings({}, '');
+      setDataSourcePluginImporter(jest.fn());
+
+      const get = jest.fn().mockRejectedValue(new Error('legacy not found'));
+      const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+      setDataSourceSrv({ get, getInstanceSettings } as unknown as DataSourceSrv);
+
+      await expect(getDataSourceInstance('unknown-uid')).rejects.toThrow(/was not found/);
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it('does not consult the legacy srv when the new path succeeds', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      const instance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      setDataSourcePluginImporter(
+        jest.fn().mockResolvedValue({ DataSourceClass: jest.fn().mockReturnValue(instance), components: {} })
+      );
+      const get = jest.fn();
+      setDataSourceSrv({ get } as unknown as DataSourceSrv);
+
+      const result = await getDataSourceInstance(settings.uid);
+
+      expect(result).toBe(instance);
+      expect(get).not.toHaveBeenCalled();
+      expect(logWarning).not.toHaveBeenCalled();
+    });
+
+    it('routes a concurrent in-flight caller through the fallback when the load rejects', async () => {
+      const settings = ds();
+      initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
+
+      // A deferred import so the first caller's load stays in-flight while the second arrives.
+      let rejectImport: (err: Error) => void = () => {};
+      const importPromise = new Promise((_, reject) => {
+        rejectImport = reject;
+      });
+      setDataSourcePluginImporter(jest.fn().mockReturnValue(importPromise));
+
+      const legacyInstance = Object.create(DataSourceApi.prototype) as DataSourceApi;
+      const get = jest.fn().mockResolvedValue(legacyInstance);
+      setDataSourceSrv({ get } as unknown as DataSourceSrv);
+
+      // First caller starts the load; the second reuses the in-flight promise.
+      const first = getDataSourceInstance(settings.uid);
+      const second = getDataSourceInstance(settings.uid);
+
+      // Let both reach their await points (first awaiting the load, second awaiting in-flight).
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      rejectImport(new Error('module not found'));
+
+      // Both callers — including the in-flight one — fall back to the legacy instance.
+      await expect(first).resolves.toBe(legacyInstance);
+      await expect(second).resolves.toBe(legacyInstance);
+      expect(get).toHaveBeenCalledTimes(2);
+      expect(logWarning).toHaveBeenCalledTimes(2);
     });
   });
 });
