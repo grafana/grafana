@@ -53,7 +53,7 @@ describe('cached display selective resolvers', () => {
     }
   });
 
-  it('display.color equals display(v).color (thresholds)', () => {
+  it('display.color equals display(v).color (thresholds) and colors() agrees', () => {
     const frame = withOverrides(
       createDataFrame({
         fields: [
@@ -81,6 +81,41 @@ describe('cached display selective resolvers', () => {
 
     for (const v of values) {
       expect(display!.color!(v)).toEqual(display!(v).color);
+    }
+
+    const { palette, indices } = display!.colors!(values);
+    expect(indices.map((i) => palette[i])).toEqual(values.map((v) => display!.color!(v)));
+  });
+
+  it('colors() palette is hex6 for opaque colors (so consumers can detect alpha by length)', () => {
+    // Regression: opaque colors normalize to hex6 (#rrggbb), not hex8 with an ff suffix.
+    // Scatter relies on this to decide whether to apply its fill-opacity slider.
+    const frame = withOverrides(
+      createDataFrame({
+        fields: [
+          {
+            name: 'status',
+            type: FieldType.number,
+            values: [1, 2],
+            config: {
+              mappings: [
+                {
+                  type: MappingType.ValueToText,
+                  options: { '1': { color: 'green' }, '2': { color: 'red' } },
+                },
+              ],
+            },
+          },
+        ],
+      })
+    );
+
+    const { palette } = frame.fields[0].display!.colors!([1, 2]);
+
+    expect(palette.length).toBeGreaterThan(0);
+    for (const c of palette) {
+      // opaque => hex6 (#rrggbb), never a hex8 #rrggbbff form
+      expect(c).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });
 });

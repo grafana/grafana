@@ -11,7 +11,7 @@ import {
 import { AxisPlacement, FieldColorModeId, VisibilityMode } from '@grafana/schema';
 
 import { PointShape } from './panelcfg.gen';
-import { prepConfig } from './scatter';
+import { paletteHasAlpha, prepConfig } from './scatter';
 import { type XYSeries } from './types2';
 
 /*
@@ -300,5 +300,32 @@ describe('color field compilation', () => {
         ['#ff0000', '#ff0000', '#ff0000'],
       ],
     ]);
+  });
+});
+
+describe('paletteHasAlpha', () => {
+  // Regression: field.display.colors() returns asHexString-normalized colors — hex6
+  // for opaque, hex8 only when an alpha channel is present. Opaque hex6 colors must NOT
+  // be treated as having alpha, otherwise the fill-opacity slider is silently skipped
+  // for color-by-field scatter. (The previous `!endsWith('ff')` check flagged opaque
+  // hex6 like '#73bf69' as having alpha.)
+  it('is false for opaque hex6 colors (so the opacity slider still applies)', () => {
+    expect(paletteHasAlpha(['#73bf69', '#f2495c', '#5794f2'])).toBe(false);
+    // an opaque color whose blue channel happens to be ff is still opaque
+    expect(paletteHasAlpha(['#0000ff'])).toBe(false);
+  });
+
+  it('is false for an empty palette', () => {
+    expect(paletteHasAlpha([])).toBe(false);
+  });
+
+  it('is true when a color carries a non-opaque alpha byte (hex8)', () => {
+    expect(paletteHasAlpha(['#73bf6980'])).toBe(true);
+    expect(paletteHasAlpha(['#73bf69', '#73bf6900'])).toBe(true); // mixed opaque + transparent
+  });
+
+  it('treats fully-opaque hex8 (#rrggbbff) as opaque', () => {
+    expect(paletteHasAlpha(['#73bf69ff'])).toBe(false);
+    expect(paletteHasAlpha(['#73BF69FF'])).toBe(false); // case-insensitive
   });
 });

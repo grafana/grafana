@@ -398,6 +398,15 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
     wrapped.text = (value: unknown, decimals?: DecimalCount) => disp.text!(value, decimals);
   }
 
+  // Batch colors reuse disp's dedup; we hex-normalize the (small, deduped) palette
+  // so it matches single-value color() output.
+  if (disp.colors) {
+    wrapped.colors = (values: unknown[], min?: number, max?: number) => {
+      const { palette, indices } = disp.colors!(values, min, max);
+      return { palette: palette.map((c) => asHexString(c)), indices };
+    };
+  }
+
   return wrapped;
 }
 

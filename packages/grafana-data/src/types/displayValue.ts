@@ -1,5 +1,15 @@
 import { type FormattedValue } from './valueFormats';
 
+/**
+ * Batch color resolution: a deduped palette and a per-value index into it (parallel to the input).
+ *
+ * @alpha
+ */
+export interface DisplayColors {
+  palette: string[];
+  indices: number[];
+}
+
 export interface DisplayProcessor {
   (value: unknown, decimals?: DecimalCount): DisplayValue;
   /**
@@ -17,6 +27,13 @@ export interface DisplayProcessor {
    * @alpha
    */
   text?(value: unknown, decimals?: DecimalCount): string;
+  /**
+   * Resolve colors for many values at once, returning a deduped palette plus a
+   * per-value index into it. For large value sets (e.g. scatter point clouds).
+   *
+   * @alpha
+   */
+  colors?(values: unknown[], min?: number, max?: number): DisplayColors;
 }
 
 export interface DisplayValue extends FormattedValue {

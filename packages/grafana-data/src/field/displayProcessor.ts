@@ -8,7 +8,8 @@ import { dateTimeParse } from '../datetime/parser';
 import { type GrafanaTheme2 } from '../themes/types';
 import { type KeyValue } from '../types/data';
 import { type Field, FieldType } from '../types/dataFrame';
-import { type DecimalCount, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
+import { type DecimalCount, type DisplayColors, type DisplayProcessor, type DisplayValue } from '../types/displayValue';
+import { FALLBACK_COLOR } from '../types/fieldColor';
 import { type TimeZone } from '../types/time';
 import { type FormattedValue } from '../types/valueFormats';
 import { type ValueMappingResult } from '../types/valueMapping';
@@ -17,6 +18,7 @@ import { getValueMappingResult } from '../utils/valueMappings';
 import { isBooleanUnit } from '../valueFormats/baseFormatters';
 import { getValueFormat } from '../valueFormats/valueFormats';
 
+import { getFieldColorModeForField } from './fieldColor';
 import { getScaleCalculator } from './scale';
 
 interface DisplayProcessorOptions {
@@ -263,6 +265,46 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   // path (skipping scale/color resolution) can follow once needed; today the
   // color path is the one callers pay for unnecessarily.
   proc.text = (value, decimals) => proc(value, decimals).text;
+
+  // Batch color resolution with palette dedup. For continuous by-value modes a
+  // caller-supplied min/max lets several series share one color scale (e.g. scatter
+  // coloring all points on a global range); otherwise colors come from the per-value
+  // resolver (the common case), and discrete modes ignore min/max entirely.
+  proc.colors = (values: unknown[], min?: number, max?: number): DisplayColors => {
+    const continuousCalc =
+      min != null && max != null && config.color?.mode?.startsWith('continuous')
+        ? getFieldColorModeForField(field).getCalculator(field, options.theme)
+        : null;
+    const span = (max ?? 0) - (min ?? 0) || 1;
+
+    const colorPalette: string[] = [];
+    const lookup = new Map<string | undefined, number>();
+    const indices = new Array<number>(values.length);
+
+    for (let i = 0; i < values.length; i++) {
+      let c: string | undefined;
+
+      if (continuousCalc != null) {
+        const v = anyToNumber(values[i]);
+        const percent = (v - min!) / span;
+        c = continuousCalc(v, percent);
+      } else {
+        c = resolveColor(values[i]);
+      }
+
+      let idx = lookup.get(c);
+
+      if (idx === undefined) {
+        idx = colorPalette.length;
+        colorPalette.push(c ?? FALLBACK_COLOR);
+        lookup.set(c, idx);
+      }
+
+      indices[i] = idx;
+    }
+
+    return { palette: colorPalette, indices };
+  };
 
   return proc;
 }

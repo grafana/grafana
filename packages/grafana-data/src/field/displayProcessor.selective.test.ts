@@ -1,6 +1,6 @@
 import { createTheme } from '../themes/createTheme';
 import { type Field, type FieldConfig, FieldType } from '../types/dataFrame';
-import { FieldColorModeId } from '../types/fieldColor';
+import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
 import { ThresholdsMode } from '../types/thresholds';
 import { MappingType, SpecialValueMatch } from '../types/valueMapping';
 
@@ -8,7 +8,8 @@ import { getDisplayProcessor } from './displayProcessor';
 
 // Proves the selective resolvers added to DisplayProcessor are equivalent to the
 // full processor: display.color(v) === display(v).color and display.text(v) ===
-// display(v).text. The full-path color baseline itself is pinned in displayProcessor.color.test.ts.
+// display(v).text, and that display.colors(values) reconstructs the same per-value
+// colors. The full-path color baseline itself is pinned in displayProcessor.color.test.ts.
 const theme = createTheme();
 
 function field(config: FieldConfig, type: FieldType = FieldType.number, values: unknown[] = []): Field {
@@ -154,5 +155,16 @@ describe.each(scenarios)('selective resolvers — $name', ({ field: f, values })
     for (const v of values) {
       expect(dp.text!(v)).toEqual(dp(v).text);
     }
+  });
+
+  it('display.colors(values) reconstructs the per-value colors with a deduped palette', () => {
+    const { palette, indices } = dp.colors!(values);
+
+    expect(indices).toHaveLength(values.length);
+    // palette is deduped
+    expect(new Set(palette).size).toEqual(palette.length);
+    // reconstructs each value's color (FALLBACK for the rare undefined-color case)
+    const reconstructed = indices.map((i) => palette[i]);
+    expect(reconstructed).toEqual(values.map((v) => dp.color!(v) ?? FALLBACK_COLOR));
   });
 });

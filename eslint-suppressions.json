@@ -3582,7 +3582,7 @@
   },
   "public/app/plugins/panel/xychart/scatter.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 14
+      "count": 11
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 4

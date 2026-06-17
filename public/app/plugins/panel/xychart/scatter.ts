@@ -1,25 +1,12 @@
-import tinycolor from 'tinycolor2';
 import uPlot from 'uplot';
 
-import {
-  FALLBACK_COLOR,
-  type Field,
-  FieldType,
-  formattedValueToString,
-  getFieldColorModeForField,
-  type GrafanaTheme2,
-  MappingType,
-  SpecialValueMatch,
-  ThresholdsMode,
-  colorManipulator,
-} from '@grafana/data';
+import { FALLBACK_COLOR, FieldType, formattedValueToString, type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { AxisPlacement, FieldColorModeId, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
+import { AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { type FacetedData, type FacetSeries } from '@grafana/ui/internal';
 
 import { pointWithin, Quadtree, type Rect } from '../barchart/quadtree';
-import { valuesToFills } from '../heatmap/utils';
 
 import { PointShape } from './panelcfg.gen';
 import { type XYSeries } from './types2';
@@ -432,25 +419,13 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     });
   });
 
-  const dispColors = xySeries.map((s): FieldColorValuesWithCache => {
-    const cfg: FieldColorValuesWithCache = {
-      index: [],
-      getAll: () => [],
-      getOne: () => -1,
-      // cache for renderer, refreshed in prepData()
-      values: [],
-      hasAlpha: false,
-    };
-
-    const f = s.color.field;
-
-    if (f != null) {
-      Object.assign(cfg, fieldValueColors(f, theme));
-      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
-    }
-
-    return cfg;
-  });
+  // palette + per-point palette idxs + alpha flag, refreshed in prepData() via
+  // field.display.colors() (the canonical value->color resolver)
+  const dispColors = xySeries.map(() => ({
+    index: [] as string[],
+    values: [] as number[],
+    hasAlpha: false,
+  }));
 
   function prepData(xySeries: XYSeries[]): FacetedData {
     // if (info.error || !data.length) {
@@ -460,7 +435,11 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
     const { size: sizeRange, color: colorRange } = getGlobalRanges(xySeries);
 
     xySeries.forEach((s, i) => {
-      dispColors[i].values = dispColors[i].getAll(s.color.field?.values ?? [], colorRange.min, colorRange.max);
+      const f = s.color.field;
+      const colors = f?.display?.colors?.(f.values, colorRange.min, colorRange.max);
+      dispColors[i].index = colors?.palette ?? [];
+      dispColors[i].values = colors?.indices ?? [];
+      dispColors[i].hasAlpha = paletteHasAlpha(dispColors[i].index);
     });
 
     return [
@@ -551,147 +530,14 @@ const getGlobalRanges = (xySeries: XYSeries[]) => {
   return ranges;
 };
 
-function getHex8Color(color: string, theme: GrafanaTheme2) {
-  return tinycolor(theme.visualization.getColorByName(color)).toHex8String();
-}
-
-export interface FieldColorValues {
-  index: unknown[];
-  getOne: GetOneValue;
-  getAll: GetAllValues;
-}
-interface FieldColorValuesWithCache extends FieldColorValues {
-  values: number[];
-  hasAlpha: boolean;
-}
-type GetAllValues = (values: unknown[], min?: number, max?: number) => number[];
-type GetOneValue = (value: unknown, min?: number, max?: number) => number;
-
-/** compiler for values to palette color idxs (from thresholds, mappings, by-value gradients) */
-// exported for golden tests that freeze its palette+index output ahead of the
-// field.display.colors() migration
-export function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
-  let index: unknown[] = [];
-  let getAll: GetAllValues = () => [];
-  let getOne: GetOneValue = () => -1;
-
-  let conds = '';
-
-  // if any mappings exist, use them regardless of other settings
-  if (f.config.mappings?.length ?? 0 > 0) {
-    let mappings = f.config.mappings!;
-
-    for (let i = 0; i < mappings.length; i++) {
-      let m = mappings[i];
-
-      if (m.type === MappingType.ValueToText) {
-        for (let k in m.options) {
-          let { color } = m.options[k];
-
-          if (color != null) {
-            let rhs = f.type === FieldType.string ? JSON.stringify(k) : Number(k);
-            conds += `v === ${rhs} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
-          }
-        }
-      } else if (m.options.result.color != null) {
-        let { color } = m.options.result;
-
-        if (m.type === MappingType.RangeToText) {
-          let range = [];
-
-          if (m.options.from != null) {
-            range.push(`v >= ${Number(m.options.from)}`);
-          }
-
-          if (m.options.to != null) {
-            range.push(`v <= ${Number(m.options.to)}`);
-          }
-
-          if (range.length > 0) {
-            conds += `${range.join(' && ')} ? ${index.length} : `;
-            index.push(getHex8Color(color, theme));
-          }
-        } else if (m.type === MappingType.SpecialValue) {
-          let spl = m.options.match;
-
-          if (spl === SpecialValueMatch.NaN) {
-            conds += `isNaN(v)`;
-          } else if (spl === SpecialValueMatch.NullAndNaN) {
-            conds += `v == null || isNaN(v)`;
-          } else {
-            conds += `v ${
-              spl === SpecialValueMatch.True
-                ? '=== true'
-                : spl === SpecialValueMatch.False
-                  ? '=== false'
-                  : spl === SpecialValueMatch.Null
-                    ? '== null'
-                    : spl === SpecialValueMatch.Empty
-                      ? '=== ""'
-                      : '== null'
-            }`;
-          }
-
-          conds += ` ? ${index.length} : `;
-          index.push(getHex8Color(color, theme));
-        } else if (m.type === MappingType.RegexToText) {
-          // TODO
-        }
-      }
-    }
-
-    conds += '-1'; // ?? what default here? null? FALLBACK_COLOR?
-  } else if (f.config.color?.mode === FieldColorModeId.Thresholds) {
-    if (f.config.thresholds?.mode === ThresholdsMode.Absolute) {
-      let steps = f.config.thresholds.steps;
-      let lasti = steps.length - 1;
-
-      for (let i = lasti; i > 0; i--) {
-        let rhs = Number(steps[i].value);
-        conds += `v >= ${rhs} ? ${i} : `;
-      }
-
-      conds += '0';
-
-      index = steps.map((s) => getHex8Color(s.color, theme));
-    } else {
-      // TODO: percent thresholds?
-    }
-  } else if (f.config.color?.mode?.startsWith('continuous')) {
-    let calc = getFieldColorModeForField(f).getCalculator(f, theme);
-
-    index = Array(32);
-
-    for (let i = 0; i < index.length; i++) {
-      let pct = i / (index.length - 1);
-      index[i] = getHex8Color(calc(pct, pct), theme);
-    }
-
-    getAll = (vals, min, max) => valuesToFills(vals as number[], index as string[], min!, max!);
-  }
-
-  if (conds !== '') {
-    getOne = new Function('v', `return ${conds};`) as GetOneValue;
-
-    getAll = new Function(
-      'vals',
-      `
-      let idxs = Array(vals.length);
-
-      for (let i = 0; i < vals.length; i++) {
-        let v = vals[i];
-        idxs[i] = ${conds};
-      }
-
-      return idxs;
-    `
-    ) as GetAllValues;
-  }
-
-  return {
-    index,
-    getOne,
-    getAll,
-  };
+/**
+ * Whether any palette color carries non-opaque alpha. field.display.colors() returns
+ * asHexString-normalized colors: hex6 (#rrggbb) for opaque colors and hex8 (#rrggbbaa)
+ * when an alpha channel is present. So a color is non-opaque only when it is hex8 with
+ * an alpha byte below ff. When the palette already encodes alpha (e.g. opacity-by-value)
+ * the renderer uses it as-is; otherwise it applies the panel's fill-opacity slider, so
+ * mis-detecting opaque colors as having alpha silently disables that slider.
+ */
+export function paletteHasAlpha(palette: string[]): boolean {
+  return palette.some((c) => c.length > 7 && !c.toLowerCase().endsWith('ff'));
 }
