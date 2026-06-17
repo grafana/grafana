@@ -467,7 +467,7 @@ var (
 			Description: "Read the alerting notifications configuration, including external Alertmanager sync state.",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingConfigRead},
+				{Action: accesscontrol.ActionAlertingConfigRead, Scope: models.ScopeAlertingConfigAll},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -480,7 +480,7 @@ var (
 			Description: "Update the alerting notifications configuration, including the external Alertmanager sync target.",
 			Group:       models.AlertRolesGroup,
 			Permissions: accesscontrol.ConcatPermissions(notificationsConfigReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingConfigUpdate},
+				{Action: accesscontrol.ActionAlertingConfigUpdate, Scope: models.ScopeAlertingConfigAll},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},

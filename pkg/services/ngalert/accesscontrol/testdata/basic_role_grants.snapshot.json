@@ -210,10 +210,12 @@
         "scope": "notifications.alerting.grafana.app/alertmanagerimports:*"
       },
       {
-        "action": "notifications.alerting.grafana.app/configs:get"
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
       },
       {
-        "action": "notifications.alerting.grafana.app/configs:update"
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
       },
       {
         "action": "notifications.alerting.grafana.app/routingtrees:create"
@@ -447,7 +449,8 @@
         "scope": "folders:*"
       },
       {
-        "action": "notifications.alerting.grafana.app/configs:get"
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
       }
     ]
   }

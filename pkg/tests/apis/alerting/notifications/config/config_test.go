@@ -133,6 +133,18 @@ func requireSingletonRejection(t *testing.T, err error) {
 	require.Contains(t, err.Error(), "singleton")
 }
 
+// configWildcardPermission grants the given Config actions over the all-uid
+// scope (configs:uid:*), which covers the configs:uid:default scope the
+// authorizer evaluates against.
+func configWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
+	return resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          accesscontrol.AlertingConfigResource,
+		ResourceAttribute: "uid",
+		ResourceID:        "*",
+	}
+}
+
 // TestIntegrationConfigAccessControl pins down the custom authorizer behavior:
 //   - get/list gated by configs:get (read), granted to Viewer and Admin.
 //   - create/patch/update gated by configs:update, granted to Admin only.
@@ -148,11 +160,11 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 
 	// Custom reader: only the Config read action.
 	reader := helper.CreateUser("ConfigReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{Actions: []string{accesscontrol.ActionAlertingConfigRead}},
+		configWildcardPermission(accesscontrol.ActionAlertingConfigRead),
 	})
 	// Custom writer: read + update, no status action.
 	writer := helper.CreateUser("ConfigWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		{Actions: []string{accesscontrol.ActionAlertingConfigRead, accesscontrol.ActionAlertingConfigUpdate}},
+		configWildcardPermission(accesscontrol.ActionAlertingConfigRead, accesscontrol.ActionAlertingConfigUpdate),
 	})
 
 	type testCase struct {

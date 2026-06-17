@@ -1099,7 +1099,8 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "notifications.alerting.grafana.app/configs:get"
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
       }
     ],
     "grants": [
@@ -1113,10 +1114,12 @@
     "group": "Alerting",
     "permissions": [
       {
-        "action": "notifications.alerting.grafana.app/configs:get"
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
       },
       {
-        "action": "notifications.alerting.grafana.app/configs:update"
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
       }
     ],
     "grants": [
