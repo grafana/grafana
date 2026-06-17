@@ -3,7 +3,9 @@ import { BehaviorSubject, type Observable, combineLatest, type Subscription } fr
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
+import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
 import { type ScopesSelectorService } from './selector/ScopesSelectorService';
@@ -28,10 +30,17 @@ export class ScopesService implements ScopesContextValue {
 
   private subscriptions: Subscription[] = [];
 
+  // Holds the in-flight default-scope fetch started in the constructor when
+  // ScopesFirstMode is on and no URL scope is set. setEnabled awaits it so it
+  // gets to apply the result; if the fetch hasn't started (other mode), this
+  // stays undefined and setEnabled is a no-op for the default-scope path.
+  private defaultScopePromise: Promise<string | undefined> | undefined;
+
   constructor(
     private selectorService: ScopesSelectorService,
     private dashboardsService: ScopesDashboardsService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private apiClient: ScopesApiClient
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
@@ -112,6 +121,21 @@ export class ScopesService implements ScopesContextValue {
       this.selectorService.resolvePathToRoot(scopeNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
       });
+    }
+
+    // Kick off the default-scope fetch eagerly when no URL scope is set and
+    // ScopesFirstMode is on. Firing here (app boot) instead of in setEnabled
+    // (dashboard mount) gives /find/default_scope a head start over the
+    // selector's `useScopesById` request for recent scopes that will fire as
+    // soon as state.enabled flips to true. fetchDefaultScope seeds the
+    // getScope RTK cache as a side effect, so once it completes, the
+    // selector's lookup is a cache hit. Captured promise is consumed in
+    // setEnabled below (no duplicate request — RTK dedupes in-flight queries).
+    if (
+      queryParams.getAll('scopes').length === 0 &&
+      getFeatureFlagClient().getBooleanValue('grafana.enableScopesFirstMode', false)
+    ) {
+      this.defaultScopePromise = this.apiClient.fetchDefaultScope();
     }
 
     // Update scopes state based on URL.
@@ -248,6 +272,25 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
+        // When there is no selection yet and ScopesFirstMode is on, fetch the
+        // default scope and apply it. Fire-and-forget so setEnabled stays sync.
+        // fetchDefaultScope is itself gated on grafana.useDefaultScopesEndpoint
+        // and returns undefined when off, so the call is safe here.
+        if (appliedScopes.length === 0 && this.defaultScopePromise) {
+          this.defaultScopePromise.then((name) => {
+            if (name) {
+              // Bypass this.changeScopes (which hardcodes redirectOnApply=false
+              // for URL-driven init) and call the selector service directly
+              // with redirectOnApply=true. Applying the default scope on first
+              // mount should land the user on the scope's redirectPath or
+              // first scope navigation, matching the behavior of selecting
+              // the scope manually. The scope metadata is already in the
+              // getScope RTK Query cache (seeded by fetchDefaultScope), so
+              // applyScopes' downstream fetch is a cache hit.
+              this.selectorService.changeScopes([name], undefined, undefined, true);
+            }
+          });
+        }
         // Defer the URL write when scope metadata has not loaded yet.
         // setEnabled is called from `@grafana/scenes` during dashboard mount,
         // which can race with `applyScopes` and re-write a stale `scope_node`
