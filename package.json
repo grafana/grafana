@@ -25,6 +25,7 @@
     "e2e:pw": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test",
     "e2e:playwright:debug": "yarn e2e:pw --debug -x --trace on",
     "e2e:playwright:10x": "yarn e2e:pw --repeat-each=10",
+    "e2e:playwright:strict-csp": "STRICT_CSP=1 yarn e2e:playwright",
     "e2e:playwright:cloud-plugins": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep @cloud-plugins",
     "e2e:playwright:storybook": "NODE_OPTIONS='-C @grafana-app/source' yarn playwright test -c playwright.storybook.config.ts",
     "e2e:playwright:a11y": "AXE_A11Y_REPORT_PATH=./axe-ci-report.json NODE_OPTIONS='-C @grafana-app/source' yarn playwright test --grep \"@a11y\"",
