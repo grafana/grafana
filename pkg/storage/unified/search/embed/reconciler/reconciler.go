@@ -669,12 +669,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
 
-	// Don't embed resources whose tenant is marked for deletion. The tenant
-	// watcher labels every resource in the tenant, so the MODIFIED events
-	// from that labeling pass carry the pending-delete label and get skipped
-	// here. On restore the watcher removes the label and emits a MODIFIED
-	// event whose value no longer has it, so the resource embeds again.
-	// DELETED events are handled above so vectors still get cleaned up.
 	if embed.HasPendingDeleteLabel(ev.value) {
 		statusLabel = "skipped_pending_delete"
 		return nil

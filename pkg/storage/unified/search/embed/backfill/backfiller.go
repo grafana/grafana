@@ -350,9 +350,6 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
-	// Skip resources whose tenant is pending deletion — the tenant watcher
-	// labels them. Restore removes the label, so they embed again on the
-	// next pass.
 	if embed.HasPendingDeleteLabel(iter.Value()) {
 		statusLabel = "skipped_pending_delete"
 		return nil
