@@ -747,7 +747,7 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			//  skips the webhooks check at both the app and installation level,
+			// A disabled webhook skips the webhooks check at both the app and installation level,
 			// so a GitHub App without webhooks:write can still connect successfully.
 			name: "success - webhook disabled, no webhooks permission on app or installation",
 			connection: &provisioning.Connection{
@@ -792,7 +792,7 @@ func TestConnection_Test(t *testing.T) {
 			expectSuccess: true,
 		},
 		{
-			//  only skips the webhooks check; other required permissions still apply.
+			// A disabled webhook only skips the webhooks check; other required permissions still apply.
 			name: "failure - webhook disabled does not exempt missing contents permission",
 			connection: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
