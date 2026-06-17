@@ -943,15 +943,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAggregator",
-			Description:     "Enable grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "kubernetesAggregatorCapTokenAuth",
 			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
 			Stage:           FeatureStageExperimental,
@@ -1285,7 +1276,6 @@ var (
 			Expression:  "true", // Enabled by default for now
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
-
 		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",

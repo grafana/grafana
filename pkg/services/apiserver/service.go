@@ -445,8 +445,7 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	var runningServer *genericapiserver.GenericAPIServer
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
+	isKubernetesAggregatorEnabled := s.cfg.EnableKubernetesAggregator
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(

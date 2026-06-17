@@ -3009,7 +3009,8 @@
       "metadata": {
         "name": "kubernetesAggregator",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-02-12T20:59:35Z"
+        "creationTimestamp": "2024-02-12T20:59:35Z",
+        "deletionTimestamp": "2026-06-17T14:16:41Z"
       },
       "spec": {
         "description": "Enable grafana's embedded kube-aggregator",
