@@ -66,8 +66,13 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
 
   buildUrl = async (queryOptions?: UrlQueryMap) => {
     this.setState({ isBuildUrlLoading: true });
-    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme, useAbsoluteImageUrl } =
-      this.state;
+    const {
+      panelRef,
+      useLockedTime: useAbsoluteTimeRange,
+      useShortUrl,
+      selectedTheme,
+      useAbsoluteImageUrl,
+    } = this.state;
     const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 

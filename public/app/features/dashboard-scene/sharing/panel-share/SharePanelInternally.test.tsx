@@ -77,7 +77,7 @@ describe('SharePanelInternally', () => {
 
     await waitFor(() => expect(tab.state.imageUrl).toMatch(/^\/render\/d-solo\/dash-1\?/));
     expect(tab.state.imageUrl).not.toMatch(/^https?:\/\//);
-    expect(tab.state.imageUrl).toContain('panelId=A$panel-12');
+    expect(tab.state.imageUrl).toContain('panelId=panel-12');
   });
 });
 
