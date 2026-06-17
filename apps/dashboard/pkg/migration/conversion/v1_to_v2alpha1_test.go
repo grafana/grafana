@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
@@ -750,4 +751,56 @@ func TestV1ToV2alpha1_TimezoneEmptyString(t *testing.T) {
 	// leaving Timezone unset (nil), so the serving layer can apply the fallback.
 	assert.Nil(t, v2alpha1Dash.Spec.TimeSettings.Timezone,
 		"timezone: '' from V1 should produce nil Timezone in V2, not 'browser'")
+}
+
+func TestV1ToV2alpha1_TimeCompare(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	v1Dash := &dashv1.Dashboard{
+		Spec: dashv1.DashboardSpec{
+			Object: map[string]interface{}{
+				"title": "Time compare dashboard",
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":          1,
+						"type":        "timeseries",
+						"timeCompare": "1d",
+						"targets": []interface{}{
+							map[string]interface{}{
+								"refId": "A",
+								"datasource": map[string]interface{}{
+									"type": "prometheus",
+									"uid":  "prometheus-uid",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var v2alpha1Dash dashv2alpha1.Dashboard
+	err = scheme.Convert(v1Dash, &v2alpha1Dash, nil)
+	require.NoError(t, err)
+
+	panel := v2alpha1Dash.Spec.Elements["panel-1"].PanelKind
+	require.NotNil(t, panel)
+	require.NotNil(t, panel.Spec.Data.Spec.QueryOptions.TimeCompare)
+	assert.Equal(t, "1d", *panel.Spec.Data.Spec.QueryOptions.TimeCompare)
+
+	var v2beta1Dash dashv2beta1.Dashboard
+	err = scheme.Convert(&v2alpha1Dash, &v2beta1Dash, nil)
+	require.NoError(t, err)
+
+	betaPanel := v2beta1Dash.Spec.Elements["panel-1"].PanelKind
+	require.NotNil(t, betaPanel)
+	require.NotNil(t, betaPanel.Spec.Data.Spec.QueryOptions.TimeCompare)
+	assert.Equal(t, "1d", *betaPanel.Spec.Data.Spec.QueryOptions.TimeCompare)
 }
