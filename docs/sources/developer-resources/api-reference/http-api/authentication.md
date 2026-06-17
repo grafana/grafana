@@ -29,8 +29,9 @@ You can authenticate HTTP API requests using basic authentication or a service a
 
 ### Basic auth
 
-Basic auth is enabled by default. If you use this option, you authenticate your HTTP request via
-standard basic auth. Basic auth also authenticates LDAP users.
+This option is available in Grafana on prem only.
+
+Basic auth is enabled by default and allows you authenticate your HTTP request via standard basic auth. Basic auth also authenticates LDAP users.
 
 For example:
 
