@@ -31,7 +31,7 @@ If you need to manage or access other resources from your [Grafana Cloud Stack](
 
 Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning. To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
-## Grafana API specification
+## The Grafana API specification
 
 HTTP API specs are available in Swagger:
 
@@ -40,17 +40,11 @@ HTTP API specs are available in Swagger:
 
 You can browser and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
 
-## Authenticate HTTP API requests
+## Authentication
 
-### Grafana OSS
+In OSS, you can authenticate your requests to the HTTP APIs using basic auth or a service account. In Grafana Cloud, only the service account option is available. For more details refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
 
-{{< docs/shared lookup="developers/authentication.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Grafana Cloud
-
-{{< docs/shared source="grafana-cloud" lookup="/developer-resources/authentication.md" version="" >}}
-
-## X-Grafana-Org-Id Header
+## The X-Grafana-Org-Id header
 
 **X-Grafana-Org-Id** is an optional property that specifies the organization to which the action is applied. If not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
 
