@@ -810,7 +810,11 @@ export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: 
     // is intentionally not exposed (it is replaced by an expander placeholder row),
     // and the reserved meta keys are never shadowed by a same-named column so the
     // true row metadata (notably __index, used to resolve every cell) always wins.
-    const proto = {};
+    const proto = {
+      __depth: -1,
+      __index: -1,
+      __parentIndex: undefined,
+    };
     const descriptors: PropertyDescriptorMap = {};
     for (let j = 0; j < displayNames.length; j++) {
       const name = displayNames[j];
