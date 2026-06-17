@@ -7,10 +7,10 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
-import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardEditPane } from '../DashboardEditPane';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';

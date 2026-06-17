@@ -1,10 +1,10 @@
 import { type Subscription } from 'rxjs';
 
 import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { loadDefaultControlsShared$, loadDefaultLinks$, loadDefaultVariables$ } from '../utils/dashboardControls';
 import { getDsRefsFromScene } from '../utils/dashboardDsRefs';
-import { getDashboardSceneFor } from '../utils/utils';
 
 export class DefaultControlsBehavior extends SceneObjectBase<SceneObjectState> {
   private _variablesSub?: Subscription;

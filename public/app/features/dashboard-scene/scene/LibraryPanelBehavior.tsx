@@ -12,10 +12,11 @@ import {
 import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelLinksBehavior } from './PanelMenuBehavior';

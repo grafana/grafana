@@ -30,8 +30,7 @@ import {
   defaultIntervalVariableSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
-
-import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
+import { getIntervalsQueryFromNewIntervalModel } from 'app/features/dashboard-scene/utils/getIntervalsQueryFromNewIntervalModel';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';

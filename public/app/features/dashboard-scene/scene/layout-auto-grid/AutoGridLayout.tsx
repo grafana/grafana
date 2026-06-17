@@ -7,9 +7,9 @@ import {
   type VizPanel,
   type SceneGridItemLike,
 } from '@grafana/scenes';
+import { getLayoutOrchestratorFor } from 'app/features/dashboard-scene/utils/getLayoutOrchestratorFor';
 
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getLayoutOrchestratorFor } from '../../utils/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
 import { AutoGridItem } from './AutoGridItem';

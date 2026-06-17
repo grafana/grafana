@@ -9,10 +9,11 @@ import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { GroupByVariable, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { findVizPanelByKey, getQueryRunnerFor } from '../utils/utils';
 
 import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 

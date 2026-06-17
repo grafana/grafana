@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -7,7 +8,6 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
-import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { PanelElementEntry, PanelElementsData, MutationResult } from '../types';
 

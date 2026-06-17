@@ -28,11 +28,9 @@ import {
   SceneDataTransformer,
   type SceneObject,
 } from '@grafana/scenes';
-import {
-  activateSceneObjectAndParentTree,
-  findVizPanelByKey,
-  getVizPanelKeyForPanelId,
-} from 'app/features/dashboard-scene/utils/utils';
+import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/activateSceneObjectAndParentTree';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 

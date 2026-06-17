@@ -8,12 +8,12 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getDefaultVizPanel } from 'app/features/dashboard-scene/utils/getDefaultVizPanel';
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-
-import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { isDashboardLayoutItem } from './types/DashboardLayoutItem';

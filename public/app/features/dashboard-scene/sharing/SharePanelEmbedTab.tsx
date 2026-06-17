@@ -9,11 +9,11 @@ import {
 } from '@grafana/scenes';
 import { ShareEmbed } from 'app/features/dashboard/components/ShareModal/ShareEmbed';
 import { buildParams, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { type SceneShareTabState } from './types';
 

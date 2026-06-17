@@ -12,11 +12,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/getLibraryPanelBehavior';
+import { hasActualSaveChanges } from 'app/features/dashboard-scene/utils/hasActualSaveChanges';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/isLibraryPanel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { SaveLibraryVizPanelModal } from '../panel-edit/SaveLibraryVizPanelModal';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { getLibraryPanelBehavior, hasActualSaveChanges, isLibraryPanel } from '../utils/utils';
 
 interface DashboardPromptProps {
   dashboard: DashboardScene;

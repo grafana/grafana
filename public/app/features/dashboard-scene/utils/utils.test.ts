@@ -1,5 +1,8 @@
 import { VizPanel, SceneGridLayout } from '@grafana/scenes';
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { getLayoutForObject } from 'app/features/dashboard-scene/utils/getLayoutForObject';
+import { hasLibraryPanelsInV1Dashboard } from 'app/features/dashboard-scene/utils/hasLibraryPanelsInV1Dashboard';
+import { isValidLibraryPanelRef } from 'app/features/dashboard-scene/utils/isValidLibraryPanelRef';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -9,8 +12,6 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
-
-import { isValidLibraryPanelRef, hasLibraryPanelsInV1Dashboard, getLayoutForObject } from './utils';
 
 describe('utils', () => {
   describe('isValidLibraryPanelRef', () => {

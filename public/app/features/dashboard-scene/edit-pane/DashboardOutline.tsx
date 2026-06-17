@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
@@ -13,7 +14,6 @@ import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { type DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';

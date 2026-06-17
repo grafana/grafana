@@ -32,10 +32,10 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { NEW_ANNOTATION_NAME } from '../../scene/DashboardDataLayerSet';
-import { getPanelIdForVizPanel } from '../../utils/utils';
 
 type Props = {
   annotation: AnnotationQuery;

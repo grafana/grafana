@@ -65,6 +65,7 @@ import {
   enablePanelProfilingForDashboard,
   getDashboardComponentInteractionCallback,
 } from 'app/features/dashboard/services/DashboardProfiler';
+import { getIntervalsFromQueryString } from 'app/features/dashboard-scene/utils/getIntervalsFromQueryString';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
@@ -80,7 +81,6 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
-import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';

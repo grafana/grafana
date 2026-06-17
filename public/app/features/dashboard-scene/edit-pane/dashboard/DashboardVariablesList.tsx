@@ -7,12 +7,12 @@ import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { Box, Button } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
 import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 
 import { DraggableList } from './DraggableList';
 import { partitionSceneObjects } from './helpers';

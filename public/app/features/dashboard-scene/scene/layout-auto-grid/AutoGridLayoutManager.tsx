@@ -14,18 +14,16 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import { forceRenderChildren } from 'app/features/dashboard-scene/utils/forceRenderChildren';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getGridItemKeyForPanelId } from 'app/features/dashboard-scene/utils/getGridItemKeyForPanelId';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
+import { useDashboard } from 'app/features/dashboard-scene/utils/useDashboard';
 
 import { dashboardEditActions, NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
-import {
-  forceRenderChildren,
-  getDashboardSceneFor,
-  getGridItemKeyForPanelId,
-  getVizPanelKeyForPanelId,
-  useDashboard,
-} from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';

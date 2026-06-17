@@ -7,11 +7,11 @@ import { type EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
+import { useScenesFlickeringFix } from 'app/features/dashboard-scene/utils/useScenesFlickeringFix';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { useScenesFlickeringFix } from '../utils/utils';
 
 export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
   const stateManager = getDashboardScenePageStateManager();

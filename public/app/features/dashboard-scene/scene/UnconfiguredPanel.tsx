@@ -24,6 +24,8 @@ import {
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { AccessControlAction } from 'app/types/accessControl';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
@@ -42,7 +44,6 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 

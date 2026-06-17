@@ -5,10 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { useDashboardState } from 'app/features/dashboard-scene/utils/useDashboardState';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
-import { getQueryRunnerFor, useDashboardState } from '../../../utils/utils';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { RowRepeaterBehavior } from '../RowRepeaterBehavior';
 

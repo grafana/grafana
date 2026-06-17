@@ -7,10 +7,9 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { InspectTab } from 'app/features/inspector/types';
-
-import { getQueryRunnerFor } from '../utils/utils';
 
 export interface InspectQueryTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;

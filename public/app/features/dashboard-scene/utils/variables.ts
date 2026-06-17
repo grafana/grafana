@@ -18,13 +18,13 @@ import {
 } from '@grafana/scenes';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { getCurrentValueForOldIntervalModel } from 'app/features/dashboard-scene/utils/getCurrentValueForOldIntervalModel';
+import { getIntervalsFromQueryString } from 'app/features/dashboard-scene/utils/getIntervalsFromQueryString';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
-
-import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
 

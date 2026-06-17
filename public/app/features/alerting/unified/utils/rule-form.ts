@@ -17,11 +17,9 @@ import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
-import {
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-} from 'app/features/dashboard-scene/utils/utils';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { type LokiQuery } from 'app/plugins/datasource/loki/types';

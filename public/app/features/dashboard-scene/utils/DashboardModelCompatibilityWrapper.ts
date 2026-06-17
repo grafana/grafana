@@ -9,13 +9,14 @@ import {
 } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { behaviors, sceneGraph, type SceneObject, VizPanel } from '@grafana/scenes';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent

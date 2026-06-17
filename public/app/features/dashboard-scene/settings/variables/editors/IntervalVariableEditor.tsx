@@ -4,10 +4,8 @@ import { type ChangeEvent, type FormEvent } from 'react';
 import { type SelectableValue } from '@grafana/data';
 import { IntervalVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import {
-  getIntervalsFromQueryString,
-  getIntervalsQueryFromNewIntervalModel,
-} from 'app/features/dashboard-scene/utils/utils';
+import { getIntervalsFromQueryString } from 'app/features/dashboard-scene/utils/getIntervalsFromQueryString';
+import { getIntervalsQueryFromNewIntervalModel } from 'app/features/dashboard-scene/utils/getIntervalsQueryFromNewIntervalModel';
 
 import { IntervalVariableForm } from '../components/IntervalVariableForm';
 

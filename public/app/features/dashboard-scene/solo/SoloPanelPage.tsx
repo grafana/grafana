@@ -11,12 +11,12 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardPageRouteParams } from 'app/features/dashboard/containers/types';
+import { useScenesFlickeringFix } from 'app/features/dashboard-scene/utils/useScenesFlickeringFix';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../scene/SoloPanelContext';
-import { useScenesFlickeringFix } from '../utils/utils';
 
 import { SoloPanelPageLogo } from './SoloPanelPageLogo';
 

@@ -8,10 +8,12 @@ import { t } from '@grafana/i18n';
 import { locationService, config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { interpolateSectionTitle } from 'app/features/dashboard-scene/utils/interpolateSectionTitle';
+import { useDashboardState } from 'app/features/dashboard-scene/utils/useDashboardState';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
-import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { useSoloPanelContext } from '../SoloPanelContext';
 import { SectionVariableControls } from '../VariableControls';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';

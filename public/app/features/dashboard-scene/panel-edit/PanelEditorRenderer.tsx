@@ -6,11 +6,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useEditPaneCollapsed } from '../edit-pane/shared';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { LibraryPanelEditModals } from './LibraryPanelEditModals';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';

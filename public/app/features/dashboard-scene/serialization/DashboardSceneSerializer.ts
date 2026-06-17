@@ -12,6 +12,7 @@ import {
   getV1SchemaVariables,
   getV2SchemaVariables,
 } from 'app/features/dashboard/utils/tracking';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/getVizPanelKeyForPanelId';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -20,7 +21,6 @@ import { type DashboardChangeInfo } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';

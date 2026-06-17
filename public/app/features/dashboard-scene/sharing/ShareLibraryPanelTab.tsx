@@ -5,6 +5,7 @@ import { ShareLibraryPanel } from 'app/features/dashboard/components/ShareModal/
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -13,7 +14,6 @@ import {
   transformSceneToSaveModel,
   vizPanelToPanel,
 } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { type SceneShareTabState } from './types';
 

@@ -10,9 +10,8 @@ import {
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 import { InspectTab } from 'app/features/inspector/types';
-
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';
 import { InspectDataTab } from './InspectDataTab';

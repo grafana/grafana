@@ -22,6 +22,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
+import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/activateSceneObjectAndParentTree';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanelByKey';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -30,7 +32,6 @@ import { PanelTimeRange, type PanelTimeRangeState } from '../../scene/panel-time
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
-import { activateSceneObjectAndParentTree, findVizPanelByKey } from '../../utils/utils';
 import { buildPanelEditScene } from '../PanelEditor';
 import {
   testDashboard,

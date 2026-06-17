@@ -7,11 +7,11 @@ import {
   SwitchVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardEditActionEvent } from '../../edit-pane/shared';
-import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene, type DashboardSceneState } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';

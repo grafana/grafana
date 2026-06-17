@@ -5,9 +5,9 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type ModalSceneObjectLike } from '../sharing/types';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { UnlinkModal } from './UnlinkModal';
 

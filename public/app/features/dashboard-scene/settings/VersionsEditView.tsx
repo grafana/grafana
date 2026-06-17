@@ -22,10 +22,10 @@ import {
   type RevisionModel,
   VERSIONS_FETCH_LIMIT,
 } from 'app/features/dashboard/types/revisionModels';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { getDashboardTemplateExtension } from './enterprise-components/DashboardTemplateExtension';
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';

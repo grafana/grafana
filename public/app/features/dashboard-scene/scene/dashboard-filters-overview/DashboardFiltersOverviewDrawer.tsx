@@ -11,8 +11,8 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { Drawer, useStyles2 } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
 
-import { getDashboardSceneFor } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';

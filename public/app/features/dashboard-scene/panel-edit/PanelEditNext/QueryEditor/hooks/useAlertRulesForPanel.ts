@@ -3,10 +3,11 @@ import { useMemo } from 'react';
 import { AlertState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 import { type AlertingRule, type CombinedRule } from 'app/types/unified-alerting';
 
 import { promAlertStateToAlertState } from '../../../../scene/AlertStatesDataLayer';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../../../utils/utils';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 import { type AlertingState } from '../QueryEditorContext';
 import { type AlertRule } from '../types';

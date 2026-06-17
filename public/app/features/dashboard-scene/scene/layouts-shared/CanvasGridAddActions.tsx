@@ -6,9 +6,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { getDefaultVizPanel } from 'app/features/dashboard-scene/utils/getDefaultVizPanel';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 

@@ -9,9 +9,10 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { Box, Button, Combobox, Drawer, FeatureBadge, Field, Label, Stack, Switch } from '@grafana/ui';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
-import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
 

@@ -22,8 +22,7 @@ import {
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-
-import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
+import { getIntervalsQueryFromNewIntervalModel } from 'app/features/dashboard-scene/utils/getIntervalsQueryFromNewIntervalModel';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';

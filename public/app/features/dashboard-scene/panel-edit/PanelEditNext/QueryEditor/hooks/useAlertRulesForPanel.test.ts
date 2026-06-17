@@ -2,10 +2,11 @@ import { renderHook } from '@testing-library/react';
 
 import { AlertState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
+import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/getDashboardSceneFor';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/getPanelIdForVizPanel';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { promAlertStateToAlertState } from '../../../../scene/AlertStatesDataLayer';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../../../utils/utils';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 
 import { useAlertRulesForPanel } from './useAlertRulesForPanel';
