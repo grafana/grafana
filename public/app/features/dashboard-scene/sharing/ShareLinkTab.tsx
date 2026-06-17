@@ -35,6 +35,7 @@ interface ShareOptions extends ShareLinkConfiguration {
   shareUrl: string;
   imageUrl: string;
   isBuildUrlLoading: boolean;
+  useAbsoluteImageUrl: boolean;
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements ShareView {
@@ -51,6 +52,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       shareUrl: '',
       imageUrl: '',
       isBuildUrlLoading: false,
+      useAbsoluteImageUrl: state.useAbsoluteImageUrl ?? true,
     });
 
     this.addActivationHandler(() => {
@@ -64,7 +66,8 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
 
   buildUrl = async (queryOptions?: UrlQueryMap) => {
     this.setState({ isBuildUrlLoading: true });
-    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme } = this.state;
+    const { panelRef, useLockedTime: useAbsoluteTimeRange, useShortUrl, selectedTheme, useAbsoluteImageUrl } =
+      this.state;
     const dashboard = getDashboardSceneFor(this);
     const panel = panelRef?.resolve();
 
@@ -97,7 +100,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> implements 
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       updateQuery: { ...urlParamsUpdate, ...queryOptions, panelId: panel?.getPathId() },
-      absolute: true,
+      absolute: useAbsoluteImageUrl,
       soloRoute: true,
       render: true,
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),

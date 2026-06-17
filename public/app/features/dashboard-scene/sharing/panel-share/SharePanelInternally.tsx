@@ -13,7 +13,8 @@ export class SharePanelInternally extends ShareLinkTab {
   static Component = SharePanelInternallyRenderer;
 
   constructor(state: Partial<ShareLinkTabState>) {
-    super(state);
+    // Panel image actions should call Grafana through the same-origin render endpoint.
+    super({ ...state, useAbsoluteImageUrl: false });
   }
 
   public getTabLabel() {
