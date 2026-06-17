@@ -49,7 +49,7 @@ To add a variable, follow these steps:
 1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
 1. Choose a variable type from the list.
 
-    You can update the variable type by clicking **Change type** in the sidebar.
+   You can update the variable type by clicking **Change type** in the sidebar.
 
 {{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="add-variable" >}}
 
