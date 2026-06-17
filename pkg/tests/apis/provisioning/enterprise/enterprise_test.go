@@ -923,6 +923,11 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 				return false
 			}
 			last = updated
+			if msg := updated.Status.Health.Message; len(msg) > 0 || updated.Status.Health.Error != "" {
+				t.Logf("GHE poll: healthy=%v checked=%d error=%q message=%v",
+					updated.Status.Health.Healthy, updated.Status.Health.Checked,
+					updated.Status.Health.Error, msg)
+			}
 			ready := meta.FindStatusCondition(updated.Status.Conditions, provisioning.ConditionTypeReady)
 			return updated.Status.Health.Checked > 0 &&
 				updated.Status.Health.Healthy &&

@@ -239,6 +239,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	c, err := cc.connectionFactory.Build(ctx, conn)
 	if err != nil {
 		logger.Error("failed to build connection", "error", err)
+		// Record the build failure on the connection's health so the reason is
+		// observable instead of leaving the status empty when we return early.
+		// Best-effort: do not mask the original error if the status patch fails.
+		if patchErr := cc.patchBuildFailure(ctx, conn, err); patchErr != nil {
+			logger.Warn("failed to record build failure on connection status", "error", patchErr)
+		}
 		return err
 	}
 
@@ -328,6 +334,22 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
+}
+
+// patchBuildFailure records a failed connection Build on the status health so the
+// reason is visible, rather than leaving the status empty when process() returns early.
+func (cc *ConnectionController) patchBuildFailure(ctx context.Context, conn *provisioning.Connection, buildErr error) error {
+	health := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{buildErr.Error()},
+	}
+	return cc.statusPatcher.Patch(ctx, conn, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/health",
+		"value": health,
+	})
 }
 
 func (cc *ConnectionController) shouldGenerateToken(
