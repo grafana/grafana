@@ -25,11 +25,13 @@ import { transformToZipkin } from './transformToZipkin';
 export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '', fields: string[] = []) {
   let textToDownload = '';
 
-  logsModel.meta?.forEach((metaItem) => {
-    const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
-    textToDownload = textToDownload + string;
-  });
-  textToDownload = textToDownload + '\n\n';
+  if (logsModel.meta?.length) {
+    logsModel.meta?.forEach((metaItem) => {
+      const string = `${metaItem.label ? `${metaItem.label}: ` : ''}${JSON.stringify(metaItem.value)}\n`;
+      textToDownload = textToDownload + string;
+    });
+    textToDownload = textToDownload + '\n\n';
+  }
 
   logsModel.rows.forEach((row) => {
     const entry = !fields.length ? row.entry : fields.map((field) => row.labels[field] ?? '').join(' ');
