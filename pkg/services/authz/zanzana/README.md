@@ -237,20 +237,14 @@ address = localhost:4317
 
 ### Reconciler configuration
 
-There are two reconcilers for syncing authorization data to Zanzana. Only one should be active at a time:
+The MT reconciler syncs authorization data from CRDs to Zanzana. It can run in a standalone Zanzana server or embedded in Grafana.
 
-**1. Multi-tenant (MT) reconciler** - reads from CRDs. Can run in standalone Zanzana server or embedded in Grafana.
-
-**2. Legacy RBAC reconciler** - reads from Grafana's SQL database. Runs in the main Grafana process.
-
-Both reconcilers are controlled by the `[zanzana.reconciler]` section:
+Configuration is controlled by the `[zanzana.reconciler]` section:
 
 ```ini
 [zanzana.reconciler]
-# Which reconciler to run: "legacy" (default), "mt", or "disabled"
-mode = legacy
-
-# --- MT reconciler settings (only used when mode = mt) ---
+# Which reconciler to run: "mt" (default) or "disabled"
+mode = mt
 
 # For standalone Zanzana server, set API server URLs:
 # folder_apiserver_url = https://folder-apiserver.default.svc.cluster.local:6446
@@ -270,8 +264,7 @@ token_namespace = *
 ```
 
 **Reconciler modes:**
-- `mode = legacy` (default) - Legacy RBAC reconciler runs, reads from SQL tables
-- `mode = mt` - MT reconciler runs, reads from Unistore CRDs
+- `mode = mt` (default) - MT reconciler runs, reads from Unistore CRDs
   - In standalone Zanzana: requires `folder_apiserver_url` and `iam_apiserver_url`
   - In embedded Grafana: uses local apiserver automatically
 - `mode = disabled` - No reconciler runs

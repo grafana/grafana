@@ -908,7 +908,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	// identity on the context; Zanzana's authorizer rejects that unless
 	// allow_insecure is set. Enable it for the embedded test server so the
 	// reconciler can make progress.
-	if opts.ZanzanaReconcilerMode == setting.ZanzanaReconcilerModeMT {
+	if opts.ZanzanaReconcilerMode != setting.ZanzanaReconcilerModeDisabled {
 		zanzanaServerSect, err := getOrCreateSection("zanzana.server")
 		require.NoError(t, err)
 		_, err = zanzanaServerSect.NewKey("allow_insecure", "true")
