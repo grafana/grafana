@@ -1320,9 +1320,9 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch:          "main",
-						WebhookDisabled: true,
+						Branch: "main",
 					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
 				},
 			},
 			webhookURL:    "https://example.com/webhook",
@@ -1789,9 +1789,9 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						Branch:          "main",
-						WebhookDisabled: true,
+						Branch: "main",
 					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
 				},
 				Status: provisioning.RepositoryStatus{
 					Webhook: &provisioning.WebhookStatus{
