@@ -363,10 +363,10 @@ describe('TemplateDashboardModal', () => {
   });
 
   describe('Custom templates tab', () => {
-    describe('when the grafana.orgDashboardTemplates flag is enabled and the extension is registered', () => {
+    describe('when the grafana.customDashboardTemplates flag is enabled and the extension is registered', () => {
       beforeEach(() => {
         mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
 
       it('renders both Custom and Grafana-provisioned tabs when grafana templates are available', async () => {
@@ -436,10 +436,10 @@ describe('TemplateDashboardModal', () => {
       });
     });
 
-    describe('when the grafana.orgDashboardTemplates flag is disabled', () => {
+    describe('when the grafana.customDashboardTemplates flag is disabled', () => {
       beforeEach(() => {
         mockGetDashboardTemplatesTab.mockReturnValue(MockCustomTemplatesTab);
-        setTestFlags({ 'grafana.orgDashboardTemplates': false });
+        setTestFlags({ 'grafana.customDashboardTemplates': false });
       });
 
       it('does not render the Custom tab even when the extension is registered', async () => {
@@ -457,7 +457,7 @@ describe('TemplateDashboardModal', () => {
     describe('when the extension is not registered', () => {
       beforeEach(() => {
         mockGetDashboardTemplatesTab.mockReturnValue(null);
-        setTestFlags({ 'grafana.orgDashboardTemplates': true });
+        setTestFlags({ 'grafana.customDashboardTemplates': true });
       });
 
       it('does not render the Custom tab even when the feature flag is enabled', async () => {

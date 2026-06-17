@@ -1016,7 +1016,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
         options.route === DashboardRoutes.Template
       ) {
         const editMode = !!options.editTemplate;
@@ -1105,7 +1105,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         }
         case DashboardRoutes.Template: {
           if (
-            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false) &&
+            getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
             dashboardTemplateUid
           ) {
             rsp = await this.loadDashboardTemplate(dashboardTemplateUid, { editMode: !!editTemplate });
@@ -1161,7 +1161,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     dashboardTemplateUid: string,
     { editMode }: { editMode: boolean }
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
       throw new Error('Custom dashboard templates are not enabled');
     }
 
@@ -1415,7 +1415,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (options.route === DashboardRoutes.Template) {
       if (
         options.dashboardTemplateUid &&
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaOrgDashboardTemplates, false)
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)
       ) {
         this.setActiveManager('v2');
       } else {

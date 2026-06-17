@@ -10,7 +10,7 @@ import {
   useFlagAnalyticsFramework,
   useFlagAssistantFrontendToolsDashboardTemplates,
   useFlagDashboardTemplatesAssistantButton,
-  useFlagGrafanaOrgDashboardTemplates,
+  useFlagGrafanaCustomDashboardTemplates,
 } from '@grafana/runtime/internal';
 import { Box, Grid, Modal, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
 
@@ -40,7 +40,7 @@ export const TemplateDashboardModal = () => {
   const isOpen = searchParams.get('templateDashboards') === 'true';
   const entryPoint = searchParams.get('source') || '';
   const DashboardTemplatesTab = getDashboardTemplatesTab();
-  const showCustomTemplates = useFlagGrafanaOrgDashboardTemplates() && DashboardTemplatesTab !== null;
+  const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && DashboardTemplatesTab !== null;
   const [activeTab, setActiveTab] = useState<TemplateTab>(showCustomTemplates ? 'custom' : 'grafana');
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();

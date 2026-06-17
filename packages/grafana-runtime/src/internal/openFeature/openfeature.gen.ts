@@ -39,6 +39,8 @@ export const FlagKeys = {
   FlameGraphWithCallTree: "flameGraphWithCallTree",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Enables custom dashboard templates for enterprise */
+  GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
   /** Enables usage of the new annotations API client */
@@ -47,8 +49,6 @@ export const FlagKeys = {
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
-  /** Enables org-defined dashboard templates for enterprise */
-  GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
@@ -247,6 +247,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables custom dashboard templates for enterprise
+ *
+ * **Details:**
+ * - flag key: `grafana.customDashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -288,17 +299,6 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", false, options).value;
-};
-
-/**
- * Enables org-defined dashboard templates for enterprise
- *
- * **Details:**
- * - flag key: `grafana.orgDashboardTemplates`
- * - default value: `false`
- */
-export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.orgDashboardTemplates", false, options).value;
 };
 
 /**

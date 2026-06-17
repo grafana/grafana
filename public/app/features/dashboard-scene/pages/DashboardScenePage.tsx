@@ -4,7 +4,7 @@ import { usePrevious } from 'react-use';
 
 import { PageLayoutType } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -43,7 +43,7 @@ export interface Props
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
-  const isDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
