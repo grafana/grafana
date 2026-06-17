@@ -20,7 +20,8 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { QueryVariableEditor, getQueryVariableOptions, Editor } from './QueryVariableEditor';
+import { getQueryVariableOptions } from './getQueryVariableOptions';
+import { QueryVariableEditor, Editor } from './QueryVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',

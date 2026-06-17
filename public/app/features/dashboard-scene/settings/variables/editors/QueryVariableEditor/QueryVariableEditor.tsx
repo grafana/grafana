@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -8,12 +8,11 @@ import {
   type VariableRegexApplyTo,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { QueryVariable, sceneGraph, type SceneVariable } from '@grafana/scenes';
+import { type QueryVariable, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
-import { Box, Button, Field, Modal } from '@grafana/ui';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { Field } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { QueryVariableRegexForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableRegexForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -26,9 +25,9 @@ import {
   type StaticOptionsType,
 } from 'app/features/variables/query/QueryVariableStaticOptions';
 
-import { QueryVariableEditorForm } from '../components/QueryVariableForm';
-import { VariableValuesPreview } from '../components/VariableValuesPreview';
-import { hasVariableOptions } from '../utils';
+import { QueryVariableEditorForm } from '../../components/QueryVariableForm';
+import { VariableValuesPreview } from '../../components/VariableValuesPreview';
+import { hasVariableOptions } from '../../utils';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
@@ -133,74 +132,6 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       onStaticOptionsOrderChange={onStaticOptionsOrderChange}
       options={options}
     />
-  );
-}
-
-export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
-  if (!(variable instanceof QueryVariable)) {
-    console.warn('getQueryVariableOptions: variable is not a QueryVariable');
-    return [];
-  }
-
-  return [
-    new OptionsPaneItemDescriptor({
-      id: `variable-${variable.state.name}-value`,
-      render: () => <ModalEditor variable={variable} />,
-    }),
-  ];
-}
-
-function ModalEditor({ variable }: { variable: QueryVariable }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const onRunQuery = () => {
-    variable.refreshOptions();
-  };
-
-  return (
-    <>
-      <Box display={'flex'} direction={'column'} paddingBottom={1}>
-        <Button
-          tooltip={t(
-            'dashboard.edit-pane.variable.open-editor-tooltip',
-            'For more variable options open variable editor'
-          )}
-          onClick={() => setIsOpen(true)}
-          size="sm"
-          fullWidth
-          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
-        >
-          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
-        </Button>
-      </Box>
-      <Modal
-        title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-        closeOnBackdropClick={false}
-        closeOnEscape={false}
-      >
-        <Editor variable={variable} />
-        <Modal.ButtonRow>
-          <Button
-            variant="primary"
-            fill="outline"
-            onClick={onRunQuery}
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
-          >
-            <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
-          </Button>
-          <Button
-            variant="secondary"
-            fill="outline"
-            onClick={() => setIsOpen(false)}
-            data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
-          >
-            <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
-          </Button>
-        </Modal.ButtonRow>
-      </Modal>
-    </>
   );
 }
 
