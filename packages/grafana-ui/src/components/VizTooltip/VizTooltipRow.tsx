@@ -32,6 +32,7 @@ const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
 const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
+/** @alpha */
 export const VizTooltipRow = ({
   label,
   value,

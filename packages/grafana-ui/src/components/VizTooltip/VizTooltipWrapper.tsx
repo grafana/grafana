@@ -7,10 +7,12 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 
+/** @alpha */
 export interface VizTooltipWrapperProps extends HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
+/** @alpha */
 export const VizTooltipWrapper = ({ children, className }: VizTooltipWrapperProps) => {
   const styles = useStyles2(getStyles);
   return (

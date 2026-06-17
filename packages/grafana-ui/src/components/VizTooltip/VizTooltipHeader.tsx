@@ -7,6 +7,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { VizTooltipRow } from './VizTooltipRow';
 import { type VizTooltipItem } from './types';
 
+/** @alpha */
 export interface VizTooltipHeaderProps {
   /** The item to display in the header row, typically the x-axis or time value. */
   item: VizTooltipItem;
@@ -17,6 +18,7 @@ export interface VizTooltipHeaderProps {
   isPinned: boolean;
 }
 
+/** @alpha */
 export const VizTooltipHeader = ({
   item: { label, value, color, colorIndicator },
   isPinned,

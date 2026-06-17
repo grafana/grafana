@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
+/** @alpha */
 export interface TooltipScrollableOptions {
   mode: TooltipDisplayMode;
   maxHeight?: number;
@@ -111,6 +112,8 @@ export const getTooltipDisplayValue = (
 };
 
 /**
+ * @alpha
+ *
  * Builds the list of {@link VizTooltipItem} rows to display in a visualization tooltip.
  *
  * @param fields - All fields in the aligned data frame (including the x/time field).
@@ -223,6 +226,8 @@ export const getFieldDisplayItems = (
 };
 
 /**
+ * @alpha
+ *
  * Returns the resolved data links for a specific data point in a field.
  *
  * Deduplicates links by `title/href` so that the same link target is not shown
@@ -266,6 +271,8 @@ const getIndicatorAndPlacement = (field: Field) => {
 };
 
 /**
+ * @alpha
+ *
  * Returns true when the tooltip content area should be vertically scrollable.
  *
  * Scrolling is enabled only in `Multi` mode with an explicit `maxHeight` set —

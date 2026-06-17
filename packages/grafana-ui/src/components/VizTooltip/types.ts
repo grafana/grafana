@@ -1,5 +1,6 @@
 import { type LineStyle } from '@grafana/schema';
 
+/** @alpha */
 export enum ColorIndicator {
   /** A colored line segment, used for time series and line charts. */
   series = 'series',
@@ -21,6 +22,7 @@ export enum ColorIndicator {
   marker_lg = 'marker_lg',
 }
 
+/** @alpha */
 export enum ColorPlacement {
   /** No color indicator is rendered. */
   hidden = 'hidden',
@@ -32,6 +34,7 @@ export enum ColorPlacement {
   trailing = 'trailing',
 }
 
+/** @alpha */
 export interface VizTooltipItem {
   /** Display label for this row. */
   label: string;
@@ -57,4 +60,5 @@ export interface VizTooltipItem {
   numeric?: number;
 }
 
+/** @alpha */
 export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;

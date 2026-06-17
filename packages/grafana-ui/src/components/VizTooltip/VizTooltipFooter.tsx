@@ -20,10 +20,12 @@ import { Stack } from '../Layout/Stack/Stack';
 import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 import { type AdHocFilterItem } from '../Table/TableNG/types';
 
+/** @alpha */
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
 }
 
+/** @alpha */
 export interface FilterByGroupedLabelsModel {
   onFilterForGroupedLabels?: () => void;
   onFilterOutGroupedLabels?: () => void;
@@ -98,6 +100,7 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
+/** @alpha */
 export const VizTooltipFooter = ({
   dataLinks,
   actions = [],

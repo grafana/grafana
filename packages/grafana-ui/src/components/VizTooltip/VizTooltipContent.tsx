@@ -23,6 +23,7 @@ interface VizTooltipContentProps {
   maxHeight?: number;
 }
 
+/** @alpha */
 export const VizTooltipContent = ({
   items,
   children,
