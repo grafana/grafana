@@ -75,7 +75,7 @@ type WebhookParser interface {
 }
 
 // Webhook is the provider-agnostic representation of a git provider webhook.
-type Webhook[W any] struct {
+type Webhook[E any] struct {
 	// The ID of the webhook. Can be 0 on creation.
 	ID int64
 	// The events which this webhook shall contact the URL for.
@@ -87,7 +87,7 @@ type Webhook[W any] struct {
 	Secret string
 	// Extra holds provider-specific webhook fields, passed through untouched
 	// by the manager between the provider client's reads and writes.
-	Extra W
+	Extra E
 }
 
 // WebhookManager implements the provider-agnostic webhook lifecycle (registration,
@@ -95,7 +95,7 @@ type Webhook[W any] struct {
 // holds the shared webhook state (config, secret, incremental sync policy) that the
 // provider-specific inbound handlers read.
 type WebhookManager[W any] struct {
-	client            WebhookClient[W]
+	client            WebhookClient[E]
 	parser            WebhookParser
 	replay            *ReplayCache
 	config            *provisioning.Repository
@@ -107,8 +107,8 @@ type WebhookManager[W any] struct {
 	incrementalPolicy IncrementalSyncPolicy
 }
 
-func NewWebhookManager[W any](client WebhookClient[W], parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager[W] {
-	return &WebhookManager[W]{
+func NewWebhookManager[E any](client WebhookClient[E], parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager[E] {
+	return &WebhookManager[E]{
 		client:            client,
 		parser:            parser,
 		replay:            replay,
@@ -125,7 +125,7 @@ func NewWebhookManager[W any](client WebhookClient[W], parser WebhookParser, rep
 // Webhook authenticates, de-duplicates and dispatches an inbound webhook
 // delivery, producing the sync/pull-request job response. Providers supply the
 // authentication and event normalization via the WebhookParser.
-func (m *WebhookManager[W]) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
+func (m *WebhookManager[E]) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
 	if m.config.Status.Webhook == nil {
 		return nil, fmt.Errorf("unexpected webhook request")
 	}
@@ -189,7 +189,7 @@ func (m *WebhookManager[W]) Webhook(ctx context.Context, req *http.Request) (*pr
 	}
 }
 
-func (m *WebhookManager[W]) pullRequestResponse(event WebhookEvent) *provisioning.WebhookResponse {
+func (m *WebhookManager[E]) pullRequestResponse(event WebhookEvent) *provisioning.WebhookResponse {
 	return &provisioning.WebhookResponse{
 		Code:    http.StatusAccepted,
 		Message: fmt.Sprintf("pull request: %s", event.Action),
@@ -206,7 +206,7 @@ func (m *WebhookManager[W]) pullRequestResponse(event WebhookEvent) *provisionin
 	}
 }
 
-func (m *WebhookManager[W]) OnCreate(ctx context.Context) ([]map[string]any, error) {
+func (m *WebhookManager[E]) OnCreate(ctx context.Context) ([]map[string]any, error) {
 	if len(m.webhookURL) == 0 {
 		return nil, nil
 	}
@@ -227,7 +227,7 @@ func (m *WebhookManager[W]) OnCreate(ctx context.Context) ([]map[string]any, err
 	return statusPatches(hook.ID, hook.URL, hook.Events, hook.Secret), nil
 }
 
-func (m *WebhookManager[W]) OnUpdate(ctx context.Context) ([]map[string]any, error) {
+func (m *WebhookManager[E]) OnUpdate(ctx context.Context) ([]map[string]any, error) {
 	if len(m.webhookURL) == 0 {
 		return nil, nil
 	}
@@ -254,7 +254,7 @@ func (m *WebhookManager[W]) OnUpdate(ctx context.Context) ([]map[string]any, err
 	return statusPatches(hook.ID, hook.URL, hook.Events, hook.Secret), nil
 }
 
-func (m *WebhookManager[W]) OnDelete(ctx context.Context) error {
+func (m *WebhookManager[E]) OnDelete(ctx context.Context) error {
 	if m.config.Status.Webhook == nil {
 		return nil
 	}
@@ -262,7 +262,7 @@ func (m *WebhookManager[W]) OnDelete(ctx context.Context) error {
 	return m.deleteWebhook(ctx)
 }
 
-func (m *WebhookManager[W]) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
+func (m *WebhookManager[E]) RotateWebhookSecret(ctx context.Context) ([]map[string]any, error) {
 	if m.config.Status.Webhook == nil || m.config.Status.Webhook.ID == 0 {
 		return nil, nil
 	}
@@ -294,7 +294,7 @@ func (m *WebhookManager[W]) RotateWebhookSecret(ctx context.Context) ([]map[stri
 
 // PushSyncResponse builds the webhook response that enqueues a sync job for a
 // push, choosing an incremental or full sync from the given changes.
-func (m *WebhookManager[W]) PushSyncResponse(deletedPaths []string, totalChanges int) *provisioning.WebhookResponse {
+func (m *WebhookManager[E]) PushSyncResponse(deletedPaths []string, totalChanges int) *provisioning.WebhookResponse {
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,
 		Job: &provisioning.JobSpec{
@@ -307,19 +307,19 @@ func (m *WebhookManager[W]) PushSyncResponse(deletedPaths []string, totalChanges
 	}
 }
 
-func (m *WebhookManager[W]) createWebhook(ctx context.Context) (Webhook[W], error) {
+func (m *WebhookManager[E]) createWebhook(ctx context.Context) (Webhook[E], error) {
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return Webhook[W]{}, fmt.Errorf("could not generate secret: %w", err)
+		return Webhook[E]{}, fmt.Errorf("could not generate secret: %w", err)
 	}
 
-	hook, err := m.client.CreateWebhook(ctx, Webhook[W]{
+	hook, err := m.client.CreateWebhook(ctx, Webhook[E]{
 		URL:    m.webhookURL,
 		Secret: secret.String(),
 		Events: m.events,
 	})
 	if err != nil {
-		return Webhook[W]{}, err
+		return Webhook[E]{}, err
 	}
 
 	// The provider does not return the secret, so we set it manually.
@@ -331,11 +331,11 @@ func (m *WebhookManager[W]) createWebhook(ctx context.Context) (Webhook[W], erro
 
 // updateWebhook checks if the webhook needs to be updated and updates it if necessary.
 // if the webhook does not exist, it will create it.
-func (m *WebhookManager[W]) updateWebhook(ctx context.Context) (Webhook[W], bool, error) {
+func (m *WebhookManager[E]) updateWebhook(ctx context.Context) (Webhook[E], bool, error) {
 	if m.config.Status.Webhook == nil || m.config.Status.Webhook.ID == 0 {
 		hook, err := m.createWebhook(ctx)
 		if err != nil {
-			return Webhook[W]{}, false, err
+			return Webhook[E]{}, false, err
 		}
 		return hook, true, nil
 	}
@@ -345,11 +345,11 @@ func (m *WebhookManager[W]) updateWebhook(ctx context.Context) (Webhook[W], bool
 	case errors.Is(err, ErrFileNotFound):
 		hook, err := m.createWebhook(ctx)
 		if err != nil {
-			return Webhook[W]{}, false, err
+			return Webhook[E]{}, false, err
 		}
 		return hook, true, nil
 	case err != nil:
-		return Webhook[W]{}, false, fmt.Errorf("get webhook: %w", err)
+		return Webhook[E]{}, false, fmt.Errorf("get webhook: %w", err)
 	}
 
 	var mustUpdate bool
@@ -372,17 +372,17 @@ func (m *WebhookManager[W]) updateWebhook(ctx context.Context) (Webhook[W], bool
 	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
 	secret, err := uuid.NewRandom()
 	if err != nil {
-		return Webhook[W]{}, false, fmt.Errorf("could not generate secret: %w", err)
+		return Webhook[E]{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
 	if err := m.client.EditWebhook(ctx, hook); err != nil {
-		return Webhook[W]{}, false, fmt.Errorf("edit webhook: %w", err)
+		return Webhook[E]{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
 	return hook, true, nil
 }
 
-func (m *WebhookManager[W]) deleteWebhook(ctx context.Context) error {
+func (m *WebhookManager[E]) deleteWebhook(ctx context.Context) error {
 	logger := logging.FromContext(ctx)
 	if m.config.Status.Webhook == nil {
 		return fmt.Errorf("webhook not found")
@@ -407,7 +407,7 @@ func (m *WebhookManager[W]) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
-func (m *WebhookManager[W]) disabled() bool {
+func (m *WebhookManager[E]) disabled() bool {
 	return m.config.Spec.Webhook != nil && m.config.Spec.Webhook.Disabled
 }
 
