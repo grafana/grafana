@@ -1129,7 +1129,8 @@
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-10-12T16:56:49Z"
+        "creationTimestamp": "2023-10-12T16:56:49Z",
+        "deletionTimestamp": "2026-06-17T10:14:08Z"
       },
       "spec": {
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
