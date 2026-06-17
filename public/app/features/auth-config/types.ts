@@ -48,7 +48,6 @@ type SSOProviderSettingsBase = {
   tlsClientKey?: string;
   tlsSkipVerify?: boolean;
   tokenUrl?: string;
-  tokenExchangeTimeout?: string;
   type: string;
   usePkce?: boolean;
   useRefreshToken?: boolean;
