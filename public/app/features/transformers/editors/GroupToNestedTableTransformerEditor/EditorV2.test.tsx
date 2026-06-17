@@ -201,4 +201,69 @@ describe('GroupToNestedTableTransformerEditorV2', () => {
     expect(remaining).toHaveLength(1);
     expect(remaining[0]).toHaveValue('/bar/');
   });
+
+  describe('Expand nested rows by default', () => {
+    it('switch renders unchecked when expandAllRows is undefined', () => {
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      };
+
+      render(<GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={jest.fn()} />);
+
+      const switches = screen.getAllByRole('switch');
+      const expandSwitch = switches[switches.length - 1];
+      expect(expandSwitch).not.toBeChecked();
+    });
+
+    it('calls onChange with expandAllRows: true when toggled from undefined', () => {
+      const onChange = jest.fn();
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+      };
+
+      render(<GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />);
+
+      const switches = screen.getAllByRole('switch');
+      fireEvent.click(switches[switches.length - 1]);
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+      expect(updatedOptions.expandAllRows).toBe(true);
+    });
+
+    it('calls onChange with expandAllRows: false when toggled from true', () => {
+      const onChange = jest.fn();
+      const options: GroupToNestedTableTransformerOptionsV2 = {
+        rules: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'message' },
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+        ],
+        expandAllRows: true,
+      };
+
+      render(<GroupToNestedTableTransformerEditorV2 input={input} options={options} onChange={onChange} />);
+
+      const switches = screen.getAllByRole('switch');
+      fireEvent.click(switches[switches.length - 1]);
+
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const updatedOptions: GroupToNestedTableTransformerOptionsV2 = onChange.mock.calls[0][0];
+      expect(updatedOptions.expandAllRows).toBe(false);
+    });
+  });
 });

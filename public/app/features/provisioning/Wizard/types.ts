@@ -11,7 +11,7 @@ export type GitHubAuthType = 'pat' | 'github-app';
 
 export type GitHubAppMode = 'existing' | 'new';
 
-export interface MigrateFormData {
+interface MigrateFormData {
   history: boolean;
   identifier: boolean;
   migrateResources?: boolean;
@@ -41,6 +41,7 @@ export interface ModeOption {
 
 export const RepoTypeDisplay: { [key in RepoType]: string } = {
   github: 'GitHub',
+  githubEnterprise: 'GitHub Enterprise',
   gitlab: 'GitLab',
   bitbucket: 'Bitbucket',
   git: 'Git',

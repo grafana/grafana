@@ -5,7 +5,7 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
@@ -35,14 +35,16 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPlugins, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
+    logPluginMetaDebug('PluginMeta: initializing app plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
   setMetas(metas);
+  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {

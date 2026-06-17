@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
@@ -43,6 +44,21 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resourc
 // errStopping is returned when a write operation is rejected because the server is shutting down.
 // Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
 var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
+// logIfServerError logs errRes at Error level if it represents a 5xx (server) error.
+func (s *server) logIfServerError(ctx context.Context, op string, key *resourcepb.ResourceKey, errRes *resourcepb.ErrorResult) {
+	if errRes == nil || errRes.Code < 500 {
+		return
+	}
+	s.log.FromContext(ctx).Error(fmt.Sprintf("server error: %s", op),
+		"group", key.Group,
+		"resource", key.Resource,
+		"namespace", key.Namespace,
+		"name", key.Name,
+		"code", errRes.Code,
+		"error", errRes.Message,
+	)
+}
 
 // defaultBookmarkFrequency is how often periodic bookmark events are sent
 // to Watch clients that have AllowWatchBookmarks enabled.
@@ -281,6 +297,15 @@ type SearchOptions struct {
 	// have existed before its predecessor in the same Grafana-version group is
 	// considered eligible for cleanup.
 	IndexSnapshotCleanupGracePeriod time.Duration
+
+	// VectorSearch query-embedding cache. nil disables the cache path.
+	QueryCache             vector.QueryEmbeddingCache
+	QueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
+	RateLimiter        vector.RateLimiter
+	RateLimitPerTenant int
+	RateLimitWindow    time.Duration
 }
 
 type ResourceServerOptions struct {
@@ -327,6 +352,8 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
+	VectorMetrics *VectorMetrics
+
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
@@ -352,6 +379,28 @@ type ResourceServerOptions struct {
 	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
+
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
+	VectorReconciler BroadcasterConsumer
+}
+
+// Runnable is anything the server can launch in a goroutine and that
+// exits cleanly on context cancel. Stays abstract so the resource
+// package doesn't have to import the concrete indexer packages, which
+// would cycle.
+type Runnable interface {
+	Run(ctx context.Context) error
+}
+
+// BroadcasterConsumer is a Runnable that wants the server's write-events
+// broadcaster attached before Run. The server sets this up once
+// initWatcher has populated its broadcaster.
+type BroadcasterConsumer interface {
+	Runnable
+	UseBroadcaster(b Broadcaster[*WrittenEvent])
 }
 
 func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
@@ -380,7 +429,7 @@ func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, err
 	}
 
 	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.OwnsIndexFn)
+	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
@@ -485,14 +534,20 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.OwnsIndexFn)
+		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Access to search is required when checking quotas.
+	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
+		return nil, fmt.Errorf("overrides service requires search for quota checking")
 	}
 
 	return s, nil
@@ -584,6 +639,11 @@ type server struct {
 	storageEnabled                 bool
 
 	bookmarkFrequency time.Duration
+
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
+	vectorWriteReconciler BroadcasterConsumer
+	indexersWG            sync.WaitGroup
 }
 
 // Init implements ResourceServer.
@@ -604,11 +664,35 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
+		// Launch async vector indexers (backfiller + reconciler) once
+		// the broadcaster is up. They run for the server's lifetime
+		// and Stop() joins them via indexersWG.
+		if s.initErr == nil {
+			s.startVectorIndexers()
+		}
+
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
+}
+
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
+func (s *server) startVectorIndexers() {
+	if s.vectorWriteReconciler != nil {
+		if s.broadcaster != nil {
+			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
+		}
+		s.indexersWG.Go(func() {
+			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
+				s.log.Error("vector reconciler stopped", "err", err)
+			}
+		})
+	}
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight
@@ -648,6 +732,20 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Debug("all in-flight write operations completed")
 	case <-ctx.Done():
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
+	}
+
+	// Wait for async vector indexers (backfiller, reconciler) to wind
+	// down. They observe s.ctx, so the cancel above unblocks them.
+	indexersDone := make(chan struct{})
+	go func() {
+		s.indexersWG.Wait()
+		close(indexersDone)
+	}()
+	select {
+	case <-indexersDone:
+		s.log.Debug("vector indexers stopped")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for vector indexers to stop")
 	}
 
 	var stopFailed bool
@@ -876,6 +974,20 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
+	rsp := &resourcepb.CreateResponse{}
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		rsp.Error = &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+		return rsp, nil
+	}
+
 	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
@@ -896,20 +1008,6 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		}, nil
 	}
 
-	if r := verifyRequestKey(req.Key); r != nil {
-		return nil, fmt.Errorf("invalid request key: %s", r.Message)
-	}
-
-	rsp := &resourcepb.CreateResponse{}
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		rsp.Error = &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
-	}
-
 	var res *resourcepb.CreateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
@@ -927,6 +1025,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 
 func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
 	rsp := &resourcepb.CreateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.create", req.Key, rsp.Error) }()
 
 	event, e := s.newEvent(ctx, user, req.Key, 0, req.Value, nil)
 	if e != nil {
@@ -946,7 +1045,6 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 		}
 		rsp.Error = AsErrorResult(err)
 	}
-	s.log.FromContext(ctx).Debug("server.WriteEvent", "type", event.Type, "rv", rsp.ResourceVersion, "previousRV", event.PreviousRV, "group", event.Key.Group, "namespace", event.Key.Namespace, "name", event.Key.Name, "resource", event.Key.Resource)
 	return rsp, nil
 }
 
@@ -1001,6 +1099,10 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	}
 	defer s.inflight.Done()
 
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -1031,6 +1133,8 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 
 func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
 	rsp := &resourcepb.UpdateResponse{}
+	defer func() { s.logIfServerError(ctx, "server.update", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1040,6 +1144,32 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 	}
 	if latest.Value == nil {
 		rsp.Error = NewBadRequestError("current value does not exist")
+		return rsp, nil
+	}
+
+	// Skip write events when there is no change to the payload, but still enforce RBAC.
+	if bytes.Equal(req.Value, latest.Value) {
+		key := req.Key
+		a, err := s.access.Check(ctx, user, claims.CheckRequest{
+			Verb:      utils.VerbUpdate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+			Name:      key.Name,
+		}, latest.Folder)
+		if err != nil {
+			return &resourcepb.UpdateResponse{Error: AsErrorResult(err)}, nil
+		}
+		if !a.Allowed {
+			return &resourcepb.UpdateResponse{
+				Error: &resourcepb.ErrorResult{
+					Message: "not allowed to update resource",
+					Code:    http.StatusForbidden,
+				},
+			}, nil
+		}
+
+		rsp.ResourceVersion = latest.ResourceVersion // No change, return the current RV
 		return rsp, nil
 	}
 
@@ -1065,6 +1195,10 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 		return nil, errStopping
 	}
 	defer s.inflight.Done()
+
+	if r := verifyRequestKey(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
 
 	rsp := &resourcepb.DeleteResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -1097,6 +1231,8 @@ func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*re
 
 func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	rsp := &resourcepb.DeleteResponse{}
+	defer func() { s.logIfServerError(ctx, "server.delete", req.Key, rsp.Error) }()
+
 	latest := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
 		Key: req.Key,
 	})
@@ -1168,6 +1304,9 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 }
 
 func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.Read")
+	defer span.End()
+
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return &resourcepb.ReadResponse{
@@ -1177,8 +1316,12 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 			}}, nil
 	}
 
-	if req.Key.Resource == "" {
-		return &resourcepb.ReadResponse{Error: NewBadRequestError("missing resource")}, nil
+	// Don't validate the name format here: a lookup with an odd or
+	// invalid-looking name should fall through to the backend and surface as
+	// NotFound, matching K8s Get semantics. Strict name validation belongs on
+	// writes (Create/Update/Delete).
+	if r := verifyRequestKeyCollection(req.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	var (
@@ -1197,7 +1340,13 @@ func (s *server) Read(ctx context.Context, req *resourcepb.ReadRequest) (*resour
 	return res, err
 }
 
-func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb.ReadRequest) (readRsp *resourcepb.ReadResponse, readErr error) {
+	defer func() {
+		if readRsp != nil {
+			s.logIfServerError(ctx, "server.read", req.Key, readRsp.Error)
+		}
+	}()
+
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &resourcepb.ReadResponse{Error: rsp.Error}, nil
@@ -1228,8 +1377,15 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
-	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
+
+	if req.Options == nil {
+		return nil, status.Error(codes.InvalidArgument, "missing list options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return nil, status.Error(codes.InvalidArgument, r.Message)
+	}
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 
 	// The history + trash queries do not yet support additional filters
 	if req.Source != resourcepb.ListRequest_STORE {
@@ -1365,7 +1521,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -1435,12 +1591,14 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 		return iter.Error()
 	})
 
-	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+	return s.finalizeListResponse(ctx, rsp, rv, err, nextToken, req.Options.Key)
 }
 
 // finalizeListResponse validates the resource version, sets pagination token,
 // and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
-func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
+	defer func() { s.logIfServerError(ctx, "server.list", key, rsp.Error) }()
+
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -1533,12 +1691,31 @@ func (s *server) initWatcher() error {
 }
 
 //nolint:gocyclo
-func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
+func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+
+	// When our context is canceled (e.g. client disconnects), downstream calls
+	// like srv.Send may surface that cancellation back to us. Treat it as a
+	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
+	// branch in the watch loop. Context errors from other contexts are still
+	// propagated.
+	defer func() {
+		if retErr != nil && ctx.Err() != nil &&
+			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
+			retErr = nil
+		}
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
 		return apierrors.NewUnauthorized("no user found in context")
+	}
+
+	if req.Options == nil {
+		return status.Error(codes.InvalidArgument, "missing watch options")
+	}
+	if r := verifyRequestKeyCollection(req.Options.Key); r != nil {
+		return status.Error(codes.InvalidArgument, r.Message)
 	}
 
 	key := req.Options.Key
@@ -1631,6 +1808,9 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			for iter.Next() {
 				if err := iter.Error(); err != nil {
 					return err
+				}
+				if !checker(iter.Name(), iter.Folder()) {
+					continue
 				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
@@ -1772,18 +1952,51 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(StatsGetter)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
+	if s.search != nil {
+		return s.search.GetStats(ctx, req)
 	}
-	return s.search.GetStats(ctx, req)
+
+	if s.searchClient != nil {
+		return s.searchClient.GetStats(ctx, req)
+	}
+
+	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
+	// in the KV backend.
+	if srv, ok := s.backend.(StatsGetter); ok {
+		return srv.GetStats(ctx, req)
+	}
+
+	return nil, fmt.Errorf("search index not configured")
 }
 
+// requireUserNamespace is a cross-tenant safety net for delegated-only
+// RPCs. It does not replace resource-level access.Check; it only catches
+// the case where a caller authenticated for one namespace asks for data
+// in another.
+func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.ErrorResult {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}
+	}
+	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
+		return &resourcepb.ErrorResult{
+			Message: "namespace mismatch",
+			Code:    http.StatusForbidden,
+		}
+	}
+	return nil
+}
+
+// ListManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1791,7 +2004,13 @@ func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListMan
 	return s.search.ListManagedObjects(ctx, req)
 }
 
+// CountManagedObjects implements ManagedObjectIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1804,12 +2023,59 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
-// GetBlob implements BlobStore.
+// PutBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
 			Code:    http.StatusNotImplemented,
+		}}, nil
+	}
+
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "no user found in context",
+			Code:    http.StatusUnauthorized,
+		}}, nil
+	}
+
+	// Load the parent both to enforce existence (see proto) and to get its
+	// folder for access.Check.
+	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	switch {
+	case parent == nil:
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "parent resource not found",
+			Code:    http.StatusNotFound,
+		}}, nil
+	case parent.Error != nil:
+		// Surface backend status as-is; collapsing to 404 would hide
+		// transient 5xx as "not found".
+		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	}
+
+	a, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     req.Resource.Group,
+		Resource:  req.Resource.Resource,
+		Namespace: req.Resource.Namespace,
+		Name:      req.Resource.Name,
+	}, parent.Folder)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	if !a.Allowed {
+		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusForbidden,
 		}}, nil
 	}
 
@@ -1832,21 +2098,24 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	}
-	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	if statsRsp.Error != nil {
+		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 
-	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) <= 0 {
-		rsp.Usage = 0
-	} else {
-		rsp.Usage = usage[0].Count
+	if len(statsRsp.Stats) > 0 {
+		rsp.Usage = statsRsp.Stats[0].Count
 	}
 
 	return rsp, nil
@@ -1878,7 +2147,18 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 }
 
 // GetBlob implements BlobStore.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource key",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
+	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
+		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -1962,7 +2242,13 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	}
 }
 
+// RebuildIndexes implements ResourceIndexServer.
+// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
+// Do not route end-user traffic here directly.
 func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
+	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
+		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
+	}
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
@@ -1989,11 +2275,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		return nil
 	}
 
-	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		return nil
 	}
+	if statsRsp.Error != nil {
+		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		return nil
+	}
+	stats := statsRsp.Stats
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
 	} else {

@@ -39,8 +39,9 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 
 	newRule := &v1beta1.InhibitionRule{
 		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Name:      "test-rule",
+			Namespace:       "default",
+			Name:            "test-rule",
+			ResourceVersion: "0f982c4240a504ef",
 		},
 		Spec: v1beta1.InhibitionRuleSpec{
 			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
@@ -89,6 +90,7 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, existingRule)
 		require.Equal(t, newRule.Spec, existingRule.Spec)
+		require.Equal(t, newRule.ResourceVersion, existingRule.ResourceVersion)
 	})
 
 	t.Run("list should show created rule with generated name", func(t *testing.T) {
@@ -97,14 +99,16 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 		require.Equal(t, 1, len(list.Items))
 
 		got := list.Items[0]
-		require.Equal(t, existingRule.Spec, got.Spec)
+		require.Equal(t, newRule.Spec, got.Spec)
+		require.Equal(t, newRule.ResourceVersion, got.ResourceVersion)
 	})
 
 	existingIdentifier := existingRule.GetStaticMetadata().Identifier()
 	t.Run("get should retrieve rule by name", func(t *testing.T) {
 		got, err := client.Get(ctx, existingIdentifier)
 		require.NoError(t, err)
-		require.Equal(t, existingRule.Spec, got.Spec)
+		require.Equal(t, newRule.Spec, got.Spec)
+		require.Equal(t, newRule.ResourceVersion, got.ResourceVersion)
 	})
 
 	var updatedRuleIdentifier resource.Identifier

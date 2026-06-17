@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/alerting/notify/notifytest"
 	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
@@ -22,6 +21,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/alerting/notify/notifytest"
+
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -42,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
@@ -60,6 +63,9 @@ import (
 //go:embed test-data/receiver-exports/*
 var receiverExportResponses embed.FS
 
+//go:embed test-data/provisioning_get_responses/*
+var provisioningGetResponses embed.FS
+
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
@@ -68,6 +74,11 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("policies", func(t *testing.T) {
+		validRoute := func() definitions.Route {
+			return definitions.Route{
+				Receiver: "grafana-default-email",
+			}
+		}
 		t.Run("successful GET returns 200", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
@@ -80,7 +91,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 		t.Run("successful PUT returns 202", func(t *testing.T) {
 			sut := createProvisioningSrvSut(t)
 			rc := createTestRequestCtx()
-			tree := definitions.Route{}
+			tree := validRoute()
 
 			response := sut.RoutePutPolicyTree(&rc, tree)
 
@@ -99,17 +110,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 		t.Run("when new policy tree is invalid", func(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
-				sut.policies = &fakeRejectingNotificationPolicyService{}
 				rc := createTestRequestCtx()
-				tree := definitions.Route{}
+				tree := definitions.Route{} // Invalid as it's missing a default receiver.
 
 				response := sut.RoutePutPolicyTree(&rc, tree)
 
 				require.Equal(t, 400, response.Status())
-				expBody := definitions.ValidationError{Message: "invalid object specification: invalid policy tree"}
-				expBodyJSON, marshalErr := json.Marshal(expBody)
-				require.NoError(t, marshalErr)
-				require.Equal(t, string(expBodyJSON), string(response.Body()))
+				body := string(response.Body())
+				require.Contains(t, body, "alerting.notifications.routes.invalidFormat")
+				require.Contains(t, body, "root route must specify a default receiver")
 			})
 		})
 
@@ -407,7 +416,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT without MissingSeriesEvalsToResolve clears the field", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
+				oldValue := new(int64(5))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -424,8 +433,8 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 			})
 
 			t.Run("PUT with MissingSeriesEvalsToResolve updates the value", func(t *testing.T) {
-				oldValue := util.Pointer[int64](5)
-				newValue := util.Pointer[int64](10)
+				oldValue := new(int64(5))
+				newValue := new(int64(10))
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				rule := createTestAlertRule("rule", 1)
@@ -740,7 +749,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Nil(t, updated.Rules[0].MissingSeriesEvalsToResolve)
 
 				// Put the same group with a new value
-				group.Rules[0].MissingSeriesEvalsToResolve = util.Pointer[int64](5)
+				group.Rules[0].MissingSeriesEvalsToResolve = new(int64(5))
 				response = sut.RoutePutAlertRuleGroup(&rc, group, "folder-uid", group.Title)
 				require.Equal(t, 200, response.Status())
 				updated = deserializeRuleGroup(t, response.Body())
@@ -1540,7 +1549,7 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 
 				rc.Req.Form.Add("format", "hcl")
 				expectedResponse := "resource \"grafana_notification_policy\" \"notification_policy_1\" {\n" +
-					"  contact_point = \"some-receiver\"\n" +
+					"  contact_point = \"grafana-default-email\"\n" +
 					"  group_by      = []\n" +
 					"}\n"
 
@@ -1838,7 +1847,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
+			expectedRedactedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@example.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"[REDACTED]","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"[REDACTED]","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"[REDACTED]","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"[REDACTED]"},"disableResolveMessage":true}]}]}`
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1877,7 +1886,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@email.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"disableResolveMessage":true}]}]}`
+				expectedResponse := `{"apiVersion":1,"contactPoints":[{"orgId":1,"name":"grafana-default-email","receivers":[{"uid":"ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b","type":"email","settings":{"addresses":"\u003cexample@example.com\u003e"},"disableResolveMessage":false}]},{"orgId":1,"name":"multiple integrations","receivers":[{"uid":"c2090fda-f824-4add-b545-5a4d5c2ef082","type":"prometheus-alertmanager","settings":{"basicAuthPassword":"testpass","basicAuthUser":"test","url":"http://localhost:9093"},"disableResolveMessage":true},{"uid":"c84539ec-f87e-4fc5-9a91-7a687d34bbd1","type":"discord","settings":{"avatar_url":"some avatar","url":"some url","use_discord_username":true},"disableResolveMessage":false}]},{"orgId":1,"name":"pagerduty test","receivers":[{"uid":"b9bf06f8-bde2-4438-9d4a-bba0522dcd4d","type":"pagerduty","settings":{"client":"some client","integrationKey":"some key","severity":"criticalish"},"disableResolveMessage":false}]},{"orgId":1,"name":"slack test","receivers":[{"uid":"cbfd0976-8228-4126-b672-4419f30a9e50","type":"slack","settings":{"text":"title body test","title":"title test","url":"some secure slack webhook"},"disableResolveMessage":true}]}]}`
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
@@ -1898,7 +1907,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("yaml body content is as expected", func(t *testing.T) {
-			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
+			expectedRedactedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@example.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: '[REDACTED]'\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: '[REDACTED]'\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: '[REDACTED]'\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: '[REDACTED]'\n          disableResolveMessage: true\n"
 			t.Run("decrypt false", func(t *testing.T) {
 				env := createTestEnv(t, testContactPointConfig)
 				sut := createProvisioningSrvSutFromEnv(t, &env)
@@ -1937,7 +1946,7 @@ func TestIntegrationProvisioningApiContactPointExport(t *testing.T) {
 
 				response := sut.RouteGetContactPointsExport(&rc)
 
-				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@email.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: testpass\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: some key\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: some secure slack webhook\n          disableResolveMessage: true\n"
+				expectedResponse := "apiVersion: 1\ncontactPoints:\n    - orgId: 1\n      name: grafana-default-email\n      receivers:\n        - uid: ad95bd8a-49ed-4adc-bf89-1b444fa1aa5b\n          type: email\n          settings:\n            addresses: <example@example.com>\n          disableResolveMessage: false\n    - orgId: 1\n      name: multiple integrations\n      receivers:\n        - uid: c2090fda-f824-4add-b545-5a4d5c2ef082\n          type: prometheus-alertmanager\n          settings:\n            basicAuthPassword: testpass\n            basicAuthUser: test\n            url: http://localhost:9093\n          disableResolveMessage: true\n        - uid: c84539ec-f87e-4fc5-9a91-7a687d34bbd1\n          type: discord\n          settings:\n            avatar_url: some avatar\n            url: some url\n            use_discord_username: true\n          disableResolveMessage: false\n    - orgId: 1\n      name: pagerduty test\n      receivers:\n        - uid: b9bf06f8-bde2-4438-9d4a-bba0522dcd4d\n          type: pagerduty\n          settings:\n            client: some client\n            integrationKey: some key\n            severity: criticalish\n          disableResolveMessage: false\n    - orgId: 1\n      name: slack test\n      receivers:\n        - uid: cbfd0976-8228-4126-b672-4419f30a9e50\n          type: slack\n          settings:\n            text: title body test\n            title: title test\n            url: some secure slack webhook\n          disableResolveMessage: true\n"
 				require.Equal(t, 200, response.Status())
 				require.Equal(t, expectedResponse, string(response.Body()))
 			})
@@ -1971,18 +1980,18 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 	runTestCase := func(t *testing.T, tc testcase) {
 		postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&tc.receiver)
 		require.NoError(t, err)
-		postable := definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
+		postable := v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
 						Receiver: postableReceiver.Name,
 					},
 				},
-				Receivers: []*definitions.PostableApiReceiver{postableReceiver},
+				Receivers: []*v1.PostableApiReceiver{postableReceiver},
 			},
 		}
 
-		amConfig, err := json.Marshal(postable)
+		amConfig, err := legacy_storage.SerializeAlertmanagerConfig(postable)
 		require.NoError(t, err)
 
 		env := createTestEnv(t, string(amConfig))
@@ -2134,6 +2143,144 @@ func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
 	}
 }
 
+func TestApiGetSnapshots(t *testing.T) {
+	// This test should fail whenever a GET snapshot changes. If the change is expected, update
+	// the corresponding test response file(s) in test-data/provisioning_get_responses/
+	cfg := policy_exports.Config()
+
+	// Route
+	cfg.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(cfg.AlertmanagerConfig.Route, cfg.ManagedRoutes)
+
+	// Templates
+	t1 := v1.NewTemplateGroup("templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t2 := v1.NewTemplateGroup("templateB", "{{ define \"templateB\" }}B{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	t3 := v1.NewTemplateGroup("templateC", "{{ define \"templateC\" }}C{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+	cfg.Templates = map[v1.ResourceUID]v1.TemplateGroup{
+		t1.UID: t1,
+		t2.UID: t2,
+		t3.UID: t3,
+	}
+
+	// Contact Points
+	allIntegrationsName := "all-integrations"
+	allIntegrations := make([]models.Integration, 0, len(notifytest.AllKnownV1ConfigsForTesting))
+	for integrationType := range notifytest.AllKnownV1ConfigsForTesting {
+		integration := models.IntegrationGen(
+			models.IntegrationMuts.WithName(allIntegrationsName),
+			models.IntegrationMuts.WithUID(fmt.Sprintf("%s-uid", strings.ToLower(string(integrationType)))),
+			models.IntegrationMuts.WithValidConfig(integrationType),
+			models.IntegrationMuts.RemoveSetting("http_config"),
+		)()
+		integration.DisableResolveMessage = false
+		allIntegrations = append(allIntegrations, integration)
+	}
+	receiver := models.ReceiverGen(models.ReceiverMuts.WithName(allIntegrationsName), models.ReceiverMuts.WithIntegrations(allIntegrations...))()
+	postableReceiver, err := legacy_storage.ReceiverToPostableApiReceiver(&receiver)
+	require.NoError(t, err)
+	cfg.AlertmanagerConfig.Receivers = append(cfg.AlertmanagerConfig.Receivers, postableReceiver)
+
+	// Mute Timings
+	location, err := time.LoadLocation("America/Montreal")
+	if err != nil {
+		t.Fatalf("Failed to load location America/Montreal: %s", err)
+	}
+	timeIntervalExample := func() timeinterval.TimeInterval {
+		return timeinterval.TimeInterval{
+			Times: []timeinterval.TimeRange{
+				{StartMinute: 10, EndMinute: 20},
+				{StartMinute: 50, EndMinute: 60},
+			},
+			Weekdays: []timeinterval.WeekdayRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 2}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 5, End: 6}},
+			},
+			DaysOfMonth: []timeinterval.DayOfMonthRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 10}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 20, End: 25}},
+			},
+			Months: []timeinterval.MonthRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 3}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 7, End: 9}},
+			},
+			Years: []timeinterval.YearRange{
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2020, End: 2022}},
+				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2025, End: 2026}},
+			},
+			Location: &timeinterval.Location{Location: location},
+		}
+	}
+	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
+		v1.MuteTimeInterval{
+			Name: "MuteTimeIntervalA",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+		v1.MuteTimeInterval{
+			Name: "MuteTimeIntervalB",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+	)
+	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
+		v1.TimeInterval{
+			Name: "TimeIntervalA",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+		v1.TimeInterval{
+			Name: "TimeIntervalB",
+			TimeIntervals: []timeinterval.TimeInterval{
+				timeIntervalExample(),
+			},
+		},
+	)
+
+	amConfig, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
+	require.NoError(t, err)
+
+	env := createTestEnv(t, string(amConfig))
+	env.ac.Callback = func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+		return true, nil
+	}
+	sut := createProvisioningSrvSutFromEnv(t, &env)
+	rc := createTestRequestCtx()
+
+	verify := func(t *testing.T, res response.Response, expectedBodyFilename string) {
+		require.Equalf(t, 200, res.Status(), "expected 200, got %d, body: %q", res.Status(), res.Body())
+
+		// Indent the JSON for easier comparison.
+		// This isn't strictly necessary, but it makes the test output more readable.
+		out := new(bytes.Buffer)
+		err = json.Indent(out, res.Body(), "", " ")
+		require.NoError(t, err)
+		actualBody := out.Bytes()
+
+		p := path.Join("test-data", "provisioning_get_responses", expectedBodyFilename)
+
+		// To update these files:
+		//os.WriteFile(path.Join(p), actualBody, 0644)
+
+		exportRaw, err := provisioningGetResponses.ReadFile(p)
+		require.NoError(t, err)
+		require.JSONEq(t, string(exportRaw), string(actualBody))
+	}
+	t.Run("Routes", func(t *testing.T) {
+		verify(t, sut.RouteGetPolicyTree(&rc), "combined-route.json")
+	})
+	t.Run("Templates", func(t *testing.T) {
+		verify(t, sut.RouteGetTemplates(&rc), "templates.json")
+	})
+	t.Run("Contact Points", func(t *testing.T) {
+		verify(t, sut.RouteGetContactPoints(&rc), "all-integrations.json")
+	})
+	t.Run("Time Intervals", func(t *testing.T) {
+		verify(t, sut.RouteGetMuteTimings(&rc), "time-intervals.json")
+	})
+}
+
 // testEnvironment binds together common dependencies for testing alerting APIs.
 type testEnvironment struct {
 	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -2141,7 +2288,6 @@ type testEnvironment struct {
 	store            store.DBstore
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
-	configs          legacy_storage.AMConfigStore
 	xact             provisioning.TransactionManager
 	quotas           provisioning.QuotaChecker
 	prov             provisioning.ProvisioningStore
@@ -2150,6 +2296,7 @@ type testEnvironment struct {
 	rulesAuthz       *fakes.FakeRuleService
 	features         featuremgmt.FeatureToggles
 	nsValidator      provisioning.NotificationSettingsValidatorProvider
+	settings         setting.UnifiedAlertingSettings
 }
 
 func createTestEnv(t *testing.T, testConfig string) testEnvironment {
@@ -2165,15 +2312,10 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	})
 	require.NoError(t, err)
 
-	raw, err := json.Marshal(c)
+	raw, err := legacy_storage.SerializeAlertmanagerConfig(*c)
 	require.NoError(t, err)
 
 	log := log.NewNopLogger()
-	configs := &legacy_storage.MockAMConfigStore{}
-	configs.EXPECT().
-		GetsConfig(models.AlertConfiguration{
-			AlertmanagerConfiguration: string(raw),
-		})
 	sqlStore, _ := db.InitTestDBWithCfg(t)
 
 	quotas := &provisioning.MockQuotaChecker{}
@@ -2231,16 +2373,25 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	}
 	// if not one of the two above, return ErrFolderNotFound
 	folderService.ExpectedError = dashboards.ErrFolderNotFound
+	settings := setting.UnifiedAlertingSettings{
+		BaseInterval:         time.Second * 10,
+		DefaultConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
+	}
 	store := store.DBstore{
-		Logger:   log,
-		SQLStore: sqlStore,
-		Cfg: setting.UnifiedAlertingSettings{
-			BaseInterval: time.Second * 10,
-		},
+		Logger:         log,
+		SQLStore:       sqlStore,
+		Cfg:            settings,
 		FolderService:  folderService,
 		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
+	err = store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(raw),
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     1,
+	})
+	require.NoError(t, err)
 	user := &user.SignedInUser{
 		OrgID: 1,
 		/*
@@ -2257,7 +2408,6 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 	return testEnvironment{
 		secrets:          secretsService,
 		log:              log,
-		configs:          configs,
 		store:            store,
 		folderService:    folderService,
 		dashboardService: dashboardService,
@@ -2269,6 +2419,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		rulesAuthz:       ruleAuthz,
 		features:         features,
 		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
+		settings:         settings,
 	}
 }
 
@@ -2283,20 +2434,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
 
-	rev := legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{
-						Receiver: "some-receiver",
-					},
-				},
-			},
-		},
-	}
+	configStore := legacy_storage.NewAlertmanagerConfigStore(&env.store, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
+	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](env.ac, ngalertfakes.NewFakeRoutePermissionsService(), true)
+	rs := routes.NewService(configStore, env.store, env.xact, env.settings, env.features, env.log, validation.ValidateProvenanceRelaxed, tracer, routeAccess)
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets), env.features)
-	rs := routes.NewFakeService(rev)
 	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
 	receiverSvc := notifier.NewReceiverService(
 		receiverAuthz,
@@ -2314,9 +2455,20 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		nil,
 		&notifier.NoopOrgEmailValidator{},
 	)
+	provisionRouteService := routes.NewService(
+		configStore,
+		env.prov,
+		env.xact,
+		env.settings,
+		env.features,
+		env.log,
+		validation.ValidateProvenanceRelaxed,
+		tracer,
+		routeAccess,
+	)
 	return ProvisioningSrv{
 		log:                 env.log,
-		policies:            newFakeNotificationPolicyService(rev),
+		policies:            provisioning.NewNotificationPolicyService(configStore, env.prov, env.xact, provisionRouteService, env.settings, env.log, validation.ValidateProvenanceRelaxed),
 		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store, rs, validation.ValidateProvenanceRelaxed),
@@ -2375,21 +2527,21 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
 	result := *f.config.Config.AlertmanagerConfig.Route
-	result.Provenance = definitions.Provenance(f.prov)
-	return result, "", nil
+	result.Provenance = v1.Provenance(f.prov)
+	return *notifier.RouteToAPI(&result), "", nil
 }
 
 func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	f.config.Config.AlertmanagerConfig.Route = &tree
+	f.config.Config.AlertmanagerConfig.Route = v1.RouteToModel(&tree)
 	f.prov = p
 	return tree, "some", nil
 }
 
 func (f *fakeNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	f.config.Config.AlertmanagerConfig.Route = &definitions.Route{} // TODO
+	f.config.Config.AlertmanagerConfig.Route = &v1.Route{} // TODO
 	return definitions.Route{}, nil
 }
 
@@ -2409,26 +2561,10 @@ func (f *fakeFailingNotificationPolicyService) ResetPolicyTree(ctx context.Conte
 	return definitions.Route{}, fmt.Errorf("something went wrong")
 }
 
-type fakeRejectingNotificationPolicyService struct {
-	NotificationPolicyService
-}
-
 type fakeRejectingNotificationSettingsValidatorProvider struct{}
 
 func (f *fakeRejectingNotificationSettingsValidatorProvider) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
 	return notifier.RejectingValidation{}, nil
-}
-
-func (f *fakeRejectingNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error) {
-	return definitions.Route{}, "", nil
-}
-
-func (f *fakeRejectingNotificationPolicyService) UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p models.Provenance, version string) (definitions.Route, string, error) {
-	return definitions.Route{}, "", fmt.Errorf("%w: invalid policy tree", provisioning.ErrValidation)
-}
-
-func (f *fakeRejectingNotificationPolicyService) ResetPolicyTree(ctx context.Context, orgID int64, provenance models.Provenance) (definitions.Route, error) {
-	return definitions.Route{}, nil
 }
 
 func createInvalidContactPoint() definitions.EmbeddedContactPoint {
@@ -2515,9 +2651,9 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		NotificationSettings: &definitions.AlertRuleNotificationSettings{
 			Receiver:            "Test-Receiver",
 			GroupBy:             []string{"alertname", "grafana_folder", "test"},
-			GroupWait:           util.Pointer(model.Duration(1 * time.Second)),
-			GroupInterval:       util.Pointer(model.Duration(5 * time.Second)),
-			RepeatInterval:      util.Pointer(model.Duration(5 * time.Minute)),
+			GroupWait:           new(model.Duration(1 * time.Second)),
+			GroupInterval:       new(model.Duration(5 * time.Second)),
+			RepeatInterval:      new(model.Duration(5 * time.Minute)),
 			MuteTimeIntervals:   []string{"test-mute"},
 			ActiveTimeIntervals: []string{"test-active"},
 		},
@@ -2633,7 +2769,7 @@ var testConfig = `
 				"name": "email receiver",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}],
@@ -2695,7 +2831,7 @@ var testContactPointConfig = `
             "type":"email",
             "disableResolveMessage":false,
             "settings":{
-               "addresses":"<example@email.com>"
+               "addresses":"<example@example.com>"
             },
             "secureSettings":{}
          }

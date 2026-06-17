@@ -76,6 +76,11 @@ var ErrTooManyItems error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "maximum number of items exceeded",
 }}
 
+var ErrRepositoryMismatch = apierrors.NewBadRequest("repository mismatch")
+
+// ErrInvalidRef indicates that a provided git ref (branch or commit SHA) failed validation.
+var ErrInvalidRef = apierrors.NewBadRequest("invalid ref")
+
 type FileInfo struct {
 	// Path to the file on disk.
 	// No leading or trailing slashes will be contained within.
@@ -158,6 +163,14 @@ type RepositoryWithURLs interface {
 	// Get resource URLs for a file inside a repository
 	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.RepositoryURLs, error)
 	RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error)
+}
+
+// WebhookRepository is implemented by repositories that can receive and handle
+// incoming webhook requests from their git provider.
+type WebhookRepository interface {
+	Repository
+
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 }
 
 // Hooks called after the repository has been created, updated or deleted

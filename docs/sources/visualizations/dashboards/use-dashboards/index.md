@@ -67,7 +67,7 @@ image_maps:
         content: |
           **Variables**
 
-          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/), including filters, to create more interactive and dynamic dashboards.
+          Use [variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) and [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/), to create more interactive and dynamic dashboards.
       - x_coord: 45
         y_coord: 23
         content: |
@@ -358,29 +358,9 @@ Selecting the **Auto** interval schedules a refresh based on the query time rang
 
 ## Filter dashboard data
 
-After you've [added a filter](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-ad-hoc-filters) in the dashboard settings, you can create label/value filter pairs on the dashboard.
+Filters help you narrow the data displayed in a dashboard.
+
+After you've added a filter in the dashboard settings, you can create label/value filter pairs on the dashboard.
 These filters are applied to all metric queries that use the specified data source and to all panels on the dashboard.
 
-To filter dashboard data, follow these steps:
-
-1. On the dashboard, click in the filter field.
-1. Select a label, operator, and value.
-
-   To add multiple values for one label, choose one of the multi-select operators, **One of** (`=|`) or **Not one of** (`!=|`). These operators only appear if the filter data source supports it.
-
-1. Repeat this process as needed until you have all the filters you need.
-
-   ![Filters](/media/docs/grafana/dashboards/screenshot-adhoc-filters-v11.3.png)
-
-### Edit or delete filters
-
-To edit or delete filters, follow these steps:
-
-1. On the dashboard, click anywhere on the filter you want to change.
-1. Do one of the following:
-   - To edit the operator or value of a filter, click anywhere on the filter and update it.
-
-     ![Editing a filter](/media/docs/grafana/dashboards/screenshot-edit-filters-v11.3.png)
-
-   - To change the filter label, you must delete the filter and create a new one.
-   - To delete a filter, click the **X** next to it.
+To learn more, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).

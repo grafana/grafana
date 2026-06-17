@@ -65,6 +65,11 @@ const zoneInfo = "ZONEINFO"
 // Default renderer auth token from [rendering]renderer_token.
 const DefaultRendererAuthToken = "-"
 
+// ProvisioningMaxFileSizeDefault is the default value for the
+// [provisioning] max_file_size key (5 MiB). It bounds files read from or
+// written to a provisioning repository through the files API.
+const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -151,8 +156,12 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	ProvisioningAllowedTargets                []string
+	ProvisioningAllowedTargets []string
+	// ProvisioningResources is the configured set of provisionable resources, each as a
+	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
+	ProvisioningResources                     []string
 	ProvisioningAllowImageRendering           bool
+	ProvisioningAllowInsecure                 bool // allow http:// repository URLs together with a token (cleartext credentials); local/dev only
 	ProvisioningMinSyncInterval               time.Duration
 	ProvisioningRepositoryTypes               []string
 	ProvisioningLokiURL                       string
@@ -163,6 +172,7 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
+	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
@@ -283,26 +293,27 @@ type Cfg struct {
 	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
-	LoginCookieName               string
-	LoginMaxInactiveLifetime      time.Duration
-	LoginMaxLifetime              time.Duration
-	TokenRotationIntervalMinutes  int
-	SigV4AuthEnabled              bool
-	SigV4VerboseLogging           bool
-	AzureAuthEnabled              bool
-	AzureSkipOrgRoleSync          bool
-	BasicAuthEnabled              bool
-	BasicAuthStrongPasswordPolicy bool
-	AdminUser                     string
-	AdminPassword                 string
-	DisableLogin                  bool
-	AdminEmail                    string
-	DisableLoginForm              bool
-	SignoutRedirectUrl            string
-	IDResponseHeaderEnabled       bool
-	IDResponseHeaderPrefix        string
-	IDResponseHeaderNamespaces    map[string]struct{}
-	ManagedServiceAccountsEnabled bool
+	LoginCookieName                   string
+	LoginMaxInactiveLifetime          time.Duration
+	LoginMaxLifetime                  time.Duration
+	TokenRotationIntervalMinutes      int
+	SigV4AuthEnabled                  bool
+	SigV4VerboseLogging               bool
+	AzureAuthEnabled                  bool
+	AzureSkipOrgRoleSync              bool
+	BasicAuthEnabled                  bool
+	BasicAuthStrongPasswordPolicy     bool
+	AdminUser                         string
+	AdminPassword                     string
+	DisableLogin                      bool
+	AdminEmail                        string
+	DisableLoginForm                  bool
+	SignoutRedirectUrl                string
+	IDResponseHeaderEnabled           bool
+	IDResponseHeaderPrefix            string
+	IDResponseHeaderNamespaces        map[string]struct{}
+	ManagedServiceAccountsEnabled     bool
+	IDUseExternalGroupsForGroupsClaim bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders          []string
@@ -448,6 +459,8 @@ type Cfg struct {
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
 	IntercomSecret                      string
+	PostHogToken                        string
+	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
 	MeticulousAIRecordingToken          string
 
@@ -650,6 +663,12 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
+	// MigrationChunkedWrites writes each migration chunk in its own transaction,
+	// bounded by migration_chunk_max_bytes. Requires migration_locking=true for HA. Default: false.
+	MigrationChunkedWrites bool
+	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
+	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
+	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline time.Duration
@@ -669,9 +688,14 @@ type Cfg struct {
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
 	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
+	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
+	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
+	DiskIndexCleanupInterval                   time.Duration // How often to scan the bleve index root for folders to reclaim. Zero disables the loop (default: 0).
+	DiskIndexCleanupGracePeriod                time.Duration // Minimum age a candidate folder must have before disk cleanup is allowed to delete it (default: 1h).
+	DiskIndexCleanupUnopenedGracePeriod        time.Duration // Longer grace applied to the newest on-disk index of a resource this pod owns but has not opened. Lets cold-start BuildIndex reuse it instead of rebuilding from scratch (default: 24h).
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
@@ -683,6 +707,7 @@ type Cfg struct {
 	MemberlistClusterLabel                     string
 	MemberlistClusterLabelVerificationDisabled bool
 	SearchRingReplicationFactor                int
+	SearchRingExtendReplicaSet                 bool
 	InstanceID                                 string
 	SprinklesApiServer                         string
 	SprinklesApiServerPageLimit                int
@@ -692,7 +717,8 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// Vector storage (separate pgvector database)
+
+	// Vector storage
 	EnableVectorBackend      bool
 	VectorDBHost             string
 	VectorDBPort             string
@@ -700,21 +726,44 @@ type Cfg struct {
 	VectorDBUser             string
 	VectorDBPassword         string
 	VectorDBSSLMode          string
-	VectorPromotionThreshold int           // row count per tenant to trigger leaf promotion
+	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold int           // row count per tenant to trigger promotion
 	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+
+	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
+	VectorQueryCacheEnabled      bool
+	VectorQueryCacheMaxPerTenant int
+
+	// VectorSearch per-tenant rate limit (DB-backed, sliding window).
+	VectorRateLimitEnabled   bool
+	VectorRateLimitPerTenant int
+	VectorRateLimitWindow    time.Duration
+
 	// Embedding provider used by the VectorSearch RPC. "" = disabled.
-	EmbeddingProvider                 string // "vertex" | "bedrock" | ""
-	VertexProjectID                   string
-	VertexLocation                    string // default "us-central1"
-	VertexModel                       string // default "gemini-embedding-001"
-	VertexDimensions                  int    // default 768
-	BedrockRegion                     string // default "us-east-1"
-	BedrockModel                      string // default "cohere.embed-v4:0"
-	BedrockDimensions                 int    // default 1024
-	OverridesFilePath                 string
-	OverridesReloadInterval           time.Duration
-	EnforcedQuotaResources            []string
-	QuotasErrorMessageSupportInfo     string
+	EmbeddingProvider  string // "vertex" | "bedrock" | "azure" | ""
+	VertexProjectID    string
+	VertexLocation     string // default "us-central1"
+	VertexModel        string // default "gemini-embedding-001"
+	VertexDimensions   int    // default 768
+	VertexBatchSize    int    // texts per Vertex predict call; default 50
+	BedrockRegion      string // default "us-east-1"
+	BedrockModel       string // default "cohere.embed-v4:0"
+	BedrockDimensions  int    // default 1024
+	BedrockBatchSize   int    // texts per Bedrock invoke call; default 50
+	BedrockMaxAttempts int    // max InvokeModel attempts per call under throttling; default 5
+	AzureEndpoint      string // Azure OpenAI resource endpoint, e.g. https://<resource>.openai.azure.com
+	AzureDeployment    string // Azure OpenAI embeddings deployment name; default "text-embedding-3-small"
+	AzureAPIVersion    string // Azure OpenAI REST API version; default "2024-02-01"
+	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
+	AzureBatchSize     int    // texts per Azure embeddings call; default 50
+
+	// Overrides/Quotas
+	OverridesFilePath             string
+	OverridesReloadInterval       time.Duration
+	EnforcedQuotaResources        []string
+	QuotasErrorMessageSupportInfo string
+
 	EnableSQLKVBackend                bool
 	EnableSQLKVCompatibilityMode      bool
 	EnableKVLeases                    bool
@@ -1097,14 +1146,19 @@ type AnnotationAppPlatformSettings struct {
 	PostgresConnMaxLifetime  time.Duration // Maximum lifetime of a connection
 	PostgresTagCacheTTL      time.Duration // TTL for tag query cache
 	PostgresTagCacheSize     int           // Size of the tag query cache
+
+	// EnableLegacyID controls whether a grafana.app/legacyID label is generated
+	// for new annotations.
+	EnableLegacyID bool
 }
 
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{
-		Enabled:      appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend: appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL: appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		Enabled:        appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:   appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:   appPlatformSection.Key("retention_ttl").MustDuration(2160 * time.Hour),
+		EnableLegacyID: appPlatformSection.Key("enable_legacy_id").MustBool(false),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -1548,6 +1602,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
 	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.PostHogToken = analytics.Key("posthog_token").String()
+	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
 	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
 
@@ -2052,6 +2108,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
 	}
 
+	cfg.IDUseExternalGroupsForGroupsClaim = auth.Key("id_use_external_groups_for_groups_claim").MustBool(false)
+
 	// anonymous access
 	cfg.readAnonymousSettings()
 
@@ -2454,14 +2512,20 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	}
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
-		cfg.ProvisioningAllowedTargets = []string{"folder"}
+		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
+	}
+	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings(",")
+	if len(cfg.ProvisioningResources) == 0 {
+		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
+	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
@@ -2472,6 +2536,19 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
 
 	return nil
+}
+
+// defaultProvisioningResources is the built-in set used when [provisioning] resources is
+// unset. Tokens use the shared "<group>/<Kind>[:cap...]" grammar (see
+// resources.ParseSupportedResources). Library panels and playlists are declared but
+// disabled by default.
+func defaultProvisioningResources() []string {
+	return []string{
+		"folder.grafana.app/Folder:folder",
+		"dashboard.grafana.app/Dashboard:folder",
+		"dashboard.grafana.app/LibraryPanel:folder:disabled",
+		"playlist.grafana.app/Playlist:disabled",
+	}
 }
 
 func (cfg *Cfg) readPublicDashboardsSettings() {

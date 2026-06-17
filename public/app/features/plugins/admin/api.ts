@@ -1,4 +1,4 @@
-import { type PluginError, type PluginMeta, renderMarkdown } from '@grafana/data';
+import { type PluginError, renderMarkdown } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { installPluginMeta, logPluginMetaError, uninstallPluginMeta } from '@grafana/runtime/internal';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -221,7 +221,7 @@ export async function getProvisionedPlugins(): Promise<ProvisionedPlugin[]> {
 }
 
 export async function installPlugin(id: string, version?: string) {
-  // Install via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Install via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
@@ -246,7 +246,7 @@ export async function installPlugin(id: string, version?: string) {
 }
 
 export async function uninstallPlugin(id: string) {
-  // Uninstall via K8s PluginMeta API (no-op when useMTPlugins is off).
+  // Uninstall via K8s PluginMeta API (no-op when plugins.useMTPlugins is off).
   // We call both this and the legacy path because the K8s settings API doesn't cover all
   // plugin types yet — the legacy call keeps the UI in sync across browser refreshes.
   // TODO(@hugohaggmark): return early once all plugin types support the K8s Settings API.
@@ -260,16 +260,6 @@ export async function uninstallPlugin(id: string) {
 
   // Legacy uninstall path — kept until K8s settings API covers all plugin types.
   return await getBackendSrv().post(`${API_ROOT}/${id}/uninstall`);
-}
-
-export async function updatePluginSettings(id: string, data: Partial<PluginMeta>) {
-  const response = await getBackendSrv().datasourceRequest({
-    url: `/api/plugins/${id}/settings`,
-    method: 'POST',
-    data,
-  });
-
-  return response?.data;
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {
@@ -289,5 +279,3 @@ export async function getPluginEntitlement(id: string): Promise<boolean> {
     return false;
   }
 }
-
-export const api = { getRemotePlugins, getInstalledPlugins: getLocalPlugins, installPlugin, uninstallPlugin };

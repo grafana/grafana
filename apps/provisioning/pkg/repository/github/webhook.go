@@ -21,16 +21,14 @@ import (
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
 
-type WebhookRepository interface {
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
-
 type GithubWebhookRepository interface {
 	GithubRepository
 	repository.Hooks
 
-	WebhookRepository
+	repository.WebhookRepository
 }
+
+var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
@@ -41,6 +39,7 @@ type githubWebhookRepository struct {
 	gh                Client
 	webhookURL        string
 	incrementalPolicy repository.IncrementalSyncPolicy
+	replayCache       *replayCache
 }
 
 func NewGithubWebhookRepository(
@@ -48,7 +47,13 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
+	replay *replayCache,
 ) GithubWebhookRepository {
+	// Defensive: callers should pass the factory-owned cache, but never leave
+	// Webhook with a nil cache to dereference.
+	if replay == nil {
+		replay = newReplayCache(defaultReplayCacheTTL)
+	}
 	return &githubWebhookRepository{
 		GithubRepository:  basic,
 		config:            basic.Config(),
@@ -58,6 +63,7 @@ func NewGithubWebhookRepository(
 		webhookURL:        webhookURL,
 		secret:            secret,
 		incrementalPolicy: incrementalPolicy,
+		replayCache:       replay,
 	}
 }
 
@@ -76,11 +82,32 @@ func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request
 		return nil, apierrors.NewUnauthorized("invalid signature")
 	}
 
-	return r.parseWebhook(github.WebHookType(req), payload)
+	// Replay protection: key on the validated signature, not the
+	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
+	// only, so the delivery ID is unauthenticated — an attacker replaying a
+	// captured (body, signature) could simply pick a fresh delivery ID and
+	// slip past a delivery-ID cache. The signature, by contrast, is bound to
+	// both the signed body and the repository's unique secret, so it cannot be
+	// forged or collided across repositories.
+	//
+	// Silently drop a request whose signature we have already processed within
+	// the cache TTL — returning a generic 200 avoids confirming to a replay
+	// attacker that the captured payload was a real previously-processed
+	// delivery.
+	signature := req.Header.Get(github.SHA256SignatureHeader)
+	if signature == "" {
+		signature = req.Header.Get(github.SHA1SignatureHeader)
+	}
+	if r.replayCache.seenOrAdd(signature) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
+	}
+
+	return r.parseWebhook(ctx, github.WebHookType(req), payload)
 }
 
 // This method does not include context because it does delegate any more requests
-func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
 	event, err := github.ParseWebHook(messageType, payload)
 	if err != nil {
 		return nil, apierrors.NewBadRequest("invalid payload")
@@ -88,7 +115,7 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		return r.parsePushEvent(event)
+		return r.parsePushEvent(ctx, event)
 	case *github.PullRequestEvent:
 		return r.parsePullRequestEvent(event)
 	case *github.PingEvent:
@@ -104,12 +131,16 @@ func (r *githubWebhookRepository) parseWebhook(messageType string, payload []byt
 	}
 }
 
-func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
+	_, logger := r.logger(ctx, "")
+
 	if event.GetRepo() == nil {
 		return nil, fmt.Errorf("missing repository in push event")
 	}
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		logger.Warn("webhook push event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 
 	// No need to sync if not enabled
@@ -153,8 +184,10 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 		return nil, fmt.Errorf("missing GitHub config")
 	}
 
-	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
-		return nil, fmt.Errorf("repository mismatch")
+	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
+	if event.GetRepo().GetFullName() != expected {
+		slog.Warn("webhook pull request event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
+		return nil, repository.ErrRepositoryMismatch
 	}
 	pr := event.GetPullRequest()
 	if pr == nil {
@@ -308,6 +341,13 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 		return nil, nil
 	}
 
+	// extra.Build never wraps a repository with spec.webhook.disabled in a GithubWebhookRepository,
+	// so reaching here with the flag set would be a bug. Guard anyway to be safe.
+	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
+		logging.FromContext(ctx).Warn("webhook hooks invoked while spec.webhook.disabled is true; skipping")
+		return nil, nil
+	}
+
 	if len(r.config.Spec.Workflows) == 0 {
 		return nil, nil
 	}
@@ -340,6 +380,11 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]in
 
 func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
+		return nil, nil
+	}
+
+	// See OnCreate for the reasoning behind this guard.
+	if r.config.Spec.Webhook != nil && r.config.Spec.Webhook.Disabled {
 		return nil, nil
 	}
 

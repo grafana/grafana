@@ -64,11 +64,6 @@ func UpdatePreferencesFor(ctx context.Context,
 		Navbar:           dtoCmd.Navbar,
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
-		saveCmd.RegionalFormat = dtoCmd.RegionalFormat
-	}
-
 	if err := preferenceService.Save(ctx, &saveCmd); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
 	}
@@ -103,13 +98,6 @@ func GetPreferencesFor(ctx context.Context,
 	if preference.JSONData != nil {
 		if preference.JSONData.Language != "" {
 			dto.Language = &preference.JSONData.Language
-		}
-
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features.IsEnabled(ctx, featuremgmt.FlagLocaleFormatPreference) {
-			if preference.JSONData.RegionalFormat != "" {
-				dto.RegionalFormat = &preference.JSONData.RegionalFormat
-			}
 		}
 
 		if preference.JSONData.Navbar.BookmarkUrls != nil {

@@ -37,9 +37,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Home,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPageProxy" */ '../features/dashboard/containers/DashboardPageProxy')
-      ),
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "HomeRoute" */ '../features/home/HomeRoute')),
     },
     {
       path: '/d/:uid/:slug?',
@@ -576,7 +574,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return routes.filter(isTruthy);
 }
 
-export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
   if (!cfg.supportBundlesEnabled) {
     return [];
   }

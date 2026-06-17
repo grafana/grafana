@@ -20,6 +20,8 @@ export async function importPluginModule({
   version,
   moduleHash,
   translations,
+  hasUpdate,
+  pluginName,
 }: PluginImportInfo): Promise<System.Module> {
   if (version) {
     registerPluginInfoInCache({ path, version, loadingStrategy });
@@ -67,7 +69,11 @@ export async function importPluginModule({
   }
 
   return SystemJS.import(modulePath).catch((e) => {
-    let error = new Error('Could not load plugin', { cause: e });
+    let errorMessage = 'Could not load plugin';
+    if (hasUpdate) {
+      errorMessage = `Could not load plugin. Updating the "${pluginName}" plugin to the latest version may fix the problem.`;
+    }
+    let error = new Error(errorMessage, { cause: e });
     console.error(error);
     getLogger('features.plugins').logError(error, {
       path,

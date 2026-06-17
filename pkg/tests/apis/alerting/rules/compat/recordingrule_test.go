@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -62,14 +61,15 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 			},
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
-			Title:  rule.Title,
-			Metric: v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			Title:               rule.Title,
+			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
+			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(rule.Record.TargetDatasourceUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {
-					QueryType:     util.Pointer(rule.Data[0].QueryType),
-					DatasourceUID: util.Pointer(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
+					QueryType:     new(rule.Data[0].QueryType),
+					DatasourceUID: new(v0alpha1.RecordingRuleDatasourceUID(rule.Data[0].DatasourceUID)),
 					Model:         rule.Data[0].Model,
-					Source:        util.Pointer(true),
+					Source:        new(true),
 					RelativeTimeRange: &v0alpha1.RecordingRuleRelativeTimeRange{
 						From: v0alpha1.RecordingRulePromDurationWMillis("5m"),
 						To:   v0alpha1.RecordingRulePromDurationWMillis("0s"),

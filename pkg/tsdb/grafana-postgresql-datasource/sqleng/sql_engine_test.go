@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
 
-func Pointer[T any](v T) *T { return &v }
-
 func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
@@ -76,19 +74,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int64{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time3", nil, []int64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*int64{
-				Pointer(tMilliseconds),
+				new(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []int64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*int64{
-				Pointer(tNanoSeconds),
+				new(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*int64{
 				nilPointer,
@@ -120,19 +118,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint64{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time3", nil, []uint64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*uint64{
-				Pointer(tMilliseconds),
+				new(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []uint64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*uint64{
-				Pointer(tNanoSeconds),
+				new(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*uint64{
 				nilPointer,
@@ -162,7 +160,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int32{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time7", nil, []*int32{
 				nilInt,
@@ -187,7 +185,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint32{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time7", nil, []*uint32{
 				nilInt,
@@ -213,19 +211,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float64{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time3", nil, []float64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*float64{
-				Pointer(tMilliseconds),
+				new(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []float64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*float64{
-				Pointer(tNanoSeconds),
+				new(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*float64{
 				nilPointer,
@@ -255,7 +253,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float32{
-				Pointer(tSeconds),
+				new(tSeconds),
 			}),
 			data.NewField("time7", nil, []*float32{
 				nilInt,
@@ -276,61 +274,61 @@ func TestSQLEngine(t *testing.T) {
 				int64(1),
 			}),
 			data.NewField("value2", nil, []*int64{
-				Pointer(int64(1)),
+				new(int64(1)),
 			}),
 			data.NewField("value3", nil, []int32{
 				int32(1),
 			}),
 			data.NewField("value4", nil, []*int32{
-				Pointer(int32(1)),
+				new(int32(1)),
 			}),
 			data.NewField("value5", nil, []int16{
 				int16(1),
 			}),
 			data.NewField("value6", nil, []*int16{
-				Pointer(int16(1)),
+				new(int16(1)),
 			}),
 			data.NewField("value7", nil, []int8{
 				int8(1),
 			}),
 			data.NewField("value8", nil, []*int8{
-				Pointer(int8(1)),
+				new(int8(1)),
 			}),
 			data.NewField("value9", nil, []float64{
 				float64(1),
 			}),
 			data.NewField("value10", nil, []*float64{
-				Pointer(1.0),
+				new(1.0),
 			}),
 			data.NewField("value11", nil, []float32{
 				float32(1),
 			}),
 			data.NewField("value12", nil, []*float32{
-				Pointer(float32(1)),
+				new(float32(1)),
 			}),
 			data.NewField("value13", nil, []uint64{
 				uint64(1),
 			}),
 			data.NewField("value14", nil, []*uint64{
-				Pointer(uint64(1)),
+				new(uint64(1)),
 			}),
 			data.NewField("value15", nil, []uint32{
 				uint32(1),
 			}),
 			data.NewField("value16", nil, []*uint32{
-				Pointer(uint32(1)),
+				new(uint32(1)),
 			}),
 			data.NewField("value17", nil, []uint16{
 				uint16(1),
 			}),
 			data.NewField("value18", nil, []*uint16{
-				Pointer(uint16(1)),
+				new(uint16(1)),
 			}),
 			data.NewField("value19", nil, []uint8{
 				uint8(1),
 			}),
 			data.NewField("value20", nil, []*uint8{
-				Pointer(uint8(1)),
+				new(uint8(1)),
 			}),
 		)
 		for i := 0; i < len(originFrame.Fields); i++ {

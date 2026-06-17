@@ -1,9 +1,11 @@
-import { t, Trans } from '@grafana/i18n';
+import { textUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
+import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
@@ -17,7 +19,8 @@ interface RepositoryActionsProps {
 
 export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const name = repository.metadata?.name ?? '';
-  const repoHref = getRepoHrefForProvider(repository.spec);
+  const rawRepoHref = getRepoHrefForProvider(repository.spec);
+  const repoHref = rawRepoHref ? textUtil.sanitizeUrl(rawRepoHref) : undefined;
   const connectionName = repository.spec?.connection?.name;
 
   const repoType = repository.spec?.type;
@@ -26,8 +29,8 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
 
   return (
-    <Stack wrap="wrap">
-      {isReadOnlyRepo && <Badge color="darkgrey" text={t('folder-repo.read-only-badge', 'Read only')} />}
+    <Stack wrap="wrap" alignItems="center">
+      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
       {repoHref && (
         <Button variant="secondary" icon={providerIcon} onClick={() => window.open(repoHref, '_blank')}>

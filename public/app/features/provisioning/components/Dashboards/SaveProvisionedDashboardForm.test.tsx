@@ -1,4 +1,4 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, delay, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type Dashboard } from '@grafana/schema';
@@ -101,14 +101,16 @@ function setup(props: Partial<Props> = {}) {
     schemaVersion: 36,
   };
 
+  const dashboardState = {
+    meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
+    title: 'Test Dashboard',
+    description: 'Test Description',
+    isDirty: true,
+  };
   const defaultProps: Props = {
     dashboard: {
-      useState: () => ({
-        meta: { folderUid: 'folder-uid', slug: 'test-dashboard' },
-        title: 'Test Dashboard',
-        description: 'Test Description',
-        isDirty: true,
-      }),
+      state: dashboardState,
+      useState: () => dashboardState,
       setState: jest.fn(),
       closeModal: jest.fn(),
       getSaveAsModel: jest.fn().mockReturnValue(mockDashboard),
@@ -259,6 +261,46 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(newDashboard);
   });
 
+  it('uses the repository commit.singleResourceMessageTemplate when the comment is empty', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
+
+    const { user, props } = setup({
+      repository: {
+        type: 'github',
+        name: 'test-repo',
+        title: 'Test Repo',
+        workflows: ['branch', 'write'],
+        target: 'folder',
+        commit: { singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' },
+      },
+    });
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'Test Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.searchParams.get('message')).toBe('feat(dashboards): create Test Dashboard');
+  });
+
   it('should update an existing dashboard successfully', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
@@ -284,6 +326,17 @@ describe('SaveProvisionedDashboardForm', () => {
     const { user } = setup({
       isNew: false,
       dashboard: {
+        state: {
+          meta: {
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
+            slug: 'test-dashboard',
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        },
         useState: () => ({
           meta: {
             folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
@@ -322,6 +375,161 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.body).toEqual(updatedDashboard);
   });
 
+  it('shows the in-progress state on Save while new dashboard validation is pending', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'New Dashboard' } } },
+        });
+      })
+    );
+
+    // Hold title validation open so the submit stays in its validation phase.
+    let resolveValidation!: (value: unknown) => void;
+    const validationPromise = new Promise((resolve) => {
+      resolveValidation = resolve;
+    });
+    (validationSrv.validateNewDashboardName as jest.Mock).mockReturnValue(validationPromise);
+
+    const newDashboard = {
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p', name: undefined },
+      spec: { title: 'New Dashboard', panels: [], schemaVersion: 36 },
+    };
+
+    const { user, props } = setup();
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue(newDashboard);
+
+    const titleInput = screen.getByRole('textbox', { name: /title/i });
+    await user.clear(titleInput);
+    await user.type(titleInput, 'New Dashboard');
+
+    const filenameInput = screen.getByRole('textbox', { name: /filename/i });
+    await user.clear(filenameInput);
+    await user.type(filenameInput, 'custom-filename.json');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    // The button reflects the in-progress submit during validation, before the create POST fires.
+    const savingButton = await screen.findByRole('button', { name: /saving/i });
+    expect(savingButton).toBeDisabled();
+    expect(capturedRequest).toBeNull();
+
+    // Completing validation lets the create POST go out.
+    await act(async () => {
+      resolveValidation(true);
+    });
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+  });
+
+  it('re-enables Save and skips the write when new dashboard validation fails', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'New Dashboard' } } },
+        });
+      })
+    );
+
+    (validationSrv.validateNewDashboardName as jest.Mock).mockRejectedValue(
+      new Error('A dashboard or a folder with the same name already exists')
+    );
+
+    const { user, props } = setup();
+    props.dashboard.getSaveResource = jest.fn().mockReturnValue({
+      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      kind: 'Dashboard',
+      metadata: { generateName: 'p' },
+      spec: { title: 'New Dashboard', panels: [], schemaVersion: 36 },
+    });
+
+    const titleInput = screen.getByRole('textbox', { name: /title/i });
+    await user.clear(titleInput);
+    await user.type(titleInput, 'New Dashboard');
+
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    // Failed validation re-enables the button and never fires the create POST.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /save/i })).not.toBeDisabled();
+    });
+    expect(capturedRequest).toBeNull();
+  });
+
+  it('shows the in-progress state on Save while an existing dashboard is being written', async () => {
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        // Keep the write in flight so the in-progress state is observable.
+        await delay(50);
+        const url = new URL(request.url);
+        capturedRequest = { url, body: await request.json() };
+        return HttpResponse.json({
+          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
+        });
+      })
+    );
+
+    const updatedDashboard = {
+      apiVersion: 'dashboard.grafana.app/vXyz',
+      metadata: {
+        name: 'test-dashboard',
+        annotations: {
+          [AnnoKeyFolder]: 'folder-uid',
+          [AnnoKeySourcePath]: 'path/to/file.json',
+        },
+      },
+      spec: { title: 'Test Dashboard', description: 'Test Description' },
+    };
+    const { user } = setup({
+      isNew: false,
+      dashboard: {
+        state: {
+          meta: {
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
+            slug: 'test-dashboard',
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        },
+        useState: () => ({
+          meta: {
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
+            slug: 'test-dashboard',
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        }),
+        setState: jest.fn(),
+        closeModal: jest.fn(),
+        getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
+        setManager: jest.fn(),
+        getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
+      } as unknown as DashboardScene,
+    });
+
+    const commentInput = screen.getByRole('textbox', { name: /comment/i });
+    await user.clear(commentInput);
+    await user.type(commentInput, 'Update dashboard');
+    await user.click(screen.getByRole('button', { name: /save/i }));
+
+    // The in-progress state shows for edits too, while the write is in flight.
+    const savingButton = await screen.findByRole('button', { name: /saving/i });
+    expect(savingButton).toBeDisabled();
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+  });
+
   it('should rename file when path changes on existing dashboard', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
@@ -358,6 +566,17 @@ describe('SaveProvisionedDashboardForm', () => {
         workflow: 'write',
       },
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -435,6 +654,17 @@ describe('SaveProvisionedDashboardForm', () => {
         workflow: 'write',
       },
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -485,6 +715,17 @@ describe('SaveProvisionedDashboardForm', () => {
         workflow: 'write',
       },
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            uid: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -577,6 +818,16 @@ describe('SaveProvisionedDashboardForm', () => {
   it('should disable save button when dashboard is not dirty', () => {
     setup({
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -624,6 +875,16 @@ describe('SaveProvisionedDashboardForm', () => {
   it('enables save button when only the comment changes', async () => {
     const { user } = setup({
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+            k8s: { name: 'test-dashboard' },
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -813,6 +1074,15 @@ describe('SaveProvisionedDashboardForm', () => {
 
     const { user } = setup({
       dashboard: {
+        state: {
+          meta: {
+            folderUid: 'folder-uid',
+            slug: 'test-dashboard',
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: false,
+        },
         useState: () => ({
           meta: {
             folderUid: 'folder-uid',
@@ -868,6 +1138,17 @@ describe('SaveProvisionedDashboardForm', () => {
     const { user } = setup({
       isNew: false,
       dashboard: {
+        state: {
+          meta: {
+            folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],
+            slug: 'test-dashboard',
+            uid: updatedDashboard.metadata.name,
+            k8s: updatedDashboard.metadata,
+          },
+          title: 'Test Dashboard',
+          description: 'Test Description',
+          isDirty: true,
+        },
         useState: () => ({
           meta: {
             folderUid: updatedDashboard.metadata.annotations[AnnoKeyFolder],

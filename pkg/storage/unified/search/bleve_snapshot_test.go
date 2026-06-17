@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -30,128 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-// fakeRemoteIndexStore is an in-memory RemoteIndexStore for unit tests.
-// DownloadIndex writes a minimal bleve index populated from the stored meta
-// so validateDownloadedIndex sees consistent data.
-//
-// All data access is mutex-guarded so cold-start tests can mutate the
-// snapshot set from a goroutine while coordinateColdStartBuild is
-// probing on the main goroutine. The mutex is uncontended in single-
-// threaded tests.
-type fakeRemoteIndexStore struct {
-	mu          sync.Mutex
-	data        map[ulid.ULID]*IndexMeta
-	getErr      map[ulid.ULID]error
-	listErr     error
-	downloadErr error
-
-	listCalls     atomic.Int32
-	listKeyCalls  atomic.Int32
-	getMetaCalls  atomic.Int32
-	downloadCalls atomic.Int32
-}
-
-type noopIndexStoreLock struct {
-	lost chan struct{}
-}
-
-func (l *noopIndexStoreLock) Release() error {
-	return nil
-}
-
-func (l *noopIndexStoreLock) Lost() <-chan struct{} {
-	return l.lost
-}
-
-func (f *fakeRemoteIndexStore) put(key ulid.ULID, meta *IndexMeta) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.data == nil {
-		f.data = map[ulid.ULID]*IndexMeta{}
-	}
-	f.data[key] = meta
-}
-
-func (f *fakeRemoteIndexStore) ListIndexes(context.Context, resource.NamespacedResource) (map[ulid.ULID]*IndexMeta, error) {
-	f.listCalls.Add(1)
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.listErr != nil {
-		return nil, f.listErr
-	}
-	out := make(map[ulid.ULID]*IndexMeta, len(f.data))
-	for k, v := range f.data {
-		out[k] = v
-	}
-	return out, nil
-}
-
-func (f *fakeRemoteIndexStore) ListIndexKeys(context.Context, resource.NamespacedResource) ([]ulid.ULID, error) {
-	f.listKeyCalls.Add(1)
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if f.listErr != nil {
-		return nil, f.listErr
-	}
-	keys := make([]ulid.ULID, 0, len(f.data))
-	for k := range f.data {
-		keys = append(keys, k)
-	}
-	return keys, nil
-}
-
-func (f *fakeRemoteIndexStore) GetIndexMeta(_ context.Context, _ resource.NamespacedResource, k ulid.ULID) (*IndexMeta, error) {
-	f.getMetaCalls.Add(1)
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	if err, ok := f.getErr[k]; ok {
-		return nil, err
-	}
-	meta, ok := f.data[k]
-	if !ok {
-		return nil, ErrSnapshotNotFound
-	}
-	return meta, nil
-}
-
-func (f *fakeRemoteIndexStore) DownloadIndex(_ context.Context, _ resource.NamespacedResource, k ulid.ULID, destDir string) (*IndexMeta, error) {
-	f.downloadCalls.Add(1)
-	f.mu.Lock()
-	meta, ok := f.data[k]
-	downloadErr := f.downloadErr
-	f.mu.Unlock()
-	if downloadErr != nil {
-		return nil, downloadErr
-	}
-	if !ok {
-		return nil, fmt.Errorf("not found")
-	}
-	return meta, writeFakeSnapshot(destDir, meta)
-}
-
-func (f *fakeRemoteIndexStore) LockBuildIndex(context.Context, resource.NamespacedResource, string) (IndexStoreLock, error) {
-	return &noopIndexStoreLock{lost: make(chan struct{})}, nil
-}
-
-func (f *fakeRemoteIndexStore) UploadIndex(context.Context, resource.NamespacedResource, string, IndexMeta) (ulid.ULID, error) {
-	panic("UploadIndex not implemented for fakeRemoteIndexStore")
-}
-func (f *fakeRemoteIndexStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
-	panic("DeleteIndex not implemented for fakeRemoteIndexStore")
-}
-func (f *fakeRemoteIndexStore) CleanupIncompleteUploads(context.Context, resource.NamespacedResource, time.Duration) (int, error) {
-	panic("CleanupIncompleteUploads not implemented for fakeRemoteIndexStore")
-}
-func (f *fakeRemoteIndexStore) ListNamespaces(context.Context) ([]string, error) {
-	panic("ListNamespaces not implemented for fakeRemoteIndexStore")
-}
-func (f *fakeRemoteIndexStore) ListNamespaceIndexes(context.Context, string) ([]resource.NamespacedResource, error) {
-	panic("ListNamespaceIndexes not implemented for fakeRemoteIndexStore")
-}
-func (f *fakeRemoteIndexStore) LockNamespaceForCleanup(context.Context, string) (IndexStoreLock, error) {
-	panic("LockNamespaceForCleanup not implemented for fakeRemoteIndexStore")
-}
 
 // writeFakeSnapshot creates an empty bleve index at dir with RV and build info
 // matching meta. validateDownloadedIndex reads these back.
@@ -196,6 +73,20 @@ func makeULID(t *testing.T, at time.Time) ulid.ULID {
 	return k
 }
 
+func testIndexFormat(t *testing.T) string {
+	t.Helper()
+	format := maxSupportedIndexFormat()
+	require.NotEmpty(t, format)
+	return format
+}
+
+func testIndexFormatDelta(t *testing.T, delta int) string {
+	t.Helper()
+	formatType, version, ok := parseIndexFormat(testIndexFormat(t))
+	require.True(t, ok)
+	return indexFormat(formatType, uint32(int(version)+delta))
+}
+
 func TestSnapshotTier(t *testing.T) {
 	running := semver.MustParse("11.5.0")
 	minV := semver.MustParse("11.4.0")
@@ -234,11 +125,14 @@ func TestPickBestSnapshot(t *testing.T) {
 		}
 	}
 
+	format := testIndexFormat(t)
+
 	newBackend := func(minVersion *semver.Version) *bleveBackend {
 		return &bleveBackend{
-			log:                 log.New("bleve-snapshot-test"),
-			opts:                BleveOptions{Snapshot: SnapshotOptions{MinBuildVersion: minVersion}},
-			runningBuildVersion: running,
+			log:                     log.New("bleve-snapshot-test"),
+			opts:                    BleveOptions{Snapshot: SnapshotOptions{MinBuildVersion: minVersion}},
+			runningBuildVersion:     running,
+			maxSupportedIndexFormat: format,
 		}
 	}
 	cutoff := func(maxAge time.Duration) time.Time { return now.Add(-maxAge) }
@@ -309,6 +203,32 @@ func TestPickBestSnapshot(t *testing.T) {
 		assert.Equal(t, 2, c.tier)
 	})
 
+	t.Run("index format gate", func(t *testing.T) {
+		older := makeULID(t, now.Add(-30*time.Second))
+		same := makeULID(t, now.Add(-20*time.Second))
+		legacy := makeULID(t, now.Add(-10*time.Second))
+		tooNew := makeULID(t, now)
+
+		all := map[ulid.ULID]*IndexMeta{
+			older:  snap("11.5.0", 100, time.Minute),
+			same:   snap("11.5.0", 200, time.Minute),
+			legacy: snap("11.5.0", 300, time.Minute),
+			tooNew: snap("11.5.0", 400, time.Minute),
+		}
+		all[older].IndexFormat = testIndexFormatDelta(t, -1)
+		all[same].IndexFormat = format
+		all[tooNew].IndexFormat = testIndexFormatDelta(t, 1)
+
+		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, legacy, c.key, "empty legacy format remains compatible and normal tie-breaking still applies")
+
+		delete(all, legacy)
+		c, ok = newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
+		require.True(t, ok)
+		assert.Equal(t, same, c.key, "same format should beat older format by RV")
+	})
+
 	t.Run("within tier: version desc, then RV desc, then upload desc", func(t *testing.T) {
 		a := makeULID(t, now.Add(-30*time.Second))
 		b := makeULID(t, now.Add(-20*time.Second))
@@ -338,12 +258,12 @@ func TestPickBestSnapshot(t *testing.T) {
 type downloadTest struct {
 	be          *bleveBackend
 	metrics     *resource.BleveIndexMetrics
-	store       *fakeRemoteIndexStore
+	store       *hookableStore
 	ns          resource.NamespacedResource
 	resourceDir string
 }
 
-func newDownloadTest(t *testing.T, store *fakeRemoteIndexStore) downloadTest {
+func newDownloadTest(t *testing.T, store *hookableStore) downloadTest {
 	t.Helper()
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
@@ -374,29 +294,32 @@ func (dt downloadTest) counter(status string) float64 {
 }
 
 func TestTryDownloadRemoteSnapshot_Empty(t *testing.T) {
-	dt := newDownloadTest(t, &fakeRemoteIndexStore{})
+	dt := newDownloadTest(t, newHookableStore(t))
 	idx, _, err := dt.run(t)
 	require.NoError(t, err)
 	assert.Nil(t, idx)
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusEmpty))
-	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when no candidate exists")
+	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndexSnapshot should not be called when no candidate exists")
 }
 
 func TestTryDownloadRemoteSnapshot_ListError(t *testing.T) {
-	dt := newDownloadTest(t, &fakeRemoteIndexStore{listErr: errors.New("boom")})
+	store := newHookableStore(t)
+	store.setListKeysErr(errors.New("boom"))
+	dt := newDownloadTest(t, store)
 	_, _, err := dt.run(t)
 	require.Error(t, err)
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusDownloadError))
 }
 
 func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
-	store := &fakeRemoteIndexStore{downloadErr: errors.New("network dropped")}
-	store.put(makeULID(t, time.Now()), &IndexMeta{
+	store := newHookableStore(t)
+	store.setDownloadErr(errors.New("network dropped"))
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
-	dt := newDownloadTest(t, store)
 
 	_, _, err := dt.run(t)
 	require.Error(t, err)
@@ -408,13 +331,13 @@ func TestTryDownloadRemoteSnapshot_DownloadError(t *testing.T) {
 }
 
 func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), &IndexMeta{
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 0, // invalid (<=0)
 		UploadTimestamp:       time.Now(),
 	})
-	dt := newDownloadTest(t, store)
 
 	_, _, err := dt.run(t)
 	require.Error(t, err)
@@ -426,13 +349,13 @@ func TestTryDownloadRemoteSnapshot_ValidationError(t *testing.T) {
 }
 
 func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), &IndexMeta{
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now(),
 	})
-	dt := newDownloadTest(t, store)
 
 	idx, rv, err := dt.run(t)
 	require.NoError(t, err)
@@ -446,33 +369,33 @@ func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 }
 
 func TestTryDownloadRemoteSnapshot_AllFilteredOut(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now().Add(-2*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-2 * time.Hour),
 	})
-	dt := newDownloadTest(t, store)
 	dt.be.opts.Snapshot.MaxIndexAge = time.Hour
 
 	idx, _, err := dt.run(t)
 	require.NoError(t, err)
 	assert.Nil(t, idx)
 	assert.Equal(t, 1.0, dt.counter(snapshotStatusEmpty))
-	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndex should not be called when all candidates are filtered out")
+	assert.Zero(t, dt.store.downloadCalls.Load(), "DownloadIndexSnapshot should not be called when all candidates are filtered out")
 }
 
 // TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero pins the
 // "MaxIndexAge=0 means no age limit" semantic for the tiered selection
 // path: an arbitrarily old same-version snapshot is still downloaded.
 func TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now().Add(-30*24*time.Hour)), &IndexMeta{
+	store := newHookableStore(t)
+	dt := newDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now().Add(-30*24*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-30 * 24 * time.Hour),
 	})
-	dt := newDownloadTest(t, store)
 	dt.be.opts.Snapshot.MaxIndexAge = 0
 
 	idx, rv, err := dt.run(t)
@@ -487,12 +410,12 @@ func TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 type freshDownloadTest struct {
 	be          *bleveBackend
 	metrics     *resource.BleveIndexMetrics
-	store       *fakeRemoteIndexStore
+	store       *hookableStore
 	ns          resource.NamespacedResource
 	resourceDir string
 }
 
-func newFreshDownloadTest(t *testing.T, store *fakeRemoteIndexStore) freshDownloadTest {
+func newFreshDownloadTest(t *testing.T, store *hookableStore) freshDownloadTest {
 	t.Helper()
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
@@ -538,9 +461,9 @@ func freshSnapshot(buildAge time.Duration) *IndexMeta {
 }
 
 func TestTryDownloadFreshSnapshot_Hit(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	store := newHookableStore(t)
 	dt := newFreshDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	idx, rv, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -553,9 +476,9 @@ func TestTryDownloadFreshSnapshot_Hit(t *testing.T) {
 // means "no age limit": an arbitrarily old same-version snapshot is
 // accepted as long as it is newer than lastImportTime.
 func TestTryDownloadFreshSnapshot_NoAgeLimitWhenZero(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), freshSnapshot(30*24*time.Hour))
+	store := newHookableStore(t)
 	dt := newFreshDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(30*24*time.Hour))
 
 	idx, rv, err := dt.run(t, time.Time{}, 0)
 	require.NoError(t, err)
@@ -565,11 +488,11 @@ func TestTryDownloadFreshSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 }
 
 func TestTryDownloadFreshSnapshot_VersionMismatchSkipped(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	dt := newFreshDownloadTest(t, store)
 	meta := freshSnapshot(time.Minute)
 	meta.BuildVersion = "11.4.0" // backend runs 11.5.0
-	store.put(makeULID(t, time.Now()), meta)
-	dt := newFreshDownloadTest(t, store)
+	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), meta)
 
 	idx, _, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -579,7 +502,8 @@ func TestTryDownloadFreshSnapshot_VersionMismatchSkipped(t *testing.T) {
 }
 
 func TestTryDownloadFreshSnapshot_BuildTimeOlderThanMaxAge(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	dt := newFreshDownloadTest(t, store)
 	// Periodic re-upload: ULID (upload time) is recent, but BuildTime is old.
 	meta := &IndexMeta{
 		BuildVersion:          "11.5.0",
@@ -587,8 +511,7 @@ func TestTryDownloadFreshSnapshot_BuildTimeOlderThanMaxAge(t *testing.T) {
 		UploadTimestamp:       time.Now(),
 		BuildTime:             time.Now().Add(-3 * time.Hour),
 	}
-	store.put(makeULID(t, time.Now()), meta)
-	dt := newFreshDownloadTest(t, store)
+	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), meta)
 
 	idx, _, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -598,12 +521,12 @@ func TestTryDownloadFreshSnapshot_BuildTimeOlderThanMaxAge(t *testing.T) {
 }
 
 func TestTryDownloadFreshSnapshot_RejectedByLastImportTime(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	dt := newFreshDownloadTest(t, store)
 	// Snapshot built 5 minutes ago, but lastImportTime says KV mutated 2 minutes ago.
 	// The snapshot pre-dates known mutations and must be rejected even though it
 	// fits the maxFreshSnapshotAge window.
-	store.put(makeULID(t, time.Now()), freshSnapshot(5*time.Minute))
-	dt := newFreshDownloadTest(t, store)
+	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(5*time.Minute))
 
 	lastImportTime := time.Now().Add(-2 * time.Minute)
 	idx, _, err := dt.run(t, lastImportTime, time.Hour)
@@ -614,11 +537,11 @@ func TestTryDownloadFreshSnapshot_RejectedByLastImportTime(t *testing.T) {
 }
 
 func TestTryDownloadFreshSnapshot_AcceptedWhenBuiltAfterLastImportTime(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	dt := newFreshDownloadTest(t, store)
 	// Snapshot built 1 minute ago, lastImportTime 5 minutes ago: snapshot is
 	// strictly newer than the latest known mutation, so it's safe to use.
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
-	dt := newFreshDownloadTest(t, store)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 
 	lastImportTime := time.Now().Add(-5 * time.Minute)
 	idx, _, err := dt.run(t, lastImportTime, time.Hour)
@@ -628,7 +551,8 @@ func TestTryDownloadFreshSnapshot_AcceptedWhenBuiltAfterLastImportTime(t *testin
 }
 
 func TestTryDownloadFreshSnapshot_ListError(t *testing.T) {
-	store := &fakeRemoteIndexStore{listErr: errors.New("boom")}
+	store := newHookableStore(t)
+	store.setListKeysErr(errors.New("boom"))
 	dt := newFreshDownloadTest(t, store)
 
 	_, _, err := dt.run(t, time.Time{}, time.Hour)
@@ -637,7 +561,7 @@ func TestTryDownloadFreshSnapshot_ListError(t *testing.T) {
 }
 
 func TestTryDownloadFreshSnapshot_Empty(t *testing.T) {
-	dt := newFreshDownloadTest(t, &fakeRemoteIndexStore{})
+	dt := newFreshDownloadTest(t, newHookableStore(t))
 	idx, _, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
 	assert.Nil(t, idx)
@@ -648,24 +572,24 @@ func TestTryDownloadFreshSnapshot_Empty(t *testing.T) {
 // probe walks past a recent ULID whose BuildTime is stale (e.g. a periodic
 // re-upload) to find an earlier same-version candidate that's actually fresh.
 func TestTryDownloadFreshSnapshot_WalksPastStaleNewerCandidate(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	dt := newFreshDownloadTest(t, store)
 	now := time.Now()
 	// Newer ULID (uploaded just now) but stale BuildTime: a periodic re-upload
 	// of a long-lived index. Must be rejected by build-start freshness.
-	store.put(makeULID(t, now), &IndexMeta{
+	seedSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, now), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 10,
 		UploadTimestamp:       now,
 		BuildTime:             now.Add(-3 * time.Hour),
 	})
 	// Older ULID, fresh BuildTime: this is the one we want.
-	store.put(makeULID(t, now.Add(-30*time.Minute)), &IndexMeta{
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, dt.ns, makeULID(t, now.Add(-30*time.Minute)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       now.Add(-30 * time.Minute),
 		BuildTime:             now.Add(-30 * time.Minute),
 	})
-	dt := newFreshDownloadTest(t, store)
 
 	idx, rv, err := dt.run(t, time.Time{}, time.Hour)
 	require.NoError(t, err)
@@ -678,8 +602,9 @@ func TestTryDownloadFreshSnapshot_WalksPastStaleNewerCandidate(t *testing.T) {
 // BuildIndex prefers downloading a fresh same-version snapshot over running
 // the builder.
 func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -687,7 +612,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -703,10 +628,11 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 // when no fresh same-version snapshot is available, BuildIndex runs the
 // builder rather than falling back to the tiered selection.
 func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
+	ns := newTestNsResource()
 	// Older snapshot present — would be acceptable to the tiered policy on
 	// the initial-startup path, but must be ignored on the rebuild path.
-	store.put(makeULID(t, time.Now().Add(-3*time.Hour)), &IndexMeta{
+	seedSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now().Add(-3*time.Hour)), &IndexMeta{
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 42,
 		UploadTimestamp:       time.Now().Add(-3 * time.Hour),
@@ -719,7 +645,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
 		func(index resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -732,12 +658,171 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 	assert.Zero(t, store.downloadCalls.Load(), "older snapshot must not be downloaded on the rebuild path")
 }
 
+// TestBuildIndex_RebuildLeaderUploads verifies that a periodic rebuild leader
+// holds the remote build lock through the rebuild and uploads the fresh snapshot
+// immediately so waiting replicas can download it.
+func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(index resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "leader must acquire the build lock")
+	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeAcquiredLock)))
+}
+
+// TestBuildIndex_RebuildLeaderLockLostDuringBuild verifies that if the rebuild
+// leader's lock is lost during the build, the immediate upload is skipped but
+// the rebuild itself still completes — lock-lost is coordination, not fatal.
+func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+
+	builderCalled := atomic.Int32{}
+	idx, err := be.BuildIndex(t.Context(), ns, 10, nil, "rebuild",
+		func(resource.ResourceIndex) (int64, error) {
+			builderCalled.Add(1)
+			store.signalLockLost()
+			return 7, nil
+		},
+		nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+	require.NoError(t, err)
+	require.NotNil(t, idx)
+
+	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
+	assert.Zero(t, store.uploadCalls.Load(), "leader must skip immediate upload after lock loss")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader still releases the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost)))
+	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
+}
+
+func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, _ := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	builderCalled := atomic.Int32{}
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) {
+				builderCalled.Add(1)
+				return 1, nil
+			},
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Zero(t, builderCalled.Load(), "waiter must not rebuild when a fresh snapshot appears")
+	assert.Positive(t, store.downloadCalls.Load(), "waiter must download the fresh snapshot")
+}
+
+// TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait verifies that the
+// rebuild waiter records the downloaded_after_wait outcome under the rebuild
+// flow on the shared build-coordination metric.
+func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	be, metrics := newTestBleveBackend(t, SnapshotOptions{
+		Store:       store,
+		MinDocCount: 1,
+		MaxIndexAge: 24 * time.Hour,
+	})
+	withSnapshotBuildPollInterval(t, 5*time.Millisecond)
+
+	heldLock, err := store.inner.LockBuildIndex(t.Context(), ns, "11.5.0")
+	require.NoError(t, err)
+	defer func() { require.NoError(t, heldLock.Release()) }()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 2*time.Second)
+	defer cancel()
+
+	type buildResult struct {
+		idx resource.ResourceIndex
+		err error
+	}
+	resultCh := make(chan buildResult, 1)
+	go func() {
+		idx, err := be.BuildIndex(ctx, ns, 10, nil, "rebuild",
+			func(resource.ResourceIndex) (int64, error) { return 1, nil },
+			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
+		resultCh <- buildResult{idx: idx, err: err}
+	}()
+
+	require.Eventually(t, func() bool {
+		return store.lockAcquireCalls.Load() > 0
+	}, time.Second, 5*time.Millisecond)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+
+	select {
+	case result := <-resultCh:
+		require.NoError(t, result.err)
+		require.NotNil(t, result.idx)
+	case <-ctx.Done():
+		t.Fatal("timed out waiting for rebuild waiter")
+	}
+
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowRebuild, snapshotBuildOutcomeDownloadedAfterWait)))
+}
+
 // TestBuildIndex_RebuildSkipsFastPathWhenDisabled verifies that passing
 // maxFreshSnapshotAge=0 disables the rebuild-path fast path entirely (no
 // list/get calls against the store).
 func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	store := newHookableStore(t)
+	ns := newTestNsResource()
+	seedSnapshot(t, t.Context(), store.bucket, ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	be, _ := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -745,7 +830,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	})
 
 	builderCalled := atomic.Int32{}
-	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, nil, "rebuild",
+	idx, err := be.BuildIndex(context.Background(), ns, 10, nil, "rebuild",
 		func(resource.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
@@ -755,12 +840,13 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 	require.NotNil(t, idx)
 	assert.Equal(t, int32(1), builderCalled.Load())
 	assert.Zero(t, store.downloadCalls.Load())
+	assert.Zero(t, store.lockAcquireCalls.Load())
 }
 
-// TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexes is not called
+// TestBuildIndex_SkipsDownloadBelowMinDocCount ensures ListIndexSnapshots is not called
 // when the size parameter is below MinDocCount.
 func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
-	store := &fakeRemoteIndexStore{}
+	store := newHookableStore(t)
 	be, _ := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1000, // much higher than size below
@@ -772,11 +858,11 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
-	assert.Zero(t, store.listCalls.Load(), "ListIndexes should not be called below MinDocCount")
+	assert.Zero(t, store.listKeyCalls.Load(), "ListIndexSnapshots should not be called below MinDocCount")
 }
 
 // TestIntegrationBleveSnapshotRoundTrip seeds an in-memory bucket with a
-// snapshot via store.UploadIndex, then verifies BuildIndex downloads it
+// snapshot via store.UploadIndexSnapshot, then verifies BuildIndex downloads it
 // instead of calling the builder. The round-trip of a real built index
 // through the store is covered separately in TestRemoteIndexStore_*.
 func TestShouldUpload(t *testing.T) {
@@ -818,6 +904,42 @@ func TestShouldUpload(t *testing.T) {
 		be.setUploadTracking(key, time.Now().Add(-2*time.Minute))
 
 		should, err := be.shouldUpload(key, idx, time.Now())
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("skips when mutation count is below threshold and snapshot is still fresh", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when mutation count is below threshold but snapshot is stale", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-5*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips stale snapshot when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 2 * time.Hour, UploadInterval: 4 * time.Hour, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
 		require.NoError(t, err)
 		assert.False(t, should)
 	})
@@ -952,7 +1074,7 @@ func TestBleveSnapshotLifecycleWithFileBucket(t *testing.T) {
 	beA.runUploadSnapshots(ctx)
 	assert.Equal(t, 1.0, testutil.ToFloat64(metricsA.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 
-	indexes, err := beA.opts.Snapshot.Store.ListIndexes(ctx, key)
+	indexes, err := ListIndexSnapshots(ctx, beA.opts.Snapshot.Store, key, testLogger)
 	require.NoError(t, err)
 	require.Len(t, indexes, 1)
 
@@ -995,7 +1117,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)
@@ -1025,7 +1147,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := store.UploadIndex(ctx, key, snapshotDir, meta)
+	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
 
 	// Fresh backend pointing at the same bucket should download instead of building.
@@ -1076,19 +1198,21 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 // error-path cases; when set, the probe is expected to return an error.
 type probeCase struct {
 	name    string
-	setup   func(s *fakeRemoteIndexStore) ulid.ULID
+	setup   func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID
 	wantErr string
 }
 
-type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string) (ulid.ULID, *IndexMeta, error)
+type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string, f string, logger log.Logger) (ulid.ULID, *IndexMeta, error)
 
 func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 	t.Helper()
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			store := &fakeRemoteIndexStore{getErr: map[ulid.ULID]error{}}
-			want := tc.setup(store)
-			k, meta, err := probe(t.Context(), store, newTestNsResource(), time.Now().Add(-time.Hour), "11.5.0")
+			store := newHookableStore(t)
+			ns := newTestNsResource()
+			want := tc.setup(t, store, ns)
+			format := testIndexFormat(t)
+			k, meta, err := probe(t.Context(), store, ns, time.Now().Add(-time.Hour), "11.5.0", format, log.New("bleve-snapshot-test"))
 			if tc.wantErr != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErr)
@@ -1112,55 +1236,90 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByUploadTime, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				k := mk(-5 * time.Minute)
-				s.put(k, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.bucket, ns, k, &IndexMeta{BuildVersion: "11.5.0"})
 				return k
 			},
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
 				match := mk(-30 * time.Minute)
-				s.put(match, &IndexMeta{BuildVersion: "11.5.0"})
-				s.put(mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+				return match
+			},
+		},
+		{
+			name: "uses same index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				format := testIndexFormat(t)
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				return match
+			},
+		},
+		{
+			name: "uses older index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, -1)})
+				return match
+			},
+		},
+		{
+			name: "skips newer index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				format := testIndexFormat(t)
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, 1)})
+				match := mk(-10 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
+				return match
+			},
+		},
+		{
+			name: "uses legacy empty index format",
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				match := mk(-5 * time.Minute)
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
 				return match
 			},
 		},
 		{
 			name:  "no candidates",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID { return ulid.ULID{} },
+			setup: func(*testing.T, *hookableStore, resource.NamespacedResource) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
-				s.put(nf, &IndexMeta{BuildVersion: "11.5.0"})
-				s.getErr[nf] = ErrSnapshotNotFound
+				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0"})
+				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
-				s.put(iv, &IndexMeta{BuildVersion: "11.5.0"})
-				s.getErr[iv] = ErrInvalidManifest
+				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0"})
+				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
-				s.put(m, &IndexMeta{BuildVersion: "11.5.0"})
+				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0"})
 				return m
 			},
 		},
 		{
 			name: "surfaces list error",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.listErr = errors.New("boom")
+			setup: func(t *testing.T, s *hookableStore, _ resource.NamespacedResource) ulid.ULID {
+				s.setListKeysErr(errors.New("boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "boom",
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
-				s.put(bad, &IndexMeta{BuildVersion: "11.5.0"})
-				s.getErr[bad] = errors.New("transport boom")
+				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0"})
+				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "transport boom",
@@ -1175,20 +1334,20 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByBuildStart, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
 				k := mk(-5 * time.Minute)
-				s.put(k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.bucket, ns, k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				return k
 			},
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
 				match := mk(-30 * time.Minute)
-				s.put(match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
-				s.put(mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-55 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.bucket, ns, match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-50*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-55 * time.Minute)})
 				return match
 			},
 		},
@@ -1197,51 +1356,51 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			// recent ULID + matching version + old BuildTime (a periodic
 			// re-upload of a long-lived index) must be rejected.
 			name: "skips recent re-upload of old build",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
 				return ulid.ULID{}
 			},
 		},
 		{
 			// Zero-value BuildTime carries no freshness signal.
 			name: "skips zero BuildTime",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.put(mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+				seedSnapshot(t, t.Context(), s.bucket, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				return ulid.ULID{}
 			},
 		},
 		{
 			name:  "no candidates",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID { return ulid.ULID{} },
+			setup: func(*testing.T, *hookableStore, resource.NamespacedResource) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
-				s.put(nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
-				s.getErr[nf] = ErrSnapshotNotFound
+				seedSnapshot(t, t.Context(), s.bucket, ns, nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				s.setReadManifestErr(nf, ErrSnapshotNotFound)
 				iv := mk(-10 * time.Minute)
-				s.put(iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
-				s.getErr[iv] = ErrInvalidManifest
+				seedSnapshot(t, t.Context(), s.bucket, ns, iv, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-15 * time.Minute)})
+				s.setReadManifestErr(iv, ErrInvalidManifest)
 				m := mk(-15 * time.Minute)
-				s.put(m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
+				seedSnapshot(t, t.Context(), s.bucket, ns, m, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-20 * time.Minute)})
 				return m
 			},
 		},
 		{
 			name: "surfaces list error",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
-				s.listErr = errors.New("boom")
+			setup: func(t *testing.T, s *hookableStore, _ resource.NamespacedResource) ulid.ULID {
+				s.setListKeysErr(errors.New("boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "boom",
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(s *fakeRemoteIndexStore) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
-				s.put(bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
-				s.getErr[bad] = errors.New("transport boom")
+				seedSnapshot(t, t.Context(), s.bucket, ns, bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
+				s.setReadManifestErr(bad, errors.New("transport boom"))
 				return ulid.ULID{}
 			},
 			wantErr: "transport boom",
@@ -1249,100 +1408,26 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	})
 }
 
-// coldStartFakeStore extends fakeRemoteIndexStore with controllable lock
-// behaviour and an UploadIndex stub so we can exercise cold-start
-// coordination paths (acquired-lock, downloaded-after-wait, wait-timed-
-// out, lock backend error). Snapshot data and its mutex come from the
-// embedded base store; this struct's own mu guards only lock-state
-// fields.
-type coldStartFakeStore struct {
-	*fakeRemoteIndexStore
-
-	mu                sync.Mutex // guards lockHeld, lockBackendErr, currentLock
-	lockHeld          bool
-	lockBackendErr    error // returned (instead of errLockHeld) when set
-	currentLock       *coldStartFakeLock
-	lockAcquireCalls  atomic.Int32
-	lockReleasedCalls atomic.Int32
-
-	uploadCalls atomic.Int32
-}
-
-func newColdStartFakeStore() *coldStartFakeStore {
-	return &coldStartFakeStore{fakeRemoteIndexStore: &fakeRemoteIndexStore{}}
-}
-
-func (s *coldStartFakeStore) setLockHeld(held bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.lockHeld = held
-}
-
-func (s *coldStartFakeStore) LockBuildIndex(context.Context, resource.NamespacedResource, string) (IndexStoreLock, error) {
-	s.lockAcquireCalls.Add(1)
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.lockBackendErr != nil {
-		return nil, s.lockBackendErr
-	}
-	if s.lockHeld {
-		return nil, errLockHeld
-	}
-	s.lockHeld = true
-	s.currentLock = &coldStartFakeLock{store: s, lost: make(chan struct{})}
-	return s.currentLock, nil
-}
-
-// signalLockLost simulates a heartbeat-detected lease loss on the most
-// recently acquired lock. Tests use this to drive the leader's pre-upload
-// checkSnapshotLock branch.
-func (s *coldStartFakeStore) signalLockLost() {
-	s.mu.Lock()
-	lock := s.currentLock
-	s.mu.Unlock()
-	if lock != nil {
-		lock.markLost()
-	}
-}
-
-func (s *coldStartFakeStore) UploadIndex(context.Context, resource.NamespacedResource, string, IndexMeta) (ulid.ULID, error) {
-	s.uploadCalls.Add(1)
-	return ulid.Make(), nil
-}
-
-type coldStartFakeLock struct {
-	store       *coldStartFakeStore
-	lost        chan struct{}
-	releaseOnce sync.Once
-	lostOnce    sync.Once
-}
-
-func (l *coldStartFakeLock) Release() error {
-	l.releaseOnce.Do(func() {
-		l.store.mu.Lock()
-		l.store.lockHeld = false
-		l.store.mu.Unlock()
-		l.store.lockReleasedCalls.Add(1)
+// withSnapshotBuildPollInterval overrides snapshotBuildPollInterval for the
+// duration of the test. Restored via t.Cleanup.
+func withSnapshotBuildPollInterval(t *testing.T, poll time.Duration) {
+	t.Helper()
+	prev := snapshotBuildPollInterval
+	snapshotBuildPollInterval = poll
+	t.Cleanup(func() {
+		snapshotBuildPollInterval = prev
 	})
-	return nil
 }
 
-func (l *coldStartFakeLock) Lost() <-chan struct{} { return l.lost }
-
-func (l *coldStartFakeLock) markLost() {
-	l.lostOnce.Do(func() { close(l.lost) })
-}
-
-// withColdStartTimings overrides the package-level wait-loop timings for the
+// withColdStartTimings overrides the cold-start wait-loop timings for the
 // duration of the test. Restored via t.Cleanup.
 func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 	t.Helper()
-	prevPoll, prevTotal := coldStartPollInterval, coldStartTotalWait
-	coldStartPollInterval = poll
+	withSnapshotBuildPollInterval(t, poll)
+	prev := coldStartTotalWait
 	coldStartTotalWait = total
 	t.Cleanup(func() {
-		coldStartPollInterval = prevPoll
-		coldStartTotalWait = prevTotal
+		coldStartTotalWait = prev
 	})
 }
 
@@ -1350,12 +1435,12 @@ func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 type coldStartTest struct {
 	be          *bleveBackend
 	metrics     *resource.BleveIndexMetrics
-	store       *coldStartFakeStore
+	store       *hookableStore
 	ns          resource.NamespacedResource
 	resourceDir string
 }
 
-func newColdStartTest(t *testing.T, store *coldStartFakeStore) coldStartTest {
+func newColdStartTest(t *testing.T, store *hookableStore) coldStartTest {
 	t.Helper()
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
@@ -1388,11 +1473,11 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 }
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
-	return testutil.ToFloat64(ct.metrics.IndexSnapshotColdStarts.WithLabelValues(outcome))
+	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
 }
 
 func TestColdStart_BecameLeader(t *testing.T) {
-	store := newColdStartFakeStore()
+	store := newHookableStore(t)
 	ct := newColdStartTest(t, store)
 
 	role, lock, err := ct.coordinate(context.Background(), time.Time{})
@@ -1400,41 +1485,50 @@ func TestColdStart_BecameLeader(t *testing.T) {
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load())
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 
-	// Releasing the leader's lock must unwind the fake's lockHeld state so
-	// other replicas can acquire next.
 	require.NoError(t, lock.Release())
-	store.mu.Lock()
-	assert.False(t, store.lockHeld)
-	store.mu.Unlock()
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(),
+		"Release() must reach the underlying lock so the bucket entry is removed")
 }
 
 func TestColdStart_WaitedForLeader(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true) // another instance is the leader
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld) // another instance is the leader
 	ct := newColdStartTest(t, store)
 	withColdStartTimings(t, 10*time.Millisecond, time.Second)
 
+	// Build the snapshot on the test goroutine — the build uses require.*,
+	// which would violate testing.TB rules if called from the helper
+	// goroutine below. The helper goroutine only writes prepared bytes to
+	// the bucket and reports any error back via errCh.
+	snap := buildDownloadableSnapshot(t, ct.ns, makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	ctx := t.Context()
+
 	// While coordinateColdStartBuild is in its wait loop, simulate the
-	// leader publishing a snapshot. The next probe tick should pick it up.
+	// leader publishing the prepared snapshot. The next probe tick should
+	// pick it up.
+	errCh := make(chan error, 1)
 	go func() {
 		time.Sleep(25 * time.Millisecond)
-		store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+		errCh <- snap.publish(ctx, store.bucket)
 	}()
 
 	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
+	require.NoError(t, <-errCh)
 	assert.Equal(t, "downloaded", role)
 	assert.Nil(t, lock)
-	// The waiter must not steal the leader's lock.
-	assert.True(t, store.lockHeldNow())
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeDownloadedAfterWait))
+	// The waiter must not have taken the lock, so lockReleaseCalls stays at
+	// zero (no Release was invoked because no Acquire ever succeeded).
+	assert.Zero(t, store.lockReleaseCalls.Load(),
+		"waiter must not acquire the lock when a snapshot becomes available")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeDownloadedAfterWait))
 }
 
 func TestColdStart_WaitTimeout(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true)
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
 	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
 
@@ -1442,14 +1536,14 @@ func TestColdStart_WaitTimeout(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeWaitTimedOut))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut))
 	// We retried the lock at least a couple times before giving up.
 	assert.GreaterOrEqual(t, store.lockAcquireCalls.Load(), int32(2))
 }
 
 func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true)
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
 	withColdStartTimings(t, 10*time.Millisecond, time.Second)
 
@@ -1458,34 +1552,35 @@ func TestColdStart_AcquiresLockAfterLeaderRelease(t *testing.T) {
 	// promote us.
 	go func() {
 		time.Sleep(25 * time.Millisecond)
-		store.setLockHeld(false)
+		store.setLockBuildErr(nil)
 	}()
 
 	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "leader", role)
 	require.NotNil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeAcquiredLock))
+	t.Cleanup(func() { _ = lock.Release() })
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeAcquiredLock))
 }
 
 func TestColdStart_LockBackendErrorBuildsAlone(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.lockBackendErr = errors.New("backend down")
+	store := newHookableStore(t)
+	store.setLockBuildErr(errors.New("backend down"))
 	ct := newColdStartTest(t, store)
 
 	role, lock, err := ct.coordinate(context.Background(), time.Time{})
 	require.NoError(t, err)
 	assert.Equal(t, "build_alone", role)
 	assert.Nil(t, lock)
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeLockError))
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeLockError))
 }
 
 // TestColdStart_LockBackendContextErrorPropagates verifies that a context
 // error returned by LockBuildIndex itself (e.g. cancellation arriving
 // mid-acquire) is propagated, not swallowed as a build-alone fallback.
 func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.lockBackendErr = context.Canceled
+	store := newHookableStore(t)
+	store.setLockBuildErr(context.Canceled)
 	ct := newColdStartTest(t, store)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -1493,14 +1588,14 @@ func TestColdStart_LockBackendContextErrorPropagates(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeLockError), "context cancel must not be recorded as lock_error")
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeLockError), "context cancel must not be recorded as lock_error")
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true)
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld)
 	ct := newColdStartTest(t, store)
 	withColdStartTimings(t, 10*time.Millisecond, time.Second)
 
@@ -1512,8 +1607,8 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 
 	_, _, err := ct.coordinate(ctx, time.Time{})
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Zero(t, ct.coldStartCounter(coldStartOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
-	assert.Equal(t, 1.0, ct.coldStartCounter(coldStartOutcomeContextCanceled))
+	assert.Zero(t, ct.coldStartCounter(snapshotBuildOutcomeWaitTimedOut), "context cancel must not be recorded as wait_timed_out")
+	assert.Equal(t, 1.0, ct.coldStartCounter(snapshotBuildOutcomeContextCanceled))
 }
 
 // runBuildIndexColdStart wires a bleveBackend around store and calls
@@ -1551,8 +1646,8 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 // With a fresh snapshot present, the tiered selection runs first and
 // downloads it before the cold-start path is even considered.
 func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.put(makeULID(t, time.Now()), freshSnapshot(time.Minute))
+	store := newHookableStore(t)
+	seedDownloadableSnapshot(t, t.Context(), store.bucket, newTestNsResource(), makeULID(t, time.Now()), freshSnapshot(time.Minute))
 	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
@@ -1568,15 +1663,15 @@ func TestBuildIndex_ColdStartFastPathDownloads(t *testing.T) {
 // store, leader builds from scratch, and the leader's freshly-built snapshot
 // is uploaded immediately under the held lock.
 func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
-	store := newColdStartFakeStore()
+	store := newHookableStore(t)
 	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
-	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
@@ -1585,7 +1680,7 @@ func TestBuildIndex_ColdStartLeaderUploads(t *testing.T) {
 // is skipped (recorded as skip_lock_lost) but the build itself still
 // completes — lock-lost is coordination, not a fatal error.
 func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
-	store := newColdStartFakeStore()
+	store := newHookableStore(t)
 	// Simulate heartbeat-detected lease loss while we're in the middle of
 	// the from-scratch build.
 	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, store.signalLockLost)
@@ -1594,7 +1689,7 @@ func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Zero(t, store.uploadCalls.Load(), "leader must skip immediate upload after lock loss")
-	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader still releases the lock object")
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader still releases the lock object")
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSkipLockLost)))
 	assert.Zero(t, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
@@ -1603,8 +1698,8 @@ func TestBuildIndex_ColdStartLeaderLockLostDuringBuild(t *testing.T) {
 // permanently held by another instance and no snapshot ever appears, the
 // timeout path runs the builder anyway (no upload).
 func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true)
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld)
 	withColdStartTimings(t, 5*time.Millisecond, 30*time.Millisecond)
 	metrics, builderCalled, idx, err := runBuildIndexColdStart(t, store, nil)
 	require.NoError(t, err)
@@ -1612,7 +1707,7 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 
 	assert.Equal(t, int32(1), builderCalled.Load(), "build alone after timeout")
 	assert.Zero(t, store.uploadCalls.Load(), "no leader upload on timeout path")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeWaitTimedOut)))
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeWaitTimedOut)))
 }
 
 // TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero verifies that
@@ -1620,7 +1715,7 @@ func TestBuildIndex_ColdStartTimeoutBuildsAlone(t *testing.T) {
 // cold-start coordination still runs, the leader path is taken, and the
 // freshly-built snapshot is uploaded immediately under the held lock.
 func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
-	store := newColdStartFakeStore()
+	store := newHookableStore(t)
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
 		MinDocCount: 1,
@@ -1640,8 +1735,8 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 	assert.Equal(t, int32(1), builderCalled.Load(), "builder must run on the leader path")
 	assert.Equal(t, int32(1), store.lockAcquireCalls.Load(), "cold-start must attempt the lock even when MaxIndexAge=0")
 	assert.Equal(t, int32(1), store.uploadCalls.Load(), "leader must upload immediately")
-	assert.Equal(t, int32(1), store.lockReleasedCalls.Load(), "leader must release the build lock")
-	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotColdStarts.WithLabelValues(coldStartOutcomeAcquiredLock)))
+	assert.Equal(t, int32(1), store.lockReleaseCalls.Load(), "leader must release the build lock")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, snapshotBuildOutcomeAcquiredLock)))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotUploads.WithLabelValues(snapshotUploadStatusSuccess)))
 }
 
@@ -1649,8 +1744,8 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 // cancellation during cold-start coordination aborts BuildIndex with the
 // context error rather than falling back to a full from-scratch build.
 func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
-	store := newColdStartFakeStore()
-	store.setLockHeld(true) // force entry to the wait loop
+	store := newHookableStore(t)
+	store.setLockBuildErr(errLockHeld) // force entry to the wait loop
 	withColdStartTimings(t, 5*time.Millisecond, time.Second)
 	be, _ := newTestBleveBackend(t, SnapshotOptions{
 		Store:       store,
@@ -1674,12 +1769,4 @@ func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 	assert.Nil(t, idx)
 	assert.Zero(t, builderCalled.Load(), "builder must not run after context cancel")
-}
-
-// lockHeldNow exposes the fake's lockHeld state for tests that assert the
-// leader's lock survived a download by a waiter.
-func (s *coldStartFakeStore) lockHeldNow() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.lockHeld
 }

@@ -4,7 +4,6 @@
       "label-advanced": "Avanzate"
     },
     "advanced-resource-picker": {
-      "aria-label-add": "Aggiungi",
       "aria-label-remove": "Rimuovi",
       "button-add-resource": "Aggiungi risorsa",
       "button-add-resource-uri": "Aggiungi URI risorsa",

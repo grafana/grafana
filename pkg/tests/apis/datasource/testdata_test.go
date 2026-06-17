@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -86,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -106,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -132,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
@@ -257,9 +259,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Equal(t, 1, frame.Fields[1].Len())
 			require.Equal(t, 1, frame.Fields[2].Len())
 
-			require.Equal(t, ptr.To(int64(1)), frame.Fields[0].At(0))
-			require.Equal(t, ptr.To("two"), frame.Fields[1].At(0))
-			require.Equal(t, ptr.To(false), frame.Fields[2].At(0))
+			require.Equal(t, new(int64(1)), frame.Fields[0].At(0))
+			require.Equal(t, new("two"), frame.Fields[1].At(0))
+			require.Equal(t, new(false), frame.Fields[2].At(0))
 		}
 
 		// The standard JSON request/response
@@ -334,6 +336,51 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
+		})
+	})
+
+	t.Run("resources", func(t *testing.T) {
+		const base = "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resources/"
+
+		// The testdata plugin's /test/json route echoes the request back, so we
+		// can confirm the method, path and body are forwarded to the plugin.
+		t.Run("echo endpoint reflects the forwarded request", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   base + "test/json",
+				Body:   []byte(`{"hello":"world"}`),
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+
+			body := string(raw.Body)
+			require.Contains(t, body, `"method":"POST"`, "echoed method")
+			require.Contains(t, body, "test/json", "echoed forwarded path")
+			require.Contains(t, body, `"hello":"world"`, "echoed request body")
+		})
+
+		// A forwarded sub path that itself contains "/resources" must be passed
+		// through intact (it falls through to the catch-all handler).
+		t.Run("forwards a sub path containing /resources", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   base + "nested/resources/path",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+			require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		})
+
+		t.Run("returns 404 for an unknown datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources/test/json",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode)
 		})
 	})
 

@@ -2,6 +2,7 @@ import { PluginType } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../config';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
@@ -26,6 +27,7 @@ jest.mock('./plugins', () => ({
 jest.mock('./logging', () => ({
   logPluginMetaWarning: jest.fn(),
   logPluginMetaError: jest.fn(),
+  logPluginMetaDebug: jest.fn(),
 }));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
@@ -35,9 +37,9 @@ const logPluginMetaWarningMock = jest.mocked(logPluginMetaWarning);
 const datasourceItemsFromApi = v0alpha1Response.items.filter((i) => i.spec.pluginJson.type === 'datasource');
 const datasourceIdsFromApi = datasourceItemsFromApi.map((i) => i.spec.pluginJson.id);
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     setLogger('grafana/runtime.plugins.settings', {
       logDebug: jest.fn(),
       logError: jest.fn(),
@@ -231,9 +233,9 @@ describe('when useMTPlugins flag is enabled', () => {
   });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {

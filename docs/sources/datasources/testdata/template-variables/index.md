@@ -120,4 +120,4 @@ With a variable named `env` set to `production`, entering `env=$env` in the **La
 
 ## Limitations
 
-TestData doesn't support the [filters variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters). Filters require the data source to implement tag key and value lookups, which TestData doesn't provide.
+TestData doesn't support the use of [filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/). Filters require the data source to implement tag key and value lookups, which TestData doesn't provide.

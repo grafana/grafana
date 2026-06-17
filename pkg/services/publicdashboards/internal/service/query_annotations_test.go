@@ -15,7 +15,6 @@ import (
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/testhelpers"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
 	"github.com/stretchr/testify/assert"
@@ -39,7 +38,7 @@ func TestIntegrationFindAnnotationsTimerange(t *testing.T) {
 				Tags:     nil,
 				Type:     "dashboard",
 			},
-			Type: util.Pointer("dashboard"),
+			Type: new("dashboard"),
 		}
 		annos := []models.DashAnnotation{grafanaAnnotation}
 		dashboard := AddAnnotationsToDashboard(t, dash, annos)

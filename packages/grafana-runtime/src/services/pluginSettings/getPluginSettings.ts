@@ -6,12 +6,14 @@ import { getCachedPromiseWithArgs } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
 import { getPluginMetaFromCache } from '../pluginMeta/plugins';
 
+import { logPluginSettingsDebug, logPluginSettingsError } from './logging';
 import { getSettingsMapper } from './mappers/mappers';
 import { type Settings as v0alpha1Settings } from './types';
 import { getApiVersion, getCacheKey, getLegacyCacheKey, getNamespace, isAuthError } from './utils';
 
 export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): Promise<PluginMeta> {
   const options = { showErrorAlert, validatePath: true };
+  logPluginSettingsDebug('PluginSettings: getting legacy plugin settings', { pluginId });
 
   return getBackendSrv()
     .get(`/api/plugins/${pluginId}/settings`, undefined, undefined, options)
@@ -22,12 +24,14 @@ export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): P
         return Promise.reject(err);
       }
 
+      logPluginSettingsError('PluginSettings: getting legacy plugin settings failed', err, { pluginId });
       return Promise.reject(new Error('Unknown Plugin', { cause: err }));
     });
 }
 
 export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<v0alpha1Settings> {
   const options = { showErrorAlert, validatePath: true };
+  logPluginSettingsDebug('PluginSettings: getting plugin settings', { pluginId });
 
   return getBackendSrv()
     .get<v0alpha1Settings>(
@@ -43,6 +47,7 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
         return Promise.reject(err);
       }
 
+      logPluginSettingsError('PluginSettings: getting plugin settings failed', err, { pluginId });
       return Promise.reject(new Error('Unknown Plugin', { cause: err }));
     });
 }
@@ -54,7 +59,7 @@ export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean)
  * @returns The plugin's `PluginMeta`.
  */
 export async function getPluginSettings(pluginId: string, showErrorAlert = false): Promise<PluginMeta> {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.UseMTPluginSettings, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPluginSettings, false)) {
     return getCachedLegacySettings(pluginId, showErrorAlert);
   }
 

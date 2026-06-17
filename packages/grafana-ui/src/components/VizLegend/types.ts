@@ -39,7 +39,7 @@ export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
 }
 
 export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {
-  displayMode: LegendDisplayMode;
+  displayMode?: LegendDisplayMode;
 }
 
 export interface VizLegendItem<T = any> {

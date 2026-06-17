@@ -33,6 +33,8 @@ const defaultPreImport: PreImportStrategy = (plugin) => {
     pluginId: plugin.id,
     moduleHash: plugin.moduleHash,
     translations: plugin.translations,
+    hasUpdate: plugin.hasUpdate,
+    pluginName: plugin.name,
   };
 
   return args;

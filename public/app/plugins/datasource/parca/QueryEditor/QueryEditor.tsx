@@ -16,7 +16,7 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<ParcaDataSource, Query, ParcaDataSourceOptions>;
 
-export const defaultQuery: Partial<Parca> = {
+const defaultQuery: Partial<Parca> = {
   ...defaultParcaDataQuery,
   queryType: defaultParcaQueryType,
 };

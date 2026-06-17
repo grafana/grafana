@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { config, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -15,6 +15,8 @@ export interface UseFolderReadmeResult {
   /** Path of the README relative to the repository's configured root. */
   readmePath: string;
   status: FolderReadmeStatus;
+  /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
+  isLoading: boolean;
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
@@ -22,8 +24,10 @@ export interface UseFolderReadmeResult {
 
 /**
  * Resolves a folder's README.md path (using the source-path annotation when
- * present) and fetches it through the provisioning files API. Skips the fetch
- * when the `provisioningReadmes` toggle is off.
+ * present) and fetches it through the provisioning files API.
+ *
+ * Callers must gate on the `provisioning.readmes` OpenFeature toggle before
+ * mounting any component that invokes this hook.
  *
  * Returns a tagged `status` instead of raw boolean flags so callers can
  * exhaustively switch on the four states without reconstructing the machine.
@@ -34,7 +38,7 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
   const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
   const readmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
 
-  const shouldFetch = !!config.featureToggles.provisioningReadmes && !!repository && !!folderUID && !isRepoLoading;
+  const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
 
   const {
     data: fileData,
@@ -50,8 +54,10 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
       : skipToken
   );
 
+  const isLoading = isRepoLoading || isFileLoading;
+
   let status: FolderReadmeStatus;
-  if (isRepoLoading || isFileLoading) {
+  if (isLoading) {
     status = 'loading';
   } else if (error && isFetchError(error) && error.status === 404) {
     status = 'missing';
@@ -83,6 +89,7 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
     folder,
     readmePath,
     status,
+    isLoading,
     markdownContent,
     refetch,
   };

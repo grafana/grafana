@@ -29,6 +29,7 @@ const putMock = jest.fn();
 const getMock = jest.fn();
 const mockAppEvents = {
   subscribe: () => ({ unsubscribe: jest.fn() }),
+  publish: jest.fn(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

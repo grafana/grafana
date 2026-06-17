@@ -18,6 +18,9 @@
     "primary": {
       "main": "#C28A4D"
     },
+    "accent": {
+      "main": "#C28A4D"
+    },
     "secondary": {
       "main": "#3A2C22",
       "text": "#C4B89B",

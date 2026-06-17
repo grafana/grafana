@@ -50,6 +50,7 @@ export {
   type GroupToNestedTableTransformerOptionsV2,
   type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
+  EXPAND_ALL_ROWS_DEFAULT,
   migrateGroupToNestedTableOptions,
   isV1GroupToNestedTableOptions,
 } from '../transformations/transformers/groupToNestedTable';
@@ -70,7 +71,8 @@ export {
 } from '../transformations/transformers/calculateField';
 export { type SeriesToRowsTransformerOptions } from '../transformations/transformers/seriesToRows';
 export { histogramFieldInfo, type HistogramTransformerInputs } from '../transformations/transformers/histogram';
-export { joinByFieldTransformer, type JoinByFieldOptions, JoinMode } from '../transformations/transformers/joinByField';
+export { joinByFieldTransformer, type JoinByFieldOptions } from '../transformations/transformers/joinByField';
+export { JoinMode } from '../transformations/transformers/joinShared';
 export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformations/transformers/labelsToFields';
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
@@ -115,9 +117,14 @@ export { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } 
 
 export { getStreamingFrameOptions } from '../dataframe/StreamingDataFrame';
 export { fieldIndexComparer } from '../field/fieldComparers';
-export { decoupleHideFromState } from '../field/fieldState';
+export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
-export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
+export {
+  type PanelOptionsSupplier,
+  type PluginViewOptionsQuickToggles,
+  type PanelPluginViewOptions,
+} from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
 export { NewThemeOptionsSchema } from '../themes/createTheme';
+export { createFieldsOrdererAuto } from '../transformations/transformers/order';

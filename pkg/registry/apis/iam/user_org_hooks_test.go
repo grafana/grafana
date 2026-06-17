@@ -355,7 +355,7 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		finishFunc, err := b.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
-		require.Nil(t, finishFunc) // Should return nil when no update needed
+		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
 
 	t.Run("should not call zanzana when update fails", func(t *testing.T) {
@@ -425,7 +425,7 @@ func TestBeginUserUpdate(t *testing.T) {
 
 		finishFunc, err := builder.BeginUserUpdate(context.Background(), &newUser, &oldUser, nil)
 		require.NoError(t, err)
-		require.Nil(t, finishFunc) // Should return nil when zClient is nil
+		require.NotNil(t, finishFunc) // Hooks must always return a non-nil FinishFunc
 	})
 }
 

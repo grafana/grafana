@@ -17,10 +17,10 @@ import {
 } from '@grafana/data';
 import { reportInteraction, config } from '@grafana/runtime';
 import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { isRecord } from 'app/core/utils/isRecord';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import {
   CloseExtensionSidebarEvent,
   OpenExtensionSidebarEvent,
@@ -88,11 +88,7 @@ export const wrapWithPluginContext = <T,>({
   log: ExtensionsLog;
 }) => {
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const {
-      error,
-      loading,
-      value: pluginMeta,
-    } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+    const { error, loading, value: pluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;
@@ -213,13 +209,6 @@ export function generateExtensionId(pluginId: string, extensionPointId: string, 
 
 const _isReadOnlyProxy = Symbol('isReadOnlyProxy');
 const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
-
-export class ReadOnlyProxyError extends Error {
-  constructor(message?: string) {
-    super(message ?? 'Mutating a read-only proxy object');
-    this.name = 'ReadOnlyProxyError';
-  }
-}
 
 /**
  * Returns a proxy that wraps the given object in a way that makes it read only.
@@ -476,7 +465,7 @@ export function getLinkExtensionOverrides(
   }
 }
 
-export function getLinkExtensionOnClick(
+function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
@@ -549,7 +538,7 @@ export function getLinkExtensionOnClick(
   };
 }
 
-export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({

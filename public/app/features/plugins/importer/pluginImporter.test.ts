@@ -68,6 +68,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -87,6 +88,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -107,6 +109,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -125,6 +128,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -152,6 +156,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -171,6 +176,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -205,6 +211,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -224,6 +231,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -255,6 +263,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -315,6 +324,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'script',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -360,6 +370,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -401,6 +412,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });
@@ -422,6 +434,7 @@ describe('pluginImporter', () => {
         version: '1.0.0',
         loadingStrategy: 'fetch',
         pluginId: 'test-plugin',
+        pluginName: 'Test Plugin',
         moduleHash: 'cc3e6f370520e1efc6043f1874d735fabc710d4b',
         translations: { 'en-US': 'public/plugins/test-plugin/locales/en-US/test-plugin.json' },
       });

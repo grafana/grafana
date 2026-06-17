@@ -15,6 +15,7 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   useGetAlertManagerDataSourcesByPermissionAndConfig,
 } from '../../../utils/datasource';
+import { NAMED_ROOT_LABEL_NAME } from '../../notification-policies/useNotificationPolicyRoute';
 
 import { NotificationPreview } from './NotificationPreview';
 
@@ -201,6 +202,40 @@ describe('NotificationPreview', () => {
     });
 
     expect(ui.contactPointGroup.query()).not.toBeInTheDocument();
+  });
+
+  // Regression test for bug #3 from PR #124697:
+  // __grafana_managed_route__ is routing infrastructure and must never be shown to users —
+  // neither in the instance label list nor in the "Non-matching labels" section of the route drawer.
+  it('should not display __grafana_managed_route__ label in the notification preview', async () => {
+    mockHasEditPermission(true);
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, [
+      mockAlertmanagerAlert({
+        labels: { tomato: 'red', [NAMED_ROOT_LABEL_NAME]: 'my-policy' },
+      }),
+    ]);
+
+    const { user } = render(
+      <NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="A" folder={folder} />
+    );
+
+    await waitFor(async () => {
+      const matchingContactPoint = await ui.contactPointGroup.findAll();
+      expect(matchingContactPoint).toHaveLength(1);
+    });
+
+    // Expand instance list
+    await user.click(await ui.expandButton.find());
+
+    // The internal routing label must not be visible anywhere on the page
+    expect(screen.queryByText(NAMED_ROOT_LABEL_NAME)).not.toBeInTheDocument();
+    expect(screen.queryByText('my-policy')).not.toBeInTheDocument();
+
+    // Open the route drawer and verify the label is absent from "Non-matching labels" too
+    await user.click(await ui.seeDetails.find());
+    const drawer = ui.details.drawer.getAll()[0];
+    expect(within(drawer).queryByText(NAMED_ROOT_LABEL_NAME)).not.toBeInTheDocument();
   });
 
   it('should render details when clicking see details button', async () => {

@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, render, screen } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type UseFolderReadmeResult, useFolderReadme } from '../../hooks/useFolderReadme';
 
@@ -40,16 +40,27 @@ function setReadmeResult(overrides: Partial<UseFolderReadmeResult> = {}) {
     folder: mockFolder,
     readmePath: 'dashboards/team-a/README.md',
     status: 'ok',
+    isLoading: false,
     markdownContent: '# Hello\n\nThis is a README.',
     refetch: jest.fn(),
     ...overrides,
   });
 }
 
+function setup(folderUID = 'test-folder') {
+  return render(<FolderReadmePanel folderUID={folderUID} />);
+}
+
 describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = { provisioningReadmes: true };
+    setTestFlags({ 'provisioning.readmes': true });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
   });
 
   it('renders the README markdown inside a panel with an anchor id', () => {
@@ -84,11 +95,11 @@ describe('FolderReadmePanel', () => {
     );
   });
 
-  it('reports an interaction when the edit link is clicked', () => {
+  it('reports an interaction when the edit link is clicked', async () => {
     setReadmeResult();
 
-    render(<FolderReadmePanel folderUID="test-folder" />);
-    fireEvent.click(screen.getByRole('link', { name: /Edit README/i }));
+    const { user } = setup();
+    await user.click(screen.getByRole('link', { name: /Edit README/i }));
 
     expect(editClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
   });
@@ -106,11 +117,11 @@ describe('FolderReadmePanel', () => {
       expect(value).toContain('# Test Folder');
     });
 
-    it('reports an interaction when the Add README button is clicked', () => {
+    it('reports an interaction when the Add README button is clicked', async () => {
       setReadmeResult({ status: 'missing', markdownContent: undefined });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
-      fireEvent.click(screen.getByRole('link', { name: /Add README/i }));
+      const { user } = setup();
+      await user.click(screen.getByRole('link', { name: /Add README/i }));
 
       expect(createClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github' });
     });
@@ -133,12 +144,12 @@ describe('FolderReadmePanel', () => {
       expect(screen.getByRole('button', { name: /Try again/i })).toBeInTheDocument();
     });
 
-    it('calls refetch when the retry button is clicked', () => {
+    it('calls refetch when the retry button is clicked', async () => {
       const refetch = jest.fn();
       setReadmeResult({ status: 'error', markdownContent: undefined, refetch });
 
-      render(<FolderReadmePanel folderUID="test-folder" />);
-      fireEvent.click(screen.getByRole('button', { name: /Try again/i }));
+      const { user } = setup();
+      await user.click(screen.getByRole('button', { name: /Try again/i }));
 
       expect(refetch).toHaveBeenCalledTimes(1);
     });
@@ -159,7 +170,7 @@ describe('FolderReadmePanel', () => {
   });
 
   it('renders nothing when the feature toggle is off', () => {
-    config.featureToggles = { provisioningReadmes: false };
+    setTestFlags({ 'provisioning.readmes': false });
     setReadmeResult();
 
     const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
@@ -167,7 +178,7 @@ describe('FolderReadmePanel', () => {
   });
 
   it('does not invoke useFolderReadme when the feature toggle is off', () => {
-    config.featureToggles = { provisioningReadmes: false };
+    setTestFlags({ 'provisioning.readmes': false });
     setReadmeResult();
     render(<FolderReadmePanel folderUID="test-folder" />);
     expect(mockUseFolderReadme).not.toHaveBeenCalled();
@@ -180,20 +191,19 @@ describe('FolderReadmePanel', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders nothing while the repository view is loading', () => {
-    setReadmeResult({ status: 'loading' });
+  it('shows a loading indicator while the repository view is loading', () => {
+    setReadmeResult({ status: 'loading', isLoading: true, repository: undefined });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(container).toBeEmptyDOMElement();
+    render(<FolderReadmePanel folderUID="test-folder" />);
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.getByText('README.md')).toBeInTheDocument();
   });
 
-  it('shows a spinner while the README itself is loading', () => {
-    // When status is 'loading', the panel returns null — the layout shows the
-    // dashboards list as-is while loading; the panel appears once data arrives.
-    setReadmeResult({ status: 'loading', markdownContent: undefined });
+  it('shows a loading indicator while the README file is loading', () => {
+    setReadmeResult({ status: 'loading', isLoading: true, markdownContent: undefined });
 
-    const { container } = render(<FolderReadmePanel folderUID="test-folder" />);
-    expect(container).toBeEmptyDOMElement();
+    render(<FolderReadmePanel folderUID="test-folder" />);
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
   });
 
   it('renders an empty README without the parse-error message', () => {
@@ -204,5 +214,18 @@ describe('FolderReadmePanel', () => {
     expect(screen.getByText('README.md')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Edit README/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
+  });
+
+  it('sanitizes mXSS payloads in README markdown', () => {
+    setReadmeResult({
+      markdownContent: '<div><svg><style><img src=x onerror=alert(1)></style></svg></div>',
+    });
+
+    const { container } = setup();
+    const markdownDiv = container.querySelector('.markdown-html');
+    expect(markdownDiv).not.toBeNull();
+    // DOMPurify strips the dangerous elements
+    expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
+    expect(markdownDiv!.innerHTML).not.toContain('onerror');
   });
 });

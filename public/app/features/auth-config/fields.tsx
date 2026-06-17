@@ -1,6 +1,4 @@
-import { validate as uuidValidate } from 'uuid';
-
-import { type SelectableValue } from '@grafana/data';
+import { type SelectableValue, isUUID } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
@@ -535,10 +533,10 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           ? {
               validate: (value) => {
                 if (typeof value === 'string') {
-                  return uuidValidate(value);
+                  return isUUID(value);
                 }
                 if (isSelectableValueArray(value)) {
-                  return value.every((v) => v?.value && uuidValidate(v.value));
+                  return value.every((v) => v?.value && isUUID(v.value));
                 }
                 return true;
               },

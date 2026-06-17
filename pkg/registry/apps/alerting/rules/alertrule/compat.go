@@ -2,22 +2,22 @@ package alertrule
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strconv"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/util"
 
 	prom_model "github.com/prometheus/common/model"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -38,9 +38,20 @@ func convertToK8sResource(
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
+	noDataState, err := ConvertToK8sNoDataState(rule.NoDataState)
+	if err != nil {
+		return nil, err
+	}
+
+	execErrState, err := ConvertToK8sExecErrState(rule.ExecErrState)
+	if err != nil {
+		return nil, err
+	}
+
 	k8sRule := &model.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
+			UID:             types.UID(rule.GUID),
 			Namespace:       namespaceMapper(orgID),
 			ResourceVersion: fmt.Sprint(rule.Version),
 			Labels:          make(map[string]string),
@@ -53,14 +64,14 @@ func convertToK8sResource(
 			},
 			Labels:                      make(map[string]model.AlertRuleTemplateString),
 			Annotations:                 make(map[string]model.AlertRuleTemplateString),
-			NoDataState:                 model.AlertRuleNoDataState(rule.NoDataState),
-			ExecErrState:                model.AlertRuleExecErrState(rule.ExecErrState),
+			NoDataState:                 noDataState,
+			ExecErrState:                execErrState,
 			MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
 		},
 	}
 
 	if rule.IsPaused {
-		k8sRule.Spec.Paused = util.Pointer(true)
+		k8sRule.Spec.Paused = new(true)
 	}
 
 	if rule.RuleGroup != "" && !ngmodels.IsNoGroupRuleGroup(rule.RuleGroup) {
@@ -69,11 +80,11 @@ func convertToK8sResource(
 	}
 
 	if rule.For != 0 {
-		k8sRule.Spec.For = util.Pointer(rule.For.String())
+		k8sRule.Spec.For = new(rule.For.String())
 	}
 
 	if rule.KeepFiringFor != 0 {
-		k8sRule.Spec.KeepFiringFor = util.Pointer(rule.KeepFiringFor.String())
+		k8sRule.Spec.KeepFiringFor = new(rule.KeepFiringFor.String())
 	}
 
 	if rule.PanelID != nil && rule.DashboardUID != nil &&
@@ -103,13 +114,13 @@ func convertToK8sResource(
 			GroupBy:  setting.GroupBy,
 		}
 		if setting.GroupWait != nil {
-			simplifiedRouting.GroupWait = util.Pointer(model.AlertRulePromDuration(setting.GroupWait.String()))
+			simplifiedRouting.GroupWait = new(model.AlertRulePromDuration(setting.GroupWait.String()))
 		}
 		if setting.GroupInterval != nil {
-			simplifiedRouting.GroupInterval = util.Pointer(model.AlertRulePromDuration(setting.GroupInterval.String()))
+			simplifiedRouting.GroupInterval = new(model.AlertRulePromDuration(setting.GroupInterval.String()))
 		}
 		if setting.RepeatInterval != nil {
-			simplifiedRouting.RepeatInterval = util.Pointer(model.AlertRulePromDuration(setting.RepeatInterval.String()))
+			simplifiedRouting.RepeatInterval = new(model.AlertRulePromDuration(setting.RepeatInterval.String()))
 		}
 		if setting.MuteTimeIntervals != nil {
 			simplifiedRouting.MuteTimeIntervals = make([]model.AlertRuleTimeIntervalRef, 0, len(setting.MuteTimeIntervals))
@@ -162,9 +173,37 @@ func convertToK8sResource(
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
-
-	k8sRule.UID = gapiutil.CalculateClusterWideUID(k8sRule)
 	return k8sRule, nil
+}
+
+func ConvertToK8sNoDataState(state ngmodels.NoDataState) (model.AlertRuleNoDataState, error) {
+	switch state {
+	case ngmodels.OK:
+		return model.AlertRuleNoDataStateOk, nil
+	case ngmodels.NoData:
+		return model.AlertRuleNoDataStateNoData, nil
+	case ngmodels.KeepLast:
+		return model.AlertRuleNoDataStateKeepLast, nil
+	case ngmodels.Alerting:
+		return model.AlertRuleNoDataStateAlerting, nil
+	default:
+		return "", fmt.Errorf("invalid NoDataState value")
+	}
+}
+
+func ConvertToK8sExecErrState(state ngmodels.ExecutionErrorState) (model.AlertRuleExecErrState, error) {
+	switch state {
+	case ngmodels.AlertingErrState:
+		return model.AlertRuleExecErrStateAlerting, nil
+	case ngmodels.ErrorErrState:
+		return model.AlertRuleExecErrStateError, nil
+	case ngmodels.OkErrState:
+		return model.AlertRuleExecErrStateOk, nil
+	case ngmodels.KeepLastErrState:
+		return model.AlertRuleExecErrStateKeepLast, nil
+	default:
+		return "", fmt.Errorf("invalid ExecErrState value")
+	}
 }
 
 func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) model.AlertRuleExpression {
@@ -172,11 +211,11 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		Model: query.Model,
 	}
 	if query.QueryType != "" {
-		expression.QueryType = util.Pointer(query.QueryType)
+		expression.QueryType = new(query.QueryType)
 	}
 	// DatasourceUID is optional and defaults to expr datasource
 	if !expr.IsDataSource(query.DatasourceUID) {
-		expression.DatasourceUID = util.Pointer(model.AlertRuleDatasourceUID(query.DatasourceUID))
+		expression.DatasourceUID = new(model.AlertRuleDatasourceUID(query.DatasourceUID))
 	}
 	if time.Duration(query.RelativeTimeRange.From) > 0 || time.Duration(query.RelativeTimeRange.To) > 0 {
 		expression.RelativeTimeRange = &model.AlertRuleRelativeTimeRange{
@@ -185,7 +224,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 		}
 	}
 	if rule.Condition == query.RefID {
-		expression.Source = util.Pointer(true)
+		expression.Source = new(true)
 	}
 	return expression
 }
@@ -214,6 +253,80 @@ func convertToK8sResources(
 	return k8sRules, nil
 }
 
+// convertVersionToK8sResource converts an AlertRuleVersion into a k8s AlertRule resource.
+// The version's revision message is preserved on the message annotation so callers iterating
+// history can display per-revision context the same way the unified storage history list does.
+func convertVersionToK8sResource(
+	orgID int64,
+	version *ngmodels.AlertRuleVersion,
+	namespaceMapper request.NamespaceMapper,
+) (*model.AlertRule, error) {
+	if version == nil {
+		return nil, fmt.Errorf("nil version")
+	}
+	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, ngmodels.ProvenanceNone, namespaceMapper)
+	if err != nil {
+		return nil, err
+	}
+	if version.Message != "" {
+		meta, err := utils.MetaAccessor(k8sRule)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get metadata: %w", err)
+		}
+		meta.SetMessage(version.Message)
+	}
+	return k8sRule, nil
+}
+
+// convertVersionsToK8sResources converts a list of AlertRuleVersion into a k8s AlertRuleList.
+// The Version on each rule is reflected via ResourceVersion so paginating clients can identify revisions.
+func convertVersionsToK8sResources(
+	orgID int64,
+	versions []*ngmodels.AlertRuleVersion,
+	namespaceMapper request.NamespaceMapper,
+) (*model.AlertRuleList, error) {
+	out := &model.AlertRuleList{Items: make([]model.AlertRule, 0, len(versions))}
+	for _, v := range versions {
+		k8sRule, err := convertVersionToK8sResource(orgID, v, namespaceMapper)
+		if err != nil {
+			if errors.Is(err, errInvalidRule) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to convert version to k8s resource: %w", err)
+		}
+		out.Items = append(out.Items, *k8sRule)
+	}
+	return out, nil
+}
+
+// convertDeletedToK8sResources converts soft-deleted alert rules into a k8s AlertRuleList,
+// stamping each item with a deletion timestamp.
+func convertDeletedToK8sResources(
+	orgID int64,
+	rules []*ngmodels.AlertRule,
+	namespaceMapper request.NamespaceMapper,
+) (*model.AlertRuleList, error) {
+	out := &model.AlertRuleList{Items: make([]model.AlertRule, 0, len(rules))}
+	for _, rule := range rules {
+		// Tombstone rows clear the UID; the converter requires a non-empty Name, so fall back to the GUID.
+		copy := *rule
+		if copy.UID == "" {
+			copy.UID = copy.GUID
+		}
+		k8sRule, err := convertToK8sResource(orgID, &copy, ngmodels.ProvenanceNone, namespaceMapper)
+		if err != nil {
+			if errors.Is(err, errInvalidRule) {
+				continue
+			}
+			return nil, fmt.Errorf("failed to convert deleted rule to k8s resource: %w", err)
+		}
+		deleted := metav1.NewTime(rule.Updated)
+		k8sRule.SetDeletionTimestamp(&deleted)
+		out.Items = append(out.Items, *k8sRule)
+	}
+	return out, nil
+}
+
 func convertToDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.AlertRule, ngmodels.Provenance, error) {
 	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
 	if err != nil {
@@ -228,6 +341,16 @@ func convertToDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.Aler
 }
 
 func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.AlertRule, error) {
+	noDataState, err := convertToDomainNoDataState(model.AlertRuleNoDataState(k8sRule.Spec.NoDataStateOrDefault()))
+	if err != nil {
+		return nil, err
+	}
+
+	execErrState, err := convertToDomainExecErrState(model.AlertRuleExecErrState(k8sRule.Spec.ExecErrStateOrDefault()))
+	if err != nil {
+		return nil, err
+	}
+
 	domainRule := &ngmodels.AlertRule{
 		OrgID:        orgID,
 		UID:          k8sRule.Name,
@@ -237,8 +360,8 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 		IsPaused:     k8sRule.Spec.Paused != nil && *k8sRule.Spec.Paused,
 		Labels:       make(map[string]string),
 		Annotations:  make(map[string]string),
-		NoDataState:  ngmodels.NoDataState(k8sRule.Spec.NoDataStateOrDefault()),
-		ExecErrState: ngmodels.ExecutionErrorState(k8sRule.Spec.ExecErrStateOrDefault()),
+		NoDataState:  noDataState,
+		ExecErrState: execErrState,
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -326,6 +449,36 @@ func convertToBaseDomainModel(orgID int64, k8sRule *model.AlertRule) (*ngmodels.
 	}
 
 	return domainRule, nil
+}
+
+func convertToDomainNoDataState(state model.AlertRuleNoDataState) (ngmodels.NoDataState, error) {
+	switch state {
+	case model.AlertRuleNoDataStateOk:
+		return ngmodels.OK, nil
+	case model.AlertRuleNoDataStateNoData:
+		return ngmodels.NoData, nil
+	case model.AlertRuleNoDataStateKeepLast:
+		return ngmodels.KeepLast, nil
+	case model.AlertRuleNoDataStateAlerting:
+		return ngmodels.Alerting, nil
+	default:
+		return "", fmt.Errorf("invalid NoDataState value")
+	}
+}
+
+func convertToDomainExecErrState(state model.AlertRuleExecErrState) (ngmodels.ExecutionErrorState, error) {
+	switch state {
+	case model.AlertRuleExecErrStateAlerting:
+		return ngmodels.AlertingErrState, nil
+	case model.AlertRuleExecErrStateError:
+		return ngmodels.ErrorErrState, nil
+	case model.AlertRuleExecErrStateOk:
+		return ngmodels.OkErrState, nil
+	case model.AlertRuleExecErrStateKeepLast:
+		return ngmodels.KeepLastErrState, nil
+	default:
+		return "", fmt.Errorf("invalid ExecErrState value")
+	}
 }
 
 func ConvertNotificationSettings(sourceSettings *model.AlertRuleNotificationSettings) (ngmodels.NotificationSettings, error) {

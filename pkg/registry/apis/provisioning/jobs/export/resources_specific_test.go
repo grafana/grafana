@@ -105,8 +105,8 @@ func TestExportSpecificResources_Success(t *testing.T) {
 		Path:   "grafana",
 		Branch: "feature/branch",
 		Resources: []provisioningV0.ResourceRef{
-			{Name: "dash-1", Kind: "Dashboard"},
-			{Name: "dash-2", Kind: "Dashboard"},
+			{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group},
+			{Name: "dash-2", Kind: "Dashboard", Group: resources.DashboardResource.Group},
 		},
 	}
 
@@ -140,7 +140,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
@@ -170,7 +170,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
@@ -198,7 +198,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
@@ -227,7 +227,7 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, true)
@@ -236,29 +236,94 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
 }
 
-func TestExportSpecificResources_NonDashboardKindIsErroredAndSkipped(t *testing.T) {
-	// ForKind still gets called once at the top of ExportSpecificResources so
-	// the shim can be prepared, even though no dashboards end up being fetched.
+func TestExportSpecificResources_FolderKindIsSkipped(t *testing.T) {
+	// Folders are exported as a tree by ExportFolders; a folder named in
+	// Resources must be skipped here (recorded as ignored) so we don't write a
+	// conflicting standalone folder file.
+	folderGVK := schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}
+
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
-		Return(&mockGetByName{items: map[string]*unstructured.Unstructured{}}, resources.DashboardResource, nil)
+	resourceClients.On("ForKind", mock.Anything, folderGVK).
+		Return(&mockGetByName{items: map[string]*unstructured.Unstructured{}}, resources.FolderResource, nil)
 
 	repoResources := resources.NewMockRepositoryResources(t)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		// A non-Dashboard kind is a caller mistake (admission would normally
-		// reject it); if it still reaches the worker, fail the item rather
-		// than quietly warn so the job surfaces the bad input. The action is
-		// NOT Ignored because the recorder silently discards errors on
-		// ignored results — we need this one to escalate the job state.
-		return r.Name() == "folder-ref" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+		return r.Name() == "folder-ref" && r.Action() == repository.FileActionIgnored && r.Error() == nil
+	})).Return()
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "folder-ref", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
+	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
+	// A supported non-dashboard, non-folder kind (here a Playlist) is resolved
+	// against its own kind/group and exported through the shared write path,
+	// without the dashboard conversion shim.
+	playlistGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Kind: "Playlist"}
+	playlistGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	playlist := &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   map[string]any{"name": "playlist-1"},
+		},
+	}
+	playlistClient := &mockGetByName{items: map[string]*unstructured.Unstructured{"playlist-1": playlist}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, playlistGVK).
+		Return(playlistClient, playlistGVR, nil)
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "playlist-1" && obj.GetKind() == "Playlist"
+	}), mock.Anything).Return("playlist-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "playlist-1" && r.Action() == repository.FileActionCreated && r.Error() == nil
 	})).Return()
 	progress.On("TooManyErrors").Return(nil).Once()
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "folder-ref", Kind: "Folder"}},
+		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
+}
+
+func TestExportSpecificResources_UnresolvableKindRecordsError(t *testing.T) {
+	// A kind that discovery cannot resolve (e.g. a typo or a disabled resource
+	// that slipped past admission) fails the item so the job surfaces the bad
+	// input rather than silently dropping it.
+	unknownGVK := schema.GroupVersionKind{Group: "unknown.grafana.app", Kind: "Mystery"}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, unknownGVK).
+		Return(nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group unknown.grafana.app"))
+
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "mystery-1" && r.Action() != repository.FileActionIgnored && r.Error() != nil
+	})).Return()
+	progress.On("TooManyErrors").Return(nil).Once()
+
+	options := provisioningV0.ExportJobOptions{
+		Resources: []provisioningV0.ResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
 	}
 
 	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)

@@ -1,5 +1,6 @@
 import { Icon, useTheme2 } from '@grafana/ui';
 
+import { alertToActionItem } from '../../../actionItem';
 import { getAlertStateColor, QueryEditorType } from '../../../constants';
 import { useQueryEditorUIContext, useQueryEditorTypeConfig } from '../../QueryEditorContext';
 import { type AlertRule } from '../../types';
@@ -12,12 +13,7 @@ export const AlertCard = ({ alert }: { alert: AlertRule }) => {
   const typeConfig = useQueryEditorTypeConfig();
   const isSelected = selectedAlert?.alertId === alert.alertId;
 
-  const item = {
-    name: alert.rule.name,
-    type: QueryEditorType.Alert,
-    isHidden: false,
-    alertState: alert.state,
-  };
+  const item = alertToActionItem(alert);
 
   return (
     <SidebarCard id={alert.alertId} isSelected={isSelected} item={item} onSelect={() => setSelectedAlert(alert)}>

@@ -127,6 +127,7 @@ function getStyles(theme: GrafanaTheme2) {
       label: 'body',
       flexGrow: 1,
       display: 'flex',
+      flexDirection: 'column',
       gap: '8px',
       gridArea: 'panels',
       marginBottom: theme.spacing(2),

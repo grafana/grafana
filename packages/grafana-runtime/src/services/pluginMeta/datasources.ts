@@ -2,10 +2,11 @@ import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
@@ -92,14 +93,16 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initDatasourcePluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
+    logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
   setMetas(metas);
+  logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with meta values', {});
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {
@@ -138,7 +141,7 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
 }
 
 export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const resolved = settings ?? (await getBackendSrv().get<FrontendSettings>('/api/frontend/settings'));
     setDatasourcesAndAliases(extractFromConfig(resolved.datasources));
     return;

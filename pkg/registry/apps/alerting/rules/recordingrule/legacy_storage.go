@@ -24,6 +24,37 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
 
+// onlyRecordingVersions filters versions to those representing recording rules. Versions of
+// alerting rules share storage but should not surface through the RecordingRule resource.
+func onlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
+	out := versions[:0]
+	for _, v := range versions {
+		if v == nil {
+			continue
+		}
+		if v.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// onlyRecordingRules filters deleted rules to those representing recording rules.
+func onlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
+	out := rules[:0]
+	for _, r := range rules {
+		if r == nil {
+			continue
+		}
+		if r.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
@@ -67,6 +98,30 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
+	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
+	if err != nil {
+		return nil, k8serrors.NewBadRequest(err.Error())
+	}
+	switch mode {
+	case common.ListModeHistory:
+		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		if err != nil {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
+			}
+			return nil, err
+		}
+		return convertVersionsToK8sResources(info.OrgID, onlyRecordingVersions(versions), s.namespacer)
+	case common.ListModeTrash:
+		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+		return convertDeletedToK8sResources(info.OrgID, onlyRecordingRules(deleted), s.namespacer)
+	case common.ListModeNormal:
+		// fall through to the normal list pipeline below.
+	}
+
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
 	if err != nil {
 		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.GroupLabelKey, err))
@@ -77,27 +132,40 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter  provisioning.ListRuleStringFilter
-		pausedFilter provisioning.ListRuleBoolFilter
+		titleFilter               provisioning.ListRuleStringFilter
+		pausedFilter              provisioning.ListRuleBoolFilter
+		metricFilter              provisioning.ListRuleStringFilter
+		targetDatasourceUIDFilter provisioning.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
-			isEq := r.Operator == selection.Equals || r.Operator == selection.DoubleEquals
 			switch r.Field {
 			case "spec.title":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.title (only = supported)")
+				if err := common.ApplyFieldSelectorRequirement(&titleFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
 				}
-				titleFilter.Include = []string{r.Value}
 			case "spec.paused":
-				if !isEq {
-					return nil, k8serrors.NewBadRequest("unsupported operator for spec.paused (only = supported)")
-				}
 				v, err := strconv.ParseBool(r.Value)
 				if err != nil {
 					return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid value for spec.paused: %s", r.Value))
 				}
-				pausedFilter.Value = &v
+				switch r.Operator {
+				case selection.Equals, selection.DoubleEquals:
+					pausedFilter.Value = &v
+				case selection.NotEquals:
+					negated := !v
+					pausedFilter.Value = &negated
+				default:
+					return nil, k8serrors.NewBadRequest(fmt.Sprintf("unsupported operator %q for spec.paused (only =, ==, != are supported)", r.Operator))
+				}
+			case "spec.metric":
+				if err := common.ApplyFieldSelectorRequirement(&metricFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
+			case "spec.targetDatasourceUID":
+				if err := common.ApplyFieldSelectorRequirement(&targetDatasourceUIDFilter, r, nil); err != nil {
+					return nil, k8serrors.NewBadRequest(err.Error())
+				}
 			default:
 				return nil, k8serrors.NewBadRequest(fmt.Sprintf("unknown field selector: %s", r.Field))
 			}
@@ -105,13 +173,15 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
-		RuleType:      ngmodels.RuleTypeFilterRecording,
-		Limit:         opts.Limit,
-		ContinueToken: opts.Continue,
-		GroupFilter:   groupFilter,
-		FolderFilter:  folderFilter,
-		TitleFilter:   titleFilter,
-		PausedFilter:  pausedFilter,
+		RuleType:                  ngmodels.RuleTypeFilterRecording,
+		Limit:                     opts.Limit,
+		ContinueToken:             opts.Continue,
+		GroupFilter:               groupFilter,
+		FolderFilter:              folderFilter,
+		TitleFilter:               titleFilter,
+		PausedFilter:              pausedFilter,
+		MetricFilter:              metricFilter,
+		TargetDatasourceUIDFilter: targetDatasourceUIDFilter,
 	})
 	if err != nil {
 		return nil, err
@@ -180,12 +250,12 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, err
 	}
 
-	rule, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	created, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	return convertToK8sResource(info.OrgID, &created, provenance, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {

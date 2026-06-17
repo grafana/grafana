@@ -19,12 +19,6 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const defaultQuery: (dataSource: CloudMonitoringDatasource) => PromQLQuery = (dataSource) => ({
-  projectName: dataSource.getDefaultProject(),
-  expr: '',
-  step: '10s',
-});
-
 export function PromQLQueryEditor({
   refId,
   query,
