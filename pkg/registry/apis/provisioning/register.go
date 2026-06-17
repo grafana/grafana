@@ -544,15 +544,16 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 		return authorizer.DecisionAllow, "", nil
 
 	// refs subresource - editors need to see branches to push changes.
-	// We check repositories:write (an admin-only RBAC action) rather than
-	// repositories:read, because repositories:read is granted to Viewer and
-	// would let viewers read branches too. Editors pass through the Editor
-	// fallback role; admins satisfy either check.
+	// This is a read, so we check the read action provisioning.jobs:read,
+	// which is granted to Editor (not Viewer) - rather than repositories:read,
+	// which is granted to Viewer and would let viewers read branches too.
+	// Editors pass via jobs:read (or the Editor fallback role); admins satisfy
+	// either check; viewers are denied.
 	case "refs":
 		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbUpdate,
+			Verb:      apiutils.VerbGet,
 			Group:     provisioning.GROUP,
-			Resource:  provisioning.RepositoryResourceInfo.GetName(),
+			Resource:  provisioning.JobResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
 		}, ""))
