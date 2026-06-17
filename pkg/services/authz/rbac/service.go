@@ -975,6 +975,13 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 		return true, nil
 	}
 
+	// A specific object was named but its parent folder is unknown. Without a
+	// folder the only thing that can authorize the request is a wildcard folder
+	// grant (handled above).
+	if req.ParentFolder == "" {
+		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
+	}
+
 	// The stack-role grant lives under the resource-type action
 	// (e.g. customcrdtest.ext.grafana.app/widgets:create), so the scopeMap
 	// passed in here only ever contains widget scopes. To enforce the folder
@@ -996,13 +1003,6 @@ func (s *Service) checkPermissionWithFolderAuthz(ctx context.Context, scopeMap m
 	// without walking the tree.
 	if folderScopeMap["*"] {
 		return true, nil
-	}
-
-	// A specific object was named but its parent folder is unknown. Without a
-	// folder the only thing that can authorize the request is a wildcard folder
-	// grant (handled above).
-	if req.ParentFolder == "" {
-		return false, fmt.Errorf("k8s authorizer supports folder level not resource level authorization")
 	}
 
 	// Global access check failed, return early

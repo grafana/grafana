@@ -1533,7 +1533,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group allowed with stack-role grant and no folder (only with wildcard access)", func(t *testing.T) {
+	t.Run("Check: unregistered group denied with stack-role grant and no folder (wildcard access)", func(t *testing.T) {
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
 			{Action: "folders:read", Scope: "folders:*"},
@@ -1546,8 +1546,8 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Verb:      "get",
 			Name:      "w1",
 		})
-		require.NoError(t, err)
-		assert.True(t, resp.Allowed)
+		require.Error(t, err)
+		assert.False(t, resp.Allowed)
 	})
 
 	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
@@ -1741,7 +1741,7 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 				stackRole("widget.ext.grafana.app/widgets:get"),
 				{Action: "folders:read", Scope: "*", Kind: "*"},
 			},
-			folders:  []store.Folder{{UID: "f1"}},
+			folders:  []store.Folder{{}},
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbGet, Name: "w1", Folder: "f1"},
 			expected: true,
 		},
