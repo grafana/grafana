@@ -79,8 +79,8 @@
     "generate:openapi": "yarn workspace @grafana/openapi generate:openapi",
     "gen-plugin-schema-types": "jq '.title = \"PluginSchema\"' docs/sources/developers/plugins/plugin.schema.json | yarn json2ts --ignoreMinAndMaxItems > \"${PLUGIN_SCHEMA_TYPES_OUT:-./plugin-schema.d.ts}\"",
     "check-enterprise-linked": "./scripts/check-enterprise-linked.sh",
-    "knip": "yarn check-enterprise-linked && knip",
-    "knip:fix": "yarn check-enterprise-linked && knip --fix --allow-remove-files"
+    "knip": "yarn check-enterprise-linked && knip --no-config-hints",
+    "knip:fix": "yarn check-enterprise-linked && knip --fix --allow-remove-files --no-config-hints"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
@@ -433,8 +433,8 @@
     "get-document": "workspace:*",
     "gitconfiglocal": "2.1.0",
     "tmp@npm:^0.0.33": "~0.2.1",
-    "js-yaml@npm:4.1.0": "^4.1.0",
-    "js-yaml@npm:=4.1.0": "^4.1.0",
+    "js-yaml@npm:4.1.1": "^4.1.0",
+    "js-yaml@npm:=4.1.1": "^4.1.0",
     "nodemailer": "8.0.7",
     "storybook@npm:10.3.6": "patch:storybook@npm%3A10.3.6#~/.yarn/patches/storybook-npm-10.3.6-8a0644ac0b.patch",
     "@types/slate/immutable": "^4.0.0",

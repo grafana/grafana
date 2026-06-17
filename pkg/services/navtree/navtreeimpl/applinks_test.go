@@ -631,3 +631,79 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 		require.Equal(t, "/a/test-app1/announcements", appsNode.Children[0].Children[0].Url)
 	})
 }
+
+func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	permissions := []ac.Permission{
+		{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"},
+	}
+
+	sloApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-slo-app", Name: "SLO", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Home", Path: "/a/grafana-slo-app/home", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Manage SLOs", Path: "/a/grafana-slo-app/manage-slos", Type: "page", AddToNav: true},
+			},
+		},
+	}
+	mwApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
+			},
+		},
+	}
+
+	newService := func(plugins ...pluginstore.Plugin) ServiceImpl {
+		ps := map[string]*pluginsettings.DTO{}
+		list := make([]pluginstore.Plugin, 0, len(plugins))
+		for _, p := range plugins {
+			ps[p.ID] = &pluginsettings.DTO{OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+			list = append(list, p)
+		}
+		return ServiceImpl{
+			log:            log.New("navtree"),
+			cfg:            setting.NewCfg(),
+			accessControl:  accesscontrolmock.New().WithPermissions(permissions),
+			pluginSettings: &pluginsettings.FakePluginSettings{Plugins: ps},
+			features:       featuremgmt.WithFeatures(),
+			pluginStore:    &pluginstore.FakePluginStore{PluginList: list},
+			navigationAppConfig: map[string]NavigationAppConfig{
+				"grafana-slo-app": {SectionID: navtree.NavIDRoot},
+			},
+		}
+	}
+
+	t.Run("Should nest Maintenance Windows under SLO when both are enabled", func(t *testing.T) {
+		service := newService(sloApp, mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+
+		sloNode := treeRoot.FindById("plugin-page-grafana-slo-app")
+		require.NotNil(t, sloNode)
+		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
+		require.NotNil(t, mwChild)
+		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
+		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
+		require.True(t, mwChild.IsNew)
+
+		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
+	})
+
+	t.Run("Should keep Maintenance Windows as its own app when SLO is not enabled", func(t *testing.T) {
+		service := newService(mwApp)
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+
+		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
+		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+	})
+}

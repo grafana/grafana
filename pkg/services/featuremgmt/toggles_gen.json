@@ -1398,7 +1398,8 @@
       "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-16T13:48:37Z"
       },
       "spec": {
         "description": "Enables the created by me search filter on the browse dashboards page",
@@ -4034,7 +4035,8 @@
       "metadata": {
         "name": "preventPanelChromeOverflow",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-17T14:40:08Z"
+        "creationTimestamp": "2025-10-17T14:40:08Z",
+        "deletionTimestamp": "2026-06-16T13:33:46Z"
       },
       "spec": {
         "description": "Restrict PanelChrome contents with overflow: hidden;",
