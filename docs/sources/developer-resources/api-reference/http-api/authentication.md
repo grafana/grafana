@@ -21,7 +21,7 @@ aliases:
   - ../../../developer-resources/api-reference/http-api/api-legacy/authentication/ #legacy folder
 ---
 
-# Authentication options for the HTTP APIs 
+# Authentication options for the HTTP APIs
 
 ## Authentication options in Grafana OSS/Enterprise
 
