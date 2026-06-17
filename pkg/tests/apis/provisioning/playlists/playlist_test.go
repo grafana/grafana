@@ -3,6 +3,7 @@ package playlists
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -244,16 +245,23 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 		assert.Equal(collect, "Files Playlist Updated", title, "the updated title should be reflected in Grafana")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist title should be updated after a files PUT")
 
-	// Move: re-provisions the playlist at the new path. With the resourceVersion carried
-	// into the update, the move succeeds and the source-path annotation is refreshed.
-	const movedPath = "moved/" + path
+	// Move (same directory level): re-provisions the playlist as an update at the new path.
+	// With the resourceVersion carried into the update, the move succeeds and the source-path
+	// annotation is refreshed.
+	//
+	// The move stays at the repository root on purpose: playlists are org-scoped, and moving
+	// one into a subdirectory derives a grafana.app/folder annotation that the playlist
+	// apiserver forbids ("folders are not supported"). That folder-scoping gap is independent
+	// of the resourceVersion round-trip exercised here.
+	const movedPath = "files-playlist-moved.json"
 	moveResp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
 		TargetPath:   movedPath,
 		OriginalPath: path,
 		Message:      "move playlist",
 	})
-	require.Equal(t, 200, moveResp.StatusCode, "playlist move via files endpoint should succeed")
+	moveBody, _ := io.ReadAll(moveResp.Body)
 	require.NoError(t, moveResp.Body.Close())
+	require.Equalf(t, 200, moveResp.StatusCode, "playlist move via files endpoint should succeed; body: %s", moveBody)
 
 	repoFiles := repositoryFilePaths(t, ctx, helper, repo)
 	require.NotContains(t, repoFiles, path, "the playlist file should no longer be at its original path")
@@ -267,8 +275,7 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 			"the source-path annotation should be refreshed to the moved path")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist source path should be refreshed after a files move")
 
-	// Delete: removes the (moved) file and deprovisions the playlist. The moved path is
-	// nested, so use the files client (the typed REST builder rejects '/' in a subresource).
+	// Delete: removes the (moved) file and deprovisions the playlist.
 	delResp := helper.NewFilesClient(repo).Delete(t, movedPath)
 	require.Equal(t, 200, delResp.StatusCode, "deleting a playlist file should succeed")
 
