@@ -2,13 +2,17 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -887,5 +891,240 @@ func TestWebhookManager_RotateWebhookSecret(t *testing.T) {
 		ops, err := m.RotateWebhookSecret(context.Background())
 		require.NoError(t, err)
 		require.Nil(t, ops)
+	})
+}
+
+// stubParser is a WebhookParser whose authentication and normalization results
+// are fully controlled by the test, so the manager's provider-agnostic dispatch
+// can be exercised without any real provider payloads.
+type stubParser struct {
+	replayKey string
+	verifyErr error
+	event     WebhookEvent
+	parseErr  error
+}
+
+func (s stubParser) Verify(*http.Request, common.RawSecureValue) ([]byte, string, error) {
+	return nil, s.replayKey, s.verifyErr
+}
+
+func (s stubParser) Parse(*http.Request, []byte) (WebhookEvent, error) {
+	return s.event, s.parseErr
+}
+
+func dispatchManager(parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, secret common.RawSecureValue) *WebhookManager[any] {
+	return NewWebhookManager[any](nil, parser, replay, config, "", "grafana/grafana", "main", subscribedEvents, secret, NewIncrementalSyncPolicy(false, 5))
+}
+
+func dispatchConfig() *provisioning.Repository {
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{Enabled: true},
+		},
+		Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}},
+	}
+}
+
+func TestWebhookManager_Webhook(t *testing.T) {
+	const secret = "webhook-secret"
+
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		secret        common.RawSecureValue
+		parser        stubParser
+		expected      *provisioning.WebhookResponse
+		expectedError error
+	}{
+		{
+			name:          "missing webhook status",
+			config:        &provisioning.Repository{},
+			secret:        secret,
+			expectedError: fmt.Errorf("unexpected webhook request"),
+		},
+		{
+			name:          "missing secret",
+			config:        dispatchConfig(),
+			secret:        "",
+			expectedError: fmt.Errorf("missing webhook secret"),
+		},
+		{
+			name:          "verification failure",
+			config:        dispatchConfig(),
+			secret:        secret,
+			parser:        stubParser{verifyErr: fmt.Errorf("bad signature")},
+			expectedError: apierrors.NewUnauthorized("invalid signature"),
+		},
+		{
+			name:          "parse failure",
+			config:        dispatchConfig(),
+			secret:        secret,
+			parser:        stubParser{parseErr: fmt.Errorf("invalid payload")},
+			expectedError: fmt.Errorf("invalid payload"),
+		},
+		{
+			name:          "push repository mismatch",
+			config:        dispatchConfig(),
+			secret:        secret,
+			parser:        stubParser{event: WebhookEvent{Type: WebhookEventPush, RepoSlug: "other/repo", Branch: "main"}},
+			expectedError: ErrRepositoryMismatch,
+		},
+		{
+			name:     "push sync disabled",
+			config:   &provisioning.Repository{Status: provisioning.RepositoryStatus{Webhook: &provisioning.WebhookStatus{}}},
+			secret:   secret,
+			parser:   stubParser{event: WebhookEvent{Type: WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main"}},
+			expected: &provisioning.WebhookResponse{Code: http.StatusOK},
+		},
+		{
+			name:     "push other branch",
+			config:   dispatchConfig(),
+			secret:   secret,
+			parser:   stubParser{event: WebhookEvent{Type: WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "feature"}},
+			expected: &provisioning.WebhookResponse{Code: http.StatusOK},
+		},
+		{
+			name:   "push accepted",
+			config: dispatchConfig(),
+			secret: secret,
+			parser: stubParser{event: WebhookEvent{Type: WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}},
+			expected: &provisioning.WebhookResponse{
+				Code: http.StatusAccepted,
+				Job: &provisioning.JobSpec{
+					Repository: "test-repo",
+					Action:     provisioning.JobActionPull,
+					Pull:       &provisioning.SyncJobOptions{Incremental: true},
+				},
+			},
+		},
+		{
+			name:          "pull request repository mismatch",
+			config:        dispatchConfig(),
+			secret:        secret,
+			parser:        stubParser{event: WebhookEvent{Type: WebhookEventPullRequest, RepoSlug: "other/repo", Branch: "main"}},
+			expectedError: ErrRepositoryMismatch,
+		},
+		{
+			name:   "pull request other branch",
+			config: dispatchConfig(),
+			secret: secret,
+			parser: stubParser{event: WebhookEvent{Type: WebhookEventPullRequest, RepoSlug: "grafana/grafana", Branch: "develop"}},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: "ignoring pull request event as develop is not the configured branch",
+			},
+		},
+		{
+			name:   "pull request ignored action",
+			config: dispatchConfig(),
+			secret: secret,
+			parser: stubParser{event: WebhookEvent{Type: WebhookEventPullRequest, RepoSlug: "grafana/grafana", Branch: "main", Action: "closed"}},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: "ignore pull request event: closed",
+			},
+		},
+		{
+			name:   "pull request accepted",
+			config: dispatchConfig(),
+			secret: secret,
+			parser: stubParser{event: WebhookEvent{
+				Type:      WebhookEventPullRequest,
+				RepoSlug:  "grafana/grafana",
+				Branch:    "main",
+				Action:    pullRequestActionOpened,
+				PRNumber:  123,
+				PRURL:     "https://github.com/grafana/grafana/pull/123",
+				SourceRef: "feature-branch",
+				Hash:      "abcdef",
+			}},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusAccepted,
+				Message: "pull request: opened",
+				Job: &provisioning.JobSpec{
+					Repository: "test-repo",
+					Action:     provisioning.JobActionPullRequest,
+					PullRequest: &provisioning.PullRequestJobOptions{
+						URL:  "https://github.com/grafana/grafana/pull/123",
+						PR:   123,
+						Ref:  "feature-branch",
+						Hash: "abcdef",
+					},
+				},
+			},
+		},
+		{
+			name:     "ping",
+			config:   dispatchConfig(),
+			secret:   secret,
+			parser:   stubParser{event: WebhookEvent{Type: WebhookEventPing}},
+			expected: &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"},
+		},
+		{
+			name:     "unsupported",
+			config:   dispatchConfig(),
+			secret:   secret,
+			parser:   stubParser{event: WebhookEvent{Type: WebhookEventUnsupported, Message: "unsupported messageType: team"}},
+			expected: &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: "unsupported messageType: team"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := dispatchManager(tt.parser, NewReplayCache(time.Hour), tt.config, tt.secret)
+
+			rsp, err := m.Webhook(context.Background(), &http.Request{})
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actual *apierrors.StatusError
+					require.True(t, errors.As(err, &actual), "expected StatusError, got %T", err)
+					require.Equal(t, statusErr.Status().Message, actual.Status().Message)
+					require.Equal(t, statusErr.Status().Code, actual.Status().Code)
+				} else {
+					require.Equal(t, tt.expectedError.Error(), err.Error())
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected.Code, rsp.Code)
+			require.Equal(t, tt.expected.Message, rsp.Message)
+			require.Equal(t, tt.expected.Job, rsp.Job)
+		})
+	}
+}
+
+func TestWebhookManager_Webhook_ReplayProtection(t *testing.T) {
+	const secret = "webhook-secret"
+	pushEvent := WebhookEvent{Type: WebhookEventPush, RepoSlug: "grafana/grafana", Branch: "main", TotalChanges: 1}
+
+	t.Run("replayed key is silently dropped", func(t *testing.T) {
+		m := dispatchManager(stubParser{replayKey: "sig-1", event: pushEvent}, NewReplayCache(time.Hour), dispatchConfig(), secret)
+
+		first, err := m.Webhook(context.Background(), &http.Request{})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, first.Code)
+
+		dup, err := m.Webhook(context.Background(), &http.Request{})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, dup.Code)
+		require.Equal(t, "ok", dup.Message)
+		require.Nil(t, dup.Job)
+	})
+
+	t.Run("empty replay key is never deduplicated", func(t *testing.T) {
+		m := dispatchManager(stubParser{replayKey: "", event: pushEvent}, NewReplayCache(time.Hour), dispatchConfig(), secret)
+
+		first, err := m.Webhook(context.Background(), &http.Request{})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, first.Code)
+
+		second, err := m.Webhook(context.Background(), &http.Request{})
+		require.NoError(t, err)
+		require.Equal(t, http.StatusAccepted, second.Code)
 	})
 }

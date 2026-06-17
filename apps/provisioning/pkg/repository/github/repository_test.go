@@ -572,7 +572,7 @@ func TestGitHubRepositoryHistory(t *testing.T) {
 
 			repo := &githubRepository{
 				config: tt.config,
-				gh:     mockClient,
+				Client: mockClient,
 				owner:  "grafana",
 				repo:   "grafana",
 			}
@@ -1046,12 +1046,12 @@ func TestGitHubRepositoryAccessors(t *testing.T) {
 
 		repo := &githubRepository{
 			config: config,
-			gh:     mockClient,
+			Client: mockClient,
 			owner:  "grafana",
 			repo:   "grafana",
 		}
 
-		result := repo.Client()
+		result := repo.Client
 		assert.Equal(t, mockClient, result)
 	})
 
@@ -1171,7 +1171,7 @@ func TestGitHubRepository_GetDefaultBranch(t *testing.T) {
 
 			repo := &githubRepository{
 				config: config,
-				gh:     mockClient,
+				Client: mockClient,
 				owner:  "grafana",
 				repo:   "grafana",
 			}
@@ -1420,7 +1420,7 @@ func TestGitHubRepository_Test_BranchProtection(t *testing.T) {
 			repo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
-				gh:            mockClient,
+				Client:        mockClient,
 				owner:         "grafana",
 				repo:          "grafana",
 			}
@@ -1637,7 +1637,7 @@ func TestGitHubRepository_Test_Rulesets(t *testing.T) {
 			repo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
-				gh:            mockClient,
+				Client:        mockClient,
 				owner:         "grafana",
 				repo:          "grafana",
 			}
@@ -1792,7 +1792,7 @@ func TestGitHubRepository_Test_CombinedProtection(t *testing.T) {
 			repo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
-				gh:            mockClient,
+				Client:        mockClient,
 				owner:         "grafana",
 				repo:          "grafana",
 			}
@@ -1960,7 +1960,7 @@ func TestGitHubRepository_Test_EmptyBranch(t *testing.T) {
 			githubRepo := &githubRepository{
 				config:        config,
 				GitRepository: mockGitRepo,
-				gh:            mockClient,
+				Client:        mockClient,
 				owner:         "grafana",
 				repo:          "grafana",
 			}
