@@ -1102,90 +1102,84 @@ describe('ScopesService', () => {
             flagKey === 'grafana.enableScopesFirstMode' ? true : defaultValue,
         });
 
-      // Each test constructs its own service AFTER setting up the flag + apiClient
-      // mock, because the default-scope fetch fires in the ScopesService constructor
-      // (giving /find/default_scope a head start over selector mount, which races
-      // useScopesById against an empty cache).
+      beforeEach(() => {
+        // The ScopesService constructor calls selectorService.changeScopes during URL init.
+        // Clear those calls so the assertions below only see the default-scope flow.
+        jest.clearAllMocks();
+      });
 
-      it('fetches the default scope in the constructor and applies it on setEnabled when no URL scope is set and ScopesFirstMode is on', async () => {
+      it('fetches the default scope and applies it when no scope is selected and ScopesFirstMode is on', async () => {
         turnOnScopesFirstMode();
-        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
         selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
 
-        const localService = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
-        expect(apiClient.fetchDefaultScope).toHaveBeenCalledTimes(1);
-
-        localService.setEnabled(true);
+        service.setEnabled(true);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
         // redirectOnApply=true so the user lands on the scope's redirectPath
         // or first scope navigation, matching manual selection behavior.
         expect(selectorService.changeScopes).toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 
-      it('does not fetch the default scope when ScopesFirstMode is off', () => {
+      it('does not fetch when ScopesFirstMode is off', () => {
         getFeatureFlagClient.mockReturnValue({ getBooleanValue: jest.fn().mockReturnValue(false) });
+        selectorService.state.appliedScopes = [];
         apiClient.fetchDefaultScope = jest.fn();
 
-        new ScopesService(selectorService, dashboardsService, locationService, apiClient);
+        service.setEnabled(true);
 
         expect(apiClient.fetchDefaultScope).not.toHaveBeenCalled();
       });
 
-      it('does not fetch the default scope when the URL already has a scope', () => {
+      it('does not fetch when a scope is already selected', () => {
         turnOnScopesFirstMode();
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+        };
         apiClient.fetchDefaultScope = jest.fn();
-        locationService.getLocation = jest.fn().mockReturnValue({ pathname: '/test', search: '?scopes=mimir' });
 
-        new ScopesService(selectorService, dashboardsService, locationService, apiClient);
+        service.setEnabled(true);
 
         expect(apiClient.fetchDefaultScope).not.toHaveBeenCalled();
-      });
-
-      it('does not apply when a scope is selected by the time setEnabled fires', async () => {
-        turnOnScopesFirstMode();
-        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
-
-        const localService = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
-        // simulate URL-driven scope having been applied before setEnabled
-        selectorService.state.appliedScopes = [{ scopeId: 'mimir' }];
-
-        localService.setEnabled(true);
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 
       it('does not apply when fetchDefaultScope resolves to undefined (endpoint flag off or no default)', async () => {
         turnOnScopesFirstMode();
-        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
         selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
 
-        const localService = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
-        localService.setEnabled(true);
+        service.setEnabled(true);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(apiClient.fetchDefaultScope).toHaveBeenCalledTimes(1);
-        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(
-          expect.arrayContaining([expect.any(String)]),
-          undefined,
-          undefined,
-          true
-        );
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
+      });
+
+      it('does not apply if scopes is disabled before the fetch resolves', async () => {
+        turnOnScopesFirstMode();
+        selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+
+        service.setEnabled(true);
+        // User navigates to a non-scope page before the fetch resolves.
+        service.setEnabled(false);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        expect(selectorService.changeScopes).not.toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
       });
 
       it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {
         turnOnScopesFirstMode();
-        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
         selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
 
-        const localService = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
-        localService.setEnabled(true);
-        localService.setEnabled(true);
+        service.setEnabled(true);
+        service.setEnabled(true);
         await new Promise((resolve) => setTimeout(resolve, 0));
 
-        // The constructor calls fetchDefaultScope exactly once; setEnabled consumes
-        // the captured promise and does not re-fetch.
         expect(apiClient.fetchDefaultScope).toHaveBeenCalledTimes(1);
       });
     });

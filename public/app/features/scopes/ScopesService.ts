@@ -30,12 +30,6 @@ export class ScopesService implements ScopesContextValue {
 
   private subscriptions: Subscription[] = [];
 
-  // Holds the in-flight default-scope fetch started in the constructor when
-  // ScopesFirstMode is on and no URL scope is set. setEnabled awaits it so it
-  // gets to apply the result; if the fetch hasn't started (other mode), this
-  // stays undefined and setEnabled is a no-op for the default-scope path.
-  private defaultScopePromise: Promise<string | undefined> | undefined;
-
   constructor(
     private selectorService: ScopesSelectorService,
     private dashboardsService: ScopesDashboardsService,
@@ -121,21 +115,6 @@ export class ScopesService implements ScopesContextValue {
       this.selectorService.resolvePathToRoot(scopeNodeId, this.selectorService.state.tree!).catch((error) => {
         console.error('Failed to pre-load node path', error);
       });
-    }
-
-    // Kick off the default-scope fetch eagerly when no URL scope is set and
-    // ScopesFirstMode is on. Firing here (app boot) instead of in setEnabled
-    // (dashboard mount) gives /find/default_scope a head start over the
-    // selector's `useScopesById` request for recent scopes that will fire as
-    // soon as state.enabled flips to true. fetchDefaultScope seeds the
-    // getScope RTK cache as a side effect, so once it completes, the
-    // selector's lookup is a cache hit. Captured promise is consumed in
-    // setEnabled below (no duplicate request — RTK dedupes in-flight queries).
-    if (
-      queryParams.getAll('scopes').length === 0 &&
-      getFeatureFlagClient().getBooleanValue('grafana.enableScopesFirstMode', false)
-    ) {
-      this.defaultScopePromise = this.apiClient.fetchDefaultScope();
     }
 
     // Update scopes state based on URL.
@@ -276,19 +255,29 @@ export class ScopesService implements ScopesContextValue {
         // default scope and apply it. Fire-and-forget so setEnabled stays sync.
         // fetchDefaultScope is itself gated on grafana.useDefaultScopesEndpoint
         // and returns undefined when off, so the call is safe here.
-        if (appliedScopes.length === 0 && this.defaultScopePromise) {
-          this.defaultScopePromise.then((name) => {
-            if (name) {
-              // Bypass this.changeScopes (which hardcodes redirectOnApply=false
-              // for URL-driven init) and call the selector service directly
-              // with redirectOnApply=true. Applying the default scope on first
-              // mount should land the user on the scope's redirectPath or
-              // first scope navigation, matching the behavior of selecting
-              // the scope manually. The scope metadata is already in the
-              // getScope RTK Query cache (seeded by fetchDefaultScope), so
-              // applyScopes' downstream fetch is a cache hit.
-              this.selectorService.changeScopes([name], undefined, undefined, true);
+        if (
+          appliedScopes.length === 0 &&
+          getFeatureFlagClient().getBooleanValue('grafana.enableScopesFirstMode', false)
+        ) {
+          this.apiClient.fetchDefaultScope().then((name) => {
+            // Only apply if scopes is still enabled AND no scope was applied
+            // in the meantime. If the user navigated to a non-scope page
+            // before the fetch resolved, state.enabled is now false and
+            // applying would leak `?scopes=…` into a page that doesn't use
+            // scopes (selectorService.subscribeToState writes the URL
+            // unconditionally when appliedScopes changes).
+            if (!name || !this.state.enabled || this.selectorService.state.appliedScopes.length > 0) {
+              return;
             }
+            // Bypass this.changeScopes (which hardcodes redirectOnApply=false
+            // for URL-driven init) and call the selector service directly
+            // with redirectOnApply=true. Applying the default scope on first
+            // mount should land the user on the scope's redirectPath or
+            // first scope navigation, matching the behavior of selecting
+            // the scope manually. The scope metadata is already in the
+            // getScope RTK Query cache (seeded by fetchDefaultScope), so
+            // applyScopes' downstream fetch is a cache hit.
+            this.selectorService.changeScopes([name], undefined, undefined, true);
           });
         }
         // Defer the URL write when scope metadata has not loaded yet.
