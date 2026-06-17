@@ -94,7 +94,7 @@ type Webhook[E any] struct {
 // reconciliation, secret rotation and teardown) on top of a ProviderClient. It also
 // holds the shared webhook state (config, secret, incremental sync policy) that the
 // provider-specific inbound handlers read.
-type WebhookManager[W any] struct {
+type WebhookManager[E any] struct {
 	client            WebhookClient[E]
 	parser            WebhookParser
 	replay            *ReplayCache
