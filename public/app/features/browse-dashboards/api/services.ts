@@ -9,7 +9,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { resolveStarredFolders } from 'app/features/stars/folders';
+import { resolveStarredFolders, starredFolderUids } from 'app/features/stars/folders';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
@@ -244,7 +244,7 @@ export async function listStarredFolders(): Promise<DashboardViewItem[]> {
     )
   ).unwrap();
 
-  const folders = await resolveStarredFolders(stars);
+  const folders = await resolveStarredFolders(starredFolderUids(stars));
   return folders.map((folder) => ({
     kind: 'folder' as const,
     // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.

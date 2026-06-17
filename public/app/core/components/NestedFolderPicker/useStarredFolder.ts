@@ -1,11 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { resolveStarredFolders } from 'app/features/stars/folders';
+import { resolveStarredFolders, starredFolderUids } from 'app/features/stars/folders';
 
 type UseGetStarredFoldersResult = {
   folders: DashboardViewItem[];
@@ -23,11 +23,20 @@ export function useGetStarredFolders(options?: { skip: boolean }): UseGetStarred
   const name = `user-${contextSrv.user.uid}`;
   const { data, error } = useListStarsQuery(options?.skip ? skipToken : { fieldSelector: `metadata.name=${name}` });
 
+  const uids = useMemo(() => starredFolderUids(data), [data]);
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);
 
   useEffect(() => {
+    // Clear synchronously when there's nothing to resolve so we never schedule an async state update
+    // after render — consumers that render the picker with the feature off (e.g. unrelated component
+    // tests) would otherwise see an update outside act().
+    if (uids.length === 0) {
+      setFolders([]);
+      return;
+    }
+
     let cancelled = false;
-    resolveStarredFolders(data)
+    resolveStarredFolders(uids)
       .then((items) => {
         if (!cancelled) {
           setFolders(items);
@@ -39,7 +48,7 @@ export function useGetStarredFolders(options?: { skip: boolean }): UseGetStarred
     return () => {
       cancelled = true;
     };
-  }, [data]);
+  }, [uids]);
 
   return {
     folders,
