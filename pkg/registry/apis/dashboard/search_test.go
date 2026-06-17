@@ -66,8 +66,6 @@ func TestVectorSearch(t *testing.T) {
 	}
 
 	t.Run("calls VectorSearch and maps results to hits", func(t *testing.T) {
-		// The backend returns results ordered by score (ascending cosine distance,
-		// closest first); the mock mirrors that contract.
 		mockClient := &MockClient{
 			VectorSearchResponse: &resourcepb.VectorSearchResponse{
 				Results: []*resourcepb.VectorSearchResult{
@@ -97,7 +95,6 @@ func TestVectorSearch(t *testing.T) {
 		require.Len(t, p.Hits, 3)
 		assert.Equal(t, int64(3), p.TotalHits)
 
-		// Hits preserve the backend's score order (closest first).
 		assert.Equal(t, []string{"d1", "d2", "d3"}, []string{p.Hits[0].Name, p.Hits[1].Name, p.Hits[2].Name})
 		assert.Equal(t, []float64{0.12, 0.34, 0.51}, []float64{p.Hits[0].Score, p.Hits[1].Score, p.Hits[2].Score})
 		assert.Equal(t, 0.12, p.MaxScore)
@@ -106,7 +103,6 @@ func TestVectorSearch(t *testing.T) {
 		assert.Equal(t, "f1", p.Hits[0].Folder)
 		assert.Equal(t, "dashboards", p.Hits[0].Resource)
 
-		// Each hit carries its matched panel under Field.
 		require.NotNil(t, p.Hits[0].Field)
 		assert.Equal(t, "panel/3", p.Hits[0].Field.Object["subresource"])
 		assert.Equal(t, "CPU usage\nTags: infra", p.Hits[0].Field.Object["snippet"])
@@ -124,6 +120,16 @@ func TestVectorSearch(t *testing.T) {
 		assert.Equal(t, 1, mockClient.VectorSearchCallCount)
 		assert.Equal(t, 0, mockClient.CallCount, "must not fall back to lexical search")
 		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
+	})
+
+	t.Run("normalizes the general root folder to the legacy empty UID", func(t *testing.T) {
+		mockClient := &MockClient{VectorSearchResponse: &resourcepb.VectorSearchResponse{}}
+		doRequest(newHandler(mockClient), "query=cpu&folder="+folder.GeneralFolderUID)
+
+		require.NotNil(t, mockClient.LastVectorSearchRequest)
+		require.Len(t, mockClient.LastVectorSearchRequest.Filters, 1)
+		assert.Equal(t, "folder", mockClient.LastVectorSearchRequest.Filters[0].Key)
+		assert.Equal(t, []string{""}, mockClient.LastVectorSearchRequest.Filters[0].Values)
 	})
 
 	t.Run("maps gRPC status codes to HTTP statuses instead of 500", func(t *testing.T) {
@@ -1253,7 +1259,6 @@ type MockClient struct {
 	MockCalls     []*resourcepb.ResourceSearchRequest
 	CallCount     int
 
-	// Vector search
 	LastVectorSearchRequest *resourcepb.VectorSearchRequest
 	VectorSearchResponse    *resourcepb.VectorSearchResponse
 	VectorSearchErr         error

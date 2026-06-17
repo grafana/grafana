@@ -554,9 +554,8 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 		Query: queryParams.Get("query"),
 		Limit: int64(limit),
 	}
-	// Vector search ranks by meaning, so the lexical filters/facets/sort don't
-	// apply. Only the folder constraint is carried over as an exact-match filter.
 	if folder := queryParams.Get("folder"); folder != "" {
+		folder = foldermodel.ToLegacyFolderUID(folder)
 		req.Filters = append(req.Filters, &resourcepb.Requirement{
 			Key:      "folder",
 			Operator: string(selection.Equals),
@@ -570,9 +569,6 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		// Map other gRPC statuses (e.g. ResourceExhausted -> 429, Unavailable -> 503)
-		// onto the right HTTP status; otherwise expected throttling/unavailable errors
-		// would surface as a generic 500.
 		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
 		return
 	}
@@ -584,11 +580,7 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 	s.write(w, vectorSearchResultsToSearchResults(result))
 }
 
-// vectorSearchResultsToSearchResults maps a VectorSearchResponse onto the DTO the
-// search endpoint already returns. There is one hit per matching panel (subresource):
-// the same dashboard may appear multiple times, once per panel that matched. Each
-// hit's matched panel — its subresource id, distance and the embedded text snippet
-// that explains the match — is attached under the untyped Field bag.
+// Map each matched panel to its dashboard. Dashboards are not deduplicated. Attaches embedded panel content to each result.
 //
 // Results are kept in backend order: Score is the cosine distance (lower = closer),
 // so the first hit is the best match.
