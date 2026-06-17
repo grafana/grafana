@@ -23,6 +23,9 @@
       "text": "#D1A8C4",
       "border": "#8C5A69"
     },
+    "accent": {
+      "main": "#8C5A69"
+    },
     "background": {
       "canvas": "#2E1F2D",
       "primary": "#3C2136",

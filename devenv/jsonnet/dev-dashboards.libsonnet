@@ -149,6 +149,7 @@
     "timeseries-y-ticks-zero-decimals": (import '../dev-dashboards/panel-timeseries/timeseries-y-ticks-zero-decimals.json'),
     "timeseries-yaxis-ticks": (import '../dev-dashboards/panel-timeseries/timeseries-yaxis-ticks.json'),
     "trend_example": (import '../dev-dashboards/panel-trend/trend_example.json'),
+    "view-panel-tests": (import '../dev-dashboards/scenarios/view-panel-tests.json'),
     "vizlegend": (import '../dev-dashboards/vizlegend/vizlegend.json'),
     "xychart-demo": (import '../dev-dashboards/panel-xychart/xychart-demo.json'),
     "xychart-migrations": (import '../dev-dashboards/panel-xychart/xychart-migrations.json'),

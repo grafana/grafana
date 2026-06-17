@@ -27,6 +27,12 @@
       "contrastText": "#ffff00",
       "shade": "#9900dd"
     },
+    "accent": {
+      "border": "#ff000088",
+      "text": "#cccc00",
+      "contrastText": "#ffff00",
+      "shade": "#9900dd"
+    },
     "secondary": {
       "border": "#ff000088",
       "text": "#cccc00",

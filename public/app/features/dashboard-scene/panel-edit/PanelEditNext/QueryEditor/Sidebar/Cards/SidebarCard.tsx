@@ -15,7 +15,7 @@ import {
   SIDEBAR_CARD_SPACING,
 } from '../../../constants';
 import { type SelectionModifiers, useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
-import { getEditorBorderColor } from '../../utils';
+import { getEditorBorderColor, getHiddenMaskStyles } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 
@@ -333,8 +333,7 @@ function getStyles(
       },
 
       ...(item.isHidden && {
-        opacity: theme.isDark ? 0.6 : 0.7,
-        filter: 'grayscale(0.8)',
+        ...getHiddenMaskStyles(theme),
         boxShadow: 'none',
       }),
 
