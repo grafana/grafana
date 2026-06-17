@@ -175,15 +175,7 @@ export function MoveProvisionedDashboardForm({
       }
 
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'move',
-        resourceKind: 'dashboard',
-        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-        title: dashboard.state.title ?? '',
-        ...getCurrentCommitUser(),
-      });
+      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await moveFile({

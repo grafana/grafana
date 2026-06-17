@@ -96,15 +96,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'delete',
-        resourceKind: 'folder',
-        resourceID: parentFolder?.uid ?? '',
-        title: parentFolder?.title ?? '',
-        ...getCurrentCommitUser(),
-      });
+      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await deleteRepoFile({

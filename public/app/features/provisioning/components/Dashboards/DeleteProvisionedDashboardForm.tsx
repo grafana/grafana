@@ -114,15 +114,7 @@ export function DeleteProvisionedDashboardForm({
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'delete',
-        resourceKind: 'dashboard',
-        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-        title: dashboard.state.title ?? '',
-        ...getCurrentCommitUser(),
-      });
+      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await deleteRepoFile({
