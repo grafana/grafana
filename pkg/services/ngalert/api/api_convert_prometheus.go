@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -229,12 +230,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{namespace.UID},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -260,13 +261,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{folder.UID},
 		RuleGroups:                  []string{group},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -408,13 +409,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		}
 	}
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 
-	// If the provenance is not ConvertedPrometheus, we don't keep the original rule definition.
+	// If the manager is not ConvertedPrometheus, we don't keep the original rule definition.
 	// This is because the rules can be modified through the UI, which may break compatibility
 	// with the Prometheus format. We only preserve the original rule definition
 	// to ensure we can return them in this API in Prometheus format.
-	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
+	keepOriginalRuleDefinition := manager.Kind == utils.ManagerKindClassicConvertedPrometheus //nolint:staticcheck
 
 	notificationSettings, err := parseNotificationSettingsHeader(c)
 	if err != nil {
@@ -476,7 +477,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, manager, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
@@ -862,14 +863,14 @@ func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
 	return false
 }
 
-// getProvenance determines the provenance value to use for rules created via the Prometheus conversion API.
-// If the X-Disable-Provenance header is present in the request, returns ProvenanceNone,
-// otherwise returns ProvenanceConvertedPrometheus.
-func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
+// getManagerProperties determines the ManagerProperties to use for rules created via the Prometheus conversion API.
+// If the X-Disable-Provenance header is present in the request, returns empty (unmanaged),
+// otherwise returns ManagerKindClassicConvertedPrometheus.
+func getManagerProperties(ctx *contextmodel.ReqContext) utils.ManagerProperties {
 	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
-		return models.ProvenanceNone
+		return utils.ManagerProperties{}
 	}
-	return models.ProvenanceConvertedPrometheus
+	return utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
 }
 
 func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) (*models.NotificationSettings, error) {

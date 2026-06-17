@@ -26,7 +26,7 @@ var (
 func convertToK8sResource(
 	orgID int64,
 	rule *ngmodels.AlertRule,
-	provenance ngmodels.Provenance,
+	managerProps utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
 ) (*model.RecordingRule, error) {
 	if rule.Type() != ngmodels.RuleTypeRecording {
@@ -89,8 +89,12 @@ func convertToK8sResource(
 	meta.SetUpdatedTimestamp(&rule.Updated)
 	k8sRule.SetUpdateTimestamp(rule.Updated)
 
+	provenance := ngmodels.ManagerPropertiesToProvenance(managerProps)
 	if err := k8sRule.SetProvenanceStatus(string(provenance)); err != nil {
 		return nil, fmt.Errorf("failed to set provenance status: %w", err)
+	}
+	if managerProps.Kind != utils.ManagerKindUnknown {
+		meta.SetManagerProperties(managerProps)
 	}
 
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
@@ -125,7 +129,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 func convertToK8sResources(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
-	provenanceMap map[string]ngmodels.Provenance,
+	managerPropsMap map[string]utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
 	continueToken string,
 ) (*model.RecordingRuleList, error) {
@@ -136,8 +140,8 @@ func convertToK8sResources(
 		Items: make([]model.RecordingRule, 0, len(rules)),
 	}
 	for _, rule := range rules {
-		provenance := provenanceMap[rule.UID]
-		k8sRule, err := convertToK8sResource(orgID, rule, provenance, namespaceMapper)
+		managerProps := managerPropsMap[rule.UID]
+		k8sRule, err := convertToK8sResource(orgID, rule, managerProps, namespaceMapper)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to k8s resource: %w", err)
 		}
@@ -157,7 +161,7 @@ func convertVersionToK8sResource(
 	if version == nil {
 		return nil, fmt.Errorf("nil version")
 	}
-	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, ngmodels.ProvenanceNone, namespaceMapper)
+	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, utils.ManagerProperties{}, namespaceMapper)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +210,7 @@ func convertDeletedToK8sResources(
 		if copy.UID == "" {
 			copy.UID = copy.GUID
 		}
-		k8sRule, err := convertToK8sResource(orgID, &copy, ngmodels.ProvenanceNone, namespaceMapper)
+		k8sRule, err := convertToK8sResource(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
 		if err != nil {
 			if errors.Is(err, errInvalidRule) {
 				continue
@@ -220,17 +224,38 @@ func convertDeletedToK8sResources(
 	return out, nil
 }
 
-func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, ngmodels.Provenance, error) {
+func convertToDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
 	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
 	if err != nil {
-		return nil, ngmodels.ProvenanceNone, fmt.Errorf("failed to convert to domain model: %w", err)
+		return nil, utils.ManagerProperties{}, fmt.Errorf("failed to convert to domain model: %w", err)
 	}
+
+	// Prefer ManagerProperties when set — they carry more specific manager info
+	// (e.g. ManagerKindTerraform) than the coarser provenance annotation.
+	meta, err := utils.MetaAccessor(k8sRule)
+	if err != nil {
+		return nil, utils.ManagerProperties{}, fmt.Errorf("failed to get metadata: %w", err)
+	}
+	if mp, ok := meta.GetManagerProperties(); ok {
+		// Validate consistency: if a provenance annotation is also explicitly set, it must
+		// agree with what ManagerPropertiesToProvenance(mp) would derive.
+		if sourceProv := k8sRule.GetProvenanceStatus(); sourceProv != "" && sourceProv != string(ngmodels.ProvenanceNone) {
+			derivedProv := string(ngmodels.ManagerPropertiesToProvenance(mp))
+			if derivedProv != sourceProv {
+				return nil, utils.ManagerProperties{},
+					fmt.Errorf("manager properties (kind=%s) and provenance annotation (%s) are inconsistent: manager properties imply provenance %q",
+						mp.Kind, sourceProv, derivedProv)
+			}
+		}
+		return domainRule, mp, nil
+	}
+
+	// Fall back to the provenance annotation for objects that pre-date ManagerProperties.
 	sourceProv := k8sRule.GetProvenanceStatus()
 	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
-		return nil, ngmodels.ProvenanceNone, fmt.Errorf("invalid provenance status: %s", sourceProv)
+		return nil, utils.ManagerProperties{}, fmt.Errorf("invalid provenance status: %s", sourceProv)
 	}
-	provenance := ngmodels.Provenance(sourceProv)
-	return domainRule, provenance, nil
+	return domainRule, ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv)), nil
 }
 
 func convertToBaseDomainModel(orgID int64, k8sRule *model.RecordingRule) (*ngmodels.AlertRule, error) {

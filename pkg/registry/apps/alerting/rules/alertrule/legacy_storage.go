@@ -202,7 +202,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	rules, provenanceMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:               ngmodels.RuleTypeFilterAlerting,
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,
@@ -219,7 +219,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResources(info.OrgID, rules, provenanceMap, s.namespacer, continueToken)
+	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -232,7 +232,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	rule, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	rule, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
@@ -240,7 +240,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	obj, err := convertToK8sResource(info.OrgID, &rule, provenance, s.namespacer)
+	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
 	if err != nil && errors.Is(err, errInvalidRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
@@ -272,17 +272,17 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if p.GenerateName != "" {
 		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
 	}
-	model, provenance, err := convertToDomainModel(info.OrgID, p)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
 	if err != nil {
 		return nil, err
 	}
 
-	created, err := s.service.CreateAlertRule(ctx, user, *model, provenance)
+	created, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, err
 	}
 
-	return convertToK8sResource(info.OrgID, &created, provenance, s.namespacer)
+	return convertToK8sResource(info.OrgID, &created, managerProps, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -316,23 +316,22 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
-	model, provenance, err := convertToDomainModel(info.OrgID, new)
+	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
 	if err != nil {
 		return old, false, err
 	}
 
-	// ignore returned rule as it doesn't contain the updated version
-	_, err = s.service.UpdateAlertRule(ctx, user, *model, provenance)
+	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
 		return nil, false, err
 	}
 
-	updated, provenance, err := s.service.GetAlertRule(ctx, user, name)
+	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
 		return nil, false, err
 	}
 
-	rule, err := convertToK8sResource(info.OrgID, &updated, provenance, s.namespacer)
+	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
 	if err != nil {
 		return nil, false, err
 	}
@@ -364,9 +363,9 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
 		return nil, false, fmt.Errorf("invalid provenance status: %s", sourceProv)
 	}
-	provenance := ngmodels.Provenance(sourceProv)
+	managerProps := ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv))
 
-	err = s.service.DeleteAlertRule(ctx, user, name, provenance)
+	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
 	if err != nil {
 		return old, false, err
 	}
