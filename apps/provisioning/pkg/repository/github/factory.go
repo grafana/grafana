@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -20,12 +21,12 @@ type Factory struct {
 	// replayCache is the process-wide webhook replay cache. It lives on
 	// the factory so a single instance is shared across every per-request
 	// githubWebhookRepository the factory ultimately produces.
-	replayCache *replayCache
+	replayCache *repository.ReplayCache
 }
 
 func ProvideFactory() *Factory {
 	return &Factory{
-		replayCache: newReplayCache(defaultReplayCacheTTL),
+		replayCache: repository.NewReplayCache(repository.DefaultReplayCacheTTL),
 	}
 }
 

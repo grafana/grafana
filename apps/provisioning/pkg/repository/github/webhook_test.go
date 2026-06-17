@@ -219,7 +219,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		return req
 	}
 
-	newRepo := func(cache *replayCache, secret string) *githubWebhookRepository {
+	newRepo := func(cache *repo.ReplayCache, secret string) *githubWebhookRepository {
 		cfg := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 			Spec: provisioning.RepositorySpec{
@@ -242,7 +242,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	}
 
 	t.Run("first delivery is accepted", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(time.Hour), defaultSecret)
 
 		rsp, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-1", defaultSecret))
 		require.NoError(t, err)
@@ -250,7 +250,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	})
 
 	t.Run("replayed request is silently dropped", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(time.Hour), defaultSecret)
 
 		// First delivery succeeds with the normal accepted-job response.
 		first, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-dup", defaultSecret))
@@ -271,7 +271,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		// Regression: the X-GitHub-Delivery header is not covered by the HMAC,
 		// so an attacker can replay a captured (body, signature) under a new
 		// delivery ID. Keying on the signature must still catch it.
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(time.Hour), defaultSecret)
 
 		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
 		require.NoError(t, err)
@@ -283,7 +283,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	})
 
 	t.Run("distinct payloads are independent", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(time.Hour), defaultSecret)
 
 		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-A", defaultSecret))
 		require.NoError(t, err)
@@ -298,7 +298,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 		// The shared cache is consulted by every repository. Two repos with
 		// distinct webhook secrets produce distinct signatures for the same
 		// body, so one repo's delivery must not shadow another's.
-		cache := newReplayCache(time.Hour)
+		cache := repo.NewReplayCache(time.Hour)
 		repoA := newRepo(cache, "secret-a")
 		repoB := newRepo(cache, "secret-b")
 
@@ -313,7 +313,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	t.Run("repositories sharing a cache silently drop cross-instance replays", func(t *testing.T) {
 		// Mirrors production: extras.Build rebuilds a repository per request
 		// but threads the factory's single cache through each instance.
-		cache := newReplayCache(time.Hour)
+		cache := repo.NewReplayCache(time.Hour)
 		first := newRepo(cache, defaultSecret)
 		second := newRepo(cache, defaultSecret)
 
@@ -329,7 +329,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 
 	t.Run("expired entry is accepted again", func(t *testing.T) {
 		const ttl = 50 * time.Millisecond
-		gh := newRepo(newReplayCache(ttl), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(ttl), defaultSecret)
 
 		_, err := gh.Webhook(context.Background(), newSignedRequest(pushPayload, "delivery-X", defaultSecret))
 		require.NoError(t, err)
@@ -342,7 +342,7 @@ func TestGitHubRepository_Webhook_ReplayProtection(t *testing.T) {
 	})
 
 	t.Run("invalid signature is rejected before the replay check", func(t *testing.T) {
-		gh := newRepo(newReplayCache(time.Hour), defaultSecret)
+		gh := newRepo(repo.NewReplayCache(time.Hour), defaultSecret)
 
 		req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(pushPayload))
 		req.Header.Set("X-GitHub-Event", "push")
@@ -1127,7 +1127,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				WebhookManager:   manager,
 				owner:            "grafana",
 				repo:             "grafana",
-				replayCache:      newReplayCache(time.Hour),
+				replayCache:      repo.NewReplayCache(time.Hour),
 			}
 
 			// Call the Webhook method

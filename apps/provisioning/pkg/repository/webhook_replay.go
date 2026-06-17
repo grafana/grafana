@@ -1,4 +1,4 @@
-package github
+package repository
 
 import (
 	"sync"
@@ -7,10 +7,10 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 )
 
-// defaultReplayCacheTTL is the lifetime of a recorded webhook replay key. It
-// must comfortably exceed GitHub's webhook retry window so that a replayed
-// request is still considered a duplicate.
-const defaultReplayCacheTTL = time.Hour
+// DefaultReplayCacheTTL is the lifetime of a recorded webhook replay key. It
+// must comfortably exceed the provider's webhook retry window so that a
+// replayed request is still considered a duplicate.
+const DefaultReplayCacheTTL = time.Hour
 
 // maxReplayCacheEntries bounds the cache memory footprint. Provisioning webhook
 // volume per instance is low, so an attacker would need an implausible burst to
@@ -18,12 +18,10 @@ const defaultReplayCacheTTL = time.Hour
 // evicted-then-replayed delivery is a single idempotent sync job.
 const maxReplayCacheEntries = 10000
 
-// replayCache tracks recently-seen webhook replay keys so the webhook handler
-// can reject replayed requests. The key is the validated HMAC signature
-// (X-Hub-Signature-256), which binds the entry to the signed request body and
-// the repository's unique secret — see Webhook for why the unauthenticated
-// X-GitHub-Delivery header is not used as the key.
-type replayCache struct {
+// ReplayCache tracks recently-seen webhook replay keys so the webhook handler
+// can reject replayed requests. The key is provider-supplied and must bind to
+// the signed request so it cannot be forged or collided across repositories.
+type ReplayCache struct {
 	// expirable.LRU is internally locked, but seenOrAdd's Get-then-Add is two
 	// calls; this mutex makes the check-and-set atomic so concurrent identical
 	// requests register exactly one as new.
@@ -31,8 +29,8 @@ type replayCache struct {
 	lru *expirable.LRU[string, struct{}]
 }
 
-func newReplayCache(ttl time.Duration) *replayCache {
-	return &replayCache{
+func NewReplayCache(ttl time.Duration) *ReplayCache {
+	return &ReplayCache{
 		lru: expirable.NewLRU[string, struct{}](maxReplayCacheEntries, nil, ttl),
 	}
 }
@@ -40,7 +38,7 @@ func newReplayCache(ttl time.Duration) *replayCache {
 // seenOrAdd returns true if key has been recorded within the TTL window.
 // Otherwise it records key and returns false. An empty key is never considered
 // a duplicate so callers can decide how to handle missing values.
-func (c *replayCache) seenOrAdd(key string) bool {
+func (c *ReplayCache) seenOrAdd(key string) bool {
 	if key == "" {
 		return false
 	}

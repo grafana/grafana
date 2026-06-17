@@ -9,11 +9,70 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
+
+// WebhookEventType classifies a normalized inbound webhook delivery.
+type WebhookEventType int
+
+const (
+	WebhookEventUnsupported WebhookEventType = iota
+	WebhookEventPing
+	WebhookEventPush
+	WebhookEventPullRequest
+)
+
+// WebhookEvent is the provider-agnostic form of an inbound webhook delivery.
+// A provider's WebhookParser normalizes its native event into this shape.
+type WebhookEvent struct {
+	Type WebhookEventType
+	// RepoSlug identifies the repository the event came from, for the
+	// mismatch check (e.g. "owner/repo" or a project path).
+	RepoSlug string
+	// Branch is the pushed branch, or a pull request's target branch.
+	Branch string
+	// Push fields.
+	DeletedPaths []string
+	TotalChanges int
+	// Pull request fields. Action is normalized to one of the
+	// pullRequestAction* values for watched actions.
+	Action    string
+	PRNumber  int
+	PRURL     string
+	SourceRef string
+	Hash      string
+	// Message carries a human-readable note for ping/unsupported events.
+	Message string
+}
+
+const (
+	pullRequestActionOpened   = "opened"
+	pullRequestActionReopened = "reopened"
+	pullRequestActionUpdated  = "updated"
+)
+
+func watchedPullRequestAction(action string) bool {
+	switch action {
+	case pullRequestActionOpened, pullRequestActionReopened, pullRequestActionUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+// WebhookParser authenticates and normalizes a provider's inbound webhook
+// deliveries. It is the only provider-specific part of the inbound flow.
+type WebhookParser interface {
+	// Verify authenticates the request against the secret and returns the raw
+	// payload plus a key for replay detection ("" disables replay).
+	Verify(req *http.Request, secret common.RawSecureValue) (payload []byte, replayKey string, err error)
+	// Parse normalizes a verified delivery into a provider-agnostic event.
+	Parse(req *http.Request, payload []byte) (WebhookEvent, error)
+}
 
 // Webhook is the provider-agnostic representation of a git provider webhook.
 type Webhook struct {
@@ -38,31 +97,120 @@ type Webhook struct {
 type WebhookManager struct {
 	whClient          WebhookClient
 	prClient          PullRequestClient
+	parser            WebhookParser
+	replay            *ReplayCache
 	config            *provisioning.Repository
 	webhookURL        string
+	repoSlug          string
+	branch            string
 	events            []string
 	secret            common.RawSecureValue
 	incrementalPolicy IncrementalSyncPolicy
 }
 
-func NewWebhookManager(client jointClient, config *provisioning.Repository, webhookURL string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
+func NewWebhookManager(client jointClient, parser WebhookParser, replay *ReplayCache, config *provisioning.Repository, webhookURL, repoSlug, branch string, events []string, secret common.RawSecureValue, incrementalPolicy IncrementalSyncPolicy) *WebhookManager {
 	return &WebhookManager{
 		whClient:          client,
 		prClient:          client,
+		parser:            parser,
+		replay:            replay,
 		config:            config,
 		webhookURL:        webhookURL,
+		repoSlug:          repoSlug,
+		branch:            branch,
 		events:            events,
 		secret:            secret,
 		incrementalPolicy: incrementalPolicy,
 	}
 }
 
+// Webhook authenticates, de-duplicates and dispatches an inbound webhook
+// delivery, producing the sync/pull-request job response. Providers supply the
+// authentication and event normalization via the WebhookParser.
+func (m *WebhookManager) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
+	if m.config.Status.Webhook == nil {
+		return nil, fmt.Errorf("unexpected webhook request")
+	}
+	if m.secret.IsZero() {
+		return nil, fmt.Errorf("missing webhook secret")
+	}
 
-// Secret returns the webhook secret used to authenticate inbound deliveries.
-func (m *WebhookManager) Secret() common.RawSecureValue {
-	return m.secret
+	payload, replayKey, err := m.parser.Verify(req, m.secret)
+	if err != nil {
+		return nil, apierrors.NewUnauthorized("invalid signature")
+	}
+
+	// Silently drop a delivery whose replay key we have already processed
+	// within the cache TTL — returning a generic 200 avoids confirming to a
+	// replay attacker that the captured payload was previously processed.
+	if m.replay.seenOrAdd(replayKey) {
+		logging.FromContext(ctx).Debug("dropping replayed webhook delivery")
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
+	}
+
+	event, err := m.parser.Parse(req, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	switch event.Type {
+	case WebhookEventPush:
+		if event.RepoSlug != m.repoSlug {
+			return nil, ErrRepositoryMismatch
+		}
+		if !m.config.Spec.Sync.Enabled {
+			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
+		}
+		// Skip silently if the event is not for the configured branch, as the
+		// webhook cannot be configured to only publish events for one branch.
+		if event.Branch != m.branch {
+			return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
+		}
+		return m.PushSyncResponse(event.DeletedPaths, event.TotalChanges), nil
+	case WebhookEventPullRequest:
+		if event.RepoSlug != m.repoSlug {
+			return nil, ErrRepositoryMismatch
+		}
+		if event.Branch != m.branch {
+			return &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignoring pull request event as %s is not the configured branch", event.Branch),
+			}, nil
+		}
+		if !watchedPullRequestAction(event.Action) {
+			return &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: fmt.Sprintf("ignore pull request event: %s", event.Action),
+			}, nil
+		}
+		return m.pullRequestResponse(event), nil
+	case WebhookEventPing:
+		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ping received"}, nil
+	default:
+		return &provisioning.WebhookResponse{Code: http.StatusNotImplemented, Message: event.Message}, nil
+	}
 }
 
+func (m *WebhookManager) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
+	return m.prClient.CreatePullRequestComment(ctx, prNumber, comment)
+}
+
+func (m *WebhookManager) pullRequestResponse(event WebhookEvent) *provisioning.WebhookResponse {
+	return &provisioning.WebhookResponse{
+		Code:    http.StatusAccepted,
+		Message: fmt.Sprintf("pull request: %s", event.Action),
+		Job: &provisioning.JobSpec{
+			Repository: m.config.GetName(),
+			Action:     provisioning.JobActionPullRequest,
+			PullRequest: &provisioning.PullRequestJobOptions{
+				URL:  event.PRURL,
+				PR:   event.PRNumber,
+				Ref:  event.SourceRef,
+				Hash: event.Hash,
+			},
+		},
+	}
+}
 
 func (m *WebhookManager) OnCreate(ctx context.Context) ([]map[string]any, error) {
 	if len(m.webhookURL) == 0 {

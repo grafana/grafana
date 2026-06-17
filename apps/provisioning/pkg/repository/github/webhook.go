@@ -1,16 +1,13 @@
 package github
 
 import (
-	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -29,10 +26,6 @@ var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 type githubWebhookRepository struct {
 	GithubRepository
 	*repository.WebhookManager
-	config      *provisioning.Repository
-	owner       string
-	repo        string
-	replayCache *replayCache
 }
 
 func NewGithubWebhookRepository(
@@ -40,188 +33,100 @@ func NewGithubWebhookRepository(
 	webhookURL string,
 	secret common.RawSecureValue,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	replay *replayCache,
+	replay *repository.ReplayCache,
 ) GithubWebhookRepository {
 	// Defensive: callers should pass the factory-owned cache, but never leave
 	// Webhook with a nil cache to dereference.
 	if replay == nil {
-		replay = newReplayCache(defaultReplayCacheTTL)
+		replay = repository.NewReplayCache(repository.DefaultReplayCacheTTL)
 	}
 	cfg := basic.Config()
+	slug := fmt.Sprintf("%s/%s", basic.Owner(), basic.Repo())
 	return &githubWebhookRepository{
 		GithubRepository: basic,
-		WebhookManager:   repository.NewWebhookManager(basic.Client(), cfg, webhookURL, subscribedEvents, secret, incrementalPolicy),
-		config:           cfg,
-		owner:            basic.Owner(),
-		repo:             basic.Repo(),
-		replayCache:      replay,
+		WebhookManager: repository.NewWebhookManager(
+			basic.Client(), githubWebhookParser{}, replay, cfg, webhookURL,
+			slug, cfg.Spec.GitHub.Branch, subscribedEvents, secret, incrementalPolicy),
 	}
 }
 
-// Webhook implements Repository.
-func (r *githubWebhookRepository) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	if r.config.Status.Webhook == nil {
-		return nil, fmt.Errorf("unexpected webhook request")
-	}
+// githubWebhookParser authenticates and normalizes GitHub webhook deliveries.
+type githubWebhookParser struct{}
 
-	if r.Secret().IsZero() {
-		return nil, fmt.Errorf("missing webhook secret")
-	}
-
-	payload, err := github.ValidatePayload(req, []byte(r.Secret()))
+func (githubWebhookParser) Verify(req *http.Request, secret common.RawSecureValue) ([]byte, string, error) {
+	payload, err := github.ValidatePayload(req, []byte(secret))
 	if err != nil {
-		return nil, apierrors.NewUnauthorized("invalid signature")
+		return nil, "", err
 	}
 
-	// Replay protection: key on the validated signature, not the
+	// Key replay protection on the validated signature, not the
 	// X-GitHub-Delivery header. GitHub computes the HMAC over the request body
 	// only, so the delivery ID is unauthenticated — an attacker replaying a
-	// captured (body, signature) could simply pick a fresh delivery ID and
-	// slip past a delivery-ID cache. The signature, by contrast, is bound to
-	// both the signed body and the repository's unique secret, so it cannot be
-	// forged or collided across repositories.
-	//
-	// Silently drop a request whose signature we have already processed within
-	// the cache TTL — returning a generic 200 avoids confirming to a replay
-	// attacker that the captured payload was a real previously-processed
-	// delivery.
+	// captured (body, signature) could pick a fresh delivery ID and slip past a
+	// delivery-ID cache. The signature is bound to both the signed body and the
+	// repository's unique secret, so it cannot be forged or collided.
 	signature := req.Header.Get(github.SHA256SignatureHeader)
 	if signature == "" {
 		signature = req.Header.Get(github.SHA1SignatureHeader)
 	}
-	if r.replayCache.seenOrAdd(signature) {
-		logging.FromContext(ctx).Debug("dropping replayed webhook delivery", "delivery_id", github.DeliveryID(req))
-		return &provisioning.WebhookResponse{Code: http.StatusOK, Message: "ok"}, nil
-	}
-
-	return r.parseWebhook(ctx, github.WebHookType(req), payload)
+	return payload, signature, nil
 }
 
-// This method does not include context because it does delegate any more requests
-func (r *githubWebhookRepository) parseWebhook(ctx context.Context, messageType string, payload []byte) (*provisioning.WebhookResponse, error) {
-	event, err := github.ParseWebHook(messageType, payload)
+func (githubWebhookParser) Parse(req *http.Request, payload []byte) (repository.WebhookEvent, error) {
+	event, err := github.ParseWebHook(github.WebHookType(req), payload)
 	if err != nil {
-		return nil, apierrors.NewBadRequest("invalid payload")
+		return repository.WebhookEvent{}, apierrors.NewBadRequest("invalid payload")
 	}
 
 	switch event := event.(type) {
 	case *github.PushEvent:
-		return r.parsePushEvent(ctx, event)
+		if event.GetRepo() == nil {
+			return repository.WebhookEvent{}, fmt.Errorf("missing repository in push event")
+		}
+		var deletedPaths []string
+		var totalChanges int
+		for _, change := range event.GetCommits() {
+			totalChanges += len(change.Added) + len(change.Modified) + len(change.Removed)
+			deletedPaths = append(deletedPaths, change.Removed...)
+		}
+		return repository.WebhookEvent{
+			Type:         repository.WebhookEventPush,
+			RepoSlug:     event.GetRepo().GetFullName(),
+			Branch:       strings.TrimPrefix(event.GetRef(), "refs/heads/"),
+			DeletedPaths: deletedPaths,
+			TotalChanges: totalChanges,
+		}, nil
 	case *github.PullRequestEvent:
-		return r.parsePullRequestEvent(event)
+		if event.GetRepo() == nil {
+			return repository.WebhookEvent{}, fmt.Errorf("missing repository in pull request event")
+		}
+		pr := event.GetPullRequest()
+		if pr == nil {
+			return repository.WebhookEvent{}, fmt.Errorf("expected PR in event")
+		}
+		return repository.WebhookEvent{
+			Type:      repository.WebhookEventPullRequest,
+			RepoSlug:  event.GetRepo().GetFullName(),
+			Branch:    pr.GetBase().GetRef(),
+			Action:    normalizeGitHubAction(event.GetAction()),
+			PRNumber:  pr.GetNumber(),
+			PRURL:     pr.GetHTMLURL(),
+			SourceRef: pr.GetHead().GetRef(),
+			Hash:      pr.GetHead().GetSHA(),
+		}, nil
 	case *github.PingEvent:
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK,
-			Message: "ping received",
-		}, nil
+		return repository.WebhookEvent{Type: repository.WebhookEventPing}, nil
 	default:
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusNotImplemented,
-			Message: fmt.Sprintf("unsupported messageType: %s", messageType),
+		return repository.WebhookEvent{
+			Type:    repository.WebhookEventUnsupported,
+			Message: fmt.Sprintf("unsupported messageType: %s", github.WebHookType(req)),
 		}, nil
 	}
 }
 
-func (r *githubWebhookRepository) parsePushEvent(ctx context.Context, event *github.PushEvent) (*provisioning.WebhookResponse, error) {
-	_, logger := r.logger(ctx, "")
-
-	if event.GetRepo() == nil {
-		return nil, fmt.Errorf("missing repository in push event")
+func normalizeGitHubAction(action string) string {
+	if action == "synchronize" {
+		return "updated"
 	}
-	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
-	if event.GetRepo().GetFullName() != expected {
-		logger.Warn("webhook push event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
-		return nil, repository.ErrRepositoryMismatch
-	}
-
-	// No need to sync if not enabled
-	if !r.config.Spec.Sync.Enabled {
-		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
-	}
-
-	// Skip silently if the event is not for the main/master branch
-	// as we cannot configure the webhook to only publish events for the main branch
-	if event.GetRef() != fmt.Sprintf("refs/heads/%s", r.config.Spec.GitHub.Branch) {
-		return &provisioning.WebhookResponse{Code: http.StatusOK}, nil
-	}
-
-	var deletedPaths []string
-	var totalChanges int
-	for _, change := range event.GetCommits() {
-		totalChanges += len(change.Added) + len(change.Modified) + len(change.Removed)
-		deletedPaths = append(deletedPaths, change.Removed...)
-	}
-
-	return r.PushSyncResponse(deletedPaths, totalChanges), nil
-}
-
-func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullRequestEvent) (*provisioning.WebhookResponse, error) {
-	if event.GetRepo() == nil {
-		return nil, fmt.Errorf("missing repository in pull request event")
-	}
-	cfg := r.config.Spec.GitHub
-	if cfg == nil {
-		return nil, fmt.Errorf("missing GitHub config")
-	}
-
-	expected := fmt.Sprintf("%s/%s", r.owner, r.repo)
-	if event.GetRepo().GetFullName() != expected {
-		slog.Warn("webhook pull request event repository mismatch", "expected", expected, "got", event.GetRepo().GetFullName())
-		return nil, repository.ErrRepositoryMismatch
-	}
-	pr := event.GetPullRequest()
-	if pr == nil {
-		return nil, fmt.Errorf("expected PR in event")
-	}
-
-	if pr.GetBase().GetRef() != r.config.Spec.GitHub.Branch {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK,
-			Message: fmt.Sprintf("ignoring pull request event as %s is not  the configured branch", pr.GetBase().GetRef()),
-		}, nil
-	}
-
-	action := event.GetAction()
-	if action != "opened" && action != "reopened" && action != "synchronize" {
-		return &provisioning.WebhookResponse{
-			Code:    http.StatusOK, // Nothing needed
-			Message: fmt.Sprintf("ignore pull request event: %s", action),
-		}, nil
-	}
-
-	// Queue an async job that will parse files
-	return &provisioning.WebhookResponse{
-		Code:    http.StatusAccepted, // Nothing needed
-		Message: fmt.Sprintf("pull request: %s", action),
-		Job: &provisioning.JobSpec{
-			Repository: r.config.GetName(),
-			Action:     provisioning.JobActionPullRequest,
-			PullRequest: &provisioning.PullRequestJobOptions{
-				URL:  pr.GetHTMLURL(),
-				PR:   pr.GetNumber(),
-				Ref:  pr.GetHead().GetRef(),
-				Hash: pr.GetHead().GetSHA(),
-			},
-		},
-	}, nil
-}
-
-func (r *githubWebhookRepository) logger(ctx context.Context, ref string) (context.Context, logging.Logger) {
-	logger := logging.FromContext(ctx)
-
-	type containsGh int
-	var containsGhKey containsGh
-	if ctx.Value(containsGhKey) != nil {
-		return ctx, logging.FromContext(ctx)
-	}
-
-	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
-	}
-
-	logger = logger.With(slog.Group("github_repository", "owner", r.owner, "name", r.repo, "ref", ref))
-	ctx = logging.Context(ctx, logger)
-	// We want to ensure we don't add multiple github_repository keys. With doesn't deduplicate the keys...
-	ctx = context.WithValue(ctx, containsGhKey, true)
-	return ctx, logger
+	return action
 }

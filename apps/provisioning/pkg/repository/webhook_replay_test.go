@@ -1,4 +1,4 @@
-package github
+package repository
 
 import (
 	"sync"
@@ -10,20 +10,20 @@ import (
 
 func TestReplayCache(t *testing.T) {
 	t.Run("first add returns false, duplicate returns true", func(t *testing.T) {
-		c := newReplayCache(time.Hour)
+		c := NewReplayCache(time.Hour)
 		require.False(t, c.seenOrAdd("abc"))
 		require.True(t, c.seenOrAdd("abc"))
 	})
 
 	t.Run("empty key is never considered seen", func(t *testing.T) {
-		c := newReplayCache(time.Hour)
+		c := NewReplayCache(time.Hour)
 		require.False(t, c.seenOrAdd(""))
 		require.False(t, c.seenOrAdd(""))
 	})
 
 	t.Run("entries expire after ttl", func(t *testing.T) {
 		const ttl = 50 * time.Millisecond
-		c := newReplayCache(ttl)
+		c := NewReplayCache(ttl)
 
 		require.False(t, c.seenOrAdd("abc"))
 		require.True(t, c.seenOrAdd("abc"))
@@ -35,7 +35,7 @@ func TestReplayCache(t *testing.T) {
 	})
 
 	t.Run("concurrent adds of the same key register exactly one as new", func(t *testing.T) {
-		c := newReplayCache(time.Hour)
+		c := NewReplayCache(time.Hour)
 
 		const goroutines = 64
 		var wg sync.WaitGroup
