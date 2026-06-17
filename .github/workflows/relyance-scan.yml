@@ -20,7 +20,7 @@ jobs:
 
       - name: Get API key
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@5d7e361bc7e0a183cde8afe9899fb7b596d2659b # get-vault-secrets-v1.2.0
+        uses: grafana/shared-workflows/actions/get-vault-secrets@259ba21cb3ff07724f331e26d926d655d24b317b # get-vault-secrets-v1.2.0
         with:
           repo_secrets: |
             API_KEY=relyance:API_KEY

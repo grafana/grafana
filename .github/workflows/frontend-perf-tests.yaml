@@ -19,7 +19,7 @@ jobs:
           persist-credentials: false
 
       - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@62722333225a1fae03ae27a63d638f9bc2176edb #get-vault-secrets-v1.2.0
+        uses: grafana/shared-workflows/actions/get-vault-secrets@259ba21cb3ff07724f331e26d926d655d24b317b #get-vault-secrets-v1.2.0
         with:
           repo_secrets: |
             PROMETHEUS_URL=frontend_perf_tests:prometheus_push_url

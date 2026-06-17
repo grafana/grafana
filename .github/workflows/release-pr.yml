@@ -105,7 +105,7 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-pr-automation
           permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release' || 'main' }}
@@ -120,7 +120,7 @@ jobs:
       # cannot push at all because of this.
       - name: Get GitHub App token (writer)
         id: get-writer-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-writer
           permission_set: ${{ startsWith(github.ref_name, 'release-') && 'release-writer' || 'release-writer-main' }}
