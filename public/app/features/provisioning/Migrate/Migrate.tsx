@@ -29,7 +29,12 @@ function toggle(set: Set<string>, uid: string): Set<string> {
 
 export function Migrate() {
   const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery();
-  const { data: folders, isLoading: isFoldersLoading, isError: isFoldersError } = useFolderMigrationData();
+  const {
+    data: folders,
+    isLoading: isFoldersLoading,
+    isError: isFoldersError,
+    refetch: refetchFolders,
+  } = useFolderMigrationData();
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
@@ -137,7 +142,10 @@ export function Migrate() {
           }
           onDismiss={closeDrawer}
           onMigrated={() => {
+            // Refresh both the stat cards and the folder/dashboard table so
+            // migrated resources drop out of the selectable rows.
             refetch();
+            refetchFolders();
             clearSelection();
           }}
         />

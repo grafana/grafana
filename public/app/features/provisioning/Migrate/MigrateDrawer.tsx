@@ -150,9 +150,8 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selecti
             title={t('provisioning.migrate.repo-no-push-title', 'This repository can’t be used for migration')}
           >
             <Trans i18nKey="provisioning.migrate.repo-no-push-body">
-              Migration pushes directly to the repository’s configured branch, but this repository is set up to open
-              pull requests instead. Choose a repository that allows pushing to its branch, or update this repository’s
-              workflow.
+              Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow
+              that. Choose a repository that can push to its configured branch, or update this repository’s workflow.
             </Trans>
           </Alert>
         )}

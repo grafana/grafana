@@ -3,16 +3,18 @@ import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 
 /**
- * A folder is a migration target when it isn't already managed and has at least
- * one (unmanaged) dashboard inside it. Empty and already-managed folders aren't
- * listed as things to migrate.
+ * A folder is a migration target when it isn't already managed. Empty folders
+ * count too: they have no dashboards to send as resource refs, but selecting
+ * everything runs the migrate-all job which still brings them over — so they
+ * must stay visible rather than leaving the table empty (and the page with no
+ * migrate action) when the only unmanaged items are empty folders.
  */
 export function isMigratableFolder(folder: FolderRow): boolean {
-  return !folder.managedBy && folder.dashboardCount > 0;
+  return !folder.managedBy;
 }
 
 /**
- * Summary of what the user has picked in the Dashboards to migrate table.
+ * Summary of what the user has picked in the Resources to migrate table.
  * `items` counts the user's ticks (folders + dashboards selected on their own)
  * for the button label; `dashboards` is the resolved set of dashboard refs the
  * migrate job actually receives.

@@ -13471,7 +13471,7 @@
       "n-of-m-managed": "{{managed}} of {{total}} managed",
       "repo-description": "The repository your folders and resources will be migrated into.",
       "repo-label": "Target repository",
-      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository is set up to open pull requests instead. Choose a repository that allows pushing to its branch, or update this repository’s workflow.",
+      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
       "repo-no-push-title": "This repository can’t be used for migration",
       "repo-placeholder": "Select a repository",
       "resources-collapse": "Collapse {{folder}}",

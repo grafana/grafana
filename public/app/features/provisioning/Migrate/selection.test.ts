@@ -1,5 +1,5 @@
 import { type FolderRow } from './hooks/useFolderMigrationData';
-import { resolveSelection } from './selection';
+import { isMigratableFolder, resolveSelection } from './selection';
 
 function folder(uid: string, dashboardUids: string[], overrides: Partial<FolderRow> = {}): FolderRow {
   const dashboards = dashboardUids.map((d) => ({ uid: d, title: d, url: `/d/${d}` }));
@@ -13,6 +13,17 @@ function folder(uid: string, dashboardUids: string[], overrides: Partial<FolderR
     ...overrides,
   };
 }
+
+describe('isMigratableFolder', () => {
+  it('treats any unmanaged folder as a target, including empty ones', () => {
+    expect(isMigratableFolder(folder('with-dashboards', ['d1']))).toBe(true);
+    expect(isMigratableFolder(folder('empty', []))).toBe(true);
+  });
+
+  it('excludes already-managed folders', () => {
+    expect(isMigratableFolder(folder('managed', ['d1'], { managedBy: 'repo' }))).toBe(false);
+  });
+});
 
 describe('resolveSelection', () => {
   const folders = [folder('a', ['a1', 'a2']), folder('b', ['b1'])];

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
@@ -255,7 +255,11 @@ function aggregate(
     allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
   }));
 
-  if (rootTotalDashboards > 0 || (subfoldersByParent.get(GENERAL_FOLDER_UID)?.length ?? 0) > 0) {
+  // Only synthesize the General row when there are dashboards sitting directly
+  // at the root. Root-level *folders* are their own rows; an empty "General"
+  // row (no root dashboards) would otherwise show up as a bogus migration
+  // target now that empty folders are migratable.
+  if (rootTotalDashboards > 0) {
     // The General "folder" doesn't have its own managedBy on the backend.
     // Mirror the single-managed assumption from real folders: only treat the
     // General row as managed when every root dashboard agrees on the *same*
@@ -277,11 +281,11 @@ function aggregate(
     });
   }
 
-  // Default ordering: unmanaged folders first (the migration targets), then by
-  // dashboard count desc so the folders with the most to migrate surface at the
-  // top, then title. The table lets the user re-sort; this is just a sensible
-  // initial order. Empty folders are kept — they're still valid migration
-  // targets even though there's less inside them.
+  // Default ordering: unmanaged folders first, then by dashboard count desc so
+  // the folders with the most to migrate surface at the top, then title. The
+  // table lets the user re-sort; this is just a sensible initial order. This
+  // hook returns every folder (empty ones included); the UI decides what's a
+  // migration target via isMigratableFolder.
   return rows.sort((a, b) => {
     const aIsUnmanaged = a.managedBy ? 0 : 1;
     const bIsUnmanaged = b.managedBy ? 0 : 1;
@@ -304,12 +308,13 @@ function aggregate(
  * instance. When a dedicated backend endpoint for this roll-up lands, swap the
  * body of this hook to consume it.
  */
-export function useFolderMigrationData(): State {
+export function useFolderMigrationData(): State & { refetch: () => void } {
   const [state, setState] = useState<State>({
     data: [],
     isLoading: true,
     isError: false,
   });
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -333,7 +338,12 @@ export function useFolderMigrationData(): State {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadToken]);
 
-  return state;
+  // Refetch in the background — we don't flip back to the loading state, so a
+  // post-migration refresh doesn't unmount the page (and the drawer that
+  // triggered it); the rows just update once the new data lands.
+  const refetch = useCallback(() => setReloadToken((token) => token + 1), []);
+
+  return { ...state, refetch };
 }
