@@ -159,12 +159,13 @@ async function getDataSourceInstanceFallback(
   scopedVars: ScopedVars | undefined,
   originalError: unknown
 ): Promise<DataSourceApi> {
-  const legacy = await getDataSourceSrv()
-    ?.get(ref, scopedVars)
-    .catch(() => undefined);
-  if (legacy) {
-    logDataSourceWarning(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: describeRef(ref) });
-    return legacy;
+  const srv = getDataSourceSrv();
+  if (srv) {
+    const legacy = await srv.get(ref, scopedVars).catch(() => undefined);
+    if (legacy) {
+      logDataSourceWarning(FALLBACK_TO_LEGACY_INSTANCE_WARNING, { ref: describeRef(ref) });
+      return legacy;
+    }
   }
   throw originalError;
 }
