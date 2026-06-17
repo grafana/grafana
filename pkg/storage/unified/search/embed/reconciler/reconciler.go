@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -36,6 +37,8 @@ type Backfiller interface {
 }
 
 const DefaultInterval = time.Minute
+
+const pendingDeleteTTL = time.Minute
 
 // maxEventAttempts caps retries so a permanently broken dashboard
 // can't wedge cursor advancement forever. ~5 minutes at the default
@@ -102,23 +105,17 @@ type Options struct {
 // pagination doesn't ping-pong across replicas. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage           resource.StorageBackend
-	vectorBackend     vector.VectorBackend
-	batchEmbedder     *embedder.BatchEmbedder
-	builders          map[string]embed.Builder
-	backfiller        Backfiller
-	interval          time.Duration
-	lockRetryInterval time.Duration
-	pendingDelete     embed.PendingDeleteChecker
-	// pendingDeleteMemo caches IsPendingDelete results per namespace so a
-	// batch costs one lookup per tenant — the tenant watcher's labeling
-	// pass emits one MODIFIED event per resource, so batches are often
-	// dominated by a single namespace. Reset per processEvents call so
-	// cleared tenants embed again on the next batch. Only touched from
-	// the serial processEvents loop, so no lock.
-	pendingDeleteMemo map[string]bool
-	log               log.Logger
-	metrics           *resource.VectorMetrics
+	storage            resource.StorageBackend
+	vectorBackend      vector.VectorBackend
+	batchEmbedder      *embedder.BatchEmbedder
+	builders           map[string]embed.Builder
+	backfiller         Backfiller
+	interval           time.Duration
+	lockRetryInterval  time.Duration
+	pendingDelete      embed.PendingDeleteChecker
+	pendingDeleteCache *expirable.LRU[string, bool]
+	log                log.Logger
+	metrics            *resource.VectorMetrics
 
 	// broadcaster is attached after construction by the resource server,
 	broadcaster resource.Broadcaster[*resource.WrittenEvent]
@@ -152,19 +149,19 @@ func New(opts Options) (*Reconciler, error) {
 		opts.LockRetryInterval = defaultLockRetryInterval
 	}
 	return &Reconciler{
-		storage:           opts.Storage,
-		vectorBackend:     opts.VectorBackend,
-		batchEmbedder:     opts.BatchEmbedder,
-		builders:          builders,
-		backfiller:        opts.Backfiller,
-		interval:          opts.Interval,
-		lockRetryInterval: opts.LockRetryInterval,
-		pendingDelete:     opts.PendingDelete,
-		pendingDeleteMemo: make(map[string]bool),
-		log:               log.New("embeddings_reconciler"),
-		metrics:           opts.Metrics,
-		pending:           make(map[string]*pendingEvent),
-		ensuredResources:  make(map[string]struct{}),
+		storage:            opts.Storage,
+		vectorBackend:      opts.VectorBackend,
+		batchEmbedder:      opts.BatchEmbedder,
+		builders:           builders,
+		backfiller:         opts.Backfiller,
+		interval:           opts.Interval,
+		lockRetryInterval:  opts.LockRetryInterval,
+		pendingDelete:      opts.PendingDelete,
+		pendingDeleteCache: expirable.NewLRU[string, bool](0, nil, pendingDeleteTTL),
+		log:                log.New("embeddings_reconciler"),
+		metrics:            opts.Metrics,
+		pending:            make(map[string]*pendingEvent),
+		ensuredResources:   make(map[string]struct{}),
 	}, nil
 }
 
@@ -590,7 +587,6 @@ func (s *Reconciler) processBatch(ctx context.Context, batch []*pendingEvent) {
 // For new resources, it ensures a partition and backfill job is created
 func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*pendingEvent) (maxRv, lowestFailedRv int64, failed, successes []*pendingEvent, abort bool) {
 	logger := s.log.FromContext(ctx)
-	clear(s.pendingDeleteMemo)
 	maxRv = sinceRv
 	lowestFailedRv = math.MaxInt64
 	for _, ev := range batch {
@@ -747,13 +743,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 // shouldSkipPendingDelete returns true only when the checker definitively
 // reports the namespace's tenant as pending delete. Anything ambiguous
 // (nil checker, empty namespace, lookup error) returns false — embed it.
-// Successful lookups are memoized per batch; errors are not, so transient
-// failures retry on the next event.
+// Successful lookups are cached per namespace until pendingDeleteTTL elapses;
+// errors are not, so transient failures retry on the next event.
 func (s *Reconciler) shouldSkipPendingDelete(ctx context.Context, namespace string) bool {
 	if s.pendingDelete == nil || namespace == "" {
 		return false
 	}
-	if pending, ok := s.pendingDeleteMemo[namespace]; ok {
+	if pending, ok := s.pendingDeleteCache.Get(namespace); ok {
 		return pending
 	}
 	pending, err := s.pendingDelete.IsPendingDelete(ctx, namespace)
@@ -761,7 +757,7 @@ func (s *Reconciler) shouldSkipPendingDelete(ctx context.Context, namespace stri
 		s.log.Error("reconciler: pending delete check failed", "namespace", namespace, "err", err)
 		return false
 	}
-	s.pendingDeleteMemo[namespace] = pending
+	s.pendingDeleteCache.Add(namespace, pending)
 	if pending {
 		s.log.FromContext(ctx).Debug("reconciler: skipping pending-delete namespace", "namespace", namespace)
 	}
