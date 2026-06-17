@@ -98,7 +98,13 @@ jobs:
 
   bump_main:
     name: Bump main to next minor
-    needs: setup
+    # Only advance main once the release branches have actually been cut. If either
+    # branch-cut job fails (ref already exists, token misconfigured, ghcommit-action
+    # fails after the ref was created), main must not be moved to the next pre-release.
+    needs:
+      - setup
+      - create_release_branch_grafana
+      - create_release_branch_enterprise
     runs-on: ubuntu-arm64-small
     permissions:
       contents: write
