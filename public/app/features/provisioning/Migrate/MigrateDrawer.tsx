@@ -2,12 +2,12 @@ import { useMemo, useRef, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Text } from '@grafana/ui';
-import { type Job, type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { GitSyncLimitationsAlert } from '../Shared/GitSyncLimitationsAlert';
-import { useCreateSyncJob } from '../Wizard/hooks/useCreateSyncJob';
+import { useSyncJob } from '../Wizard/hooks/useSyncJob';
 import { type StepStatusInfo } from '../Wizard/types';
 
 interface MigrateDrawerProps {
@@ -42,18 +42,14 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated }: MigrateDrawerPro
     repoOptions.length === 1 ? repoOptions[0].value : undefined
   );
 
-  const { createSyncJob, isLoading } = useCreateSyncJob({ repoName: selectedRepo ?? '' });
-  const [job, setJob] = useState<Job>();
+  const { job, startJob, isLoading } = useSyncJob({ repoName: selectedRepo ?? '' });
   const migratedRef = useRef(false);
 
   const startMigration = async () => {
     if (!selectedRepo) {
       return;
     }
-    const response = await createSyncJob(true);
-    if (response) {
-      setJob(response);
-    }
+    await startJob(true);
   };
 
   // Start a fresh job and let it replace the current one once created. We avoid

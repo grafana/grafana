@@ -6,7 +6,7 @@ replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 
 require (
 	cuelang.org/go v0.11.1
-	github.com/grafana/codejen v0.0.4-0.20250428224353-8764ced07770
+	github.com/grafana/codejen v0.0.4
 	github.com/grafana/cog v0.1.13
 	github.com/grafana/cuetsy v0.1.11
 	github.com/grafana/grafana/pkg/codegen v0.0.0-20250514132646-acbc7b54ed9e
@@ -19,13 +19,11 @@ require (
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/getkin/kin-openapi v0.138.0 // indirect
-	github.com/go-openapi/jsonpointer v0.22.5 // indirect
+	github.com/go-openapi/jsonpointer v0.23.1 // indirect
 	github.com/go-openapi/swag/jsonname v0.26.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
