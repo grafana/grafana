@@ -181,8 +181,7 @@ type ExportJobOptions struct {
 	// Resources to export. When empty, every unmanaged resource in the namespace
 	// is exported (legacy behavior). When non-empty, only the listed resources
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
-	// Supported kinds: Dashboard (a single dashboard by UID) and Folder (the folder
-	// itself plus every descendant folder and dashboard, exported recursively).
+	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRef `json:"resources,omitempty"`
 }
 
