@@ -23,18 +23,16 @@ aliases:
 
 # Authentication options for the HTTP APIs 
 
-
-
-## Authentication options for the HTTP API for Grafana OSS
+## Authentication options in Grafana OSS/Enterprise
 
 You can authenticate HTTP API requests using basic authentication or a service account token.
 
 ### Basic auth
 
-If basic auth is enabled (it is enabled by default), then you can authenticate your HTTP request via
-standard basic auth. Basic auth will also authenticate LDAP users.
+Basic auth is enabled by default. If you use this option, you authenticate your HTTP request via
+standard basic auth. Basic auth also authenticates LDAP users.
 
-curl example:
+For example:
 
 ```bash
 curl http://admin:admin@localhost:3000/api/org
@@ -43,12 +41,14 @@ curl http://admin:admin@localhost:3000/api/org
 
 ### Service account token
 
-To create a service account token, click on **Administration** in the left-side menu, click **Users and access**, then **Service Accounts**.
+To create a service account token:
+
+1. Go to **Administration** in the left-side menu
+1. Click **Users and access > Service Accounts**.
+
 For more information on how to use service account tokens, refer to the [Service Accounts](/docs/grafana/<GRAFANA_VERSION>/administration/service-accounts/) documentation.
 
-You use the token in all requests in the `Authorization` header, like this:
-
-**Example**:
+You use the token in all requests in the `Authorization` header, for example:
 
 ```http
 GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
@@ -58,6 +58,41 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 The `Authorization` header value should be _`Bearer <YOUR_SERVICE_ACCOUNT_TOKEN>`_.
 
-## Authentication options for the HTTP API in Grafana Cloud
+## Authentication options in Grafana Cloud
 
+To use the HTTP API provided by a Grafana Cloud instance, authenticate requests with a service account token.
 
+To access or create your service account tokens:
+
+1. Go to **Administration** in the left-side menu
+1. Click **Users and access > Service Accounts**.
+
+For details on creating service accounts, assigning permissions, and adding tokens, refer to [Service Accounts](/docs/grafana-cloud/account-management/authentication-and-permissions/service-accounts/).
+
+Include the service account token in the `Authorization` header for all requests to your Grafana instance:
+
+```http
+GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+Requests to the HTTP API are authenticated using the `Authorization` header:
+
+```bash
+Authorization: Bearer <SERVICE ACCOUNT TOKEN>
+```
+
+## The X-Grafana-Org-Id header
+
+**X-Grafana-Org-Id** is an optional property that specifies the organization to which the action is applied. If not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
+
+**Example Request**:
+
+```http
+GET /api/org/ HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+X-Grafana-Org-Id: 2
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
