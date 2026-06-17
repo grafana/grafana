@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -31,7 +30,7 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 
 	// A real folder, named explicitly in the export. Unlike the old behavior, a
 	// passed folder is now exported rather than silently skipped.
-	helper.CreateUnmanagedFolder(t, ctx, "exportedfolderref", "")
+	folderUID := helper.CreateUnmanagedFolder(t, ctx, "exportedfolderref", "")
 
 	const repo = "selective-export-folderref-repo"
 	helper.CreateLocalRepo(t, common.TestRepo{
@@ -41,8 +40,6 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 		Copies:                 map[string]string{},
 		SkipResourceAssertions: true,
 	})
-
-	folderUID := folderUIDByTitle(t, ctx, helper, "exportedfolderref")
 
 	spec := provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
@@ -63,18 +60,4 @@ func TestIntegrationProvisioning_ExportSpecificResources_FolderExported(t *testi
 	// The explicitly named folder is exported as a directory in the repository.
 	require.DirExists(t, filepath.Join(helper.ProvisioningPath, "exportedfolderref"),
 		"explicitly requested folder should be exported")
-}
-
-// folderUIDByTitle returns the UID of the folder with the given title.
-func folderUIDByTitle(t *testing.T, ctx context.Context, helper *common.ProvisioningTestHelper, title string) string {
-	t.Helper()
-	folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-	require.NoError(t, err, "should be able to list folders")
-	for _, f := range folders.Items {
-		if got, _, _ := unstructured.NestedString(f.Object, "spec", "title"); got == title {
-			return f.GetName()
-		}
-	}
-	require.Failf(t, "folder not found", "no folder with title %q", title)
-	return ""
 }

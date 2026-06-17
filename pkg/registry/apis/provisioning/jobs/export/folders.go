@@ -97,11 +97,18 @@ func exportFolderAncestry(ctx context.Context, options provisioning.ExportJobOpt
 	return writeFolderTree(ctx, options, repositoryResources, tree, progress)
 }
 
-// collectFolderAncestry adds the folder identified by folderUID and all of its
+// collectFolderAncestry adds the folder identified by folderUID and its
 // ancestors to tree by walking the parent chain through the folder API. The
-// full chain must be present so the tree can derive each folder's path from the
+// chain must be present so the tree can derive each folder's path from the
 // titles of its ancestors. Folders already in seen (and therefore already in
 // the tree with their own ancestry) are skipped.
+//
+// The walk stops at the first folder already owned by a manager (repository,
+// file provisioning, etc.): such a folder must not be re-written into this
+// repository, since it may be owned elsewhere. This mirrors the full
+// ExportFolders pass, which skips folders with a manager identity. Ancestors
+// above a managed boundary are intentionally not collected — the path then
+// roots at the highest unmanaged folder, exactly as the full export resolves it.
 func collectFolderAncestry(ctx context.Context, folderUID string, folderClient dynamic.ResourceInterface, tree resources.FolderTree, seen map[string]struct{}) error {
 	current := folderUID
 	for current != "" {
@@ -116,14 +123,19 @@ func collectFolderAncestry(ctx context.Context, folderUID string, folderClient d
 		if err != nil {
 			return fmt.Errorf("get folder %q: %w", current, err)
 		}
-		if err := tree.AddUnstructured(obj); err != nil {
-			return fmt.Errorf("add folder %q to tree: %w", current, err)
-		}
-		seen[current] = struct{}{}
 
 		meta, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return fmt.Errorf("extract meta accessor for folder %q: %w", current, err)
+		}
+		seen[current] = struct{}{}
+
+		if manager, _ := meta.GetManagerProperties(); manager.Identity != "" {
+			return nil
+		}
+
+		if err := tree.AddUnstructured(obj); err != nil {
+			return fmt.Errorf("add folder %q to tree: %w", current, err)
 		}
 		current = meta.GetFolder()
 	}

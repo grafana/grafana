@@ -366,6 +366,53 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TestExportSpecificResources_ManagedFolderAncestryIsSkipped verifies that a
+// requested dashboard's parent folder is NOT written into this repository when
+// it is already owned by another manager: writing it would let the target repo
+// try to manage a folder it does not own. The dashboard is still written; the
+// folder tree assembled for the export excludes the managed folder.
+func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
+	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"dash-1": dashboardInFolder("dash-1", "managed-folder"),
+	}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+
+	// The parent folder is owned by another repository.
+	managedFolder := folderObject("managed-folder", "")
+	managedFolder.Object["metadata"].(map[string]any)["annotations"] = map[string]any{
+		"grafana.app/managedBy": "repo",
+		"grafana.app/managerId": "other-repo",
+	}
+	folderClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"managed-folder": managedFolder,
+	}}
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	// The managed folder must not appear in the exported tree.
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		return tree.Count() == 0
+	}), mock.Anything).Return(nil)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "dash-1"
+	}), mock.Anything).Return("dash-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Branch:    "feature/branch",
+		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
+}
+
 func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
 	// A supported non-dashboard, non-folder kind (here a Playlist) is resolved
 	// against its own kind/group and exported through the shared write path,
