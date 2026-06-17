@@ -3286,7 +3286,7 @@ func schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref common.ReferenceCallb
 							Format:  "",
 						},
 					},
-					"authID": {
+					"authIDHash": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -3300,7 +3300,7 @@ func schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"module", "authID"},
+				Required: []string{"module", "authIDHash"},
 			},
 		},
 	}

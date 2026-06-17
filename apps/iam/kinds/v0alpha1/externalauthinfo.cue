@@ -2,6 +2,6 @@ package v0alpha1
 
 ExternalAuthInfo: {
 	module:       string
-	authID:       string
+	authIDHash:   string
 	externalUID?: string
 }

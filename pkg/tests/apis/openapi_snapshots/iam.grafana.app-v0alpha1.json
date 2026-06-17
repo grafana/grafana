@@ -6200,10 +6200,10 @@
         "type": "object",
         "required": [
           "module",
-          "authID"
+          "authIDHash"
         ],
         "properties": {
-          "authID": {
+          "authIDHash": {
             "type": "string",
             "default": ""
           },

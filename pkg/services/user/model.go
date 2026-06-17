@@ -59,7 +59,7 @@ type User struct {
 
 type ExternalAuthInfo struct {
 	Module      string
-	AuthID      string
+	AuthIDHash  string
 	ExternalUID string
 }
 

@@ -126,8 +126,8 @@ func TestUserK8sService_Create(t *testing.T) {
 				Login: "jdoe",
 				Email: "jdoe@example.com",
 				ExternalAuthInfo: []user.ExternalAuthInfo{
-					{Module: "authproxy", AuthID: "jdoe"},
-					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+					{Module: "authproxy", AuthIDHash: "jdoe"},
+					{Module: "oauth_github", AuthIDHash: "42", ExternalUID: "ext-123"},
 				},
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +135,7 @@ func TestUserK8sService_Create(t *testing.T) {
 				_ = json.NewDecoder(r.Body).Decode(&sent)
 				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
 					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
-					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthIDHash)
 					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
 					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
 					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
@@ -160,8 +160,8 @@ func TestUserK8sService_Create(t *testing.T) {
 				Login: "jdoe",
 				Email: "jdoe@example.com",
 				ExternalAuthInfo: []user.ExternalAuthInfo{
-					{Module: "authproxy", AuthID: "jdoe"},
-					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+					{Module: "authproxy", AuthIDHash: "jdoe"},
+					{Module: "oauth_github", AuthIDHash: "42", ExternalUID: "ext-123"},
 				},
 			},
 		},
@@ -1183,8 +1183,8 @@ func TestUserK8sService_Update(t *testing.T) {
 			cmd: &user.UpdateUserCommand{
 				UserID: 7,
 				ExternalAuthInfo: []user.ExternalAuthInfo{
-					{Module: "authproxy", AuthID: "jdoe"},
-					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+					{Module: "authproxy", AuthIDHash: "jdoe"},
+					{Module: "oauth_github", AuthIDHash: "42", ExternalUID: "ext-123"},
 				},
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -1214,7 +1214,7 @@ func TestUserK8sService_Update(t *testing.T) {
 				_ = json.NewDecoder(r.Body).Decode(&sent)
 				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
 					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
-					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthIDHash)
 					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
 					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
 					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
