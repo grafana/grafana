@@ -1,13 +1,22 @@
 package frontend
 
 import (
+	"context"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/stretchr/testify/assert"
+	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
@@ -141,5 +150,87 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		config.ApplyOverrides(iniFile, log.New("test"), false)
 
 		assert.Equal(t, []string{"base.example.com"}, config.FormActionAdditionalHosts)
+	})
+
+	t.Run("with full frontend settings enabled, applies rudderstack overrides to FullFrontendSettings", func(t *testing.T) {
+		config := FSRequestConfig{
+			FSFrontendSettings: FSFrontendSettings{
+				RudderstackWriteKey: "legacy-write-key",
+			},
+			FullFrontendSettings: &dtos.FrontendSettingsDTO{
+				RudderstackWriteKey:     "base-write-key",
+				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
+			},
+		}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
+		_, _ = analyticsSection.NewKey("rudderstack_data_plane_url", "https://tenant-dataplane.example.com")
+
+		config.ApplyOverrides(iniFile, log.New("test"), true)
+
+		// Overrides land on the full settings object when the flag is enabled.
+		assert.Equal(t, "tenant-write-key", config.FullFrontendSettings.RudderstackWriteKey)
+		assert.Equal(t, "https://tenant-dataplane.example.com", config.FullFrontendSettings.RudderstackDataPlaneUrl)
+
+		// The legacy FSFrontendSettings field is left untouched when the flag is enabled.
+		assert.Equal(t, "legacy-write-key", config.RudderstackWriteKey)
+	})
+
+	// When the flag is enabled the middleware always builds FullFrontendSettings before
+	// calling ApplyOverrides, so the nil case should not happen in production. The nil
+	// guard ensures we degrade gracefully (skip the analytics overrides) rather than
+	// panicking on a nil dereference if that invariant is ever broken.
+	t.Run("with full frontend settings enabled but nil FullFrontendSettings, skips overrides without panicking", func(t *testing.T) {
+		config := FSRequestConfig{}
+
+		iniFile := ini.Empty()
+		analyticsSection, _ := iniFile.NewSection("analytics")
+		_, _ = analyticsSection.NewKey("rudderstack_write_key", "tenant-write-key")
+
+		require.NotPanics(t, func() {
+			config.ApplyOverrides(iniFile, log.New("test"), true)
+		})
+
+		assert.Nil(t, config.FullFrontendSettings)
+	})
+}
+
+func TestNewFSRequestConfig(t *testing.T) {
+	newCfg := func() *setting.Cfg {
+		cfg := setting.NewCfg()
+		cfg.AppURL = "https://grafana.example.com"
+		return cfg
+	}
+
+	t.Run("does not build full frontend settings when flag disabled", func(t *testing.T) {
+		cfg := newCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		config, err := NewFSRequestConfig(context.Background(), cfg, license, false)
+		require.NoError(t, err)
+
+		assert.Nil(t, config.FullFrontendSettings)
+		// The legacy per-request settings are still populated.
+		assert.Equal(t, "https://grafana.example.com", config.AppURL)
+	})
+
+	t.Run("builds full frontend settings when flag enabled", func(t *testing.T) {
+		cfg := newCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		reqCtx := &contextmodel.ReqContext{
+			Context:      &web.Context{Req: httptest.NewRequest("GET", "/", nil)},
+			SignedInUser: &user.SignedInUser{},
+			Logger:       log.NewNopLogger(),
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
+
+		config, err := NewFSRequestConfig(ctx, cfg, license, true)
+		require.NoError(t, err)
+
+		require.NotNil(t, config.FullFrontendSettings)
+		assert.Equal(t, "https://grafana.example.com", config.FullFrontendSettings.AppUrl)
 	})
 }

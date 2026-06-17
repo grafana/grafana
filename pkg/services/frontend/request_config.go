@@ -152,6 +152,14 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger, 
 	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 	applyStringSlice(settings, "security", "form_action_additional_hosts", &c.FormActionAdditionalHosts, logger)
 
+	if fullFrontendSettingsEnabled && c.FullFrontendSettings == nil {
+		// Guard against a misconfigured call: when the flag is enabled the caller is
+		// expected to have built FullFrontendSettings. Skip the overrides rather than
+		// panicking on a nil dereference.
+		logger.Error("full frontend settings enabled but FullFrontendSettings is nil, skipping analytics overrides")
+		return
+	}
+
 	if fullFrontendSettingsEnabled {
 		// when flag enabled, settings are in a different place
 		applyString(settings, "analytics", "rudderstack_write_key", &c.FullFrontendSettings.RudderstackWriteKey, logger)
