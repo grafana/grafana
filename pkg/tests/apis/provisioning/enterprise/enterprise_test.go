@@ -5,12 +5,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strconv"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/google/go-github/v82/github"
-	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,51 +18,33 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// mockGHEConnectionClient points the shared GitHub connection factory at an
-// in-memory HTTP mock so health checks (Connection.Test) for githubEnterprise
-// connections resolve locally instead of dialing the configured serverUrl.
-// appID must match the connections created in the test so the app-ID check passes.
-func mockGHEConnectionClient(t *testing.T, helper *common.ProvisioningTestHelper, appID int64) {
+// newFakeGHEServer starts a loopback HTTP server that stands in as a GitHub Enterprise
+// endpoint, returning a healthy app/installation under the enterprise /api/v3 base path.
+// Point a connection's spec.githubEnterprise.serverUrl at server.URL so the controller's
+// Connection.Test resolves against loopback instead of dialing a real (unreachable) host.
+// This avoids mutating the shared GitHub factory's in-memory client, which the controller
+// goroutine doesn't reliably observe (that race made the in-memory mock flaky in CI).
+// The app ID (123) and installation ID (456) match the connections created in these tests.
+func newFakeGHEServer(t *testing.T) *httptest.Server {
 	t.Helper()
 
-	perms := &github.InstallationPermissions{
-		Contents:        github.Ptr("write"),
-		Metadata:        github.Ptr("read"),
-		PullRequests:    github.Ptr("write"),
-		RepositoryHooks: github.Ptr("write"),
-	}
-
-	factory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
-	factory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetApp,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = w.Write(ghmock.MustMarshal(github.App{
-					ID:          github.Ptr(appID),
-					Slug:        github.Ptr("test-app"),
-					Permissions: perms,
-				}))
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetAppInstallationsByInstallationId,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				idInt, _ := strconv.ParseInt(r.URL.Query().Get("installation_id"), 10, 64)
-				w.WriteHeader(http.StatusOK)
-				_, _ = w.Write(ghmock.MustMarshal(github.Installation{
-					ID:          github.Ptr(idInt),
-					Permissions: perms,
-				}))
-			}),
-		),
-	)
-	helper.SetGithubConnectionFactory(factory)
+	const perms = `{"contents":"write","metadata":"read","pull_requests":"write","repository_hooks":"write"}`
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.URL.Path == "/api/v3/app":
+			_, _ = fmt.Fprintf(w, `{"id":123,"slug":"test-app","permissions":%s}`, perms)
+		case strings.HasPrefix(r.URL.Path, "/api/v3/app/installations/"):
+			_, _ = fmt.Fprintf(w, `{"id":456,"permissions":%s}`, perms)
+		default:
+			w.WriteHeader(http.StatusOK)
+		}
+	}))
+	t.Cleanup(server.Close)
+	return server
 }
 
 func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
@@ -76,9 +57,9 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	privateKeyBase64 := common.TestGithubPrivateKeyBase64()
 
 	// The mutation tests create valid githubEnterprise connections which the controller
-	// then reconciles via the shared GitHub Connection.Test(). Mock the factory so the
-	// health check stays in-process and never dials the configured serverUrl.
-	mockGHEConnectionClient(t, helper, 123)
+	// then reconciles via the shared GitHub Connection.Test(). Point serverUrl at a loopback
+	// server so that background reconcile stays in-process and never dials a real host.
+	gheServer := newFakeGHEServer(t)
 
 	t.Run("should update gitlab connection name with type prefix", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -311,7 +292,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	t.Run("should update githubEnterprise connection name with type prefix", func(t *testing.T) {
 		connection := newGHEConnection(map[string]any{
 			"namespace": "default",
-		}, "https://ghe.example.com")
+		}, gheServer.URL)
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
@@ -330,7 +311,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		connection := newGHEConnection(map[string]any{
 			"namespace":    "default",
 			"generateName": generateName,
-		}, "https://ghe.example.com")
+		}, gheServer.URL)
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
@@ -349,7 +330,7 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 		connection := newGHEConnection(map[string]any{
 			"name":      name,
 			"namespace": "default",
-		}, "https://ghe.example.com")
+		}, gheServer.URL)
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
@@ -366,14 +347,14 @@ func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
 	t.Run("should trim trailing slash from githubEnterprise serverUrl", func(t *testing.T) {
 		connection := newGHEConnection(map[string]any{
 			"namespace": "default",
-		}, "https://ghe.example.com/")
+		}, gheServer.URL+"/")
 
 		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.NoError(t, err, "failed to create resource")
 
 		spec := c.Object["spec"].(map[string]any)
 		ghe := spec["githubEnterprise"].(map[string]any)
-		assert.Equal(t, "https://ghe.example.com", ghe["serverUrl"], "trailing slash should be trimmed")
+		assert.Equal(t, gheServer.URL, ghe["serverUrl"], "trailing slash should be trimmed")
 
 		t.Cleanup(func() {
 			require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -878,9 +859,11 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 	t.Run("GitHub Enterprise connection can be created and reconciled", func(t *testing.T) {
 		privateKeyBase64 := common.TestGithubPrivateKeyBase64()
 
-		// Mock the shared GitHub client so the health check resolves in-process
-		// (the GHE Connection.Test would otherwise dial the configured serverUrl).
-		mockGHEConnectionClient(t, helper, 123)
+		// Point serverUrl at a loopback server so the controller's Connection.Test resolves
+		// in-process and exercises the enterprise /api/v3 URL path, instead of dialing a real
+		// (unreachable) host. See newFakeGHEServer for why this is preferred over mocking the
+		// shared GitHub factory's in-memory client.
+		ghServer := newFakeGHEServer(t)
 
 		connection := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "provisioning.grafana.app/v0alpha1",
@@ -895,7 +878,7 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 				"githubEnterprise": map[string]any{
 					"appID":          "123",
 					"installationID": "456",
-					"serverUrl":      "https://ghe.example.com",
+					"serverUrl":      ghServer.URL,
 				},
 			},
 			"secure": map[string]any{
