@@ -204,7 +204,7 @@ function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   });
 }
 
-async function initGrafana() {
+export async function initGrafana() {
   // Preserve a mix of values from the initial boot data, and from the backend
   // - nav tree and user info come from the backend
   // - merge settings from both. FS settings contains less values
@@ -216,6 +216,16 @@ async function initGrafana() {
     return Promise.reject({ redirect: bootData.redirect });
   }
 
+  applyBootData(bootData);
+}
+
+/**
+ * Merges the boot data fetched from the API into window.grafanaBootData and applies
+ * the resulting theme. When the reduced boot data API is enabled the server already
+ * provides the full settings and nav tree, so only the user is taken from the API
+ * response and the settings/nav tree/theme handling is skipped.
+ */
+export function applyBootData(bootData: BootApiResponse) {
   // TODO: move grabbing user info behind the !window.__grafanaReduceBootdataAPI check once we have
   // a MT-friendly substitute for it.
   //
@@ -283,14 +293,18 @@ async function initGrafana() {
   }
 }
 
-window.__grafana_boot_data_promise = initGrafana();
-window.__grafana_boot_data_promise.catch((err) => {
-  // initGrafana can throw a `{ redirect: string }` object to indicate that the frontend should redirect without booting the app.
-  if (err && err.redirect && typeof err.redirect === 'string') {
-    window.location.href = err.redirect;
-    return;
-  }
+// Guarded so that importing this module in tests does not kick off a real boot
+// sequence (which would fetch /bootdata). Production and dev bundles always run it.
+if (process.env.NODE_ENV !== 'test') {
+  window.__grafana_boot_data_promise = initGrafana();
+  window.__grafana_boot_data_promise.catch((err) => {
+    // initGrafana can throw a `{ redirect: string }` object to indicate that the frontend should redirect without booting the app.
+    if (err && err.redirect && typeof err.redirect === 'string') {
+      window.location.href = err.redirect;
+      return;
+    }
 
-  console.error('__grafana_boot_data_promise rejected', err);
-  window.__grafana_load_failed(err);
-});
+    console.error('__grafana_boot_data_promise rejected', err);
+    window.__grafana_load_failed(err);
+  });
+}
