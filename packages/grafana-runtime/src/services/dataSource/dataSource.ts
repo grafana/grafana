@@ -88,6 +88,7 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
     logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
       pluginId: settings.meta.id,
       uid: settings.uid,
+      name: settings.name,
     });
     throw error;
   }
