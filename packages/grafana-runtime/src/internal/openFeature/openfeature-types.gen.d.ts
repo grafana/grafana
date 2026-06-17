@@ -27,7 +27,6 @@ declare module "@openfeature/core" {
     | "newLogsPanel"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
-    | "createdByMeSearchFilter"
     | "otelLogsFormatting"
     | "newLogContext"
     | "plugins.useMTPlugins"

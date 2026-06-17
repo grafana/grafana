@@ -1,7 +1,9 @@
 import { screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
@@ -19,6 +21,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolde
 }));
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 
@@ -54,6 +57,17 @@ const mockUseGetResourceRepositoryView = jest.mocked(
 );
 const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
+const mockJobStatus = jest.mocked(JobStatus);
+
+// jest.clearAllMocks() clears call history but not a custom mockImplementation, so a per-test
+// override of JobStatus would leak; restore the default in beforeEach.
+function resetJobStatusMock() {
+  mockJobStatus.mockImplementation(({ watch, jobType }) => (
+    <div data-testid="job-status">
+      Job Status - {jobType} - {watch?.status?.state || 'pending'}
+    </div>
+  ));
+}
 
 function setup(
   repository: RepositoryView | null,
@@ -91,6 +105,7 @@ function setup(
         }
       : null,
     isInstanceManaged: false,
+    isMissingRepo: false,
   });
 
   mockUseBulkActionJob.mockReturnValue({
@@ -114,6 +129,7 @@ function setup(
 describe('BulkDeleteProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetJobStatusMock();
 
     mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: 'test-folder',
@@ -133,6 +149,51 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(await screen.findByText(/This will delete selected folders and their descendants/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Delete/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Cancel/i })).toBeInTheDocument();
+  });
+
+  it('shows a spinner while repository data is loading', async () => {
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: undefined,
+      folder: null,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      isMissingRepo: false,
+      isLoading: true,
+    });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+
+    render(
+      <BulkDeleteProvisionedResource
+        folderUid="test-folder"
+        selectedItems={{ folder: { 'folder-1': true }, dashboard: {} }}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
+  });
+
+  it('shows RepoInvalidStateBanner when repository is not found', async () => {
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository: undefined,
+      folder: null,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      isMissingRepo: true,
+    });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: jest.fn(), isLoading: false });
+
+    render(
+      <BulkDeleteProvisionedResource
+        folderUid="test-folder"
+        selectedItems={{ folder: { 'folder-1': true }, dashboard: {} }}
+        onDismiss={jest.fn()}
+      />
+    );
+
+    expect(await screen.findByText(/Repository not found/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
   });
 
   it('calls onDismiss when Cancel is clicked', async () => {
@@ -257,6 +318,7 @@ describe('BulkDeleteProvisionedResource', () => {
           folder: null,
           isInstanceManaged: false,
           isReadOnlyRepo: false,
+          isMissingRepo: false,
         };
       }
       return {
@@ -264,6 +326,7 @@ describe('BulkDeleteProvisionedResource', () => {
         folder: null,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
+        isMissingRepo: true,
       };
     });
 
@@ -322,5 +385,74 @@ describe('BulkDeleteProvisionedResource', () => {
         }),
       })
     );
+  });
+
+  it('does not show a generated branch and targets the configured branch when write is the default workflow', async () => {
+    const writeFirstRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      branch: 'main',
+      workflows: ['write', 'branch'],
+    };
+    const { user, mockCreateBulkJob } = setup(writeFirstRepository);
+
+    // Wait for the real ResourceEditFormSharedFields branch field to render.
+    await screen.findByRole('button', { name: /Delete/i });
+
+    // The pre-filled branch must match the job (configured branch), not a generated bulk-delete branch.
+    expect(screen.queryByText(/bulk-delete\//)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/bulk-delete\//)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      writeFirstRepository,
+      expect.objectContaining({
+        action: 'delete',
+        delete: expect.objectContaining({
+          ref: undefined,
+        }),
+      })
+    );
+  });
+
+  it('shows the branch success message when the job completes on the branch workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    // Default repo has workflows ['branch', 'write'], so the default workflow is 'branch'.
+    const { user } = setup(null);
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(await screen.findByText('Requested changes were pushed to a branch')).toBeInTheDocument();
+  });
+
+  it('shows the configured-branch success message when the job completes on the write workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    const writeOnlyRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['write'],
+    };
+    const { user } = setup(writeOnlyRepository);
+
+    await user.click(screen.getByRole('button', { name: /Delete/i }));
+
+    expect(await screen.findByText('Resources deleted successfully')).toBeInTheDocument();
   });
 });

@@ -1981,14 +1981,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "createdByMeSearchFilter",
-			Description: "Enables the created by me search filter on the browse dashboards page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -2147,10 +2139,10 @@ var (
 		{
 			Name:        "newLogContext",
 			Description: "New Log Context component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "newClickhouseConfigPageDesign",
@@ -2307,14 +2299,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preventPanelChromeOverflow",
-			Description: "Restrict PanelChrome contents with overflow: hidden;",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "jaegerEnableGrpcEndpoint",
