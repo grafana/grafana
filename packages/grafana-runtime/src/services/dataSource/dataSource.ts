@@ -37,17 +37,17 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
-  try {
-    if (isExpressionReference(ref)) {
-      const expressionDs = getExpressionDataSourceInstance();
-      if (!expressionDs) {
-        throw new Error(
-          'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
-        );
-      }
-      return expressionDs;
+  if (isExpressionReference(ref)) {
+    const expressionDs = getExpressionDataSourceInstance();
+    if (!expressionDs) {
+      throw new Error(
+        'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
+      );
     }
+    return expressionDs;
+  }
 
+  try {
     const settings = await getDataSourceInstanceSettings(ref, scopedVars);
     if (!settings) {
       throw new Error(`Datasource ${describeRef(ref)} was not found`);
