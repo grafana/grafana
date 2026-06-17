@@ -29,7 +29,7 @@ keywords:
   - reuse query
 image_maps:
   - key: query-editor
-    src: query-editor-temp.png
+    src: /media/docs/grafana/panels-visualizations/screenshot-query-editor-imagemap-v13.1.png
     alt: An annotated image of the Grafana panel query editor
     points:
       - x_coord: 1
@@ -50,20 +50,20 @@ image_maps:
           **Stacked view icon**
 
           The [stacked view](#navigate-the-query-editor) displays all of your queries, expressions, and transformations in a single list in the editor pane.
-      - x_coord: 1
-        y_coord: 1
+      - x_coord: 18
+        y_coord: 94
         content: |
           **Multi-select**
 
           Click **Select...** in the sidebar footer to enter multi-select mode, then check the items you want to work with so you can take bulk actions. You can also press the `Shift` key while you click to select a range. If all items in your selection are queries, you can change the data source for all of them at once.
       - x_coord: 3.5
-        y_coord: 25
+        y_coord: 27
         content: |
           **Queries & expressions**
 
           The list of queries and expressions you've written. Click a card in the sidebar to display that query or expression in the editor pane on the right. Click the blue plus sign to add a new query, add a saved query, or an expression. For more information about expressions, refer to [Use expressions to manipulate data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/expression-queries/).
       - x_coord: 3.5
-        y_coord: 80
+        y_coord: 69
         content: |
           **Transformations**
 
@@ -138,9 +138,7 @@ Each data source's query editor provides a customized user interface that helps 
 Because of the differences between query languages, each data source query editor looks and functions differently.
 Depending on your data source, the query editor might provide auto-completion features, metric names, variable suggestions, or a visual query-building interface.
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-queries-tab-v11.6.png" max-width="750px" alt="The InfluxDB query editor" >}}
-
-<!-- TODO: Update screenshot but I can't get this to render properly -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-editor-v13.1.png" max-width="750px" alt="The Prometheus query editor" >}}
 
 For details on a specific data source's unique query editor features, refer to its documentation:
 
@@ -223,7 +221,7 @@ You can apply all the same search, filter, and sort options in the **Starred que
 
 To access your saved queries, click the blue plus sign in the sidebar and select **Add saved query** or click **Replace** in the editor pane:
 
-{{< figure src="add-save-reuse-query-temp.png" max-width="750px" alt="Access saved queries" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-add-save-reuse-query-v13.1.png" max-width="750px" alt="Access saved queries" >}}
 
 Clicking **Add saved query** adds an additional query, while clicking **Replace** updates your configured query.
 
@@ -253,7 +251,7 @@ To save a query you've created:
 
 1. From the query editor, open the **Saved queries** drop-down menu and click the **Save query** option:
 
-   {{< figure src="save-query-temp.png" max-width="750px" alt="Save a query" >}}
+   {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-save-query-v13.1.png" max-width="750px" alt="Save a query" >}}
 
 1. In the **Saved queries** dialog box, enter a title for the query that makes it easier to find later.
 1. (Optional) Enter a description and relevant tags.
@@ -309,16 +307,16 @@ When you hover your cursor over the cards, a blue plus sign appears beside the c
 You can use that to add queries, expressions, or transformations in that position.
 Hovering your cursor over a card also displays duplicate, hide, and delete actions for a specific data element:
 
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-actions-v13.1.png" max-width="300px" alt="Query card on hover showing available actions." >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-editor-card-actions-v13.1.png" max-width="250px" alt="Query card on hover showing available actions." >}}
 
 For pipelines with many queries, expressions, or transformations, you can expand the sidebar to full height to see everything at once:
 
-{{< figure src="expanded-sidebar-temp.png" max-width="750px" alt="Expanded sidebar" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-editor-expanded-v13.1.png" max-width="750px" alt="Query editor with expanded sidebar" >}}
 
 You can also use the stacked view to see all of the data elements at once in the editor pane.
 In this view, when you click a card, it takes you to the corresponding element:
 
-<!-- screenshot here -->
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-editor-stacked-view-v13.1.png" max-width="750px" alt="Query editor in stacked view" >}}
 
 ## Add a query
 
@@ -377,7 +375,7 @@ The following table describes actions you can take for each query:
 Click **Query options** in the footer of the editor pane to see settings for the selected data source.
 Changes you make here affect only queries made in this panel.
 
-{{< figure src="query-options-temp.png" max-width="750px" alt="Data source query options" >}}
+{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-query-options-v13.1.png" max-width="750px" alt="Data source query options" >}}
 
 Grafana sets defaults that are shown in dark gray text.
 Changes are displayed in white text.
