@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -216,6 +218,10 @@ func TestAnnotationWriteHandlers_Proxy(t *testing.T) {
 		{name: "DeleteAnnotation: proxy succeeds - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{}, perm: deletePerm, wantStatus: http.StatusOK},
 		{name: "DeleteAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{err: annotationsapi.ErrNotFound}, perm: deletePerm, wantStatus: http.StatusOK},
 		{name: "DeleteAnnotation: proxy error - 500", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{err: errors.New("x")}, perm: deletePerm, wantStatus: http.StatusInternalServerError},
+		// k8s 4xx forwarding
+		{name: "PostAnnotation: k8s 400 forwarded as 400", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{err: &k8serrors.StatusError{ErrStatus: metav1.Status{Code: 400, Message: "validation failed"}}}, perm: createPerm, wantStatus: http.StatusBadRequest},
+		{name: "PostAnnotation: k8s 403 returned as 500 (service config)", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{err: &k8serrors.StatusError{ErrStatus: metav1.Status{Code: 403, Message: "forbidden"}}}, perm: createPerm, wantStatus: http.StatusInternalServerError},
+		{name: "DeleteAnnotation: k8s 422 forwarded as 422", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{err: &k8serrors.StatusError{ErrStatus: metav1.Status{Code: 422, Message: "invalid"}}}, perm: deletePerm, wantStatus: http.StatusUnprocessableEntity},
 	}
 
 	for _, tt := range tests {
