@@ -400,7 +400,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 	cfg.DisablePruner = dbType == "sqlite3"
 	eDB, err := sql.ProvideResourceDB(cfg, nil)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, nil, nil, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)

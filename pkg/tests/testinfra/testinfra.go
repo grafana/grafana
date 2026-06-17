@@ -175,7 +175,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
@@ -790,6 +790,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
+	if opts.MigrationChunkMaxBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunked_writes", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunk_max_bytes", fmt.Sprintf("%d", opts.MigrationChunkMaxBytes))
+		require.NoError(t, err)
+	}
 	if opts.EnableSQLKVBackend {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -1035,6 +1043,7 @@ type GrafanaOpts struct {
 	DisableControllers                                   bool
 	DisableDBCleanup                                     bool
 	MigrationParquetBuffer                               bool
+	MigrationChunkMaxBytes                               int64
 	EnableSQLKVBackend                                   bool
 	SecretsManagerEnableDBMigrations                     bool
 	OpenFeatureAPIEnabled                                bool
