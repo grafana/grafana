@@ -2,9 +2,9 @@
   {
     "grant": "Admin",
     "roles": [
-      "fixed:alerting.admin-config:writer",
       "fixed:alerting.alertmanager-imports:writer",
       "fixed:alerting.legacy:writer",
+      "fixed:alerting.notifications.config:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
@@ -396,9 +396,9 @@
   {
     "grant": "Viewer",
     "roles": [
-      "fixed:alerting.admin-config:reader",
       "fixed:alerting.inhibition-rules:reader",
       "fixed:alerting.instances:reader",
+      "fixed:alerting.notifications.config:reader",
       "fixed:alerting.notifications.external:reader",
       "fixed:alerting.receivers:reader",
       "fixed:alerting.rules:reader",

@@ -9,11 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// Authorize maps k8s verbs on Config (and its /status subresource)
-// to three RBAC actions: read → Viewer, spec write → Admin (matches the
-// legacy /api/v1/ngalert/admin_config HTTP API), status write → service
-// identity only (sync worker owns it; see serviceIdentityPermissions in
-// pkg/apimachinery/identity/context.go).
+// Authorize maps k8s verbs on Config (and its /status subresource) to RBAC
+// actions. Config is a system-owned per-org singleton, so the verb set is
+// deliberately narrow:
+//   - get/list/watch → read (Viewer)
+//   - patch/update → update (Admin)
+//   - create → service identity only (the sync worker bootstraps the singleton
+//     and seeds .status on first sync; humans update the existing one)
+//   - delete/deletecollection → always rejected (deleting the singleton would
+//     nuke every admin setting it carries; reset individual fields via update)
+//   - status writes → service identity only (sync worker owns it; see
+//     serviceIdentityPermissions in pkg/apimachinery/identity/context.go)
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
@@ -29,7 +35,7 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		case "get", "list", "watch":
 			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigRead)
 		case "create", "patch", "update":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigStatusWrite)
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigStatusUpdate)
 		default:
 			return authorizer.DecisionNoOpinion, "", nil
 		}
@@ -37,8 +43,17 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		switch attr.GetVerb() {
 		case "get", "list", "watch":
 			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigRead)
-		case "create", "patch", "update", "delete", "deletecollection":
-			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigWrite)
+		case "patch", "update":
+			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigUpdate)
+		case "create":
+			// The singleton is bootstrapped by the in-process sync worker; humans
+			// update the existing one rather than creating it.
+			if identity.IsServiceIdentity(ctx) {
+				return authorizer.DecisionAllow, "", nil
+			}
+			return authorizer.DecisionDeny, "Config is a singleton and cannot be created directly", nil
+		case "delete", "deletecollection":
+			return authorizer.DecisionDeny, "Config is a singleton and cannot be deleted", nil
 		default:
 			return authorizer.DecisionNoOpinion, "", nil
 		}

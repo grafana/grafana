@@ -460,11 +460,11 @@ var (
 		Grants: []string{string(org.RoleEditor)},
 	}
 
-	adminConfigReaderRole = accesscontrol.RoleRegistration{
+	notificationsConfigReaderRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.admin-config:reader",
-			DisplayName: "Alerting Admin Config Reader",
-			Description: "Read the alerting admin configuration, including external Alertmanager sync state.",
+			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications.config:reader",
+			DisplayName: "Alerting Notifications Config Reader",
+			Description: "Read the alerting notifications configuration, including external Alertmanager sync state.",
 			Group:       models.AlertRolesGroup,
 			Permissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionAlertingConfigRead},
@@ -473,14 +473,14 @@ var (
 		Grants: []string{string(org.RoleViewer)},
 	}
 
-	adminConfigWriterRole = accesscontrol.RoleRegistration{
+	notificationsConfigWriterRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.admin-config:writer",
-			DisplayName: "Alerting Admin Config Writer",
-			Description: "Update the alerting admin configuration, including the external Alertmanager sync target.",
+			Name:        accesscontrol.FixedRolePrefix + "alerting.notifications.config:writer",
+			DisplayName: "Alerting Notifications Config Writer",
+			Description: "Update the alerting notifications configuration, including the external Alertmanager sync target.",
 			Group:       models.AlertRolesGroup,
-			Permissions: accesscontrol.ConcatPermissions(adminConfigReaderRole.Role.Permissions, []accesscontrol.Permission{
-				{Action: accesscontrol.ActionAlertingConfigWrite},
+			Permissions: accesscontrol.ConcatPermissions(notificationsConfigReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionAlertingConfigUpdate},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -549,7 +549,7 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		routesCreatorRole, routesReaderRole, routesWriterRole,
 		inhibitionRulesReaderRole, inhibitionRulesWriterRole,
 		alertmanagerImportsAdminRole,
-		adminConfigReaderRole, adminConfigWriterRole,
+		notificationsConfigReaderRole, notificationsConfigWriterRole,
 	}
 }
 

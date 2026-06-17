@@ -173,7 +173,7 @@ func TestAllAlertingActions_BoundToFixedRoles(t *testing.T) {
 	// in-process service identity holds (see serviceIdentityPermissions in
 	// pkg/apimachinery/identity/context.go) but no human role should.
 	intentionallyUnboundActions := map[string]bool{
-		accesscontrol.ActionAlertingConfigStatusWrite: true,
+		accesscontrol.ActionAlertingConfigStatusUpdate: true,
 	}
 
 	var unbound []string
@@ -269,8 +269,8 @@ func allAlertingActions() []string {
 		accesscontrol.ActionAlertingAlertmanagerImportsWrite,
 		accesscontrol.ActionAlertingAlertmanagerImportsDelete,
 		accesscontrol.ActionAlertingConfigRead,
-		accesscontrol.ActionAlertingConfigWrite,
-		accesscontrol.ActionAlertingConfigStatusWrite,
+		accesscontrol.ActionAlertingConfigUpdate,
+		accesscontrol.ActionAlertingConfigStatusUpdate,
 	}
 	sort.Strings(actions)
 	return actions

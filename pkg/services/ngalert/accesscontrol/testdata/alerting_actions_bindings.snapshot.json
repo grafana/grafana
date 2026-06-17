@@ -431,14 +431,14 @@
   {
     "action": "notifications.alerting.grafana.app/configs:get",
     "roles": [
-      "fixed:alerting.admin-config:reader",
-      "fixed:alerting.admin-config:writer"
+      "fixed:alerting.notifications.config:reader",
+      "fixed:alerting.notifications.config:writer"
     ]
   },
   {
     "action": "notifications.alerting.grafana.app/configs:update",
     "roles": [
-      "fixed:alerting.admin-config:writer"
+      "fixed:alerting.notifications.config:writer"
     ]
   },
   {
