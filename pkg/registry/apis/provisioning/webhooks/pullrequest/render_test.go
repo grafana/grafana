@@ -237,6 +237,36 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/test-ns/repositories/test-repo/render/test-uid",
 		},
 		{
+			name: "should render in the org that owns the repository namespace",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "org-3",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
+						require.Equal(t, int64(3), opts.OrgID)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resourcepb.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/org-3/repositories/test-repo/render/test-uid",
+		},
+		{
 			name: "should append query parameters correctly",
 			path: "test",
 			queryParams: url.Values{

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
@@ -60,11 +61,18 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 	} else {
 		path = path + "?kiosk"
 	}
+	// Render in the org that owns the repository so the dashboard resolves in
+	// multi-org/Cloud setups. The render key carries this org id, and the
+	// headless browser authenticates as a synthetic render user in that org.
+	orgID := int64(1)
+	if ns, err := authlib.ParseNamespace(repo.Namespace); err == nil && ns.OrgID > 0 {
+		orgID = ns.OrgID
+	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
 			Path: path,
 			AuthOpts: rendering.AuthOpts{
-				OrgID:   1, // TODO!!!, use the worker identity
+				OrgID:   orgID,
 				UserID:  1,
 				OrgRole: identity.RoleAdmin,
 			},
