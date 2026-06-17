@@ -22,12 +22,17 @@ jobs:
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
           persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: '24'
 
       - name: Install Actions
         run: npm install --production --prefix ./actions
@@ -39,7 +44,7 @@ jobs:
 
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-pr-automation
 
@@ -60,7 +65,7 @@ jobs:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v1.3.0 # zizmor: ignore[unpinned-uses]
+        uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets/v2.0.0 # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
           repo_secrets: |
@@ -82,7 +87,7 @@ jobs:
             ACTOR: ${{ github.actor }}
       - name: Checkout
         if: steps.check-if-grafana-org-member.outputs.is_grafana_org_member != 'true' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
-        uses: actions/checkout@v5
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -94,7 +99,7 @@ jobs:
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
-          openai_api_key: ${{ env.AUTOTRIAGER_OPENAI_API_KEY }}
+          openai_api_key: ${{ fromJSON(steps.vault-secrets.outputs.secrets).AUTOTRIAGER_OPENAI_API_KEY }}
           add_labels: true
           labels_file: ${{ github.workspace }}/.github/workflows/auto-triager/labels.txt
           types_file: ${{ github.workspace }}/.github/workflows/auto-triager/types.txt
@@ -113,7 +118,7 @@ jobs:
               "channel": "#triage-automation-ci"
             }
         env:
-          SLACK_WEBHOOK_URL:  ${{ env.AUTOTRIAGER_SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL:  ${{ fromJSON(steps.vault-secrets.outputs.secrets).AUTOTRIAGER_SLACK_WEBHOOK_URL }}
   auto-label-internal-issues:
     needs: [main]
     if: github.repository == 'grafana/grafana'
