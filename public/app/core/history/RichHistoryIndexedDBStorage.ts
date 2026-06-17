@@ -4,6 +4,7 @@ import { isEqual, omit } from 'lodash';
 import { type DataQuery, generateUUID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
+  DEFAULT_RICH_HISTORY_SETTINGS as DEFAULT_SETTINGS,
   type RichHistorySearchBackendFilters,
   type RichHistorySettings,
   SortOrder,
@@ -26,13 +27,6 @@ const METADATA_STORE = 'metadata';
 
 const DEFAULT_ITEM_COUNT_WARNING_THRESHOLD = 50_000;
 const MS_PER_DAY = 86_400_000;
-
-export const DEFAULT_SETTINGS: RichHistorySettings = {
-  retentionPeriod: 14,
-  starredTabAsFirstTab: false,
-  activeDatasourcesOnly: false,
-  lastUsedDatasourceFilters: [],
-};
 
 /**
  * Schema stored in IndexedDB. Booleans are stored as 0/1 for indexing.
