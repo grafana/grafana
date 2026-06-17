@@ -571,64 +571,6 @@ func (_c *MockClient_ListPullRequestFiles_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
-// ListWebhooks provides a mock function with given fields: ctx
-func (_m *MockClient) ListWebhooks(ctx context.Context) ([]repository.Webhook, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListWebhooks")
-	}
-
-	var r0 []repository.Webhook
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]repository.Webhook, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) []repository.Webhook); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]repository.Webhook)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_ListWebhooks_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWebhooks'
-type MockClient_ListWebhooks_Call struct {
-	*mock.Call
-}
-
-// ListWebhooks is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockClient_Expecter) ListWebhooks(ctx interface{}) *MockClient_ListWebhooks_Call {
-	return &MockClient_ListWebhooks_Call{Call: _e.mock.On("ListWebhooks", ctx)}
-}
-
-func (_c *MockClient_ListWebhooks_Call) Run(run func(ctx context.Context)) *MockClient_ListWebhooks_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *MockClient_ListWebhooks_Call) Return(_a0 []repository.Webhook, _a1 error) *MockClient_ListWebhooks_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockClient_ListWebhooks_Call) RunAndReturn(run func(context.Context) ([]repository.Webhook, error)) *MockClient_ListWebhooks_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // NewMockClient creates a new instance of MockClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockClient(t interface {

@@ -287,42 +287,6 @@ func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Comm
 	return ret, nil
 }
 
-func (r *githubClient) ListWebhooks(ctx context.Context) ([]repo.Webhook, error) {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
-		return r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
-	}
-
-	hooks, err := paginatedList(
-		ctx,
-		listFn,
-		defaultListOptions(maxWebhooks),
-	)
-	if errors.Is(err, repo.ErrTooManyItems) {
-		return nil, fmt.Errorf("too many webhooks configured (more than %d)", maxWebhooks)
-	}
-	if err != nil {
-		return nil, translateGitHubError(err)
-	}
-
-	// Pre-allocate the result slice
-	ret := make([]repo.Webhook, 0, len(hooks))
-	for _, h := range hooks {
-		contentType := h.GetConfig().GetContentType()
-		if contentType == "" {
-			contentType = "form"
-		}
-
-		ret = append(ret, repo.Webhook{
-			ID:     h.GetID(),
-			Events: h.Events,
-			URL:    h.GetConfig().GetURL(),
-			Extra:  webhookExtra{Active: h.GetActive(), ContentType: contentType}.toMap(),
-			// Intentionally not setting Secret.
-		})
-	}
-	return ret, nil
-}
-
 func (r *githubClient) CreateWebhook(ctx context.Context, hook repo.Webhook) (repo.Webhook, error) {
 	contentType := "json"
 	active := true
