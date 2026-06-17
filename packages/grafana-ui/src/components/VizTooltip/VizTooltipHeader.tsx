@@ -14,14 +14,15 @@ export interface VizTooltipHeaderProps {
   /**
    * Whether the tooltip is currently pinned (locked open by the user).
    * When pinned, the label and value become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
    */
-  isPinned: boolean;
+  isPinned?: boolean;
 }
 
 /** @alpha */
 export const VizTooltipHeader = ({
   item: { label, value, color, colorIndicator },
-  isPinned,
+  isPinned = false,
 }: VizTooltipHeaderProps) => {
   const styles = useStyles2(getStyles);
   return (

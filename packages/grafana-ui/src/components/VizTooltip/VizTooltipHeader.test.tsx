@@ -11,24 +11,28 @@ const makeItem = (overrides: Partial<VizTooltipItem> = {}): VizTooltipItem => ({
 
 describe('VizTooltipHeader', () => {
   it('renders the item label', () => {
-    render(<VizTooltipHeader item={makeItem()} isPinned={false} />);
+    render(<VizTooltipHeader item={makeItem()} />);
     expect(screen.getByText('Series A')).toBeInTheDocument();
   });
 
   it('renders the item value', () => {
-    render(<VizTooltipHeader item={makeItem()} isPinned={false} />);
+    render(<VizTooltipHeader item={makeItem()} />);
+    expect(screen.getByText('42')).toBeInTheDocument();
+  });
+
+  it('defaults to unpinned when isPinned is omitted', () => {
+    render(<VizTooltipHeader item={makeItem()} />);
+    expect(screen.getByText('Series A')).toBeInTheDocument();
     expect(screen.getByText('42')).toBeInTheDocument();
   });
 
   it('renders a color indicator when color is provided', () => {
-    render(
-      <VizTooltipHeader item={makeItem({ color: '#ff0000', colorIndicator: ColorIndicator.series })} isPinned={false} />
-    );
+    render(<VizTooltipHeader item={makeItem({ color: '#ff0000', colorIndicator: ColorIndicator.series })} />);
     expect(screen.getByTestId('series-icon')).toBeInTheDocument();
   });
 
   it('does not render a color indicator when color is absent', () => {
-    render(<VizTooltipHeader item={makeItem({ color: undefined })} isPinned={false} />);
+    render(<VizTooltipHeader item={makeItem({ color: undefined })} />);
     expect(screen.queryByTestId('series-icon')).not.toBeInTheDocument();
   });
 
