@@ -630,7 +630,7 @@ export const useCreateDropdownMenuActions = (
   onResetPolicy?: (route: RouteWithID) => void,
   onManagePermissions?: () => void
 ) => {
-  const context = useMemo(() => ({ provenance }), [provenance]);
+  const context = { provenance };
   const updateAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.UpdateTree, context });
   const deleteAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Delete, context });
   const exportAbility = useNotificationPolicyAbility({ action: NotificationPolicyAction.Export, context });

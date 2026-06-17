@@ -89,7 +89,8 @@ export function useGlobalNotificationPolicyAbility(action: NotificationPolicyAct
 
 export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityParam): Ability {
   const { hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
-  const { action, context } = payload;
+  const action = payload.action;
+  const provenance = 'context' in payload ? payload.context.provenance : undefined;
 
   return useMemo(() => {
     switch (action) {
@@ -117,7 +118,7 @@ export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityP
         if (!hasConfigurationAPI) {
           return NotSupported;
         }
-        if (isProvisionedResource(context.provenance)) {
+        if (isProvisionedResource(provenance)) {
           return Provisioned;
         }
         return makeAbility(true, PERMISSIONS[action]);
@@ -128,11 +129,11 @@ export function useNotificationPolicyAbility(payload: NotificationPolicyAbilityP
         if (!hasConfigurationAPI) {
           return NotSupported;
         }
-        if (isProvisionedResource(context.provenance)) {
+        if (isProvisionedResource(provenance)) {
           return Provisioned;
         }
         return makeAbility(isGrafanaAlertmanager, PERMISSIONS[action]);
       }
     }
-  }, [action, context, hasConfigurationAPI, isGrafanaAlertmanager]);
+  }, [action, provenance, hasConfigurationAPI, isGrafanaAlertmanager]);
 }
