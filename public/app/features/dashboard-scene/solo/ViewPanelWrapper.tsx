@@ -32,7 +32,7 @@ function ViewPanelWithPane({ panel }: ViewPanelProps) {
   const context = usePanelSceneContextObject(panel);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
-  const { fanoutMode } = viewPanelPane.useState();
+  const { fanoutMode } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
 
   // Open pane on mount
   useEffect(() => {

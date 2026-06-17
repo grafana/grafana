@@ -1,4 +1,4 @@
-import { type CSSProperties } from 'react';
+import { useMemo, type CSSProperties } from 'react';
 
 import {
   type PanelData,
@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { SceneDataNode, type VizConfig, type VizPanel } from '@grafana/scenes';
 import { VizPanel as VizPanelReact } from '@grafana/scenes-react';
-import { useTheme2, Spinner } from '@grafana/ui';
+import { useTheme2, Spinner, type ElementSelectionContextState, ElementSelectionContext } from '@grafana/ui';
 
 import { bySeriesMode, getLabelFromMode } from './ViewPanelSidePane';
 
@@ -24,7 +24,6 @@ export function FanoutPanel({
   fanoutMode: string;
 }) {
   const theme = useTheme2();
-
   const viz: VizConfig = {
     pluginId: panel.state.pluginId,
     pluginVersion: panel.state.pluginVersion ?? '0.0.0',
@@ -33,6 +32,15 @@ export function FanoutPanel({
     },
     fieldConfig: panel.state.fieldConfig,
   };
+
+  const selectionContext: ElementSelectionContextState = useMemo(() => {
+    return {
+      enabled: false,
+      selected: [],
+      onSelect: () => {},
+      onClear: () => {},
+    };
+  }, []);
 
   if (!panelDataIn) {
     return <Spinner />;
@@ -51,17 +59,19 @@ export function FanoutPanel({
   };
 
   return (
-    <div style={style}>
-      {groups.map((group, index) => {
-        const dataNode = new SceneDataNode({
-          data: {
-            ...panelDataIn,
-            series: group.frames,
-          },
-        });
-        return <VizPanelReact key={index} title={group.name} viz={viz} dataProvider={dataNode} />;
-      })}
-    </div>
+    <ElementSelectionContext.Provider value={selectionContext}>
+      <div style={style}>
+        {groups.map((group, index) => {
+          const dataNode = new SceneDataNode({
+            data: {
+              ...panelDataIn,
+              series: group.frames,
+            },
+          });
+          return <VizPanelReact key={index} title={group.name} viz={viz} dataProvider={dataNode} />;
+        })}
+      </div>
+    </ElementSelectionContext.Provider>
   );
 }
 
