@@ -321,7 +321,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	buildDir := filepath.Join(publicDir, "build")
 	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+	mockAssets := `{
 		"entrypoints": {
 		  "app": {
 			"assets": {
@@ -349,7 +349,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		  "integrity": "sha256-k1g7TksMHFQhhQGE"
 		}
 	  }
-	  `), 0o750)
+	  `
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(mockAssets), 0o750)
+	require.NoError(t, err)
+	// Also write the React 19 manifest so tests work regardless of the react19 feature flag state
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest-react19.json"), []byte(mockAssets), 0o750)
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
