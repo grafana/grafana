@@ -117,8 +117,10 @@ type recordingFolderMutator struct {
 	mu              sync.Mutex
 	deleted         []deletedFolder
 	finalizerRemove []string
+	stripped        []string
 	deleteErr       error
 	removeErr       error
+	stripErr        error
 	// notTerminating makes RemoveCascadeFinalizer report the folder as not terminating (no deletion
 	// timestamp), simulating a delete interrupted before the timestamp was set.
 	notTerminating bool
@@ -139,6 +141,13 @@ func (m *recordingFolderMutator) RemoveCascadeFinalizer(_ context.Context, _ str
 	}
 	m.finalizerRemove = append(m.finalizerRemove, name)
 	return true, m.removeErr
+}
+
+func (m *recordingFolderMutator) StripCascadeMetadata(_ context.Context, _ string, name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.stripped = append(m.stripped, name)
+	return m.stripErr
 }
 
 func (m *recordingFolderMutator) deletedNames() []string {
@@ -390,6 +399,39 @@ func TestCascadePoller_pollOnce(t *testing.T) {
 	require.Empty(t, mut.deletedNames())
 }
 
+func TestCascadePoller_drainTerminatingFolders(t *testing.T) {
+	// With the feature disabled, the drain strips finalizers from folders left terminating so they
+	// complete deletion; it must not cascade or issue any deletes.
+	term := []byte(folders.TerminatingLabelValue)
+	searcher := &mockFolderSearcher{
+		search: func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+			return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: terminatingLabelField, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "stuck-a", Resource: "folder"}, Cells: [][]byte{term}},
+					{Key: &resourcepb.ResourceKey{Name: "stuck-b", Resource: "folder"}, Cells: [][]byte{term}},
+				},
+			}}, nil
+		},
+	}
+	mut := &recordingFolderMutator{}
+	w := &CascadePoller{
+		orgs:            &fakeOrgLister{orgs: []*org.OrgDTO{{ID: 12}}},
+		namespaceMapper: func(int64) string { return "org-12" },
+		folderSearch:    searcher,
+		folderMutator:   mut,
+		log:             slog.Default(),
+	}
+
+	w.drainTerminatingFolders(context.Background())
+
+	require.ElementsMatch(t, []string{"stuck-a", "stuck-b"}, mut.stripped)
+	require.Empty(t, mut.finalizerRemove, "drain strips metadata unconditionally; it must not use the gated finalizer removal")
+	require.Empty(t, mut.deletedNames(), "drain only strips metadata; it must not issue deletes or cascade")
+}
+
 func newFakeFolderClient(t *testing.T, obj *unstructured.Unstructured) dynamic.NamespaceableResourceInterface {
 	t.Helper()
 	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
@@ -459,6 +501,38 @@ func TestDynamicFolderMutator_RemoveCascadeFinalizer(t *testing.T) {
 		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, []string{folders.CascadeDeleteFinalizer, "other.io/keep"}, got.GetFinalizers())
+	})
+}
+
+func TestDynamicFolderMutator_StripCascadeMetadata(t *testing.T) {
+	t.Run("removes the cascade finalizer and terminating label, keeps the rest", func(t *testing.T) {
+		obj := folderUnstructured("f", folders.CascadeDeleteFinalizer, "other.io/keep")
+		obj.SetLabels(map[string]string{folders.TerminatingLabel: folders.TerminatingLabelValue, "keep": "yes"})
+		client := newFakeFolderClient(t, obj)
+		mut := &dynamicFolderMutator{client: client}
+
+		require.NoError(t, mut.StripCascadeMetadata(context.Background(), "org-12", "f"))
+
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{"other.io/keep"}, got.GetFinalizers())
+		require.NotContains(t, got.GetLabels(), folders.TerminatingLabel)
+		require.Equal(t, "yes", got.GetLabels()["keep"])
+	})
+
+	t.Run("cleans a stray-labeled live folder (no deletion timestamp)", func(t *testing.T) {
+		obj := folderUnstructured("f", folders.CascadeDeleteFinalizer)
+		obj.SetLabels(map[string]string{folders.TerminatingLabel: folders.TerminatingLabelValue})
+		client := newFakeFolderClient(t, obj)
+		mut := &dynamicFolderMutator{client: client}
+
+		require.NoError(t, mut.StripCascadeMetadata(context.Background(), "org-12", "f"))
+
+		// The folder has no deletion timestamp, so it survives -- just cleaned of cascade metadata.
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Empty(t, got.GetFinalizers())
+		require.NotContains(t, got.GetLabels(), folders.TerminatingLabel)
 	})
 }
 

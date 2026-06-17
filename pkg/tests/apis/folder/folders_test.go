@@ -2724,3 +2724,50 @@ func TestIntegrationFolderCascadeDelete(t *testing.T) {
 	// The dashboard contained in child-b must have been deleted as part of the cascade, not orphaned.
 	require.False(t, dashboardExists(), "dashboard in a cascaded folder should have been deleted")
 }
+
+// TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled verifies that with the cascade
+// feature OFF, a folder still carrying the cascade finalizer (e.g. created while the feature was on,
+// before a restart that turned it off) can still be deleted: the storage wrapper strips the now
+// vestigial finalizer instead of leaving the folder stuck Terminating forever.
+func TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	// Cascade delete is disabled (no feature toggle).
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	// With the flag off, a freshly created folder has no cascade finalizer.
+	obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": "leftover"}}}
+	obj.SetName("leftover-finalizer")
+	created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotContains(t, created.GetFinalizers(), cascadeDeleteFinalizer)
+
+	// Simulate a folder created while the feature was enabled by stamping the finalizer onto it.
+	created.SetFinalizers(append(created.GetFinalizers(), cascadeDeleteFinalizer))
+	_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Deleting it must strip the vestigial finalizer and actually remove the folder, rather than
+	// leaving it stuck Terminating with nothing to drive the finalizer off.
+	require.NoError(t, client.Resource.Delete(ctx, "leftover-finalizer", metav1.DeleteOptions{}))
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := client.Resource.Get(ctx, "leftover-finalizer", metav1.GetOptions{})
+		assert.True(c, apierrors.IsNotFound(err), "folder should be deleted, not stuck terminating; got %v", err)
+	}, 10*time.Second, 200*time.Millisecond)
+}

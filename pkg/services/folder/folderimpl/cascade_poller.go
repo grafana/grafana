@@ -65,6 +65,11 @@ type folderMutator interface {
 	// label but never had its deletion timestamp set (a crashed/interrupted delete), and removing the
 	// finalizer would strand it alive forever. The caller resumes the delete instead.
 	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) (terminating bool, err error)
+	// StripCascadeMetadata unconditionally removes the cascade finalizer and terminating label. It is
+	// used by the flag-off drain: a terminating folder is then garbage-collected, and a folder left
+	// only labeled (no deletion timestamp) becomes an ordinary folder again with no stray label to
+	// mislead the poller if the feature is re-enabled.
+	StripCascadeMetadata(ctx context.Context, namespace, name string) error
 }
 
 // orgLister enumerates organizations; the poller searches each org once per tick.
@@ -166,11 +171,6 @@ func cascadeDeleteFlagEnabled(ctx context.Context) bool {
 
 // Run implements registry.BackgroundService.
 func (w *CascadePoller) Run(ctx context.Context) error {
-	if w.flagEnabled == nil || !w.flagEnabled(ctx) {
-		w.log.Debug("folder cascade poller disabled", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
-		return nil
-	}
-
 	restCfg, err := w.restConfig.GetRestConfig(ctx)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
@@ -187,6 +187,15 @@ func (w *CascadePoller) Run(ctx context.Context) error {
 
 	w.folderMutator = &dynamicFolderMutator{client: dyn.Resource(foldersv1.FolderResourceInfo.GroupVersionResource())}
 
+	// Feature disabled: the API server no longer drives cascades, but folders deleted while it was
+	// enabled may still be stuck Terminating with the finalizer and nothing to remove it. Drain those
+	// once (strip their finalizers so they complete), then stop -- no ongoing polling is needed.
+	if w.flagEnabled == nil || !w.flagEnabled(ctx) {
+		w.log.Info("folder cascade poller disabled; draining leftover terminating folders", "flag", featuremgmt.FlagKubernetesFolderCascadeDelete)
+		w.drainTerminatingFolders(ctx)
+		return nil
+	}
+
 	ticker := time.NewTicker(w.pollInterval)
 	defer ticker.Stop()
 
@@ -198,6 +207,41 @@ func (w *CascadePoller) Run(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			w.sweep(ctx)
+		}
+	}
+}
+
+// drainTerminatingFolders strips the cascade finalizer and terminating label from folders carrying
+// the terminating label when the feature is disabled. A genuinely terminating folder (with a
+// deletion timestamp) is then garbage-collected; a folder left only labeled becomes an ordinary
+// folder again, so no stray label remains to make the poller cascade it if the feature is later
+// re-enabled. This runs once at startup: with the feature off no new terminating folders appear.
+func (w *CascadePoller) drainTerminatingFolders(ctx context.Context) {
+	if w.folderMutator == nil {
+		return
+	}
+	orgs, err := w.orgs.Search(ctx, &org.SearchOrgsQuery{})
+	if err != nil {
+		w.log.Warn("folder cascade drain: list orgs failed", "error", err)
+		return
+	}
+	for _, o := range orgs {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		svcCtx := identity.WithServiceIdentityContext(ctx, o.ID)
+		names, err := searchTerminatingFolders(svcCtx, w.folderSearch, o.ID)
+		if err != nil {
+			w.log.Warn("folder cascade drain: search terminating folders failed", "orgID", o.ID, "error", err)
+			continue
+		}
+		ns := w.namespaceMapper(o.ID)
+		for _, name := range names {
+			if err := w.folderMutator.StripCascadeMetadata(svcCtx, ns, name); err != nil && !apierrors.IsNotFound(err) {
+				w.log.Warn("folder cascade drain: strip cascade metadata failed", "namespace", ns, "name", name, "error", err)
+			}
 		}
 	}
 }
@@ -466,6 +510,39 @@ func (d *dynamicFolderMutator) RemoveCascadeFinalizer(ctx context.Context, names
 		return err
 	})
 	return terminating, err
+}
+
+func (d *dynamicFolderMutator) StripCascadeMetadata(ctx context.Context, namespace, name string) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obj, err := d.client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		finalizers := obj.GetFinalizers()
+		remaining := make([]string, 0, len(finalizers))
+		for _, fin := range finalizers {
+			if fin != folders.CascadeDeleteFinalizer {
+				remaining = append(remaining, fin)
+			}
+		}
+
+		labels := obj.GetLabels()
+		_, hasLabel := labels[folders.TerminatingLabel]
+
+		// Nothing to strip.
+		if len(remaining) == len(finalizers) && !hasLabel {
+			return nil
+		}
+
+		obj.SetFinalizers(remaining)
+		if hasLabel {
+			delete(labels, folders.TerminatingLabel)
+			obj.SetLabels(labels)
+		}
+		_, err = d.client.Namespace(namespace).Update(ctx, obj, metav1.UpdateOptions{})
+		return err
+	})
 }
 
 // IsDisabled implements registry.CanBeDisabled.

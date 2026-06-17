@@ -24,20 +24,27 @@ import (
 // folder validation already prevents) can never spin forever.
 const maxCascadeMarkDepth = 100
 
-// finalizerStorage wraps a folder registry store and starts cascade deletion at delete time: it
-// stamps the cascade-delete finalizer and terminating label on the deleted folder, then kicks off
-// an asynchronous best-effort DFS that marks its subtree terminating. The cascade poller is the
-// source of truth for completion: it marks any still-unmarked children of terminating folders and
-// removes the finalizer once a folder has no children left. Legacy folders created before admission
-// defaulting may not have the finalizer until the first delete, and the terminating label is only
-// ever stamped here, on delete.
+// finalizerStorage wraps a folder registry store to manage the cascade-delete finalizer. It is
+// installed regardless of the feature flag, because folders created while the flag was on carry the
+// finalizer durably and something must always be able to take it off -- otherwise toggling the flag
+// off would strand those folders, unable to ever delete.
+//
+// When cascade is enabled, Delete starts cascade deletion: it stamps the cascade-delete finalizer
+// and terminating label on the deleted folder, then kicks off an asynchronous best-effort DFS that
+// marks its subtree terminating. The cascade poller is the source of truth for completion: it marks
+// any still-unmarked children of terminating folders and removes the finalizer once a folder has no
+// children left.
+//
+// When cascade is disabled, the finalizer is vestigial; Delete strips it (if present) before
+// deleting so the delete actually completes instead of hanging forever in Terminating.
 type finalizerStorage struct {
 	*registry.Store
-	searcher resourcepb.ResourceIndexClient
+	searcher       resourcepb.ResourceIndexClient
+	cascadeEnabled bool
 }
 
-func newFinalizerStorage(store *registry.Store, searcher resourcepb.ResourceIndexClient) *finalizerStorage {
-	return &finalizerStorage{Store: store, searcher: searcher}
+func newFinalizerStorage(store *registry.Store, searcher resourcepb.ResourceIndexClient, cascadeEnabled bool) *finalizerStorage {
+	return &finalizerStorage{Store: store, searcher: searcher, cascadeEnabled: cascadeEnabled}
 }
 
 func (s *finalizerStorage) Delete(
@@ -48,6 +55,17 @@ func (s *finalizerStorage) Delete(
 ) (runtime.Object, bool, error) {
 	// A dry-run must not mutate anything: pass straight through with the real validation.
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return s.Store.Delete(ctx, name, deleteValidation, options)
+	}
+
+	// Cascade disabled: the finalizer (stamped while the feature was on) is now vestigial and would
+	// otherwise block deletion forever, since nothing drives it to completion. Strip it, then delete
+	// normally. Stripping before the delete is crash-safe: a crash here leaves an ordinary,
+	// non-finalized folder rather than one stuck Terminating.
+	if !s.cascadeEnabled {
+		if err := removeTerminationMetadata(ctx, s.Store, name); err != nil && !apierrors.IsNotFound(err) {
+			return nil, false, err
+		}
 		return s.Store.Delete(ctx, name, deleteValidation, options)
 	}
 
@@ -164,7 +182,45 @@ func directChildFolders(ctx context.Context, searcher resourcepb.ResourceIndexCl
 // proceeds. The finalizer blocks physical removal until children are gone; the label is what
 // the cascade watcher selects on, so it must be present before the delete sets the deletion
 // timestamp and the folder enters the watcher's filtered set.
+//
+// It backfills a missing label even when the folder already has a deletion timestamp: the normal
+// flow stamps the label before the timestamp, but if a folder ends up terminating without the label
+// (e.g. manual edit or older data) the poller would never find it. applyTerminationMetadata no-ops
+// when nothing is missing, so the already-fully-stamped case stays a cheap read with no write.
 func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name string) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obj, err := store.Get(ctx, name, &metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		updated := obj.DeepCopyObject()
+		updatedAccessor, err := meta.Accessor(updated)
+		if err != nil {
+			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+		}
+		if !applyTerminationMetadata(updatedAccessor) {
+			return nil
+		}
+
+		_, _, err = store.Update(
+			ctx,
+			name,
+			rest.DefaultUpdatedObjectInfo(updated),
+			rest.ValidateAllObjectFunc,
+			rest.ValidateAllObjectUpdateFunc,
+			false,
+			&metav1.UpdateOptions{},
+		)
+		return err
+	})
+}
+
+// removeTerminationMetadata strips the cascade finalizer and terminating label from a folder if
+// present. It is used when the feature is disabled, so a folder that still carries the (now
+// vestigial) metadata can be deleted instead of hanging in Terminating, and so no stray terminating
+// label is left to mislead the poller if the feature is re-enabled. It is a no-op if neither is set.
+func removeTerminationMetadata(ctx context.Context, store folderGetUpdater, name string) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obj, err := store.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
@@ -176,9 +232,11 @@ func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name
 			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
 		}
 
-		// Already terminating: the delete that started termination already stamped the
-		// finalizer and terminating label, so there is nothing to add.
-		if accessor.GetDeletionTimestamp() != nil && !accessor.GetDeletionTimestamp().IsZero() {
+		finalizers := accessor.GetFinalizers()
+		labels := accessor.GetLabels()
+		hasFinalizer := hasCascadeFinalizer(finalizers)
+		hasLabel := labels[TerminatingLabel] == TerminatingLabelValue
+		if !hasFinalizer && !hasLabel {
 			return nil
 		}
 
@@ -187,8 +245,24 @@ func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
 		}
-		if !applyTerminationMetadata(updatedAccessor) {
-			return nil
+
+		if hasFinalizer {
+			remaining := make([]string, 0, len(finalizers))
+			for _, f := range finalizers {
+				if f != CascadeDeleteFinalizer {
+					remaining = append(remaining, f)
+				}
+			}
+			updatedAccessor.SetFinalizers(remaining)
+		}
+		if hasLabel {
+			newLabels := make(map[string]string, len(labels))
+			for k, v := range labels {
+				if k != TerminatingLabel {
+					newLabels[k] = v
+				}
+			}
+			updatedAccessor.SetLabels(newLabels)
 		}
 
 		_, _, err = store.Update(

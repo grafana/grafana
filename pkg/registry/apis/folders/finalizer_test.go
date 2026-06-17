@@ -141,16 +141,20 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 		require.Equal(t, TerminatingLabelValue, updated.Labels[TerminatingLabel])
 	})
 
-	t.Run("no update when the folder is already terminating", func(t *testing.T) {
+	t.Run("backfills a missing label even when the folder is already terminating", func(t *testing.T) {
+		// A terminating folder that somehow lost (or never got) the label would be invisible to the
+		// poller; ensureTerminationMetadata must still backfill it so the folder can be finalized.
 		now := metav1.NewTime(time.Now())
 		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
 			Name:              "f",
+			Finalizers:        []string{CascadeDeleteFinalizer},
 			DeletionTimestamp: &now,
 		}}}
 
 		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
 
-		require.Zero(t, store.updateCalls)
+		require.Equal(t, 1, store.updateCalls)
+		require.Equal(t, TerminatingLabelValue, store.obj.(*foldersv1.Folder).Labels[TerminatingLabel])
 	})
 
 	t.Run("no update when finalizer and label already present", func(t *testing.T) {
@@ -165,9 +169,69 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 		require.Zero(t, store.updateCalls)
 	})
 
+	t.Run("no update when already terminating and fully stamped", func(t *testing.T) {
+		now := metav1.NewTime(time.Now())
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:              "f",
+			Finalizers:        []string{CascadeDeleteFinalizer},
+			Labels:            map[string]string{TerminatingLabel: TerminatingLabelValue},
+			DeletionTimestamp: &now,
+		}}}
+
+		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+
+		require.Zero(t, store.updateCalls)
+	})
+
 	t.Run("propagates a get error", func(t *testing.T) {
 		store := &fakeFolderStore{getErr: errors.New("boom")}
 		require.Error(t, ensureTerminationMetadata(context.Background(), store, "f"))
+	})
+}
+
+func TestRemoveTerminationMetadata(t *testing.T) {
+	t.Run("removes the cascade finalizer and terminating label", func(t *testing.T) {
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:       "f",
+			Finalizers: []string{CascadeDeleteFinalizer, "other.io/keep"},
+			Labels:     map[string]string{TerminatingLabel: TerminatingLabelValue, "keep": "yes"},
+		}}}
+
+		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+
+		require.Equal(t, 1, store.updateCalls)
+		updated := store.obj.(*foldersv1.Folder)
+		require.Equal(t, []string{"other.io/keep"}, updated.Finalizers)
+		require.NotContains(t, updated.Labels, TerminatingLabel)
+		require.Equal(t, "yes", updated.Labels["keep"])
+	})
+
+	t.Run("removes a stray terminating label even without the finalizer", func(t *testing.T) {
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:   "f",
+			Labels: map[string]string{TerminatingLabel: TerminatingLabelValue},
+		}}}
+
+		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+
+		require.Equal(t, 1, store.updateCalls)
+		require.NotContains(t, store.obj.(*foldersv1.Folder).Labels, TerminatingLabel)
+	})
+
+	t.Run("no update when neither finalizer nor label is present", func(t *testing.T) {
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:       "f",
+			Finalizers: []string{"other.io/keep"},
+		}}}
+
+		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+
+		require.Zero(t, store.updateCalls)
+	})
+
+	t.Run("propagates a get error", func(t *testing.T) {
+		store := &fakeFolderStore{getErr: errors.New("boom")}
+		require.Error(t, removeTerminationMetadata(context.Background(), store, "f"))
 	})
 }
 

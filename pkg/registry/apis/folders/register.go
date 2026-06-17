@@ -203,10 +203,10 @@ func (b *FolderAPIBuilder) storageForVersion(
 	}
 	b.registerPermissionHooks(unified)
 	b.cascadeDeleteEnabled = kubernetesFolderCascadeDeleteEnabled(context.Background())
-	var st grafanarest.Storage = unified
-	if b.cascadeDeleteEnabled {
-		st = newFinalizerStorage(unified, b.searcher)
-	}
+	// Always wrap in finalizerStorage, even when cascade is disabled: folders created while it was
+	// enabled carry the finalizer durably, and the wrapper is what strips it so they can still be
+	// deleted. The wrapper gates cascade behavior on cascadeDeleteEnabled internally.
+	st := newFinalizerStorage(unified, b.searcher, b.cascadeDeleteEnabled)
 	b.storage = st
 
 	// This is the ST wrapper
