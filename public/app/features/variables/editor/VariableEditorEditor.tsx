@@ -79,7 +79,7 @@ export interface OwnProps {
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export const VariableEditorEditorUnConnected = memo(function VariableEditorEditorUnConnected({
+const VariableEditorEditorUnConnected = memo(function VariableEditorEditorUnConnected({
   identifier,
   editor,
   variable,

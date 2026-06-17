@@ -17,7 +17,7 @@ type Services = {
  * We use this separate context to provide a private service to internal code, compared to the restricted public API
  * provided by the `ScopesContext`.
  */
-export const ScopesServicesContext = createContext<Services | undefined>(undefined);
+const ScopesServicesContext = createContext<Services | undefined>(undefined);
 export function useScopesServices() {
   return useContext(ScopesServicesContext);
 }

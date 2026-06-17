@@ -224,8 +224,6 @@ module.exports = [
       'unicorn/no-empty-file': 'error',
       'no-constant-condition': 'error',
       '@grafana/define-feature-events': 'error',
-      '@grafana/t-plural-defaults': 'error',
-      '@grafana/trans-plural-defaults': 'error',
       '@grafana/no-plain-links': 'error',
       'react-hooks/exhaustive-deps': [
         'error',
@@ -410,6 +408,17 @@ module.exports = [
     files: ['public/app/features/alerting/unified/**/*.{ts,tsx}'],
     rules: {
       '@grafana/no-invalid-css-properties': 'error',
+    },
+  },
+  {
+    name: 'grafana/i18n-plural-defaults',
+    plugins: {
+      '@grafana/i18n': grafanaI18nPlugin,
+    },
+    files: ['**/*.{ts,tsx,js}'],
+    rules: {
+      '@grafana/i18n/t-plural-defaults': 'error',
+      '@grafana/i18n/trans-plural-defaults': 'error',
     },
   },
   {

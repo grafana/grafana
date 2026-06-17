@@ -167,7 +167,7 @@ export function isError<T>(state: AsyncState<unknown>): state is AsyncStateWithE
   return state.status === 'error';
 }
 
-export function isSuccess<T>(state: AsyncState<T>): state is AsyncStateFulfilled<T> {
+function isSuccess<T>(state: AsyncState<T>): state is AsyncStateFulfilled<T> {
   return state.status === 'success';
 }
 

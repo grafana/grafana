@@ -75,16 +75,16 @@ describe('useSelectionState', () => {
       expect(result.current.selectedQueryRefIds).toEqual(['C']);
     });
 
-    it('keeps the last selection when Cmd+clicking the only selected query', () => {
-      // Once a single item is in the bulk set, Cmd+clicking it should keep it so we never
-      // reach a "selection mode but nothing selected" state.
+    it('empties the selection when Cmd+clicking the only selected query', () => {
+      // Unchecking the last card is allowed: multi-select stays active with an empty set so the
+      // user can start a fresh selection without leaving the mode.
       const { result } = setup();
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
       expect(result.current.selectedQueryRefIds).toEqual(['A']);
 
       act(() => result.current.toggleQuerySelection({ refId: 'A' }, { multi: true }));
 
-      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+      expect(result.current.selectedQueryRefIds).toEqual([]);
     });
 
     it('does NOT call onClearSideEffects', () => {
@@ -249,14 +249,14 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
     });
 
-    it('keeps the last selection when Cmd+clicking the only selected transformation', () => {
+    it('empties the selection when Cmd+clicking the only selected transformation', () => {
       const { result } = setup();
       act(() => result.current.toggleTransformationSelection(mockTransformations[0]));
       expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
 
       act(() => result.current.toggleTransformationSelection(mockTransformations[0], { multi: true }));
 
-      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
+      expect(result.current.selectedTransformationIds).toEqual([]);
     });
   });
 
@@ -497,12 +497,42 @@ describe('useSelectionState', () => {
       expect(result.current.selectedTransformationIds).toEqual(['tx-2']);
     });
 
-    it('clears the active transformation when the active one is removed', () => {
+    it('promotes the first remaining transformation when the active one is removed', () => {
       const { result } = setup();
       act(() => result.current.activateTransformation(mockTransformations[1]));
       expect(result.current.activeTransformationId).toBe('tx-1');
       act(() => result.current.removeTransformationFromSelection('tx-1'));
+      // A real card stays active so multi-select can seed it on re-entry instead of falling
+      // back to the display-only card (which would be highlighted but unchecked).
+      expect(result.current.activeTransformationId).toBe('tx-0');
+      expect(result.current.activeQueryRefId).toBeNull();
+    });
+
+    it('promotes the first query when the last remaining transformation is removed', () => {
+      const { result } = setup({ ...defaultProps, transformations: [mockTransformations[0]] });
+      act(() => result.current.activateTransformation(mockTransformations[0]));
+      expect(result.current.activeTransformationId).toBe('tx-0');
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
       expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.activeQueryRefId).toBe('A');
+    });
+
+    it('leaves the active transformation untouched when a different one is removed', () => {
+      const { result } = setup();
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+    });
+
+    it('seeds the promoted card into multi-select after the active transformation is removed', () => {
+      const { result } = setup({ ...defaultProps, transformations: [mockTransformations[0]] });
+      act(() => result.current.activateTransformation(mockTransformations[0]));
+      act(() => result.current.removeTransformationFromSelection('tx-0'));
+      act(() => result.current.selectActiveInMultiSelection());
+      // The promoted query is checked, matching the highlighted card — no "selected but
+      // unchecked" state on multi-select re-entry.
+      expect(result.current.selectedTransformationIds).toEqual([]);
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
     });
 
     it('clears the anchor so a later Shift+Click no longer ranges from the removed transformation', () => {
@@ -516,14 +546,120 @@ describe('useSelectionState', () => {
   });
 
   describe('reconciling the active transformation with the list', () => {
-    it('clears the active transformation when it is removed from the transformations list', () => {
+    it('promotes the first remaining transformation when the active one is removed from the list', () => {
       const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
         initialProps: defaultProps,
       });
       act(() => result.current.activateTransformation(mockTransformations[1]));
       expect(result.current.activeTransformationId).toBe('tx-1');
       rerender({ ...defaultProps, transformations: mockTransformations.filter((t) => t.transformId !== 'tx-1') });
+      expect(result.current.activeTransformationId).toBe('tx-0');
+    });
+
+    it('promotes a surviving transformation after a delete reindexes the ids', () => {
+      // Transformation ids are `${configId}-${index}`, so deleting the first one reindexes the
+      // rest (organize-1 -> organize-0). The active id must follow the survivor, otherwise
+      // re-entering multi-select would seed nothing (highlighted-but-unchecked card).
+      const initial: Transformation[] = [
+        { transformId: 'reduce-0', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
+        { transformId: 'organize-1', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+      ];
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: { queries: [], transformations: initial },
+      });
+      act(() => result.current.activateTransformation(initial[0]));
+      expect(result.current.activeTransformationId).toBe('reduce-0');
+
+      // Delete reduce-0 and let the scene reindex the survivor to organize-0.
+      act(() => result.current.removeTransformationFromSelection('reduce-0'));
+      rerender({
+        queries: [],
+        transformations: [
+          { transformId: 'organize-0', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
+        ],
+      });
+
+      expect(result.current.activeTransformationId).toBe('organize-0');
+
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedTransformationIds).toEqual(['organize-0']);
+    });
+
+    it('falls back to the first query when all transformations are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      expect(result.current.activeQueryRefId).toBeNull();
+      rerender({ ...defaultProps, transformations: [] });
       expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.activeQueryRefId).toBe('A');
+    });
+
+    it('clears the active card when all transformations are removed and no queries exist', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: { ...defaultProps, queries: [] },
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      expect(result.current.activeTransformationId).toBe('tx-1');
+      rerender({ ...defaultProps, queries: [], transformations: [] });
+      expect(result.current.activeTransformationId).toBeNull();
+      expect(result.current.activeQueryRefId).toBeNull();
+    });
+
+    it('seeds the first query into multi-select after all transformations are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateTransformation(mockTransformations[1]));
+      rerender({ ...defaultProps, transformations: [] });
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedTransformationIds).toEqual([]);
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    });
+  });
+
+  describe('reconciling the active query with the list', () => {
+    it('falls back to the first remaining query when the active query is removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      act(() => result.current.activateQuery({ refId: 'B' }));
+      expect(result.current.activeQueryRefId).toBe('B');
+      rerender({ ...defaultProps, queries: mockQueries.filter((q) => q.refId !== 'B') });
+      expect(result.current.activeQueryRefId).toBe('A');
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('falls back to the first transformation when all queries are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      expect(result.current.activeQueryRefId).toBe('A');
+      rerender({ ...defaultProps, queries: [] });
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBe('tx-0');
+    });
+
+    it('clears the active card when all queries are removed and no transformations exist', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: { ...defaultProps, transformations: [] },
+      });
+      expect(result.current.activeQueryRefId).toBe('A');
+      rerender({ ...defaultProps, queries: [], transformations: [] });
+      expect(result.current.activeQueryRefId).toBeNull();
+      expect(result.current.activeTransformationId).toBeNull();
+    });
+
+    it('seeds the first transformation into multi-select after all queries are removed', () => {
+      const { result, rerender } = renderHook((props: UseSelectionStateOptions) => useSelectionState(props), {
+        initialProps: defaultProps,
+      });
+      rerender({ ...defaultProps, queries: [] });
+      act(() => result.current.selectActiveInMultiSelection());
+      expect(result.current.selectedQueryRefIds).toEqual([]);
+      expect(result.current.selectedTransformationIds).toEqual(['tx-0']);
     });
   });
 

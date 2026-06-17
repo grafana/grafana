@@ -682,7 +682,7 @@ export function EvaluationGroupCreationModal({
   );
 }
 
-export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,

@@ -124,7 +124,7 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(props: TProps) {
+const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(props: TProps) {
   const {
     setSpanNameColumnWidth,
     updateNextViewRangeTime,
