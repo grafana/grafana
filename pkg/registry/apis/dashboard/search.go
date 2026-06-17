@@ -570,7 +570,10 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, err, w)
+		// Map other gRPC statuses (e.g. ResourceExhausted -> 429, Unavailable -> 503)
+		// onto the right HTTP status; otherwise expected throttling/unavailable errors
+		// would surface as a generic 500.
+		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
 		return
 	}
 	if result.GetError() != nil {

@@ -126,6 +126,18 @@ func TestVectorSearch(t *testing.T) {
 		assert.Equal(t, http.StatusNotImplemented, rr.Result().StatusCode)
 	})
 
+	t.Run("maps gRPC status codes to HTTP statuses instead of 500", func(t *testing.T) {
+		cases := map[codes.Code]int{
+			codes.ResourceExhausted: http.StatusTooManyRequests,
+			codes.Unavailable:       http.StatusServiceUnavailable,
+		}
+		for code, wantStatus := range cases {
+			mockClient := &MockClient{VectorSearchErr: status.Error(code, "boom")}
+			rr := doRequest(newHandler(mockClient), "query=cpu")
+			assert.Equal(t, wantStatus, rr.Result().StatusCode, "grpc code %s", code)
+		}
+	})
+
 	t.Run("route is registered only when the feature toggle is enabled", func(t *testing.T) {
 		hasVectorRoute := func(features featuremgmt.FeatureToggles) bool {
 			h := SearchHandler{features: features}
