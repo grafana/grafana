@@ -417,4 +417,19 @@ describe('LogGroupsSelector', () => {
       })
     );
   });
+
+  it('resets unapplied log group selections after canceling', async () => {
+    render(<LogGroupsSelector {...defaultProps} />);
+
+    await userEvent.click(screen.getByText('Select log groups'));
+    expect(screen.getByLabelText('logGroup2')).not.toBeChecked();
+
+    await userEvent.click(screen.getByLabelText('logGroup2'));
+    expect(screen.getByLabelText('logGroup2')).toBeChecked();
+
+    await userEvent.click(screen.getByText('Cancel'));
+
+    await userEvent.click(screen.getByText('Select log groups'));
+    expect(screen.getByLabelText('logGroup2')).not.toBeChecked();
+  });
 });
