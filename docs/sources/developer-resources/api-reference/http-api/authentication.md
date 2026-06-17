@@ -25,7 +25,7 @@ aliases:
 
 Authentication options depend on whether you're using [Grafana on prem](#authentication-options-in-grafana-ossenterprise) or [Grafana Cloud](#authentication-options-in-grafana-cloud).
 
-To set up orgs, refer to the [X-Grafana-Org-Id header](#the-x-grafana-org-id-header) section.
+To set up organizations, refer to the [X-Grafana-Org-Id header](#the-x-grafana-org-id-header) section.
 
 ## Authentication options in Grafana OSS/Enterprise
 
