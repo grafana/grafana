@@ -1154,6 +1154,14 @@ type AnnotationAppPlatformSettings struct {
 	APIServerURL string
 }
 
+func (s AnnotationAppPlatformSettings) ProxyEnabled() bool {
+	return s.APIMigrationPhase == "proxy-writes" || s.APIMigrationPhase == "proxy-all"
+}
+
+func (s AnnotationAppPlatformSettings) ProxyAll() bool {
+	return s.APIMigrationPhase == "proxy-all"
+}
+
 func loadAnnotationAppPlatformSettings(cfg *ini.File) AnnotationAppPlatformSettings {
 	appPlatformSection := cfg.Section("annotations.app_platform")
 	return AnnotationAppPlatformSettings{

@@ -38,16 +38,10 @@ func (r *stubAnnotationsRepo) FindTags(_ context.Context, _ *annotations.TagsQue
 
 // fakeAnnotationProxy is a controllable fake for annotationProxy.
 type fakeAnnotationProxy struct {
-	enabled  bool
-	proxyAll bool
-	items    []*annotations.ItemDTO
-	err      error
-	called   bool // set when any proxy operation method is invoked
+	items  []*annotations.ItemDTO
+	err    error
+	called bool // set when any proxy operation method is invoked
 }
-
-func (f *fakeAnnotationProxy) Enabled() bool { return f.enabled }
-
-func (f *fakeAnnotationProxy) ProxyAll() bool { return f.proxyAll }
 
 func (f *fakeAnnotationProxy) List(_ context.Context, _ int64, _ *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	return f.items, f.err
@@ -82,6 +76,7 @@ func (f *fakeAnnotationProxy) Get(_ context.Context, _ int64, _ int64) (*annotat
 func TestFindAnnotations(t *testing.T) {
 	tests := []struct {
 		name        string
+		phase       string
 		proxy       annotationProxy
 		legacyItems []*annotations.ItemDTO
 		query       *annotations.ItemQuery
@@ -89,24 +84,25 @@ func TestFindAnnotations(t *testing.T) {
 	}{
 		{
 			name:        "proxy disabled - uses legacy",
-			proxy:       &fakeAnnotationProxy{enabled: false},
+			phase:       "off",
+			proxy:       &fakeAnnotationProxy{},
 			legacyItems: []*annotations.ItemDTO{{ID: 42}},
 			query:       &annotations.ItemQuery{OrgID: 1},
 			expectedIDs: []int64{42},
 		},
 		{
 			name:        "alert query bypasses proxy even when enabled",
-			proxy:       &fakeAnnotationProxy{enabled: true, items: []*annotations.ItemDTO{{ID: 10}}},
+			phase:       "proxy-writes",
+			proxy:       &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 10}}},
 			legacyItems: []*annotations.ItemDTO{{ID: 42}},
 			query:       &annotations.ItemQuery{OrgID: 1, Type: "alert"},
 			expectedIDs: []int64{42},
 		},
 		{
-			name: "proxy-writes: deduplicates overlapping IDs (2 not 3)",
+			name:  "proxy-writes: deduplicates overlapping IDs (2 not 3)",
+			phase: "proxy-writes",
 			proxy: &fakeAnnotationProxy{
-				enabled:  true,
-				proxyAll: false,
-				items:    []*annotations.ItemDTO{{ID: 10, TimeEnd: 20}, {ID: 42, TimeEnd: 5}},
+				items: []*annotations.ItemDTO{{ID: 10, TimeEnd: 20}, {ID: 42, TimeEnd: 5}},
 			},
 			legacyItems: []*annotations.ItemDTO{{ID: 42}},
 			query:       &annotations.ItemQuery{OrgID: 1},
@@ -114,7 +110,8 @@ func TestFindAnnotations(t *testing.T) {
 		},
 		{
 			name:        "proxy-all - new store only, legacy not queried",
-			proxy:       &fakeAnnotationProxy{enabled: true, proxyAll: true, items: []*annotations.ItemDTO{{ID: 10}}},
+			phase:       "proxy-all",
+			proxy:       &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 10}}},
 			legacyItems: []*annotations.ItemDTO{{ID: 42}},
 			query:       &annotations.ItemQuery{OrgID: 1},
 			expectedIDs: []int64{10},
@@ -123,7 +120,10 @@ func TestFindAnnotations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AnnotationAppPlatform.APIMigrationPhase = tt.phase
 			hs := &HTTPServer{
+				Cfg:                      cfg,
 				annotationMigrationProxy: tt.proxy,
 				annotationsRepo:          &stubAnnotationsRepo{findItems: tt.legacyItems},
 			}
@@ -143,25 +143,25 @@ func TestGetAnnotationByID_ProxyFallthrough(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		proxyAll   bool
+		phase      string
 		proxyErr   error
 		wantStatus int
 	}{
 		{
 			name:       "proxy-writes ErrNotFound falls through to legacy - 200",
-			proxyAll:   false,
+			phase:      "proxy-writes",
 			proxyErr:   annotationsapi.ErrNotFound,
 			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "proxy-all ErrNotFound returns 404 - no legacy fallback",
-			proxyAll:   true,
+			phase:      "proxy-all",
 			proxyErr:   annotationsapi.ErrNotFound,
 			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "proxy internal error returns 500 - no legacy fallback",
-			proxyAll:   false,
+			phase:      "proxy-writes",
 			proxyErr:   errors.New("unexpected"),
 			wantStatus: http.StatusInternalServerError,
 		},
@@ -169,8 +169,8 @@ func TestGetAnnotationByID_ProxyFallthrough(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			proxy := &fakeAnnotationProxy{enabled: true, proxyAll: tt.proxyAll, err: tt.proxyErr}
-			server := newProxyWriteServer(t, proxy)
+			proxy := &fakeAnnotationProxy{err: tt.proxyErr}
+			server := newProxyWriteServer(t, proxy, tt.phase)
 
 			req := webtest.RequestWithSignedInUser(
 				server.NewRequest(http.MethodGet, "/api/annotations/1", nil),
@@ -202,25 +202,25 @@ func TestAnnotationWriteHandlers_Proxy(t *testing.T) {
 		wantStatus int
 	}{
 		// POST /api/annotations
-		{name: "PostAnnotation: proxy succeeds - 200", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{enabled: true}, perm: createPerm, wantStatus: http.StatusOK},
-		{name: "PostAnnotation: proxy error - 500", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{enabled: true, err: errors.New("x")}, perm: createPerm, wantStatus: http.StatusInternalServerError},
+		{name: "PostAnnotation: proxy succeeds - 200", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{}, perm: createPerm, wantStatus: http.StatusOK},
+		{name: "PostAnnotation: proxy error - 500", method: http.MethodPost, path: "/api/annotations", body: `{"text":"hello"}`, proxy: &fakeAnnotationProxy{err: errors.New("x")}, perm: createPerm, wantStatus: http.StatusInternalServerError},
 		// PUT /api/annotations/1
-		{name: "UpdateAnnotation: proxy succeeds - 200", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true}, perm: writePerm, wantStatus: http.StatusOK},
-		{name: "UpdateAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true, err: annotationsapi.ErrNotFound}, perm: writePerm, wantStatus: http.StatusOK},
-		{name: "UpdateAnnotation: proxy error - 500", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true, err: errors.New("x")}, perm: writePerm, wantStatus: http.StatusInternalServerError},
+		{name: "UpdateAnnotation: proxy succeeds - 200", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{}, perm: writePerm, wantStatus: http.StatusOK},
+		{name: "UpdateAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{err: annotationsapi.ErrNotFound}, perm: writePerm, wantStatus: http.StatusOK},
+		{name: "UpdateAnnotation: proxy error - 500", method: http.MethodPut, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{err: errors.New("x")}, perm: writePerm, wantStatus: http.StatusInternalServerError},
 		// PATCH /api/annotations/1
-		{name: "PatchAnnotation: proxy succeeds - 200", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true, items: []*annotations.ItemDTO{{ID: 1}}}, perm: writePerm, wantStatus: http.StatusOK},
-		{name: "PatchAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true, err: annotationsapi.ErrNotFound}, perm: writePerm, wantStatus: http.StatusOK},
-		{name: "PatchAnnotation: proxy error - 500", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{enabled: true, err: errors.New("x")}, perm: writePerm, wantStatus: http.StatusInternalServerError},
+		{name: "PatchAnnotation: proxy succeeds - 200", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 1}}}, perm: writePerm, wantStatus: http.StatusOK},
+		{name: "PatchAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{err: annotationsapi.ErrNotFound}, perm: writePerm, wantStatus: http.StatusOK},
+		{name: "PatchAnnotation: proxy error - 500", method: http.MethodPatch, path: "/api/annotations/1", body: `{"text":"x"}`, proxy: &fakeAnnotationProxy{err: errors.New("x")}, perm: writePerm, wantStatus: http.StatusInternalServerError},
 		// DELETE /api/annotations/1
-		{name: "DeleteAnnotation: proxy succeeds - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{enabled: true}, perm: deletePerm, wantStatus: http.StatusOK},
-		{name: "DeleteAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{enabled: true, err: annotationsapi.ErrNotFound}, perm: deletePerm, wantStatus: http.StatusOK},
-		{name: "DeleteAnnotation: proxy error - 500", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{enabled: true, err: errors.New("x")}, perm: deletePerm, wantStatus: http.StatusInternalServerError},
+		{name: "DeleteAnnotation: proxy succeeds - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{}, perm: deletePerm, wantStatus: http.StatusOK},
+		{name: "DeleteAnnotation: ErrNotFound falls through to legacy - 200", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{err: annotationsapi.ErrNotFound}, perm: deletePerm, wantStatus: http.StatusOK},
+		{name: "DeleteAnnotation: proxy error - 500", method: http.MethodDelete, path: "/api/annotations/1", proxy: &fakeAnnotationProxy{err: errors.New("x")}, perm: deletePerm, wantStatus: http.StatusInternalServerError},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := newProxyWriteServer(t, tt.proxy)
+			server := newProxyWriteServer(t, tt.proxy, "proxy-writes")
 			var body io.Reader
 			if tt.body != "" {
 				body = strings.NewReader(tt.body)
@@ -239,12 +239,13 @@ func TestAnnotationWriteHandlers_Proxy(t *testing.T) {
 }
 
 // newProxyWriteServer sets up a test server with annotation ID 1 pre-saved for Update/Patch fallthrough paths.
-func newProxyWriteServer(t *testing.T, proxy annotationProxy) *webtest.Server {
+func newProxyWriteServer(t *testing.T, proxy annotationProxy, phase string) *webtest.Server {
 	t.Helper()
 	repo := annotationstest.NewFakeAnnotationsRepo()
 	require.NoError(t, repo.Save(context.Background(), &annotations.Item{ID: 1}))
 	return SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
+		hs.Cfg.AnnotationAppPlatform.APIMigrationPhase = phase
 		hs.annotationsRepo = repo
 		hs.annotationMigrationProxy = proxy
 	})

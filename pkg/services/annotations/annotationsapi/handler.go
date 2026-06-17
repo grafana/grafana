@@ -21,10 +21,8 @@ import (
 var ErrNotFound = errors.New("annotation not found in new store")
 
 // MigrationProxy routes annotation writes to the new API server.
-// When phase is "off" or api_server_url is empty, all methods are no-ops and callers fall back to legacy.
 type MigrationProxy struct {
 	client *annotationAPIClient
-	phase  string
 	logger log.Logger
 }
 
@@ -47,17 +45,8 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationPr
 
 	return &MigrationProxy{
 		client: c,
-		phase:  phase,
 		logger: log.New("annotationsapi"),
 	}, nil
-}
-
-func (h *MigrationProxy) Enabled() bool {
-	return h.client != nil && (h.phase == "proxy-writes" || h.phase == "proxy-all")
-}
-
-func (h *MigrationProxy) ProxyAll() bool {
-	return h.client != nil && h.phase == "proxy-all"
 }
 
 // List fetches annotations from the new store matching query and returns them as ItemDTOs.
