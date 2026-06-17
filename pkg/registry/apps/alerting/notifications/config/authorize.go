@@ -10,12 +10,13 @@ import (
 )
 
 // Authorize maps k8s verbs on Config (and its /status subresource) to RBAC
-// actions. Config is a system-owned per-org singleton, so the verb set is
-// deliberately narrow:
+// actions. Config is a per-org singleton:
 //   - get/list/watch → read (Viewer)
-//   - patch/update → update (Admin)
-//   - create → service identity only (the sync worker bootstraps the singleton
-//     and seeds .status on first sync; humans update the existing one)
+//   - create/patch/update → update (Admin). create is gated by the update
+//     permission (not rejected) because the singleton must be creatable via the
+//     API — and an upsert (PUT/apply to a missing object) is authorized by the
+//     apiserver as create. The singleton-name check lives in the admission
+//     validator, not here.
 //   - delete/deletecollection → always rejected (deleting the singleton would
 //     nuke every admin setting it carries; reset individual fields via update)
 //   - status writes → service identity only (sync worker owns it; see
@@ -43,15 +44,8 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		switch attr.GetVerb() {
 		case "get", "list", "watch":
 			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigRead)
-		case "patch", "update":
+		case "create", "patch", "update":
 			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingConfigUpdate)
-		case "create":
-			// The singleton is bootstrapped by the in-process sync worker; humans
-			// update the existing one rather than creating it.
-			if identity.IsServiceIdentity(ctx) {
-				return authorizer.DecisionAllow, "", nil
-			}
-			return authorizer.DecisionDeny, "Config is a singleton and cannot be created directly", nil
 		case "delete", "deletecollection":
 			return authorizer.DecisionDeny, "Config is a singleton and cannot be deleted", nil
 		default:

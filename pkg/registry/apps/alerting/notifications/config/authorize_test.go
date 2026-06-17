@@ -61,10 +61,6 @@ func ctxFor(t *testing.T, kind string) context.Context {
 }
 
 func TestAuthorize(t *testing.T) {
-	// The authorizer keys off the identity kind; guard the helpers' assumptions.
-	require.False(t, identity.IsServiceIdentity(ctxFor(t, idHuman)))
-	require.True(t, identity.IsServiceIdentity(ctxFor(t, idService)))
-
 	cases := []struct {
 		name        string
 		id          string
@@ -94,10 +90,10 @@ func TestAuthorize(t *testing.T) {
 		{name: "status patch permitted", id: idHuman, verb: "patch", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingConfigStatusUpdate, want: authorizer.DecisionAllow},
 		{name: "status create permitted", id: idHuman, verb: "create", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingConfigStatusUpdate, want: authorizer.DecisionAllow},
 
-		// create on the main resource is service-identity only, independent of RBAC
-		// (wantAction "" => the authorizer must not consult RBAC).
-		{name: "create denied for human", id: idHuman, verb: "create", rbac: true, want: authorizer.DecisionDeny},
-		{name: "create allowed for service", id: idService, verb: "create", rbac: false, want: authorizer.DecisionAllow},
+		// create is gated by the update permission: the singleton must be creatable
+		// via the API, and an upsert (PUT to a missing object) is authorized as create.
+		{name: "create permitted with update", id: idHuman, verb: "create", rbac: true, wantAction: accesscontrol.ActionAlertingConfigUpdate, want: authorizer.DecisionAllow},
+		{name: "create denied without update", id: idHuman, verb: "create", rbac: false, wantAction: accesscontrol.ActionAlertingConfigUpdate, want: authorizer.DecisionDeny},
 
 		// delete/deletecollection are always rejected (destructive on a singleton).
 		{name: "delete denied", id: idService, verb: "delete", rbac: true, want: authorizer.DecisionDeny},
