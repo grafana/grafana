@@ -9,8 +9,11 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+var searchFieldLogger = log.New("search-field-hash")
 
 // SearchCapability identifies what a search field can be used for at query
 // time. The set is intentionally small and orthogonal; combinations produce
@@ -325,11 +328,17 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 		payload = append(payload, hashableVersion{Version: v, Fields: fields})
 	}
 
-	// json.Marshal on a slice of structs with no maps and no float NaN/Inf
-	// cannot error in practice; we still discard the error explicitly to be
-	// safe — returning "" forces a rebuild rather than masking a problem.
+	// json.Marshal can only return a non-nil error for inputs it cannot
+	// encode — cyclic graphs, channels/funcs, float NaN/Inf, or types with a
+	// failing MarshalJSON. payload is a slice of structs whose fields are
+	// strings, bools, and slices of strings, none of which can produce any of
+	// those failure modes today. The branch below is defensive: if a future
+	// change introduces a type that can fail, returning "" silently disables
+	// the search-field-change rebuild trigger for this kind — the log line
+	// is the only way an operator would notice.
 	blob, err := json.Marshal(payload)
 	if err != nil {
+		searchFieldLogger.Error("failed to marshal canonical search fields for hashing", "group", group, "resource", resource, "err", err)
 		return ""
 	}
 	sum := sha256.Sum256(blob)

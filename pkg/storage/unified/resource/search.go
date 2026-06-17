@@ -1527,6 +1527,13 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	// capabilities, EmitZeroIfAbsent, CopyFromStandard) has changed since the
 	// index was built. Rebuild so documents are re-extracted with the new
 	// declarations.
+	//
+	// An empty expected hash means "no opinion" for this kind: either no
+	// SearchFieldsProvider is registered today, or the running binary doesn't
+	// supply hashes yet. In that case we leave the stored hash alone (mirrors
+	// the SelectableFields semantics, which only triggers a rebuild on added
+	// fields). The stored hash gets refreshed naturally on the next rebuild
+	// triggered by another condition.
 	if expectedSearchFieldsHash != "" && expectedSearchFieldsHash != buildInfo.SearchFieldsHash {
 		if rebuildLogger != nil {
 			rebuildLogger.Info("search field metadata changed since the index was built, rebuilding the index")
