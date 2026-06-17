@@ -64,6 +64,9 @@ type IndexViewData struct {
 
 	// Feature flag for reducing the usage of Bootdata
 	ReduceBootdataAPI bool
+
+	// Feature flag for the new preferences page
+	NewPreferencesPage bool
 }
 
 // Templates setup.
@@ -137,6 +140,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
+	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -153,6 +157,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
 		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
 		ReduceBootdataAPI:                     reduceBootdataAPI,
+		NewPreferencesPage:                    newPreferencesPage,
 		BootScript:                            p.bootScript,
 	}
 

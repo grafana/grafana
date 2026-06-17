@@ -179,8 +179,11 @@
       [[end]]
 
       [[if .ReduceBootdataAPI]]
-        // TODO add comment
         window.__grafanaReduceBootdataAPI = true;
+      [[end]]
+
+      [[if .NewPreferencesPage]]
+        window.__grafanaNewPreferencesPage = true;
       [[end]]
 
       window.__grafanaPublicDashboardAccessToken = [[.PublicDashboardAccessToken]];

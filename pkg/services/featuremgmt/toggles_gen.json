@@ -2415,14 +2415,16 @@
     {
       "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781704114797",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "expression": "false"
       }
     },
