@@ -173,11 +173,11 @@ const chunkBudgetTolerance = 32 * 1024
 // the chunked path with a tiny budget and asserts: a clean response, a resource
 // table holding the latest non-deleted version per name (matching a non-chunked
 // run), and >1 commit per phase with no commit exceeding budget. Non-sqlite only
-// (run with GRAFANA_TEST_DB=mysql).
+// (run with GRAFANA_TEST_DB=mysql or postgres).
 func TestIntegrationBulkChunkedCorrectnessAndBudget(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	if db.IsTestDbSQLite() {
-		t.Skip("chunked path is non-sqlite only; run with GRAFANA_TEST_DB=mysql")
+		t.Skip("chunked path is non-sqlite only; run with GRAFANA_TEST_DB=mysql or postgres")
 	}
 	t.Cleanup(db.CleanupTestDB)
 
@@ -300,7 +300,7 @@ func (it *killAfterKBatchIterator) Request() *resourcepb.BulkRequest { return it
 func TestIntegrationBulkChunkedKillMidMigrationThenRestart(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	if db.IsTestDbSQLite() {
-		t.Skip("chunked path is non-sqlite only; run with GRAFANA_TEST_DB=mysql")
+		t.Skip("chunked path is non-sqlite only; run with GRAFANA_TEST_DB=mysql or postgres")
 	}
 	t.Cleanup(db.CleanupTestDB)
 
