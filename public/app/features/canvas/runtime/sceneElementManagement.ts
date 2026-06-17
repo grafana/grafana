@@ -57,7 +57,7 @@ export const reorderElements = (src: ElementState, dest: ElementState, dragToGap
 
 // Reorders canvas elements
 const updateElements = (src: ElementState, dest: FrameState | RootElement, idx: number | null = null) => {
-  src.parent?.doAction(LayerActionID.Delete, src);
+  src.parent?.removeElement(src);
   src.parent = dest;
 
   const elementContainer = src.div?.getBoundingClientRect();
@@ -115,8 +115,13 @@ export const frameSelection = (scene: Scene) => {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       element.setPlacementFromConstraint(elementContainer, framePlacement as DOMRect);
-      currentLayer.doAction(LayerActionID.Delete, element);
-      newLayer.doAction(LayerActionID.Duplicate, element, false, false);
+      currentLayer.removeElement(element);
+      const framedCopy = newLayer.doAction(LayerActionID.Duplicate, element, false, false);
+      // Duplicate re-points byName at the original element (for connection stability); the
+      // framed copy is the one that stays in the scene, so point byName at it instead.
+      if (framedCopy) {
+        scene.byName.set(element.options.name, framedCopy);
+      }
     });
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

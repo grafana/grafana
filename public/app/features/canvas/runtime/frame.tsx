@@ -27,6 +27,39 @@ function removeFromByName(element: ElementState, scene: Scene) {
   }
 }
 
+function clearSceneReferences(element: ElementState, scene: Scene, replacementParent: FrameState) {
+  const subtree: ElementState[] = [element];
+  for (let i = 0; i < subtree.length; i++) {
+    const el = subtree[i];
+    if (scene.connections.connectionSource === el) {
+      scene.connections.connectionSource = undefined;
+    }
+    if (scene.connections.connectionTarget === el) {
+      scene.connections.connectionTarget = undefined;
+    }
+    if (scene.tooltipPayload?.element === el) {
+      scene.tooltipPayload = undefined;
+    }
+    if (scene.currentLayer === el) {
+      scene.currentLayer = replacementParent;
+    }
+    if (el instanceof FrameState) {
+      for (const child of el.elements) {
+        subtree.push(child);
+      }
+    }
+  }
+}
+
+function clearConnectionsForSubtree(element: ElementState, scene: Scene) {
+  updateConnectionsForSource(element, scene);
+  if (element instanceof FrameState) {
+    for (const child of element.elements) {
+      clearConnectionsForSubtree(child, scene);
+    }
+  }
+}
+
 export const frameItemDummy: CanvasElementItem = {
   id: 'frame',
   name: 'Frame',
@@ -125,14 +158,32 @@ export class FrameState extends ElementState {
     setTimeout(() => initMoveable(true, this.scene.isEditingEnabled, this.scene));
   }
 
+  removeElement(element: ElementState) {
+    const index = this.elements.indexOf(element);
+    if (index >= 0) {
+      this.elements.splice(index, 1);
+    }
+    updateConnectionsForSource(element, this.scene);
+  }
+
   // ??? or should this be on the element directly?
   // are actions scoped to layers?
   doAction = (action: LayerActionID, element: ElementState, updateName = true, shiftItemsOnDuplicate = true) => {
     switch (action) {
       case LayerActionID.Delete:
-        this.elements = this.elements.filter((e) => e !== element);
-        updateConnectionsForSource(element, this.scene);
+        this.removeElement(element);
+        // removeElement already cleared this element's incoming connections; clear its
+        // descendants' too. Do this while the subtree is still in scene.byName — updateState()
+        // rebuilds connection state from byName, so descendants must be removed from it last.
+        if (element instanceof FrameState) {
+          for (const child of element.elements) {
+            clearConnectionsForSubtree(child, this.scene);
+          }
+        }
         removeFromByName(element, this.scene);
+        clearSceneReferences(element, this.scene, this);
+        element.destroy();
+        this.scene.targetsToSelect.clear();
         this.scene.save();
         this.reinitializeMoveable();
         break;
@@ -241,7 +292,7 @@ export class FrameState extends ElementState {
         setTimeout(() => {
           this.scene.targetsToSelect.add(copy.div!);
         });
-        break;
+        return copy;
       case LayerActionID.MoveTop:
       case LayerActionID.MoveBottom:
         element.parent?.doMove(element, action);
@@ -251,6 +302,8 @@ export class FrameState extends ElementState {
         console.log('DO action', action, element);
         return;
     }
+
+    return;
   };
 
   renderElement() {
@@ -274,5 +327,14 @@ export class FrameState extends ElementState {
       ...this.options,
       elements: this.elements.map((v) => v.getSaveModel()),
     };
+  }
+
+  destroy() {
+    for (const child of this.elements) {
+      child.destroy();
+    }
+    this.elements = [];
+    this.options.elements = [];
+    super.destroy();
   }
 }
