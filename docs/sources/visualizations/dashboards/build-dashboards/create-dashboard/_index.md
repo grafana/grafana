@@ -470,7 +470,7 @@ To manage dashboard elements, follow these steps:
    - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
    - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
 
-1. In the top-corner of the sidebar, do one of the following:
+1. At the top of the sidebar, do one of the following:
    - Click **Copy**.
    - Click **Duplicate**. The duplicated element is added next to the original one. Proceed to step 6.
    - Click **Delete** and then confirm you want to delete the control. Proceed to step 7.
