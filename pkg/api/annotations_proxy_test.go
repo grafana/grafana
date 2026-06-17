@@ -12,10 +12,13 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -111,12 +114,20 @@ func TestFindAnnotations(t *testing.T) {
 			expectedIDs: []int64{10, 42},
 		},
 		{
-			name:        "proxy-all - new store only, legacy not queried",
+			name:        "proxy-all type=annotation - new store only, no legacy",
+			phase:       "proxy-all",
+			proxy:       &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 10}}},
+			legacyItems: []*annotations.ItemDTO{{ID: 42}},
+			query:       &annotations.ItemQuery{OrgID: 1, Type: "annotation"},
+			expectedIDs: []int64{10},
+		},
+		{
+			name:        "proxy-all no type - merges alert annotations from legacy",
 			phase:       "proxy-all",
 			proxy:       &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 10}}},
 			legacyItems: []*annotations.ItemDTO{{ID: 42}},
 			query:       &annotations.ItemQuery{OrgID: 1},
-			expectedIDs: []int64{10},
+			expectedIDs: []int64{10, 42},
 		},
 	}
 
@@ -140,6 +151,37 @@ func TestFindAnnotations(t *testing.T) {
 	}
 }
 
+func TestFindAnnotations_UserIDResolution(t *testing.T) {
+	makeFindHS := func(t *testing.T, svc *usertest.FakeUserService) *HTTPServer {
+		t.Helper()
+		cfg := setting.NewCfg()
+		cfg.AnnotationAppPlatform.APIMigrationPhase = "proxy-writes"
+		return &HTTPServer{
+			Cfg:                      cfg,
+			annotationMigrationProxy: &fakeAnnotationProxy{items: []*annotations.ItemDTO{{ID: 10}}},
+			annotationsRepo:          &stubAnnotationsRepo{},
+			userService:              svc,
+			log:                      log.New("test"),
+		}
+	}
+
+	t.Run("userId resolved to userUID", func(t *testing.T) {
+		svc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 5, UID: "user-uid-abc"}}
+		query := &annotations.ItemQuery{OrgID: 1, UserID: 5}
+		_, err := makeFindHS(t, svc).findAnnotations(context.Background(), query)
+		require.NoError(t, err)
+		require.Equal(t, "user-uid-abc", query.UserUID)
+	})
+
+	t.Run("userId lookup failure - proceeds without createdBy filter", func(t *testing.T) {
+		svc := &usertest.FakeUserService{ExpectedError: errors.New("not found")}
+		query := &annotations.ItemQuery{OrgID: 1, UserID: 5}
+		_, err := makeFindHS(t, svc).findAnnotations(context.Background(), query)
+		require.NoError(t, err)
+		require.Empty(t, query.UserUID)
+	})
+}
+
 func TestGetAnnotationByID_ProxyFallthrough(t *testing.T) {
 	readPerm := accesscontrol.Permission{Action: accesscontrol.ActionAnnotationsRead, Scope: accesscontrol.ScopeAnnotationsAll}
 
@@ -156,10 +198,10 @@ func TestGetAnnotationByID_ProxyFallthrough(t *testing.T) {
 			wantStatus: http.StatusOK,
 		},
 		{
-			name:       "proxy-all ErrNotFound returns 404 - no legacy fallback",
+			name:       "proxy-all ErrNotFound falls through to legacy - 200",
 			phase:      "proxy-all",
 			proxyErr:   annotationsapi.ErrNotFound,
-			wantStatus: http.StatusNotFound,
+			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "proxy internal error returns 500 - no legacy fallback",

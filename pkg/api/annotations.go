@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -103,25 +104,51 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 func (hs *HTTPServer) findAnnotations(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	isAlertQuery := query.Type == "alert" || query.AlertID != 0 || query.AlertUID != ""
-	if hs.Cfg.AnnotationAppPlatform.ProxyEnabled() && !isAlertQuery {
-		newItems, err := hs.annotationMigrationProxy.List(ctx, query.OrgID, query)
-		if err != nil {
-			return nil, err
-		}
-
-		if hs.Cfg.AnnotationAppPlatform.ProxyAll() {
-			return newItems, nil
-		}
-
-		legacyItems, err := hs.annotationsRepo.Find(ctx, query)
-		if err != nil {
-			return nil, err
-		}
-
-		return annotationsapi.Merge(newItems, legacyItems, query.Limit), nil
+	if !hs.Cfg.AnnotationAppPlatform.ProxyEnabled() || isAlertQuery {
+		return hs.annotationsRepo.Find(ctx, query)
 	}
 
-	return hs.annotationsRepo.Find(ctx, query)
+	hs.resolveUserUID(ctx, query)
+
+	newItems, err := hs.annotationMigrationProxy.List(ctx, query.OrgID, query)
+	if err != nil {
+		return nil, err
+	}
+
+	if hs.Cfg.AnnotationAppPlatform.ProxyAll() {
+		if query.Type == "annotation" {
+			return newItems, nil
+		}
+		// new API doesn't serve alert annotations; fetch from legacy and merge
+		alertQuery := *query
+		alertQuery.Type = "alert"
+		alertItems, err := hs.annotationsRepo.Find(ctx, &alertQuery)
+		if err != nil {
+			return nil, err
+		}
+		return annotationsapi.Merge(newItems, alertItems, query.Limit), nil
+	}
+
+	legacyItems, err := hs.annotationsRepo.Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return annotationsapi.Merge(newItems, legacyItems, query.Limit), nil
+}
+
+// resolveUserUID populates query.UserUID from query.UserID when only the legacy integer ID is set.
+// The new annotation store filters by UID; without this, createdBy filtering is silently skipped.
+func (hs *HTTPServer) resolveUserUID(ctx context.Context, query *annotations.ItemQuery) {
+	if query.UserID == 0 || query.UserUID != "" {
+		return
+	}
+	u, err := hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.UserID})
+	if err != nil {
+		hs.log.Warn("failed to resolve user UID for annotation createdBy filter, proceeding without filter", "userID", query.UserID, "err", err)
+		return
+	}
+	query.UserUID = u.UID
 }
 
 type AnnotationError struct {
@@ -585,10 +612,7 @@ func (hs *HTTPServer) GetAnnotationByID(c *contextmodel.ReqContext) response.Res
 		if !errors.Is(err, annotationsapi.ErrNotFound) {
 			return proxyErrResponse("Failed to get annotation", err)
 		}
-		if hs.Cfg.AnnotationAppPlatform.ProxyAll() {
-			return response.Error(http.StatusNotFound, "Annotation not found", err)
-		}
-		// ErrNotFound in proxy-writes: fall through to legacy (pre-migration record)
+		// ErrNotFound: fall through to legacy (pre-migration record or alert annotation)
 	}
 
 	annotation, resp := findAnnotationByID(c.Req.Context(), hs.annotationsRepo, annotationID, c.SignedInUser)
