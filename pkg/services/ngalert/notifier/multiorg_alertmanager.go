@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -408,6 +409,10 @@ func (syncBypassAuthz) AuthorizeDelete(context.Context, identity.Requester, stri
 	return nil
 }
 
+func (syncBypassAuthz) AuthorizePromote(context.Context, identity.Requester, merge.MergeResult) error {
+	return nil
+}
+
 // syncExternalAMConfigForOrgs runs the external Alertmanager fetch for each
 // non-disabled org whose Alertmanager instance has already been created, and
 // persists any changed configs via SaveAndApplyExtraConfiguration.
@@ -441,7 +446,7 @@ func (moa *MultiOrgAlertmanager) syncExternalAMConfigForOrgs(ctx context.Context
 		// External sync is system-driven, so we use a service identity and a no-op
 		// authz: there is no end-user request to authorize against.
 		svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
-		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/); err != nil {
+		if _, err := moa.SaveAndApplyExtraConfiguration(svcCtx, orgID, svcUser, syncBypassAuthz{}, *ec, false /*replace*/, false /*dryRun*/, false /*promote*/); err != nil {
 			reason := classifySyncError(err)
 			moa.logger.Warn("Failed to save external AM configuration", "org_id", orgID, "reason", reason, "error", err)
 			moa.metrics.ExternalAMConfigSyncFailures.WithLabelValues(fmt.Sprintf("%d", orgID), reason).Inc()

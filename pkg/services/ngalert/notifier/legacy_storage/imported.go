@@ -149,5 +149,19 @@ func (e ImportedConfigRevision) GetInhibitRules() (map[v1.ResourceUID]v1.Inhibit
 		return nil, nil
 	}
 
-	return merge.BuildManagedInhibitionRules(e.identifier, importedRules, models.ProvenanceConvertedPrometheus)
+	// provide the existing inhibition rules from the config so the merged resources names are stable
+	merged, addedUIOs, err := merge.MergeInhibitionRules(e.rev.Config.InhibitionRules, importedRules, e.identifier)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[v1.ResourceUID]v1.InhibitionRule, len(addedUIOs))
+	for _, uio := range addedUIOs {
+		m, ok := merged[v1.ResourceUID(uio)]
+		if !ok {
+			continue
+		}
+		m.Provenance = models.ProvenanceConvertedPrometheus
+		result[v1.ResourceUID(uio)] = m
+	}
+	return result, nil
 }

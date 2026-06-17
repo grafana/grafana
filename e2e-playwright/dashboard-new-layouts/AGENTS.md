@@ -11,11 +11,11 @@ All page objects live in `page-objects/` and are re-exported from `page-objects/
 | Class              | File                          | UI Region                                                              | Key Methods / Getters                                                                                                                                                                                               |
 | ------------------ | ----------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `PageObject`       | `PageObject.ts`               | _(abstract base — not used directly)_                                  | Shared constructor (`page`, `dashboardPage`, `selectors`)                                                                                                                                                           |
-| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`                                                                                                                                                                                                   |
+| `Controls`         | `Controls.ts`                 | Top nav bar (edit, save, ...)                                          | `enterEditMode()`, `exitEditMode()`                                                                                                                                                                                 |
 | `Sidebar`          | `sidebar/Sidebar.ts`          | Whole sidebar region (toolbar + open pane)                             | `.toolbar`, `.addOptions`, `.dashboardOptions`, `.panelOptions`, `.contentOutline` sub-objects; `getContainer()`, `clickGoBackButton()`, `getDockToggle()`, `clickCloseButton()`, `clickDeleteButton({ confirm? })` |
 | `Toolbar`          | `sidebar/Toolbar.ts`          | Icon strip — accessed via `sidebar.toolbar`                            | `getButton(name)`, `clickButton(name)`, `getVisibilityToggle()`                                                                                                                                                     |
 | `AddOptions`       | `sidebar/AddOptions.ts`       | "Add" pane (default pane on new dashboards) — via `sidebar.addOptions` | `clickNewPanelButton()`                                                                                                                                                                                             |
-| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `clickItem(name)`                                                                                                                                                                                                   |
+| `ContentOutline`   | `sidebar/ContentOutline.ts`   | Content outline pane — via `sidebar.contentOutline`                    | `getTree()`, `clickItem(name)`, `toggleNode(name)`                                                                                                                                                                  |
 | `DashboardOptions` | `sidebar/DashboardOptions.ts` | Dashboard options pane — via `sidebar.dashboardOptions`                | `getTitleInput()`, `getDescriptionTextarea()`                                                                                                                                                                       |
 | `PanelOptions`     | `sidebar/PanelOptions.ts`     | Panel options pane — via `sidebar.panelOptions`                        | `getTitleInput()`, `setTitle(title)`, `getDescriptionTextarea()`, `toggleTransparentBackground()`                                                                                                                   |
 | `Panel`            | `Panel.ts`                    | A dashboard panel in the edit canvas                                   | `getContainerByTitle()`, `getHeaderByTitle()`, `selectByTitle(title \| titles[])`, `deselectAll()`, `clickMenuItem(panelTitle, menuPath[])`                                                                         |
@@ -136,16 +136,39 @@ await expect(titleInput).toHaveValue(newTitle);
 
 ## Migration Status
 
-| Spec                                              | Status      |
-| ------------------------------------------------- | ----------- |
-| `dashboards-title-description.spec.ts`            | Migrated    |
-| `dashboards-edit-panel-title-description.spec.ts` | Migrated    |
-| `dashboards-edit-panel-transparent-bg.spec.ts`    | Migrated    |
-| `dashboard-mobile-sidebar.spec.ts`                | Migrated    |
-| `dashboard-hide-sidebar.spec.ts`                  | Migrated    |
-| `dashboards-remove-panel.spec.ts`                 | Migrated    |
-| `dashboard-duplicate-panel.spec.ts`               | Migrated    |
-| `dashboard-sidepane.spec.ts`                      | Migrated    |
-| 18 remaining specs                                | Not started |
+**9 of 30 specs migrated.** Non-migrated specs are listed by descending selectors usage count (a rough proxy for migration effort). "Selectors usage count" is the number of times the spec accesses the `selectors` object (`selectors.components...`, `selectors.pages...`, etc.).
+
+| Spec                                                  | Status      | Lines of code | Selectors usage count |
+| ----------------------------------------------------- | ----------- | ------------- | --------------------- |
+| `dashboards-title-description.spec.ts`                | Migrated    | —             | —                     |
+| `dashboards-edit-panel-title-description.spec.ts`     | Migrated    | —             | —                     |
+| `dashboards-edit-panel-transparent-bg.spec.ts`        | Migrated    | —             | —                     |
+| `dashboard-mobile-sidebar.spec.ts`                    | Migrated    | —             | —                     |
+| `dashboard-hide-sidebar.spec.ts`                      | Migrated    | —             | —                     |
+| `dashboards-remove-panel.spec.ts`                     | Migrated    | —             | —                     |
+| `dashboard-duplicate-panel.spec.ts`                   | Migrated    | —             | —                     |
+| `dashboard-sidepane.spec.ts`                          | Migrated    | —             | —                     |
+| `dashboard-outline.spec.ts`                           | Migrated    | —             | —                     |
+| `dashboard-group-panels.spec.ts`                      | Not started | 918           | 224                   |
+| `dashboards-repeats-tabs-layout.spec.ts`              | Not started | 482           | 74                    |
+| `dashboards-repeats-custom-grid.spec.ts`              | Not started | 551           | 70                    |
+| `dashboards-panel-layouts.spec.ts`                    | Not started | 425           | 70                    |
+| `dashboards-repeats-auto-grid.spec.ts`                | Not started | 471           | 66                    |
+| `dashboard-repeats-row-layout.spec.ts`                | Not started | 546           | 61                    |
+| `dashboards-conditional-rendering.spec.ts`            | Not started | 308           | 53                    |
+| `dashboards-add-panel.spec.ts`                        | Not started | 134           | 27                    |
+| `dashboards-edit-variables.spec.ts`                   | Not started | 204           | 26                    |
+| `dashboards-edit-custom-variables.spec.ts`            | Not started | 213           | 22                    |
+| `dashboard-tabs-scroll.spec.ts`                       | Not started | 150           | 12                    |
+| `dashboards-repeats-snapshots.spec.ts`                | Not started | 117           | 11                    |
+| `dashboards-move-panel.spec.ts`                       | Not started | 120           | 9                     |
+| `dashboard-conditional-rendering-load-change.spec.ts` | Not started | 459           | 8                     |
+| `dashboards-edit-query-variables.spec.ts`             | Not started | 83            | 6                     |
+| `dashboard-keybindings.spec.ts`                       | Not started | 60            | 6                     |
+| `dashboards-edit-adhoc-variables.spec.ts`             | Not started | 96            | 4                     |
+| `dashboards-edit-group-by-variables.spec.ts`          | Not started | 89            | 4                     |
+| `dashboards-edit-datasource-variables.spec.ts`        | Not started | 62            | 4                     |
+| `dashboard-url-syncing.spec.ts`                       | Not started | 128           | 3                     |
+| `dashboard-tabs-drag-drop.spec.ts`                    | Not started | 75            | 2                     |
 
 See [`_page_objects_strategy.md`](./_page_objects_strategy.md) for the full migration plan.

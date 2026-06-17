@@ -19,7 +19,7 @@ import { labelsMatchMatchers, matcherToMatcherField } from '../utils/alertmanage
 import { Annotation } from '../utils/constants';
 import { isCloudRulesSource } from '../utils/datasource';
 import { fuzzyFilter } from '../utils/fuzzySearch';
-import { parseMatcher, parsePromQLStyleMatcherLoose } from '../utils/matchers';
+import { parseMatcher, parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import {
   getRuleHealth,
   isPluginProvidedRule,
@@ -66,7 +66,7 @@ export function useRulesFilter() {
       dataSource: queryParams.get('dataSource') ?? undefined,
       alertState: queryParams.get('alertState') ?? undefined,
       ruleType: queryParams.get('ruleType') ?? undefined,
-      labels: parsePromQLStyleMatcherLoose(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
+      labels: parsePromQLStyleMatcherLooseSafe(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
     const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));

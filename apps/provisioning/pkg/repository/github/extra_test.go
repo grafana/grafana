@@ -169,6 +169,37 @@ func TestExtra_Build(t *testing.T) {
 			},
 		},
 		{
+			name: "skip webhook setup when webhookDisabled is true",
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-repo",
+					Namespace: "default",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
+				},
+			},
+			setupDecrypter: func() repository.Decrypter {
+				return func(r *provisioning.Repository) repository.SecureValues {
+					return &mockSecureValues{
+						token: common.RawSecureValue("test-token"),
+					}
+				}
+			},
+			// The builder must not be called when webhookDisabled is set, so no expectations.
+			setupWebhook: func(t *testing.T, repo *provisioning.Repository) github.WebhookURLBuilder {
+				return github.NewMockWebhookURLBuilder(t)
+			},
+			validateResult: func(t *testing.T, repo repository.Repository) {
+				assert.NotNil(t, repo)
+			},
+		},
+		{
 			name: "skip webhook setup when URL is empty",
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{

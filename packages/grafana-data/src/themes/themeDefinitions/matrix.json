@@ -27,6 +27,9 @@
     "secondary": {
       "text": "#008910"
     },
+    "accent": {
+      "main": "#008910"
+    },
     "gradients": {
       "brandVertical": "linear-gradient(0deg, #008910 0%, #00ff41 100%)",
       "brandHorizontal": "linear-gradient(90deg, #008910 0%, #00ff41 100%)"

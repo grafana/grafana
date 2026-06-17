@@ -117,22 +117,19 @@ SELECT DISTINCT hostname FROM cpu WHERE region = '$region'
 
 If you have a variable containing key names, you can use it in a **GROUP BY** clause. This allows you to adjust the grouping by selecting from the variable list at the top of the dashboard.
 
-## Use **Ad hoc filters**
+## Use filters
 
-InfluxDB supports the **Ad hoc filters** variable type for InfluxQL. This variable type allows you to define multiple key/value filters, which Grafana automatically applies to all your InfluxDB queries. **Ad hoc filters** also support expressions.
+InfluxDB supports the use of filters for InfluxQL. They allow you to define multiple key/value filters, which Grafana automatically applies to all your InfluxDB queries. Filters also support expressions.
 
-To add **Ad hoc filters**:
+To add filters:
 
 1. Navigate to **Dashboard settings** > **Variables**.
-1. Click **Add variable**.
-1. Select **Ad hoc filters** as the variable type.
+1. Click the **Add new element** icon (blue plus sign).
+1. Click **Filter and Group by**.
+1. Enter a **Name** for the filter.
 1. Select your InfluxDB data source.
 
-<!-- vale Grafana.Spelling = NO -->
-
-For more information, refer to [Add free-form filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
-
-<!-- vale Grafana.Spelling = YES -->
+For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 
 ## Choose a variable syntax
 

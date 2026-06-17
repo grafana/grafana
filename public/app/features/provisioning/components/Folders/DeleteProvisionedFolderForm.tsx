@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Box, Button, Stack } from '@grafana/ui';
+import { Button, Stack } from '@grafana/ui';
 import {
   type Job,
   type RepositoryView,
   useDeleteRepositoryFilesWithPathMutation,
 } from 'app/api/clients/provisioning/v0alpha1';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
@@ -23,7 +23,7 @@ import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 
@@ -179,19 +179,22 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
             <Stack direction="column" gap={2}>
-              <Box paddingBottom={2}>
-                <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
-                  This will delete this folder and all its descendants. In total, this will affect:
-                </Trans>
-                <DescendantCount
-                  selectedItems={{
-                    folder: { [resourceId]: true },
-                    dashboard: {},
-                    panel: {},
-                    $all: false,
-                  }}
-                />
-              </Box>
+              <AffectedFolderContents
+                selectedItems={{ folder: { [resourceId]: true }, dashboard: {} }}
+                defaultMessage={
+                  <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.delete-warning">
+                    This will delete this folder and all its descendants.
+                  </Trans>
+                }
+                emptyMessage={t(
+                  'browse-dashboards.delete-provisioned-folder-form.folder-empty',
+                  'Selected folder is empty'
+                )}
+                nonEmptyMessage={t(
+                  'browse-dashboards.delete-provisioned-folder-form.folder-not-empty',
+                  'Selected folder contains other resources that will be deleted'
+                )}
+              />
 
               <ResourceEditFormSharedFields
                 resourceType="folder"
@@ -221,31 +224,31 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
 }
 
 export function DeleteProvisionedFolderForm({ parentFolder, onDismiss }: DeleteProvisionedFolderFormProps) {
-  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo } = useProvisionedFolderFormData({
-    folderUid: parentFolder?.uid,
-    title: parentFolder?.title,
-  });
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.delete-folder.read-only-message',
-          'To delete this folder, please remove the folder from your repository.'
-        )}
-      />
-    );
-  }
+  const { canPushToConfiguredBranch, repository, initialValues, isReadOnlyRepo, isMissingRepo, isLoading } =
+    useProvisionedFolderFormData({
+      folderUid: parentFolder?.uid,
+      title: parentFolder?.title,
+    });
 
   return (
-    <FormContent
-      parentFolder={parentFolder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.delete-folder.read-only-message',
+        'To delete this folder, please remove the folder from your repository.'
+      )}
+    >
+      {initialValues && (
+        <FormContent
+          parentFolder={parentFolder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }
