@@ -136,15 +136,15 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 			Namespace: namespace,
 		},
 		Spec: iamv0alpha1.UserSpec{
-			Login:         strings.ToLower(cmd.Login),
-			Email:         strings.ToLower(cmd.Email),
-			Title:         cmd.Name,
-			GrafanaAdmin:  cmd.IsAdmin,
-			Disabled:      cmd.IsDisabled,
-			EmailVerified: cmd.EmailVerified,
-			Provisioned:   cmd.IsProvisioned,
-			Role:          role,
-			AuthLabels:    toAuthLabels(cmd.AuthLabels),
+			Login:            strings.ToLower(cmd.Login),
+			Email:            strings.ToLower(cmd.Email),
+			Title:            cmd.Name,
+			GrafanaAdmin:     cmd.IsAdmin,
+			Disabled:         cmd.IsDisabled,
+			EmailVerified:    cmd.EmailVerified,
+			Provisioned:      cmd.IsProvisioned,
+			Role:             role,
+			ExternalAuthInfo: toExternalAuthInfo(cmd.ExternalAuthInfo),
 		},
 	}
 
@@ -431,8 +431,8 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	if cmd.OrgRole != nil {
 		existing.Spec.Role = *cmd.OrgRole
 	}
-	if cmd.AuthLabels != nil {
-		existing.Spec.AuthLabels = toAuthLabels(cmd.AuthLabels)
+	if cmd.ExternalAuthInfo != nil {
+		existing.Spec.ExternalAuthInfo = toExternalAuthInfo(cmd.ExternalAuthInfo)
 	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
@@ -798,53 +798,53 @@ func toUserProfileDTO(u *iamv0alpha1.User, orgID int64) *user.UserProfileDTO {
 		IsProvisioned:  u.Spec.Provisioned,
 		UpdatedAt:      u.GetUpdateTimestamp(),
 		CreatedAt:      u.CreationTimestamp.Time,
-		AuthModules:    authModules(u.Spec.AuthLabels),
+		AuthModules:    authModules(u.Spec.ExternalAuthInfo),
 	}
 }
 
 func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 	return &user.User{
-		ID:            getUserID(u),
-		UID:           u.Name,
-		OrgID:         orgID,
-		Login:         u.Spec.Login,
-		Email:         u.Spec.Email,
-		Name:          u.Spec.Title,
-		IsAdmin:       u.Spec.GrafanaAdmin,
-		IsDisabled:    u.Spec.Disabled,
-		EmailVerified: u.Spec.EmailVerified,
-		IsProvisioned: u.Spec.Provisioned,
-		OrgRole:       u.Spec.Role,
-		Created:       u.CreationTimestamp.Time,
-		Updated:       u.GetUpdateTimestamp(),
-		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),
-		AuthLabels:    fromAuthLabels(u.Spec.AuthLabels),
+		ID:               getUserID(u),
+		UID:              u.Name,
+		OrgID:            orgID,
+		Login:            u.Spec.Login,
+		Email:            u.Spec.Email,
+		Name:             u.Spec.Title,
+		IsAdmin:          u.Spec.GrafanaAdmin,
+		IsDisabled:       u.Spec.Disabled,
+		EmailVerified:    u.Spec.EmailVerified,
+		IsProvisioned:    u.Spec.Provisioned,
+		OrgRole:          u.Spec.Role,
+		Created:          u.CreationTimestamp.Time,
+		Updated:          u.GetUpdateTimestamp(),
+		LastSeenAt:       time.Unix(u.Status.LastSeenAt, 0),
+		ExternalAuthInfo: fromExternalAuthInfo(u.Spec.ExternalAuthInfo),
 	}
 }
 
-func toAuthLabels(in []user.AuthLabelInfo) []iamv0alpha1.UserAuthLabel {
+func toExternalAuthInfo(in []user.ExternalAuthInfo) []iamv0alpha1.UserExternalAuthInfo {
 	if len(in) == 0 {
 		return nil
 	}
-	out := make([]iamv0alpha1.UserAuthLabel, 0, len(in))
+	out := make([]iamv0alpha1.UserExternalAuthInfo, 0, len(in))
 	for _, l := range in {
-		label := iamv0alpha1.UserAuthLabel{Module: l.Module, AuthID: l.AuthID}
+		info := iamv0alpha1.UserExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
 		if l.ExternalUID != "" {
 			externalUID := l.ExternalUID
-			label.ExternalUID = &externalUID
+			info.ExternalUID = &externalUID
 		}
-		out = append(out, label)
+		out = append(out, info)
 	}
 	return out
 }
 
-func fromAuthLabels(in []iamv0alpha1.UserAuthLabel) []user.AuthLabelInfo {
+func fromExternalAuthInfo(in []iamv0alpha1.UserExternalAuthInfo) []user.ExternalAuthInfo {
 	if len(in) == 0 {
 		return nil
 	}
-	out := make([]user.AuthLabelInfo, 0, len(in))
+	out := make([]user.ExternalAuthInfo, 0, len(in))
 	for _, l := range in {
-		info := user.AuthLabelInfo{Module: l.Module, AuthID: l.AuthID}
+		info := user.ExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
 		if l.ExternalUID != nil {
 			info.ExternalUID = *l.ExternalUID
 		}
@@ -853,7 +853,7 @@ func fromAuthLabels(in []iamv0alpha1.UserAuthLabel) []user.AuthLabelInfo {
 	return out
 }
 
-func authModules(in []iamv0alpha1.UserAuthLabel) []string {
+func authModules(in []iamv0alpha1.UserExternalAuthInfo) []string {
 	if len(in) == 0 {
 		return nil
 	}

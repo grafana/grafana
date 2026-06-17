@@ -6196,7 +6196,7 @@
           }
         ]
       },
-      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserAuthLabel": {
+      "com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo": {
         "type": "object",
         "required": [
           "module",
@@ -6272,17 +6272,6 @@
           "role"
         ],
         "properties": {
-          "authLabels": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserAuthLabel"
-                }
-              ]
-            }
-          },
           "disabled": {
             "type": "boolean",
             "default": false
@@ -6294,6 +6283,17 @@
           "emailVerified": {
             "type": "boolean",
             "default": false
+          },
+          "externalAuthInfo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.iam.pkg.apis.iam.v0alpha1.UserExternalAuthInfo"
+                }
+              ]
+            }
           },
           "grafanaAdmin": {
             "type": "boolean",

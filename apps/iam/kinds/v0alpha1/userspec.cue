@@ -9,5 +9,5 @@ UserSpec: {
 	title:         string
 	provisioned:   bool
 	role:          string
-	authLabels?: [...AuthLabel]
+	externalAuthInfo?: [...ExternalAuthInfo]
 }

@@ -83,7 +83,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		TeamSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
 		TeamTeamMember{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_TeamTeamMember(ref),
 		User{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_User(ref),
-		UserAuthLabel{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_UserAuthLabel(ref),
+		UserExternalAuthInfo{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref),
 		UserList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserList(ref),
 		UserSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
 		UserStatus{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
@@ -3273,7 +3273,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 	}
 }
 
-func schema_pkg_apis_iam_v0alpha1_UserAuthLabel(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_iam_v0alpha1_UserExternalAuthInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3416,14 +3416,14 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 							Format:  "",
 						},
 					},
-					"authLabels": {
+					"externalAuthInfo": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(UserAuthLabel{}.OpenAPIModelName()),
+										Ref:     ref(UserExternalAuthInfo{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3434,7 +3434,7 @@ func schema_pkg_apis_iam_v0alpha1_UserSpec(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			UserAuthLabel{}.OpenAPIModelName()},
+			UserExternalAuthInfo{}.OpenAPIModelName()},
 	}
 }
 

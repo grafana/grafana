@@ -5630,7 +5630,7 @@
           }
         ]
       },
-      "UserAuthLabel": {
+      "UserExternalAuthInfo": {
         "type": "object",
         "required": ["module", "authID"],
         "properties": {
@@ -5691,17 +5691,6 @@
         "type": "object",
         "required": ["disabled", "email", "emailVerified", "grafanaAdmin", "login", "title", "provisioned", "role"],
         "properties": {
-          "authLabels": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/UserAuthLabel"
-                }
-              ]
-            }
-          },
           "disabled": {
             "type": "boolean",
             "default": false
@@ -5713,6 +5702,17 @@
           "emailVerified": {
             "type": "boolean",
             "default": false
+          },
+          "externalAuthInfo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UserExternalAuthInfo"
+                }
+              ]
+            }
           },
           "grafanaAdmin": {
             "type": "boolean",

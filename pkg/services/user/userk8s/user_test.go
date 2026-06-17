@@ -120,12 +120,12 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name:           "maps auth labels into the user spec",
+			name:           "maps external auth info into the user spec",
 			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
 				Login: "jdoe",
 				Email: "jdoe@example.com",
-				AuthLabels: []user.AuthLabelInfo{
+				ExternalAuthInfo: []user.ExternalAuthInfo{
 					{Module: "authproxy", AuthID: "jdoe"},
 					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
 				},
@@ -133,13 +133,13 @@ func TestUserK8sService_Create(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				var sent v0alpha1.User
 				_ = json.NewDecoder(r.Body).Decode(&sent)
-				if assert.Len(t, sent.Spec.AuthLabels, 2) {
-					assert.Equal(t, "authproxy", sent.Spec.AuthLabels[0].Module)
-					assert.Equal(t, "jdoe", sent.Spec.AuthLabels[0].AuthID)
-					assert.Nil(t, sent.Spec.AuthLabels[0].ExternalUID, "empty externalUID should be omitted")
-					assert.Equal(t, "oauth_github", sent.Spec.AuthLabels[1].Module)
-					if assert.NotNil(t, sent.Spec.AuthLabels[1].ExternalUID) {
-						assert.Equal(t, "ext-123", *sent.Spec.AuthLabels[1].ExternalUID)
+				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
+					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.ExternalAuthInfo[1].ExternalUID)
 					}
 				}
 
@@ -159,7 +159,7 @@ func TestUserK8sService_Create(t *testing.T) {
 				OrgID: 1,
 				Login: "jdoe",
 				Email: "jdoe@example.com",
-				AuthLabels: []user.AuthLabelInfo{
+				ExternalAuthInfo: []user.ExternalAuthInfo{
 					{Module: "authproxy", AuthID: "jdoe"},
 					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
 				},
@@ -341,7 +341,7 @@ func TestUserK8sService_Create(t *testing.T) {
 			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
 			assert.Equal(t, tt.expectUser.IsProvisioned, result.IsProvisioned)
 			assert.Equal(t, tt.expectUser.Created.UTC(), result.Created.UTC())
-			assert.Equal(t, tt.expectUser.AuthLabels, result.AuthLabels)
+			assert.Equal(t, tt.expectUser.ExternalAuthInfo, result.ExternalAuthInfo)
 		})
 	}
 }
@@ -1178,11 +1178,11 @@ func TestUserK8sService_Update(t *testing.T) {
 			},
 		},
 		{
-			name:           "updates auth labels",
+			name:           "updates external auth info",
 			requesterOrgID: 1,
 			cmd: &user.UpdateUserCommand{
 				UserID: 7,
-				AuthLabels: []user.AuthLabelInfo{
+				ExternalAuthInfo: []user.ExternalAuthInfo{
 					{Module: "authproxy", AuthID: "jdoe"},
 					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
 				},
@@ -1212,13 +1212,13 @@ func TestUserK8sService_Update(t *testing.T) {
 				}
 				var sent v0alpha1.User
 				_ = json.NewDecoder(r.Body).Decode(&sent)
-				if assert.Len(t, sent.Spec.AuthLabels, 2) {
-					assert.Equal(t, "authproxy", sent.Spec.AuthLabels[0].Module)
-					assert.Equal(t, "jdoe", sent.Spec.AuthLabels[0].AuthID)
-					assert.Nil(t, sent.Spec.AuthLabels[0].ExternalUID, "empty externalUID should be omitted")
-					assert.Equal(t, "oauth_github", sent.Spec.AuthLabels[1].Module)
-					if assert.NotNil(t, sent.Spec.AuthLabels[1].ExternalUID) {
-						assert.Equal(t, "ext-123", *sent.Spec.AuthLabels[1].ExternalUID)
+				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
+					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.ExternalAuthInfo[1].ExternalUID)
 					}
 				}
 
