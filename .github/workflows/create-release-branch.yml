@@ -1,0 +1,194 @@
+# Cuts a new minor release branch off main. Grafana developers can no longer create
+# release branches by hand, so this workflow is the supported way to do it. For an
+# incoming minor (main at X.Y.0-pre) it:
+#   - creates release-X.Y.0 on grafana/grafana with package.json pinned to X.Y.0
+#   - opens a PR bumping main to the next minor pre-release (X.(Y+1).0-pre)
+#   - creates release-X.Y.0 on grafana/grafana-enterprise (no version files to bump there)
+name: Create release branch
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Compute the bumps and log them, but don't push branches or open the PR"
+        required: false
+        default: false
+        type: boolean
+
+permissions: {}
+
+jobs:
+  setup:
+    name: Compute versions
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+    outputs:
+      release_version: ${{ steps.versions.outputs.release_version }}
+      next_version: ${{ steps.versions.outputs.next_version }}
+      release_branch: ${{ steps.versions.outputs.release_branch }}
+    steps:
+      - uses: actions/checkout@v5
+      # Derive everything from main's current version. main sits at the next minor's
+      # pre-release (e.g. 13.1.0-pre); dropping the -pre suffix gives the version being
+      # cut (13.1.0), and bumping the minor gives main's new pre-release (13.2.0-pre).
+      - id: versions
+        run: |
+          CURRENT=$(jq -r .version package.json)
+          RELEASE_VERSION=${CURRENT%%-*}
+          IFS=. read -r MAJOR MINOR _PATCH <<< "$RELEASE_VERSION"
+          NEXT_VERSION="${MAJOR}.$((MINOR + 1)).0-pre"
+          {
+            echo "release_version=$RELEASE_VERSION"
+            echo "next_version=$NEXT_VERSION"
+            echo "release_branch=release-${RELEASE_VERSION}"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  create_release_branch_grafana:
+    name: Create release branch (Grafana)
+    needs: setup
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      RELEASE_BRANCH: ${{ needs.setup.outputs.release_branch }}
+      RELEASE_VERSION: ${{ needs.setup.outputs.release_version }}
+    steps:
+      # grafana/grafana is too large for GitHub's pre-receive workflow-file scan to finish
+      # within its timeout, so every push is rejected with "workflows scope may be required"
+      # unless the token has workflows:write. grafana-writer is the only app installed with
+      # that scope; commits go through the Git Data API via kminehart/ghcommit-action so
+      # they're auto-signed under grafana-writer[bot]'s identity.
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ steps.get-writer-app-token.outputs.token }}
+      - name: Update package.json versions
+        uses: ./pkg/build/actions/bump-version
+        with:
+          version: ${{ env.RELEASE_VERSION }}
+      - run: git --no-pager diff --stat
+      # Cut the branch at main's current HEAD, then commit the version pin onto it. The
+      # branch is brand new, so the change goes straight in (no PR to review against).
+      - if: ${{ !inputs.dry_run }}
+        name: Create release branch at main HEAD
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: |
+          BASE_SHA=$(git rev-parse HEAD)
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${RELEASE_BRANCH}" \
+            -f "sha=${BASE_SHA}"
+      - if: ${{ !inputs.dry_run }}
+        name: Commit version pin to release branch
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        with:
+          commit_message: "Release: set version to ${{ env.RELEASE_VERSION }}"
+          repo: ${{ github.repository }}
+          branch: ${{ env.RELEASE_BRANCH }}
+          file_pattern: "**"
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+
+  bump_main:
+    name: Bump main to next minor
+    # Only advance main once the release branches have actually been cut. If either
+    # branch-cut job fails (ref already exists, token misconfigured, ghcommit-action
+    # fails after the ref was created), main must not be moved to the next pre-release.
+    needs:
+      - setup
+      - create_release_branch_grafana
+      - create_release_branch_enterprise
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+    env:
+      NEXT_VERSION: ${{ needs.setup.outputs.next_version }}
+      RELEASE_BRANCH: ${{ needs.setup.outputs.release_branch }}
+      RUN_ID: ${{ github.run_id }}
+    steps:
+      - name: Get GitHub App token (writer)
+        id: get-writer-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-writer
+          permission_set: release-writer-main
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ steps.get-writer-app-token.outputs.token }}
+      - name: Update package.json versions
+        uses: ./pkg/build/actions/bump-version
+        with:
+          version: ${{ env.NEXT_VERSION }}
+      - run: |
+          git --no-pager diff --stat
+          echo "WORK_BRANCH=bump-version/${RUN_ID}/${NEXT_VERSION}" | tee -a "$GITHUB_ENV"
+      - if: ${{ !inputs.dry_run }}
+        name: Pre-create branch on remote
+        env:
+          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+        run: |
+          BASE_SHA=$(git rev-parse HEAD)
+          gh api "repos/${GITHUB_REPOSITORY}/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${WORK_BRANCH}" \
+            -f "sha=${BASE_SHA}"
+      - if: ${{ !inputs.dry_run }}
+        name: Commit bump-version changes
+        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        with:
+          commit_message: "Release: bump version to ${{ env.NEXT_VERSION }}"
+          repo: ${{ github.repository }}
+          branch: ${{ env.WORK_BRANCH }}
+          file_pattern: "**"
+        env:
+          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
+      - if: ${{ !inputs.dry_run }}
+        name: Create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            -l "type/ci" \
+            -l "no-changelog" \
+            -B "main" \
+            -H "$WORK_BRANCH" \
+            --title "Release: bump version to ${NEXT_VERSION}" \
+            --body "Bumps main to ${NEXT_VERSION} after cutting ${RELEASE_BRANCH}."
+
+  create_release_branch_enterprise:
+    name: Create release branch (Grafana Enterprise)
+    needs: setup
+    runs-on: ubuntu-arm64-small
+    permissions:
+      id-token: write
+    env:
+      RELEASE_BRANCH: ${{ needs.setup.outputs.release_branch }}
+    steps:
+      - name: Get GitHub App token (enterprise)
+        id: get-enterprise-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
+          permission_set: writer-enterprise-main
+      # grafana-enterprise has no package.json/version to bump — it just needs a release
+      # branch cut at the head of its default branch.
+      - if: ${{ !inputs.dry_run }}
+        name: Create release branch on grafana-enterprise
+        env:
+          GH_TOKEN: ${{ steps.get-enterprise-app-token.outputs.token }}
+        run: |
+          DEFAULT_BRANCH=$(gh api repos/grafana/grafana-enterprise --jq '.default_branch')
+          BASE_SHA=$(gh api "repos/grafana/grafana-enterprise/git/ref/heads/${DEFAULT_BRANCH}" --jq '.object.sha')
+          gh api "repos/grafana/grafana-enterprise/git/refs" \
+            --method POST \
+            -f "ref=refs/heads/${RELEASE_BRANCH}" \
+            -f "sha=${BASE_SHA}"

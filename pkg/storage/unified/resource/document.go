@@ -308,6 +308,19 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		return
 	}
 	for _, def := range defs {
+		if def.CopyFromStandard != StandardFieldUnknown {
+			if v, ok := standardFieldValue(doc, def.CopyFromStandard); ok {
+				if doc.Fields == nil {
+					doc.Fields = make(map[string]any)
+				}
+				doc.Fields[def.Name] = v
+			} else {
+				s.log.Warn("unknown CopyFromStandard target",
+					"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+					"field", def.Name, "target", def.CopyFromStandard)
+			}
+			continue
+		}
 		if def.Path == "" {
 			continue
 		}
@@ -319,6 +332,13 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 			continue
 		}
 		if raw == nil {
+			if !def.EmitZeroIfAbsent {
+				continue
+			}
+			if doc.Fields == nil {
+				doc.Fields = make(map[string]any)
+			}
+			doc.Fields[def.Name] = zeroValueForFieldDefinition(def)
 			continue
 		}
 		coerced, ok := coerceToFieldShape(raw, def.Type, def.Array)
@@ -334,6 +354,48 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		}
 		doc.Fields[def.Name] = coerced
 	}
+}
+
+// standardFieldValue returns the value of a top-level IndexableDocument field
+// referenced by CopyFromStandard. The set of supported targets is closed and
+// matches the StandardField* constants in search_field.go.
+func standardFieldValue(doc *IndexableDocument, target StandardField) (any, bool) {
+	switch target {
+	case StandardFieldCreated:
+		return doc.Created, true
+	case StandardFieldUpdated:
+		return doc.Updated, true
+	case StandardFieldCreatedBy:
+		return doc.CreatedBy, true
+	case StandardFieldUpdatedBy:
+		return doc.UpdatedBy, true
+	case StandardFieldUnknown:
+		return nil, false
+	}
+	return nil, false
+}
+
+// zeroValueForFieldDefinition returns the type-appropriate zero value for a
+// declared field. Used when Path resolves to nil and EmitZeroIfAbsent is set,
+// so the indexed document still carries the field. Returns nil for unknown
+// types so the caller drops the field instead of indexing a typeless value.
+func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
+	if def.Array {
+		return []any{}
+	}
+	switch def.Type {
+	case SearchFieldTypeBoolean:
+		return false
+	case SearchFieldTypeInt64:
+		return int64(0)
+	case SearchFieldTypeDouble:
+		return float64(0)
+	case SearchFieldTypeString, SearchFieldTypeDate:
+		return ""
+	case SearchFieldTypeUnknown:
+		return nil
+	}
+	return nil
 }
 
 // gvrForLookup resolves the GroupVersionResource the provider should be

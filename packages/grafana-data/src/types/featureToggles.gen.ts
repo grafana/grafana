@@ -1186,7 +1186,7 @@ export interface FeatureToggles {
   favoriteDatasources?: boolean;
   /**
   * New Log Context component
-  * @default false
+  * @default true
   */
   newLogContext?: boolean;
   /**

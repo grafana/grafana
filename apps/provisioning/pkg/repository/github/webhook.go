@@ -21,16 +21,14 @@ import (
 
 var subscribedEvents = []string{"pull_request", "push"} // same order as slices.Sort()
 
-type WebhookRepository interface {
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
-
 type GithubWebhookRepository interface {
 	GithubRepository
 	repository.Hooks
 
-	WebhookRepository
+	repository.WebhookRepository
 }
+
+var _ repository.WebhookRepository = (*githubWebhookRepository)(nil)
 
 type githubWebhookRepository struct {
 	GithubRepository
