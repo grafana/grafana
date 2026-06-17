@@ -574,14 +574,7 @@ export const downloadLogs = async (
           );
         }
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-        downloadDataFrameAsCsv(
-          transformedDataFrame[0],
-          `Logs-${dataFrame.refId}`,
-          undefined,
-          undefined,
-          false,
-          true
-        );
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`, undefined, undefined, false, true);
       }
       break;
     }

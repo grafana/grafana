@@ -77,7 +77,7 @@ describe('inspector download', () => {
       const blob = call[0];
       const text = typeof blob === 'string' ? blob : await blob.text();
 
-      expect(text).toEqual('"time","name","value"\r\n100,Åäö中文العربية,1\r\n')
+      expect(text).toEqual('"time","name","value"\r\n100,Åäö中文العربية,1\r\n');
     });
   });
 
