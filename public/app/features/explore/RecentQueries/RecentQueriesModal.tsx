@@ -4,16 +4,17 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { type DataQuery } from '@grafana/schema';
 import { Badge, Modal, Tab, TabsBar, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { type RichHistoryQuery } from 'app/types/explore';
+
+import { type OnSelectQueriesType } from '../QueryLibrary/types';
 
 import { RecentQueriesLayout } from './RecentQueriesLayout';
 
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onSelectQuery: (query: DataQuery, datasourceName?: string) => void;
+  onSelectQuery: OnSelectQueriesType;
 };
 
 export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
@@ -32,7 +33,7 @@ export function RecentQueriesModal({ isOpen, onClose, onSelectQuery }: Props) {
   const handleSelectQuery = useCallback(
     (query: RichHistoryQuery) => {
       reportAnalytics('querySelected', { datasourceName: query.datasourceName });
-      onSelectQuery(query.queries[0], query.datasourceName);
+      onSelectQuery(query.queries, query.datasourceName);
     },
     [onSelectQuery, reportAnalytics]
   );

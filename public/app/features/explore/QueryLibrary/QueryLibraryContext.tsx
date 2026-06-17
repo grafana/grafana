@@ -4,11 +4,18 @@ import { type CoreApp } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 import { type SavedQuery } from 'app/features/explore/QueryLibrary/types';
 
-import { type OnSelectQueryType, type QueryLibraryEventsPropertyMap, QueryLibraryTab } from './types';
+import {
+  type OnSelectQueriesType,
+  type OnSelectQueryType,
+  type QueryLibraryEventsPropertyMap,
+  QueryLibraryTab,
+} from './types';
 
 export type QueryLibraryDrawerOptions = {
   datasourceFilters?: string[];
   onSelectQuery?: OnSelectQueryType;
+  /** Multi-query selection (e.g. selecting a recent entry that ran several queries together). */
+  onSelectQueries?: OnSelectQueriesType;
   options?: {
     isReplacingQuery?: boolean;
     onSave?: () => void;
@@ -57,7 +64,9 @@ export type QueryLibraryContextType = {
     onSelectQuery?: (query: DataQuery) => void,
     datasourceFilters?: string[],
     parentRef?: React.RefObject<HTMLDivElement | null>,
-    showAsButtonHeader?: boolean
+    showAsButtonHeader?: boolean,
+    // Multi-query selection used when replacing with a recent entry that ran several queries together.
+    onSelectQueries?: OnSelectQueriesType
   ) => ReactNode;
 
   /**
@@ -87,6 +96,8 @@ export type QueryLibraryContextType = {
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
   onSelectQuery: OnSelectQueryType;
+  /** Multi-query selection (e.g. a recent entry that ran several queries together). */
+  onSelectQueries?: OnSelectQueriesType;
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };

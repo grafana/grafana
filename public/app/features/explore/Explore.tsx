@@ -619,6 +619,35 @@ export class Explore extends PureComponent<Props, ExploreState> {
       correlationsBox = <CorrelationHelper exploreId={exploreId} correlations={correlationEditorHelperData} />;
     }
 
+    const selectQueriesFromLibrary = async (selectedQueries: DataQuery[]) => {
+      const { changeDatasource, queries, setQueries } = this.props;
+      if (selectedQueries.length === 0) {
+        return;
+      }
+      // Append each selected query with a fresh refId, computed against the
+      // growing array so queries added in the same batch don't collide.
+      const newQueries = [...queries];
+      for (const selectedQuery of selectedQueries) {
+        newQueries.push({
+          ...selectedQuery,
+          refId: getNextRefId(newQueries),
+        });
+      }
+      setQueries(exploreId, newQueries);
+      const selectedDatasourceUid = selectedQueries.find((q) => q.datasource?.uid)?.datasource?.uid;
+      if (selectedDatasourceUid) {
+        const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+        const isMixed = uniqueDatasources.size > 1;
+        const newDatasourceRef = {
+          uid: isMixed ? MIXED_DATASOURCE_NAME : selectedDatasourceUid,
+        };
+        const shouldChangeDatasource = datasourceInstance?.uid !== newDatasourceRef.uid;
+        if (shouldChangeDatasource) {
+          await changeDatasource({ exploreId, datasource: newDatasourceRef });
+        }
+      }
+    };
+
     return (
       <ContentOutlineContextProvider refreshDependencies={this.props.queries}>
         <ExploreToolbar
@@ -677,28 +706,8 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           queryInspectorButtonActive={showQueryInspector}
                           onClickAddQueryRowButton={this.onClickAddQueryRowButton}
                           onClickQueryInspectorButton={() => setShowQueryInspector(!showQueryInspector)}
-                          onSelectQueryFromLibrary={async (query) => {
-                            const { changeDatasource, queries, setQueries } = this.props;
-                            const newQueries = [
-                              ...queries,
-                              {
-                                ...query,
-                                refId: getNextRefId(queries),
-                              },
-                            ];
-                            setQueries(exploreId, newQueries);
-                            if (query.datasource?.uid) {
-                              const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
-                              const isMixed = uniqueDatasources.size > 1;
-                              const newDatasourceRef = {
-                                uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
-                              };
-                              const shouldChangeDatasource = datasourceInstance.uid !== newDatasourceRef.uid;
-                              if (shouldChangeDatasource) {
-                                await changeDatasource({ exploreId, datasource: newDatasourceRef });
-                              }
-                            }
-                          }}
+                          onSelectQueryFromLibrary={(query) => selectQueriesFromLibrary([query])}
+                          onSelectQueriesFromLibrary={selectQueriesFromLibrary}
                         />
                         <ResponseErrorContainer exploreId={exploreId} />
                       </PanelContainer>

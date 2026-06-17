@@ -36,7 +36,7 @@ const starredQuery: RichHistoryQuery = {
 describe('RecentQueryRow', () => {
   const defaultProps = {
     query: mockQuery,
-    queryDisplayText: 'up{job="grafana"}',
+    queryDisplayTexts: ['up{job="grafana"}'],
     onSelectQuery: jest.fn(),
     onStarQuery: jest.fn(),
   };
@@ -58,6 +58,15 @@ describe('RecentQueryRow', () => {
   it('renders query display text', () => {
     render(<RecentQueryRow {...defaultProps} />);
     expect(screen.getByText('up{job="grafana"}')).toBeInTheDocument();
+  });
+
+  it('renders one line per query when the entry has multiple queries', () => {
+    render(
+      <RecentQueryRow {...defaultProps} queryDisplayTexts={['up{job="grafana"}', 'rate(errors[5m])', 'count()']} />
+    );
+    expect(screen.getByText('up{job="grafana"}')).toBeInTheDocument();
+    expect(screen.getByText('rate(errors[5m])')).toBeInTheDocument();
+    expect(screen.getByText('count()')).toBeInTheDocument();
   });
 
   it('renders datasource icon with fallback when no logo provided', () => {

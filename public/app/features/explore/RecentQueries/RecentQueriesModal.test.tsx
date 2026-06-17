@@ -70,11 +70,11 @@ describe('RecentQueriesModal', () => {
     expect(savedTab).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('calls onSelectQuery with query data when a query is selected', async () => {
+  it('calls onSelectQuery with all queries from the entry when selected', async () => {
     render(<RecentQueriesModal {...defaultProps} />);
     screen.getByText('select').click();
     expect(defaultProps.onSelectQuery).toHaveBeenCalledWith(
-      { refId: 'A', datasource: { uid: 'prom', type: 'prometheus' } },
+      [{ refId: 'A', datasource: { uid: 'prom', type: 'prometheus' } }],
       'Prometheus'
     );
   });

@@ -88,13 +88,13 @@ export const RecentQueriesList = memo(function RecentQueriesList({
                 {groupQueries.map((query) => {
                   const dsApi = dsApiMap?.get(query.datasourceUid);
                   const logo = dsApi?.meta?.info?.logos?.small;
-                  const displayText = createQueryText(query.queries[0], dsApi);
+                  const displayTexts = query.queries.map((q) => createQueryText(q, dsApi));
 
                   return (
                     <RecentQueryRow
                       key={query.id}
                       query={query}
-                      queryDisplayText={displayText}
+                      queryDisplayTexts={displayTexts}
                       datasourceLogo={logo}
                       onSelectQuery={onSelectQuery}
                       onStarQuery={onStarQuery}

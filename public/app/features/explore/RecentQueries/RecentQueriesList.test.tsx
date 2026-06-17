@@ -11,14 +11,14 @@ jest.mock('./RecentQueryRow', () => ({
   RecentQueryRow: jest.fn(
     ({
       query,
-      queryDisplayText,
+      queryDisplayTexts,
       datasourceLogo,
       onSelectQuery,
       onStarQuery,
       onSaveQuery,
     }: {
       query: RichHistoryQuery;
-      queryDisplayText: string;
+      queryDisplayTexts: string[];
       datasourceLogo?: string;
       onSelectQuery: (q: RichHistoryQuery) => void;
       onStarQuery: (id: string, starred: boolean) => void;
@@ -27,7 +27,7 @@ jest.mock('./RecentQueryRow', () => ({
       <div
         data-testid="recent-query-row"
         data-query-id={query.id}
-        data-display-text={queryDisplayText}
+        data-display-text={queryDisplayTexts.join('\n')}
         data-logo={datasourceLogo ?? ''}
         data-has-save={String(!!onSaveQuery)}
       >

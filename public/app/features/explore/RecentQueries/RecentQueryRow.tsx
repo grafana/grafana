@@ -9,7 +9,7 @@ import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 type Props = {
   query: RichHistoryQuery;
-  queryDisplayText: string;
+  queryDisplayTexts: string[];
   datasourceLogo?: string;
   onSelectQuery: (query: RichHistoryQuery) => void;
   onStarQuery: (id: string, starred: boolean) => void;
@@ -18,7 +18,7 @@ type Props = {
 
 export function RecentQueryRow({
   query,
-  queryDisplayText,
+  queryDisplayTexts,
   datasourceLogo,
   onSelectQuery,
   onStarQuery,
@@ -103,8 +103,12 @@ export function RecentQueryRow({
             {formattedDate}
           </Text>
         </div>
-        <div className={styles.queryText}>
-          <Text truncate>{queryDisplayText}</Text>
+        <div className={styles.queries}>
+          {queryDisplayTexts.map((text, i) => (
+            <div key={i} className={styles.queryText}>
+              <Text truncate>{text}</Text>
+            </div>
+          ))}
         </div>
       </div>
       <div className={styles.actions}>
@@ -150,6 +154,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(1),
     flexShrink: 0,
     color: theme.colors.text.secondary,
+  }),
+  queries: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+    minWidth: 0,
   }),
   queryText: css({
     minWidth: 0,

@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { useQueriesDrawerContext } from './QueriesDrawer/QueriesDrawerContext';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
-import { type OnSelectQueryType } from './QueryLibrary/types';
+import { type OnSelectQueriesType, type OnSelectQueryType } from './QueryLibrary/types';
 import { RecentQueriesModal } from './RecentQueries/RecentQueriesModal';
 
 type Props = {
@@ -23,6 +23,7 @@ type Props = {
   onClickAddQueryRowButton: () => void;
   onClickQueryInspectorButton: () => void;
   onSelectQueryFromLibrary: OnSelectQueryType;
+  onSelectQueriesFromLibrary: OnSelectQueriesType;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -42,6 +43,7 @@ export function SecondaryActions({
   onClickAddQueryRowButton,
   onClickQueryInspectorButton,
   onSelectQueryFromLibrary,
+  onSelectQueriesFromLibrary,
   queryInspectorButtonActive,
 }: Props) {
   const theme = useTheme2();
@@ -75,6 +77,7 @@ export function SecondaryActions({
               onClick={() =>
                 openQueryLibraryDrawer({
                   onSelectQuery: onSelectQueryFromLibrary,
+                  onSelectQueries: onSelectQueriesFromLibrary,
                   options: { context: CoreApp.Explore },
                 })
               }
@@ -98,7 +101,7 @@ export function SecondaryActions({
               <RecentQueriesModal
                 isOpen={recentQueriesOpen}
                 onClose={() => setRecentQueriesOpen(false)}
-                onSelectQuery={onSelectQueryFromLibrary}
+                onSelectQuery={onSelectQueriesFromLibrary}
               />
             </>
           )}
