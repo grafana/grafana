@@ -45,7 +45,8 @@ type User struct {
 
 	IsAdmin          bool
 	IsServiceAccount bool
-	OrgID            int64 `xorm:"org_id"`
+	OrgID            int64  `xorm:"org_id"`
+	OrgRole          string `xorm:"-"`
 
 	Created    time.Time
 	Updated    time.Time
@@ -98,6 +99,7 @@ type UpdateUserCommand struct {
 	OrgID         *int64      `json:"-"`
 	HelpFlags1    *HelpFlags1 `json:"-"`
 	IsProvisioned *bool       `json:"-"`
+	OrgRole       *string     `json:"-"`
 }
 
 type UpdateUserLastSeenAtCommand struct {
@@ -121,8 +123,9 @@ type SearchUsersQuery struct {
 	SortOpts     []model.SortOption
 	Filters      []Filter
 
-	IsDisabled    *bool
-	IsProvisioned *bool
+	IsDisabled           *bool
+	IsProvisioned        *bool
+	IncludeAccessControl bool
 }
 
 type SearchUserQueryResult struct {
@@ -138,6 +141,8 @@ type UserSearchHitDTO struct {
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
+	Role          string               `json:"role"`
+	AccessControl map[string]bool      `json:"accessControl,omitempty"`
 	AvatarURL     string               `json:"avatarUrl" xorm:"avatar_url"`
 	IsAdmin       bool                 `json:"isAdmin"`
 	IsDisabled    bool                 `json:"isDisabled"`

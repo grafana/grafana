@@ -52,7 +52,7 @@ interface AutoGridLayoutManagerState extends SceneObjectState {
 export type AutoGridColumnWidth = 'narrow' | 'standard' | 'wide' | 'custom' | number;
 export type AutoGridRowHeight = 'short' | 'standard' | 'tall' | 'custom' | number;
 
-export const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
+const AUTO_GRID_DEFAULT_MAX_COLUMN_COUNT = 3;
 export const AUTO_GRID_DEFAULT_COLUMN_WIDTH = 'standard';
 export const AUTO_GRID_DEFAULT_ROW_HEIGHT = 'standard';
 
@@ -114,6 +114,10 @@ export class AutoGridLayoutManager
     }
 
     return children;
+  }
+
+  public getAllGridTypes(): string[] {
+    return [AutoGridLayoutManager.descriptor.id];
   }
 
   public addPanel(vizPanel: VizPanel) {

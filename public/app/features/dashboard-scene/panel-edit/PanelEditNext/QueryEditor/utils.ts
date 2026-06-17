@@ -4,7 +4,7 @@ import { type CustomTransformerDefinition } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 
-import { getAlertStateColor, getQueryEditorColors, QUERY_EDITOR_TYPE_CONFIG, QueryEditorType } from '../constants';
+import { getAlertStateColor, getQueryEditorTypeConfig, QueryEditorType } from '../constants';
 
 import { type PendingExpression, type PendingTransformation } from './QueryEditorContext';
 import { type AlertRule, type Transformation } from './types';
@@ -42,7 +42,7 @@ export function getEditorType(
   return QueryEditorType.Query;
 }
 
-export function isDataTransformerConfig(
+function isDataTransformerConfig(
   transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
   return transformation !== null && 'id' in transformation && !('refId' in transformation);
@@ -85,13 +85,22 @@ export function getEditorBorderColor({
   isError?: boolean;
 }): string {
   if (isError) {
-    return getQueryEditorColors(theme).error;
+    return theme.colors.error.border;
   }
 
   if (editorType === QueryEditorType.Alert && alertState) {
     return getAlertStateColor(theme, alertState);
   }
-  return QUERY_EDITOR_TYPE_CONFIG[editorType].color;
+
+  const typeConfig = getQueryEditorTypeConfig(theme);
+  return typeConfig[editorType].color;
+}
+
+export function getHiddenMaskStyles(theme: GrafanaTheme2) {
+  return {
+    opacity: theme.isDark ? 0.6 : 0.7,
+    filter: 'grayscale(0.8)',
+  };
 }
 
 export interface TransformerCategoryOption {

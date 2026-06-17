@@ -54,7 +54,10 @@ export function SuggestedDashboardsBanner({ route, dashboard }: Props) {
       {({ openModal }) => (
         <Alert
           severity="info"
-          title={t('dashboard-scene.suggested-dashboard-banner.title', 'You are viewing {{title}}', { title })}
+          title={t('dashboard-scene.suggested-dashboard-banner.title', 'You are viewing {{title}}', {
+            title,
+            interpolation: { escapeValue: false },
+          })}
           style={{ flex: 0 }}
           onRemove={() => setDismissed(true)}
         >

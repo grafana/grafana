@@ -78,6 +78,31 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 5, cfg.IndexMinCount)
 	})
 
+	t.Run("search_ring_extend_replica_set", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey("search_ring_extend_replica_set", value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to true", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchRingExtendReplicaSet)
+		})
+
+		t.Run("reads configured value", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "false")
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchRingExtendReplicaSet)
+		})
+	})
+
 	t.Run("search_inject_failures_percent", func(t *testing.T) {
 		setSectionKey := func(cfg *Cfg, key, value string) {
 			section := cfg.Raw.Section("unified_storage")
@@ -152,6 +177,54 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		value, exists := cfg.UnifiedStorage["widgets.widget.custom.io"]
 		assert.True(t, exists, "widgets.widget.custom.io should exist from env var")
 		assert.Equal(t, rest.DualWriterMode(2), value.DualWriterMode)
+	})
+
+	t.Run("env vars populate bare [unified_storage] section keys", func(t *testing.T) {
+		// These env vars target keys in the bare [unified_storage] section
+		// that are not pre-defined in defaults.ini.
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_CACHE_SIZE_KB", "2000000")
+		t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_PARQUET_BUFFER", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_INDEX_WORKERS", "3")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, 2000000, cfg.MigrationCacheSizeKB)
+		assert.True(t, cfg.MigrationParquetBuffer)
+		assert.Equal(t, 3, cfg.IndexWorkers)
+	})
+
+	t.Run("vector_embedder bedrock config", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("vector_embedder")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("applies defaults", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.Equal(t, 50, cfg.BedrockBatchSize)
+			assert.Equal(t, 5, cfg.BedrockMaxAttempts)
+		})
+
+		t.Run("reads configured values independent of vertex_batch_size", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "vertex_batch_size", "33")
+			setSectionKey(cfg, "bedrock_batch_size", "7")
+			setSectionKey(cfg, "bedrock_max_attempts", "15")
+			cfg.setUnifiedStorageConfig()
+			// Guards a regression where bedrock used vertex_batch_size.
+			assert.Equal(t, 7, cfg.BedrockBatchSize)
+			assert.Equal(t, 15, cfg.BedrockMaxAttempts)
+		})
 	})
 
 	t.Run("read unified_storage configs with defaults", func(t *testing.T) {

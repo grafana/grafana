@@ -113,8 +113,8 @@ Explore replaces these sequences, changing the option from **Escape newlines** t
 ### Log level
 
 For logs where a `level` label is specified, the value of this label is used to determine the log level and update the color of each log line accordingly.
-If the log doesn't have a specified level label, Grafana attempts to determine if its content matches any of the supported expressions.
-Refer to the following table for more information. The log level is always determined by the first match. If Grafana isn't able to infer a log level field, it gets visualized as an unknown log level.
+If the log doesn't have a specified level label, Grafana treats the log line as not containing a level and omits rendering any value for it.
+Refer to the following table for more information. The log level is always determined by the first match when level is defined.
 
 {{< admonition type="tip" >}}
 When using the Loki data source, if `level` is part of your log line, you can use parsers such as `json`, `logfmt`, or `regex` to extract the level information into a level label. This label is used to determine the level value, allowing the histogram to display the various log levels as separate bars.
@@ -122,15 +122,15 @@ When using the Loki data source, if `level` is part of your log line, you can us
 
 **Log levels supported and mapping of log level abbreviation and expressions:**
 
-| Log level | Color      | Supported expressions                          |
-| :-------- | :--------- | ---------------------------------------------- |
-| critical  | purple     | emerg, fatal, alert, crit, critical, 0, 1, 2   |
-| error     | red        | err, eror, error, 3                            |
-| warning   | yellow     | warn, warning, 4                               |
-| info      | green      | info, information, informational, notice, 5, 6 |
-| debug     | blue       | dbug, debug, 7                                 |
-| trace     | light blue | trace                                          |
-| unknown   | grey       | \*                                             |
+| Log level | Color      | Supported expressions                                   |
+| :-------- | :--------- | ------------------------------------------------------- |
+| critical  | purple     | emerg, emergency, fatal, alert, crit, critical, 0, 1, 2 |
+| error     | red        | err, eror, error, 3                                     |
+| warning   | yellow     | warn, warning, 4                                        |
+| info      | green      | info, information, informational, notice, 5, 6          |
+| debug     | blue       | dbug, debug, 7                                          |
+| trace     | light blue | trace                                                   |
+| unknown   | grey       | \*                                                      |
 
 ### Highlight searched words
 

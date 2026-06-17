@@ -50,8 +50,10 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 
 jest.mock('../../hooks/useProvisionedFolderFormData');
 
-jest.mock('app/features/browse-dashboards/components/BrowseActions/DescendantCount', () => ({
-  DescendantCount: () => <div data-testid="descendant-count">2 folders, 5 dashboards</div>,
+jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents', () => ({
+  AffectedFolderContents: jest.fn(({ defaultMessage }) => (
+    <div data-testid="affected-folder-contents">{defaultMessage}</div>
+  )),
 }));
 
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
@@ -144,7 +146,9 @@ const defaultHookData: ProvisionedFolderFormDataResult = {
   folder: mockFolder,
   initialValues: mockFormData,
   isReadOnlyRepo: false,
+  isMissingRepo: false,
   canPushToConfiguredBranch: true,
+  isLoading: false,
 };
 
 function setup(
@@ -209,15 +213,15 @@ describe('DeleteProvisionedFolderForm', () => {
       setup();
       // delete warning and descendant count
       expect(screen.getByText(/This will delete this folder and all its descendants/)).toBeInTheDocument();
-      expect(screen.getByTestId('descendant-count')).toBeInTheDocument();
+      expect(screen.getByTestId('affected-folder-contents')).toBeInTheDocument();
 
       // delete and cancel buttons
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     });
 
-    it('should not render if initialValues is null', () => {
-      setup({}, { ...defaultHookData, initialValues: undefined });
+    it('should not render the form when the repository is missing', () => {
+      setup({}, { ...defaultHookData, repository: undefined, initialValues: undefined, isMissingRepo: true });
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
   });
@@ -268,6 +272,28 @@ describe('DeleteProvisionedFolderForm', () => {
           ref: 'main', // branch workflow sets ref
           message: 'Custom delete message',
         });
+      });
+    });
+
+    it('renders the message from the repo commit template when comment is empty', async () => {
+      const { mockDeleteRepoFile, clickDeleteButton } = setup(
+        {},
+        {
+          ...defaultHookData,
+          repository: {
+            ...defaultHookData.repository!,
+            commit: { singleResourceMessageTemplate: 'chore({{resourceKind}}s): {{action}} {{title}}' },
+          },
+          initialValues: { ...mockFormData, workflow: 'branch' as const, comment: '' },
+        }
+      );
+
+      await clickDeleteButton();
+
+      await waitFor(() => {
+        expect(mockDeleteRepoFile).toHaveBeenCalledWith(
+          expect.objectContaining({ message: 'chore(folders): delete Test Folder' })
+        );
       });
     });
 

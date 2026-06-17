@@ -317,7 +317,7 @@ export enum ScaleDirection {
  */
 export interface LineStyle {
   dash?: Array<number>;
-  fill?: ('solid' | 'dash' | 'dot' | 'square');
+  fill?: ('solid' | 'dash' | 'dot' | 'square' | 'accessible');
 }
 
 export const defaultLineStyle: Partial<LineStyle> = {
@@ -671,9 +671,12 @@ export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, 
  * TODO docs
  */
 export interface VizLegendOptions {
+  /**
+   * @deprecated Use LegendDisplayMode.Table
+   */
   asTable?: boolean;
   calcs: Array<string>;
-  displayMode: LegendDisplayMode;
+  displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
   placement: LegendPlacement;

@@ -3,6 +3,7 @@ import {
   defaultPanelSpec,
   type PanelKind,
   type PanelQueryKind,
+  type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -377,29 +378,118 @@ describe('ensureUniqueRefIds', () => {
 });
 
 describe('buildVizPanel', () => {
-  it('maps queryOptions.timeCompare to PanelTimeRange compareWith', () => {
+  // Pass title='' to test hoverHeader behavior (no title); omit to use the defaultPanelSpec title.
+  function buildPanelWithQueryOptions(queryOptions: Partial<QueryOptionsSpec>, title?: string): PanelKind {
     const base = defaultPanelSpec();
-    const panel: PanelKind = {
+    return {
       kind: 'Panel',
       spec: {
         ...base,
+        ...(title !== undefined ? { title } : {}),
         data: {
           kind: 'QueryGroup',
           spec: {
             ...base.data.spec,
-            queryOptions: {
-              ...base.data.spec.queryOptions,
-              timeCompare: '1d',
-            },
+            queryOptions: { ...base.data.spec.queryOptions, ...queryOptions },
           },
         },
       },
     };
+  }
+
+  function getPanelTimeRange(panel: PanelKind): PanelTimeRange {
     const viz = buildVizPanel(panel);
     if (!(viz.state.$timeRange instanceof PanelTimeRange)) {
       throw new Error('$timeRange must be PanelTimeRange');
     }
-    expect(viz.state.$timeRange).toBeDefined();
-    expect(viz.state.$timeRange?.state.compareWith).toBe('1d');
+    return viz.state.$timeRange;
+  }
+
+  it.each([
+    ['timeCompare', 'compareWith', '1d'],
+    ['timeFrom', 'timeFrom', '2h'],
+    ['timeShift', 'timeShift', '1h'],
+  ] as const)('maps queryOptions.%s to PanelTimeRange %s', (queryOptionsField, stateField, value) => {
+    const panelTime = getPanelTimeRange(buildPanelWithQueryOptions({ [queryOptionsField]: value }));
+
+    expect(panelTime.state[stateField]).toBe(value);
+  });
+
+  it('carries hideTimeOverride when another time field triggers PanelTimeRange creation', () => {
+    const panelTime = getPanelTimeRange(buildPanelWithQueryOptions({ timeFrom: '2h', hideTimeOverride: true }));
+
+    expect(panelTime.state.hideTimeOverride).toBe(true);
+  });
+
+  it('maps all four time fields when set together', () => {
+    const panelTime = getPanelTimeRange(
+      buildPanelWithQueryOptions({
+        timeFrom: '2h',
+        timeShift: '1h',
+        hideTimeOverride: true,
+        timeCompare: '1d',
+      })
+    );
+
+    expect(panelTime.state).toMatchObject({
+      timeFrom: '2h',
+      timeShift: '1h',
+      hideTimeOverride: true,
+      compareWith: '1d',
+    });
+  });
+
+  it('does not create $timeRange when only hideTimeOverride is set', () => {
+    // hideTimeOverride alone is not one of the three trigger fields (timeFrom/timeShift/timeCompare).
+    const viz = buildVizPanel(buildPanelWithQueryOptions({ hideTimeOverride: true }));
+
+    expect(viz.state.$timeRange).toBeUndefined();
+  });
+
+  it('does not create $timeRange when no time fields are set', () => {
+    const viz = buildVizPanel(buildPanelWithQueryOptions({}));
+
+    expect(viz.state.$timeRange).toBeUndefined();
+  });
+
+  describe('hoverHeader interaction with time range', () => {
+    // hoverHeader is shown only when there's no title AND no visible time override.
+    // timeOverrideShown = (timeFrom || timeShift) && !hideTimeOverride — note timeCompare is NOT included.
+
+    it('shows hoverHeader when there is no title and no time fields', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({}, ''));
+
+      expect(viz.state.hoverHeader).toBe(true);
+    });
+
+    it('hides hoverHeader when timeFrom is visible (no hideTimeOverride)', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({ timeFrom: '2h' }, ''));
+
+      expect(viz.state.hoverHeader).toBe(false);
+    });
+
+    it('hides hoverHeader when timeShift is visible', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({ timeShift: '1h' }, ''));
+
+      expect(viz.state.hoverHeader).toBe(false);
+    });
+
+    it('shows hoverHeader when timeFrom is set but hideTimeOverride suppresses it', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({ timeFrom: '2h', hideTimeOverride: true }, ''));
+
+      expect(viz.state.hoverHeader).toBe(true);
+    });
+
+    it('shows hoverHeader when only timeCompare is set (timeCompare is not a visible time override)', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({ timeCompare: '1d' }, ''));
+
+      expect(viz.state.hoverHeader).toBe(true);
+    });
+
+    it('hides hoverHeader when the panel has a title, regardless of time fields', () => {
+      const viz = buildVizPanel(buildPanelWithQueryOptions({ timeFrom: '2h', hideTimeOverride: true }, 'My Panel'));
+
+      expect(viz.state.hoverHeader).toBe(false);
+    });
   });
 });

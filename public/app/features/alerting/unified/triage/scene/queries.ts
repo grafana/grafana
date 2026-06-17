@@ -107,17 +107,23 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
   return getDataQuery(getAlertsSummariesQuery('alertstate', filter), { instant: true, format: 'table' });
 }
 
-/** Deduplicated instant count by rule fields + alertstate for summary rule counts */
-export function summaryRuleCountQuery(filter: string): SceneDataQuery {
-  return getDataQuery(getAlertsSummariesQuery('alertname, grafana_folder, grafana_rule_uid, alertstate', filter), {
-    instant: true,
-    format: 'table',
-  });
-}
+/** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
+export function alertRuleInstancesQuery(
+  ruleUID: string,
+  filter: string,
+  groupLabels: Record<string, string> = {}
+): SceneDataQuery {
+  const groupMatchers: MatcherExpr[] = Object.entries(groupLabels).map(([name, value]) => ({
+    name,
+    operator: '=' as const,
+    value,
+  }));
 
-/** Instance timeseries for a specific alert rule */
-export function alertRuleInstancesQuery(ruleUID: string, filter: string): SceneDataQuery {
-  const selectors = buildMetricSelectors(filter, [{ name: 'grafana_rule_uid', operator: '=', value: ruleUID }]);
+  const selectors = buildMetricSelectors(filter, [
+    { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
+    ...groupMatchers,
+  ]);
+
   return getDataQuery(
     `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }

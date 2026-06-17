@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
 
 func TestConvertAnnotationMappings_V1_to_V2alpha1(t *testing.T) {
@@ -321,4 +323,53 @@ func TestBuildAnnotationQuery_Mappings(t *testing.T) {
 		assert.Equal(t, "labels", *tagsMapping.Value)
 		assert.Equal(t, "/(.*)/", *tagsMapping.Regex)
 	})
+}
+
+func TestTransformVariableHideToEnum_V1_to_V2alpha1(t *testing.T) {
+	tests := []struct {
+		name string
+		in   interface{}
+		want dashv2alpha1.DashboardVariableHide
+	}{
+		{"nil", nil, dashv2alpha1.DashboardVariableHideDontHide},
+		{"int 0 -> dontHide", 0, dashv2alpha1.DashboardVariableHideDontHide},
+		{"int 1 -> hideLabel", 1, dashv2alpha1.DashboardVariableHideHideLabel},
+		{"int 2 -> hideVariable", 2, dashv2alpha1.DashboardVariableHideHideVariable},
+		{"int 3 -> inControlsMenu", 3, dashv2alpha1.DashboardVariableHideInControlsMenu},
+		{"int 99 -> dontHide (fallback)", 99, dashv2alpha1.DashboardVariableHideDontHide},
+		// JSON unmarshal yields numbers as float64; make sure that path works too.
+		{"float64 3 -> inControlsMenu", float64(3), dashv2alpha1.DashboardVariableHideInControlsMenu},
+		{"string empty -> dontHide", "", dashv2alpha1.DashboardVariableHideDontHide},
+		{"string dontHide", "dontHide", dashv2alpha1.DashboardVariableHideDontHide},
+		{"string hideLabel", "hideLabel", dashv2alpha1.DashboardVariableHideHideLabel},
+		{"string hideVariable", "hideVariable", dashv2alpha1.DashboardVariableHideHideVariable},
+		{"string inControlsMenu", "inControlsMenu", dashv2alpha1.DashboardVariableHideInControlsMenu},
+		{"string unknown -> dontHide", "bogus", dashv2alpha1.DashboardVariableHideDontHide},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, transformVariableHideToEnum(tt.in))
+		})
+	}
+}
+
+func TestTransformVariableHideFromEnum_V2alpha1_to_V1(t *testing.T) {
+	tests := []struct {
+		name string
+		in   dashv2alpha1.DashboardVariableHide
+		want interface{}
+	}{
+		{"dontHide -> 0", dashv2alpha1.DashboardVariableHideDontHide, 0},
+		{"hideLabel -> 1", dashv2alpha1.DashboardVariableHideHideLabel, 1},
+		{"hideVariable -> 2", dashv2alpha1.DashboardVariableHideHideVariable, 2},
+		{"inControlsMenu -> 3", dashv2alpha1.DashboardVariableHideInControlsMenu, 3},
+		{"unknown -> 0 (fallback)", dashv2alpha1.DashboardVariableHide("bogus"), 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, transformVariableHideFromEnum(tt.in))
+		})
+	}
 }

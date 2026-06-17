@@ -90,15 +90,11 @@ export interface DashboardLayoutManager<S = {}> extends SceneObject {
    * Get children for outline
    */
   getOutlineChildren(): SceneObject[];
-}
 
-export interface LayoutManagerSerializer {
-  serialize(layout: DashboardLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'];
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): DashboardLayoutManager;
+  /**
+   * Returns a list of all grid layout types contained within child tree
+   */
+  getAllGridTypes(): string[];
 }
 
 export function isDashboardLayoutManager(obj: SceneObject): obj is DashboardLayoutManager {

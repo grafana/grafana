@@ -14,8 +14,8 @@ import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType, ruleUsesDefaultPolicy } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
-export type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
-export type GroupFilterHandler = (
+type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
+type GroupFilterHandler = (
   group: PromRuleGroupDTO,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
 ) => boolean;

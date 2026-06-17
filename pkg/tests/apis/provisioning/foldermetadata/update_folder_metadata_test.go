@@ -18,12 +18,12 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "update-folder-metadata-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
 
 	files := helper.NewFilesClient(repo)
 
 	// Create a folder to work with
-	resp := files.Post(t, "update-test/")
+	resp := files.Post(t, "update-test/", nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating folder should succeed")
 
 	originalUID := files.ReadFolderUID(t, ctx, "update-test/_folder.json")
@@ -101,7 +101,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("nested folder title update works", func(t *testing.T) {
-		resp := files.Post(t, "nested-parent/nested-child/")
+		resp := files.Post(t, "nested-parent/nested-child/", nil)
 		require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating nested folder should succeed")
 
 		childUID := files.ReadFolderUID(t, ctx, "nested-parent/nested-child/_folder.json")

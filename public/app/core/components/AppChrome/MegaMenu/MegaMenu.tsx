@@ -3,7 +3,7 @@ import { type DOMAttributes } from '@react-types/shared';
 import { memo, forwardRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences';
+import { usePatchUserPreferencesMutation } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -11,6 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
+import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -35,6 +36,7 @@ export const MegaMenu = memo(
     const state = chrome.useState();
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
+    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
 
     // Remove profile + help from tree
     const navItems = navTree
@@ -117,6 +119,8 @@ export const MegaMenu = memo(
                     onClick={state.megaMenuDocked ? undefined : onClose}
                     activeItem={activeItem}
                     onPin={onPinItem}
+                    loadingChildren={link.id === 'starred' && starredItemsLoading}
+                    childrenLoadError={link.id === 'starred' && starredItemsError}
                   />
                 ))}
               </ul>

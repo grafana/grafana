@@ -21,8 +21,31 @@ type RepositoryViewList struct {
 	// AvailableRepositoryTypes is the list of repository types supported in this instance (e.g. git, bitbucket, github, etc)
 	AvailableRepositoryTypes []RepositoryType `json:"availableRepositoryTypes,omitempty"`
 
+	// AvailableResources is the list of resource types declared for provisioning in this
+	// instance, including disabled ones (see SupportedResource.Disabled).
+	AvailableResources []SupportedResource `json:"availableResources,omitempty"`
+
 	// +mapType=atomic
 	Items []RepositoryView `json:"items"`
+}
+
+// SupportedResource describes a resource type declared for provisioning. A resource is
+// identified by its group and kind; the API version and plural resource are resolved at
+// runtime via discovery, so they are not part of this descriptor.
+type SupportedResource struct {
+	// Group is the API group of the resource (e.g. "dashboard.grafana.app").
+	Group string `json:"group"`
+
+	// Kind is the kind of the resource (e.g. "Dashboard").
+	Kind string `json:"kind"`
+
+	// Disabled reports whether the resource is declared but not acted on by provisioning.
+	// Active resources omit this field.
+	Disabled bool `json:"disabled,omitempty"`
+}
+
+func (SupportedResource) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SupportedResource"
 }
 
 func (RepositoryViewList) OpenAPIModelName() string {
@@ -53,6 +76,9 @@ type RepositoryView struct {
 
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
+
+	// Commit message options. Mirrors the same-named field on the repository spec.
+	Commit *CommitOptions `json:"commit,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {

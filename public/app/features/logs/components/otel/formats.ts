@@ -81,11 +81,11 @@ export function getSuggestedFieldsForLogs(logs: LogListModel[] | LogRowModel[]):
   );
 }
 
-export function getSuggestedFieldsForAnyLogs() {
+function getSuggestedFieldsForAnyLogs() {
   return ['app', 'service_name', 'message', 'msg', 'traceID', 'trace_id', 'environment', 'error'];
 }
 
-export function getSuggestedOTelDisplayFormat() {
+function getSuggestedOTelDisplayFormat() {
   return ['scope_name', ...getDefaultOTelDisplayFormat()];
 }
 

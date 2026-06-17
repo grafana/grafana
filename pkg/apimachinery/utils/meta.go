@@ -171,7 +171,7 @@ func MetaAccessor(raw interface{}) (GrafanaMetaAccessor, error) {
 
 	// reflection to find title and other non object properties
 	r := reflect.ValueOf(raw)
-	if r.Kind() == reflect.Ptr || r.Kind() == reflect.Interface {
+	if r.Kind() == reflect.Pointer || r.Kind() == reflect.Interface {
 		r = r.Elem()
 	}
 	return &grafanaMetaAccessor{raw, obj, r}, nil
@@ -199,6 +199,7 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
+			anno = nilIfEmpty(anno)
 		}
 	} else {
 		if anno == nil {
@@ -316,7 +317,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 	if id == 0 {
 		if labels != nil {
 			delete(labels, LabelKeyDeprecatedInternalID)
-			m.obj.SetLabels(labels)
+			m.obj.SetLabels(nilIfEmpty(labels))
 		}
 		return
 	}
@@ -939,6 +940,15 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	}
 
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+// nilIfEmpty returns nil for an empty map so the field is dropped from the
+// serialized object rather than written as an empty {}.
+func nilIfEmpty(m map[string]string) map[string]string {
+	if len(m) == 0 {
+		return nil
+	}
+	return m
 }
 
 func getJSONFieldName(f reflect.Value, idx int) string {

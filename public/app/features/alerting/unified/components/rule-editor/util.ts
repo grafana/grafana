@@ -166,7 +166,7 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query?.params[0] ?? query.model.expression;
+      const refId = condition.query?.params?.[0] ?? query.model.expression;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {
@@ -203,8 +203,14 @@ export function getThresholdsForQueries(queries: AlertQuery[], condition: string
           }
 
           if (originRefID && hasValidOrigin && !isRangeThreshold && !hasRangeThreshold) {
+            if (threshold?.[0] === undefined) {
+              return;
+            }
             appendSingleThreshold(originRefID, threshold[0]);
           } else if (originRefID && hasValidOrigin && isRangeThreshold) {
+            if (!threshold) {
+              return;
+            }
             appendRangeThreshold(originRefID, threshold, condition.evaluator.type);
             thresholds[originRefID].mode = GraphThresholdsStyleMode.LineAndArea;
           }

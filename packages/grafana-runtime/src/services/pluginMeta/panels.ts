@@ -2,10 +2,11 @@ import { PluginType, type PanelPluginMeta } from '@grafana/data';
 
 import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getPanelPluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { PanelPluginMetas, PluginMetasResponse } from './types';
@@ -50,7 +51,7 @@ function setMetas(metas: PluginMetasResponse) {
     // fallback to config.panels from bootdata
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, PluginType.panel);
+    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.panel });
     return;
   }
 
@@ -59,14 +60,16 @@ function setMetas(metas: PluginMetasResponse) {
 }
 
 async function initPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line @grafana/no-config-panels
     setPanelsAndAliases(config.panels);
+    logPluginMetaDebug('PluginMeta: initializing panel plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
   setMetas(metas);
+  logPluginMetaDebug('PluginMeta: initializing panel plugins cache with meta values', {});
 }
 
 function getListedPanels(panels: PanelPluginMeta[]): PanelPluginMeta[] {
@@ -165,7 +168,7 @@ export function setPanelPluginMetas(override: PanelPluginMetas): void {
 }
 
 export async function refetchPanelPluginMetas(): Promise<void> {
-  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     const settings = await getBackendSrv().get('/api/frontend/settings');
     setPanelsAndAliases(settings.panels);
     return;

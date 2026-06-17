@@ -22,9 +22,10 @@ func TestIntegrationProvisioning_FolderAuthorizationWithoutMetadata(t *testing.T
 		folderPathPrefix = "parent-hash"
 	)
 
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repoName,
-		Target:                 "instance",
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
 		SkipResourceAssertions: true,
 	})
 

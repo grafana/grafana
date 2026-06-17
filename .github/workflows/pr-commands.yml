@@ -1,6 +1,10 @@
 name: PR automation
 on:
-  pull_request:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] action uses GITHUB_TOKEN only, does not check out fork code
+    types:
+      - labeled
+      - opened
+      - synchronize
 
 concurrency:
   group: pr-commands-${{ github.event.number }}
@@ -13,7 +17,7 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-arm64-small
     steps:
       - name: Run PR Commands
         uses: grafana/grafana-github-actions/commands@main

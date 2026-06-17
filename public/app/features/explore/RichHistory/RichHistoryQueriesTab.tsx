@@ -268,12 +268,20 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
                         i18nKey="explore.rich-history-queries-tab.displaying-partial-queries"
                         defaults="Displaying {{ count }} queries"
                         values={{ count: mappedQueriesToHeadings[heading].length }}
+                        tOptions={{
+                          defaultValue_one: 'Displaying {{ count }} queries',
+                          defaultValue_other: 'Displaying {{ count }} queries',
+                        }}
                       />
                     ) : (
                       <Trans
                         i18nKey="explore.rich-history-queries-tab.displaying-queries"
                         defaults="{{ count }} queries"
                         values={{ count: mappedQueriesToHeadings[heading].length }}
+                        tOptions={{
+                          defaultValue_one: '{{ count }} queries',
+                          defaultValue_other: '{{ count }} queries',
+                        }}
                       />
                     )}
                   </span>

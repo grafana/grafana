@@ -1,4 +1,6 @@
 import { css } from '@emotion/css';
+import { omit } from 'lodash';
+import { useEffect, useState } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
@@ -37,8 +39,39 @@ const getQueryLanguageOptions = (productName: string): Array<{ value: string }> 
 };
 
 export const UrlAndAuthenticationSection = (props: Props) => {
-  const { options, onOptionsChange } = props;
+  const { options, onOptionsChange, validation } = props;
   const styles = useStyles2(getStyles);
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!validation) {
+      return;
+    }
+    if (options.url) {
+      setFieldErrors((prev) => omit(prev, 'url'));
+    }
+    if (options.jsonData.product) {
+      setFieldErrors((prev) => omit(prev, 'product'));
+    }
+    if (options.jsonData.version) {
+      setFieldErrors((prev) => omit(prev, 'version'));
+    }
+    return validation.registerValidation(() => {
+      const errors: Record<string, string> = {};
+      if (!options.url) {
+        errors.url = 'URL is required';
+      }
+      if (!options.jsonData.product) {
+        errors.product = 'Product is required';
+      }
+      if (!options.jsonData.version) {
+        errors.version = 'Query language is required';
+      }
+      setFieldErrors(errors);
+      return Object.keys(errors).length === 0;
+    });
+  }, [options.url, options.jsonData.product, options.jsonData.version, validation]);
 
   const isInfluxVersion = (v: string): v is InfluxVersion =>
     typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL);
@@ -168,7 +201,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
       >
         <Text color="secondary">
           Enter the URL of your InfluxDB instance, then select your product and query language. This will determine the
-          available settings and authentication methods in the next steps. If you need futher guidance, visit the{' '}
+          available settings and authentication methods in the next steps. If you need further guidance, visit the{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/datasources/influxdb/"
             icon="external-link-alt"
@@ -178,7 +211,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
           </TextLink>
         </Text>
         <Box direction="column" marginTop={3}>
-          <Field label="URL" noMargin required>
+          <Field label="URL" noMargin required invalid={!!fieldErrors.url} error={fieldErrors.url}>
             <Input
               data-testid="influxdb-v2-config-url-input"
               placeholder="example: http://localhost:8086/"
@@ -213,6 +246,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     }
                     noMargin
                     required
+                    invalid={!!fieldErrors.product}
+                    error={fieldErrors.product}
                   >
                     <Combobox
                       data-testid="influxdb-v2-config-product-select"
@@ -230,6 +265,8 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     description={<div className={styles.dropdown}>The query language depends on product selection</div>}
                     noMargin
                     required
+                    invalid={!!fieldErrors.version}
+                    error={fieldErrors.version}
                   >
                     <Combobox
                       data-testid="influxdb-v2-config-query-language-select"

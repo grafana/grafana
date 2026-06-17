@@ -79,6 +79,31 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.snowflake)
 }
 
+// TestKvStorageBackend_Accessors verifies that KV() returns the configured
+// store and that LeaseManager() reflects whether EnableKVLeases is set.
+// These accessors let other subsystems (e.g. KV-backed search snapshots)
+// share the backend's KV store and lease manager rather than opening
+// their own.
+func TestKvStorageBackend_Accessors(t *testing.T) {
+	t.Run("KV returns configured store", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		assert.Same(t, backend.kv, backend.KV())
+	})
+
+	t.Run("LeaseManager is nil when leases are disabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		assert.Nil(t, backend.LeaseManager())
+	})
+
+	t.Run("LeaseManager is non-nil when leases are enabled", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, func(o *KVBackendOptions) {
+			o.EnableKVLeases = true
+			o.Holder = "test-holder"
+		})
+		assert.NotNil(t, backend.LeaseManager())
+	})
+}
+
 func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -338,7 +363,7 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 					require.Equal(t, rvs[j], writtenEvent.ResourceVersion)
 
 					if j > 0 {
-						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV)
+						require.Equal(t, rvs[j-1], writtenEvent.PreviousRV) // #nosec G602 -- bounds checked by `j > 0`
 					}
 				case <-ctx.Done():
 					require.FailNow(t, "timed out waiting for events")
@@ -683,14 +708,9 @@ func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 
 	response := backend.ReadResource(ctx, readReq)
 	require.NotNil(t, response.Error, "ReadResource should return error for too high resource version")
-	require.Equal(t, int32(504), response.Error.Code) // http.StatusGatewayTimeout
-	require.Equal(t, "Timeout", response.Error.Reason)
-	require.Equal(t, "ResourceVersion is larger than max", response.Error.Message)
-	require.NotNil(t, response.Error.Details)
-	require.Len(t, response.Error.Details.Causes, 1)
-	require.Equal(t, "ResourceVersionTooLarge", response.Error.Details.Causes[0].Reason)
-	require.Contains(t, response.Error.Details.Causes[0].Message, "requested:")
-	require.Contains(t, response.Error.Details.Causes[0].Message, "current")
+	require.Equal(t, int32(400), response.Error.Code)
+	require.Equal(t, "BadRequest", response.Error.Reason)
+	require.Contains(t, response.Error.Message, "too large resource version")
 }
 
 func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
@@ -1083,32 +1103,136 @@ func TestKvStorageBackend_ListModifiedSince(t *testing.T) {
 		Resource:  "resources",
 	}
 
-	expectations := seedBackend(t, backend, ctx, ns)
-	for _, expectation := range expectations {
-		_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv, nil)
+	t.Run("randomized seed in a single namespace", func(t *testing.T) {
+		expectations := seedBackend(t, backend, ctx, ns)
+		for _, expectation := range expectations {
+			_, seq := backend.ListModifiedSince(ctx, ns, expectation.rv, nil)
 
-		for mr, err := range seq {
-			require.NoError(t, err)
-			require.Equal(t, mr.Key.Group, ns.Group)
-			require.Equal(t, mr.Key.Namespace, ns.Namespace)
-			require.Equal(t, mr.Key.Resource, ns.Resource)
+			for mr, err := range seq {
+				require.NoError(t, err)
+				require.Equal(t, mr.Key.Group, ns.Group)
+				require.Equal(t, mr.Key.Namespace, ns.Namespace)
+				require.Equal(t, mr.Key.Resource, ns.Resource)
 
-			expectedMr, ok := expectation.changes[mr.Key.Name]
-			require.True(t, ok, "ListModifiedSince yielded unexpected resource: %s", mr.Key.String())
-			require.Equal(t, mr.ResourceVersion, expectedMr.ResourceVersion)
-			require.Equal(t, mr.Action, expectedMr.Action)
-			require.Equal(t, string(mr.Value), string(expectedMr.Value))
-			delete(expectation.changes, mr.Key.Name)
+				expectedMr, ok := expectation.changes[mr.Key.Name]
+				require.True(t, ok, "ListModifiedSince yielded unexpected resource: %s", mr.Key.String())
+				require.Equal(t, mr.ResourceVersion, expectedMr.ResourceVersion)
+				require.Equal(t, mr.Action, expectedMr.Action)
+				require.Equal(t, string(mr.Value), string(expectedMr.Value))
+				delete(expectation.changes, mr.Key.Name)
+			}
+
+			// Events with RV >= sinceRv are required and must have been returned.
+			// Lookback events (RV < sinceRv) are optional — they may or may not
+			// be returned depending on timing.
+			for name, mr := range expectation.changes {
+				require.Less(t, mr.ResourceVersion, expectation.rv,
+					"required event for %s (rv=%d >= sinceRv=%d) was not returned", name, mr.ResourceVersion, expectation.rv)
+			}
 		}
+	})
 
-		// Events with RV >= sinceRv are required and must have been returned.
-		// Lookback events (RV < sinceRv) are optional — they may or may not
-		// be returned depending on timing.
-		for name, mr := range expectation.changes {
-			require.Less(t, mr.ResourceVersion, expectation.rv,
-				"required event for %s (rv=%d >= sinceRv=%d) was not returned", name, mr.ResourceVersion, expectation.rv)
+	t.Run("cross-namespace scan with empty namespace", func(t *testing.T) {
+		// Same name in two namespaces — the cross-namespace scan must
+		// yield both rather than collapsing them through name-based
+		// dedup. Uses its own group/resource to stay isolated from the
+		// randomized seed above.
+		group := "test.cross.app"
+		resource := "test-resources"
+		nsA := NamespacedResource{Namespace: "cross-a", Group: group, Resource: resource}
+		nsB := NamespacedResource{Namespace: "cross-b", Group: group, Resource: resource}
+		nsOther := NamespacedResource{Namespace: "cross-a", Group: "other.app", Resource: "other-resources"}
+
+		objA, err := createTestObjectWithName("shared", nsA, "value-a")
+		require.NoError(t, err)
+		metaA, err := utils.MetaAccessor(objA)
+		require.NoError(t, err)
+
+		objB, err := createTestObjectWithName("shared", nsB, "value-b")
+		require.NoError(t, err)
+		metaB, err := utils.MetaAccessor(objB)
+		require.NoError(t, err)
+
+		objOther, err := createTestObjectWithName("ignored", nsOther, "value-other")
+		require.NoError(t, err)
+		metaOther, err := utils.MetaAccessor(objOther)
+		require.NoError(t, err)
+
+		rvA, err := backend.WriteEvent(ctx, WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Namespace: nsA.Namespace, Group: nsA.Group, Resource: nsA.Resource, Name: "shared"},
+			Value:  objectToJSONBytes(t, objA),
+			Object: metaA,
+		})
+		require.NoError(t, err)
+
+		rvB, err := backend.WriteEvent(ctx, WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Namespace: nsB.Namespace, Group: nsB.Group, Resource: nsB.Resource, Name: "shared"},
+			Value:  objectToJSONBytes(t, objB),
+			Object: metaB,
+		})
+		require.NoError(t, err)
+
+		_, err = backend.WriteEvent(ctx, WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Namespace: nsOther.Namespace, Group: nsOther.Group, Resource: nsOther.Resource, Name: "ignored"},
+			Value:  objectToJSONBytes(t, objOther),
+			Object: metaOther,
+		})
+		require.NoError(t, err)
+
+		crossNs := NamespacedResource{Group: group, Resource: resource}
+
+		paths := []struct {
+			name    string
+			sinceRV func() int64
+		}{
+			{name: "via event store (recent RV < 1 hour)", sinceRV: func() int64 { return rvA - 1 }},
+			{name: "via data store (old RV > 1 hour)", sinceRV: func() int64 { return generateOldSnowflake(t) }},
 		}
-	}
+		for _, p := range paths {
+			t.Run(p.name, func(t *testing.T) {
+				rv, seq := backend.ListModifiedSince(ctx, crossNs, p.sinceRV(), nil)
+
+				seen := map[string]*ModifiedResource{}
+				for mr, err := range seq {
+					require.NoError(t, err)
+					require.Equal(t, group, mr.Key.Group)
+					require.Equal(t, resource, mr.Key.Resource)
+					require.NotEqual(t, "ignored", mr.Key.Name, "cross-namespace scan must filter by (group, resource)")
+					seen[mr.Key.Namespace+"/"+mr.Key.Name] = mr
+				}
+
+				require.Greater(t, rv, p.sinceRV())
+				require.Contains(t, seen, nsA.Namespace+"/shared")
+				require.Contains(t, seen, nsB.Namespace+"/shared")
+				require.Equal(t, rvA, seen[nsA.Namespace+"/shared"].ResourceVersion)
+				require.Equal(t, rvB, seen[nsB.Namespace+"/shared"].ResourceVersion)
+			})
+		}
+	})
+
+	t.Run("rejects missing group or resource", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			key  NamespacedResource
+		}{
+			{name: "missing group", key: NamespacedResource{Resource: "x"}},
+			{name: "missing resource", key: NamespacedResource{Group: "x"}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				_, seq := backend.ListModifiedSince(ctx, tc.key, 0, nil)
+				var gotErr error
+				for _, err := range seq {
+					gotErr = err
+					break
+				}
+				require.Error(t, gotErr)
+				require.Contains(t, gotErr.Error(), "group and resource are required")
+			})
+		}
+	})
 }
 
 type expectation struct {
@@ -1197,7 +1321,7 @@ func seedBackend(t *testing.T, backend *kvStorageBackend, ctx context.Context, n
 	// whose latest RV is slightly before sinceRv. Add these to each
 	// expectation's changes map so the test can validate them.
 	for _, expect := range expectations {
-		lookbackRv := subtractDurationFromSnowflake(expect.rv, backend.searchLookback)
+		lookbackRv := SubtractDurationFromSnowflake(expect.rv, backend.searchLookback)
 		for name, mr := range allResources {
 			if _, ok := expect.changes[name]; ok {
 				continue // already expected

@@ -15,6 +15,8 @@ export interface TreeElement {
   style?: CSSProperties;
 }
 
+type TreeElementCallback = (item: TreeElement, index: number, arr: TreeElement[]) => void;
+
 export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {
   let elements: TreeElement[] = [];
   if (root) {
@@ -46,11 +48,7 @@ export function onNodeDrop(
   const destPos = info.node.pos.split('-');
   const destPosition = info.dropPosition - Number(destPos[destPos.length - 1]);
 
-  const loop = (
-    data: TreeElement[],
-    key: number,
-    callback: { (item: TreeElement, index: number, arr: TreeElement[]): void }
-  ) => {
+  const loop = (data: TreeElement[], key: number, callback: TreeElementCallback) => {
     data.forEach((item, index, arr) => {
       if (item.key === key) {
         callback(item, index, arr);

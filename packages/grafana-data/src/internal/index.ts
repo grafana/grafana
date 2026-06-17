@@ -26,8 +26,15 @@ export {
   type ConvertFieldTypeTransformerOptions,
   convertFieldType,
 } from '../transformations/transformers/convertFieldType';
-export { type ConvertFrameTypeTransformerOptions, FrameType } from '../transformations/transformers/convertFrameType';
-export { type FilterFieldsByNameTransformerOptions } from '../transformations/transformers/filterByName';
+export {
+  convertFrameTypeTransformer,
+  type ConvertFrameTypeTransformerOptions,
+  FrameType,
+} from '../transformations/transformers/convertFrameType';
+export {
+  filterFieldsByNameTransformer,
+  type FilterFieldsByNameTransformerOptions,
+} from '../transformations/transformers/filterByName';
 export { type FilterFramesByRefIdTransformerOptions } from '../transformations/transformers/filterByRefId';
 export { FormatStringOutput, type FormatStringTransformerOptions } from '../transformations/transformers/formatString';
 export { organizeFieldsTransformer } from '../transformations/transformers/organize';
@@ -40,7 +47,12 @@ export {
 } from '../transformations/transformers/groupBy';
 export {
   type GroupToNestedTableTransformerOptions,
+  type GroupToNestedTableTransformerOptionsV2,
+  type GroupToNestedTableMatcherConfig,
   SHOW_NESTED_HEADERS_DEFAULT,
+  EXPAND_ALL_ROWS_DEFAULT,
+  migrateGroupToNestedTableOptions,
+  isV1GroupToNestedTableOptions,
 } from '../transformations/transformers/groupToNestedTable';
 export {
   type BinaryValue,
@@ -59,11 +71,16 @@ export {
 } from '../transformations/transformers/calculateField';
 export { type SeriesToRowsTransformerOptions } from '../transformations/transformers/seriesToRows';
 export { histogramFieldInfo, type HistogramTransformerInputs } from '../transformations/transformers/histogram';
-export { type JoinByFieldOptions, JoinMode } from '../transformations/transformers/joinByField';
+export { joinByFieldTransformer, type JoinByFieldOptions } from '../transformations/transformers/joinByField';
+export { JoinMode } from '../transformations/transformers/joinShared';
 export { LabelsToFieldsMode, type LabelsToFieldsOptions } from '../transformations/transformers/labelsToFields';
 export { type LimitTransformerOptions } from '../transformations/transformers/limit';
 export { type MergeTransformerOptions } from '../transformations/transformers/merge';
-export { ReduceTransformerMode, type ReduceTransformerOptions } from '../transformations/transformers/reduce';
+export {
+  reduceTransformer,
+  ReduceTransformerMode,
+  type ReduceTransformerOptions,
+} from '../transformations/transformers/reduce';
 export {
   createOrderFieldsComparer,
   Order,
@@ -100,9 +117,14 @@ export { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } 
 
 export { getStreamingFrameOptions } from '../dataframe/StreamingDataFrame';
 export { fieldIndexComparer } from '../field/fieldComparers';
-export { decoupleHideFromState } from '../field/fieldState';
+export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
-export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
+export {
+  type PanelOptionsSupplier,
+  type PluginViewOptionsQuickToggles,
+  type PanelPluginViewOptions,
+} from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
 export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
 export { NewThemeOptionsSchema } from '../themes/createTheme';
+export { createFieldsOrdererAuto } from '../transformations/transformers/order';

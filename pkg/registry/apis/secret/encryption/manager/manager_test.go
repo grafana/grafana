@@ -613,7 +613,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 			// (created within a rolled-back transaction) is no longer in memory.
 			// Without flushing, the test would pass trivially because the phantom key
 			// would still be in the cache.
-			svc.(*EncryptionManager).dataKeyCache.Flush(namespace.String())
+			svc.(*EncryptionManager).dataKeyCache.Flush(ctx, namespace.String())
 
 			// Therefore, the data encrypted after this point, become unrecoverable after a restart.
 			// So, the different test cases here are there to prevent that from happening again
@@ -669,21 +669,90 @@ type stubCache struct {
 	setCalled        bool
 }
 
-func (c *stubCache) GetByLabel(namespace, label string) (encryption.DataKeyCacheEntry, bool) {
+func (c *stubCache) GetByLabel(_ context.Context, namespace, label string) (encryption.DataKeyCacheEntry, bool, error) {
 	c.getByLabelCalled = true
-	return encryption.DataKeyCacheEntry{}, false
+	return encryption.DataKeyCacheEntry{}, false, nil
 }
 
-func (c *stubCache) GetById(namespace, id string) (encryption.DataKeyCacheEntry, bool) {
+func (c *stubCache) GetById(_ context.Context, namespace, id string) (encryption.DataKeyCacheEntry, bool, error) {
 	c.getByIdCalled = true
-	return encryption.DataKeyCacheEntry{}, false
+	return encryption.DataKeyCacheEntry{}, false, nil
 }
 
-func (c *stubCache) Set(namespace string, entry encryption.DataKeyCacheEntry) {
+func (c *stubCache) Set(_ context.Context, namespace string, entry encryption.DataKeyCacheEntry) error {
 	c.setCalled = true
+	return nil
 }
-func (c *stubCache) Flush(namespace string) {}
-func (c *stubCache) RemoveExpired()         {}
+func (c *stubCache) Flush(_ context.Context, namespace string) {}
+func (c *stubCache) RemoveExpired(_ context.Context)           {}
+
+type fatalNamespaceOnGetByIdCache struct{}
+
+func (c *fatalNamespaceOnGetByIdCache) GetById(context.Context, string, string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, encryption.ErrDataKeyCacheUnexpectedNamespace
+}
+
+func (c *fatalNamespaceOnGetByIdCache) GetByLabel(_ context.Context, _, _ string) (encryption.DataKeyCacheEntry, bool, error) {
+	return encryption.DataKeyCacheEntry{}, false, nil
+}
+
+func (c *fatalNamespaceOnGetByIdCache) Set(_ context.Context, _ string, _ encryption.DataKeyCacheEntry) error {
+	return nil
+}
+
+func (c *fatalNamespaceOnGetByIdCache) RemoveExpired(_ context.Context) {}
+
+func (c *fatalNamespaceOnGetByIdCache) Flush(_ context.Context, _ string) {}
+
+func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t *testing.T) {
+	ctx := context.Background()
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+	tracer := noop.NewTracerProvider().Tracer("test")
+	database := database.ProvideDatabase(testDB, tracer)
+
+	cfg := &setting.Cfg{
+		SecretsManagement: setting.SecretsManagerSettings{
+			CurrentEncryptionProvider: "secret_key.v1",
+			ConfiguredKMSProviders:    map[string]map[string]string{"secret_key.v1": {"secret_key": "SW2YcwTIb9zpOOhoPsMm"}},
+			DataKeysCacheTTL:          time.Hour,
+		},
+	}
+
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, tracer, nil)
+	require.NoError(t, err)
+
+	usageStats := &usagestats.UsageStatsMock{T: t}
+	enc, err := service.ProvideAESGCMCipherService(tracer, usageStats)
+	require.NoError(t, err)
+
+	ossProviders, err := osskmsproviders.ProvideOSSKMSProviders(cfg, enc)
+	require.NoError(t, err)
+
+	cache := &fatalNamespaceOnGetByIdCache{}
+	svc, err := ProvideEncryptionManager(tracer, store, usageStats, enc, ossProviders, cache, cfg)
+	require.NoError(t, err)
+
+	namespace := xkube.Namespace("test-namespace")
+	encrypted, err := svc.Encrypt(ctx, namespace, []byte("consolidation-payload"), contracts.EncryptionOption{})
+	require.NoError(t, err)
+
+	values := []*contracts.EncryptedValue{
+		{
+			EncryptedPayload: contracts.EncryptedPayload{
+				DataKeyID:     encrypted.DataKeyID,
+				EncryptedData: encrypted.EncryptedData,
+			},
+			Namespace: namespace.String(),
+			Name:      "secret-name",
+			Version:   1,
+		},
+	}
+
+	_, err = svc.ConsolidateNamespace(ctx, namespace, values)
+	require.Error(t, err)
+	require.ErrorIs(t, err, encryption.ErrDataKeyCacheUnexpectedNamespace)
+	assert.Contains(t, err.Error(), "fatal namespace mismatch during consolidation")
+}
 
 func TestEncryptionService_WithSkipCache(t *testing.T) {
 	ctx := context.Background()
@@ -825,20 +894,24 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 
 	// Verify the key is in the cache by checking both by ID and by label
 	label := encryption.KeyLabel(svc.providerConfig.CurrentProvider)
-	_, existsById := dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById, cacheErr := dekCache.GetById(ctx, namespace.String(), dataKeyID)
+	require.NoError(t, cacheErr)
 	assert.True(t, existsById, "DEK should be cached by ID before flush")
 
-	_, existsByLabel := dekCache.GetByLabel(namespace.String(), label)
+	_, existsByLabel, cacheErr := dekCache.GetByLabel(ctx, namespace.String(), label)
+	require.NoError(t, cacheErr)
 	assert.True(t, existsByLabel, "DEK should be cached by label before flush")
 
 	// Flush the cache for this namespace
-	svc.dataKeyCache.Flush(namespace.String())
+	svc.dataKeyCache.Flush(ctx, namespace.String())
 
 	// Verify the cache is empty for this namespace
-	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById, cacheErr = dekCache.GetById(ctx, namespace.String(), dataKeyID)
+	require.NoError(t, cacheErr)
 	assert.False(t, existsById, "DEK should not be in cache by ID after flush")
 
-	_, existsByLabel = dekCache.GetByLabel(namespace.String(), label)
+	_, existsByLabel, cacheErr = dekCache.GetByLabel(ctx, namespace.String(), label)
+	require.NoError(t, cacheErr)
 	assert.False(t, existsByLabel, "DEK should not be in cache by label after flush")
 
 	// Verify we can still decrypt - this should fetch from DB and re-cache
@@ -847,6 +920,7 @@ func TestEncryptionService_FlushCache(t *testing.T) {
 	assert.Equal(t, plaintext, decrypted)
 
 	// Verify the key is back in the cache after the decrypt operation
-	_, existsById = dekCache.GetById(namespace.String(), dataKeyID)
+	_, existsById, cacheErr = dekCache.GetById(ctx, namespace.String(), dataKeyID)
+	require.NoError(t, cacheErr)
 	assert.True(t, existsById, "DEK should be re-cached by ID after decrypt")
 }

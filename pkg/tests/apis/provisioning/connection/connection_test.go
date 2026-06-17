@@ -577,7 +577,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					installation := github.InstallationToken{
-						Token:     github.Ptr("someToken"),
+						Token:     new("someToken"),
 						ExpiresAt: &github.Timestamp{Time: time.Now().Add(time.Hour * 2)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(installation))
@@ -1096,10 +1096,10 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 						ID:   &appID,
 						Slug: &appSlug,
 						Permissions: &github.InstallationPermissions{
-							Contents:        github.Ptr("write"),
-							Metadata:        github.Ptr("read"),
-							PullRequests:    github.Ptr("write"),
-							RepositoryHooks: github.Ptr("write"),
+							Contents:        new("write"),
+							Metadata:        new("read"),
+							PullRequests:    new("write"),
+							RepositoryHooks: new("write"),
 						},
 					}))
 				}),
@@ -1211,10 +1211,10 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 						ID:   &appID,
 						Slug: &appSlug,
 						Permissions: &github.InstallationPermissions{
-							Contents:        github.Ptr("write"),
-							Metadata:        github.Ptr("read"),
-							PullRequests:    github.Ptr("write"),
-							RepositoryHooks: github.Ptr("write"),
+							Contents:        new("write"),
+							Metadata:        new("read"),
+							PullRequests:    new("write"),
+							RepositoryHooks: new("write"),
 						},
 					}))
 				}),
@@ -1331,10 +1331,10 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 					ID:   &appID,
 					Slug: &appSlug,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				},
 			),
@@ -1392,10 +1392,10 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 					ID:   &appID,
 					Slug: &appSlug,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				},
 			),
@@ -1403,10 +1403,10 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 				ghmock.GetAppInstallationsByInstallationId, github.Installation{
 					ID: &validInstallationID,
 					Permissions: &github.InstallationPermissions{
-						Contents:        github.Ptr("write"),
-						Metadata:        github.Ptr("read"),
-						PullRequests:    github.Ptr("write"),
-						RepositoryHooks: github.Ptr("write"),
+						Contents:        new("write"),
+						Metadata:        new("read"),
+						PullRequests:    new("write"),
+						RepositoryHooks: new("write"),
 					},
 				},
 			),
@@ -1879,10 +1879,10 @@ func verifyToken(t *testing.T, appID, token string) (bool, error) {
 // createInstallationWithPermissions creates a GitHub installation with specific permissions
 func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
 	app := &github.App{
-		ID:   github.Ptr(id),
-		Slug: github.Ptr("test-app"),
+		ID:   new(id),
+		Slug: new("test-app"),
 		Owner: &github.User{
-			Login: github.Ptr("test-owner"),
+			Login: new("test-owner"),
 		},
 	}
 
@@ -1891,16 +1891,16 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 		installationPerms := &github.InstallationPermissions{}
 
 		if contents, ok := permissions["contents"]; ok {
-			installationPerms.Contents = github.Ptr(contents)
+			installationPerms.Contents = new(contents)
 		}
 		if metadata, ok := permissions["metadata"]; ok {
-			installationPerms.Metadata = github.Ptr(metadata)
+			installationPerms.Metadata = new(metadata)
 		}
 		if prs, ok := permissions["pull_requests"]; ok {
-			installationPerms.PullRequests = github.Ptr(prs)
+			installationPerms.PullRequests = new(prs)
 		}
 		if hooks, ok := permissions["webhooks"]; ok {
-			installationPerms.RepositoryHooks = github.Ptr(hooks)
+			installationPerms.RepositoryHooks = new(hooks)
 		}
 
 		app.Permissions = installationPerms
@@ -1912,12 +1912,12 @@ func createAppWithPermissions(id int64, permissions map[string]string) *github.A
 // createInstallationWithPermissions creates a GitHub installation with specific permissions
 func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
 	installation := &github.Installation{
-		ID: github.Ptr(id),
+		ID: new(id),
 		Permissions: &github.InstallationPermissions{
-			Contents:        github.Ptr("write"),
-			Metadata:        github.Ptr("read"),
-			PullRequests:    github.Ptr("write"),
-			RepositoryHooks: github.Ptr("write"),
+			Contents:        new("write"),
+			Metadata:        new("read"),
+			PullRequests:    new("write"),
+			RepositoryHooks: new("write"),
 		},
 	}
 
@@ -1926,16 +1926,16 @@ func createAppInstallationWithPermissions(id int64, permissions map[string]strin
 		installationPerms := &github.InstallationPermissions{}
 
 		if contents, ok := permissions["contents"]; ok {
-			installationPerms.Contents = github.Ptr(contents)
+			installationPerms.Contents = new(contents)
 		}
 		if metadata, ok := permissions["metadata"]; ok {
-			installationPerms.Metadata = github.Ptr(metadata)
+			installationPerms.Metadata = new(metadata)
 		}
 		if prs, ok := permissions["pull_requests"]; ok {
-			installationPerms.PullRequests = github.Ptr(prs)
+			installationPerms.PullRequests = new(prs)
 		}
 		if hooks, ok := permissions["webhooks"]; ok {
-			installationPerms.RepositoryHooks = github.Ptr(hooks)
+			installationPerms.RepositoryHooks = new(hooks)
 		}
 
 		installation.Permissions = installationPerms
@@ -2040,12 +2040,12 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 
 			app := createAppWithPermissions(123456, tc.permissions)
 			installation := &github.Installation{
-				ID: github.Ptr(int64(454545)),
+				ID: new(int64(454545)),
 				Permissions: &github.InstallationPermissions{
-					Contents:        github.Ptr("write"),
-					Metadata:        github.Ptr("read"),
-					PullRequests:    github.Ptr("write"),
-					RepositoryHooks: github.Ptr("write"),
+					Contents:        new("write"),
+					Metadata:        new("read"),
+					PullRequests:    new("write"),
+					RepositoryHooks: new("write"),
 				},
 			}
 
@@ -2252,16 +2252,16 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 			connectionFactory := helper.GetEnv().GithubConnectionFactory.(*githubConnection.Factory)
 
 			app := &github.App{
-				ID:   github.Ptr(int64(123456)),
-				Slug: github.Ptr("test-app"),
+				ID:   new(int64(123456)),
+				Slug: new("test-app"),
 				Owner: &github.User{
-					Login: github.Ptr("test-owner"),
+					Login: new("test-owner"),
 				},
 				Permissions: &github.InstallationPermissions{
-					Contents:        github.Ptr("write"),
-					Metadata:        github.Ptr("read"),
-					PullRequests:    github.Ptr("write"),
-					RepositoryHooks: github.Ptr("write"),
+					Contents:        new("write"),
+					Metadata:        new("read"),
+					PullRequests:    new("write"),
+					RepositoryHooks: new("write"),
 				},
 			}
 			installation := createAppInstallationWithPermissions(454545, tc.permissions)

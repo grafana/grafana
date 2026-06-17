@@ -1,9 +1,6 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
-import WKT from 'ol/format/WKT';
-import Geometry from 'ol/geom/Geometry';
 import { type CSSProperties } from 'react';
-import { type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -21,6 +18,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -31,6 +29,7 @@ import {
 
 import { getTextColorForAlphaBackground } from '../../../utils/colors';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { inferPills } from './Cells/PillCell';
@@ -48,8 +47,6 @@ import {
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
-
 /**
  * @internal
  * Returns the default row height based on the theme and cell height setting.
@@ -629,10 +626,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
  * @internal
  * Processes nested table rows
  */
-export const processNestedTableRows = (
-  rows: TableRow[],
-  processParents: (parents: TableRow[]) => TableRow[]
-): TableRow[] => {
+const processNestedTableRows = (rows: TableRow[], processParents: (parents: TableRow[]) => TableRow[]): TableRow[] => {
   // Separate parent and child rows
   // Array for parentRows: enables sorting and maintains order for iteration
   // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
@@ -786,13 +780,15 @@ export function applyFilter(
  * @internal
  */
 export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const hasNestedFrames = (nestedFramesFieldName ?? '').length > 0;
   const fnBody = `
-    const rows = Array(frame.length);
     const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const hasNestedFrames = ${hasNestedFrames};
+    const frameLength = frame.length ?? values[0]?.length ?? 0;
+    const rows = Array(frameLength);
 
     let rowCount = 0;
-    for (let i = 0; i < frame.length; i++) {
+    for (let i = 0; i < frameLength; i++) {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
@@ -1023,6 +1019,12 @@ export function computeColWidths(fields: Field[], availWidth: number) {
   );
 }
 
+export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {
+  return new Map<string, ColumnWidth>(
+    fields.map((field, idx) => [getDisplayName(field), { type: 'resized', width: widths[idx] }])
+  );
+}
+
 /**
  * @internal
  * if applyToRow is true in any field, return a function that gets the row background color
@@ -1106,17 +1108,18 @@ function isPlainObject(value: unknown): value is object {
   return typeof value === 'object' && value != null && !Array.isArray(value);
 }
 
-export function buildInspectValue(value: unknown, field: Field): [string, TableCellInspectorMode] {
+export function buildInspectValue(
+  value: unknown,
+  field: Field,
+  formatGeometry?: OpenLayersContextValue['formatGeometry']
+): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
   let inspectValue: string;
   let mode = TableCellInspectorMode.text;
 
-  if (field.type === FieldType.geo && value instanceof Geometry) {
-    inspectValue = new WKT().writeGeometry(value, {
-      featureProjection: 'EPSG:3857',
-      dataProjection: 'EPSG:4326',
-    });
+  if (field.type === FieldType.geo && isGeometry(value)) {
+    inspectValue = formatGeometry ? formatGeometry(value) : JSON.stringify(value, null, '  ');
     mode = TableCellInspectorMode.code;
   } else if (
     cellOptions.type === TableCellDisplayMode.Sparkline ||
@@ -1206,3 +1209,8 @@ export const IS_SAFARI_26 = (() => {
   const minorVersion = +safariVersionMatch[2];
   return majorVersion === 26 && minorVersion <= 1;
 })();
+
+export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
+  const key = frame?.meta?.custom?.stableRowKey;
+  return key != null ? String(key) : String(rowIndex);
+};

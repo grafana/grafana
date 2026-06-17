@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import { Checkbox, Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { type ActionItem, Actions } from '../../../Actions';
+import { Actions } from '../../../Actions';
+import { type ActionItem } from '../../../actionItem';
 import {
-  QUERY_EDITOR_TYPE_CONFIG,
   QueryEditorType,
+  SIDEBAR_CARD_DATA_ATTR,
   SIDEBAR_CARD_HEIGHT,
   SIDEBAR_CARD_INDENT,
   SIDEBAR_CARD_SPACING,
-  getQueryEditorColors,
 } from '../../../constants';
-import { getEditorBorderColor } from '../../utils';
+import { type SelectionModifiers, useQueryEditorTypeConfig, useQueryEditorUIContext } from '../../QueryEditorContext';
+import { getEditorBorderColor, getHiddenMaskStyles } from '../../utils';
 import { AddCardButton } from '../AddCardButton';
 import { getGhostCardVisuals } from '../SidebarCardGhostStyles';
 
@@ -22,9 +23,10 @@ interface SidebarCardProps {
   children: React.ReactNode;
   id: string;
   isSelected: boolean;
-  isPartOfSelection?: boolean;
+  isMultiSelected?: boolean;
   item: ActionItem;
-  onSelect: (modifiers?: { multi?: boolean; range?: boolean }) => void;
+  onSelect: () => void;
+  onToggleMultiSelect?: (modifiers?: SelectionModifiers) => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
   onToggleHide?: () => void;
@@ -35,21 +37,24 @@ export const SidebarCard = ({
   children,
   id,
   isSelected,
-  isPartOfSelection,
+  isMultiSelected = false,
   item,
   onSelect,
+  onToggleMultiSelect,
   onDelete,
   onDuplicate,
   onToggleHide,
   variant = 'default',
 }: SidebarCardProps) => {
   const theme = useTheme2();
-  const queryEditorColors = getQueryEditorColors(theme);
+  const typeConfig = useQueryEditorTypeConfig();
   const addVariant = item.type === QueryEditorType.Transformation ? 'transformation' : 'query';
   const hasActions = onDelete || onDuplicate || onToggleHide;
   const [hasFocusWithin, setHasFocusWithin] = useState(false);
+  const shiftRangeSelectRef = useRef(false);
+  const { multiSelectMode } = useQueryEditorUIContext();
 
-  const styles = useStyles2(getStyles, { isSelected, isPartOfSelection, item });
+  const styles = useStyles2(getStyles, { isSelected, item });
 
   const handleFocus = useCallback(() => {
     setHasFocusWithin(true);
@@ -61,13 +66,25 @@ export const SidebarCard = ({
     }
   }, []);
 
-  // Setter function to reset the focus state of the card when the modal is closed.
   const handleResetFocus = useCallback(() => {
     setHasFocusWithin(false);
   }, []);
 
-  // Using a div with role="button" instead of a native button for @hello-pangea/dnd compatibility,
-  // so we manually handle Enter and Space key activation.
+  const handleCardMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.shiftKey) {
+      e.preventDefault();
+    }
+    // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
+    // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
+    if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+      document.activeElement.blur();
+    }
+  };
+
+  const handleCardClick = () => {
+    onSelect();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.target !== e.currentTarget) {
       return;
@@ -75,19 +92,35 @@ export const SidebarCard = ({
 
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onSelect({});
+      onSelect();
     }
   };
 
+  const handleBulkCheckboxMouseDownCapture = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.shiftKey) {
+      e.preventDefault();
+      shiftRangeSelectRef.current = true;
+      onToggleMultiSelect?.({ range: true });
+    }
+  };
+
+  const handleCheckboxChange = () => {
+    if (shiftRangeSelectRef.current) {
+      shiftRangeSelectRef.current = false;
+      return;
+    }
+    onToggleMultiSelect?.({ multi: true });
+  };
+
   if (variant === 'ghost') {
-    const typeConfig = QUERY_EDITOR_TYPE_CONFIG[item.type];
+    const config = typeConfig[item.type];
     return (
       <div className={cx(styles.wrapper, styles.ghostWrapper)} aria-hidden>
         <div className={cx(styles.card, styles.ghostCard)}>
           <div className={styles.cardContent}>
-            <Icon name={typeConfig.icon} size="sm" className={styles.ghostCardIcon} />
+            <Icon name={config.icon} size="sm" className={styles.ghostCardIcon} />
             <span className={styles.ghostCardLabel}>
-              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: typeConfig.getLabel() })}
+              {t('query-editor-next.sidebar.new-type', 'New {{type}}', { type: config.getLabel() })}
             </span>
           </div>
         </div>
@@ -97,52 +130,65 @@ export const SidebarCard = ({
 
   return (
     <div className={styles.wrapper}>
-      <div
-        className={styles.card}
-        onClick={(e) => onSelect({ multi: e.metaKey || e.ctrlKey, range: e.shiftKey })}
-        onMouseDown={(e) => {
-          // Prevent the browser's native text-selection behaviour when Shift is held
-          // (Shift+Click is used for range-selection of cards, not text).
-          if (e.shiftKey) {
-            e.preventDefault();
-          }
-        }}
-        onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        role="button"
-        tabIndex={0}
-        data-query-sidebar-card={id}
-        aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
-        aria-pressed={isSelected || isPartOfSelection}
-      >
-        <div className={styles.cardContent}>{children}</div>
-        {/** Alerts don't have actions and cannot be hidden so we don't need to show the hidden icon or hover actions. */}
-        {/** hasActions is indicating if this is an alert card or a query/transformation card. */}
-        {hasActions && (
-          <div>
-            <div className={styles.cardContentIcons}>
-              {item.isHidden && <Icon name="eye-slash" size="sm" />}
-              {!!item.error && <Icon name="exclamation-triangle" size="sm" color={queryEditorColors.error} />}
-            </div>
-            <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
-              <Actions
-                handleResetFocus={handleResetFocus}
-                item={item}
-                onDelete={onDelete}
-                onDuplicate={onDuplicate}
-                onToggleHide={onToggleHide}
-                order={{
-                  delete: 1,
-                  duplicate: 0,
-                  hide: 2,
-                }}
+      <div className={styles.cardRow}>
+        <div
+          aria-hidden={!multiSelectMode}
+          className={cx(styles.checkboxWrapper, multiSelectMode && styles.checkboxWrapperOpen)}
+          {...(!multiSelectMode && { inert: '' })}
+        >
+          {onToggleMultiSelect && (
+            <div onMouseDownCapture={handleBulkCheckboxMouseDownCapture}>
+              <Checkbox
+                value={isMultiSelected}
+                onChange={handleCheckboxChange}
+                aria-label={t('query-editor-next.sidebar.card-multi-select', 'Include card {{id}} in bulk selection', {
+                  id,
+                })}
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
+        <div
+          className={styles.card}
+          onClick={handleCardClick}
+          onMouseDown={handleCardMouseDown}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          role="button"
+          tabIndex={0}
+          {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}
+          aria-label={t('query-editor-next.sidebar.card-click', 'Select card {{id}}', { id })}
+          aria-pressed={isSelected}
+        >
+          <div className={styles.cardContent}>{children}</div>
+          {hasActions && !multiSelectMode && (
+            <div>
+              <div className={styles.cardContentIcons}>
+                {item.isHidden && <Icon name="eye-slash" size="sm" />}
+                {!!item.error && <Icon name="exclamation-triangle" size="sm" color={theme.colors.error.text} />}
+              </div>
+              <div className={cx(styles.hoverActions, { [styles.hoverActionsVisible]: hasFocusWithin })}>
+                <Actions
+                  handleResetFocus={handleResetFocus}
+                  item={item}
+                  onDelete={onDelete}
+                  onDuplicate={onDuplicate}
+                  onToggleHide={onToggleHide}
+                  order={{
+                    delete: 1,
+                    duplicate: 0,
+                    hide: 2,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      <AddCardButton variant={addVariant} afterId={id} />
+      {/* The inline add button is absolutely positioned into the left gutter, which the bulk
+          checkbox occupies in multi-select mode. Hide it there to avoid the visual collision. */}
+      {!multiSelectMode && <AddCardButton variant={addVariant} afterId={id} />}
     </div>
   );
 };
@@ -151,15 +197,12 @@ function getStyles(
   theme: GrafanaTheme2,
   {
     isSelected,
-    isPartOfSelection,
     item,
   }: {
     isSelected?: boolean;
-    isPartOfSelection?: boolean;
     item: ActionItem;
   }
 ) {
-  // TODO: I think we should refactor this so we aren't relying on this border color for the selected card.
   const borderColor = getEditorBorderColor({
     theme,
     editorType: item.type,
@@ -167,9 +210,9 @@ function getStyles(
     isError: !!item.error,
   });
 
-  const themeColors = getQueryEditorColors(theme);
   const selectedBg = `color-mix(in srgb, ${borderColor} 10%, ${theme.colors.background.primary})`;
-  const hoverBackgroundColor = isSelected ? selectedBg : themeColors.card.hoverBg;
+  const hoverBackgroundColor = isSelected ? selectedBg : colorManipulator.alpha(theme.colors.text.primary, 0.08);
+  const hoverSolidBg = isSelected ? selectedBg : theme.colors.background.secondary;
 
   const {
     ghostBackgroundColor,
@@ -191,14 +234,12 @@ function getStyles(
     display: 'flex',
     alignItems: 'center',
     paddingRight: theme.spacing(1),
-    // increasing the left padding lets the gradient become transparent before the first button rather than behind the first button
     paddingLeft: theme.spacing(3),
     borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-    background: `linear-gradient(270deg, ${hoverBackgroundColor} 70%, transparent 100%)`,
+    background: `linear-gradient(270deg, ${hoverSolidBg} 80%, transparent 100%)`,
     opacity: 0,
     transform: 'translateX(8px)',
     pointerEvents: 'none',
-    // This transition handles the opacity and transform of the hover actions when the card is hovered.
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity', 'transform'], {
         duration: theme.transitions.duration.standard,
@@ -206,15 +247,11 @@ function getStyles(
     },
   });
 
-  const inSelection = isSelected || isPartOfSelection;
   const cardBorder = !!item.error
-    ? `1px solid color-mix(in srgb, ${themeColors.error} 50%, transparent)`
-    : `1px solid ${inSelection ? borderColor : theme.colors.border.medium}`;
+    ? `1px solid ${theme.colors.error.border}`
+    : `1px solid ${isSelected ? borderColor : theme.colors.border.medium}`;
 
-  const selectionTintBg = `color-mix(in srgb, ${borderColor} 5%, ${theme.colors.background.primary})`;
-
-  // Selection-based styling
-  const cardBackground = isSelected ? selectedBg : isPartOfSelection ? selectionTintBg : themeColors.card.bg;
+  const cardBackground = isSelected ? selectedBg : theme.colors.background.primary;
   const cardBoxShadow = isSelected ? `0 0 4px 0 color-mix(in srgb, ${borderColor} 40%, transparent)` : 'none';
   const indicatorWidth = isSelected ? 3 : 2;
 
@@ -231,11 +268,6 @@ function getStyles(
       marginLeft: theme.spacing(SIDEBAR_CARD_INDENT),
       marginRight: theme.spacing(SIDEBAR_CARD_INDENT),
 
-      // Two slim pseudo-element strips extend the hover zone to the left and
-      // below the card, covering the path to the "+" button without overlapping
-      // the card's clickable area.
-
-      // Left strip: narrow gutter running along the card's left edge and below.
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -245,7 +277,6 @@ function getStyles(
         height: `calc(100% + ${theme.spacing(1.5)})`,
       },
 
-      // Bottom strip: runs along the card's bottom edge extending to the left.
       '&::after': {
         content: '""',
         position: 'absolute',
@@ -277,6 +308,8 @@ function getStyles(
       justifyContent: 'space-between',
 
       width: '100%',
+      flex: 1,
+      minWidth: 0,
       background: cardBackground,
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
@@ -300,12 +333,10 @@ function getStyles(
       },
 
       ...(item.isHidden && {
-        opacity: theme.isDark ? 0.6 : 0.7,
-        filter: 'grayscale(0.8)',
+        ...getHiddenMaskStyles(theme),
         boxShadow: 'none',
       }),
 
-      // This transitions the background color of the card when it is hovered or selected.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['background-color', 'box-shadow', 'opacity', 'filter'], {
           duration: theme.transitions.duration.standard,
@@ -339,7 +370,6 @@ function getStyles(
       overflow: 'hidden',
       minWidth: 0,
       flex: 1,
-      // This transitions the opacity of the card text when the card is hidden.
       [theme.transitions.handleMotion('no-preference', 'reduce')]: {
         transition: theme.transitions.create(['opacity'], {
           duration: theme.transitions.duration.standard,
@@ -347,6 +377,33 @@ function getStyles(
       },
     }),
 
+    cardRow: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1.25),
+    }),
+
+    // Slot for the always-rendered checkbox: width animates open/closed to slide
+    // the card and reveal/clip it. Negative margin cancels `cardRow`'s gap when closed.
+    checkboxWrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      width: 0,
+      flexShrink: 0,
+      lineHeight: 0,
+      marginRight: `-${theme.spacing(1.25)}`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['width', 'margin-right'], {
+          duration: theme.transitions.duration.short,
+          easing: theme.transitions.easing.easeOut,
+        }),
+      },
+    }),
+    checkboxWrapperOpen: css({
+      width: theme.spacing(2),
+      marginRight: 0,
+    }),
     ghostCard: css({
       border: `1px solid ${ghostBorderColor}`,
       background: ghostBackgroundColor,

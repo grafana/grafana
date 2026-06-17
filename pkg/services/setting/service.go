@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
@@ -27,6 +26,9 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -78,6 +80,7 @@ type clientMetrics struct {
 	listResultSize           prometheus.Histogram
 	rateLimiterThrottleTotal prometheus.Counter
 	cacheHitTotal            prometheus.Counter
+	cacheMissTotal           prometheus.Counter
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -322,6 +325,7 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 		}
 	}
 
+	s.metrics.cacheMissTotal.Inc()
 	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
 	if err != nil {
 		oErr = err
@@ -623,6 +627,7 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_duration_seconds",
 				Help:                        "Duration of remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
@@ -633,6 +638,7 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_result_size",
 				Help:                        "Number of settings returned by remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
 			},
 		),
 		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{
@@ -647,6 +653,12 @@ func initMetrics() clientMetrics {
 			Name:      "list_settings_cache_hit_total",
 			Help:      "Total number of List cache hits",
 		}),
+		cacheMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: "settings",
+			Subsystem: "service",
+			Name:      "list_settings_cache_miss_total",
+			Help:      "Total number of List cache misses",
+		}),
 	}
 	return metrics
 }
@@ -656,6 +668,7 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.listResultSize.Describe(descs)
 	s.metrics.rateLimiterThrottleTotal.Describe(descs)
 	s.metrics.cacheHitTotal.Describe(descs)
+	s.metrics.cacheMissTotal.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -663,4 +676,5 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.listResultSize.Collect(metrics)
 	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
 	s.metrics.cacheHitTotal.Collect(metrics)
+	s.metrics.cacheMissTotal.Collect(metrics)
 }

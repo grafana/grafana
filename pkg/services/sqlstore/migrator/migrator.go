@@ -5,19 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"go.uber.org/atomic"
 
 	"github.com/grafana/grafana/pkg/util/sqlite"
 
@@ -205,7 +204,7 @@ func (mg *Migrator) RunMigrations(ctx context.Context, isDatabaseLockingEnabled 
 	if err != nil {
 		return err
 	}
-	key, err := database.GenerateAdvisoryLockId(dbName)
+	key, err := GenerateAdvisoryLockID(dbName)
 	if err != nil {
 		return err
 	}

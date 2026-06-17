@@ -5,7 +5,7 @@ import { config } from '@grafana/runtime';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
-import { PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/constants';
 import {
   type BrowseDashboardsState,
   type DashboardsTreeItem,
@@ -20,8 +20,8 @@ import { getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
-export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
-export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
+const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
+const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
   rootItemsSelector,
@@ -140,7 +140,7 @@ export function useLoadNextChildrenPage(
  * @param openFolders Object of UID to whether that item is expanded or not
  * @param level level of item in the tree. Only to be specified when called recursively.
  */
-export function createFlatTree(
+function createFlatTree(
   folderUID: string | undefined,
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],

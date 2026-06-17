@@ -23,12 +23,32 @@ import { type RawTimeRange, type TimeRange } from './time';
 import { type UserStorage } from './userStorage';
 import { type CustomVariableSupport, type DataSourceVariableSupport, type StandardVariableSupport } from './variables';
 
+/** @alpha */
 export interface DataSourceConfigValidationAPI {
+  /**
+   * Registers a validator function that will be called during form submission.
+   * Returns a cleanup function that unregisters the validator.
+   */
   registerValidation: (validator: () => Promise<boolean> | boolean) => () => void;
+  /**
+   * Runs all registered validators and returns true if all pass.
+   */
   validate: () => Promise<boolean>;
+  /**
+   * Returns true if there are no active field errors.
+   */
   isValid: () => boolean;
+  /**
+   * Returns the current map of field errors, keyed by field name.
+   */
   getErrors: () => Record<string, string>;
+  /**
+   * Sets an error message for the given field.
+   */
   setError: (field: string, message: string) => void;
+  /**
+   * Clears the error for the given field, if one exists.
+   */
   clearError: (field: string) => void;
 }
 export interface DataSourcePluginOptionsEditorProps<
@@ -436,7 +456,7 @@ abstract class DataSourceApi<
 /**
  * Base options shared across datasource filtering operations.
  */
-export interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
+interface DataSourceFilteringRequestOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * Context time range. New in v10.3
    */

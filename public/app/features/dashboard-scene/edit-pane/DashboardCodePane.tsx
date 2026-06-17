@@ -3,21 +3,30 @@ import { useCallback, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, IconButton, Modal, Sidebar, Tooltip, useStyles2 } from '@grafana/ui';
+import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+import { Alert, Button, ClipboardButton, IconButton, Modal, Sidebar, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
-export interface DashboardCodePaneProps {
-  initialValue: string;
-  onApply: (jsonText: string) => { success: boolean; error?: string };
+import { applyJsonToDashboard, getDashboardJsonText, getDashboardResourceText } from './codePaneUtils';
+
+export class DashboardCodePane extends SceneObjectBase {
+  public static Component = DashboardCodePaneRenderer;
+  public minWidth = 700;
+
+  public getId() {
+    return 'code' as const;
+  }
 }
 
-export function DashboardCodePane({ initialValue, onApply }: DashboardCodePaneProps) {
+function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodePane>) {
   const styles = useStyles2(getStyles);
+  const dashboard = getDashboardSceneFor(model);
 
   const [hasValidationErrors, setHasValidationErrors] = useState(true);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [jsonText, setJsonText] = useState(initialValue);
+  const [jsonText, setJsonText] = useState(() => getDashboardJsonText(dashboard));
   const [isExpanded, setIsExpanded] = useState(false);
   const [editorFormat, setEditorFormat] = useState<SchemaEditorFormat>('json');
 
@@ -28,11 +37,32 @@ export function DashboardCodePane({ initialValue, onApply }: DashboardCodePanePr
 
   const handleApply = useCallback(() => {
     setApplyError(null);
-    const result = onApply(jsonText);
+
+    const result = applyJsonToDashboard(dashboard, jsonText);
     if (!result.success) {
       setApplyError(result.error ?? 'Failed to apply changes');
     }
-  }, [onApply, jsonText]);
+  }, [dashboard, jsonText]);
+
+  const getResourceText = useCallback(
+    () => getDashboardResourceText(dashboard, editorFormat),
+    [dashboard, editorFormat]
+  );
+
+  const copyAsResourceButton = (
+    <ClipboardButton
+      variant="secondary"
+      size="sm"
+      icon="copy"
+      getText={getResourceText}
+      tooltip={t(
+        'dashboard.code-pane.copy-as-resource-tooltip',
+        'Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files'
+      )}
+    >
+      {t('dashboard.code-pane.copy-as-resource', 'Copy as resource')}
+    </ClipboardButton>
+  );
 
   const applyTooltip =
     editorFormat === 'yaml'
@@ -78,7 +108,10 @@ export function DashboardCodePane({ initialValue, onApply }: DashboardCodePanePr
           <DashboardSchemaEditor {...editorProps} containerStyles={styles.codeEditor} />
         </div>
         <div className={styles.toolbar}>
-          {applyButton}
+          <Stack gap={1} alignItems="center">
+            {applyButton}
+            {copyAsResourceButton}
+          </Stack>
           <IconButton
             name="expand-arrows"
             size="sm"
@@ -102,7 +135,10 @@ export function DashboardCodePane({ initialValue, onApply }: DashboardCodePanePr
             {errorAlert}
             <DashboardSchemaEditor {...editorProps} />
             <div className={styles.toolbar}>
-              {applyButton}
+              <Stack gap={1} alignItems="center">
+                {applyButton}
+                {copyAsResourceButton}
+              </Stack>
               <IconButton
                 name="compress-arrows"
                 size="sm"

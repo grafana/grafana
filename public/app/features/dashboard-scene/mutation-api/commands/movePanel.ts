@@ -22,7 +22,7 @@ import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const movePanelPayloadSchema = payloads.movePanel;
+const movePanelPayloadSchema = payloads.movePanel;
 
 export type MovePanelPayload = z.infer<typeof movePanelPayloadSchema>;
 
@@ -178,9 +178,14 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       const previousLayoutItem = serializeResultLayoutItem(vizPanel);
 
       const sourceGridItem = vizPanel.parent;
-      const originalSize =
+      const originalPosition =
         sourceGridItem instanceof DashboardGridItem
-          ? { width: sourceGridItem.state.width, height: sourceGridItem.state.height }
+          ? {
+              x: sourceGridItem.state.x,
+              y: sourceGridItem.state.y,
+              width: sourceGridItem.state.width,
+              height: sourceGridItem.state.height,
+            }
           : undefined;
 
       const panelClone = vizPanel.clone();
@@ -199,8 +204,8 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
         } else {
           applyGridPosition(panelClone, effectivePosition);
         }
-      } else if (originalSize && !isTargetAutoGrid) {
-        applyGridPosition(panelClone, originalSize);
+      } else if (originalPosition && !isTargetAutoGrid) {
+        applyGridPosition(panelClone, originalPosition);
       }
 
       const resultLayoutItem = serializeResultLayoutItem(panelClone);

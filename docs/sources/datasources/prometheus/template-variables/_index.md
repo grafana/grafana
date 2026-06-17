@@ -142,6 +142,10 @@ The Prometheus data source supports two variable syntaxes for use in the **Query
 
 If you've enabled the `Multi-value` or `Include all value` options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.
 
-## Use the ad hoc filters variable type
+## Use the filters variable type
 
-Prometheus supports the special [ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, allowing dynamic filtering without modifying individual queries.
+Prometheus supports the **Filter and Group by** feature.
+You can use this filters to specify any number of key/value filters, and Grafana applies them automatically to all of your Prometheus queries.
+The group by function allows you to then group data by keys, letting you split it up.
+
+For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).

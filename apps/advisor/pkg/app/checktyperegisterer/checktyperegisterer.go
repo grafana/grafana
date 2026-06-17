@@ -9,6 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/org"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Runner is a "runnable" app used to be able to expose and API endpoint
@@ -90,7 +91,7 @@ func (r *Runner) Run(ctx context.Context) error {
 }
 
 func (r *Runner) registerCheckType(ctx context.Context, logger logging.Logger, checkType string, obj resource.Object) error {
-	for i := 0; i < r.retryAttempts; i++ {
+	for i := range r.retryAttempts {
 		current, err := r.client.Get(ctx, obj.GetStaticMetadata().Identifier())
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -212,13 +213,14 @@ func (r *Runner) update(ctx context.Context, log logging.Logger, obj resource.Ob
 
 func isAPIServerShuttingDown(err error, logger logging.Logger) bool {
 	if strings.Contains(err.Error(), "apiserver is shutting down") {
-		logger.Debug("Error creating check type, not retrying", "error", err)
+		logger.Debug("Error operating on check type, not retrying", "error", err)
 		return true
 	}
 	return false
 }
 
 func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger logging.Logger, namespace string) error {
+	registeredIDs := make(map[string]struct{}, len(r.checkRegistry.Checks()))
 	for _, t := range r.checkRegistry.Checks() {
 		steps := t.Steps()
 		stepTypes := make([]advisorv0alpha1.CheckTypeStep, len(steps))
@@ -249,6 +251,59 @@ func (r *Runner) RegisterCheckTypesInNamespace(ctx context.Context, logger loggi
 		if err := r.registerCheckType(ctx, logger, t.ID(), obj); err != nil {
 			return fmt.Errorf("failed to register check type %s: %w", t.ID(), err)
 		}
+		registeredIDs[t.ID()] = struct{}{}
+	}
+	if err := r.cleanupStaleCheckTypes(ctx, logger, namespace, registeredIDs); err != nil {
+		return fmt.Errorf("failed to cleanup stale check types in namespace %s: %w", namespace, err)
 	}
 	return nil
+}
+
+// cleanupStaleCheckTypes removes any CheckType resources in the given namespace
+// that are no longer present in the check registry. This keeps the API in sync
+// with the source of truth when a check type is removed from the binary.
+func (r *Runner) cleanupStaleCheckTypes(ctx context.Context, logger logging.Logger, namespace string, registeredIDs map[string]struct{}) error {
+	items, err := r.listAllCheckTypes(ctx, namespace)
+	if err != nil {
+		if isAPIServerShuttingDown(err, logger) {
+			return nil
+		}
+		return fmt.Errorf("error listing check types: %w", err)
+	}
+	for _, item := range items {
+		name := item.GetStaticMetadata().Name
+		if _, ok := registeredIDs[name]; ok {
+			continue
+		}
+		id := item.GetStaticMetadata().Identifier()
+		logger.Debug("Deleting stale check type", "check_type", name, "namespace", namespace)
+		if err := r.client.Delete(context.WithoutCancel(ctx), id, resource.DeleteOptions{}); err != nil {
+			if errors.IsNotFound(err) {
+				continue
+			}
+			if isAPIServerShuttingDown(err, logger) {
+				return nil
+			}
+			logger.Error("Unable to delete stale check type", "check_type", name, "error", err)
+			return fmt.Errorf("failed to delete stale check type %s: %w", name, err)
+		}
+		logger.Debug("Stale check type deleted successfully", "check_type", name)
+	}
+	return nil
+}
+
+func (r *Runner) listAllCheckTypes(ctx context.Context, namespace string) ([]resource.Object, error) {
+	list, err := r.client.List(ctx, namespace, resource.ListOptions{Limit: 1000})
+	if err != nil {
+		return nil, err
+	}
+	items := list.GetItems()
+	for list.GetContinue() != "" {
+		list, err = r.client.List(ctx, namespace, resource.ListOptions{Continue: list.GetContinue(), Limit: 1000})
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, list.GetItems()...)
+	}
+	return items, nil
 }

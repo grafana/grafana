@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   GroupByVariable,
@@ -87,6 +88,8 @@ export function PanelGroupByActionPopover({
         originFilters: finalOriginFilters,
         filters: [...nonGroupByFilters, ...newUserGroupBys],
       });
+
+      reportInteraction('grafana_unified_drilldown_groupby_popover_applied');
     }
     onCancel();
   }, [groupByVariable, onCancel, values]);
@@ -103,7 +106,12 @@ export function PanelGroupByActionPopover({
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
       {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-      <div className={styles.menuContainer} onClick={(ev) => ev.stopPropagation()}>
+      <div
+        className={styles.menuContainer}
+        onClick={(ev) => ev.stopPropagation()}
+        onPointerDown={(ev) => ev.stopPropagation()}
+        onPointerUp={(ev) => ev.stopPropagation()}
+      >
         <Stack direction="column">
           <div className={styles.searchContainer}>
             <FilterInput

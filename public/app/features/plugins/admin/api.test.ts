@@ -1,6 +1,6 @@
 import { getBackendSrv, type MonitoringLogger, setBackendSrv } from '@grafana/runtime';
-import { installPluginMeta, setPluginMetaLogger, uninstallPluginMeta } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { installPluginMeta, uninstallPluginMeta, FlagKeys } from '@grafana/runtime/internal';
+import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { installPlugin, uninstallPlugin } from './api';
 
@@ -19,7 +19,6 @@ const originalFetch = global.fetch;
 
 describe('api', () => {
   let logger: MonitoringLogger;
-
   beforeEach(() => {
     jest.clearAllMocks();
     setBackendSrv({
@@ -33,15 +32,7 @@ describe('api', () => {
       request: jest.fn(),
       datasourceRequest: jest.fn(),
     });
-    logger = {
-      logDebug: jest.fn(),
-      logError: jest.fn(),
-      logInfo: jest.fn(),
-      logMeasurement: jest.fn(),
-      logWarning: jest.fn(),
-    };
-    setPluginMetaLogger(logger);
-    jest.spyOn(console, 'error').mockImplementation();
+    logger = mockLogger('grafana/runtime.plugins.meta');
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -52,9 +43,9 @@ describe('api', () => {
     global.fetch = originalFetch;
   });
 
-  describe('when useMTPlugins flag is enabled', () => {
+  describe('when plugins.useMTPlugins flag is enabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: true });
+      setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
     });
 
     afterAll(() => {
@@ -106,19 +97,15 @@ describe('api', () => {
           { version: '1.5.0' },
           { showErrorAlert: false }
         );
-        expect(console.error).toHaveBeenCalledTimes(1);
-        expect(console.error).toHaveBeenCalledWith(
-          'PluginMeta: Failed to install plugin with id myorg-test-panel and version 1.5.0',
-          new Error('Network Error')
-        );
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to install plugin with id myorg-test-panel and version 1.5.0',
+            message: 'installPluginMeta: Failed to install plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel', pluginVersion: '1.5.0' }
         );
       });
     });
@@ -146,27 +133,23 @@ describe('api', () => {
         expect(uninstallPluginMetaMock).toHaveBeenCalledTimes(1);
         expect(uninstallPluginMetaMock).toHaveBeenCalledWith('myorg-test-panel');
         expect(getBackendSrv().post).toHaveBeenCalledTimes(1);
-        expect(console.error).toHaveBeenCalledTimes(1);
-        expect(console.error).toHaveBeenCalledWith(
-          'PluginMeta: Failed to uninstall plugin with id myorg-test-panel',
-          new Error('Network Error')
-        );
         expect(logger.logError).toHaveBeenCalledTimes(1);
         expect(logger.logError).toHaveBeenCalledWith(
           expect.objectContaining({
-            message: 'PluginMeta: Failed to uninstall plugin with id myorg-test-panel',
+            message: 'uninstallPluginMeta: Failed to uninstall plugin',
             cause: expect.objectContaining({
               message: 'Network Error',
             }),
-          })
+          }),
+          { pluginId: 'myorg-test-panel' }
         );
       });
     });
   });
 
-  describe('when useMTPlugins flag is disabled', () => {
+  describe('when plugins.useMTPlugins flag is disabled', () => {
     beforeAll(() => {
-      setTestFlags({ useMTPlugins: false });
+      setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
     });
 
     afterAll(() => {

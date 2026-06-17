@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { renderHook } from '@testing-library/react';
 
 import { config } from '@grafana/runtime';
@@ -127,6 +128,66 @@ describe('useGetResourceRepositoryView', () => {
 
       expect(result.current.status).toBe(RepoViewStatus.Error);
       expect(result.current.error).toBe(err);
+    });
+  });
+
+  describe('settings 403 (no provisioning.settings:read access)', () => {
+    const forbidden = { status: 403, data: { message: 'forbidden' } };
+
+    it('degrades to Ready with no repository for an unannotated folder', () => {
+      setupMocks({ settingsError: forbidden, folder: folderData() });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+      expect(result.current.isInstanceManaged).toBe(false);
+    });
+
+    it('degrades to Ready when the folder query is skipped (root import)', () => {
+      setupMocks({ settingsError: forbidden });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '', includeInstance: true }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+    });
+
+    it('stays Error for a repo-managed folder', () => {
+      const folder = folderData({
+        [AnnoKeyManagerKind]: ManagerKind.Repo,
+        [AnnoKeyManagerIdentity]: 'my-repo',
+      });
+      setupMocks({ settingsError: forbidden, folder });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'nested-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+      expect(result.current.error).toBe(forbidden);
+    });
+
+    it('stays Error for a name-based lookup', () => {
+      setupMocks({ settingsError: forbidden });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ name: 'my-repo' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+    });
+
+    it('stays Error when the folder query also failed', () => {
+      setupMocks({ settingsError: forbidden, folderError: { status: 403, data: {} } });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+    });
+
+    it('stays Loading while the folder query is still in flight', () => {
+      setupMocks({ settingsError: forbidden, folderLoading: true });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Loading);
     });
   });
 
@@ -287,6 +348,92 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.status).toBe(RepoViewStatus.Ready);
       expect(result.current.repository).toBeUndefined();
       expect(result.current.isInstanceManaged).toBe(false);
+    });
+
+    it('returns instance repo when both name and folderName are empty (root import)', () => {
+      const instanceRepo = repoView({ name: 'instance-repo', target: 'instance' });
+      setupMocks({ settingsItems: [instanceRepo] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: '', includeInstance: true }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBe(instanceRepo);
+      expect(result.current.isInstanceManaged).toBe(true);
+    });
+
+    it('skips settings query when no name, folderName, or includeInstance is provided', () => {
+      setupMocks();
+
+      renderHook(() => useGetResourceRepositoryView({ folderName: '' }));
+
+      expect(mockUseGetFrontendSettingsQuery).toHaveBeenCalledWith(skipToken);
+    });
+  });
+
+  describe('isMissingRepo', () => {
+    it('is false while loading, even though no repository is resolved yet', () => {
+      setupMocks({ settingsLoading: true });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is false when a repository is resolved', () => {
+      setupMocks({ settingsItems: [repoView()] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'my-repo' }));
+
+      expect(result.current.repository).toBeDefined();
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is false when the resolved repository is read-only', () => {
+      setupMocks({ settingsItems: [repoView({ workflows: [] })] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'my-repo' }));
+
+      expect(result.current.isReadOnlyRepo).toBe(true);
+      expect(result.current.isMissingRepo).toBe(false);
+    });
+
+    it('is true when loading settled with no matching repository', () => {
+      setupMocks({ settingsItems: [] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.repository).toBeUndefined();
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when the resource is orphaned (repo no longer exists)', () => {
+      setupMocks({ settingsItems: [repoView()] });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ name: 'deleted-repo' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Orphaned);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when the settings query errors (no repository could be resolved)', () => {
+      setupMocks({ settingsError: { status: 500, data: { message: 'boom' } } });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Error);
+      expect(result.current.isMissingRepo).toBe(true);
+    });
+
+    it('is true when provisioning is disabled (no repository can exist)', () => {
+      config.featureToggles = { ...originalToggles, provisioning: false };
+      setupMocks();
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'some-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Disabled);
+      expect(result.current.isMissingRepo).toBe(true);
     });
   });
 });
