@@ -73,7 +73,33 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		treeRoot.AddSection(appLink)
 	}
 
+	s.nestMaintenanceWindowsUnderSLO(treeRoot)
+
 	return nil
+}
+
+func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRoot) {
+	const sloPluginID = "grafana-slo-app"
+	const mwPluginID = "grafana-maintenancewindows-app"
+
+	sloNode := treeRoot.FindById("plugin-page-" + sloPluginID)
+	mwNode := treeRoot.FindById("plugin-page-" + mwPluginID)
+	if sloNode == nil || mwNode == nil {
+		return
+	}
+
+	treeRoot.RemoveSectionByID(mwNode.Id)
+
+	mwNode.Id = "standalone-plugin-page-" + mwPluginID
+	mwNode.IsNew = true
+	// Reset the standalone app's plugin SortWeight so it falls back to its
+	// appended position and sorts last among SLO's child pages.
+	mwNode.SortWeight = 0
+	sloNode.Children = append(sloNode.Children, mwNode)
+
+	if appsNode := treeRoot.FindById(navtree.NavIDApps); appsNode != nil && len(appsNode.Children) == 0 {
+		treeRoot.RemoveSectionByID(navtree.NavIDApps)
+	}
 }
 
 // shouldIncludeInvestigations checks if the investigations feature should be included for the assistant app
@@ -382,7 +408,9 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-exploretraces-app":        {SectionID: navtree.NavIDDrilldown, SortWeight: 3, Text: "Traces"},
 		"grafana-pyroscope-app":            {SectionID: navtree.NavIDDrilldown, SortWeight: 4, Text: "Profiles"},
 		"grafana-sqldrilldown-app":         {SectionID: navtree.NavIDDrilldown, SortWeight: 5, Text: "SQL"},
-		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
+		"grafana-agentictesting-app":       {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Agentic testing", IsNew: true},
+		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Performance"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 3, Text: "Synthetics"},
 		"grafana-servicecenter-app":        {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "Service center"},
 		"grafana-irm-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "IRM"},
 		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
@@ -398,7 +426,6 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-adaptiveprofiles-app":     {SectionID: navtree.NavIDAdaptiveTelemetry, SortWeight: 4},
 		"grafana-cmab-app":                 {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightCMAB, Icon: "cmab-logo", IsNew: true},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature

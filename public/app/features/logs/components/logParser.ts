@@ -1,5 +1,3 @@
-import { partition } from 'lodash';
-
 import {
   type DataFrame,
   type Field,
@@ -123,35 +121,6 @@ function getVisibleFieldIndices(frame: DataFrame, opts: VisOptions): Set<number>
   }
 
   return visibleFieldIndices;
-}
-
-// split the dataframe's fields into visible and hidden arrays.
-// note: does not do any row-level checks,
-// for example does not check if the field's values are nullish
-// or not at a givn row.
-export function separateVisibleFields(
-  frame: DataFrame,
-  opts?: VisOptions
-): { visible: FieldWithIndex[]; hidden: FieldWithIndex[] } {
-  const fieldsWithIndex: FieldWithIndex[] = frame.fields.map((field, index) => ({ ...field, index }));
-
-  const visibleFieldIndices = getVisibleFieldIndices(frame, opts ?? {});
-
-  const [visible, hidden] = partition(fieldsWithIndex, (f) => {
-    // hidden fields are always hidden
-    if (f.config.custom?.hidden) {
-      return false;
-    }
-
-    // fields with data-links are visible
-    if ((f.config.links ?? []).length > 0) {
-      return true;
-    }
-
-    return visibleFieldIndices.has(f.index);
-  });
-
-  return { visible, hidden };
 }
 
 // Memoization cache for getVisibleFieldIndices results to avoid re-processing the same DataFrame structure

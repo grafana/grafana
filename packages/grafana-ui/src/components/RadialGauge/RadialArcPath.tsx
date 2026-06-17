@@ -8,7 +8,7 @@ import { ARC_END, ARC_START } from './constants';
 import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
 import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
 
-export interface RadialArcPathPropsBase {
+interface RadialArcPathPropsBase {
   arcLengthDeg: number;
   barEndcaps?: boolean;
   dimensions: RadialGaugeDimensions;

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,7 +86,7 @@ func (c *jobsConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
 
@@ -114,7 +113,7 @@ func (c *jobsConnector) Connect(
 		}
 
 		c.handleCreateJob(ctx, r, name, spec, responder)
-	}), 30*time.Second), nil
+	}), nil
 }
 
 // handleGetJob serves GET requests for job history — either a single job by
@@ -172,7 +171,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 	}
 
 	if spec.Action == provisioning.JobActionPull {
-		if err := c.authorizeAdminJob(r.Context(), cfg); err != nil {
+		if err := c.authorizeAdminJob(ctx, cfg); err != nil {
 			responder.Error(err)
 			return
 		}
@@ -183,7 +182,7 @@ func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, na
 		return
 	}
 
-	if err := c.authorizeJob(r.Context(), repo, cfg, spec); err != nil {
+	if err := c.authorizeJob(ctx, repo, cfg, spec); err != nil {
 		responder.Error(err)
 		return
 	}
@@ -277,7 +276,7 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 		return
 	}
 
-	if err := c.authorizeAdminJob(r.Context(), &provisioning.Repository{
+	if err := c.authorizeAdminJob(ctx, &provisioning.Repository{
 		ObjectMeta: metav1.ObjectMeta{Namespace: ns},
 	}); err != nil {
 		responder.Error(err)
@@ -324,12 +323,16 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 
 // newJobAuthorizer creates an Authorizer for the given repository. Returns an error
 // if the repository does not implement Reader.
-func (c *jobsConnector) newJobAuthorizer(repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
+func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		return nil, apierrors.NewBadRequest("repository does not support reading")
 	}
-	return resources.NewAuthorizer(cfg, reader, c.access, c.folderMetadataEnabled), nil
+	clients, err := c.clients.Clients(ctx, cfg.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("create clients for authorization: %w", err)
+	}
+	return resources.NewAuthorizer(cfg, reader, c.access, clients, c.folderMetadataEnabled), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user
@@ -406,7 +409,7 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 		return nil
 	}
 
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
 	}
@@ -418,7 +421,7 @@ func (c *jobsConnector) authorizeResourceJob(ctx context.Context, repo repositor
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
 func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.DeleteJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
 	}
@@ -434,7 +437,7 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
-	authorizer, err := c.newJobAuthorizer(repo, cfg)
+	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)
 	if err != nil {
 		return err
 	}

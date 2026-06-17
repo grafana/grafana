@@ -25,6 +25,9 @@ export type DashboardPageRouteSearchParams = {
   path?: string;
   // Used by community template dashboards to identify the Grafana.com dashboard
   gnetId?: string;
+  // Used by the org dashboard templates flow on DashboardRoutes.Template.
+  dashboardTemplateUid?: string;
+  editTemplate?: string | true;
 };
 
 export type PublicDashboardPageRouteParams = {

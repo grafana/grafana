@@ -2,22 +2,15 @@ package imguploader
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/client"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
-	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/defaults"
-	"github.com/aws/aws-sdk-go/aws/ec2metadata"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/grafana/grafana/pkg/ifaces/s3ifaces"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -42,32 +35,37 @@ type S3Uploader struct {
 }
 
 // Stubbable by tests.
-var newS3Client = func(cfg *aws.Config) (s3ifaces.S3Client, error) {
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
+var newS3Client = func(cfg aws.Config, opts S3UploaderOptions) (s3ifaces.S3Client, error) {
+	svc := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if opts.Endpoint != "" {
+			o.BaseEndpoint = aws.String(opts.Endpoint)
+		}
+		o.UsePathStyle = opts.PathStyleAccess
+	})
 	return &s3ClientWrapper{
-		uploader: s3manager.NewUploader(sess),
-		svc:      s3.New(sess),
+		uploader: manager.NewUploader(svc),
+		presign:  s3.NewPresignClient(svc),
 	}, nil
 }
 
 type s3ClientWrapper struct {
-	uploader *s3manager.Uploader
-	svc      *s3.S3
+	uploader *manager.Uploader
+	presign  *s3.PresignClient
 }
 
-func (w *s3ClientWrapper) Upload(ctx context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
-	return w.uploader.UploadWithContext(ctx, input)
+func (w *s3ClientWrapper) Upload(ctx context.Context, input *s3.PutObjectInput) (*manager.UploadOutput, error) {
+	return w.uploader.Upload(ctx, input)
 }
 
-func (w *s3ClientWrapper) PresignGetObject(bucket, key string, expiration time.Duration) (string, error) {
-	req, _ := w.svc.GetObjectRequest(&s3.GetObjectInput{
+func (w *s3ClientWrapper) PresignGetObject(ctx context.Context, bucket, key string, expiration time.Duration) (string, error) {
+	req, err := w.presign.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
-	})
-	return req.Presign(expiration)
+	}, s3.WithPresignExpires(expiration))
+	if err != nil {
+		return "", err
+	}
+	return req.URL, nil
 }
 
 func NewS3Uploader(opts S3UploaderOptions) *S3Uploader {
@@ -78,25 +76,20 @@ func NewS3Uploader(opts S3UploaderOptions) *S3Uploader {
 }
 
 func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
-	sess, err := session.NewSession()
+	loadOpts := []func(*config.LoadOptions) error{}
+	if u.opts.Region != "" {
+		loadOpts = append(loadOpts, config.WithRegion(u.opts.Region))
+	}
+	// When explicit credentials are configured they take precedence; otherwise fall
+	// back to the default chain (env vars, web identity, ECS endpoint, EC2 IMDS).
+	if u.opts.AccessKey != "" {
+		loadOpts = append(loadOpts, config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(u.opts.AccessKey, u.opts.SecretKey, ""),
+		))
+	}
+	cfg, err := config.LoadDefaultConfig(ctx, loadOpts...)
 	if err != nil {
 		return "", err
-	}
-	creds := credentials.NewChainCredentials(
-		[]credentials.Provider{
-			&credentials.StaticProvider{Value: credentials.Value{
-				AccessKeyID:     u.opts.AccessKey,
-				SecretAccessKey: u.opts.SecretKey,
-			}},
-			&credentials.EnvProvider{},
-			webIdentityProvider(sess),
-			remoteCredProvider(sess),
-		})
-	cfg := &aws.Config{
-		Region:           aws.String(u.opts.Region),
-		Endpoint:         aws.String(u.opts.Endpoint),
-		S3ForcePathStyle: aws.Bool(u.opts.PathStyleAccess),
-		Credentials:      creds,
 	}
 
 	rand, err := util.GetRandomString(20)
@@ -119,19 +112,19 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 		}
 	}()
 
-	s3Client, err := newS3Client(cfg)
+	s3Client, err := newS3Client(cfg, u.opts)
 	if err != nil {
 		return "", err
 	}
 
-	uploadInput := &s3manager.UploadInput{
+	uploadInput := &s3.PutObjectInput{
 		Bucket:      aws.String(u.opts.Bucket),
 		Key:         aws.String(key),
 		Body:        file,
 		ContentType: aws.String("image/png"),
 	}
 	if !u.opts.EnablePresignedURLs {
-		uploadInput.ACL = aws.String(u.opts.ACL)
+		uploadInput.ACL = types.ObjectCannedACL(u.opts.ACL)
 	}
 
 	result, err := s3Client.Upload(ctx, uploadInput)
@@ -140,43 +133,8 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	}
 
 	if u.opts.EnablePresignedURLs {
-		return s3Client.PresignGetObject(u.opts.Bucket, key, u.opts.PresignedURLExpiration)
+		return s3Client.PresignGetObject(ctx, u.opts.Bucket, key, u.opts.PresignedURLExpiration)
 	}
 
 	return result.Location, nil
-}
-
-func webIdentityProvider(sess client.ConfigProvider) credentials.Provider {
-	svc := sts.New(sess)
-
-	roleARN := os.Getenv("AWS_ROLE_ARN")
-	tokenFilepath := os.Getenv("AWS_WEB_IDENTITY_TOKEN_FILE")
-	roleSessionName := os.Getenv("AWS_ROLE_SESSION_NAME")
-
-	// nolint:staticcheck
-	return stscreds.NewWebIdentityRoleProvider(svc, roleARN, roleSessionName, tokenFilepath)
-}
-
-func remoteCredProvider(sess *session.Session) credentials.Provider {
-	ecsCredURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-
-	if len(ecsCredURI) > 0 {
-		return ecsCredProvider(sess, ecsCredURI)
-	}
-	return ec2RoleProvider(sess)
-}
-
-func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
-	const host = `169.254.170.2`
-
-	d := defaults.Get()
-	return endpointcreds.NewProviderClient(
-		*d.Config,
-		d.Handlers,
-		fmt.Sprintf("http://%s%s", host, uri),
-		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
-}
-
-func ec2RoleProvider(sess client.ConfigProvider) credentials.Provider {
-	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }

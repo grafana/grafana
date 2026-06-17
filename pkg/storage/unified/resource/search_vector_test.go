@@ -80,6 +80,9 @@ func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, []vector.Vector) error {
+	return nil
+}
 func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
 	return nil
 }
@@ -93,8 +96,16 @@ func (f *fakeVectorBackend) Exists(context.Context, string, string, string, stri
 	return false, nil
 }
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
+func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
+func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
+	return func() {}, true, nil
+}
 func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
+}
+func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }
+func (f *fakeVectorBackend) CreateBackfillJob(_ context.Context, _, _ string, _ int64) error {
+	return nil
 }
 func (f *fakeVectorBackend) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil

@@ -120,7 +120,7 @@ export const DashboardInteractions = {
 
   // dashboards_new_section_variable_type_selected
   // when a user selects a variable type when creating a new section (row/tab) variable
-  sectionVariableTypeSelected: (properties: { type: string }) => {
+  sectionVariableTypeSelected: (properties: { type: string; sectionOwner: 'row' | 'tab' | undefined }) => {
     reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 

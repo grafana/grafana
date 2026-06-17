@@ -116,8 +116,9 @@ func (s *EncryptionManager) registerUsageMetrics() {
 }
 
 func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespace, payload []byte, opts contracts.EncryptionOption) (contracts.EncryptedPayload, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Encrypt", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.Encrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
+		attribute.Bool("skipCache", opts.SkipCache),
 	))
 	defer span.End()
 
@@ -163,7 +164,7 @@ func (s *EncryptionManager) Encrypt(ctx context.Context, namespace xkube.Namespa
 // If there's no current data key in cache nor in database it generates a new random data key,
 // and stores it into both the in-memory cache and database (encrypted by the encryption provider).
 func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.Namespace, label string, skipCache bool) (string, []byte, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.CurrentDataKey", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.CurrentDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.String("label", label),
 	))
@@ -194,6 +195,13 @@ func (s *EncryptionManager) currentDataKey(ctx context.Context, namespace xkube.
 // dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it.
 func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label string, skipCache bool) (string, []byte, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.dataKeyByLabel", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("label", label),
+		attribute.Bool("skipCache", skipCache),
+	))
+	defer span.End()
+
 	// 0. Get data key from in-memory cache (stored encrypted).
 	if !skipCache {
 		entry, exists, cacheErr := s.dataKeyCache.GetByLabel(ctx, namespace, label)
@@ -244,9 +252,10 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 
 // newDataKey creates a new random data key, encrypts it and stores it into the database.
 func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, label string, skipCache bool) (string, []byte, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.NewDataKey", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.NewDataKey", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("label", label),
+		attribute.Bool("skipCache", skipCache),
 	))
 	defer span.End()
 
@@ -305,8 +314,9 @@ func newRandomDataKey() ([]byte, error) {
 }
 
 func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespace, payload contracts.EncryptedPayload, opts contracts.EncryptionOption) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.Decrypt", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
+		attribute.Bool("skipCache", opts.SkipCache),
 	))
 	defer span.End()
 
@@ -349,7 +359,7 @@ func (s *EncryptionManager) Decrypt(ctx context.Context, namespace xkube.Namespa
 
 // dataKeyById looks up for data key in the database and returns it decrypted.
 func (s *EncryptionManager) dataKeyById(ctx context.Context, namespace, id string, skipCache bool) ([]byte, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.GetDataKey", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.dataKeyById", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("id", id),
 	))
@@ -407,7 +417,7 @@ func (s *EncryptionManager) GetProviders() encryption.ProviderConfig {
 // ConsolidateNamespace re-encrypts all values for a single namespace using one new DEK held in memory. It avoids unnecessary cache lookups by leveraging the cipher directly.
 // For each value, it resolves the old DEK by id, decrypts with it, and re-encrypts using the new in-memory key.
 func (s *EncryptionManager) ConsolidateNamespace(ctx context.Context, namespace xkube.Namespace, values []*contracts.EncryptedValue) ([]*contracts.EncryptedPayload, error) {
-	ctx, span := s.tracer.Start(ctx, "EnvelopeEncryptionManager.ConsolidateNamespace", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.ConsolidateNamespace", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.Int("values_count", len(values)),
 	))
@@ -482,6 +492,13 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 // cacheDataKey caches stores an encrypted data key in the cache.
 // Warning: It should not be called from within a database transaction, as we cannot guarantee that a newly created data key has actually been persisted when the key is retrieved.
 func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, dataKey *contracts.SecretDataKey, decrypted []byte) error {
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.cacheDataKey", trace.WithAttributes(
+		attribute.String("namespace", namespace),
+		attribute.String("uid", dataKey.UID),
+		attribute.String("label", dataKey.Label),
+	))
+	defer span.End()
+
 	// Encrypt the decrypted data key with configured secret before storing in cache.
 	encryptedForCache, err := s.cipher.Encrypt(ctx, decrypted, s.cacheEncryptionKey)
 	if err != nil {
@@ -506,5 +523,7 @@ func (s *EncryptionManager) cacheDataKey(ctx context.Context, namespace string, 
 
 // decryptCachedDataKey decrypts a data key retrieved from the cache.
 func (s *EncryptionManager) decryptCachedDataKey(ctx context.Context, encryptedDataKey []byte) ([]byte, error) {
+	ctx, span := s.tracer.Start(ctx, "EncryptionManager.decryptCachedDataKey")
+	defer span.End()
 	return s.cipher.Decrypt(ctx, encryptedDataKey, s.cacheEncryptionKey)
 }

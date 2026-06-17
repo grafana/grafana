@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -79,6 +78,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
+			service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
@@ -125,7 +125,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 						Name: "anyDataFrame",
 						Fields: []*data.Field{
 							data.NewField("anyGroupName", nil, []*string{
-								aws.String("group_a"), aws.String("group_b"), aws.String("group_c"),
+								new("group_a"), new("group_b"), new("group_c"),
 							}),
 						},
 					},
@@ -171,6 +171,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(_ bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
+		service.On("FindByAccessToken", mock.Anything, validAccessToken).Return(nil, nil).Maybe()
 		testServer := setupTestServer(t, nil, service, anonymousUser)
 
 		return testServer, service

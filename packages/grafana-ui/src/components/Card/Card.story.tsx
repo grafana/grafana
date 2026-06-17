@@ -40,7 +40,7 @@ export const Basic: StoryFn<typeof Card> = (args) => {
  */
 export const MultipleMetadataElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin>
+    <Card noMargin {...args}>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta>{['Folder: Test', 'Views: 100']}</Card.Meta>
     </Card>
@@ -53,7 +53,7 @@ export const MultipleMetadataElements: StoryFn<typeof Card> = (args) => {
  */
 export const ComplexMetadataElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin>
+    <Card noMargin {...args}>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta>
         <>Grafana</>
@@ -70,7 +70,7 @@ export const ComplexMetadataElements: StoryFn<typeof Card> = (args) => {
  */
 export const MultipleMetadataWithCustomSeparator: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin>
+    <Card noMargin {...args}>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Meta separator={'-'}>
         Grafana
@@ -89,7 +89,7 @@ export const MultipleMetadataWithCustomSeparator: StoryFn<typeof Card> = (args) 
  */
 export const Tags: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin>
+    <Card noMargin {...args}>
       <Card.Heading>Test dashboard</Card.Heading>
       <Card.Description>Card with a list of tags</Card.Description>
       <Card.Tags>
@@ -104,7 +104,7 @@ export const Tags: StoryFn<typeof Card> = (args) => {
  */
 export const AsALink: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin href="https://grafana.com">
+    <Card noMargin href="https://grafana.com" {...args}>
       <Card.Heading>Redirect to Grafana</Card.Heading>
       <Card.Description>Clicking this card will redirect to grafana website</Card.Description>
     </Card>
@@ -118,7 +118,7 @@ export const AsALink: StoryFn<typeof Card> = (args) => {
  */
 export const AsAButton: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin onClick={() => alert('Hello, Grafana!')}>
+    <Card noMargin onClick={() => alert('Hello, Grafana!')} {...args}>
       <Card.Heading>Hello, Grafana</Card.Heading>
       <Card.Description>Clicking this card will create an alert</Card.Description>
     </Card>
@@ -132,25 +132,25 @@ export const InsideAListItem: StoryFn<typeof Card> = (args) => {
   return (
     <ul style={{ padding: '20px', listStyle: 'none', display: 'grid', gap: '8px' }}>
       <li>
-        <Card noMargin>
+        <Card noMargin {...args}>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card noMargin>
+        <Card noMargin {...args}>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card noMargin>
+        <Card noMargin {...args}>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
       </li>
       <li>
-        <Card noMargin>
+        <Card noMargin {...args}>
           <Card.Heading>List card item</Card.Heading>
           <Card.Description>Card that is rendered inside li element.</Card.Description>
         </Card>
@@ -164,7 +164,7 @@ export const InsideAListItem: StoryFn<typeof Card> = (args) => {
  */
 export const WithMediaElements: StoryFn<typeof Card> = (args) => {
   return (
-    <Card noMargin>
+    <Card noMargin {...args}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Figure>
         <img src={logo} alt="Grafana Logo" width="40" height="40" />
@@ -276,6 +276,9 @@ export const Full: StoryFn<typeof Card> = (args) => {
       <Card.Figure>
         <img src={logo} alt="Prometheus Logo" height="40" width="40" />
       </Card.Figure>
+      <Card.Tags>
+        <TagList tags={['tag1', 'tag2', 'tag3']} onClick={(tag) => console.log(tag)} />
+      </Card.Tags>
       <Card.Actions>
         <Button key="settings" variant="secondary">
           Main action

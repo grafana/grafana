@@ -43,6 +43,28 @@ func TestKeeperQueries(t *testing.T) {
 						},
 					},
 				},
+				{
+					Name: "create-with-secure-value-refs",
+					Data: &createKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &keeperDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Description: "description",
+							Type:        "sql",
+							Payload:     "",
+						},
+						UsedSecureValues: []string{"a", "b"},
+						SystemKeeperName: contracts.SystemKeeperName,
+					},
+				},
 			},
 			sqlKeeperDelete: {
 				{
@@ -112,14 +134,26 @@ func TestKeeperQueries(t *testing.T) {
 						},
 					},
 				},
-			},
-			sqlKeeperListByName: {
 				{
-					Name: "list",
-					Data: listByNameKeeper{
+					Name: "update-with-secure-value-refs",
+					Data: &updateKeeper{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Namespace:   "ns",
-						KeeperNames: []string{"a", "b"},
+						Row: &keeperDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Description: "description",
+							Type:        "sql",
+							Payload:     "",
+						},
+						UsedSecureValues: []string{"a", "b"},
+						SystemKeeperName: contracts.SystemKeeperName,
 					},
 				},
 			},

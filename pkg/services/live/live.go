@@ -90,7 +90,14 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	}
 
 	if cfg.LiveHAPrefix != "" {
-		g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
+		// Once this is deployed across all waves in grafana cloud, we can remove the configured LiveHAPrefix
+		// This is OK because the channel prefix now starts with the full stack identifier
+		// Removing the prefix means we can implement an MT live apiserver, while watching events sent from ST
+		// nolint:staticcheck // not yet migrated to OpenFeature
+		keepPrefix := cfg.StackID == "" || toggles.IsEnabledGlobally(featuremgmt.FlagLiveKeepHAPrefixInCloud)
+		if keepPrefix {
+			g.keyPrefix = cfg.LiveHAPrefix + ".gf_live"
+		}
 	}
 
 	logger.Debug("GrafanaLive initialization", "ha", g.IsHA())
@@ -451,7 +458,7 @@ type GrafanaLive struct {
 	pluginStore           pluginstore.Store
 	pluginClient          plugins.Client
 
-	keyPrefix string // HA prefix for grafana cloud (since the org is always 1)
+	keyPrefix string
 
 	node         *centrifuge.Node
 	surveyCaller *survey.Caller

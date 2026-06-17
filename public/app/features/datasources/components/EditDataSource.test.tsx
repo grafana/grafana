@@ -41,8 +41,6 @@ const setup = (props?: Partial<ViewProps>) => {
         dataSourceRights={{ readOnly: false, hasWriteRights: true, hasDeleteRights: true }}
         exploreUrl={'/explore'}
         onDelete={jest.fn()}
-        onDefaultChange={jest.fn()}
-        onNameChange={jest.fn()}
         onOptionsChange={onOptionsChange}
         onTest={jest.fn()}
         onUpdate={jest.fn()}

@@ -1100,7 +1100,7 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1143,7 +1143,7 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 		for j := 0; j < tpe.NumField(); j++ {
 			field := tpe.Field(j)
 			value := v.Field(j)
-			if !value.IsValid() || value.Kind() == reflect.Ptr && value.IsNil() || value.IsZero() {
+			if !value.IsValid() || value.Kind() == reflect.Pointer && value.IsNil() || value.IsZero() {
 				continue
 			}
 			delete(fields, field.Name)
@@ -1485,6 +1485,74 @@ func TestWithoutPrivateLabels(t *testing.T) {
 
 			require.Equal(t, tt.expected, result)
 			require.Equal(t, inputCopy, tt.input, "input map should not be modified")
+		})
+	}
+}
+
+func TestAlertRuleGetEvalCondition_Origin(t *testing.T) {
+	const sloOrigin = PluginGrafanaSLOOrigin
+	const otherOrigin = "plugin/grafana-other-app"
+
+	tests := []struct {
+		name           string
+		labels         map[string]string
+		expectedOrigin string // empty means key should be absent
+	}{
+		{
+			name:           "no origin label",
+			labels:         map[string]string{},
+			expectedOrigin: "",
+		},
+		{
+			name:           "origin only",
+			labels:         map[string]string{PluginGrafanaOriginLabel: otherOrigin},
+			expectedOrigin: otherOrigin,
+		},
+		{
+			name: "origin with generic uid label",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    otherOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+			},
+			expectedOrigin: otherOrigin + "|generic-uid",
+		},
+		{
+			name: "SLO origin with slo uuid fallback",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  sloOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|slo-uuid-123",
+		},
+		{
+			name: "SLO origin with both labels — generic takes precedence",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:    sloOrigin,
+				PluginGrafanaOriginUIDLabel: "generic-uid",
+				PluginGrafanaSLOUUIDLabel:   "slo-uuid-123",
+			},
+			expectedOrigin: sloOrigin + "|generic-uid",
+		},
+		{
+			name: "non-SLO origin with slo uuid label — fallback not triggered",
+			labels: map[string]string{
+				PluginGrafanaOriginLabel:  otherOrigin,
+				PluginGrafanaSLOUUIDLabel: "slo-uuid-123",
+			},
+			expectedOrigin: otherOrigin,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := RuleGen.With(RuleMuts.WithLabels(tt.labels)).Generate()
+			condition := rule.GetEvalCondition()
+
+			if tt.expectedOrigin == "" {
+				require.NotContains(t, condition.Metadata, "Origin")
+			} else {
+				require.Equal(t, tt.expectedOrigin, condition.Metadata["Origin"])
+			}
 		})
 	}
 }

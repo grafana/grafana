@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -487,6 +486,124 @@ func TestUserK8sService_GetByID(t *testing.T) {
 	}
 }
 
+func TestUserK8sService_GetByUID(t *testing.T) {
+	makeGetResponse := func(u v0alpha1.User) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(u)
+		}
+	}
+
+	tests := []struct {
+		name           string
+		cmd            *user.GetUserByUIDQuery
+		requesterOrgID int64
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noRequester    bool
+		expectErr      bool
+		expectErrIs    error
+		expectUser     *user.User
+	}{
+		{
+			name:           "successfully retrieves a user by UID",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "some-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "some-uid")
+				makeGetResponse(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com"))(w, r)
+			},
+			expectUser: &user.User{
+				ID:            42,
+				UID:           "some-uid",
+				OrgID:         1,
+				Login:         "jdoe",
+				Email:         "jdoe@example.com",
+				Name:          "John Doe",
+				IsAdmin:       true,
+				EmailVerified: true,
+				LastSeenAt:    time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:           "returns ErrUserNotFound when user does not exist",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "missing-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonNotFound,
+					Code:     http.StatusNotFound,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserNotFound,
+		},
+		{
+			name:           "propagates non-not-found error from k8s client",
+			requesterOrgID: 1,
+			cmd:            &user.GetUserByUIDQuery{UID: "some-uid"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Message:  "k8s error",
+					Code:     http.StatusInternalServerError,
+				})
+			},
+			expectErr: true,
+		},
+		{
+			name:        "returns error when config provider not initialized",
+			cmd:         &user.GetUserByUIDQuery{UID: "some-uid"},
+			nilProvider: true,
+			expectErr:   true,
+		},
+		{
+			name:        "returns error when no requester in context",
+			cmd:         &user.GetUserByUIDQuery{UID: "some-uid"},
+			noRequester: true,
+			expectErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
+
+			result, err := svc.GetByUID(ctx, tt.cmd)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectUser.ID, result.ID)
+			assert.Equal(t, tt.expectUser.UID, result.UID)
+			assert.Equal(t, tt.expectUser.OrgID, result.OrgID)
+			assert.Equal(t, tt.expectUser.Login, result.Login)
+			assert.Equal(t, tt.expectUser.Email, result.Email)
+			assert.Equal(t, tt.expectUser.Name, result.Name)
+			assert.Equal(t, tt.expectUser.IsAdmin, result.IsAdmin)
+			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
+		})
+	}
+}
+
 func TestUserK8sService_GetByEmail(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -891,6 +1008,8 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 	}
 }
 
+func strPtr(s string) *string { return &s }
+
 func TestUserK8sService_Update(t *testing.T) {
 	trueVal := true
 	falseVal := false
@@ -1006,6 +1125,53 @@ func TestUserK8sService_Update(t *testing.T) {
 					},
 					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
 					Spec:       v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+		},
+		{
+			name:           "updates the org role",
+			requesterOrgID: 1,
+			cmd: &user.UpdateUserCommand{
+				UserID:  7,
+				OrgRole: strPtr("Editor"),
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					resp := v0alpha1.User{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "some-uid",
+							Namespace: "org-1",
+							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						},
+						Spec: v0alpha1.UserSpec{Login: "user7", Role: "Admin"},
+					}
+					list := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{resp},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(list)
+					return
+				}
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				spec := body["spec"].(map[string]any)
+				assert.Equal(t, "Editor", spec["role"])
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       v0alpha1.UserSpec{Login: "user7", Role: "Editor"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -2189,14 +2355,19 @@ func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 	}
 }
 
-// testClientGenerator creates a resource.ClientGenerator backed by a test HTTP server.
-func testClientGenerator(serverURL string) resource.ClientGenerator {
-	return apiserver.ProvideClientGenerator(apiserver.RestConfigProviderFunc(
-		func(_ context.Context) (*rest.Config, error) {
-			return &rest.Config{Host: serverURL}, nil
-		},
-	))
+type testDirectRestConfigProvider struct {
+	serverURL string
 }
+
+func (p *testDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
+	return &rest.Config{Host: p.serverURL}
+}
+
+func (p *testDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
+
+func (p *testDirectRestConfigProvider) IsReady() bool { return true }
+
+var _ apiserver.DirectRestConfigProvider = (*testDirectRestConfigProvider)(nil)
 
 func contextWithReqContext() context.Context {
 	reqCtx := &contextmodel.ReqContext{}
@@ -2222,7 +2393,7 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 	} else {
 		ts := httptest.NewServer(http.HandlerFunc(s.serverResponse))
 		t.Cleanup(ts.Close)
-		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, testClientGenerator(ts.URL), tracer)
+		svc = NewUserK8sService(log.NewNopLogger(), s.cfg, &testDirectRestConfigProvider{serverURL: ts.URL}, tracer)
 	}
 
 	ctx := contextWithReqContext()
@@ -2234,4 +2405,51 @@ func setupServiceAndCtx(t *testing.T, s svcTestSetup) (*UserK8sService, context.
 	}
 
 	return svc, ctx
+}
+
+func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
+	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
+	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
+
+	var gotAccessControlParam string
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		requesterOrgID: 1,
+		serverResponse: func(w http.ResponseWriter, r *http.Request) {
+			gotAccessControlParam = r.URL.Query().Get("accesscontrol")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v0alpha1.GetSearchUsersResponse{
+				TotalHits: 1,
+				Hits: []v0alpha1.GetSearchUsersUserHit{{
+					Name:          "uid-one",
+					Title:         "John Doe",
+					Login:         "jdoe",
+					Email:         "jdoe@example.com",
+					Role:          "Admin",
+					AccessControl: map[string]bool{"org.users:write": true},
+					LastSeenAt:    lastSeen.Unix(),
+					LastSeenAtAge: "5 days",
+					Provisioned:   true,
+					Disabled:      true,
+					InternalId:    42,
+					Created:       created.UnixMilli(),
+				}},
+			})
+		},
+	})
+
+	result, err := svc.Search(ctx, &user.SearchUsersQuery{IncludeAccessControl: true})
+	require.NoError(t, err)
+	require.Len(t, result.Users, 1)
+
+	assert.Equal(t, "true", gotAccessControlParam)
+
+	got := result.Users[0]
+	assert.Equal(t, int64(42), got.ID)
+	assert.Equal(t, "uid-one", got.UID)
+	assert.Equal(t, "Admin", got.Role)
+	assert.Equal(t, map[string]bool{"org.users:write": true}, got.AccessControl)
+	assert.True(t, got.IsDisabled)
+	assert.True(t, got.IsProvisioned)
+	assert.Equal(t, created.UTC(), got.Created.UTC())
+	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
 }

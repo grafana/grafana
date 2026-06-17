@@ -38,6 +38,10 @@ func TestLegacyDatasourceScopeAndActionToK8s(t *testing.T) {
 	scope, action = LegacyDatasourceScopeAndActionToK8s("loki", "datasources:uid:abc", "datasources:read")
 	assert.Equal(t, "loki.datasource.grafana.app/datasources:abc", scope)
 	assert.Equal(t, "loki.datasource.grafana.app/datasources:get", action)
+
+	scope, action = LegacyDatasourceScopeAndActionToK8s("*", "datasources:*", "datasources.permissions:write")
+	assert.Equal(t, "*.datasource.grafana.app/datasources:*", scope)
+	assert.Equal(t, "*.datasource.grafana.app/datasources:set_permissions", action)
 }
 
 func TestLegacyDatasourceAction(t *testing.T) {
@@ -46,9 +50,19 @@ func TestLegacyDatasourceAction(t *testing.T) {
 		LegacyDatasourceAction("loki", &a)
 		assert.Equal(t, "loki.datasource.grafana.app/datasources:get", a)
 	})
-	t.Run("skips nested resource", func(t *testing.T) {
+	t.Run("maps permissions read", func(t *testing.T) {
 		a := "datasources.permissions:read"
 		LegacyDatasourceAction("loki", &a)
-		assert.Equal(t, "datasources.permissions:read", a)
+		assert.Equal(t, "loki.datasource.grafana.app/datasources:get_permissions", a)
+	})
+	t.Run("maps permissions write", func(t *testing.T) {
+		a := "datasources.permissions:write"
+		LegacyDatasourceAction("*", &a)
+		assert.Equal(t, "*.datasource.grafana.app/datasources:set_permissions", a)
+	})
+	t.Run("skips unknown nested resource", func(t *testing.T) {
+		a := "datasources.id:read"
+		LegacyDatasourceAction("loki", &a)
+		assert.Equal(t, "datasources.id:read", a)
 	})
 }

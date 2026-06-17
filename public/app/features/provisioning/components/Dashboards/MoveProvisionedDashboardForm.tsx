@@ -23,6 +23,8 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
+import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getTargetFolderPathInRepo, isResourceAlreadyInTarget } from '../BulkActions/utils';
@@ -157,7 +159,15 @@ export function MoveProvisionedDashboardForm({
       }
 
       const branchRef = ref;
-      const commitMessage = comment || `Move dashboard: ${dashboard.state.title}`;
+      const commitMessage = getSingleResourceCommitMessage({
+        comment,
+        repository,
+        action: 'move',
+        resourceKind: 'dashboard',
+        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+        title: dashboard.state.title ?? '',
+        ...getCurrentCommitUser(),
+      });
 
       try {
         await moveFile({

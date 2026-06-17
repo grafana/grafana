@@ -10,7 +10,6 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
@@ -41,25 +40,6 @@ type ResourcePermSqlBackend struct {
 
 func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
 	store := idStore.NewLegacySQLStores(dbProvider)
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"},
-		NewIDScopedMapper("teams", []string{"Member", "Admin"}), nil,
-	)
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
-		NewIDScopedMapper("users", defaultLevels), nil,
-	)
-	// BasicRole is excluded: built-in roles already cover all service accounts globally,
-	// so granting a ResourcePermission to a BasicRole on a specific SA is not permitted.
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"},
-		NewMapperWithAttribute("serviceaccounts", []string{"Edit", "Admin"}, ScopeAttributeID,
-			[]v0alpha1.ResourcePermissionSpecPermissionKind{
-				v0alpha1.ResourcePermissionSpecPermissionKindUser,
-				v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
-				v0alpha1.ResourcePermissionSpecPermissionKindTeam,
-			}), nil,
-	)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
 		identityStore: store,

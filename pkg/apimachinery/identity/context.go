@@ -57,7 +57,7 @@ func GetRequester(ctx context.Context) (Requester, error) {
 }
 
 func checkNilRequester(r Requester) bool {
-	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
+	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Pointer && reflect.ValueOf(r).IsNil())
 }
 
 const (
@@ -173,6 +173,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"playlists:read",        // playlist.ActionPlaylistsRead
+	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 	"users:read",           // accesscontrol.ActionUsersRead,
@@ -181,10 +183,11 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
-// Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
+// Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
 var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
+	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
 	"datasource.grafana.app:*",
@@ -199,6 +202,7 @@ var serviceIdentityTokenPermissions = []string{
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
+	"notifications.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
 

@@ -7,13 +7,17 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -74,6 +78,42 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			expectedErr: folder.ErrInvalidUID,
+		},
+		{
+			name: "empty title rejected",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec:       folders.FolderSpec{Title: ""},
+			},
+			expectedErr: folder.ErrTitleEmpty,
+		},
+		{
+			name: "whitespace-only title rejected after trim",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
+				Spec:       folders.FolderSpec{Title: "   \t  "},
+			},
+			expectedErr: folder.ErrTitleEmpty,
+		},
+		{
+			name: "root parent annotation - empty",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": ""},
+				},
+				Spec: folders.FolderSpec{Title: "ok"},
+			},
+		},
+		{
+			name: "root parent annotation - general",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "p1",
+					Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+				},
+				Spec: folders.FolderSpec{Title: "ok"},
+			},
 		},
 		{
 			name: "too long",
@@ -413,6 +453,86 @@ func TestValidateUpdate(t *testing.T) {
 			expectedErr: "folder.name-exists",
 		},
 		{
+			name: "empty title rejected on update",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "nnn"},
+				Spec:       folders.FolderSpec{Title: "   "},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "nnn"},
+				Spec:       folders.FolderSpec{Title: "old"},
+			},
+			expectedErr: "folder.title-empty",
+		},
+		{
+			name: "no folder change skips tree validation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
+				},
+				Spec: folders.FolderSpec{Title: "new title"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
+				},
+				Spec: folders.FolderSpec{Title: "old title"},
+			},
+		},
+		{
+			name: "move to root - empty parent annotation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: ""},
+				},
+				Spec: folders.FolderSpec{Title: "new title"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				},
+				Spec: folders.FolderSpec{Title: "old title"},
+			},
+		},
+		{
+			name: "move to root - general parent annotation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
+				},
+				Spec: folders.FolderSpec{Title: "new title"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				},
+				Spec: folders.FolderSpec{Title: "old title"},
+			},
+		},
+		{
+			name: "move to root - root parent annotation",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
+				},
+				Spec: folders.FolderSpec{Title: "new title"},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				},
+				Spec: folders.FolderSpec{Title: "old title"},
+			},
+		},
+		{
 			name: "error to move into k6 folder",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -434,6 +554,74 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move the k6 folder itself",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move the k6 folder to root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.LegacyRootFolderUID, // nolint:staticcheck
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "somewhere",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
+			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "no-op update on k6 folder is allowed (title change, parent unchanged)",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "renamed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "k6-app",
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
 		},
 		{
 			name: "can move a folder to max depth",
@@ -660,6 +848,7 @@ func TestValidateUpdate(t *testing.T) {
 					return tt.parents, tt.parentsError
 				},
 				&mockSearchClient{folders: tt.allFolders},
+				nil,
 				maxDepth)
 
 			if tt.expectedErr == "" {
@@ -673,11 +862,15 @@ func TestValidateUpdate(t *testing.T) {
 }
 
 func TestValidateDelete(t *testing.T) {
+	zeroGrace := int64(0)
+
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		searcher    *mockSearchClient
-		expectedErr string
+		name                 string
+		folder               *folders.Folder
+		searcher             *mockSearchClient
+		deleteOptions        *metav1.DeleteOptions
+		cascadeDeleteEnabled bool
+		expectedErr          string
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
@@ -728,6 +921,47 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 		expectedErr: "could not verify if folder is empty",
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is allowed",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folder.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: true,
+	}, {
+		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folder.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+		expectedErr:          "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
@@ -796,7 +1030,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
 					},
@@ -838,7 +1072,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    10, // now validated
 					},
@@ -855,7 +1089,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher)
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -867,6 +1101,208 @@ func TestValidateDelete(t *testing.T) {
 	}
 }
 
+func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
+	repoAnnotations := map[string]string{utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo)}
+	ownerRef := metav1.OwnerReference{APIVersion: "v1", Kind: "ConfigMap", Name: "owner-a", UID: "owner-a-uid"}
+	differentOwnerRef := metav1.OwnerReference{APIVersion: "v1", Kind: "ConfigMap", Name: "owner-b", UID: "owner-b-uid"}
+
+	tests := []struct {
+		name      string
+		obj       *folders.Folder
+		old       *folders.Folder
+		forbidden bool
+	}{
+		{
+			name: "neither managed - owner refs allowed on create",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef}},
+			},
+		},
+		{
+			name: "neither managed - owner refs allowed on update",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef}},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f"},
+			},
+		},
+		{
+			name: "new managed on create with no owner refs - ok",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+			},
+		},
+		{
+			name: "new managed on create with owner refs - forbidden",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+			forbidden: true,
+		},
+		{
+			name: "old managed, owner refs unchanged - ok",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+		},
+		{
+			name: "old managed, owner refs added - forbidden",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+			},
+			forbidden: true,
+		},
+		{
+			name: "old managed, owner refs changed - forbidden",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{differentOwnerRef},
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					Annotations:     repoAnnotations,
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+			forbidden: true,
+		},
+		{
+			name: "new object loses managed-by but had owner refs - rejected because old was managed",
+			obj: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "f",
+					OwnerReferences: []metav1.OwnerReference{ownerRef},
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+			},
+			forbidden: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateOwnerReferencesOnManagedFolder(tt.obj, tt.old)
+			if tt.forbidden {
+				require.Error(t, err)
+				require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %T: %v", err, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGetChildrenBatchPagination(t *testing.T) {
+	const namespace = "default"
+	const parent = "p1"
+
+	makeFolders := func(n int) []folders.Folder {
+		out := make([]folders.Folder, 0, n)
+		for i := 0; i < n; i++ {
+			out = append(out, folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        fmt.Sprintf("c%d", i),
+					Annotations: map[string]string{"grafana.app/folder": parent},
+				},
+			})
+		}
+		return out
+	}
+
+	t.Run("hasMore true via TotalHits when more pages remain (bleve path)", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.True(t, hasMore)
+	})
+
+	t.Run("hasMore false on the final page", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(5), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 4)
+		require.NoError(t, err)
+		require.Len(t, children, 1)
+		require.False(t, hasMore)
+	})
+
+	t.Run("hasMore true via NextPageToken even when TotalHits is missing", func(t *testing.T) {
+		searcher := &mockSearchClient{
+			folders:          makeFolders(5),
+			paginate:         true,
+			useNextPageToken: true,
+			dropTotalHits:    true,
+		}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.True(t, hasMore)
+	})
+
+	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
+		searcher := &mockSearchClient{folders: makeFolders(2), paginate: true}
+		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 10, 0)
+		require.NoError(t, err)
+		require.Len(t, children, 2)
+		require.False(t, hasMore)
+	})
+}
+
+func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
+	// pageSize inside checkSubtreeDepthBatched is 1000, so we need >1000 children
+	// under a single parent to force more than one iteration of the pagination loop.
+	const namespace = "default"
+	const parent = "root"
+	const childCount = 1001
+
+	all := make([]folders.Folder, 0, childCount)
+	for i := 0; i < childCount; i++ {
+		all = append(all, folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        fmt.Sprintf("c%d", i),
+				Annotations: map[string]string{"grafana.app/folder": parent},
+			},
+		})
+	}
+
+	searcher := &mockSearchClient{folders: all, paginate: true}
+	// remainingDepth is generous and children have no further descendants, so the
+	// recursion bottoms out cleanly and we only exercise the sibling pagination loop.
+	err := checkSubtreeDepth(context.Background(), searcher, namespace, parent, 10, 20)
+	require.NoError(t, err)
+	// 1 call for the first 1000 children + 1 call for the final partial page,
+	// plus 1 recursive call per page that finds no grandchildren = 4 total.
+	require.Equal(t, 4, searcher.searchCalls)
+}
+
 var (
 	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
 )
@@ -876,6 +1312,13 @@ type mockSearchClient struct {
 	statsErr error
 
 	folders []folders.Folder
+
+	// pagination controls (opt-in: zero values preserve the original "return everything" behavior)
+	paginate         bool
+	useNextPageToken bool
+	dropTotalHits    bool
+
+	searchCalls int
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -885,6 +1328,8 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	m.searchCalls++
+
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
 	if req.Options != nil && req.Options.Fields != nil {
@@ -912,9 +1357,263 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		}
 	}
 
-	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{Rows: rows},
-	}, nil
+	if !m.paginate {
+		return &resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{Rows: rows},
+		}, nil
+	}
+
+	total := int64(len(rows))
+	offset := req.Offset
+	if offset < 0 {
+		offset = 0
+	}
+	if offset > total {
+		offset = total
+	}
+	end := total
+	if req.Limit > 0 && offset+req.Limit < end {
+		end = offset + req.Limit
+	}
+	pageRows := rows[offset:end]
+
+	nextToken := ""
+	if m.useNextPageToken && end < total {
+		nextToken = fmt.Sprintf("next-%d", end)
+	}
+
+	resp := &resourcepb.ResourceSearchResponse{
+		Results: &resourcepb.ResourceTable{Rows: pageRows, NextPageToken: nextToken},
+	}
+	if !m.dropTotalHits {
+		resp.TotalHits = total
+	}
+	return resp, nil
+}
+
+// allow is a single (group, resource, verb, name, folder) tuple the mock
+// authlib client treats as Allowed; everything else is denied.
+type allow struct{ group, resource, verb, name, folder string }
+
+func TestCheckMoveAccess(t *testing.T) {
+	const (
+		namespace    = "default"
+		orgID        = int64(1)
+		sourceUID    = "source"
+		oldParentUID = "oldParent"
+		newParentUID = "newParent"
+	)
+
+	folderGVR := folders.FolderResourceInfo.GroupVersionResource()
+	allowFolder := func(verb, name, folderUID string) allow {
+		return allow{group: folderGVR.Group, resource: folderGVR.Resource, verb: verb, name: name, folder: folderUID}
+	}
+
+	// Common allows: user can update source under its current parent (so the
+	// escalation check passes for "update" when present), and can create
+	// folders in the new parent (so destination-write passes). Tests override
+	// these via additionalAllows / nilClient / no destination-write entry.
+	canCreateFolderInNew := allowFolder(utils.VerbCreate, "", newParentUID)
+	canUpdateOnSourceUnderOld := allowFolder(utils.VerbUpdate, sourceUID, oldParentUID)
+	canUpdateOnSourceUnderNew := allowFolder(utils.VerbUpdate, sourceUID, newParentUID)
+
+	tests := []struct {
+		name        string
+		newParent   string
+		oldParent   string
+		nilClient   bool
+		allows      []allow
+		expectedErr string
+	}{
+		{
+			name:      "nil accessClient is a no-op",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			nilClient: true,
+		},
+		{
+			name:      "no create on new parent denies the move",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			// no canCreateFolderInNew → destination-write fails
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			name:      "create on new parent and no extra capabilities is allowed",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateFolderInNew},
+		},
+		{
+			name:        "folder verb allowed on source only under new parent is escalation",
+			newParent:   newParentUID,
+			oldParent:   oldParentUID,
+			allows:      []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			name:      "folder verb allowed on source under both parents is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows:    []allow{canCreateFolderInNew, canUpdateOnSourceUnderNew, canUpdateOnSourceUnderOld},
+		},
+		{
+			name:      "move to root requires create at root",
+			newParent: folder.GeneralFolderUID,
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			name:        "move to root denied without create at root",
+			newParent:   folder.GeneralFolderUID,
+			oldParent:   oldParentUID,
+			expectedErr: "folders.forbiddenMove",
+		},
+		{
+			// Tier model: gaining a *different* verb at the same tier is not
+			// escalation. Old=update (Editor), new=delete (Editor) → no jump.
+			name:      "same-tier verb swap (update→delete) is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbUpdate, sourceUID, oldParentUID),
+				allowFolder(utils.VerbDelete, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: losing capability at the destination is never
+			// escalation. Old=Admin (setperms), new=Editor (update only).
+			name:      "tier downgrade Admin→Editor is not escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, oldParentUID),
+				allowFolder(utils.VerbUpdate, sourceUID, newParentUID),
+			},
+		},
+		{
+			// Tier model: gaining Admin (setperms) where the user only had
+			// Editor (update) before is a tier jump → escalation.
+			name:      "tier upgrade Editor→Admin on folder is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				canUpdateOnSourceUnderOld,
+				canUpdateOnSourceUnderNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Tier model: gaining View (None → Viewer) is a tier jump on its
+			// own → escalation. Catches read-only access gained by the move.
+			name:      "tier upgrade None→Viewer is escalation",
+			newParent: newParentUID,
+			oldParent: oldParentUID,
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbGet, sourceUID, newParentUID),
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+				UserID: 1,
+				OrgID:  orgID,
+			})
+
+			var client authlib.AccessClient
+			var mock *mockAccessClient
+			if !tt.nilClient {
+				mock = newMockAccessClient(tt.allows)
+				client = mock
+			}
+
+			err := checkMoveAccess(ctx, namespace, sourceUID, tt.oldParent, tt.newParent, client)
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.expectedErr)
+			}
+
+			// All access checks must be batched into one BatchCheck round-trip.
+			if mock != nil {
+				require.Equal(t, 1, mock.batchCheckCall, "expected exactly one BatchCheck call")
+			}
+		})
+	}
+
+	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient(nil)
+		mock.batchCheckErr = fmt.Errorf("boom")
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "boom")
+		require.Equal(t, 1, mock.batchCheckCall)
+	})
+
+	t.Run("fails closed when BatchCheck omits the write-destination result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "writeDest"
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for destination write")
+	})
+
+	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
+		mock := newMockAccessClient([]allow{canCreateFolderInNew})
+		mock.dropResultFor = "newFolder|" + utils.VerbGet
+		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
+		require.ErrorContains(t, err, "no result for verb")
+	})
+}
+
+type mockAccessClient struct {
+	allowed        map[allow]struct{}
+	batchCheckCall int
+	batchCheckErr  error
+	dropResultFor  string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+}
+
+func newMockAccessClient(allows []allow) *mockAccessClient {
+	m := &mockAccessClient{allowed: make(map[allow]struct{}, len(allows))}
+	for _, a := range allows {
+		m.allowed[a] = struct{}{}
+	}
+	return m
+}
+
+func (m *mockAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	_, ok := m.allowed[allow{group: req.Group, resource: req.Resource, verb: req.Verb, name: req.Name, folder: folder}]
+	return authlib.CheckResponse{Allowed: ok, Zookie: authlib.NoopZookie{}}, nil
+}
+
+func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	m.batchCheckCall++
+	if m.batchCheckErr != nil {
+		return authlib.BatchCheckResponse{}, m.batchCheckErr
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		if c.CorrelationID == m.dropResultFor {
+			continue
+		}
+		_, ok := m.allowed[allow{group: c.Group, resource: c.Resource, verb: c.Verb, name: c.Name, folder: c.Folder}]
+		results[c.CorrelationID] = authlib.BatchCheckResult{Allowed: ok}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func (m *mockAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(string, string) bool { return false }, authlib.NoopZookie{}, nil
 }
 
 // RebuildIndexes implements resourcepb.ResourceIndexClient.

@@ -5,6 +5,7 @@
   "version": "13.1.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
+    "@grafana/azure-sdk": "0.1.0",
     "@grafana/data": "13.1.0-pre",
     "@grafana/i18n": "13.1.0-pre",
     "@grafana/plugin-ui": "^0.13.1",
@@ -13,8 +14,7 @@
     "@grafana/ui": "13.1.0-pre",
     "lodash": "^4.17.23",
     "react": "18.3.1",
-    "rxjs": "7.8.2",
-    "tslib": "2.8.1"
+    "rxjs": "7.8.2"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "13.1.0-pre",
@@ -27,7 +27,6 @@
     "@types/node": "24.10.1",
     "@types/react": "18.3.18",
     "i18next-cli": "^1.48.0",
-    "ts-node": "10.9.2",
     "typescript": "6.0.2",
     "webpack": "^5.105.0"
   },
@@ -40,5 +39,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary"
   },
-  "packageManager": "yarn@4.11.0"
+  "packageManager": "yarn@4.15.0"
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -193,14 +194,20 @@ func (evalResults Results) HasNonRetryableErrors() bool {
 	return false
 }
 
-// IsNonRetryableError indicates whether an error is considered persistent and not worth performing evaluation retries.
-// Currently it is true if err is `&invalidEvalResultFormatError` or `ErrSeriesMustBeWide`
+// IsNonRetryableError reports whether an error is persistent and not worth retrying within an
+// evaluation cycle: malformed results, or deterministic Mimir query-limit / write rejections.
 func IsNonRetryableError(err error) bool {
 	var nonRetryableError *invalidEvalResultFormatError
 	if errors.As(err, &nonRetryableError) {
 		return true
 	}
 	if errors.Is(err, expr.ErrSeriesMustBeWide) {
+		return true
+	}
+	if errors.Is(err, expr.ErrQueryLimit) {
+		return true
+	}
+	if errors.Is(err, writer.ErrNonRetryableWrite) {
 		return true
 	}
 	return false
@@ -331,12 +338,28 @@ func ParseStateString(repr string) (State, error) {
 	}
 }
 
+// sanitizeHeaderValue strips ASCII control characters (including CRLF) and
+// truncates to 128 bytes to prevent header injection and oversized headers.
+func sanitizeHeaderValue(v string) string {
+	s := strings.Map(func(r rune) rune {
+		if r < 0x20 || r == 0x7f {
+			return -1
+		}
+		return r
+	}, v)
+	const maxLen = 128
+	if len(s) > maxLen {
+		s = s[:maxLen]
+	}
+	return s
+}
+
 func buildDatasourceHeaders(ctx context.Context, metadata map[string]string) map[string]string {
 	headers := make(map[string]string, len(metadata)+3)
 
 	if len(metadata) > 0 {
 		for key, value := range metadata {
-			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(value)
+			headers[fmt.Sprintf("http_X-Rule-%s", key)] = url.QueryEscape(sanitizeHeaderValue(value))
 		}
 	}
 

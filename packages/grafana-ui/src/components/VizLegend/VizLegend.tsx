@@ -20,7 +20,7 @@ export function VizLegend<T>({
   items,
   thresholdItems,
   mappingItems,
-  displayMode,
+  displayMode = LegendDisplayMode.List,
   sortBy: sortKey,
   seriesVisibilityChangeBehavior = SeriesVisibilityChangeBehavior.Isolate,
   sortDesc,

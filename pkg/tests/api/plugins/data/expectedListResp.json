@@ -1179,6 +1179,52 @@
     "angularDetected": false
   },
   {
+    "name": "Logs Table",
+    "type": "panel",
+    "id": "logstable",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/logstable/img/icn-logs-panel.svg",
+        "large": "public/plugins/logstable/img/icn-logs-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/logstable/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
     "name": "Loki",
     "type": "datasource",
     "id": "loki",

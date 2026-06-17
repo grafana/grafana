@@ -89,6 +89,8 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
 		`UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_backfill_jobs WHERE model = $1`, testModel)
 }
 
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
@@ -186,6 +188,156 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TestIntegrationVectorUpsertReplaceSubresources pins the atomic
+// "replace the stored subresource set for this UID" contract the
+// reconciler depends on: subresources not present in the new write get
+// deleted, present ones get rewritten, and nothing about other UIDs or
+// the rest of the namespace changes.
+func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub, content string) Vector {
+		return Vector{
+			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
+			Subresource: sub, ResourceVersion: 10, Content: content,
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		}
+	}
+
+	// Seed dash-a with three panels and dash-b with two; dash-b is the
+	// "untouched neighbor" used to assert isolation.
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("dash-a", "panel/1", "a-1"),
+		mk("dash-a", "panel/2", "a-2"),
+		mk("dash-a", "panel/3", "a-3"),
+		mk("dash-b", "panel/1", "b-1"),
+		mk("dash-b", "panel/2", "b-2"),
+	}))
+
+	// Replace dash-a with just panel/1 (rewritten) and panel/4 (new).
+	// panel/2 and panel/3 must be deleted in the same transaction.
+	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+		mk("dash-a", "panel/1", "a-1 updated"),
+		mk("dash-a", "panel/4", "a-4 new"),
+	})
+	require.NoError(t, err)
+
+	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"panel/1": "a-1 updated",
+		"panel/4": "a-4 new",
+	}, stored, "stale subresources removed; new set is the exact replacement")
+
+	// dash-b must be untouched.
+	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"panel/1": "b-1",
+		"panel/2": "b-2",
+	}, storedB, "neighbor UID is isolated from the replace")
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+}
+
+// TestIntegrationVectorUpsertReplaceSubresources_MultiUID verifies
+// that a single call covering multiple UIDs replaces each UID's set
+// independently in one transaction.
+func TestIntegrationVectorUpsertReplaceSubresources_MultiUID(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub, content string) Vector {
+		return Vector{
+			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
+			Subresource: sub, ResourceVersion: 1, Content: content,
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		}
+	}
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("dash-a", "panel/1", "a-1"),
+		mk("dash-a", "panel/2", "a-2"),
+		mk("dash-b", "panel/1", "b-1"),
+		mk("dash-b", "panel/2", "b-2"),
+	}))
+
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, []Vector{
+		mk("dash-a", "panel/1", "a-1 v2"),
+		mk("dash-b", "panel/3", "b-3"),
+	}))
+
+	storedA, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "a-1 v2"}, storedA)
+
+	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/3": "b-3"}, storedB)
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+}
+
+// TestIntegrationVectorUpsertReplaceSubresources_EmptyInput is the
+// no-op early-return path. Existing rows stay put.
+func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{{
+		Namespace: "integration-test", Resource: testResource, UID: "dash", Title: "Dash",
+		Subresource: "panel/1", ResourceVersion: 1, Content: "untouched",
+		Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+	}}))
+
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, nil))
+
+	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+}
+
+// TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError
+// pins the all-or-nothing contract: when a vector in the batch fails
+// validation, no rows in the batch are persisted and no stale rows
+// are deleted. The reconciler depends on this so a half-applied
+// dashboard never appears in search.
+func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub, content string) Vector {
+		return Vector{
+			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
+			Subresource: sub, ResourceVersion: 1, Content: content,
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		}
+	}
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("dash", "panel/1", "v1"),
+		mk("dash", "panel/2", "v1"),
+	}))
+
+	// Second vector has empty Title — Validate() rejects it.
+	bad := mk("dash", "panel/2", "v2-bad")
+	bad.Title = ""
+	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+		mk("dash", "panel/1", "v2"),
+		bad,
+	})
+	require.Error(t, err)
+
+	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
+	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
+		"failed batch leaves no half-applied state")
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+}
+
 func TestIntegrationVectorExists(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
@@ -219,16 +371,51 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), rv)
 
-	err = backend.Upsert(ctx, []Vector{
-		{Namespace: "integration-test", Resource: testResource, UID: "rv-test", Title: "RV Test", Subresource: "x",
-			ResourceVersion: 42, Content: "test content", Metadata: json.RawMessage(`{}`),
-			Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
-	})
-	require.NoError(t, err)
-
+	require.NoError(t, backend.SetLatestRV(ctx, 42))
 	rv, err = backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(42), rv)
+
+	// Monotonic: lower rv is ignored.
+	require.NoError(t, backend.SetLatestRV(ctx, 10))
+	rv, err = backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(42), rv)
+
+	// Higher rv advances.
+	require.NoError(t, backend.SetLatestRV(ctx, 100))
+	rv, err = backend.GetLatestRV(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, int64(100), rv)
+}
+
+func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100))
+
+	// Second insert for the same (model, resource) is a no-op (ON CONFLICT
+	// DO NOTHING): the original row is preserved, not overwritten with 200.
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200))
+
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
+	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
+}
+
+func TestIntegrationVectorReconcilerLock(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	release, acquired, err := backend.TryAcquireReconcilerLock(ctx)
+	require.NoError(t, err)
+	require.True(t, acquired)
+	defer release()
+
+	// Second acquire on the same backend (different connection) must be denied.
+	_, acquired2, err := backend.TryAcquireReconcilerLock(ctx)
+	require.NoError(t, err)
+	require.False(t, acquired2)
 }
 
 func TestIntegrationPromoterPromotesLargeTenant(t *testing.T) {
@@ -310,4 +497,46 @@ func makeEmbedding(a, b float32) []float32 {
 	e[0] = a
 	e[1] = b
 	return e
+}
+
+func TestEnsureResourcePartition_RejectsUnsafeResource(t *testing.T) {
+	b := &pgvectorBackend{}
+	for _, res := range []string{"", "Dashboards", "dash-boards", "a.b", "drop;table", "with space"} {
+		require.Error(t, b.EnsureResourcePartition(context.Background(), res),
+			"resource %q must be rejected", res)
+	}
+}
+
+func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	pg := backend.(*pgvectorBackend)
+
+	const res = "testpartition"
+	leaf := subtreeName(res)
+	idx := leaf + "_metadata_idx"
+	drop := func() { _, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf)) }
+	drop()
+	t.Cleanup(drop)
+
+	// Absent before creation.
+	ready, err := pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	require.False(t, ready)
+
+	// Create it: partition + metadata index both present.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "leaf attached as partition and metadata index present")
+
+	// Heals a missing index: drop it, retry must recreate it.
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, idx))
+	require.NoError(t, err)
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "missing index recreated on retry")
+
+	// Idempotent: a second call (fast path) is a no-op, no error.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
 }

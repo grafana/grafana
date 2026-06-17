@@ -112,7 +112,7 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
-		b.proxyFlagReq(ctx, flagKey, isAuthedReq, w, r)
+		b.proxyFlagReq(ctx, flagKey, isAuthedReq, authNamespace, w, r)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
 			return
 		}
-		b.proxyAllFlagReq(ctx, isAuthedReq, w, r)
+		b.proxyAllFlagReq(ctx, isAuthedReq, authNamespace, w, r)
 		return
 	}
 

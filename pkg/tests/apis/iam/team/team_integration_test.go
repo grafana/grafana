@@ -45,6 +45,7 @@ func TestIntegrationTeams(t *testing.T) {
 
 			doTeamCRUDTestsUsingTheNewAPIs(t, helper)
 			doTeamSpecMembersTests(t, helper)
+			doTeamSpecExternalGroupsOSSTests(t, helper)
 
 			if mode < 3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
@@ -755,5 +756,38 @@ func doTeamSpecMembersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}
 		require.ElementsMatch(t, []string{editorUID, viewerUID}, names,
 			"both members must be present; the stale-RV writer must not have erased editor")
+	})
+}
+
+// doTeamSpecExternalGroupsOSSTests covers spec.externalGroups behavior that
+// is universal regardless of which ExternalGroupReconciler is bound. Hydration
+// is reconciler-dependent and exercised in the enterprise suite.
+func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) {
+	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		GVR:       gvrTeams,
+	})
+
+	t.Run("spec.externalGroups: validation rejects duplicates after lowercasing", func(t *testing.T) {
+		ctx := context.Background()
+		body := map[string]interface{}{
+			"apiVersion": "iam.grafana.app/v0alpha1",
+			"kind":       "Team",
+			"metadata":   map[string]interface{}{"generateName": "team-egroups-dup-"},
+			"spec": map[string]interface{}{
+				"title":          "Team egroups dup",
+				"email":          "egroups-dup@example.com",
+				"provisioned":    false,
+				"externalUID":    "",
+				"externalGroups": []interface{}{"LDAP-Admins", "  ldap-admins  "},
+			},
+		}
+		_, err := teamClient.Resource.Create(ctx, &unstructured.Unstructured{Object: body}, metav1.CreateOptions{})
+		require.Error(t, err)
+		var se *errors.StatusError
+		require.ErrorAs(t, err, &se)
+		require.Equal(t, int32(400), se.ErrStatus.Code)
+		require.Contains(t, se.ErrStatus.Message, "duplicate")
 	})
 }
