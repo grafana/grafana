@@ -26,9 +26,6 @@ import (
 // endpoint, returning a healthy app/installation under the enterprise /api/v3 base path.
 // Point a connection's spec.githubEnterprise.serverUrl at server.URL so the controller's
 // Connection.Test resolves against loopback instead of dialing a real (unreachable) host.
-// This avoids mutating the shared GitHub factory's in-memory client, which the controller
-// goroutine doesn't reliably observe (that race made the in-memory mock flaky in CI).
-// The app ID (123) and installation ID (456) match the connections created in these tests.
 func newFakeGHEServer(t *testing.T) *httptest.Server {
 	t.Helper()
 

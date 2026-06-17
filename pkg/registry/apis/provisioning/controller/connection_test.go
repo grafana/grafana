@@ -861,9 +861,7 @@ func TestConnectionController_process(t *testing.T) {
 				mockFactory.EXPECT().Build(mock.Anything, mock.Anything).
 					Return(nil, errors.New("failed to build connection"))
 
-				mockStatusPatcher := NewMockConnectionStatusPatcher(t)
-				mockStatusPatcher.EXPECT().Patch(mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
+				return mockLister, mockHealthChecker, nil, mockFactory
 			},
 			conn: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{
