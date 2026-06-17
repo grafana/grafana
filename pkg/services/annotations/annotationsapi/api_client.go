@@ -147,6 +147,9 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 	if query.MatchAny && len(query.Tags) > 0 {
 		req = req.Param("tagsMatchAny", "true")
 	}
+	if query.UserUID != "" {
+		req = req.Param("createdBy", query.UserUID)
+	}
 
 	raw, err := req.DoRaw(ctx)
 	if err != nil {

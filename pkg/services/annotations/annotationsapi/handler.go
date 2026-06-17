@@ -231,8 +231,5 @@ func itemToAnnotation(item *annotations.Item) *annotationV0.Annotation {
 		},
 		Spec: spec,
 	}
-	if item.UserID != 0 {
-		anno.SetCreatedBy(fmt.Sprintf("user:%d", item.UserID))
-	}
 	return anno
 }
