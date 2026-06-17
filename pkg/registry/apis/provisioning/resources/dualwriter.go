@@ -315,7 +315,9 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		},
 	}
 
-	urls, err := getFolderURLs(ctx, opts.Path, opts.Ref, r.repo)
+	// URLs must point at the updated _folder.json file, not the directory, so the
+	// "view file" link resolves to the actual changed resource on the remote.
+	urls, err := getFolderURLs(ctx, safepath.Join(opts.Path, folderMetadataFileName), opts.Ref, r.repo)
 	if err != nil {
 		return nil, err
 	}

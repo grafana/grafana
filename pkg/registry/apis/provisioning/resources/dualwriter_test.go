@@ -1412,6 +1412,8 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				urlRepo := &mockReaderWriterWithURLs{
 					MockReaderWriter: rw,
 					resourceURLsFn: func(_ context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+						// URLs must resolve to the updated _folder.json file, not the directory.
+						assert.Equal(t, "myfolder/_folder.json", file.Path)
 						return &provisioning.RepositoryURLs{
 							SourceURL:         "https://github.com/org/repo/blob/feature/myfolder/_folder.json",
 							NewPullRequestURL: "https://github.com/org/repo/compare/main...feature",
