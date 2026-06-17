@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, dateMath } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -347,10 +347,10 @@ function useColumns(alertManagerSourceName: string) {
         id: 'schedule',
         label: t('alerting.use-columns.columns.label.schedule', 'Schedule'),
         renderCell: function renderSchedule({ data: { startsAt, endsAt } }) {
-          const startsAtDate = dateMath.parse(startsAt);
-          const endsAtDate = dateMath.parse(endsAt);
           const dateDisplayFormat = 'YYYY-MM-DD HH:mm';
-          return `${startsAtDate?.format(dateDisplayFormat)} - ${endsAtDate?.format(dateDisplayFormat)}`;
+          const startsAtDate = dateTimeFormat(startsAt, { format: dateDisplayFormat });
+          const endsAtDate = dateTimeFormat(endsAt, { format: dateDisplayFormat });
+          return `${startsAtDate} - ${endsAtDate}`;
         },
         size: 7,
       },

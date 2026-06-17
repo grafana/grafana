@@ -1,4 +1,4 @@
-import { DefaultTimeZone, addDurationToDate, dateTime, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { addDurationToDate, dateTime, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { type SilenceFormFields } from 'app/features/alerting/unified/types/silence-form';
 import { matcherToMatcherField } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
@@ -53,7 +53,7 @@ export const getFormFieldsForSilence = (silence: Silence): SilenceFormFields => 
     matchers: silence.matchers?.map(matcherToMatcherField) || [],
     matcherName: '',
     matcherValue: '',
-    timeZone: DefaultTimeZone,
+    timeZone: '',
   };
 };
 
@@ -74,7 +74,7 @@ export const getDefaultSilenceFormValues = (partial?: Partial<SilenceFormFields>
     isRegex: false,
     matcherName: '',
     matcherValue: '',
-    timeZone: DefaultTimeZone,
+    timeZone: '',
     matchers: [{ name: '', value: '', operator: MatcherOperator.equal }],
     ...partial,
   };
