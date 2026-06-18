@@ -969,4 +969,8 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagDashboardVectorSearch
+	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 )

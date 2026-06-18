@@ -60,7 +60,7 @@ func NewRepository(
 	return &githubRepository{
 		config:        config,
 		GitRepository: gitRepo,
-		gh:            factory.New(ctx, token), // TODO, baseURL from config
+		gh:            factory.New(ctx, owner, repo, token), // TODO, baseURL from config
 		owner:         owner,
 		repo:          repo,
 	}, nil
@@ -79,7 +79,7 @@ func (r *githubRepository) Client() Client {
 }
 
 func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
-	repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+	repo, err := r.gh.GetRepository(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository metadata: %w", err)
 	}
@@ -192,7 +192,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	var allReasons []string
 
 	// Check classic branch protection rules
-	bp, err := r.gh.GetBranchProtection(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	bp, err := r.gh.GetBranchProtection(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check branch protection - return error to user
 		return &provisioning.TestResults{
@@ -213,7 +213,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	}
 
 	// Check repository rulesets
-	rulesets, err := r.gh.GetRulesets(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	rulesets, err := r.gh.GetRulesets(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check rulesets - return error to user
 		return &provisioning.TestResults{
@@ -264,7 +264,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
+	commits, err := r.gh.Commits(ctx, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, repository.ErrFileNotFound
