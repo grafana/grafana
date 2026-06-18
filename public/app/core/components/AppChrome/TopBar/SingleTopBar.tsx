@@ -98,6 +98,13 @@ export const SingleTopBar = memo(function SingleTopBar({
           <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
+          <ToolbarButton
+            icon="ai-sparkle"
+            onClick={() => chrome.setAgentMode(true)}
+            tooltip={t('navigation.agent-mode.enter', 'Enter Agent mode')}
+          >
+            {t('navigation.agent-mode.enter', 'Enter Agent mode')}
+          </ToolbarButton>
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />

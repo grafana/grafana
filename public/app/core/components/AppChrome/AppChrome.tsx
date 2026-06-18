@@ -2,7 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'classnames';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useEffect } from 'react';
+import { type PropsWithChildren, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -14,6 +15,7 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
+import { AgentModeShell } from './AgentMode/AgentModeShell';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import {
@@ -40,6 +42,15 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+
+  // PoC: hardcoded on. Phase 2 -> gate behind `assistantAgentMode` feature flag.
+  const isAgentModeEnabled = true;
+
+  // The single DOM node the live page (`children`) is portaled into. It is swapped
+  // between the normal <main> and the agent-mode Platform tab. Because `children`
+  // keeps a stable position in the React tree, only its DOM target moves on toggle
+  // -> no remount, no reload, live state preserved.
+  const [outletHost, setOutletHost] = useState<HTMLElement | null>(null);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
@@ -83,88 +94,102 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  const agentMode = isAgentModeEnabled && Boolean(state.agentMode);
+
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
+  //
+  // The live page (`children`) is rendered once via a portal into `outletHost`,
+  // whose DOM node is swapped between the normal <main> and the agent-mode Platform
+  // tab. Keeping `children` at a stable position in the React tree means toggling
+  // agent mode only moves its DOM -> no remount, no reload, live state preserved.
   return (
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless,
+        'main-view--chrome-hidden': state.chromeless || agentMode,
       })}
     >
-      {!state.chromeless && (
+      {outletHost && createPortal(children, outletHost)}
+
+      {agentMode ? (
+        <AgentModeShell outletRef={setOutletHost} />
+      ) : (
         <>
-          <LinkButton
-            className={styles.skipLink}
-            href="#pageContent"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('pageContent')?.focus();
-            }}
-          >
-            <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
-          </LinkButton>
-          {menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+          {!state.chromeless && (
+            <>
+              <LinkButton
+                className={styles.skipLink}
+                href="#pageContent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pageContent')?.focus();
+                }}
+              >
+                <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
+              </LinkButton>
+              {menuDockedAndOpen && (
+                <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+              )}
+              <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+                <SingleTopBar
+                  sectionNav={state.sectionNav.node}
+                  pageNav={state.pageNav}
+                  onToggleMegaMenu={handleMegaMenu}
+                  onToggleKioskMode={chrome.onToggleKioskMode}
+                  actions={state.actions}
+                  breadcrumbActions={state.breadcrumbActions}
+                  scopes={scopes}
+                  showToolbarLevel={headerLevels === 2}
+                />
+              </header>
+            </>
           )}
-          <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
-            <SingleTopBar
-              sectionNav={state.sectionNav.node}
-              pageNav={state.pageNav}
-              onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
-              actions={state.actions}
-              breadcrumbActions={state.breadcrumbActions}
-              scopes={scopes}
-              showToolbarLevel={headerLevels === 2}
-            />
-          </header>
+          <div className={contentClass}>
+            <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
+              {!state.chromeless && (
+                <div
+                  className={cx(styles.scopesDashboardsContainer, {
+                    [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+                  })}
+                >
+                  <ErrorBoundaryAlert boundaryName="scopes-dashboards">
+                    <ScopesDashboards />
+                  </ErrorBoundaryAlert>
+                </div>
+              )}
+              <main
+                className={cx(styles.pageContainer, {
+                  [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+                  [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+                  [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
+                  [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
+                })}
+                id="pageContent"
+                tabIndex={-1}
+                ref={setOutletHost}
+              />
+              {!state.chromeless && isExtensionSidebarOpen && (
+                <Resizable
+                  className={styles.sidebarContainer}
+                  defaultSize={{ width: extensionSidebarWidth }}
+                  enable={{ left: true }}
+                  onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
+                  handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
+                  minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+                  maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+                >
+                  <ExtensionSidebar />
+                </Resizable>
+              )}
+            </div>
+          </div>
+          {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
+          {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
         </>
       )}
-      <div className={contentClass}>
-        <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
-          {!state.chromeless && (
-            <div
-              className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
-              })}
-            >
-              <ErrorBoundaryAlert boundaryName="scopes-dashboards">
-                <ScopesDashboards />
-              </ErrorBoundaryAlert>
-            </div>
-          )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-              [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
-            })}
-            id="pageContent"
-            tabIndex={-1}
-          >
-            {children}
-          </main>
-          {!state.chromeless && isExtensionSidebarOpen && (
-            <Resizable
-              className={styles.sidebarContainer}
-              defaultSize={{ width: extensionSidebarWidth }}
-              enable={{ left: true }}
-              onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-              handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-              minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
-              maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
-            >
-              <ExtensionSidebar />
-            </Resizable>
-          )}
-        </div>
-      </div>
-      {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
-      {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
+      {(!state.chromeless || agentMode) && <CommandPalette />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
