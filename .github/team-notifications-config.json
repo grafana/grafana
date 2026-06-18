@@ -102,12 +102,10 @@
       ],
       "area_labels": [
         "area/dashboard/snapshot",
-        "area/dashboard/templating",
         "area/frontend/library-panels",
         "area/library-panel",
         "area/playlist",
         "area/saved-queries",
-        "area/suggestions",
         "team/grafana-sharing"
       ],
       "enabled": {
