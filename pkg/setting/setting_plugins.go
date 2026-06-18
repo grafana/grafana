@@ -156,6 +156,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
 		}
+		if cfg.IsFeatureToggleEnabled("canvasExternalPlugin") { // Use literal string to avoid circular dependency
+			preinstallPluginsAsync["canvas"] = InstallPlugin{"canvas", "", ""}
+		}
 		if cfg.IsEnterprise {
 			preinstallPluginsAsync["grafana-assistant-app"] = InstallPlugin{"grafana-assistant-app", "", ""}
 		}
