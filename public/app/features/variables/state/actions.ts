@@ -20,7 +20,7 @@ import {
   VariableRefresh,
   type VariableWithOptions,
 } from '@grafana/data';
-import { config, locationService, logWarning } from '@grafana/runtime';
+import { locationService, logWarning } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -763,11 +763,7 @@ export const onTimeRangeUpdated =
     // approach # 2, get variables that need refresh but use the dependency graph to only update the ones that are affected
     // TODO: remove the VariableWithOptions type once the feature flag is on GA
     let variablesThatNeedRefresh: VariableWithOptions[] | TypedVariableModel[] = [];
-    if (config.featureToggles.refactorVariablesTimeRange) {
-      variablesThatNeedRefresh = getVariablesThatNeedRefreshNew(key, getState());
-    } else {
-      variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
-    }
+    variablesThatNeedRefresh = getVariablesThatNeedRefreshOld(key, getState());
 
     const variableIds = variablesThatNeedRefresh.map((variable) => variable.id);
     const promises = variablesThatNeedRefresh.map((variable) =>
