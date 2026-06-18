@@ -282,6 +282,14 @@ type SearchOptions struct {
 	// lower-case. Entries with empty hash strings are ignored.
 	SearchFieldsHashesForKinds map[string]string
 
+	// UseSearchEngine routes indexing and search through the engine-agnostic
+	// SearchEngineHooks instead of calling ResourceIndex methods directly.
+	UseSearchEngine bool
+
+	// EngineProviderSetup builds SearchEngineHooks after the builder cache is
+	// initialized. Nil disables engine routing even when UseSearchEngine is true.
+	EngineProviderSetup EngineProviderSetup
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool

@@ -1,0 +1,58 @@
+{
+  "aggs": {
+    "tags": {
+      "terms": {
+        "field": "tags",
+        "size": 10
+      }
+    }
+  },
+  "query": {
+    "bool": {
+      "filter": [
+        {
+          "term": {
+            "is_deleted": false
+          }
+        },
+        {
+          "terms": {
+            "folder": [
+              "platform"
+            ]
+          }
+        },
+        {
+          "terms": {
+            "folder": [
+              "platform",
+              "general"
+            ]
+          }
+        }
+      ],
+      "must": [
+        {
+          "multi_match": {
+            "fields": [
+              "title",
+              "title_ngram",
+              "title_phrase"
+            ],
+            "query": "cpu",
+            "type": "best_fields"
+          }
+        }
+      ]
+    }
+  },
+  "size": 25,
+  "sort": [
+    {
+      "title_phrase": {
+        "order": "desc"
+      }
+    }
+  ],
+  "track_total_hits": true
+}

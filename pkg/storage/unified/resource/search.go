@@ -228,6 +228,9 @@ type searchServer struct {
 	indexModificationCacheTTL time.Duration
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+
+	useSearchEngine bool
+	engineHooks     SearchEngineHooks
 }
 
 // getIndexMaxAge returns the configured rebuild interval for the given
@@ -317,6 +320,20 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 	s.builders, err = newBuilderCache(info, 100, time.Minute*2) // TODO? opts
 	if s.builders != nil {
 		s.builders.blob = blob
+	}
+
+	s.useSearchEngine = opts.UseSearchEngine
+	if s.useSearchEngine && opts.EngineProviderSetup != nil && s.builders != nil {
+		hooks, hookErr := opts.EngineProviderSetup(EngineSetupConfig{
+			Backend:            opts.Backend,
+			Access:             access,
+			SearchFieldsHashes: opts.SearchFieldsHashesForKinds,
+			GetFields:          s.builders.GetFields,
+		})
+		if hookErr != nil {
+			return nil, hookErr
+		}
+		s.engineHooks = hooks
 	}
 
 	return s, err
@@ -556,6 +573,16 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
+	if s.useSearchEngine && s.engineHooks.Search != nil {
+		if !s.engineHooks.SkipLegacyIndex {
+			_, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
+			if err != nil {
+				return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+			}
+		}
+		return s.engineHooks.Search(ctx, req, stats)
+	}
+
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -1674,6 +1701,13 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+func (s *searchServer) bulkIndex(ctx context.Context, key NamespacedResource, index ResourceIndex, items []*BulkIndexItem, rv int64) error {
+	if s.useSearchEngine && s.engineHooks.Index != nil {
+		return s.engineHooks.Index(ctx, key, items, rv)
+	}
+	return index.BulkIndex(&BulkIndexRequest{Items: items, ResourceVersion: rv})
+}
+
 //nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
@@ -1744,7 +1778,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				// When we reach the batch size, perform bulk index and reset the batch.
 				if len(items) >= maxBatchSize {
 					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+					if err = s.bulkIndex(ctx, nsr, index, items, 0); err != nil {
 						return err
 					}
 
@@ -1755,7 +1789,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// Index any remaining items in the final batch.
 			if len(items) > 0 {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = s.bulkIndex(ctx, nsr, index, items, 0); err != nil {
 					return err
 				}
 			}
@@ -1860,7 +1894,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = s.bulkIndex(ctx, nsr, index, items, rv); err != nil {
 					return 0, 0, err
 				}
 
@@ -1873,7 +1907,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		// Index any remaining items in the final batch.
 		if len(items) > 0 {
 			span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+			if err = s.bulkIndex(ctx, nsr, index, items, rv); err != nil {
 				return 0, 0, err
 			}
 

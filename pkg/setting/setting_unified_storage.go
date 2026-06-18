@@ -178,6 +178,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
+	searchEngineSection := cfg.Raw.Section("unified_storage.search_engine")
+	cfg.SearchEngineType = searchEngineSection.Key("type").MustString("bleve")
+	cfg.ElasticsearchAddresses = searchEngineSection.Key("addresses").String()
+	cfg.ElasticsearchIndexPrefix = searchEngineSection.Key("index_prefix").MustString("grafana")
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)

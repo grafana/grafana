@@ -718,6 +718,13 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	// SearchEngineType selects the in-process search engine implementation
+	// ("bleve" or "elasticsearch"). Empty defaults to bleve.
+	SearchEngineType string
+	// ElasticsearchAddresses is a comma-separated list of Elasticsearch URLs.
+	ElasticsearchAddresses string
+	// ElasticsearchIndexPrefix is prepended to per-kind index names in ES.
+	ElasticsearchIndexPrefix string
 
 	// Vector storage
 	EnableVectorBackend      bool
