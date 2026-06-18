@@ -388,7 +388,7 @@ func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[s
 	renames = make(map[string]string)
 	added = make([]v1.ResourceUID, 0, len(incoming))
 
-for _, name := range slices.Sorted(maps.Keys(incoming)) {
+	for _, name := range slices.Sorted(maps.Keys(incoming)) {
 		content := incoming[name]
 		finalName := name
 		if _, exists := usedNames[name]; exists {

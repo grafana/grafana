@@ -382,7 +382,8 @@ func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy
 
 	if t.includeImported && len(revision.Config.ExtraConfigs) > 0 {
 		extraCfg := revision.Config.ExtraConfigs[0]
-// Merge imported template files with existing templates to compute UIDs and handle name conflicts.
+		// Merge imported template files with existing templates to compute UIDs and handle name conflicts.
+		merged, _, _, err := notifymerge.MergeTemplates(revision.Config.Templates, extraCfg.TemplateFiles, extraCfg.Identifier)
 		if err != nil {
 			return v1.TemplateGroup{}, false, err
 		}
