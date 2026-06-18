@@ -165,7 +165,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
@@ -194,7 +194,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -257,7 +257,7 @@ func TestGetManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -291,8 +291,8 @@ func TestGetManagedRoutes(t *testing.T) {
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		allowedNames := map[string]struct{}{
-			legacy_storage.UserDefinedRoutingTreeName: {},
-			"route-a": {},
+			models.DefaultRoutingTreeName: {},
+			"route-a":                     {},
 		}
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
 			FilterReadFunc: func(_ context.Context, _ identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error) {
@@ -313,7 +313,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		for _, r := range routes {
 			names = append(names, r.Name)
 		}
-		assert.ElementsMatch(t, []string{legacy_storage.UserDefinedRoutingTreeName, "route-a"}, names)
+		assert.ElementsMatch(t, []string{models.DefaultRoutingTreeName, "route-a"}, names)
 	})
 
 	t.Run("returns empty list when user has no access to any route", func(t *testing.T) {
@@ -401,7 +401,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -416,7 +416,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, models.ProvenanceNone, "v1", user)
+		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 

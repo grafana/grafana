@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
-const UserDefinedRoutingTreeName = models.DefaultRoutingTreeName
 const NamedRouteMatcher = models.NamedRouteLabel
 
 type ManagedRoute struct {
@@ -175,7 +174,7 @@ func (rev *ConfigRevision) GetManagedRoutes(includeManagedRoutes bool) ManagedRo
 			managedRoutes = append(managedRoutes, NewManagedRoute(k, rev.Config.ManagedRoutes[k]))
 		}
 	}
-	managedRoutes = append(managedRoutes, NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+	managedRoutes = append(managedRoutes, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 
 	return managedRoutes
 }
@@ -277,7 +276,7 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*Ma
 		rev.Config.AlertmanagerConfig.Receivers = append(rev.Config.AlertmanagerConfig.Receivers, defaultRcv)
 	}
 
-	return rev.UpdateNamedRoute(UserDefinedRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
+	return rev.UpdateNamedRoute(models.DefaultRoutingTreeName, *defaultCfg.AlertmanagerConfig.Route)
 }
 
 func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {

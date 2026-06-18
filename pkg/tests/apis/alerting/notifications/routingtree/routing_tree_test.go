@@ -252,7 +252,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 1)
-					require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
+					require.Equal(t, models.DefaultRoutingTreeName, list.Items[0].Name)
 				})
 
 				t.Run("should be able to read routing trees by resource identifier", func(t *testing.T) {
@@ -926,7 +926,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
-	require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
+	require.Equal(t, models.DefaultRoutingTreeName, list.Items[0].Name)
 
 	validateGetErr := func(t *testing.T, name string, expectedErrReason v1.StatusReason) {
 		t.Helper()
@@ -1034,7 +1034,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for _, route := range allCreatedRoutes {
 				expectedRoutes = append(expectedRoutes, *route)
 			}
-			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
+			expectedRoutes = append(expectedRoutes, *k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
 
 			for i := range expectedRoutes {
 				expectedRoutes[i].TypeMeta = v1.TypeMeta{
@@ -1045,7 +1045,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})
 		t.Run("Default policy last", func(t *testing.T) {
-			assert.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
+			assert.Equal(t, models.DefaultRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
 		})
 	})
 
