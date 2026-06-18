@@ -151,6 +151,17 @@ describe('useFolderMigrationData', () => {
     expect(parent?.allDashboards.map((d) => d.uid)).toEqual(['d1']);
   });
 
+  it('pages through results that span more than one page', async () => {
+    // 201 folders forces a second page (PAGE_SIZE is 200), exercising the
+    // totalRows-driven parallel fetch.
+    mockSearch(Array.from({ length: 201 }, (_, index) => folder(`f${index}`)));
+
+    const { result } = renderHook(() => useFolderMigrationData());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data).toHaveLength(201);
+  });
+
   it('sets isError when the search request fails', async () => {
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
