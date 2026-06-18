@@ -211,7 +211,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       marginTop: theme.spacing(2),
       borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderTopLeftRadius: theme.shape.radius.default,
+      borderTopLeftRadius: theme.shape.radius.lg,
     }),
     expandOptionsWrapper: css({
       display: 'flex',

@@ -28,6 +28,12 @@ FROM {{ .Ident "resource_history" }} AS kv
       {{ if .Key.Name }}
       AND {{ .Ident "name" }}      = {{ .Arg .Key.Name }}
       {{ end }}
+      {{ if .StartName }}
+      AND {{ .Ident "name" }} > {{ .Arg .StartName }}
+      {{ end }}
+      {{ if .EndName }}
+      AND {{ .Ident "name" }} <= {{ .Arg .EndName }}
+      {{ end }}
     GROUP BY mkv.{{ .Ident "namespace" }}, mkv.{{ .Ident "group" }}, mkv.{{ .Ident "resource" }}, mkv.{{ .Ident "name" }} 
   ) AS maxkv
        ON maxkv.{{ .Ident "resource_version" }} = kv.{{ .Ident "resource_version" }}
@@ -47,6 +53,12 @@ FROM {{ .Ident "resource_history" }} AS kv
       {{ end }}
       {{ if .Key.Name }}
       AND kv.{{ .Ident "name" }}      = {{ .Arg .Key.Name }}
+      {{ end }}
+      {{ if .StartName }}
+      AND kv.{{ .Ident "name" }} > {{ .Arg .StartName }}
+      {{ end }}
+      {{ if .EndName }}
+      AND kv.{{ .Ident "name" }} <= {{ .Arg .EndName }}
       {{ end }}
     ORDER BY kv.{{ .Ident "resource_version" }} ASC
 ;

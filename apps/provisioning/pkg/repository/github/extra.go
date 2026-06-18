@@ -84,8 +84,8 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 
 	// Webhook integration is explicitly disabled for this repository, so polling will be
 	// used instead. Skip registration even if a webhook URL would otherwise be available.
-	if r.Spec.GitHub.WebhookDisabled {
-		logger.Debug("Skipping webhook setup: webhookDisabled is true")
+	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
+		logger.Debug("Skipping webhook setup: webhook is disabled")
 		return ghRepo, nil
 	}
 

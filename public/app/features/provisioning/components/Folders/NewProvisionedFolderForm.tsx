@@ -97,18 +97,15 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   };
 
   // Use the repository-type and resource-type aware provisioned request handler
-  useProvisionedRequestHandler<FolderDTO>({
+  const { handleSuccess } = useProvisionedRequestHandler<FolderDTO>({
     folderUID: folder?.metadata.name,
-    request,
     workflow,
     repository,
     resourceType: 'folder',
-    selectedBranch: methods.getValues().ref,
     handlers: {
       onDismiss,
       onBranchSuccess,
       onWriteSuccess,
-      onError,
     },
   });
 
@@ -133,6 +130,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       type: 'folder',
     };
 
+    // The branch entered in the form, before the ref is dropped for the write workflow
+    const selectedBranch = ref;
     if (workflow === 'write') {
       ref = undefined;
     }
@@ -143,21 +142,26 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    create({
-      ref,
-      name: repoName,
-      path,
-      message: getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'create',
-        resourceKind: 'folder',
-        resourceID: '',
-        title,
-        ...getCurrentCommitUser(),
-      }),
-      body: folderModel,
-    });
+    try {
+      const data = await create({
+        ref,
+        name: repoName,
+        path,
+        message: getSingleResourceCommitMessage({
+          comment,
+          repository,
+          action: 'create',
+          resourceKind: 'folder',
+          resourceID: '',
+          title,
+          ...getCurrentCommitUser(),
+        }),
+        body: folderModel,
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch });
+    } catch (err) {
+      onError(err);
+    }
   };
 
   return (

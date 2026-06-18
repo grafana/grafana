@@ -287,8 +287,76 @@ func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQue
 	return toUser(found, orgID), nil
 }
 
-func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs []int64) ([]*user.User, error) {
-	return nil, errors.New("not implemented")
+// ListByIdOrUID resolves users by their k8s UID (resource name) and/or legacy
+// internal ID, deduplicating users matched by both. Users that don't resolve are
+// omitted, matching the legacy "WHERE uid IN (...) OR id IN (...)" semantics.
+func (s *UserK8sService) ListByIdOrUID(ctx context.Context, uids []string, intIDs []int64) ([]*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.listByIdOrUID")
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in ListByIdOrUID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	users := make([]*user.User, 0, len(uids)+len(intIDs))
+	seen := make(map[string]struct{}, len(uids)+len(intIDs))
+
+	for _, uid := range uids {
+		if uid == "" {
+			continue
+		}
+		found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", uid, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	for _, id := range intIDs {
+		found, err := s.getByInternalID(ctx, ctxLogger, client, id, namespace)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				continue
+			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	return users, nil
 }
 
 func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
@@ -480,7 +548,10 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	// Use a full Update (not UpdateStatus) to avoid a bug in UserClient.UpdateStatus
 	// which constructs a new User with an empty Spec, causing the status subresource
 	// path to persist an empty spec and corrupt the stored user data.
-	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: existing.ResourceVersion,
+	})
 	if err != nil {
 		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
