@@ -70,10 +70,16 @@ function toExternalNamespaceOptions(namespaceNames: Iterable<string>): ComboboxO
   return sortByLabel(Array.from(namespaceNames).map(formatNamespaceOption));
 }
 
-async function fetchGrafanaFolderNames(fetchGrafanaGroups: FetchGrafanaGroups): Promise<string[]> {
+// When a search term is provided it's forwarded to the backend via `search.folder`, so folders are
+// searched server-side instead of being derived from a truncated page of rule groups.
+async function fetchGrafanaFolderNames(
+  fetchGrafanaGroups: FetchGrafanaGroups,
+  searchFolder?: string
+): Promise<string[]> {
   const response = await fetchGrafanaGroups({
     limitAlerts: 0,
     groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+    searchFolder: searchFolder || undefined,
   }).unwrap();
   return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
 }
@@ -108,7 +114,7 @@ export function useNamespaceAndGroupOptions(): {
 
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
-      const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups);
+      const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue);
       const externalNamespaceNames = await fetchExternalNamespaceNames(fetchExternalGroups);
 
       const totalNamespaces = grafanaFolderNames.length + externalNamespaceNames.size;
@@ -123,11 +129,12 @@ export function useNamespaceAndGroupOptions(): {
         ];
       }
 
-      const options = [
+      // Grafana folders are filtered server-side via `search.folder`. External namespaces have no
+      // backend folder search, so they're filtered client-side here.
+      return [
         ...toGrafanaFolderOptions(grafanaFolderNames),
-        ...toExternalNamespaceOptions(externalNamespaceNames),
+        ...filterBySearch(toExternalNamespaceOptions(externalNamespaceNames), inputValue),
       ];
-      return filterBySearch(options, inputValue);
     },
     [fetchGrafanaGroups, fetchExternalGroups]
   );

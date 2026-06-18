@@ -88,19 +88,6 @@ describe('useNamespaceAndGroupOptions', () => {
       ]);
     });
 
-    it('filters the derived folder options client-side by the typed text', async () => {
-      setGrafanaPromRules([
-        { name: 'g1', file: 'production', folderUid: 'p', interval: 60, rules: [] },
-        { name: 'g2', file: 'staging', folderUid: 's', interval: 60, rules: [] },
-      ]);
-
-      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
-
-      const options = await resolveOptions(() => result.current.namespaceOptions('prod'));
-
-      expect(options).toEqual([{ label: 'production', value: 'production', description: 'Grafana folder' }]);
-    });
-
     it('returns an info option when there are more than 500 folders', async () => {
       // 501 distinct folders pushes the derived namespace count past the threshold.
       setGrafanaPromRules(buildFolders(501));
@@ -189,21 +176,19 @@ describe('useNamespaceAndGroupOptions', () => {
       ]);
     });
 
-    it.skip('should find a folder whose rule groups are outside the default group page', async () => {
-      // Backend that supports server-side folder search: the folder "systems/authnz"
-      // only appears when `search.folder` is forwarded. The default (unfiltered) call is
-      // capped and does NOT include it - mirroring an instance with more groups than the
-      // group limit, where later folders never make it into the response.
+    it('should find a folder whose rule groups are outside the default group page', async () => {
+      const requests: URLSearchParams[] = [];
+      const allGroups: GrafanaPromRuleGroupDTO[] = [
+        { name: 'g0', file: 'folder-a', folderUid: 'a', interval: 60, rules: [] },
+        { name: 'g1', file: 'systems/authnz', folderUid: 'authnz-uid', interval: 60, rules: [] },
+      ];
       server.use(
         http.get(GRAFANA_RULES_URL, ({ request }) => {
           const { searchParams } = new URL(request.url);
-          const searchFolder = searchParams.get('search.folder');
-
-          const groups: GrafanaPromRuleGroupDTO[] = searchFolder
-            ? [{ name: 'g1', file: 'systems/authnz', folderUid: 'authnz-uid', interval: 60, rules: [] }]
-            : // Buggy path: unfiltered, capped page that never reaches systems/authnz
-              [{ name: 'g0', file: 'folder-a', folderUid: 'a', interval: 60, rules: [] }];
-
+          requests.push(searchParams);
+          const search = searchParams.get('search.folder')?.toLowerCase() ?? '';
+          // Without a search term the backend returns the capped page
+          const groups = search ? allGroups.filter((g) => g.file.toLowerCase().includes(search)) : [allGroups[0]];
           return HttpResponse.json({ status: 'success', data: { groups } });
         })
       );
@@ -212,7 +197,11 @@ describe('useNamespaceAndGroupOptions', () => {
 
       const options = await resolveOptions(() => result.current.namespaceOptions('authnz'));
 
-      expect(options.map((o) => o.value)).toContain('systems/authnz');
+      // the typed text is forwarded to the backend, and only matching folders come back
+      expect(requests[0].get('search.folder')).toBe('authnz');
+      expect(options).toEqual([
+        { label: 'systems/authnz', value: 'systems/authnz', description: 'Grafana folder' },
+      ]);
     });
   });
 
