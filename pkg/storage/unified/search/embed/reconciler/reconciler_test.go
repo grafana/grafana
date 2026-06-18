@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -974,7 +975,7 @@ func labeledDashboard(uid, title string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"metadata": map[string]any{
 			"name":   uid,
-			"labels": map[string]any{embed.LabelPendingDelete: "true"},
+			"labels": map[string]any{controller.LabelPendingDelete: "true"},
 		},
 		"spec": map[string]any{"uid": uid, "title": title},
 	})
