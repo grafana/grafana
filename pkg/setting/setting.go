@@ -812,8 +812,12 @@ type Cfg struct {
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 
-	// Experimental features
+	// EnableKubernetesAggregator routes API traffic through a kube-aggregator layer
+	// (required for Kubernetes-style API aggregation, e.g. the service API builder).
 	EnableKubernetesAggregator bool
+
+	// EnableDataplaneAggregator enables Grafana's own aggregation layer, which proxies
+	// API requests to plugins via DataPlaneService registrations. 
 	EnableDataplaneAggregator  bool
 }
 
