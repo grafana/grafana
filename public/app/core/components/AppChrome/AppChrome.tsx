@@ -216,7 +216,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       paddingTop: 0,
     }),
     dockedMegaMenu: css({
-      background: theme.colors.background.primary,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'none',
       height: '100%',
@@ -244,7 +244,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({

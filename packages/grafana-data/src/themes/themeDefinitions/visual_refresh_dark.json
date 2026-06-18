@@ -3,6 +3,12 @@
   "id": "visual_refresh_dark",
   "colors": {
     "mode": "dark",
+    "background": {
+      "canvas": "palette.ink950",
+      "primary": "palette.ink850",
+      "secondary": "palette.ink800",
+      "elevated": "palette.ink800"
+    },
     "primary": {
       "main": "palette.ink100"
     },
