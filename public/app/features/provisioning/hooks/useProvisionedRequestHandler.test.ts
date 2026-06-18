@@ -35,30 +35,6 @@ describe('useProvisionedRequestHandler', () => {
     mockDispatch.mockClear();
   });
 
-  describe('handleError', () => {
-    it('should call onError handler with correct parameters', () => {
-      const { handlers, mockPublish, render } = setup();
-
-      const { result } = render({
-        repository: githubRepository,
-        resourceType: 'dashboard',
-        handlers,
-      });
-      result.current.handleError(new Error('Test error'));
-
-      expect(handlers.onError).toHaveBeenCalledWith(
-        new Error('Test error'),
-        expect.objectContaining({
-          resourceType: 'dashboard',
-          repoType: 'github',
-        })
-      );
-      expect(handlers.onBranchSuccess).not.toHaveBeenCalled();
-      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
-      expect(mockPublish).not.toHaveBeenCalled();
-    });
-  });
-
   describe('handleSuccess', () => {
     it('should publish success event and call onDismiss', () => {
       const { handlers, mockPublish, render } = setup();
@@ -195,13 +171,13 @@ describe('useProvisionedRequestHandler', () => {
 
     it('should allow overriding handlers per call', () => {
       const { handlers, render } = setup();
-      const overrideError = jest.fn();
+      const overrideWrite = jest.fn();
 
-      const { result } = render({ handlers });
-      result.current.handleError(new Error('boom'), { handlers: { onError: overrideError } });
+      const { result } = render({ workflow: 'write', resourceType: 'dashboard', handlers });
+      result.current.handleSuccess(createMockResourceWrapper(), { handlers: { onWriteSuccess: overrideWrite } });
 
-      expect(overrideError).toHaveBeenCalledWith(new Error('boom'), expect.objectContaining({ repoType: 'git' }));
-      expect(handlers.onError).not.toHaveBeenCalled();
+      expect(overrideWrite).toHaveBeenCalled();
+      expect(handlers.onWriteSuccess).not.toHaveBeenCalled();
     });
   });
 
@@ -213,7 +189,6 @@ describe('useProvisionedRequestHandler', () => {
 
       expect(() => {
         result.current.handleSuccess(createMockResourceWrapper());
-        result.current.handleError(new Error('Test error'));
       }).not.toThrow();
     });
   });
@@ -249,7 +224,6 @@ function setup() {
   setAppEvents({ publish: mockPublish } as unknown as typeof appEvents);
 
   const handlers: RequestHandlers<Dashboard> = {
-    onError: jest.fn(),
     onBranchSuccess: jest.fn(),
     onWriteSuccess: jest.fn(),
     onDismiss: jest.fn(),

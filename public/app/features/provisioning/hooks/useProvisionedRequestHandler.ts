@@ -36,7 +36,6 @@ interface RequestHandlers<T> {
     wrapper: ResourceWrapper
   ) => void;
   onWriteSuccess?: (resource: Resource<T>, wrapper: ResourceWrapper) => void;
-  onError?: (error: unknown, info: ProvisionedOperationInfo) => void;
   onDismiss?: () => void;
 }
 
@@ -120,14 +119,14 @@ function notifySaveSuccess(
  * Generic handler for the result of provisioned resource mutations, across any
  * resource type and repository provider.
  *
- * Call the returned functions from the submit path:
+ * Call the returned function from the submit path; handle failures in the caller's catch:
  *
- *   const { handleSuccess, handleError } = useProvisionedRequestHandler({ repository, workflow, handlers });
+ *   const { handleSuccess } = useProvisionedRequestHandler({ repository, workflow, handlers });
  *   try {
  *     const data = await mutation(args).unwrap();
  *     handleSuccess(data);
  *   } catch (error) {
- *     handleError(error);
+ *     showError(error);
  *   }
  *
  * Per-call `overrides` shallow-merge over the hook options, for values only
@@ -176,16 +175,7 @@ export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptio
     handlers?.onDismiss?.();
   };
 
-  const handleError = (error: unknown, overrides?: Partial<ProvisionedHandlerOptions<T>>) => {
-    const { workflow, repository, resourceType, handlers } = { ...options, ...overrides };
-    handlers?.onError?.(error, {
-      repoType: repository?.type || 'git',
-      resourceType,
-      workflow,
-    });
-  };
-
-  return { handleSuccess, handleError };
+  return { handleSuccess };
 }
 
 export type { ProvisionedOperationInfo, RequestHandlers };
