@@ -46,7 +46,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 interface Props {
   className?: string;
-  isValueActive?(): Promise<boolean>;
+  isValueActive?(value: string): Promise<boolean>;
   include?(value: string): void;
   exclude?(value: string): void;
   iconSize?: IconSize;

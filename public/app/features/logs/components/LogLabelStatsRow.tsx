@@ -59,7 +59,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 export interface Props {
-  isValueActive?(): Promise<boolean>;
+  isValueActive?(value: string): Promise<boolean>;
   include?(value: string): void;
   exclude?(value: string): void;
   iconSize?: IconSize;
@@ -92,7 +92,7 @@ export const LogLabelStatsRow = ({
             <AsyncIconButton
               name="search-plus"
               onClick={() => include(value)}
-              isActive={isValueActive}
+              isActive={isValueActive ? () => isValueActive(value) : undefined}
               size={iconSize}
               tooltipSuffix=""
             />
