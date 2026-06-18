@@ -62,7 +62,6 @@ const (
 var (
 	iamGroup             = iamv0.UserResourceInfo.GroupResource().Group
 	usersResource        = iamv0.UserResourceInfo.GroupResource().Resource
-	teamsResource        = iamv0.TeamResourceInfo.GroupResource().Resource
 	roleBindingsResource = iamv0.RoleBindingInfo.GroupResource().Resource
 )
 

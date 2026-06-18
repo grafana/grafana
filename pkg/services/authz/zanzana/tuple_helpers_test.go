@@ -465,7 +465,6 @@ func TestUserManagementToTuples(t *testing.T) {
 
 func TestTeamRoleBindingManagementToTuples(t *testing.T) {
 	const subject = "role:role-1#assignee"
-	const teamsObject = "group_resource:iam.grafana.app/teams"
 	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings"
 
 	t.Run("maps each action to its tuples under an all-scope", func(t *testing.T) {
