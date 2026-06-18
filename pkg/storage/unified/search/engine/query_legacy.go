@@ -11,8 +11,8 @@ import (
 )
 
 // FromResourceSearchRequest converts the legacy public gRPC search request into
-// the engine-agnostic SearchRequest. Authz is not embedded; callers pass an
-// in-process ItemChecker to SearchEngine.Search instead.
+// the engine-agnostic SearchRequest. Authorization is expressed via
+// SearchRequest.Authz or applied by the caller wrapper around SearchEngine.
 func FromResourceSearchRequest(req *resourcepb.ResourceSearchRequest) (*resourcepb.SearchRequest, error) {
 	if req == nil || req.Options == nil || req.Options.Key == nil {
 		return nil, fmt.Errorf("search key is required")

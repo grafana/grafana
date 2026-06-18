@@ -7,8 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/engine"
@@ -90,7 +88,7 @@ func (e *ElasticSearchEngine) Index(ctx context.Context, req *resourcepb.IndexRe
 	}, nil
 }
 
-func (e *ElasticSearchEngine) Search(ctx context.Context, req *resourcepb.SearchRequest, checker authlib.ItemChecker) (*resourcepb.SearchResponse, error) {
+func (e *ElasticSearchEngine) Search(ctx context.Context, req *resourcepb.SearchRequest) (*resourcepb.SearchResponse, error) {
 	if req == nil || req.Index == nil {
 		return &resourcepb.SearchResponse{Error: resource.NewBadRequestError("missing index key")}, nil
 	}
@@ -100,47 +98,11 @@ func (e *ElasticSearchEngine) Search(ctx context.Context, req *resourcepb.Search
 	index := e.searchIndexNames(req)
 	body := esSearchBody(req)
 
-	// When authz is not expressed as folders/names and checker is set, over-fetch
-	// and post-filter in-process.
-	overFetch := checker != nil && (req.Authz == nil || (!req.Authz.All && len(req.Authz.Folders) == 0 && len(req.Authz.Names) == 0))
-	if overFetch {
-		limit := esRequestLimit(body)
-		if limit < 200 {
-			body["size"] = limit * 4
-		}
-	}
-
 	raw, err := e.client.search(ctx, index, body)
 	if err != nil {
 		return &resourcepb.SearchResponse{Error: resource.AsErrorResult(err)}, nil
 	}
-	rsp, err := parseESSearchResponse(raw, req)
-	if err != nil {
-		return &resourcepb.SearchResponse{Error: resource.AsErrorResult(err)}, nil
-	}
-	if overFetch && checker != nil {
-		filtered := make([]*resourcepb.Hit, 0, len(rsp.Hits))
-		for _, hit := range rsp.Hits {
-			if hit == nil || hit.Key == nil {
-				continue
-			}
-			folder := ""
-			if rawHit := findHitSource(raw, hit.Key.Name); rawHit != nil {
-				if f, ok := rawHit["folder"].(string); ok {
-					folder = f
-				}
-			}
-			if checker(hit.Key.Name, folder) {
-				filtered = append(filtered, hit)
-			}
-		}
-		if req.Limit > 0 && int64(len(filtered)) > req.Limit {
-			filtered = filtered[:req.Limit]
-		}
-		rsp.Hits = filtered
-		rsp.TotalHits = int64(len(filtered))
-	}
-	return rsp, nil
+	return parseESSearchResponse(raw, req)
 }
 
 func (e *ElasticSearchEngine) searchIndexNames(req *resourcepb.SearchRequest) string {
@@ -263,29 +225,4 @@ func mustJSON(v any) string {
 		panic(fmt.Sprintf("json marshal: %v", err))
 	}
 	return string(raw)
-}
-
-func findHitSource(raw map[string]any, name string) map[string]any {
-	hitsRoot, ok := raw["hits"].(map[string]any)
-	if !ok {
-		return nil
-	}
-	hits, ok := hitsRoot["hits"].([]any)
-	if !ok {
-		return nil
-	}
-	for _, h := range hits {
-		hitMap, ok := h.(map[string]any)
-		if !ok {
-			continue
-		}
-		src, ok := hitMap["_source"].(map[string]any)
-		if !ok {
-			continue
-		}
-		if fmt.Sprint(src["name"]) == name {
-			return src
-		}
-	}
-	return nil
 }

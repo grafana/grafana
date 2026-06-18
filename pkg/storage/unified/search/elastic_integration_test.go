@@ -46,7 +46,7 @@ func TestElasticSearchEngineIntegration(t *testing.T) {
 		Query: &resourcepb.Query{Text: []*resourcepb.TextPredicate{{Value: "cpu", Fields: []string{"title"}}}},
 		Limit: 10,
 		Authz: &resourcepb.AuthzFilter{All: true},
-	}, nil)
+	})
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
 	require.GreaterOrEqual(t, rsp.TotalHits, int64(1))

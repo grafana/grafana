@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/engine"
@@ -90,7 +88,7 @@ func (e *BleveSearchEngine) Index(ctx context.Context, req *resourcepb.IndexRequ
 	}, nil
 }
 
-func (e *BleveSearchEngine) Search(ctx context.Context, req *resourcepb.SearchRequest, checker authlib.ItemChecker) (*resourcepb.SearchResponse, error) {
+func (e *BleveSearchEngine) Search(ctx context.Context, req *resourcepb.SearchRequest) (*resourcepb.SearchResponse, error) {
 	if req == nil || req.Index == nil {
 		return &resourcepb.SearchResponse{Error: resource.NewBadRequestError("missing index key")}, nil
 	}
@@ -114,9 +112,8 @@ func (e *BleveSearchEngine) Search(ctx context.Context, req *resourcepb.SearchRe
 		}
 		federate = append(federate, fidx)
 	}
-	access := accessClientFromChecker(checker)
 	stats := resource.NewSearchStats("engine.Search")
-	legacyRsp, err := idx.Search(ctx, access, legacyReq, federate, stats)
+	legacyRsp, err := idx.Search(ctx, nil, legacyReq, federate, stats)
 	if err != nil {
 		return nil, err
 	}
@@ -244,28 +241,4 @@ func (e *BleveSearchEngine) ensureIndex(
 	e.indexes[key] = &indexEntry{index: idx, schemaHash: schemaHash, fields: fields}
 	e.mu.Unlock()
 	return idx, reconciled, nil
-}
-
-type checkerAccessClient struct {
-	checker authlib.ItemChecker
-}
-
-func accessClientFromChecker(checker authlib.ItemChecker) authlib.AccessClient {
-	if checker == nil {
-		return nil
-	}
-	return &checkerAccessClient{checker: checker}
-}
-
-func (c *checkerAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
-	return c.checker, nil, nil
-}
-
-func (c *checkerAccessClient) Check(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-	allowed := c.checker(req.Name, folder)
-	return authlib.CheckResponse{Allowed: allowed}, nil
-}
-
-func (c *checkerAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-	return authlib.BatchCheckResponse{}, fmt.Errorf("not implemented")
 }

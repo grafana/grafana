@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/engine"
@@ -70,12 +68,19 @@ func (p *engineProvider) search(ctx context.Context, req *resourcepb.ResourceSea
 	if err != nil {
 		return &resourcepb.ResourceSearchResponse{Error: resource.AsErrorResult(err)}, nil
 	}
-	engineRsp, err := p.engine.Search(ctx, engineReq, checker)
+	originalLimit := engineReq.Limit
+	if needsPostFilter(checker, engineReq.Authz) {
+		engineReq.Limit = overFetchLimit(originalLimit)
+	}
+	engineRsp, err := p.engine.Search(ctx, engineReq)
 	if err != nil {
 		return nil, err
 	}
 	if engineRsp.Error != nil {
 		return &resourcepb.ResourceSearchResponse{Error: engineRsp.Error}, nil
+	}
+	if needsPostFilter(checker, engineReq.Authz) {
+		engineRsp = filterSearchResponse(engineRsp, checker, originalLimit)
 	}
 	legacy, err := engine.ToResourceSearchResponse(req, engineRsp)
 	if err != nil {
@@ -157,32 +162,6 @@ func (b *resourceSearchBridge) fieldDefinitions(key resource.NamespacedResource)
 		}
 	}
 	return resource.SearchFieldsFromTableColumns(cols)
-}
-
-func compileSearchChecker(ctx context.Context, access authlib.AccessClient, req *resourcepb.ResourceSearchRequest) (authlib.ItemChecker, error) {
-	if access == nil || req.Options == nil || req.Options.Key == nil {
-		return nil, nil
-	}
-	user, ok := authlib.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return nil, nil
-	}
-	verb := utils.VerbGet
-	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
-		verb = utils.VerbUpdate
-	}
-	checker, _, err := access.Compile(ctx, user, authlib.ListRequest{
-		Namespace: req.Options.Key.Namespace,
-		Group:     req.Options.Key.Group,
-		Resource:  req.Options.Key.Resource,
-		Verb:      verb,
-	})
-	return checker, err
-}
-
-// CompileSearchCheckerForTest exposes authz compilation for tests.
-func CompileSearchCheckerForTest(ctx context.Context, access authlib.AccessClient, req *resourcepb.ResourceSearchRequest) (authlib.ItemChecker, error) {
-	return compileSearchChecker(ctx, access, req)
 }
 
 func parseElasticsearchAddresses(raw string) []string {

@@ -5,14 +5,12 @@ import (
 
 	"google.golang.org/grpc"
 
-	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/engine"
 )
 
 // Client implements engine.SearchEngine by calling a remote SearchEngine gRPC
-// service. ItemChecker is ignored; callers must populate req.Authz instead.
+// service. Callers must populate req.Authz for authorization scoping.
 type Client struct {
 	conn   grpc.ClientConnInterface
 	client resourcepb.SearchEngineClient
@@ -26,7 +24,7 @@ func (c *Client) Index(ctx context.Context, req *resourcepb.IndexRequest) (*reso
 	return c.client.Index(ctx, req)
 }
 
-func (c *Client) Search(ctx context.Context, req *resourcepb.SearchRequest, _ authlib.ItemChecker) (*resourcepb.SearchResponse, error) {
+func (c *Client) Search(ctx context.Context, req *resourcepb.SearchRequest) (*resourcepb.SearchResponse, error) {
 	return c.client.Search(ctx, req)
 }
 
