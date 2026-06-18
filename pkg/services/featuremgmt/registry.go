@@ -583,14 +583,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "cachingOptimizeSerializationMemoryUsage",
-			Description: "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -2711,10 +2703,10 @@ var (
 		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "frontendServiceUseSettingsService",
@@ -2786,6 +2778,15 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.viewPanelPane",
+			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3176,6 +3177,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "dashboard.vectorSearch",
+			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

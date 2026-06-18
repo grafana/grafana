@@ -55,6 +55,8 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the sidebar pane with new toggles and options in panel view mode */
+  GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -332,6 +334,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables the sidebar pane with new toggles and options in panel view mode
+ *
+ * **Details:**
+ * - flag key: `grafana.viewPanelPane`
+ * - default value: `false`
+ */
+export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.viewPanelPane", false, options).value;
 };
 
 /**

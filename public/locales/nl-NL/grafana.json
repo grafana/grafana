@@ -4272,6 +4272,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Fout bij verwijderen van bronnen",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4295,7 @@
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
       "move-warning": "Dit verplaatst de geselecteerde mappen en alle onderliggende items. Beschikbare doelmappen zijn afhankelijk van de geselecteerde bronnen.",
       "move-warning-tooltip": "Je kunt alleen geprovisioneerde bronnen verplaatsen binnen hun geprovisioneerde map en lokale bronnen naar lokale mappen.",
+      "success-title": "",
       "target-folder": "Doelmap",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6212,7 +6214,17 @@
       "snapshot": {
         "tooltip": "Origineel dashboard openen"
       },
-      "undo": "Ongedaan maken"
+      "undo": "Ongedaan maken",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Bron ({{provider}})",
@@ -6471,6 +6483,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -13055,6 +13068,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Sla de installatie over en krijg Git Sync volledig beheerd en gehost op Grafana Cloud met het <2>altijd gratis Grafana Cloud-abonnement</2>.",

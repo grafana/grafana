@@ -4272,6 +4272,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Error al eliminar los recursos",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4295,7 @@
       "error-no-target-folder-path": "La ruta de la carpeta de destino no es válida o está vacía. Selecciona otra.",
       "move-warning": "Esto moverá las carpetas seleccionadas y sus subcarpetas. Las carpetas de destino disponibles dependen de los recursos seleccionados.",
       "move-warning-tooltip": "Solo puedes mover recursos aprovisionados dentro de su carpeta aprovisionada y recursos locales a carpetas locales.",
+      "success-title": "",
       "target-folder": "Carpeta de destino",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6212,7 +6214,17 @@
       "snapshot": {
         "tooltip": "Abrir el dashboard original"
       },
-      "undo": "Deshacer"
+      "undo": "Deshacer",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Fuente ({{provider}})",
@@ -6471,6 +6483,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -13055,6 +13068,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Ahórrate la configuración y consigue Git Sync totalmente gestionado y alojado en Grafana Cloud con el <2>plan Grafana Cloud gratuito para siempre</2>.",

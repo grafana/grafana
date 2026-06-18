@@ -289,11 +289,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-  * @default false
-  */
-  cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   * @default false
   */
@@ -1487,7 +1482,7 @@ export interface FeatureToggles {
   alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
-  * @default false
+  * @default true
   */
   react19?: boolean;
   /**

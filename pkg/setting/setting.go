@@ -663,6 +663,12 @@ type Cfg struct {
 	// This separates the read phase (legacy DB) from the write phase (unified storage)
 	// Default: false.
 	MigrationParquetBuffer bool
+	// MigrationChunkedWrites writes each migration chunk in its own transaction,
+	// bounded by migration_chunk_max_bytes. Requires migration_locking=true for HA. Default: false.
+	MigrationChunkedWrites bool
+	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
+	// when MigrationChunkedWrites is enabled. Default: 256 MiB.
+	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
 	RenameWaitDeadline time.Duration
