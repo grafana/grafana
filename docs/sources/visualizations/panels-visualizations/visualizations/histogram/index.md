@@ -51,6 +51,7 @@ After you've created a [dashboard](https://grafana.com/docs/grafana/<GRAFANA_VER
 ## Supported data formats
 
 Histograms support time series and any table results with one or more numerical fields.
+If a data source returns pre-calculated histogram buckets, Grafana renders the supplied frequencies instead of calculating buckets in the panel.
 
 ### Examples
 
@@ -99,6 +100,7 @@ The data is converted as follows:
 ### Histogram options
 
 Use the following options to refine your histogram visualization.
+When the query data is already a histogram frame, the bucket options are read-only and Grafana shows frequencies calculated by the query.
 
 <!-- prettier-ignore-start -->
 

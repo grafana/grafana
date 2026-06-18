@@ -27,6 +27,10 @@ aliases:
 
 # Trend
 
+{{< admonition type="note" >}}
+The trend visualization is in beta.
+{{< /admonition >}}
+
 Trend visualizations should be used for datasets that have a sequential, numeric x-field that is not time. Some examples are function graphs, rpm/torque curves, supply/demand relationships, and elevation or heart rate plots along a race course (with x as distance or duration from start).
 
 For example, you could represent engine power and torque versus speed where speed is plotted on the x-axis and power and torque are plotted on the y-axes:
@@ -40,6 +44,8 @@ Trend visualizations support all visual styles and options available in the [tim
 - No multi-timezone x-axis
 - No ability to change the dashboard time range using drag-selection
 
+Trend visualizations support one query frame with at least two numeric fields. The x-field must use ascending numeric values. If the values aren't ascending, Grafana shows an error.
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
@@ -50,7 +56,7 @@ Trend visualizations support all visual styles and options available in the [tim
 
 ### X axis options
 
-In the **X field** option, select a field that contains increasing numeric values.
+In the **X field** option, select a numeric field that contains ascending values.
 
 ### Tooltip options
 
@@ -62,7 +68,7 @@ In the **X field** option, select a field that contains increasing numeric value
 
 ### Graph styles options
 
-The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options).
+The options under the **Graph styles** section let you control the general appearance of the graph, excluding [color](#standard-options). These options apply to non-time x-axis series.
 
 {{< docs/shared lookup="visualizations/graph-styles-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
