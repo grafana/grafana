@@ -19,6 +19,8 @@ overrides:
   eslint-plugin-testing-library: 7.1.1
   stylelint-scss: 6.2.1
   i18next: 25.6.2
+  playwright: 1.56.1
+  playwright-core: 1.56.1
   webpack: 5.107.2
   '@reduxjs/toolkit': 2.10.1
   semver@~7.3.5: ^7.3.5
@@ -572,7 +574,7 @@ importers:
         version: 0.18.3
       '@axe-core/playwright':
         specifier: ^4.11.1
-        version: 4.11.3(playwright-core@1.61.0)
+        version: 4.11.3(playwright-core@1.56.1)
       '@emotion/eslint-plugin':
         specifier: 11.12.0
         version: 11.12.0(eslint@9.32.0(jiti@2.7.0))(typescript@6.0.2)
@@ -587,7 +589,7 @@ importers:
         version: 0.17.2(eslint@9.32.0(jiti@2.7.0))
       '@grafana/plugin-e2e':
         specifier: 3.7.2
-        version: 3.7.2(@axe-core/playwright@4.11.3(playwright-core@1.61.0))(@playwright/test@1.56.1)
+        version: 3.7.2(@axe-core/playwright@4.11.3(playwright-core@1.56.1))(@playwright/test@1.56.1)
       '@grafana/test-utils':
         specifier: workspace:*
         version: link:packages/grafana-test-utils
@@ -3834,7 +3836,7 @@ packages:
   '@axe-core/playwright@4.11.3':
     resolution: {integrity: sha512-h/kfksv4F0cVIDlKpT4700OehdRgpvuVskuQ2nb7/JmtWUXpe9ftHAPtwyXGvVSsa6SJ64A9ER7Zrzc/sIvC4w==}
     peerDependencies:
-      playwright-core: '>= 1.0.0'
+      playwright-core: 1.56.1
 
   '@babel/code-frame@7.26.2':
     resolution: {integrity: sha512-RJlIHRueQgwWitWgF8OdFYGZX328Ax5BCemNGlqHfplnRT9ESi8JkFlvaVYbS+UubVY6dpv87Fs2u5M29iNFVQ==}
@@ -14054,18 +14056,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright-core@1.61.0:
-    resolution: {integrity: sha512-caX7TrY3Ml6egyDX0WUcTHDxodl/b51y5wJOdCEA36QviK/s2g081hvmGs8eaE3DWb6NYZQ6BjO/QkNRPenoPA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright@1.56.1:
     resolution: {integrity: sha512-aFi5B0WovBHTEvpM3DzXTUaeN6eN0qWnTkKx4NQaH4Wvcmc153PdaY2UBdSYKaGYw+UyWXSVyxDUg5DoPEttjw==}
-    engines: {node: '>=18'}
-    hasBin: true
-
-  playwright@1.61.0:
-    resolution: {integrity: sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -17219,10 +17211,10 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@axe-core/playwright@4.11.3(playwright-core@1.61.0)':
+  '@axe-core/playwright@4.11.3(playwright-core@1.56.1)':
     dependencies:
       axe-core: 4.11.4
-      playwright-core: 1.61.0
+      playwright-core: 1.56.1
 
   '@babel/code-frame@7.26.2':
     dependencies:
@@ -18136,7 +18128,7 @@ snapshots:
     dependencies:
       monaco-editor: 0.34.1
 
-  '@grafana/plugin-e2e@3.7.2(@axe-core/playwright@4.11.3(playwright-core@1.61.0))(@playwright/test@1.56.1)':
+  '@grafana/plugin-e2e@3.7.2(@axe-core/playwright@4.11.3(playwright-core@1.56.1))(@playwright/test@1.56.1)':
     dependencies:
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@playwright/test': 1.56.1
@@ -18144,7 +18136,7 @@ snapshots:
       uuid: 13.0.2
       yaml: 2.9.0
     optionalDependencies:
-      '@axe-core/playwright': 4.11.3(playwright-core@1.61.0)
+      '@axe-core/playwright': 4.11.3(playwright-core@1.56.1)
 
   '@grafana/plugin-ui@0.13.1(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rxjs@7.8.2)(typescript@6.0.2)':
     dependencies:
@@ -21439,8 +21431,8 @@ snapshots:
       jest-serializer-html: 7.1.0
       jest-watch-typeahead: 3.0.1(jest@30.4.2(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@24.10.1)(typescript@6.0.2)))
       nyc: 15.1.0
-      playwright: 1.61.0
-      playwright-core: 1.61.0
+      playwright: 1.56.1
+      playwright-core: 1.56.1
       rimraf: 3.0.2
       storybook: 10.3.6(patch_hash=a5fb83bc68b91e3a91cc274cf3404ebe78e191bcc68fdf36467a97964f6ac972)(@testing-library/dom@10.4.1)(prettier@3.6.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       uuid: 11.1.1
@@ -30227,17 +30219,9 @@ snapshots:
 
   playwright-core@1.56.1: {}
 
-  playwright-core@1.61.0: {}
-
   playwright@1.56.1:
     dependencies:
       playwright-core: 1.56.1
-    optionalDependencies:
-      fsevents: 2.3.2
-
-  playwright@1.61.0:
-    dependencies:
-      playwright-core: 1.61.0
     optionalDependencies:
       fsevents: 2.3.2
 

@@ -35,6 +35,16 @@ const esModules = [
   'pbf',
   'geotiff',
   'uuid',
+  // ml-regression chain (used by the regression transformer) ships ESM; pnpm's
+  // strict layout no longer hoists it where the default ignore would skip it.
+  'ml-regression-polynomial',
+  'ml-regression-simple-linear',
+  'ml-regression-base',
+  'ml-matrix',
+  'ml-array-rescale',
+  'ml-array-max',
+  'ml-array-min',
+  'is-any-array',
 ].join('|');
 
 module.exports = {

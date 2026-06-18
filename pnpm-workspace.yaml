@@ -120,6 +120,13 @@ overrides:
   # 25.7+ prints a promotional console.info banner during init; jest-fail-on-console
   # then fails every suite that initialises i18n. 25.6.2 (yarn-resolved) is quiet.
   i18next: "25.6.2"
+  # @storybook/test-runner asks for playwright ^1.14.0; a fresh pnpm resolution
+  # picks a newer version than grafana's pinned @playwright/test (1.56.1), so the
+  # browser `pnpm exec playwright install` downloads doesn't match the build the
+  # test-runner launches (chrome-headless-shell missing → storybook a11y fails).
+  # yarn deduped both to 1.56.1; pin to match so they share one browser version.
+  playwright: "1.56.1"
+  playwright-core: "1.56.1"
   # Single webpack version across all workspaces — a range across 20 package.json
   # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
   webpack: "5.107.2"
