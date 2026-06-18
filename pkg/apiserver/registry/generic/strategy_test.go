@@ -146,10 +146,6 @@ func TestStatusStrategy(t *testing.T) {
 		}
 
 		t.Run("ignores spec updates", func(t *testing.T) {
-			// The assumption here is that the status strategy should not allow for spec updates.
-			// This is drawn due to the GetResetFields function returning `metadata` and `spec`, and due to it copying old `metadata` fields to the new object (but not spec?).
-			t.Skip("assumption does not hold -- verify with app platform if this is intended")
-
 			t.Parallel()
 			oldObj := obj.DeepCopy()
 			newObj := obj.DeepCopy()
