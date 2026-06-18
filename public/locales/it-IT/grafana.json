@@ -4272,6 +4272,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Errore durante l'eliminazione delle risorse",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4295,7 @@
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-warning": "Questa operazione sposterà le cartelle selezionate e i relativi discendenti. Le cartelle di destinazione disponibili dipendono dalle risorse selezionate.",
       "move-warning-tooltip": "È possibile spostare solo le risorse sottoposte a provisioning all'interno della relativa cartella sottoposta a provisioning e le risorse locali nelle cartelle locali.",
+      "success-title": "",
       "target-folder": "Cartella di destinazione",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6212,7 +6214,17 @@
       "snapshot": {
         "tooltip": "Apri la dashboard originale"
       },
-      "undo": "Annulla"
+      "undo": "Annulla",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Origine ({{provider}})",
@@ -6471,6 +6483,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -13055,6 +13068,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Ignora la configurazione e utilizza Git Sync completamente gestito e ospitato su Grafana Cloud con il <2>piano Grafana Cloud gratuito per sempre</2>.",

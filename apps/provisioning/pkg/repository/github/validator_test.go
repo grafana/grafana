@@ -151,10 +151,10 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:             "https://github.com/grafana/grafana",
-						Branch:          "main",
-						WebhookDisabled: true,
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
 					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
 				},
 			},
 		},
@@ -165,17 +165,17 @@ func TestValidate(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:             "https://github.com/grafana/grafana",
-						Branch:          "main",
-						WebhookDisabled: true,
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
 					},
 					Webhook: &provisioning.WebhookConfig{
-						BaseURL: "https://grafana.example.com",
+						Disabled: true,
+						BaseURL:  "https://grafana.example.com",
 					},
 				},
 			},
 			expectedError: true,
-			errorContains: []string{"webhookDisabled", "cannot be true when spec.webhook is set"},
+			errorContains: []string{"disabled", "cannot be true when spec.webhook.baseUrl is set"},
 		},
 	}
 

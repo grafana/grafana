@@ -234,7 +234,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	}
 
 	// Validate the app's permissions.
-	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions, c.obj.Spec.GitHub.WebhookDisabled)
+	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions, c.obj.Spec.Webhook != nil && c.obj.Spec.Webhook.Disabled)
 	if len(permissionErrors) > 0 {
 		logger.Info("GitHub App permission validation failed", "appID", c.obj.Spec.GitHub.AppID, "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
@@ -328,7 +328,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// Validate that the installation has accepted the required permissions.
 	// Installation permissions may lag behind App permissions when the App owner added new
 	// permissions but the installation owner has not yet accepted them on GitHub.
-	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions, c.obj.Spec.GitHub.WebhookDisabled)
+	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions, c.obj.Spec.Webhook != nil && c.obj.Spec.Webhook.Disabled)
 	if len(installationPermErrors) > 0 {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{

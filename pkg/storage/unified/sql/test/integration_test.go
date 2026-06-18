@@ -71,7 +71,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	}
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -227,7 +227,7 @@ func TestClientServer(t *testing.T) {
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 
 	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
@@ -339,7 +339,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
 	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
 	require.NoError(t, err)
-	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)

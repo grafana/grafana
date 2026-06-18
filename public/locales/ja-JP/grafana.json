@@ -4245,6 +4245,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "リソースの削除中にエラーが発生しました",
+      "success-title": "",
       "folder-empty_other": "",
       "folder-not-empty_other": ""
     },
@@ -4265,6 +4266,7 @@
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
       "move-warning": "これにより、選択したフォルダとその配下のフォルダが移動されます。利用可能なターゲットフォルダは、選択したリソースによって異なります。",
       "move-warning-tooltip": "プロビジョニングされたリソースは、プロビジョニングされたフォルダ内にのみ移動でき、ローカルリソースはローカルフォルダにのみ移動できます。",
+      "success-title": "",
       "target-folder": "移動先フォルダ",
       "folder-not-empty_other": ""
     },
@@ -6178,7 +6180,17 @@
       "snapshot": {
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す"
+      "undo": "元に戻す",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "ソース（{{provider}}）",
@@ -6437,6 +6449,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -12978,6 +12991,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "<2>永久無料のGrafana Cloudプラン</2>を利用すれば、セットアップを省略して、Grafana Cloudでフルマネージドかつホスト済みのGit Syncを利用できます。",

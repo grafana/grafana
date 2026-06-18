@@ -6,6 +6,7 @@ import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, Pl
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -164,6 +165,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         transition: theme.transitions.create(['background'], {
           duration: theme.transitions.duration.short,
         }),
+      },
+
+      '&:focus-visible': {
+        ...getFocusStyles(theme),
       },
 
       '&:hover': {
