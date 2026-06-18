@@ -199,9 +199,7 @@ describe('useNamespaceAndGroupOptions', () => {
 
       // the typed text is forwarded to the backend, and only matching folders come back
       expect(requests[0].get('search.folder')).toBe('authnz');
-      expect(options).toEqual([
-        { label: 'systems/authnz', value: 'systems/authnz', description: 'Grafana folder' },
-      ]);
+      expect(options).toEqual([{ label: 'systems/authnz', value: 'systems/authnz', description: 'Grafana folder' }]);
     });
   });
 

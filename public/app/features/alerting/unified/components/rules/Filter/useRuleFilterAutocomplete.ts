@@ -22,6 +22,7 @@ function getExternalRuleDataSources() {
 const NAMESPACE_THRESHOLD_LIMIT = 500;
 const MIN_GROUP_SEARCH_CHARACTERS = 3;
 const GROUP_SEARCH_LIMIT = 100;
+const STATUS_FULFILLED = 'fulfilled';
 
 function createInfoOption(message: string): ComboboxOption<string> {
   return {
@@ -44,7 +45,8 @@ function formatNamespaceOption(namespaceName: string): ComboboxOption {
 
   const maxLength = 50;
   const maxDescriptionLength = 100;
-  const truncatedName = namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
+  const truncatedName =
+    namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
   const truncatedDescription =
     namespaceName.length > maxDescriptionLength
       ? `${namespaceName.substring(0, maxDescriptionLength)}...`
@@ -70,8 +72,6 @@ function toExternalNamespaceOptions(namespaceNames: Iterable<string>): ComboboxO
   return sortByLabel(Array.from(namespaceNames).map(formatNamespaceOption));
 }
 
-// When a search term is provided it's forwarded to the backend via `search.folder`, so folders are
-// searched server-side instead of being derived from a truncated page of rule groups.
 async function fetchGrafanaFolderNames(
   fetchGrafanaGroups: FetchGrafanaGroups,
   searchFolder?: string
@@ -96,7 +96,7 @@ async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGro
   );
   const results = await Promise.allSettled(calls);
   for (const res of results) {
-    if (res.status === 'fulfilled') {
+    if (res.status === STATUS_FULFILLED) {
       res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
     }
   }
