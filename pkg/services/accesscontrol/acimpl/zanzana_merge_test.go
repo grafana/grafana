@@ -218,13 +218,13 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 	})
 
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, nil, false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("success unions zanzana permissions", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, nil, false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
@@ -245,7 +245,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil).Maybe()
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc, nil, false)
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
@@ -257,7 +257,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil)
 		// "legacy" overlaps an existing scope (must dedup), "zanzana" is new (must be added).
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc, nil, false)
 
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, base, log.New("test"))
 
@@ -277,7 +277,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 		nil, permreg.ProvidePermissionRegistry(), nil,
 	)
 	if zClient != nil {
-		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, false)
+		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)
 	}
 	return svc
 }
