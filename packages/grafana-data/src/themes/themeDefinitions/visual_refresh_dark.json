@@ -11,7 +11,15 @@
       "text": "palette.orange400"
     },
     "text": {
+      "primary": "palette.ink200",
+      "secondary": "palette.ink300",
+      "disabled": "palette.ink500",
       "link": "palette.orange400"
     }
+  },
+  "shape": {
+    "borderRadiusSm": 6,
+    "borderRadius": 8,
+    "borderRadiusLg": 12
   }
 }
