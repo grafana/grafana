@@ -3176,7 +3176,7 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
-			Generate:    Generate{Go: true},
+			Generate:    Generate{Go: true, React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

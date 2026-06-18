@@ -19,6 +19,8 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
+  DashboardVectorSearch: "dashboard.vectorSearch",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -134,6 +136,17 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+ *
+ * **Details:**
+ * - flag key: `dashboard.vectorSearch`
+ * - default value: `false`
+ */
+export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.vectorSearch", false, options).value;
 };
 
 /**
