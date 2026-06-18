@@ -99,6 +99,8 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 	return s.k8sClient.Delete(ctx, name, orgID, v1.DeleteOptions{})
 }
 
+// TODO: expensive — the legacyID index does not cover the time partition, so this scans
+// every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
 	list, err := s.k8sClient.List(ctx, orgID, v1.ListOptions{
 		FieldSelector: fmt.Sprintf("metadata.legacyID=%d", annotationID),

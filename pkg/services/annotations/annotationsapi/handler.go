@@ -127,6 +127,7 @@ func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotati
 }
 
 // Update writes to new store. Returns ErrNotFound if the record is not there yet, caller falls back to legacy.
+// TODO: only text/tags are updated; editing time needs annotation delete + re-insert since the store partitions on time.
 func (h *MigrationProxy) Update(ctx context.Context, orgID int64, annotationID int64, item *annotations.Item) error {
 	existing, err := h.client.GetByLegacyID(ctx, orgID, annotationID)
 	if err != nil {
