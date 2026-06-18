@@ -21,14 +21,12 @@ func afterCreatePermissionCreator(ctx context.Context,
 	obj runtime.Object,
 	setter DefaultPermissionSetter,
 ) (permissionCreatorFunc, error) {
-	if grantPermisions == "" {
-		return nil, nil
-	}
-	if grantPermisions != utils.AnnoGrantPermissionsDefault {
+	if grantPermisions != "" && grantPermisions != utils.AnnoGrantPermissionsDefault {
 		return nil, fmt.Errorf("invalid permissions value. only '%s' supported", utils.AnnoGrantPermissionsDefault)
 	}
+	// When no permission setter is configured there is nothing to do, regardless of the annotation.
 	if setter == nil {
-		return nil, fmt.Errorf("missing default permission creator")
+		return nil, nil
 	}
 	val, err := utils.MetaAccessor(obj)
 	if err != nil {
