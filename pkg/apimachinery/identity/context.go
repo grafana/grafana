@@ -177,6 +177,9 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"users:read",           // accesscontrol.ActionUsersRead,
 	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
 	"teams:read",           // accesscontrol.ActionTeamsRead,

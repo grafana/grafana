@@ -397,10 +397,8 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
-		nil, // adminConfigStore - not needed in this test
-		nil, // datasourceService - not needed in this test
-		nil, // httpClientProvider - not needed in this test
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
+		// Sync deps are nil — this test does not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 	)
 	require.NoError(t, err)
 	return mam

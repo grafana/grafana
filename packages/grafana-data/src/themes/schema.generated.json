@@ -383,7 +383,17 @@
     "shape": {
       "type": "object",
       "properties": {
+        "borderRadiusSm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
         "borderRadius": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "borderRadiusLg": {
           "type": "integer",
           "minimum": 0,
           "maximum": 9007199254740991

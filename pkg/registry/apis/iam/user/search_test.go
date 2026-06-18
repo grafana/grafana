@@ -176,6 +176,57 @@ func mockClientWithHits() *MockClient {
 	}
 }
 
+func TestSearchSort(t *testing.T) {
+	loginField := resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN
+	emailField := resource.SEARCH_FIELD_PREFIX + builders.USER_EMAIL
+
+	tests := []struct {
+		name     string
+		url      string
+		expected []*resourcepb.ResourceSearchRequest_Sort
+	}{
+		{
+			name:     "no sort param defaults to login ascending",
+			url:      "/searchUsers",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: false}},
+		},
+		{
+			name:     "explicit ascending sort is respected",
+			url:      "/searchUsers?sort=email",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: emailField, Desc: false}},
+		},
+		{
+			name:     "explicit descending sort is respected",
+			url:      "/searchUsers?sort=-login",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: true}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockClient := mockClientWithHits()
+			searchHandler := NewSearchHandler(
+				tracing.NewNoopTracerService(),
+				mockClient,
+				featuremgmt.WithFeatures(),
+				&setting.Cfg{},
+				authlib.FixedAccessClient(true),
+			)
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, mockClient.LastSearchRequest)
+			require.Equal(t, tc.expected, mockClient.LastSearchRequest.SortBy)
+		})
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {

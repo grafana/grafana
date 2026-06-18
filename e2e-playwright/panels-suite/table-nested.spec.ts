@@ -540,9 +540,11 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
     ).toBeVisible();
 
+    // Click neutral header padding to the left of the title button to dismiss the tooltip. The offset
+    // clears the panel's rounded corner (border-radius), which is excluded from the element's hit region.
     await panelEditPage
       .getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Nested Kitchen Sink'))
-      .click({ position: { x: 0, y: 0 } });
+      .click({ position: { x: 4, y: 24 } });
 
     await expect(
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)
@@ -566,7 +568,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     await panelEditPage
       .getByGrafanaSelector(selectors.components.Panels.Panel.title('Table - Nested Kitchen Sink'))
-      .click({ position: { x: 0, y: 0 } });
+      .click({ position: { x: 4, y: 24 } });
 
     await expect(
       panelEditPage.getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)

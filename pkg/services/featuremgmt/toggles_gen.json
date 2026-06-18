@@ -4981,15 +4981,18 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1781613484775",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-16 12:38:04.775347 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
