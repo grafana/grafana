@@ -196,9 +196,11 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) e
 	}
 
 	// Run all pending migrations
-	if _, err := provider.Up(ctx); err != nil {
+	results, err := provider.Up(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	logger.Info("Database migrations complete", "applied", len(results))
 
 	return nil
 }
