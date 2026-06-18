@@ -39,7 +39,7 @@ export interface ManagedFieldsEntry {
     subresource?: string;
 }
 
-export interface Meta {
+export interface App {
     kind: string;
     apiVersion: string;
     metadata: Metadata;

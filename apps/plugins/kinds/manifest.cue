@@ -18,5 +18,6 @@ v0alpha1Version: {
 	kinds: [
 		pluginV0Alpha1,
 		metaV0Alpha1,
+		appV0Alpha1,
 	]
 }

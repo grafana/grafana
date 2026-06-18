@@ -21,6 +21,24 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 				"freshness": "Current",
 				"resources": [
 					{
+						"resource": "apps",
+						"responseKind": {
+							"group": "",
+							"kind": "App",
+							"version": ""
+						},
+						"scope": "Namespaced",
+						"singularResource": "app",
+						"verbs": [
+							"create",
+							"delete",
+							"get",
+							"list",
+							"patch",
+							"update"
+						]
+					},
+					{
 						"resource": "metas",
 						"responseKind": {
 							"group": "",
@@ -29,21 +47,6 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 						},
 						"scope": "Namespaced",
 						"singularResource": "meta",
-						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "Meta",
-									"version": ""
-								},
-								"subresource": "status",
-								"verbs": [
-									"get",
-									"patch",
-									"update"
-								]
-							}
-						],
 						"verbs": [
 							"get",
 							"list"
@@ -58,21 +61,6 @@ func TestIntegrationPluginsIntegrationDiscovery(t *testing.T) {
 						},
 						"scope": "Namespaced",
 						"singularResource": "plugin",
-						"subresources": [
-							{
-								"responseKind": {
-									"group": "",
-									"kind": "Plugin",
-									"version": ""
-								},
-								"subresource": "status",
-								"verbs": [
-									"get",
-									"patch",
-									"update"
-								]
-							}
-						],
 						"verbs": [
 							"create",
 							"delete",

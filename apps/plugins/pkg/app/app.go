@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	restclient "k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
-	restclient "k8s.io/client-go/rest"
 
 	pluginsappapis "github.com/grafana/grafana/apps/plugins/pkg/apis"
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
@@ -34,6 +35,9 @@ func New(cfg app.Config) (app.App, error) {
 	pluginKind := simple.AppManagedKind{
 		Kind: pluginsv0alpha1.PluginKind(),
 	}
+	appKind := simple.AppManagedKind{
+		Kind: pluginsv0alpha1.AppKind(),
+	}
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	simpleConfig := simple.AppConfig{
@@ -46,7 +50,7 @@ func New(cfg app.Config) (app.App, error) {
 				},
 			},
 		},
-		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind},
+		ManagedKinds: []simple.AppManagedKind{metaKind, pluginKind, appKind},
 	}
 
 	a, err := simple.NewApp(simpleConfig)

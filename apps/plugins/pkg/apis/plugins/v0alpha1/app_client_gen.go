@@ -6,33 +6,33 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-type MetaClient struct {
-	client *resource.TypedClient[*Meta, *MetaList]
+type AppClient struct {
+	client *resource.TypedClient[*App, *AppList]
 }
 
-func NewMetaClient(client resource.Client) *MetaClient {
-	return &MetaClient{
-		client: resource.NewTypedClient[*Meta, *MetaList](client, MetaKind()),
+func NewAppClient(client resource.Client) *AppClient {
+	return &AppClient{
+		client: resource.NewTypedClient[*App, *AppList](client, AppKind()),
 	}
 }
 
-func NewMetaClientFromGenerator(generator resource.ClientGenerator) (*MetaClient, error) {
-	c, err := generator.ClientFor(MetaKind())
+func NewAppClientFromGenerator(generator resource.ClientGenerator) (*AppClient, error) {
+	c, err := generator.ClientFor(AppKind())
 	if err != nil {
 		return nil, err
 	}
-	return NewMetaClient(c), nil
+	return NewAppClient(c), nil
 }
 
-func (c *MetaClient) Get(ctx context.Context, identifier resource.Identifier) (*Meta, error) {
+func (c *AppClient) Get(ctx context.Context, identifier resource.Identifier) (*App, error) {
 	return c.client.Get(ctx, identifier)
 }
 
-func (c *MetaClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
+func (c *AppClient) List(ctx context.Context, namespace string, opts resource.ListOptions) (*AppList, error) {
 	return c.client.List(ctx, namespace, opts)
 }
 
-func (c *MetaClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*MetaList, error) {
+func (c *AppClient) ListAll(ctx context.Context, namespace string, opts resource.ListOptions) (*AppList, error) {
 	resp, err := c.client.List(ctx, namespace, resource.ListOptions{
 		ResourceVersion: opts.ResourceVersion,
 		Limit:           opts.Limit,
@@ -60,21 +60,21 @@ func (c *MetaClient) ListAll(ctx context.Context, namespace string, opts resourc
 	return resp, nil
 }
 
-func (c *MetaClient) Create(ctx context.Context, obj *Meta, opts resource.CreateOptions) (*Meta, error) {
+func (c *AppClient) Create(ctx context.Context, obj *App, opts resource.CreateOptions) (*App, error) {
 	// Make sure apiVersion and kind are set
 	obj.APIVersion = GroupVersion.Identifier()
-	obj.Kind = MetaKind().Kind()
+	obj.Kind = AppKind().Kind()
 	return c.client.Create(ctx, obj, opts)
 }
 
-func (c *MetaClient) Update(ctx context.Context, obj *Meta, opts resource.UpdateOptions) (*Meta, error) {
+func (c *AppClient) Update(ctx context.Context, obj *App, opts resource.UpdateOptions) (*App, error) {
 	return c.client.Update(ctx, obj, opts)
 }
 
-func (c *MetaClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Meta, error) {
+func (c *AppClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*App, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
 }
 
-func (c *MetaClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
+func (c *AppClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
 }

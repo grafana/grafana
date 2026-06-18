@@ -7,14 +7,17 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	authlib "github.com/grafana/authlib/types"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/prometheus/client_golang/prometheus"
-
+	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -22,18 +25,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller    = (*AppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
 	metaManager        *meta.ProviderManager
 	cfgProvider        configprovider.ConfigProvider
 	restConfigProvider apiserver.RestConfigProvider
+	pluginSettings     pluginsettings.Service
 
 	*pluginsapp.PluginAppInstaller
 }
@@ -41,6 +47,7 @@ type AppInstaller struct {
 func ProvideAppInstaller(
 	cfgProvider configprovider.ConfigProvider,
 	restConfigProvider apiserver.RestConfigProvider,
+	pluginSettings pluginsettings.Service, // Legacy app settings access
 	pluginStore pluginstore.Store, moduleHashCalc *modulehash.Calculator,
 	accessControlService accesscontrol.Service, accessClient authlib.AccessClient,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer,
@@ -70,7 +77,8 @@ func ProvideAppInstaller(
 	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
 	authorizer := grafanaauthorizer.NewResourceAuthorizer(accessClient)
-	i, err := pluginsapp.NewPluginsAppInstaller(logger, authorizer, metaProviderManager)
+
+	i, err := pluginsapp.NewPluginsAppInstaller(logger, &tempAuthorizerWrapper{authorizer}, metaProviderManager)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +88,19 @@ func ProvideAppInstaller(
 		cfgProvider:        cfgProvider,
 		restConfigProvider: restConfigProvider,
 		PluginAppInstaller: i,
+		pluginSettings:     pluginSettings,
 	}, nil
+}
+
+func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {
+	gvr := pluginsv0alpha1.AppKind().GroupVersionResource()
+	if requested.String() == gvr.String() {
+		return &legacyStorage{
+			pluginSettings: a.pluginSettings,
+			tableConverter: newAppsTableConverter(),
+		}
+	}
+	return nil
 }
 
 func getStaticRootPath(cfgProvider configprovider.ConfigProvider, logger logging.Logger) (string, error) {
