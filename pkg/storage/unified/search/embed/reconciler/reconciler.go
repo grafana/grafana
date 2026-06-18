@@ -715,19 +715,19 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	desired := make([]string, 0, len(items))
 	toEmbed := make([]embed.Item, 0, len(items))
-	matchedExisting := 0
+	present := make(map[string]struct{}, len(items))
 	for _, it := range items {
 		desired = append(desired, it.Subresource)
 		prev, ok := stored[it.Subresource]
 		if ok {
-			matchedExisting++
+			present[it.Subresource] = struct{}{}
 		}
 		if folderMoved || !ok || prev != it.Content {
 			toEmbed = append(toEmbed, it)
 		}
 	}
 
-	hasStale := matchedExisting < len(stored)
+	hasStale := len(present) < len(stored)
 	if len(toEmbed) == 0 && !hasStale {
 		return nil
 	}
