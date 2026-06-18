@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -12,7 +13,7 @@ func labeledValue(t *testing.T, pendingDelete bool) []byte {
 	t.Helper()
 	metadata := map[string]any{"name": "dash-1"}
 	if pendingDelete {
-		metadata["labels"] = map[string]any{LabelPendingDelete: "true"}
+		metadata["labels"] = map[string]any{controller.LabelPendingDelete: "true"}
 	}
 	b, err := json.Marshal(map[string]any{"metadata": metadata, "spec": map[string]any{"title": "x"}})
 	require.NoError(t, err)
