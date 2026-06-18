@@ -4,10 +4,11 @@ import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { resolveStarredFolders } from 'app/features/stars/folders';
+import { useStarredItems } from 'app/features/stars/hooks';
 
 import { NestedFolderPicker } from './NestedFolderPicker';
 import { useFoldersQuery } from './useFoldersQuery';
-import { useGetStarredFolders } from './useStarredFolder';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
@@ -28,19 +29,21 @@ jest.mock('./useTeamOwnedFolder', () => {
   };
 });
 
-jest.mock('./useStarredFolder', () => {
-  const actual = jest.requireActual('./useStarredFolder');
-  return {
-    ...actual,
-    useGetStarredFolders: jest.fn(),
-  };
-});
+jest.mock('app/features/stars/hooks', () => ({
+  ...jest.requireActual('app/features/stars/hooks'),
+  useStarredItems: jest.fn(),
+}));
+jest.mock('app/features/stars/folders', () => ({
+  ...jest.requireActual('app/features/stars/folders'),
+  resolveStarredFolders: jest.fn(),
+}));
 
 describe('NestedFolderPicker', () => {
   const mockOnChange = jest.fn();
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
   const useGetTeamFoldersMock = useGetTeamFolders as jest.Mock;
-  const useGetStarredFoldersMock = useGetStarredFolders as jest.Mock;
+  const useStarredItemsMock = useStarredItems as jest.Mock;
+  const resolveStarredFoldersMock = resolveStarredFolders as jest.Mock;
   const useFoldersQueryMock = useFoldersQuery as jest.Mock;
 
   beforeAll(() => {
@@ -68,16 +71,12 @@ describe('NestedFolderPicker', () => {
       };
     });
 
-    useGetStarredFoldersMock.mockImplementation((options?: { skip: boolean }) => {
-      if (options?.skip) {
-        return { folders: [], error: undefined };
-      }
-
-      return {
-        folders: [{ kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' }],
-        error: undefined,
-      };
-    });
+    useStarredItemsMock.mockImplementation((_group: string, _kind: string, options?: { skip?: boolean }) =>
+      options?.skip ? { data: undefined, error: undefined } : { data: ['starred-folder-1'], error: undefined }
+    );
+    resolveStarredFoldersMock.mockResolvedValue([
+      { kind: 'folder', uid: 'starred-folder-1', title: 'Starred Folder One' },
+    ]);
   });
 
   afterAll(() => {

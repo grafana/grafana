@@ -9,7 +9,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
-import { getStatusFromError } from 'app/core/utils/errors';
+import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { type DashboardViewItemWithUIItems, type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
@@ -17,13 +17,14 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type QueryResponse } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
+import { resolveStarredFolders } from 'app/features/stars/folders';
+import { useStarredItems } from 'app/features/stars/hooks';
 import { type PermissionLevel } from 'app/types/acl';
 
 import { FolderRepo } from './FolderRepo';
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useFoldersQuery } from './useFoldersQuery';
-import { useGetStarredFolders } from './useStarredFolder';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { useTreeInteractions } from './useTreeInteractions';
 import { getRootFolderItem } from './utils';
@@ -475,7 +476,31 @@ function useTeamFolders(
 }
 
 function useStarredFolders(foldersOpenState: Record<string, boolean>) {
-  const { folders, error } = useGetStarredFolders({ skip: !starredFoldersEnabled() });
+  const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder', { skip: !starredFoldersEnabled() });
+
+  const [folders, setFolders] = useState<DashboardViewItem[]>([]);
+
+  // Custom use effect for loading data to prevent async state setting, which breaks the tests
+  useEffect(() => {
+    if (!uids || uids.length === 0) {
+      setFolders([]);
+      return;
+    }
+
+    let cancelled = false;
+    resolveStarredFolders(uids)
+      .then((items) => {
+        if (!cancelled) {
+          setFolders(items);
+        }
+      })
+      .catch(() => {
+        // Searcher failures are non-fatal here; the starred section just stays empty.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uids]);
 
   const starredFolderTreeItems = useMemo(() => {
     if (folders.length === 0) {
@@ -513,7 +538,7 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>) {
     return starredIsOpen ? [parentItem, ...children] : [parentItem];
   }, [folders, foldersOpenState]);
 
-  return { starredFolderTreeItems, error };
+  return { starredFolderTreeItems, error: error ? new Error(getMessageFromError(error)) : undefined };
 }
 
 function searchResultsToTreeItems(items: DashboardViewItem[]): DashboardsTreeItem[] {

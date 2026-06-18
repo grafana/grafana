@@ -61,11 +61,12 @@ export const useStarItem = (group: string, kind: string) => {
 /**
  * Get starred items from legacy or app platform API
  */
-export const useStarredItems = (group: string, kind: string) => {
+export const useStarredItems = (group: string, kind: string, options?: { skip?: boolean }) => {
+  const skip = options?.skip ?? false;
   const name = `user-${contextSrv.user.uid}`;
   const appPlatform = config.featureToggles.starsFromAPIServer;
-  const legacyResponse = useLegacyGetStarsQuery(appPlatform ? skipToken : undefined);
-  const queryArgs = !appPlatform ? skipToken : { fieldSelector: `metadata.name=${name}` };
+  const legacyResponse = useLegacyGetStarsQuery(appPlatform || skip ? skipToken : undefined);
+  const queryArgs = !appPlatform || skip ? skipToken : { fieldSelector: `metadata.name=${name}` };
   const appPlatformResponse = useListStarsQuery(queryArgs);
 
   const appPlatformStarredItems = useMemo(() => {
