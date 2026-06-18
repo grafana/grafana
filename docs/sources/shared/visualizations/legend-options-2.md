@@ -34,7 +34,7 @@ Control how wide the legend is when placed on the right side of the visualizatio
 
 ### Overflow
 
-Control how long series names overflow is handled. This option is only displayed if you set the legend placement to **Right** and mode is **Table**.
+Control how overflow for long series names is handled. This option is only displayed if you set the legend placement to **Right** and mode is **Table**.
 
 - **Ellipsis -** Truncates the series names with "..." at the end.
 - **Wrap -** Word-wraps the series names to multiple lines.
