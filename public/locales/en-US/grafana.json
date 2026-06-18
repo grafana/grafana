@@ -10709,6 +10709,13 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "incidents-card": {
+      "empty": "No active incidents.",
+      "error-title": "Could not load active incidents",
+      "retry": "Retry",
+      "title": "Active incidents",
+      "view-all": "View all incidents"
+    },
     "most-used-dashboards-tab": {
       "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
       "error-title": "Could not load most viewed dashboards",

@@ -25,8 +25,6 @@ import { type Team } from 'app/types/teams';
 
 import { HomeSection } from '../HomeSection';
 
-const MAX_ALERTS = 5;
-
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
   const raw = alert.generatorURL;
@@ -134,7 +132,7 @@ function FiringAlertsCardInner() {
     return { sorted: decorated, criticalCount, highCount };
   }, [alerts]);
 
-  const displayed = sorted.slice(0, MAX_ALERTS);
+  const displayed = sorted;
 
   return (
     <HomeSection>
@@ -266,6 +264,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.5),
+    // Show roughly five rows; scroll the rest so every team-relevant alert stays reachable.
+    maxHeight: theme.spacing(22),
+    overflowY: 'auto',
   }),
   row: css({
     display: 'flex',

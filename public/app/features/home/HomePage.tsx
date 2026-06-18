@@ -10,6 +10,7 @@ import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
 import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
@@ -58,7 +59,14 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </HomeSection>
-          <FiringAlertsCard />
+          <Stack direction="row" gap={2}>
+            <div className={styles.card}>
+              <FiringAlertsCard />
+            </div>
+            <div className={styles.card}>
+              <IncidentsCard />
+            </div>
+          </Stack>
 
           {renderLimitedComponents({
             props: {},
@@ -84,6 +92,21 @@ const getStyles = () => ({
       '&:empty': {
         display: 'none',
       },
+    },
+  }),
+  card: css({
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 0',
+    minWidth: 0,
+    // A card renders null when unavailable (no alerting permission / no incident plugin);
+    // its empty wrapper then collapses so the remaining card spans the full row.
+    '&:empty': {
+      display: 'none',
+    },
+    // Stretch the card body to fill the row height so both cards stay equal height.
+    '> *': {
+      flex: 1,
     },
   }),
 });
