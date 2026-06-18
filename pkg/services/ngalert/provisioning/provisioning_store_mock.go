@@ -371,6 +371,98 @@ func (_m *MockProvisioningStore) SetManagerProperties(ctx context.Context, o mod
 	return r0
 }
 
+// MockProvisioningStore_GetManagerProperties_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetManagerProperties'
+type MockProvisioningStore_GetManagerProperties_Call struct {
+	*mock.Call
+}
+
+// GetManagerProperties is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o models.Provisionable
+//   - org int64
+func (_e *MockProvisioningStore_Expecter) GetManagerProperties(ctx interface{}, o interface{}, org interface{}) *MockProvisioningStore_GetManagerProperties_Call {
+	return &MockProvisioningStore_GetManagerProperties_Call{Call: _e.mock.On("GetManagerProperties", ctx, o, org)}
+}
+
+func (_c *MockProvisioningStore_GetManagerProperties_Call) Run(run func(ctx context.Context, o models.Provisionable, org int64)) *MockProvisioningStore_GetManagerProperties_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.Provisionable), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerProperties_Call) Return(_a0 utils.ManagerProperties, _a1 error) *MockProvisioningStore_GetManagerProperties_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerProperties_Call) RunAndReturn(run func(context.Context, models.Provisionable, int64) (utils.ManagerProperties, error)) *MockProvisioningStore_GetManagerProperties_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MockProvisioningStore_GetManagerPropertiesByUIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetManagerPropertiesByUIDs'
+type MockProvisioningStore_GetManagerPropertiesByUIDs_Call struct {
+	*mock.Call
+}
+
+// GetManagerPropertiesByUIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org int64
+//   - resourceType string
+//   - uids []string
+func (_e *MockProvisioningStore_Expecter) GetManagerPropertiesByUIDs(ctx interface{}, org interface{}, resourceType interface{}, uids interface{}) *MockProvisioningStore_GetManagerPropertiesByUIDs_Call {
+	return &MockProvisioningStore_GetManagerPropertiesByUIDs_Call{Call: _e.mock.On("GetManagerPropertiesByUIDs", ctx, org, resourceType, uids)}
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByUIDs_Call) Run(run func(ctx context.Context, org int64, resourceType string, uids []string)) *MockProvisioningStore_GetManagerPropertiesByUIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(string), args[3].([]string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByUIDs_Call) Return(_a0 map[string]utils.ManagerProperties, _a1 error) *MockProvisioningStore_GetManagerPropertiesByUIDs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByUIDs_Call) RunAndReturn(run func(context.Context, int64, string, []string) (map[string]utils.ManagerProperties, error)) *MockProvisioningStore_GetManagerPropertiesByUIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MockProvisioningStore_SetManagerProperties_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetManagerProperties'
+type MockProvisioningStore_SetManagerProperties_Call struct {
+	*mock.Call
+}
+
+// SetManagerProperties is a helper method to define mock.On call
+//   - ctx context.Context
+//   - o models.Provisionable
+//   - org int64
+//   - m utils.ManagerProperties
+func (_e *MockProvisioningStore_Expecter) SetManagerProperties(ctx interface{}, o interface{}, org interface{}, m interface{}) *MockProvisioningStore_SetManagerProperties_Call {
+	return &MockProvisioningStore_SetManagerProperties_Call{Call: _e.mock.On("SetManagerProperties", ctx, o, org, m)}
+}
+
+func (_c *MockProvisioningStore_SetManagerProperties_Call) Run(run func(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties)) *MockProvisioningStore_SetManagerProperties_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(models.Provisionable), args[2].(int64), args[3].(utils.ManagerProperties))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_SetManagerProperties_Call) Return(_a0 error) *MockProvisioningStore_SetManagerProperties_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockProvisioningStore_SetManagerProperties_Call) RunAndReturn(run func(context.Context, models.Provisionable, int64, utils.ManagerProperties) error) *MockProvisioningStore_SetManagerProperties_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockProvisioningStore creates a new instance of MockProvisioningStore. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockProvisioningStore(t interface {
