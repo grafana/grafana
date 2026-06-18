@@ -146,16 +146,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       position: 'relative',
     }),
-    mobileHeader: css({
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: theme.spacing(1, 1, 1, 2),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-
-      [theme.breakpoints.up('md')]: {
-        display: 'none',
-      },
-    }),
     itemList: css({
       boxSizing: 'border-box',
       display: 'flex',
