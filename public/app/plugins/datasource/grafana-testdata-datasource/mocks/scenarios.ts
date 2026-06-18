@@ -111,7 +111,7 @@ export const scenarios = [
     stringInput: '5s',
   },
   {
-    description: 'Like Slow Query, but returns a configurable datasource-style error for a percentage of requests.',
+    description: '',
     id: TestDataQueryType.FlakyQuery,
     name: 'Flaky Query',
     stringInput: '5s',

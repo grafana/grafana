@@ -30,7 +30,7 @@ const FlakyQueryEditor = ({ query, onChange }: EditorProps) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField labelWidth={14} label="Error probability" tooltip="Percentage of requests that return an error">
+        <InlineField labelWidth={14} label="Error rate" tooltip="Percentage of requests that return an error">
           <Input
             type="number"
             min={0}

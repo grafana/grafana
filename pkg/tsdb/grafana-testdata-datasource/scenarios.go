@@ -85,7 +85,6 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		Name:        "Flaky Query",
 		StringInput: "5s",
 		handler:     s.handleFlakyQueryScenario,
-		Description: "Like Slow Query, but returns a configurable datasource-style error for a percentage of requests.",
 	})
 
 	s.registerScenario(&Scenario{

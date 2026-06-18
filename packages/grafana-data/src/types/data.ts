@@ -18,6 +18,7 @@ export enum LoadingState {
   Done = 'Done',
   Error = 'Error',
 }
+
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
 export const preferredVisualizationTypes = [
   'graph',
