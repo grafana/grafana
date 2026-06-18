@@ -13,6 +13,11 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
+# `pnpm start` builds the grafana bundle plus its 16 decoupled-plugin deps (the
+# `start` nx target's dependsOn). With a cold cache in `tilt ci` that exceeds the
+# default 5m readiness window, so the assets-manifest probe times out. Give it room.
+ci_settings(readiness_timeout='15m')
+
 # --- Frontend processes
 local_resource(
   'pnpm install',

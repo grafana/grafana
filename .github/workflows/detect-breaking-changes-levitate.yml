@@ -47,7 +47,10 @@ jobs:
         run: pnpm run packages:build
 
       - name: Pack packages
-        run: pnpm run packages:pack --out ./%s.tgz
+        # Pack each package into its own dir as @<name>.tgz (the name check-breaking-changes.sh
+        # expects). Can't reuse `packages:pack` here: it pins --pack-destination, and pnpm pack
+        # rejects --pack-destination and --out together.
+        run: pnpm exec lerna exec --no-private -- pnpm pack --out '@%s.tgz'
 
       - name: Zip built tarballed packages
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
@@ -94,7 +97,10 @@ jobs:
         run: pnpm run packages:build
 
       - name: Pack packages
-        run: pnpm run packages:pack --out ./%s.tgz
+        # Pack each package into its own dir as @<name>.tgz (the name check-breaking-changes.sh
+        # expects). Can't reuse `packages:pack` here: it pins --pack-destination, and pnpm pack
+        # rejects --pack-destination and --out together.
+        run: pnpm exec lerna exec --no-private -- pnpm pack --out '@%s.tgz'
 
       - name: Zip built tarballed packages
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
