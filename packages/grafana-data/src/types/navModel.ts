@@ -60,7 +60,10 @@ export type NavIndex = { [s: string]: NavModelItem };
 
 export enum PageLayoutType {
   Standard,
-  Canvas,
   Custom,
+
+  // TODO deprecate and remove these in the future once visual refresh is delivered
+  // there is only 1 page style - custom can be used for anything else
+  Canvas,
   Home,
 }
