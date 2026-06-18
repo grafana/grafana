@@ -1,5 +1,4 @@
 import { type VizPanel } from '@grafana/scenes';
-
 import { type InspectTab } from 'app/features/inspector/types';
 
 type PanelInspectorOpener = (panel: VizPanel, tab: InspectTab) => void;
