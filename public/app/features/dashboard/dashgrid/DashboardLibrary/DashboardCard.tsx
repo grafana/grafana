@@ -179,7 +179,9 @@ function DashboardCardComponent({
             aria-label={
               kind === 'template_dashboard'
                 ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
-                : t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                : kind === 'suggested_dashboard'
+                  ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                  : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
             }
           >
             {kind === 'template_dashboard' ? (
