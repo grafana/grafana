@@ -548,7 +548,10 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 	// Use a full Update (not UpdateStatus) to avoid a bug in UserClient.UpdateStatus
 	// which constructs a new User with an empty Spec, causing the status subresource
 	// path to persist an empty spec and corrupt the stored user data.
-	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: existing.ResourceVersion,
+	})
 	if err != nil {
 		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)
