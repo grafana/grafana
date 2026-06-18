@@ -16,7 +16,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
@@ -52,7 +52,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     title: title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { locked } = useCommitMessageTemplate({
+  const { locked, message } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
@@ -121,7 +121,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     },
   });
 
-  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     const folderPath = initialValues.path;
@@ -145,15 +145,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       name: repoName,
       path: folderPath,
       ref: branchRef,
-      message: getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'rename',
-        resourceKind: 'folder',
-        resourceID: folder.uid,
-        title,
-        ...getCurrentCommitUser(),
-      }),
+      message,
       body: {
         spec: { title },
       },
@@ -188,6 +180,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
             repository={repository}
             hiddenFields={['path']}
             lockComment={locked}
+            commitMessage={message}
           />
 
           {error && <ProvisioningAlert error={error} />}

@@ -20,7 +20,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -62,7 +62,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     title: parentFolder?.title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { locked } = useCommitMessageTemplate({
+  const { locked, message } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
@@ -80,7 +80,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
-  const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo, path }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
@@ -96,14 +96,13 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
-          message: commitMessage,
+          message,
         }).unwrap();
       } catch (error) {
         showError(error);
@@ -114,7 +113,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     // Write workflow: use Job API
     const jobSpec = {
       action: 'delete' as const,
-      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
+      message,
       delete: {
         ref: undefined,
         resources: [
@@ -211,6 +210,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 lockComment={locked}
+                commitMessage={message}
               />
 
               {error && <ProvisioningAlert error={error} />}

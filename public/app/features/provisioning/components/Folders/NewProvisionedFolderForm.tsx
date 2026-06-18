@@ -17,7 +17,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -59,7 +59,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     title: title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { locked } = useCommitMessageTemplate({
+  const { locked, message } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
@@ -129,7 +129,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     },
   });
 
-  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -164,15 +164,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       ref,
       name: repoName,
       path,
-      message: getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'create',
-        resourceKind: 'folder',
-        resourceID: '',
-        title,
-        ...getCurrentCommitUser(),
-      }),
+      message,
       body: folderModel,
     });
   };
@@ -220,6 +212,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             repository={repository}
             hiddenFields={['path']}
             lockComment={locked}
+            commitMessage={message}
           />
 
           {prURL && (

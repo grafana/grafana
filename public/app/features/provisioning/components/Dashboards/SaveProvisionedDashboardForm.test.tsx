@@ -1014,8 +1014,8 @@ describe('SaveProvisionedDashboardForm', () => {
       } as unknown as DashboardScene,
     });
 
-    // Populate the commit comment so the submit handler doesn't fall back to
-    // `dashboard.state.title` (which the mocked scene doesn't expose).
+    // Populate the commit comment so the committed message is deterministic ('Retry save') rather
+    // than the template/default rendered from the form title.
     const commentInput = screen.getByRole('textbox', { name: /comment/i });
     await user.type(commentInput, 'Retry save');
 

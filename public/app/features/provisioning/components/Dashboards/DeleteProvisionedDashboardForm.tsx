@@ -19,7 +19,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -75,7 +75,7 @@ export function DeleteProvisionedDashboardForm({
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { locked } = useCommitMessageTemplate({
+  const { locked, message } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
@@ -93,7 +93,7 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
-  const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
       showError(
@@ -114,14 +114,13 @@ export function DeleteProvisionedDashboardForm({
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
-          message: commitMessage,
+          message,
         }).unwrap();
       } catch (error) {
         showError(error);
@@ -133,7 +132,7 @@ export function DeleteProvisionedDashboardForm({
     const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'delete' as const,
-      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
+      message,
       delete: {
         ref: effectiveRef,
         resources: [
@@ -235,6 +234,7 @@ export function DeleteProvisionedDashboardForm({
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 lockComment={locked}
+                commitMessage={message}
               />
 
               {submitError && <ProvisioningAlert error={submitError} />}

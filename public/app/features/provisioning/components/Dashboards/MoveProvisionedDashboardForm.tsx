@@ -24,7 +24,7 @@ import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { type CommitTemplateVars, getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
@@ -74,7 +74,7 @@ export function MoveProvisionedDashboardForm({
     title: dashboard.state.title ?? '',
     ...getCurrentCommitUser(),
   };
-  const { locked } = useCommitMessageTemplate({
+  const { locked, message } = useCommitMessageTemplate({
     repository,
     vars: templateVars,
     comment: watch('comment') ?? '',
@@ -125,7 +125,7 @@ export function MoveProvisionedDashboardForm({
     });
   };
 
-  const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     if (!repo || !repository) {
       showError();
       return;
@@ -175,14 +175,13 @@ export function MoveProvisionedDashboardForm({
       }
 
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({ comment, repository, ...templateVars });
 
       try {
         await moveFile({
           name: repo,
           path: targetPath,
           ref: branchRef,
-          message: commitMessage,
+          message,
           body: currentFileData.resource.file,
           originalPath: path,
         }).unwrap();
@@ -196,7 +195,7 @@ export function MoveProvisionedDashboardForm({
     const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'move' as const,
-      message: getSingleResourceCommitMessage({ comment, repository, ...templateVars }),
+      message,
       move: {
         ref: effectiveRef,
         targetPath: targetFolderPath,
@@ -340,6 +339,7 @@ export function MoveProvisionedDashboardForm({
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 lockComment={locked}
+                commitMessage={message}
               />
 
               <Stack gap={2}>

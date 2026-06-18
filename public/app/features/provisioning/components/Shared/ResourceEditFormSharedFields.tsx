@@ -32,6 +32,8 @@ interface DashboardEditFormSharedFieldsProps {
   allowPathEdit?: boolean;
   /** When true, the comment field renders read-only (template enforcement). */
   lockComment?: boolean;
+  /** The resolved, read-only commit message to display when `lockComment` is true. */
+  commitMessage?: string;
 }
 
 export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsProps>(
@@ -44,6 +46,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     hiddenFields,
     allowPathEdit,
     lockComment = false,
+    commitMessage,
   }) => {
     const {
       control,
@@ -286,17 +289,26 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             noMargin
             label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-comment', 'Comment')}
           >
-            <TextArea
-              id="provisioned-resource-form-comment"
-              {...register('comment')}
-              disabled={readOnly}
-              readOnly={lockComment}
-              placeholder={t(
-                'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
-                'Add a note to describe your changes (optional)'
-              )}
-              rows={5}
-            />
+            {lockComment ? (
+              <TextArea
+                id="provisioned-resource-form-comment"
+                value={commitMessage ?? ''}
+                readOnly
+                disabled={readOnly}
+                rows={5}
+              />
+            ) : (
+              <TextArea
+                id="provisioned-resource-form-comment"
+                {...register('comment')}
+                disabled={readOnly}
+                placeholder={t(
+                  'provisioned-resource-form.save-or-delete-resource-shared-fields.comment-placeholder-describe-changes-optional',
+                  'Add a note to describe your changes (optional)'
+                )}
+                rows={5}
+              />
+            )}
           </Field>
         )}
       </>
