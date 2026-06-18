@@ -416,7 +416,7 @@ func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
 		// k8s read-back: ProvenanceAPI → ManagerKindClassicAPI
 		retrieved, err := k8sClient.Get(ctx, rule[0].UID, v1.GetOptions{})
 		require.NoError(t, err)
-		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.Annotations[utils.AnnoKeyManagerKind],
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.Annotations[utils.AnnoKeyManagerKind], //nolint:staticcheck // asserting the legacy classic-API shim mapping
 			"legacy ProvenanceAPI should map to ManagerKindClassicAPI in k8s representation")
 		// Classic kinds have no meaningful identity
 		require.Empty(t, retrieved.Annotations[utils.AnnoKeyManagerIdentity],
