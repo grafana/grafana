@@ -1,6 +1,6 @@
 import { autocompletion } from '@codemirror/autocomplete';
 import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView, placeholder as placeholderExtension, tooltips } from '@codemirror/view';
+import { EditorView, tooltips } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
@@ -64,7 +64,13 @@ export const stripNewlinesOnPaste: Extension = EditorView.domEventHandlers({
 // A single-line text field shouldn't look or behave like a code editor. Disable
 // gutters, active-line highlighting, bracket closing/matching, auto-indent, and
 // the bundled autocompletion (this component configures its own). Editing
-// niceties (undo history, the default keymap, selection drawing) stay on.
+// niceties (undo history, the default keymap) stay on.
+//
+// `drawSelection` is off so the browser's native caret/selection is used. With
+// the placeholder rendered as an overlay (not a CodeMirror widget), an empty
+// doc is a normal `<div class="cm-line"><br></div>`, which the native caret
+// anchors to and renders on the first focus — the drawn caret did not show on
+// an empty doc here.
 const INLINE_BASIC_SETUP = {
   lineNumbers: false,
   foldGutter: false,
@@ -74,6 +80,7 @@ const INLINE_BASIC_SETUP = {
   bracketMatching: false,
   indentOnInput: false,
   autocompletion: false,
+  drawSelection: false,
 } as const;
 
 function createInlineInputTheme(theme: GrafanaTheme2): Extension {
@@ -95,19 +102,11 @@ function createInlineInputTheme(theme: GrafanaTheme2): Extension {
     '.cm-content': {
       padding: 0,
       color: theme.colors.text.primary,
+      // `drawSelection` is off (see basicSetup), so this colors the native caret.
       caretColor: theme.colors.text.primary,
-    },
-    // `drawSelection` (on via basicSetup) hides the native caret and draws its
-    // own element, which defaults to black; color it for the dark surface.
-    '.cm-cursor, .cm-dropCursor': {
-      borderLeftColor: theme.colors.text.primary,
     },
     '.cm-line': {
       padding: 0,
-    },
-    '.cm-placeholder': {
-      color: theme.colors.text.disabled,
-      fontStyle: 'normal',
     },
     // The popup is parented to `document.body` (see `tooltips` extension) so it
     // escapes the modal's clipping/stacking context; lift it above the modal.
@@ -158,19 +157,52 @@ function createInlineInputTheme(theme: GrafanaTheme2): Extension {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // The consuming field (e.g. a `Field`) owns the outer border; this element
-  // provides the input chrome (typography, radius, focus ring) but stays
-  // transparent and borderless so it sits cleanly inside that field.
+  // Render the standard Grafana input chrome (border, background, radius,
+  // typography) so the field reads like a normal text input. The inner editor
+  // is transparent (see `createInlineInputTheme`), so this background — and the
+  // placeholder overlay behind it — show through.
   wrapper: cx(
     getInputStyles({ theme }).input,
     css({
+      display: 'flex',
+      alignItems: 'center',
       width: '100%',
-      padding: '3px 8px',
-      backgroundColor: 'transparent',
-      border: 'none',
+      // Pin to the standard input height (rather than free-sizing to the line
+      // height) so this lines up with sibling `Input` fields; `alignItems`
+      // centers the single editor line within it.
+      minHeight: theme.spacing(theme.components.height.md),
+      padding: theme.spacing(0, 1),
       '&:focus-within': getFocusStyles(theme),
     })
   ),
+  // The editor fills the row, sits above the placeholder overlay, and may shrink
+  // so long values scroll horizontally instead of stretching the field.
+  editor: css({
+    position: 'relative',
+    zIndex: 1,
+    flex: 1,
+    minWidth: 0,
+    '& > div': {
+      width: '100%',
+    },
+  }),
+  // The placeholder is rendered here as an overlay rather than via CodeMirror's
+  // inline widget: the widget left the empty editor with no caret anchor, so the
+  // caret was invisible until the first edit. Sitting behind the transparent
+  // editor, this shows through while the editor keeps a normal caret.
+  placeholder: css({
+    position: 'absolute',
+    left: theme.spacing(1),
+    right: theme.spacing(1),
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: theme.colors.text.disabled,
+    fontFamily: theme.typography.fontFamilyMonospace,
+    fontSize: theme.typography.body.fontSize,
+    pointerEvents: 'none',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+  }),
 });
 
 /**
@@ -200,7 +232,9 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
       // Render tooltips (the completion popup) in `document.body` so they aren't
       // clipped by, or stacked beneath, a containing modal's scroll/footer.
       tooltips({ parent: document.body }),
-      ...(placeholder ? [placeholderExtension(placeholder)] : []),
+      // The visible placeholder is an overlay (see render); expose it to
+      // assistive tech via `aria-placeholder` on the editable element.
+      ...(placeholder ? [EditorView.contentAttributes.of({ 'aria-placeholder': placeholder })] : []),
       // Configure autocompletion directly (rather than via the base's
       // `completionSources` prop) so `interactionDelay` can be disabled: Enter
       // has no other purpose in a single-line input, so it should accept the
@@ -213,16 +247,23 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
 
   return (
     <div className={styles.wrapper} id={id}>
-      <CodeMirrorEditor
-        value={value}
-        onChange={onChange}
-        theme={editorTheme}
-        basicSetup={INLINE_BASIC_SETUP}
-        height="auto"
-        extensions={extensions}
-        aria-label={ariaLabel}
-        aria-labelledby={ariaLabelledby}
-      />
+      <div className={styles.editor}>
+        <CodeMirrorEditor
+          value={value}
+          onChange={onChange}
+          theme={editorTheme}
+          basicSetup={INLINE_BASIC_SETUP}
+          height="auto"
+          extensions={extensions}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledby}
+        />
+      </div>
+      {placeholder && value.length === 0 && (
+        <div className={styles.placeholder} aria-hidden>
+          {placeholder}
+        </div>
+      )}
     </div>
   );
 });

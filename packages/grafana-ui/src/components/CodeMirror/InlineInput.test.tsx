@@ -102,6 +102,15 @@ describe('CodeMirrorInlineInput', () => {
     expect(await screen.findByRole('textbox')).toHaveAttribute('aria-placeholder', 'Enter a URL');
   });
 
+  it('shows the placeholder overlay only while empty', async () => {
+    const { rerender } = render(<CodeMirrorInlineInput value="" onChange={jest.fn()} placeholder="Enter a URL" />);
+    await screen.findByRole('textbox');
+    expect(screen.getByText('Enter a URL')).toBeInTheDocument();
+
+    rerender(<CodeMirrorInlineInput value="http://example.com" onChange={jest.fn()} placeholder="Enter a URL" />);
+    expect(screen.queryByText('Enter a URL')).not.toBeInTheDocument();
+  });
+
   it('forwards aria-labelledby to the editable element', async () => {
     render(<CodeMirrorInlineInput value="" onChange={jest.fn()} aria-labelledby="my-label" />);
     expect(await screen.findByRole('textbox')).toHaveAttribute('aria-labelledby', 'my-label');
