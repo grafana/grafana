@@ -23,7 +23,6 @@ interface FolderPeekSubfolder {
 export interface FolderRow {
   uid: string;
   title: string;
-  parentTitle?: string;
   /**
    * The provisioning tool that manages this folder, if any. A folder is
    * single-managed: when this is set, every dashboard inside the folder is

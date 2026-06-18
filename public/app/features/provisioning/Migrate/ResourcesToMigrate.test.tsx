@@ -54,7 +54,7 @@ describe('ResourcesToMigrate', () => {
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
     expect(screen.queryByText('Managed Folder')).not.toBeInTheDocument();
-    expect(screen.getByText('Showing 1 of 1 folders')).toBeInTheDocument();
+    expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
   });
 
   it('expands a folder to reveal its resources', async () => {

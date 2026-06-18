@@ -200,10 +200,12 @@ export function ResourcesToMigrate({
       <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between" wrap>
         <Text variant="bodySmall" color="secondary">
           {t('provisioning.migrate.resources-to-migrate-footer', '', {
-            count: filtered.length,
-            total: unmanagedFolders.length,
-            defaultValue_one: 'Showing {{count}} of {{total}} folders',
-            defaultValue_other: 'Showing {{count}} of {{total}} folders',
+            // Plural agrees with the total folder count (the noun), not the
+            // number of rows shown.
+            shown: filtered.length,
+            count: unmanagedFolders.length,
+            defaultValue_one: 'Showing {{shown}} of {{count}} folder',
+            defaultValue_other: 'Showing {{shown}} of {{count}} folders',
           })}
         </Text>
         {unmanagedFolders.length > 0 && (
