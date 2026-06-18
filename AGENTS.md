@@ -12,7 +12,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 ## Project Overview
 
-Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with Yarn workspaces (frontend) and Go workspaces (backend).
+Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with pnpm workspaces (frontend) and Go workspaces (backend).
 
 ## Principles
 
@@ -38,8 +38,8 @@ Before running `git push`, stop and get explicit human approval. When changes ar
 ```bash
 make run                          # Backend with hot reload (localhost:3000, admin/admin)
 make build-backend                # Backend only
-yarn start                        # Frontend dev server (watches for changes)
-yarn build                        # Frontend production build
+pnpm run start                    # Frontend dev server (watches for changes)
+pnpm run build                    # Frontend production build
 ```
 
 ### Test
@@ -51,22 +51,22 @@ make test-go-unit                                  # All unit tests
 make test-go-integration                           # Integration tests
 
 # Frontend
-yarn test path/to/file                             # Specific file
-yarn test -t "pattern"                             # By name pattern
-yarn test -u                                       # Update snapshots
+pnpm run test path/to/file                         # Specific file
+pnpm run test -t "pattern"                         # By name pattern
+pnpm run test -u                                   # Update snapshots
 
 # E2E
-yarn e2e:playwright path/to/test.spec.ts           # Specific test
+pnpm run e2e:playwright path/to/test.spec.ts       # Specific test
 ```
 
 ### Lint & Format
 
 ```bash
 make lint-go                      # Go linter
-yarn lint                         # ESLint
-yarn lint:fix                     # ESLint auto-fix
-yarn prettier:write               # Prettier auto-format
-yarn typecheck                    # TypeScript check
+pnpm run lint                     # ESLint
+pnpm run lint:fix                 # ESLint auto-fix
+pnpm run prettier:write           # Prettier auto-format
+pnpm run typecheck                # TypeScript check
 ```
 
 ### Code Generation
@@ -84,7 +84,7 @@ make update-workspace             # Go workspace (after adding modules)
 ### Dev Environment
 
 ```bash
-yarn install --immutable                          # Install frontend deps
+pnpm install --frozen-lockfile                     # Install frontend deps
 make devenv sources=postgres,influxdb,loki        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
@@ -113,7 +113,7 @@ make lefthook-install                             # Pre-commit hooks
 | ---------------------- | ----------------------------------------------------- |
 | `public/app/core/`     | Shared services, components, utilities                |
 | `public/app/features/` | Feature code by domain (dashboard, alerting, explore) |
-| `public/app/plugins/`  | Built-in plugins (many are Yarn workspaces)           |
+| `public/app/plugins/`  | Built-in plugins (many are pnpm workspaces)           |
 | `public/app/types/`    | TypeScript type definitions                           |
 | `public/app/store/`    | Redux store configuration                             |
 
@@ -131,7 +131,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 These built-in plugins require separate build steps: `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `tempo`, `jaeger`, `mysql`, `parca`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
 
-Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
+Build a specific plugin: `pnpm --filter @grafana-plugins/<name> run dev`
 
 ## Key Notes
 
@@ -151,17 +151,17 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 - **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match.
 - **Go 1.25.7** (see `go.mod`). Pre-installed in the VM.
-- **Yarn 4.11.0** via corepack (bundled in `.yarn/releases/`). Run `corepack enable` if `yarn` is not found.
+- **pnpm 11.7.0** via corepack (provisioned from the `packageManager` field). Run `corepack enable` if `pnpm` is not found.
 - **GCC** required for CGo/SQLite compilation of the backend.
 
 ### Running services
 
 - **Backend**: `make run` — builds and starts Grafana backend with hot-reload (air) on `localhost:3000`. Default login: `admin`/`admin`. First build takes ~3 minutes due to debug symbols (`-gcflags all=-N -l`); subsequent hot-reload rebuilds are faster.
-- **Frontend**: `yarn start` — starts webpack dev server that watches for changes. The backend proxies to it. First compile takes ~45s.
+- **Frontend**: `pnpm run start` — starts webpack dev server that watches for changes. The backend proxies to it. First compile takes ~45s.
 - No external databases required — Grafana uses embedded SQLite by default.
 
 ### Testing gotchas
 
-- **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
+- **Frontend tests**: The `pnpm run test` script includes `--watch` by default. Always use `pnpm exec jest --no-watch` or add `--watchAll=false` to run tests once and exit.
 - **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
 - All standard build/test/lint commands are documented in the Commands section above.

@@ -64,11 +64,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: ./.github/actions/setup-node
-      - name: Install JS dependencies
-        run: yarn install --immutable
+      - uses: ./.github/actions/pnpm-install
       - name: Build frontend
-        run: yarn build
+        run: pnpm run build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-frontend

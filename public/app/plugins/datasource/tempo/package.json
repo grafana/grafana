@@ -50,11 +50,11 @@
   },
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
-    "build:stats": "yarn build --env stats --profile --json=compilation-stats.json",
+    "build:stats": "pnpm run build --env stats --profile --json=compilation-stats.json",
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.15.0"
+  "packageManager": "pnpm@11.7.0"
 }

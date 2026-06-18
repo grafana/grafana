@@ -18,13 +18,13 @@ If you wish to build a test plugin with webpack, you may take a look at how the 
 #### Local development
 
 1: Install frontend dependencies:
-`yarn install --immutable`
+`pnpm install --frozen-lockfile`
 
 2: Build and watch the core frontend
-`yarn start`
+`pnpm run start`
 
 3: Build and watch the test plugins
-`yarn e2e:plugin:build:dev`
+`pnpm run e2e:plugin:build:dev`
 
 4: Build the backend
 `make build-go`

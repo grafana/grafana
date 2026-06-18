@@ -1,0 +1,48 @@
+########################################################################################
+# "pnpm install" composite action                                                      #
+#--------------------------------------------------------------------------------------#
+# Self-contained: installs pnpm (version from the packageManager field), sets up Node   #
+# with pnpm's store cached, then runs a frozen install.                                 #
+#                                                                                      #
+# Usage in workflow steps:                                                             #
+#                                                                                      #
+#      - name: Monorepo install                                                        #
+#        uses: ./.github/actions/pnpm-install                                          #
+#        with:                                                                         #
+#          cwd: ${{ github.workspace }}/apps/my-app # (default = '.')                  #
+#          cache-prefix: add cache key prefix       # (default = 'default')            #
+########################################################################################
+
+name: 'Monorepo install (pnpm)'
+description: 'Run pnpm install with cache enabled'
+inputs:
+  cwd:
+    description: "Changes node's process.cwd() if the project is not located on the root. Default to process.cwd()"
+    required: false
+    default: '.'
+  cache-prefix:
+    description: 'Add a specific cache-prefix'
+    required: false
+    default: 'default'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install pnpm
+      uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: '${{ inputs.cwd }}/.nvmrc'
+        cache: 'pnpm'
+        cache-dependency-path: '${{ inputs.cwd }}/pnpm-lock.yaml'
+
+    - name: Install dependencies
+      shell: bash
+      working-directory: ${{ inputs.cwd }}
+      run: pnpm install --frozen-lockfile
+      env:
+        # Skip big post-install dependencies
+        PUPPETEER_SKIP_DOWNLOAD: 'true'
+        CYPRESS_INSTALL_BINARY: '0'

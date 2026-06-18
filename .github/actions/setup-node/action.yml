@@ -3,7 +3,7 @@ description: Sets up a node.js environment with presets for the Grafana reposito
 
 inputs:
   cache:
-    description: Whether to cache the yarn dependencies. Note, its recommended to use .github/actions/yarn-install instead as it has better caching.
+    description: Whether to cache the node dependencies. Note, its recommended to use .github/actions/pnpm-install instead as it has better caching.
     required: false
     default: 'false'
   cwd:
@@ -17,5 +17,5 @@ runs:
     - uses: actions/setup-node@v6
       with:
         node-version-file: '${{ inputs.cwd }}/.nvmrc'
-        cache: ${{ inputs.cache == 'true' && 'yarn' || '' }}
-        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/yarn.lock', inputs.cwd) || 'false' }}
+        cache: ${{ inputs.cache == 'true' && 'pnpm' || '' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && format('{0}/pnpm-lock.yaml', inputs.cwd) || 'false' }}

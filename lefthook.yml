@@ -13,14 +13,14 @@ pre-commit:
     frontend-lint:
       glob: '*.{js,ts,tsx}'
       run: |
-        yarn eslint --ext .js,.tsx,.ts --cache --prune-suppressions --fix {staged_files} &&
+        pnpm exec eslint --ext .js,.tsx,.ts --cache --prune-suppressions --fix {staged_files} &&
         git add eslint-suppressions.json &&
-        yarn prettier --write {staged_files}
+        pnpm exec prettier --write {staged_files}
       stage_fixed: true
 
     other-format:
       glob: '*.{json,scss,md,mdx}'
-      run: yarn prettier --write {staged_files}
+      run: pnpm exec prettier --write {staged_files}
       stage_fixed: true
 
     backend-format:

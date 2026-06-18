@@ -38,11 +38,11 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Build storybook
-        run: yarn storybook:build
+        run: pnpm run storybook:build
 
       # Create the GCS folder name for the preview. Creates a consistent name for all deploys for the PR.
       # Matches format of `pr_<PR_NUMBER>_<SANITIZED_BRANCH>`.

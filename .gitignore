@@ -1,6 +1,5 @@
 node_modules
 npm-debug.log
-yarn-error.log
 coverage/
 .aws-config.json
 awsconfig
@@ -19,13 +18,6 @@ tsconfig.tsbuildinfo
 __debug_bin*
 *.cov
 
-# yarn
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*
@@ -36,7 +28,7 @@ __debug_bin*
 # Swagger intermediate file
 /public/api-spec.json
 
-# Default output of `yarn gen-plugin-schema-types` when run locally without PLUGIN_SCHEMA_TYPES_OUT set
+# Default output of `pnpm run gen-plugin-schema-types` when run locally without PLUGIN_SCHEMA_TYPES_OUT set
 /plugin-schema.d.ts
 
 # Enterprise devenv
@@ -164,10 +156,9 @@ pkg/services/featuremgmt/openfeature-manifest-react.gen.json
 
 /scripts/build/release_publisher/release_publisher
 *.patch
-!.yarn/patches/*.patch
+!patches/*.patch
 
 # Ignoring frontend packages specifics
-/packages/grafana-ui/.yarn/.cache
 /packages/grafana-ui/.storybook/static
 /packages/grafana-ui/unstable
 /packages/grafana-flamegraph/.storybook/static
@@ -186,7 +177,7 @@ manifest-react19.json
 # Ignore go local build dependencies
 /scripts/go/bin/**
 
-# Ignore compilation stats from `yarn stats`
+# Ignore compilation stats from `pnpm run stats`
 compilation-stats.json
 
 # e2e tests

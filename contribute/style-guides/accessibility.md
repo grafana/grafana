@@ -74,6 +74,6 @@ We use [pa11y-ci](https://github.com/pa11y/pa11y-ci) to collect accessibility er
 If the contribution introduces new a11y errors, our continuous integration will fail, preventing you from merging to the main branch. In those cases there are two alternatives for moving forward:
 
 - Check the error log on the pipeline step `test-a11y-frontend-pr`, identify the nature of the error, and then fix it.
-- Locally run the command `yarn test:accessibility-report` that generates an HTML accessibility report, and then go to the URL that contains your change. On this URL, identify the error, and then fix it. Keep in mind that a local end-to-end Grafana instance is going to be running on `http://localhost:3001`.
+- Locally run the command `pnpm run test:accessibility-report` that generates an HTML accessibility report, and then go to the URL that contains your change. On this URL, identify the error, and then fix it. Keep in mind that a local end-to-end Grafana instance is going to be running on `http://localhost:3001`.
 
 You can also avoid introducing accessibility errors by installing an a11y plugin in your browser. For example, you could use axe DevTools or Accessibility Insights for Web, among others.

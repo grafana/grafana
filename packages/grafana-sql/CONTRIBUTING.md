@@ -12,19 +12,19 @@ All commands are run from the **monorepo root**, not this directory.
 **Build the package:**
 
 ```bash
-yarn workspace @grafana/sql build
+pnpm --filter @grafana/sql build
 ```
 
 **Run tests:**
 
 ```bash
-yarn workspace @grafana/sql test
+pnpm --filter @grafana/sql test
 ```
 
 **Type-check:**
 
 ```bash
-yarn workspace @grafana/sql typecheck
+pnpm --filter @grafana/sql typecheck
 ```
 
 ## Adding or changing code

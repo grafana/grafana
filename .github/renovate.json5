@@ -28,7 +28,7 @@
   includePaths: ["package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml"],
   ignorePaths: ["emails/**", "**/mocks/**"],
   labels: ["area/frontend", "dependencies", "no-changelog"],
-  postUpdateOptions: ["yarnDedupeHighest"],
+  postUpdateOptions: ["pnpmDedupe"],
   packageRules: [
     {
       automerge: true,

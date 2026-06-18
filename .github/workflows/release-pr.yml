@@ -149,6 +149,11 @@ jobs:
       - name: Setup Node.js
         if: ${{ !contains(inputs.version, '+security') }}
         uses: ./.github/actions/setup-node
+      # setup-node only provides Node; the bump step below runs pnpm directly, so pnpm
+      # must be on PATH explicitly (unlike the classic yarn shim, it isn't ambient).
+      - name: Install pnpm
+        if: ${{ !contains(inputs.version, '+security') }}
+        uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
       # Use actions/setup-go directly instead of ./.github/actions/setup-go: the composite
       # references ./.github/actions/report-go-cache-sizes, which resolves from this job's
       # workspace (the release-branch checkout). That subtree may lag main and miss the action,
@@ -230,18 +235,18 @@ jobs:
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
-          yarn install
+          pnpm install
           npm version patch --no-git-tag-version
-          yarn run lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
-          yarn install
-          yarn prettier:write
+          pnpm exec lerna version patch --no-push --no-git-tag-version --force-publish --exact --yes
+          pnpm install
+          pnpm run prettier:write
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
 
       # Single commit for all release-PR file changes (changelog + version bumps +
-      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # pnpm-lock.yaml refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
       # API, which gives us two things in one shot:
       #   1. Commits made via the API with a GitHub App installation token are auto-signed
       #      by GitHub under grafana-writer[bot]'s identity (Verified signature),

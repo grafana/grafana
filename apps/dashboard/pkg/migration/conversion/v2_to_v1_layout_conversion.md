@@ -215,7 +215,7 @@ OUTPUT_OVERRIDE=true go test ./apps/dashboard/pkg/migration/conversion/... -run 
 ### Compare Backend vs Frontend
 
 ```bash
-yarn test public/app/features/dashboard-scene/serialization/transformSaveModelV2ToV1.test.ts --no-watch
+pnpm run test public/app/features/dashboard-scene/serialization/transformSaveModelV2ToV1.test.ts --no-watch
 ```
 
 ---

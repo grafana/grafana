@@ -2,7 +2,7 @@ This folder contains a rendered OpenAPI file for each group/version. The “real
 
 ## Generating RTK API Clients
 
-The RTK API clients are generated from processed OpenAPI files using the `packages/grafana-openapi/src/scripts/process-specs.ts` script. The source files are in `pkg/tests/apis/openapi_snapshots`, and the processed files are stored in the `packages/grafana-openapi/src/apis` directory. Spec processing happens as part of `yarn generate-apis` task, but can also be triggered separately (see below).
+The RTK API clients are generated from processed OpenAPI files using the `packages/grafana-openapi/src/scripts/process-specs.ts` script. The source files are in `pkg/tests/apis/openapi_snapshots`, and the processed files are stored in the `packages/grafana-openapi/src/apis` directory. Spec processing happens as part of `pnpm run generate-apis` task, but can also be triggered separately (see below).
 
 To generate or update the RTK API clients:
 
@@ -22,11 +22,11 @@ To generate or update the RTK API clients:
 
 3. Run:
    ```bash
-   yarn generate-apis
+   pnpm run generate-apis
    ```
    This command generates (or updates) the spec files in the `packages/grafana-openapi/src/apis` directory and generates the RTK API clients.
 
 If you want to process the OpenAPI files without generating the RTK API clients (for example, if you have a separate `generate-rtk-apis` file), run:
 ```bash
-yarn workspace @grafana/openapi process-specs
+pnpm --filter @grafana/openapi process-specs
 ```

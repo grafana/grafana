@@ -85,9 +85,9 @@ deps-js: node_modules ## Install frontend dependencies.
 deps: deps-js ## Install all dependencies.
 
 .PHONY: node_modules
-node_modules: package.json yarn.lock ## Install node modules.
+node_modules: package.json pnpm-lock.yaml ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	pnpm install --frozen-lockfile
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
@@ -168,7 +168,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	yarn workspace @grafana/openapi process-specs
+	pnpm --filter @grafana/openapi run process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -179,17 +179,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 pnpm run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 pnpm run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -351,7 +351,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	yarn run build
+	pnpm run build
 
 public/build:
 	$(MAKE) build-js
@@ -525,7 +525,7 @@ run-go: ## Build and run web server immediately.
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
-	yarn start
+	pnpm run start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -607,7 +607,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
-	yarn test
+	pnpm run test
 
 .PHONY: test
 test: test-go test-js ## Run all tests.
@@ -651,20 +651,20 @@ PLATFORM=linux/amd64
 # default to a production build for frontend
 #
 DOCKER_JS_NODE_ENV_FLAG = production
-DOCKER_JS_YARN_BUILD_FLAG = build
-DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+DOCKER_JS_BUILD_FLAG = build
+DOCKER_JS_INSTALL_FLAG = --frozen-lockfile
 #
 # if go is in dev mode, also build node in dev mode
 ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_BUILD_FLAG = dev
+	DOCKER_JS_INSTALL_FLAG =
 endif
 # if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
 ifeq (${NODE_ENV}, dev)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_BUILD_FLAG = dev
+	DOCKER_JS_INSTALL_FLAG =
 endif
 
 .PHONY: build-docker-full
@@ -674,8 +674,8 @@ build-docker-full: ## Build Docker image for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_INSTALL_FLAG=$(DOCKER_JS_INSTALL_FLAG) \
+	--build-arg JS_BUILD_FLAG=$(DOCKER_JS_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -694,8 +694,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_INSTALL_FLAG=$(DOCKER_JS_INSTALL_FLAG) \
+	--build-arg JS_BUILD_FLAG=$(DOCKER_JS_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -715,8 +715,8 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_INSTALL_FLAG=$(DOCKER_JS_INSTALL_FLAG) \
+	--build-arg JS_BUILD_FLAG=$(DOCKER_JS_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \

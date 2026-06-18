@@ -15,19 +15,19 @@ port_goff     = base_port + 6   # +6  go feature flag
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
 
 local_resource(
-  'yarn start',
+  'pnpm start',
   cmd='rm -rf public/build/assets-manifest.json',
-  serve_cmd='yarn start:noLint',
-  resource_deps=['yarn install'],
+  serve_cmd='pnpm run start:noLint',
+  resource_deps=['pnpm install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
   # the webpack build is complete?
@@ -109,11 +109,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])

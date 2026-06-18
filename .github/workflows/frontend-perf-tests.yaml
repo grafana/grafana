@@ -37,11 +37,11 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Run Playwright tests (fsperf)
         id: pw-fsperf
@@ -52,7 +52,7 @@ jobs:
           GRAFANA_URL: https://fsperf.grafana-dev.net
           GRAFANA_ADMIN_USER: ${{ env.FSPERF_USERNAME }}
           GRAFANA_ADMIN_PASSWORD: ${{ env.FSPERF_PASSWORD }}
-        run: yarn e2e:playwright --grep @performance --reporter json
+        run: pnpm run e2e:playwright --grep @performance --reporter json
 
       - name: Bench report (fsperf)
         id: bench-fsperf

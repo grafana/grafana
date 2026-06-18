@@ -25,14 +25,14 @@ jobs:
       - run: go version
       - name: Setup Node
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
       - name: Install Playwright browsers
-        run: yarn playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
       - name: Build grafana
         run: make build
       - name: Run dashboard scenes e2e
-        run: yarn e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
+        run: pnpm run e2e:schema-v2 || echo "Test failed but marking as success since schema V2 is behind a feature flag and should not block PRs"
 
       - name: Always succeed # This is a workaround to make the job pass even if the previous step fails
         if: failure()

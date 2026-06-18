@@ -43,7 +43,7 @@ To do so, execute `go mod tidy` to ensure that `go.mod` and `go.sum` are updated
 
 ## Node.js dependencies
 
-Updated using `yarn`:
+Updated using `pnpm`:
 
 - `package.json`
 

@@ -185,13 +185,13 @@ jobs:
           cwd: './pr'
 
       - name: Install dependencies for manifest generation
-        uses: ./pr/.github/actions/yarn-install
+        uses: ./pr/.github/actions/pnpm-install
         with:
           cwd: './pr'
 
       - name: Generate codeowners manifest
         working-directory: './pr'
-        run: yarn codeowners-manifest
+        run: pnpm run codeowners-manifest
 
       - name: Check if codeowner affected by changes
         id: check-affected
@@ -231,14 +231,14 @@ jobs:
 
       - name: Install dependencies for main branch
         if: steps.check-affected.outputs.affected == 'true'
-        uses: ./pr/.github/actions/yarn-install
+        uses: ./pr/.github/actions/pnpm-install
         with:
           cwd: './main'
 
       - name: Run coverage for main branch
         if: steps.check-affected.outputs.affected == 'true'
         working-directory: './main'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: pnpm run test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'
@@ -251,7 +251,7 @@ jobs:
       - name: Run coverage for PR branch
         if: steps.check-affected.outputs.affected == 'true'
         working-directory: './pr'
-        run: yarn test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
+        run: pnpm run test:coverage:by-codeowner "${{ matrix.codeowner }}" --maxWorkers=1
         env:
           SHOULD_OPEN_COVERAGE_REPORT: 'false'
           CI: 'true'

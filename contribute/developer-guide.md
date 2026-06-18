@@ -36,9 +36,9 @@ For alternative ways of cloning the Grafana repository, refer to [GitHub's docum
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
-### Set up yarn
+### Set up pnpm
 
-In the repository enable and install yarn via corepack
+In the repository enable and install pnpm via corepack
 
 ```
 corepack enable
@@ -47,7 +47,7 @@ corepack install
 
 ### Configure precommit hooks
 
-We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously, the Grafana repository automatically installed these hook when you ran `yarn install`, but they are now opt-in for all contributors.
+We use pre-commit hooks (via [lefthook](https://github.com/evilmartians/lefthook)) to lint, fix, and format code as you commit your changes. Previously, the Grafana repository automatically installed these hook when you ran `pnpm install`, but they are now opt-in for all contributors.
 
 To install the precommit hooks:
 
@@ -68,13 +68,13 @@ make lefthook-uninstall
 We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
 
 ```sh
-yarn knip
+pnpm run knip
 ```
 
 In some cases, fixes can be automatically applied:
 
 ```sh
-yarn knip:fix
+pnpm run knip:fix
 ```
 
 ## Build Grafana
@@ -89,20 +89,20 @@ When building Grafana, be aware that it consists of two components:
 Before you can build the frontend assets, you need to install the related dependencies:
 
 ```
-yarn install --immutable
+pnpm install --frozen-lockfile
 ```
 
-> If you get the error `The remote archive doesn't match the expected checksum` for a dependency pulled from a link (for example, `"tether-drop": "https://github.com/torkelo/drop"`): this is a temporary mismatch. To work around the error (while someone corrects the issue), you can prefix your `yarn install --immutable` command with [`YARN_CHECKSUM_BEHAVIOR=update`](https://yarnpkg.com/advanced/error-codes#yn0018---cache_checksum_mismatch).
+> If you get an integrity or checksum error for a dependency (for example, one pulled from a Git URL): this is usually a temporary mismatch. To work around the error (while someone corrects the issue), run `pnpm install --no-frozen-lockfile` to let pnpm refresh the affected lockfile entry, or `pnpm install --force` to refetch packages from scratch.
 
 After the command has finished, you can start building the source code:
 
 ```
-yarn start
+pnpm run start
 ```
 
 This command generates SASS theme files, builds all external plugins, and then builds the frontend assets.
 
-After `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+After `pnpm run start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
 
@@ -124,24 +124,24 @@ If you want to contribute to any of the plugins listed below (that are found wit
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
 ```
-yarn plugin:build:dev
+pnpm run plugin:build:dev
 ```
 
 If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/tempo`.
 
 ```
-yarn workspace <name_of_plugin> dev
+pnpm --filter <name_of_plugin> dev
 ```
 
 If you want to run multiple specific plugins, you can use the following command.
 
 ```
-yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+pnpm exec nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
 ```
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
 
-`yarn nx show projects --projects="@grafana-plugins/*"`
+`pnpm exec nx show projects --projects="@grafana-plugins/*"`
 
 Next, we'll explain how to build and run the web server that serves these frontend assets.
 
@@ -217,7 +217,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 We use [Jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
-yarn test
+pnpm run test
 ```
 
 ### Run backend tests
@@ -258,17 +258,17 @@ make test-go-integration-postgres
 
 - Grafana uses [Playwright](https://playwright.dev/) to run automated end-to-end tests. You can find more information [in our end-to-end testing style guide](./style-guides/e2e-playwright.md#playwright-for-plugins)
 
-- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `yarn playwright install chromium`.
-- Run tests with `yarn e2e:playwright [optional path to test file]`.
+- Each version of Playwright needs specific versions of browser binaries to operate. You need to use the Playwright CLI to install these browsers: `pnpm exec playwright install chromium`.
+- Run tests with `pnpm run e2e:playwright [optional path to test file]`.
 
-- To open the last HTML report, you can run `yarn playwright show-report`. You can also open an arbitrary report with `yarn playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
+- To open the last HTML report, you can run `pnpm exec playwright show-report`. You can also open an arbitrary report with `pnpm exec playwright show-report <reportLocation>`. The reports are also downloadable from CI by:
   - Clicking through to _End-to-end tests_/_All Playwright tests complete_.
   - Clicking _Summary_.
   - Download the _playwright-html-<number>_ artifact.
   - Unzip.
-  - Run `yarn playwright show-report <reportLocation>`
+  - Run `pnpm exec playwright show-report <reportLocation>`
 
-- There are also a set of acceptance tests that can be run with `yarn e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
+- There are also a set of acceptance tests that can be run with `pnpm run e2e:acceptance`. These tests should run against a Grafana instance with the default configuration (e.g. no provisioned dashboards/datasources), and are used to verify our cloud/on-prem images are working as expected.
 
 If you are curious about other commands, you can see the full list in [the Playwright documentation](https://playwright.dev/docs/test-cli#all-options).
 
@@ -377,7 +377,7 @@ ulimit: open files: cannot modify limit: Operation not permitted
 
 If that happens to you, chances are you've already set a lower limit and your shell won't let you set a higher one. Try looking in your shell initialization files (`~/.bashrc`, typically), to see if there's already an `ulimit` command that you can tweak.
 
-### System limit for number of file watchers reached while running `yarn start`
+### System limit for number of file watchers reached while running `pnpm run start`
 
 Depending on your environment, you may need to increase the number of file watchers allowed by `inotify` package to monitor filesystem changes. You may encounter an error `Error: ENOSPC: System limit for number of file watchers reached` otherwise.
 
@@ -409,9 +409,9 @@ On macOS:
 sysctl kern.maxfiles
 ```
 
-### JavaScript heap out of memory while running `yarn start`
+### JavaScript heap out of memory while running `pnpm run start`
 
-Running `yarn start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
+Running `pnpm run start` requires a substantial amount of memory space. You may check the currently allocated heap space to `node` by running the command:
 
 ```bash
 node -e 'console.log(v8.getHeapStatistics().heap_size_limit/(1024*1024))'

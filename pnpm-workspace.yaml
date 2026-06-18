@@ -1,0 +1,190 @@
+packages:
+  - 'packages/*'
+  - 'public/app/plugins/*/*'
+  - 'e2e-playwright/test-plugins/*'
+
+# Supply chain security — 3 days in minutes (matches yarn's npmMinimalAgeGate).
+# pnpm 11 defaults to 1440 (1 day), so this must be set explicitly.
+minimumReleaseAge: 4320
+# Only @grafana-scoped packages may be excluded — excluding anything else would
+# weaken the supply-chain gate. Security-fix version bumps are appended by
+# `pnpm audit --fix` and need matching excludes when they pull recent releases.
+minimumReleaseAgeExclude:
+  - "@grafana/scenes"
+  - "@grafana/scenes-react"
+  - "@grafana/plugin-e2e"
+  - "@grafana/plugin-ui"
+  - jspdf@3.0.1
+  - dompurify@3.2.4
+  - jspdf@3.0.2
+  - jspdf@3.0.5
+  - jspdf@4.0.1
+  - jspdf@4.2.0
+  - jspdf@4.2.1
+  - dompurify@3.3.2
+  - dompurify@3.3.4
+  - dompurify@3.4.0
+  - uuid@11.1.1
+  - tar@7.5.16
+  - dompurify@3.4.7
+  - dompurify@3.4.6
+  - dompurify@3.4.9
+  - dompurify@3.4.8
+  - dompurify@3.4.11
+
+# Link workspace packages by version match, mimicking yarn. The @grafana/*
+# packages reference each other by exact Lerna-managed version (e.g. 13.1.0-pre)
+# rather than workspace:*, so without this pnpm would try to fetch them from npm.
+linkWorkspacePackages: true
+
+# Peer dependency handling for the monorepo.
+resolvePeersFromWorkspaceRoot: true
+dedupePeerDependents: true
+
+# Force singletons for packages that export `unique symbol` types (RTK Query's
+# skipToken). The react 18 / react-19-alias dual build makes pnpm create two
+# @reduxjs/toolkit instances under different peer contexts, producing
+# "unique symbol is not assignable" type errors. Removable once react 18 is retired.
+publicHoistPattern:
+  - "@reduxjs/toolkit"
+  - "react-redux"
+
+# Build-script allowlist — pnpm blocks install scripts by default. Each decision
+# is deliberate: native builds are allowed, telemetry/optional native parsers denied.
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  '@tree-sitter-grammars/tree-sitter-yaml': false
+  core-js: false
+  core-js-pure: false
+  esbuild: true
+  msw: true
+  nx: true
+  protobufjs: true
+  tree-sitter: false
+  tree-sitter-json: false
+  unrs-resolver: true
+
+# Package extensions — same syntax as the old .yarnrc.yml.
+packageExtensions:
+  croact-css-styled@1.1.9:
+    dependencies:
+      croact: "1.0.4"
+  doctrine@3.0.0:
+    dependencies:
+      assert: "2.0.0"
+  rc-trigger@2.6.5:
+    peerDependencies:
+      react: "17.0.1"
+      react-dom: "17.0.1"
+
+# Patches — moved from .yarn/patches/ to patches/ and renamed to pnpm convention.
+patchedDependencies:
+  history@4.10.1: patches/history@4.10.1.patch
+  react-grid-layout@1.4.4: patches/react-grid-layout@1.4.4.patch
+  react-split-pane@0.1.92: patches/react-split-pane@0.1.92.patch
+  slate-dev-environment@0.2.5: patches/slate-dev-environment@0.2.5.patch
+  storybook@10.3.6: patches/storybook@10.3.6.patch
+  # Deduplicates processAsyncTree's queue so webpack doesn't re-enqueue the same
+  # module through pnpm's symlinks until V8's array limit throws. Not fixed upstream.
+  webpack@5.107.2: patches/webpack@5.107.2.patch
+
+# Overrides — converted from package.json `resolutions`.
+overrides:
+  # --- Simple version pins ---
+  underscore: "1.13.8"
+  "@types/slate": "0.47.11"
+  # Pin the (transitive) react-grid-layout to the patched version. yarn's
+  # resolutions forced this via the patch: specifier; pnpm needs an explicit pin
+  # or the version drifts and patches/react-grid-layout@1.4.4.patch goes unused.
+  react-grid-layout: "1.4.4"
+  redux: "^5.0.0"
+  gitconfiglocal: "2.1.0"
+  nodemailer: "8.0.7"
+  ws: "^8.20.1"
+  js-cookie: "^3.0.7"
+  "@opentelemetry/core": "2.8.0"
+  # Drift pins: a fresh pnpm resolution moved these above the versions yarn.lock
+  # had, and the newer releases broke types in code untouched by this migration
+  # (react-hook-form 7.79 tightened Validate<>; @bsull/augurs 0.10.2 added
+  # Symbol.dispose). Pin to the yarn-resolved versions; bump separately later.
+  react-hook-form: "7.62.0"
+  "@bsull/augurs": "0.10.1"
+  # 7.16's no-node-access rule flags a test untouched by this migration; 7.1.1
+  # (the yarn-resolved version) does not. Pin to keep lint stable.
+  eslint-plugin-testing-library: "7.1.1"
+  # 6.14's no-global-function-names flags pre-existing map-keys() usage; 6.2.1
+  # (yarn-resolved, transitive via stylelint-config-sass-guidelines) does not.
+  stylelint-scss: "6.2.1"
+  # 25.7+ prints a promotional console.info banner during init; jest-fail-on-console
+  # then fails every suite that initialises i18n. 25.6.2 (yarn-resolved) is quiet.
+  i18next: "25.6.2"
+  # Single webpack version across all workspaces — a range across 20 package.json
+  # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
+  webpack: "5.107.2"
+  "@reduxjs/toolkit": "2.10.1"
+
+  # --- Scoped version selectors (yarn npm: prefix dropped) ---
+  "semver@~7.3.5": "^7.3.5"
+  "debug@^0.7.2": "2.6.9"
+  "debug@^0.7.4": "2.6.9"
+  "tmp@^0.0.33": "~0.2.1"
+  "js-yaml@4.1.1": "^4.1.0"
+  "js-yaml@=4.1.1": "^4.1.0"
+
+  # --- Nested overrides (yarn "/" separator becomes ">" in pnpm) ---
+  "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
+  "@grafana/scenes>@grafana/e2e-selectors": "workspace:*"
+  "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*"
+  "swagger-ui-react>dompurify": "3.4.0"
+  "socks>ip-address": "10.2.0"
+  "refractor>prismjs": "^1.27.0"
+  "@types/slate>immutable": "^4.0.0"
+  "@types/slate-react>immutable": "^4.0.0"
+  # @testing-library/dom@10.4.1 allows ^0.5.9; pnpm picks 0.5.16, whose corrected
+  # accessible-name handling (title vs text content) breaks TraceView SpanDetail
+  # tests untouched by this migration. yarn locked 0.5.10 — pin to match.
+  "@testing-library/dom>dom-accessibility-api": "0.5.10"
+
+  # --- Vendored workspace packages (formerly github: deps) ---
+  "@mapbox/jsonlint-lines-primitives": "workspace:*"
+  get-document: "workspace:*"
+
+  # --- Force ALL consumers (incl. external npm pkgs like @grafana/scenes,
+  #     @grafana/plugin-ui) onto the workspace @grafana/* copies. The npm-published
+  #     versions lack the src/ files that the @grafana-app/source export condition
+  #     points to, so webpack fails with "no valid target file was found". ---
+  "@grafana/data": "workspace:*"
+  "@grafana/runtime": "workspace:*"
+  "@grafana/ui": "workspace:*"
+  "@grafana/e2e-selectors": "workspace:*"
+  "@grafana/schema": "workspace:*"
+  "@grafana/i18n": "workspace:*"
+
+  # --- Version pin previously expressed as a patch: resolution ---
+  "slate-dev-environment@^0.2.2": "0.2.5"
+
+  # --- Security advisories (from `pnpm audit --fix override`) ---
+  # nodemailer and js-yaml are intentionally pinned above (8.0.7 / ^4.1.0), so the
+  # audit's bumps for them are omitted here to avoid overriding deliberate choices.
+  dompurify@<3.2.4: ^3.2.4
+  dompurify@<3.3.2: ^3.3.2
+  dompurify@<3.4.0: ^3.4.0
+  dompurify@<3.4.7: ^3.4.7
+  dompurify@<3.4.9: ^3.4.9
+  dompurify@<=3.3.1: ^3.3.2
+  dompurify@<=3.3.3: ^3.3.4
+  dompurify@<=3.4.10: ^3.4.11
+  dompurify@<=3.4.5: ^3.4.6
+  dompurify@<=3.4.6: ^3.4.7
+  dompurify@>=1.0.10 <3.4.0: ^3.4.0
+  dompurify@>=3.0.0 <=3.4.7: ^3.4.8
+  jspdf@<3.0.1: ^3.0.1
+  jspdf@<4.2.0: ^4.2.0
+  jspdf@<=3.0.1: ^3.0.2
+  jspdf@<=3.0.4: ^3.0.5
+  jspdf@<=4.0.0: ^4.0.1
+  jspdf@<=4.2.0: ^4.2.1
+  tar@<=7.5.15: ^7.5.16
+  uuid@<11.1.1: ^11.1.1

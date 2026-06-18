@@ -26,8 +26,14 @@ function scenesModule(): string {
   try {
     const status = fs.lstatSync(scenesPath);
     if (status.isSymbolicLink()) {
-      console.log(`scenes is linked to local scenes repo`);
-      return path.resolve(scenesPath + '/src');
+      // pnpm symlinks every dependency, so the symlink alone doesn't mean a local
+      // dev checkout. Resolve the target: pnpm's store links resolve inside
+      // node_modules, a real local checkout resolves outside it.
+      const target = fs.realpathSync(scenesPath);
+      if (!target.includes('node_modules')) {
+        console.log(`scenes is linked to local scenes repo`);
+        return path.resolve(scenesPath + '/src');
+      }
     }
   } catch (error) {
     console.error(`Error checking scenes path: ${error instanceof Error ? error.message : String(error)}`);

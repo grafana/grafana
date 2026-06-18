@@ -34,7 +34,7 @@ jobs:
               - '.prettierrc*'
               - '.stylelintrc*'
               - 'tsconfig*'
-              - 'yarn.lock'
+              - 'pnpm-lock.yaml'
               - 'package.json'
               - '.betterer*'
               - 'jest.config*'

@@ -143,16 +143,16 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 
 	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
+		return nil, fmt.Errorf("missing app entry, try running `pnpm run build`")
 	}
 	if entryPoints.Dark == nil || len(entryPoints.Dark.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing dark entry, try running `yarn build`")
+		return nil, fmt.Errorf("missing dark entry, try running `pnpm run build`")
 	}
 	if entryPoints.Light == nil || len(entryPoints.Light.Assets.CSS) == 0 {
-		return nil, fmt.Errorf("missing light entry, try running `yarn build`")
+		return nil, fmt.Errorf("missing light entry, try running `pnpm run build`")
 	}
 	if entryPoints.Swagger == nil || len(entryPoints.Swagger.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing swagger entry, try running `yarn build`")
+		return nil, fmt.Errorf("missing swagger entry, try running `pnpm run build`")
 	}
 
 	rsp := &dtos.EntryPointAssets{

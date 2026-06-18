@@ -89,7 +89,7 @@ jobs:
         uses: actions/cache@v5  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
         id: cache
         with:
-          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('yarn.lock', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
+          key: "e2e-build-frontend-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json', 'packages/**', 'public/**', 'scripts/webpack/**', '!**/*.test.ts', '!**/*.test.tsx', 'tsconfig.json', '.browserslistrc', 'nx.json', 'project.json', '.nvmrc') }}"
           path: |
             public/build
             public/app/plugins/*/*/dist
@@ -98,9 +98,9 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
+      - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/pnpm-install
 
       - name: Build frontend
         if: steps.cache.outputs.cache-hit != 'true'
@@ -144,14 +144,14 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Run Storybook and E2E tests
-        run: yarn e2e:playwright:storybook
+        run: pnpm run e2e:playwright:storybook
 
   run-playwright-tests:
     needs:
@@ -176,12 +176,12 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       # It's quicker to build them in each test shard then prebuild and upload/download them as artifacts
       - name: Build test plugins
-        run: yarn e2e:plugin:build
+        run: pnpm run e2e:plugin:build
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
       - name: Download backend artifacts
@@ -228,7 +228,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Wait for Grafana server to start
         run: |
@@ -251,7 +251,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Run Playwright tests
-        run: yarn e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
+        run: pnpm run e2e:playwright --shard=${{ matrix.shard }}/${{ matrix.shardTotal }} --reporter=dot,blob --output=playwright-test-results
         env:
           GRAFANA_URL: http://localhost:3001
           CI: true
@@ -349,7 +349,7 @@ jobs:
             echo ""
             echo "Alternatively, download the test report from $REPORT_URL"
             echo "and view it locally with:"
-            echo "  yarn playwright show-report <path-to-unzipped-report>"
+            echo "  pnpm exec playwright show-report <path-to-unzipped-report>"
           fi
 
           if [ "$FAILED" = "true" ]; then
@@ -417,9 +417,9 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
         with:
-          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+          cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the pnpm-install step
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:

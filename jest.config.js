@@ -47,7 +47,9 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
+    // The optional .pnpm/<pkg>@<ver>/node_modules/ segment matches pnpm's nested
+    // store layout so ESM packages there are still transformed, not skipped.
+    `/node_modules/(?!(?:\\.pnpm/.+/node_modules/)?(${esModules}))`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],

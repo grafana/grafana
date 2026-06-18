@@ -21,7 +21,7 @@ export default (env: Env = {}) => {
     plugins: [new BundleAnalyzerPlugin(bundleAnalyzerOpts)],
   };
 
-  // yarn build:smolstats
+  // pnpm run build:smolstats
   if (env.filtered) {
     config.plugins?.push(
       new FilterStatsPlugin({
@@ -31,13 +31,13 @@ export default (env: Env = {}) => {
     );
   }
 
-  // yarn build:stats --env doctor
+  // pnpm run build:stats --env doctor
   if (env.doctor) {
     config.plugins?.push(new RsdoctorWebpackPlugin());
   }
 
   // disable hashing in output filenames to make them easier to identify
-  // yarn build:stats --env doctor --env namedChunks
+  // pnpm run build:stats --env doctor --env namedChunks
   if (env.namedChunks) {
     config.optimization = {
       chunkIds: 'named',

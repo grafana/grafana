@@ -38,16 +38,16 @@ jobs:
         with:
           cwd: './pr'
 
-      - name: Install yarn dependencies
-        uses: ./pr/.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./pr/.github/actions/pnpm-install
         with:
           cwd: './pr'
 
       - name: Build packages
-        run: yarn packages:build
+        run: pnpm run packages:build
 
       - name: Pack packages
-        run: yarn packages:pack --out ./%s.tgz
+        run: pnpm run packages:pack --out ./%s.tgz
 
       - name: Zip built tarballed packages
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
@@ -85,16 +85,16 @@ jobs:
         with:
           cwd: './base'
 
-      - name: Install yarn dependencies
-        uses: ./pr/.github/actions/yarn-install # run the action from the PR, pointing to the base checkout
+      - name: Install dependencies
+        uses: ./pr/.github/actions/pnpm-install # run the action from the PR, pointing to the base checkout
         with:
           cwd: './base'
 
       - name: Build packages
-        run: yarn packages:build
+        run: pnpm run packages:build
 
       - name: Pack packages
-        run: yarn packages:pack --out ./%s.tgz
+        run: pnpm run packages:pack --out ./%s.tgz
 
       - name: Zip built tarballed packages
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
@@ -123,8 +123,8 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Get built packages from pr
         uses: actions/download-artifact@v8

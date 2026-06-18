@@ -321,10 +321,16 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       unsafeCache: true,
     },
 
+    // pnpm isolates each workspace's node_modules, so loaders aren't hoisted to a
+    // single tree. Resolve them from both the cwd and this config's own directory.
+    resolveLoader: {
+      modules: ['node_modules', path.resolve(import.meta.dirname, 'node_modules')],
+    },
+
     stats: 'minimal',
 
     watchOptions: {
-      ignored: ['**/node_modules', '**/dist', '**/.yarn'],
+      ignored: ['**/node_modules', '**/dist'],
     },
   };
 
