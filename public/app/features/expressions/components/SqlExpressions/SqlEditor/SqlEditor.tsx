@@ -27,12 +27,12 @@ export const SqlEditor = ({
   children,
 }: SqlEditorProps) => {
   const styles = useStyles2(getStyles);
-  const completionSource = useMemo(() => {
+  const completionSources = useMemo(() => {
     if (!completionProvider) {
       return undefined;
     }
 
-    return getSqlCompletionSource(completionProvider);
+    return [getSqlCompletionSource(completionProvider)];
   }, [completionProvider]);
 
   const formatQuery = useCallback(() => {
@@ -50,7 +50,7 @@ export const SqlEditor = ({
           onChange={onChange}
           height={typeof height === 'number' ? `${height}px` : height}
           aria-label={ariaLabel}
-          completionSources={completionSource ? [completionSource] : undefined}
+          completionSources={completionSources}
         />
       </div>
       {children?.({ formatQuery })}

@@ -1,7 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { type Resource, type ResourceList } from 'app/features/apiserver/types';
+import { type Resource, type TableResponse } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -143,47 +143,18 @@ export class UnifiedDashboardAPI
     return await this.v1Client.restoreDashboardVersion(uid, version);
   }
 
-  async listDeletedDashboards(
-    options: ListDeletedDashboardsOptions
-  ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    const { v1: v1Token, v2: v2Token } = decodeCompositeToken(options.continue);
+  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
+    // Table format carries only metadata — no spec/status available for conversion
+    // filtering. Both v1 and v2 hit the same backend trash store, so delegate to v1.
+    return this.v1Client.listDeletedDashboards(options);
+  }
 
-    const v1Response = await this.v1Client.listDeletedDashboards({ ...options, continue: v1Token });
-    const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
-
-    if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
-      return {
-        ...v1Response,
-        metadata: {
-          ...v1Response.metadata,
-          continue: encodeCompositeToken(v1Response.metadata.continue, v2Token),
-        },
-      };
+  async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<Dashboard | DashboardV2Spec>> {
+    try {
+      return await this.v1Client.getDashboard(name, params);
+    } catch {
+      return await this.v2Client.getDashboard(name, params);
     }
-
-    const v2Response = await this.v2Client.listDeletedDashboards({ ...options, continue: v2Token });
-    const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
-
-    if (v1Valid.length === 0) {
-      return {
-        ...v2Response,
-        metadata: {
-          ...v2Response.metadata,
-          continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
-        },
-      };
-    }
-
-    const merged = [...v1Valid, ...v2Valid].filter(isResource);
-
-    return {
-      ...v1Response,
-      items: merged,
-      metadata: {
-        ...v1Response.metadata,
-        continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
-      },
-    };
   }
 
   async restoreDashboard(dashboard: Resource<DashboardDataDTO | DashboardV2Spec>) {

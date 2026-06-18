@@ -198,7 +198,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   },
 });
 
-export function getPreviewResults(
+function getPreviewResults(
   previewError: unknown | undefined,
   payloadFormatError: string | null,
   data: TemplatePreviewResponse | undefined

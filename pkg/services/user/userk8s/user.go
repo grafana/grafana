@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -246,11 +247,116 @@ func (s *UserK8sService) GetByID(ctx context.Context, cmd *user.GetUserByIDQuery
 }
 
 func (s *UserK8sService) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*user.User, error) {
-	return nil, errors.New("not implemented")
+	ctx, span := s.tracer.Start(ctx, "user.getByUID", trace.WithAttributes(
+		attribute.String("userUID", cmd.UID),
+	))
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in GetByUID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: cmd.UID})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", cmd.UID, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	return toUser(found, orgID), nil
 }
 
-func (s *UserK8sService) ListByIdOrUID(ctx context.Context, ids []string, intIDs []int64) ([]*user.User, error) {
-	return nil, errors.New("not implemented")
+// ListByIdOrUID resolves users by their k8s UID (resource name) and/or legacy
+// internal ID, deduplicating users matched by both. Users that don't resolve are
+// omitted, matching the legacy "WHERE uid IN (...) OR id IN (...)" semantics.
+func (s *UserK8sService) ListByIdOrUID(ctx context.Context, uids []string, intIDs []int64) ([]*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.listByIdOrUID")
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	orgID, err := s.getOrgID(ctx, ctxLogger)
+	if err != nil {
+		ctxLogger.Error("failed to get orgID from context in ListByIdOrUID", "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
+
+	client, err := s.getUserClient(ctx)
+	if err != nil {
+		ctxLogger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	users := make([]*user.User, 0, len(uids)+len(intIDs))
+	seen := make(map[string]struct{}, len(uids)+len(intIDs))
+
+	for _, uid := range uids {
+		if uid == "" {
+			continue
+		}
+		found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				continue
+			}
+			ctxLogger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", uid, "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	for _, id := range intIDs {
+		found, err := s.getByInternalID(ctx, ctxLogger, client, id, namespace)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				continue
+			}
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return nil, err
+		}
+		if _, ok := seen[found.Name]; ok {
+			continue
+		}
+		seen[found.Name] = struct{}{}
+		users = append(users, toUser(found, orgID))
+	}
+
+	return users, nil
 }
 
 func (s *UserK8sService) GetByLoginWithPassword(_ context.Context, _ *user.GetUserByLoginQuery) (*user.User, error) {
@@ -388,6 +494,9 @@ func (s *UserK8sService) Update(ctx context.Context, cmd *user.UpdateUserCommand
 	}
 	if cmd.IsProvisioned != nil {
 		existing.Spec.Provisioned = *cmd.IsProvisioned
+	}
+	if cmd.OrgRole != nil {
+		existing.Spec.Role = *cmd.OrgRole
 	}
 
 	_, err = client.Update(ctx, existing, resource.UpdateOptions{})
@@ -553,6 +662,9 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	if cmd.Query != "" {
 		req = req.Param("query", cmd.Query)
 	}
+	if cmd.IncludeAccessControl {
+		req = req.Param("accesscontrol", "true")
+	}
 	for _, sortParam := range legacysort.ConvertToSortParams(cmd.SortOpts, iamuser.UserSortFieldMapping()) {
 		req = req.Param("sort", sortParam)
 	}
@@ -576,12 +688,17 @@ func (s *UserK8sService) Search(ctx context.Context, cmd *user.SearchUsersQuery)
 	users := make([]*user.UserSearchHitDTO, 0, len(searchResp.Hits))
 	for _, hit := range searchResp.Hits {
 		users = append(users, &user.UserSearchHitDTO{
+			ID:            hit.InternalId,
 			UID:           hit.Name,
 			Name:          hit.Title,
 			Login:         hit.Login,
 			Email:         hit.Email,
+			Role:          hit.Role,
+			AccessControl: hit.AccessControl,
 			LastSeenAt:    time.Unix(hit.LastSeenAt, 0),
 			LastSeenAtAge: hit.LastSeenAtAge,
+			Created:       time.UnixMilli(hit.Created),
+			IsDisabled:    hit.Disabled,
 			IsProvisioned: hit.Provisioned,
 		})
 	}
@@ -760,6 +877,7 @@ func toUser(u *iamv0alpha1.User, orgID int64) *user.User {
 		IsDisabled:    u.Spec.Disabled,
 		EmailVerified: u.Spec.EmailVerified,
 		IsProvisioned: u.Spec.Provisioned,
+		OrgRole:       u.Spec.Role,
 		Created:       u.CreationTimestamp.Time,
 		Updated:       u.GetUpdateTimestamp(),
 		LastSeenAt:    time.Unix(u.Status.LastSeenAt, 0),

@@ -37,9 +37,3 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
     </ThemeContext.Provider>
   );
 };
-
-export const provideTheme = <P extends {}>(component: React.ComponentType<P>, theme: GrafanaTheme2) => {
-  return function ThemeProviderWrapper(props: P) {
-    return <ThemeProvider value={theme}>{React.createElement(component, { ...props })}</ThemeProvider>;
-  };
-};
