@@ -129,6 +129,27 @@ export type PanelOptionsSupplier<TOptions> = (
   context: StandardEditorContext<TOptions>
 ) => void;
 
+/**
+ * Controls the view panel side pane controls
+ */
+export interface PanelPluginViewOptions {
+  /**
+   * Enable fanout option. Enables splitting a single panel into multiple panels by series or label
+   */
+  fanout?: {
+    enabled: boolean;
+  };
+  /**
+   *  Make some option properties available as quick toggles in the view panel side pane
+   */
+  quickToggles?: PluginViewOptionsQuickToggles;
+}
+
+export interface PluginViewOptionsQuickToggles {
+  optionProperties: string[];
+  fieldConfigProperties: string[];
+}
+
 export class PanelPlugin<
   TOptions = any,
   TFieldConfigOptions extends object = {},
@@ -139,6 +160,7 @@ export class PanelPlugin<
     overrides: [],
   };
 
+  private _viewPanelOptions?: PanelPluginViewOptions;
   private _fieldConfigRegistry?: FieldConfigOptionsRegistry;
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
@@ -200,6 +222,10 @@ export class PanelPlugin<
       },
       overrides: this._fieldConfigDefaults.overrides,
     };
+  }
+
+  get viewPanelOptions() {
+    return this._viewPanelOptions;
   }
 
   /**
@@ -552,6 +578,14 @@ export class PanelPlugin<
    */
   setScreenshotImage(handler: PanelScreenshotHandler) {
     this.onScreenshot = handler;
+    return this;
+  }
+
+  /**
+   * Set options for the view panel side pane, which can include enabling fanout and adding quick toggles for options and field config defaults.
+   */
+  setViewPanelOptions(options: PanelPluginViewOptions) {
+    this._viewPanelOptions = options;
     return this;
   }
 }

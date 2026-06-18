@@ -102,10 +102,11 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
-	// Enforce max_file_size right at the repo boundary so oversized payloads
-	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
-	// the bytes are streamed back from handleGetRawFile.
-	readWriter = repository.NewSizeLimitedReaderWriter(readWriter, c.maxFileSize)
+	if c.maxFileSize > 0 {
+		if m, ok := readWriter.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(c.maxFileSize)
+		}
+	}
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {

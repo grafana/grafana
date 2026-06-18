@@ -6,9 +6,9 @@ import { LazyLoader, type SceneComponentProps, type VizPanel } from '@grafana/sc
 import { useElementSelection } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
+import { renderMatchingSoloPanels, useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { renderMatchingSoloPanels, useSoloPanelContext } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 
 import { type DashboardGridItem, type RepeatDirection } from './DashboardGridItem';
