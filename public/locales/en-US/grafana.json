@@ -1303,8 +1303,7 @@
       "delete": {
         "button": {
           "label": "Delete all rules"
-        },
-        "error": "Failed to delete folder rules"
+        }
       },
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",

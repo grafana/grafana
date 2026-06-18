@@ -160,21 +160,6 @@ export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
 /**
- * This one will check for folder abilities
- */
-export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
-  return {
-    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
-    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
-  };
-};
-
-export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
-  const allAbilities = useFolderBulkActionAbilities();
-  return allAbilities[action];
-};
-
-/**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
  */
 export const useAlertingAbilities = (): Abilities<AlertingAction> => {
