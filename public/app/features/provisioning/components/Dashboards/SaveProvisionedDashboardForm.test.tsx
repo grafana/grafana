@@ -1,4 +1,4 @@
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type Dashboard } from '@grafana/schema';
@@ -10,7 +10,6 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { setupProvisioningMswServer } from '../../mocks/server';
 
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
@@ -29,12 +28,6 @@ jest.mock('@grafana/runtime', () => {
         },
       },
     },
-  };
-});
-
-jest.mock('../../hooks/useProvisionedRequestHandler', () => {
-  return {
-    useProvisionedRequestHandler: jest.fn(),
   };
 });
 
@@ -62,11 +55,12 @@ jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
   };
 });
 
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {
     ...actual,
-    useNavigate: () => jest.fn(),
+    useNavigate: () => mockNavigate,
   };
 });
 
@@ -113,6 +107,8 @@ function setup(props: Partial<Props> = {}) {
       useState: () => dashboardState,
       setState: jest.fn(),
       closeModal: jest.fn(),
+      getSaveModel: jest.fn().mockReturnValue({}),
+      saveCompleted: jest.fn(),
       getSaveAsModel: jest.fn().mockReturnValue(mockDashboard),
       setManager: jest.fn(),
       getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -164,6 +160,20 @@ function requireCapturedRequest(capturedRequest: { url: URL; body: unknown } | n
   return capturedRequest as { url: URL; body: unknown };
 }
 
+// Minimal ResourceWrapper body the real useProvisionedRequestHandler can consume
+function saveSuccessResponse(name: string, title: string) {
+  return HttpResponse.json({
+    resource: {
+      upsert: {
+        apiVersion: 'v1',
+        kind: 'Dashboard',
+        metadata: { name, uid: name },
+        spec: { title },
+      },
+    },
+  });
+}
+
 describe('SaveProvisionedDashboardForm', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
 
@@ -207,9 +217,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'New Dashboard' } } },
-        });
+        return saveSuccessResponse('new-dashboard', 'New Dashboard');
       })
     );
 
@@ -259,6 +267,13 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(request.url.searchParams.get('ref')).toBe('dashboard/2023-01-01-abcde');
     expect(request.url.searchParams.get('message')).toBe('Initial commit');
     expect(request.body).toEqual(newDashboard);
+
+    // Success path completes the save and navigates to the newly created dashboard
+    await waitFor(() => {
+      expect(props.dashboard.saveCompleted).toHaveBeenCalled();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining('/d/new-dashboard'));
+    expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
 
   it('uses the repository commit.singleResourceMessageTemplate when the comment is empty', async () => {
@@ -266,9 +281,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'new-dashboard' }, spec: { title: 'Test Dashboard' } } },
-        });
+        return saveSuccessResponse('new-dashboard', 'Test Dashboard');
       })
     );
 
@@ -306,9 +319,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
-        });
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -350,6 +361,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -462,10 +475,14 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('shows the in-progress state on Save while an existing dashboard is being written', async () => {
+    // Hold the write open so the in-progress state stays observable without a timing race.
+    let resolveWrite: () => void;
+    const writeInFlight = new Promise<void>((resolve) => {
+      resolveWrite = resolve;
+    });
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        // Keep the write in flight so the in-progress state is observable.
-        await delay(50);
+        await writeInFlight;
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
         return HttpResponse.json({
@@ -526,7 +543,12 @@ describe('SaveProvisionedDashboardForm', () => {
     // The in-progress state shows for edits too, while the write is in flight.
     const savingButton = await screen.findByRole('button', { name: /saving/i });
     expect(savingButton).toBeDisabled();
+    expect(capturedRequest).toBeNull();
 
+    // Release the write and let it complete.
+    await act(async () => {
+      resolveWrite();
+    });
     await waitFor(() => expect(capturedRequest).not.toBeNull());
   });
 
@@ -535,9 +557,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
-        });
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -590,6 +610,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -623,9 +645,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Test Dashboard' } } },
-        });
+        return saveSuccessResponse('test-dashboard', 'Test Dashboard');
       })
     );
 
@@ -678,6 +698,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -739,6 +761,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -840,6 +864,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -897,6 +923,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -1046,9 +1074,7 @@ describe('SaveProvisionedDashboardForm', () => {
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
-        return HttpResponse.json({
-          resource: { upsert: { metadata: { name: 'test-dashboard' }, spec: { title: 'Raw JSON Dashboard' } } },
-        });
+        return saveSuccessResponse('test-dashboard', 'Raw JSON Dashboard');
       })
     );
 
@@ -1094,6 +1120,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveAsModel: jest.fn().mockReturnValue({}),
         getSaveResource: jest.fn().mockReturnValue(dashboardFromRawJson),
         getSaveResourceFromSpec: jest.fn().mockReturnValue(dashboardFromRawJson),
@@ -1123,6 +1151,10 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('clears dashboardWatcher suppression on error and surfaces the error message', async () => {
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
+    );
+
     const updatedDashboard = {
       apiVersion: 'dashboard.grafana.app/vXyz',
       metadata: {
@@ -1162,6 +1194,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
         getRawJsonFromEditor: jest.fn().mockReturnValue(undefined),
@@ -1181,15 +1215,9 @@ describe('SaveProvisionedDashboardForm', () => {
       expect(dashboardWatcher.ignoreSaveIndefinitely).toHaveBeenCalled();
     });
 
-    const mockHook = useProvisionedRequestHandler as jest.Mock;
-    const { handlers } = mockHook.mock.calls.at(-1)![0];
-    await act(async () => {
-      handlers.onError(new Error('boom'), { repoType: 'github' });
-    });
-
-    expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
-    // getProvisionedRequestError -> extractErrorMessage surfaces error.message verbatim
-    // as the ProvisioningAlert title.
+    // getProvisionedRequestError -> extractErrorMessage surfaces the API error message
+    // verbatim as the ProvisioningAlert title.
     expect(await screen.findByText('boom')).toBeInTheDocument();
+    expect(dashboardWatcher.clearIgnoreSave).toHaveBeenCalled();
   });
 });
