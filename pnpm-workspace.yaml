@@ -127,6 +127,11 @@ overrides:
   # yarn deduped both to 1.56.1; pin to match so they share one browser version.
   playwright: "1.56.1"
   playwright-core: "1.56.1"
+  # nwsapi is jsdom's CSS selector engine. 2.2.24 (fresh-resolved from jsdom's
+  # ^2.2.2 range) matches :hover/:invalid in getComputedStyle after userEvent,
+  # so the cascade overrides asserted styles in tests untouched by this migration
+  # (LogRow, AutoSaveField). 2.2.2 (yarn-resolved) does not; pin to match.
+  nwsapi: "2.2.2"
   # Single webpack version across all workspaces — a range across 20 package.json
   # files lets pnpm resolve two instances, crashing plugins with ".tap is undefined".
   webpack: "5.107.2"
