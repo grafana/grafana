@@ -8,7 +8,10 @@ import {
   type SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
-import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
+import {
+  getDataSourceWithInspector,
+  getDataSourceWithErrorsAndNoticesInspector,
+} from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -16,6 +19,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 import { HelpWizard } from './HelpWizard/HelpWizard';
 import { InspectDataTab } from './InspectDataTab';
+import { InspectErrorsAndNoticesTab } from './InspectErrorsAndNoticesTab';
 import { InspectJsonTab } from './InspectJsonTab';
 import { InspectMetaDataTab } from './InspectMetaDataTab';
 import { InspectQueryTab } from './InspectQueryTab';
@@ -70,6 +74,11 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
         const dsWithInspector = await getDataSourceWithInspector(data.state.data);
         if (dsWithInspector) {
           tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
+        }
+
+        const dsWithErrorsAndNotices = await getDataSourceWithErrorsAndNoticesInspector(data.state.data);
+        if (dsWithErrorsAndNotices) {
+          tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
         }
       }
 

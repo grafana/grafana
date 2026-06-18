@@ -22,6 +22,7 @@ import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
+import { type PanelStatusItem } from './types';
 
 /**
  * @internal
@@ -47,6 +48,10 @@ interface BaseProps {
    * Used to display status message (used for panel errors currently)
    */
   statusMessage?: string;
+  /**
+   * Structured list of errors and notices shown in the panel header status popover.
+   */
+  statusItems?: PanelStatusItem[];
   /**
    * Handle opening error details view (like inspect / error tab)
    */
@@ -142,6 +147,7 @@ export function PanelChrome({
   hoverHeaderOffset,
   loadingState,
   statusMessage,
+  statusItems,
   statusMessageOnClick,
   leftItems,
   actions,
@@ -397,10 +403,11 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {statusMessage && (
+            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
+                  items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                 />
@@ -420,10 +427,11 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {statusMessage && (
+              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}
+                    items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
                   />

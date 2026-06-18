@@ -5,7 +5,9 @@ import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { annotationServer } from 'app/features/annotations/api';
+import { InspectTab } from 'app/features/inspector/types';
 
+import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
@@ -204,6 +206,11 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     // TODO
     //return onUpdatePanelSnapshotData(this.props.panel, frames);
     return Promise.resolve(true);
+  };
+
+  context.onOpenInspector = () => {
+    const dashboard = getDashboardSceneFor(vizPanel);
+    dashboard.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.ErrorsAndNotices }));
   };
 }
 
