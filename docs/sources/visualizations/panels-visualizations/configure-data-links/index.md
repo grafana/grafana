@@ -31,9 +31,9 @@ refs:
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
   global-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/global-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
