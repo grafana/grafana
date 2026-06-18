@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -77,7 +78,11 @@ func (authz *AuthService) Authorize(ctx context.Context, query annotations.ItemQ
 		}
 
 		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query)
+
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return nil, err
+			}
 			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
 	}

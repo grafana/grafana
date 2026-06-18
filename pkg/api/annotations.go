@@ -66,7 +66,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
 	for _, item := range items {
