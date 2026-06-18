@@ -626,10 +626,8 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 // pipeline. The status label tracked through the function powers the
 // reconciler_process_duration histogram observed in the deferred closure.
 //
-// On a write, only subresources whose extracted content differs from
-// what's already stored are re-embedded; unchanged panels are left in
-// place. Panels that disappeared are deleted. See the embed/diff block
-// below.
+// On a write, only panels whose content changed are re-embedded;
+// unchanged panels stay and vanished ones are deleted.
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
@@ -685,9 +683,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
 	}
-	// Cap before the diff so the survivor set, the diff, and the embed
-	// all operate on the same truncated slice; otherwise `desired` would
-	// protect keys that were never stored and stale cleanup would leak.
+	// Cap before the diff so desired and the embed set use the same items.
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
 		items = items[:maxItems]
 	}
@@ -704,8 +700,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return nil
 	}
 
-	// All items from one Extract share the dashboard UID; it's the key
-	// the vectors are stored under.
+	// All items from one Extract share the dashboard UID.
 	uid := items[0].UID
 
 	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
@@ -714,16 +709,13 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("get stored content: %w", err)
 	}
 
-	// A folder move changes the stored `folder` (used for search authz)
-	// but not the embedded content, so it wouldn't trip the content diff.
-	// Detect it here and force a full re-embed. Folder is dashboard-wide,
-	// so items[0] is representative; the len(stored) guard distinguishes
-	// "no rows yet" from "rows stored under a different folder".
+	// A folder move refreshes the stored folder (search authz) without
+	// changing content, so force a re-embed when it differs. The len
+	// guard skips this for a brand-new resource.
 	folderMoved := len(stored) > 0 && storedFolder != items[0].Folder
 
-	// Diff extracted content against what's stored. `desired` is every
-	// current subresource (the survivor set); `toEmbed` is just the new
-	// or content-changed panels — the only ones worth the embed call.
+	// desired = every current subresource (survivor set); toEmbed = the
+	// new or content-changed panels that need an embed call.
 	desired := make([]string, 0, len(items))
 	desiredSet := make(map[string]struct{}, len(items))
 	toEmbed := make([]embed.Item, 0, len(items))

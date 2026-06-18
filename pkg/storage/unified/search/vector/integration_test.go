@@ -243,11 +243,8 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
 }
 
-// TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate exercises
-// the changed ⊊ desired case the reconciler relies on: only panels whose
-// content changed are rewritten, unchanged panels listed in `desired` are
-// left in place (not re-upserted), and a new panel is inserted. Nothing is
-// deleted because every stored panel is still desired.
+// changed ⊊ desired: only `changed` rows are rewritten, panels in
+// `desired` but not `changed` are kept, and nothing is deleted.
 func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
@@ -285,9 +282,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
 }
 
-// TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange covers
-// the empty-changed path: a panel was removed but no surviving panel's
-// content changed, so there's nothing to embed — only a stale delete.
+// Empty `changed`: a panel is dropped from `desired` and deleted, with nothing to upsert.
 func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 

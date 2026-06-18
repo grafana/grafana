@@ -122,9 +122,8 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 }
 
 func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) (retErr error) {
-	// Both empty is a no-op: nothing to write and no survivor set means
-	// "leave the resource alone" rather than "delete everything" (the
-	// reconciler uses Delete for an intentional full wipe).
+	// Both empty = no-op; an empty desired must not be read as "delete
+	// all" (the reconciler uses Delete for a full wipe).
 	if len(changed) == 0 && len(desired) == 0 {
 		return nil
 	}
@@ -305,8 +304,7 @@ func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, 
 	for _, r := range rows {
 		out[r.Subresource] = r.Content
 	}
-	// Folder is written identically on every subresource of a resource,
-	// so any row is representative.
+	// Folder is uniform across a resource's rows, so any row works.
 	return out, rows[0].Folder, nil
 }
 

@@ -159,15 +159,15 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 type fakeVector struct {
 	mu sync.Mutex
 
-	latestRV    int64
-	upserts     [][]vector.Vector
-	deletes     []deleteCall
-	delsubs     []deleteSubsCall
+	latestRV     int64
+	upserts      [][]vector.Vector
+	deletes      []deleteCall
+	delsubs      []deleteSubsCall
 	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
 	storedFolder map[string]string            // ns|model|res|uid -> folder
-	upsertErr   error
-	upsertErrFn func(vs []vector.Vector) error // dynamic error decision
-	deleteErr   error
+	upsertErr    error
+	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
+	deleteErr    error
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -217,9 +217,7 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	// Atomic stale-removal + upsert: delete any stored subresource not in
-	// `desired`, then upsert `changed`. Failure on either rolls back via
-	// the lock-protected snapshot.
+	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
 	keep := make(map[string]struct{}, len(desired))
 	for _, s := range desired {
 		keep[s] = struct{}{}

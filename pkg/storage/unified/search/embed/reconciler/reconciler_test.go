@@ -250,9 +250,7 @@ func TestReconciler_StaleSubresources_AreDeletedBeforeUpsert(t *testing.T) {
 	require.Len(t, vec.upserts, 1)
 }
 
-// threePanelDashboard builds a dashboard whose three panels have distinct
-// content, so changing one panel's title changes only that panel's
-// extracted content.
+// threePanelDashboard builds a 3-panel dashboard with distinct per-panel content.
 func threePanelDashboard(panel2Title string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"uid": "dash-1", "title": "Dash",
@@ -265,9 +263,7 @@ func threePanelDashboard(panel2Title string) []byte {
 	return body
 }
 
-// TestReconciler_PartialReembed_OnlyChangedPanel verifies the content
-// diff: re-processing a dashboard with a single panel changed re-embeds
-// only that panel and leaves the rest in place.
+// Re-processing with one panel changed re-embeds only that panel.
 func TestReconciler_PartialReembed_OnlyChangedPanel(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
@@ -291,9 +287,7 @@ func TestReconciler_PartialReembed_OnlyChangedPanel(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV)
 }
 
-// TestReconciler_PartialReembed_NoChangeSkipsWrite verifies that
-// re-processing identical content embeds nothing and writes nothing,
-// while still advancing the checkpoint.
+// Re-processing identical content writes nothing but still advances the checkpoint.
 func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
@@ -313,8 +307,7 @@ func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances on a no-op write")
 }
 
-// dashboardInFolder builds a single-panel dashboard whose folder UID comes
-// from the grafana.app/folder annotation. Used to drive folder-move events.
+// dashboardInFolder sets the folder UID via the grafana.app/folder annotation.
 func dashboardInFolder(uid, title, folderUID string) []byte {
 	body, _ := json.Marshal(map[string]any{
 		"uid": uid, "title": title,
@@ -328,10 +321,8 @@ func dashboardInFolder(uid, title, folderUID string) []byte {
 	return body
 }
 
-// TestReconciler_PartialReembed_FolderMoveReembeds guards the search-authz
-// correctness case: a folder move changes the stored folder but not the
-// embedded content, so the content diff alone would skip the write and
-// leave a stale folder. The folder check must force a re-embed.
+// A folder move doesn't change content but must refresh the authz
+// folder, so it forces a re-embed.
 func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)
@@ -342,8 +333,7 @@ func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
 	require.Equal(t, "folder-a", vec.upserts[0][0].Folder)
 	require.Equal(t, 1, text.calls)
 
-	// Move to folder-b: panel content is byte-identical, only the folder
-	// annotation changed.
+	// Move to folder-b; panel content is identical.
 	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, dashboardInFolder("dash-1", "Dash", "folder-b")))
 	s.processPending(context.Background())
 
