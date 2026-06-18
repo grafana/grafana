@@ -2,7 +2,7 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getCustomSearchHandler, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, PROVISIONING_API_BASE as BASE, searchRoute } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -130,6 +130,22 @@ describe('Migrate', () => {
 
       expect(await screen.findByRole('heading', { name: /migrate to gitops/i })).toBeInTheDocument();
       expect(screen.getByText(/^experimental$/i)).toBeInTheDocument();
+    });
+
+    it('renders the overview while the resource table is still loading', async () => {
+      // The folder enumeration never resolves; the header + KPI cards must not
+      // wait on it.
+      server.use(
+        http.get(searchRoute, async () => {
+          await delay('infinite');
+          return HttpResponse.json({ totalHits: 0, hits: [] });
+        })
+      );
+
+      render(<Migrate />);
+
+      expect(await screen.findByText('Dashboards')).toBeInTheDocument();
+      expect(screen.getByText(/loading resources/i)).toBeInTheDocument();
     });
 
     it('renders a status card per resource type plus a combined "All resources" card', async () => {

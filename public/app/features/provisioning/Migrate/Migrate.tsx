@@ -48,7 +48,10 @@ export function Migrate() {
     [folders, selectedFolderUids, selectedDashboardUids]
   );
 
-  if (isLoading || isFoldersLoading) {
+  // Gate only on the stats query — the header and KPI cards depend on it. The
+  // folder/dashboard enumeration can be slow on large instances, so the table
+  // carries its own loading state below instead of blocking the whole tab.
+  if (isLoading) {
     return (
       <Stack direction="row" alignItems="center" gap={1}>
         <Spinner />
@@ -102,7 +105,12 @@ export function Migrate() {
       <MigrateToGitopsHeader />
       <OverviewStatCards totals={totals} folderCounts={folderCounts} />
 
-      {isFoldersError ? (
+      {isFoldersLoading ? (
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Spinner />
+          <Trans i18nKey="provisioning.migrate.loading-resources">Loading resources...</Trans>
+        </Stack>
+      ) : isFoldersError ? (
         <Alert
           severity="warning"
           title={t('provisioning.migrate.folders-error-title', 'Could not load the list of resources to migrate')}

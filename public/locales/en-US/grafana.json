@@ -13464,6 +13464,7 @@
       "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
       "loading": "Loading stats...",
+      "loading-resources": "Loading resources...",
       "migrate-button": "Migrate everything",
       "migrate-button-blocked-tooltip": "This repository can’t push to its configured branch",
       "migrate-button-disabled-tooltip": "Select a target repository first",
