@@ -7,7 +7,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.9.1
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/grafana-app-sdk/logging v0.55.0
+	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/lib/pq v1.12.3
@@ -33,9 +33,9 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.43.0 // indirect
-	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	go.opentelemetry.io/otel/trace v1.43.0 // indirect
+	go.opentelemetry.io/otel v1.44.0 // indirect
+	go.opentelemetry.io/otel/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect

@@ -669,6 +669,11 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return fmt.Errorf("unknown action %v", ev.action)
 	}
 
+	if embed.HasPendingDeleteLabel(ev.value) {
+		statusLabel = "skipped_pending_delete"
+		return nil
+	}
+
 	if len(ev.value) == 0 {
 		return nil
 	}

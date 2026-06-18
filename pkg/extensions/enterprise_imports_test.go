@@ -62,4 +62,5 @@ import (
 	_ "k8s.io/component-base/featuregate/testing"
 	_ "pgregory.net/rapid"
 	_ "sigs.k8s.io/randfill"
+	_ "sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 )
