@@ -21,6 +21,7 @@ export interface AppChromeState {
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
+  agentMode?: boolean;
   layout: PageLayoutType;
   returnToPrevious?: {
     title: ReturnToPreviousProps['title'];
@@ -50,6 +51,7 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
+    agentMode: false,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -167,6 +169,17 @@ export class AppChromeService {
       action: 'toggle',
       mode: nextMode,
     });
+  };
+
+  public setAgentMode = (agentMode: boolean) => {
+    this.update({ agentMode });
+    reportInteraction('grafana_agent_mode', {
+      action: agentMode ? 'enter' : 'exit',
+    });
+  };
+
+  public toggleAgentMode = () => {
+    this.setAgentMode(!this.state.getValue().agentMode);
   };
 
   public exitKioskMode() {
