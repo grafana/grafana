@@ -260,7 +260,7 @@ const FolderIcon = React.memo(({ isCollapsed }: { isCollapsed: boolean }) => {
 
 FolderIcon.displayName = 'FolderIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({}),
     header: css({

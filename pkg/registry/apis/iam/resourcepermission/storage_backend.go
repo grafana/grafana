@@ -10,7 +10,6 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
@@ -41,14 +40,6 @@ type ResourcePermSqlBackend struct {
 
 func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
 	store := idStore.NewLegacySQLStores(dbProvider)
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "teams"},
-		NewIDScopedMapper("teams", []string{"Member", "Admin"}), nil,
-	)
-	mappers.RegisterMapper(
-		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
-		NewIDScopedMapper("users", defaultLevels), nil,
-	)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
 		identityStore: store,

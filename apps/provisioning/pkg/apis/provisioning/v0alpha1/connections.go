@@ -94,6 +94,17 @@ func (GitlabConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitlabConnectionConfig"
 }
 
+type ConnectionWebhookConfig struct {
+	// Disabled disables webhook integration for this connection. When true, the GitHub
+	// App does not require webhooks:write permission and Grafana will not register or receive
+	// webhook events. Use this when Grafana is not reachable from the public internet.
+	Disabled bool `json:"disabled,omitempty"`
+}
+
+func (ConnectionWebhookConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ConnectionWebhookConfig"
+}
+
 // ConnectionType defines the types of Connection providers
 // +enum
 type ConnectionType string
@@ -132,6 +143,9 @@ type ConnectionSpec struct {
 	// Gitlab connection configuration
 	// Only applicable when provider is "gitlab"
 	Gitlab *GitlabConnectionConfig `json:"gitlab,omitempty"`
+
+	// Webhook configuration for this connection
+	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
 }
 
 func (ConnectionSpec) OpenAPIModelName() string {

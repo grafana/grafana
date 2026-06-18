@@ -6,9 +6,8 @@ import { store } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { type ListMeta, type ResourceList } from 'app/features/apiserver/types';
+import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
 import { type SearchState, SearchLayout } from 'app/features/search/types';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { deletedDashboardsCache } from '../search/service/deletedDashboardsCache';
 
@@ -22,7 +21,7 @@ setupMockServer();
 jest.mock('./api/useRecentlyDeletedStateManager');
 jest.mock('../search/service/deletedDashboardsCache', () => ({
   deletedDashboardsCache: {
-    getAsResourceList: jest.fn(),
+    getAsTable: jest.fn(),
   },
 }));
 
@@ -36,20 +35,19 @@ jest.mock('react-virtualized-auto-sizer', () => ({
 const mockUseRecentlyDeletedStateManager = useRecentlyDeletedStateManager as jest.MockedFunction<
   typeof useRecentlyDeletedStateManager
 >;
-const mockGetAsResourceList = deletedDashboardsCache.getAsResourceList as jest.MockedFunction<
-  typeof deletedDashboardsCache.getAsResourceList
+const mockGetAsTable = deletedDashboardsCache.getAsTable as jest.MockedFunction<
+  typeof deletedDashboardsCache.getAsTable
 >;
 
-function buildList(count: number, metadata: Partial<ListMeta> = {}): ResourceList<DashboardDataDTO> {
+function buildTable(count: number, metadata: Partial<ListMeta> = {}): TableResponse {
   return {
-    apiVersion: 'v1',
-    kind: 'List',
+    ...EMPTY_TABLE_RESPONSE,
     metadata: { resourceVersion: '0', ...metadata },
-    items: Array.from({ length: count }, (_, i) => ({
-      apiVersion: 'dashboard.grafana.app/v1beta1',
-      kind: 'Dashboard',
-      metadata: { name: `d-${i}`, resourceVersion: '0', creationTimestamp: '2024-01-01T00:00:00Z' },
-      spec: {} as DashboardDataDTO,
+    rows: Array.from({ length: count }, (_, i) => ({
+      cells: [],
+      object: {
+        metadata: { name: `d-${i}`, resourceVersion: '0', creationTimestamp: '2024-01-01T00:00:00Z' },
+      },
     })),
   };
 }
@@ -112,7 +110,7 @@ const atLimitAlert = { name: /deleted dashboards limit reached/i };
 describe('RecentlyDeletedPage banner integration', () => {
   beforeEach(() => {
     store.delete(DISMISS_STORAGE_KEY);
-    mockGetAsResourceList.mockReset();
+    mockGetAsTable.mockReset();
     currentSearchState = defaultSearchState();
     stateSubscribers.clear();
 
@@ -134,7 +132,7 @@ describe('RecentlyDeletedPage banner integration', () => {
   });
 
   it('renders the at_limit banner when the cache reports an overage', async () => {
-    mockGetAsResourceList.mockResolvedValue(buildList(1000, { continue: 'next' }));
+    mockGetAsTable.mockResolvedValue(buildTable(1000, { continue: 'next' }));
 
     render();
 
@@ -142,24 +140,24 @@ describe('RecentlyDeletedPage banner integration', () => {
   });
 
   it('updates the banner when searchState.result changes (post-mutation reactivity)', async () => {
-    mockGetAsResourceList.mockResolvedValue(buildList(500));
+    mockGetAsTable.mockResolvedValue(buildTable(500));
 
     render();
 
     await waitFor(() => {
-      expect(mockGetAsResourceList).toHaveBeenCalledTimes(1);
+      expect(mockGetAsTable).toHaveBeenCalledTimes(1);
     });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
     // Simulate the state manager finishing a new search after a delete/restore
     // mutation: cache was invalidated, now repopulated with 1000 items, and
     // `setState({ result, loading: false })` hands callers a fresh reference.
-    mockGetAsResourceList.mockResolvedValue(buildList(1000));
+    mockGetAsTable.mockResolvedValue(buildTable(1000));
     await act(async () => {
       publishSearchState(defaultSearchState(buildSearchResult(2)));
     });
 
     expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
-    expect(mockGetAsResourceList).toHaveBeenCalledTimes(2);
+    expect(mockGetAsTable).toHaveBeenCalledTimes(2);
   });
 });

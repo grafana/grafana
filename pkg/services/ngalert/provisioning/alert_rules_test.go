@@ -3230,6 +3230,24 @@ func TestDeleteRuleGroups(t *testing.T) {
 		deletes := getDeletedRules(t, ruleStore)
 		require.Empty(t, deletes)
 	})
+
+	t.Run("succeeds even when quota is exceeded", func(t *testing.T) {
+		filterOpts := &FilterOptions{
+			NamespaceUIDs: []string{"namespace1"},
+			RuleGroups:    []string{"group1"},
+		}
+
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+		checker := &MockQuotaChecker{}
+		checker.EXPECT().LimitExceeded()
+		service.quotas = checker
+
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		require.NoError(t, err)
+	})
 }
 
 func getDeleteQueries(ruleStore *fakes.RuleStore) []fakes.GenericRecordedQuery {

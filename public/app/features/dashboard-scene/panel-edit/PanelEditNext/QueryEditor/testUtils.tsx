@@ -25,13 +25,6 @@ import {
 } from './QueryEditorContext';
 import { type Transformation } from './types';
 
-export function setup(jsx: React.ReactElement) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
-
 export const ds1SettingsMock: DataSourceInstanceSettings = {
   id: 1,
   uid: 'test',
@@ -297,8 +290,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
-    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
-    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
+    selectedQueryRefIds: [],
+    selectedTransformationIds: [],
     multiSelectMode: false,
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),

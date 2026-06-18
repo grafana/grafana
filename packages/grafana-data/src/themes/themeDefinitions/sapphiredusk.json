@@ -35,6 +35,16 @@
       "name": "secondary",
       "borderTransparent": "rgba(200, 200, 180, 0.25)"
     },
+    "accent": {
+      "main": "#93EBF0",
+      "text": "#a8e9ed",
+      "border": "#93ebf0",
+      "name": "accent",
+      "shade": "#c0f5d9",
+      "transparent": "#93EBF029",
+      "contrastText": "#111614",
+      "borderTransparent": "#93ebf040"
+    },
     "info": {
       "main": "#4d4593",
       "text": "#a8e9ed",

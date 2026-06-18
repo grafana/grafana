@@ -8,12 +8,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -120,6 +122,84 @@ func TestIntegrationProvisioning_ExportSpecificResources(t *testing.T) {
 	require.True(t, os.IsNotExist(err), "non-selected dashboard file should not be written: %s", excluded)
 }
 
+// TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders verifies the
+// end-to-end selective migrate of a single dashboard that lives several levels
+// deep in a pre-existing unmanaged folder hierarchy: the migrate job completes
+// successfully and the dashboard ends up managed by the repository, parented
+// under a fully-managed folder chain.
+//
+// Note: this package runs with the provisioningFolderMetadata flag disabled, so
+// the export does not write a _folder.json preserving the original folder UIDs;
+// the sync therefore creates fresh managed folders instead of taking over the
+// original unmanaged ones. The unmanaged-parent-folder takeover path (the
+// selective-migrate folder-conflict regression) requires that flag and is
+// covered by the unit tests in
+// pkg/registry/apis/provisioning/resources/folders_test.go
+// (TestEnsureFolderExists_TakeoverAllowlist).
+func TestIntegrationProvisioning_SelectiveMigrateDashboardInNestedFolders(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// Pre-existing unmanaged folder hierarchy: grandparent > parent > child, with
+	// an unmanaged dashboard in the deepest (child) folder.
+	grandparentUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Grandparent", "")
+	parentUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Parent", grandparentUID)
+	childUID := helper.CreateUnmanagedFolder(t, ctx, "Selective Migrate Child", parentUID)
+	dashName := helper.CreateUnmanagedDashboard(t, ctx, "Dashboard in nested unmanaged folder", childUID)
+
+	const repo = "selective-migrate-nested-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    3,
+	})
+
+	// Selective migrate naming only the dashboard. The folders are not named, but
+	// the export emits the folder tree so the dashboard's nested path resolves.
+	migrateJob := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionMigrate,
+		Migrate: &provisioning.MigrateJobOptions{
+			Message: "Selectively migrate one nested dashboard",
+			Resources: []provisioning.ResourceRef{
+				{Name: dashName, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	})
+	common.HasNoErrors()(t, migrateJob)
+	common.HasState(provisioning.JobStateSuccess)(t, migrateJob)
+
+	// The dashboard is now managed by the repo, and every folder in its ancestry
+	// (child > parent > grandparent) is managed by the repo too.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		d, err := helper.DashboardsV1.Resource.Get(ctx, dashName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "dashboard should still exist") {
+			return
+		}
+		assert.Equal(collect, repo, d.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"dashboard should be managed by the repo after migration")
+
+		// Walk the parent chain from the dashboard up to the root, asserting each
+		// folder is managed by the repo. Three folders deep proves the nested path
+		// was fully created and claimed.
+		depth := 0
+		folderUID := d.GetAnnotations()[utils.AnnoKeyFolder]
+		for folderUID != "" {
+			f, err := helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+			if !assert.NoError(collect, err, "ancestor folder %q should exist", folderUID) {
+				return
+			}
+			assert.Equal(collect, repo, f.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+				"ancestor folder %q should be managed by the repo", folderUID)
+			depth++
+			folderUID = f.GetAnnotations()[utils.AnnoKeyFolder]
+		}
+		assert.Equal(collect, 3, depth, "dashboard should sit under a 3-level managed folder chain")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should become managed under a managed nested folder chain")
+}
+
 // TestIntegrationProvisioning_ExportSpecificResources_NotFound verifies that
 // naming a dashboard that does not exist finishes the job in error state
 // with a "not found" error recorded against that resource. The caller asked
@@ -178,4 +258,63 @@ func TestIntegrationProvisioning_ExportSpecificResources_NotFound(t *testing.T) 
 	present := filepath.Join(helper.ProvisioningPath, "test-dashboard-created-at-v1.json")
 	_, err = os.Stat(present)
 	require.NoError(t, err, "present dashboard should still be exported despite sibling being missing")
+}
+
+// TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry
+// verifies the selective-export folder behavior: only the folders required to
+// place the named dashboard are written (its full parent ancestry, generated on
+// demand even though those folders were not named), while folders belonging to
+// unrelated, non-exported dashboards stay out of the repository entirely.
+func TestIntegrationProvisioning_ExportSpecificResources_GeneratesFolderAncestry(t *testing.T) {
+	helper := sharedHelper(t)
+	ctx := context.Background()
+
+	// Two independent folder hierarchies, each holding one dashboard. Only the
+	// dashboard in the "exported" hierarchy is named in the export; the
+	// "unrelated" hierarchy must not be touched.
+	exportedParent := helper.CreateUnmanagedFolder(t, ctx, "exportedparent", "")
+	exportedChild := helper.CreateUnmanagedFolder(t, ctx, "exportedchild", exportedParent)
+	selectedDash := helper.CreateUnmanagedDashboard(t, ctx, "selecteddash", exportedChild)
+
+	unrelatedFolder := helper.CreateUnmanagedFolder(t, ctx, "unrelatedfolder", "")
+	_ = helper.CreateUnmanagedDashboard(t, ctx, "unrelateddash", unrelatedFolder)
+
+	const repo = "selective-export-folders-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:               repo,
+		SyncTarget:         "instance",
+		Workflows:          []string{"write"},
+		Copies:             map[string]string{},
+		ExpectedDashboards: 2,
+		ExpectedFolders:    3,
+	})
+
+	helper.DebugState(t, repo, "BEFORE SELECTIVE EXPORT")
+
+	spec := provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	}
+	helper.TriggerJobAndWaitForSuccess(t, repo, spec)
+
+	helper.DebugState(t, repo, "AFTER SELECTIVE EXPORT")
+	common.PrintFileTree(t, helper.ProvisioningPath)
+
+	// The named dashboard lands at its full nested path even though neither of
+	// its parent folders was named in the export.
+	selectedPath := filepath.Join(helper.ProvisioningPath, "exportedparent", "exportedchild", "selecteddash.json")
+	_, err := os.Stat(selectedPath)
+	require.NoError(t, err, "named dashboard should be exported at its generated nested path %s", selectedPath)
+
+	// The unrelated hierarchy must not have been exported: neither its folder
+	// directory nor its dashboard file may appear in the repository.
+	files := helper.ListRepositoryFiles(t, ctx, repo)
+	for _, f := range files {
+		require.NotContains(t, f.Path, "unrelated",
+			"unrelated folder/dashboard must not be exported during selective export; got file %q", f.Path)
+	}
 }

@@ -81,7 +81,7 @@ interface CircleProps {
   style?: React.CSSProperties;
 }
 
-export const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
+const Circle = ({ size, style, children }: React.PropsWithChildren<CircleProps>) => {
   const theme = useTheme2();
   return (
     <div

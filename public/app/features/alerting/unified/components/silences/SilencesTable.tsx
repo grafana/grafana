@@ -22,13 +22,14 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { type AlertmanagerAlert, type Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink, stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
-import { Authorize } from '../Authorize';
 import { DynamicTable, type DynamicTableColumnProps, type DynamicTableItemProps } from '../DynamicTable';
 import { GrafanaAlertmanagerWarning } from '../GrafanaAlertmanagerWarning';
 
@@ -50,10 +51,8 @@ const API_QUERY_OPTIONS = { pollingInterval: SILENCES_POLL_INTERVAL_MS, refetchO
 
 const SilencesTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '' } = useAlertmanager();
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
+  const canCreateSilence = isGranted(useSilenceAbility({ action: SilenceAction.Create }));
 
   const { data: alertManagerAlerts = [], isLoading: amAlertsIsLoading } =
     alertmanagerApi.endpoints.getAlertmanagerAlerts.useQuery(
@@ -151,13 +150,13 @@ const SilencesTable = () => {
       {!!silences.length && (
         <Stack direction="column">
           <SilencesFilter silences={silences} />
-          <Authorize actions={[AlertmanagerAction.CreateSilence]}>
+          {canCreateSilence && (
             <Stack justifyContent="end">
               <LinkButton href={makeAMLink('/alerting/silence/new', alertManagerSourceName)} icon="plus">
                 <Trans i18nKey="silences.table.add-silence-button">Add Silence</Trans>
               </LinkButton>
             </Stack>
-          </Authorize>
+          )}
           <SilenceList
             items={itemsNotExpired}
             alertManagerSourceName={alertManagerSourceName}
@@ -281,7 +280,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 function useColumns(alertManagerSourceName: string) {
-  const [updateSupported, updateAllowed] = useAlertmanagerAbility(AlertmanagerAction.UpdateSilence);
+  const updateAbility = useSilenceAbility({ action: SilenceAction.Update });
   const [expireSilence] = alertSilencesApi.endpoints.expireSilence.useMutation();
 
   const isGrafanaFlavoredAlertmanager = alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME;
@@ -307,18 +306,15 @@ function useColumns(alertManagerSourceName: string) {
           if (!ruleUid) {
             return 'None';
           }
-
-          const ruleTitle = metadata.rule_title;
-          if (ruleTitle) {
+          if (metadata.rule_title) {
             return (
               <Link
                 href={`/alerting/grafana/${encodeURIComponent(ruleUid)}/view?returnTo=${encodeURIComponent('/alerting/silences')}`}
               >
-                {ruleTitle}
+                {metadata.rule_title}
               </Link>
             );
           }
-
           return <MissingAlertRuleWarning ruleUid={ruleUid} />;
         },
         size: 8,
@@ -368,8 +364,14 @@ function useColumns(alertManagerSourceName: string) {
         const canCreate = silence?.accessControl?.create;
         const canWrite = silence?.accessControl?.write;
 
-        const canRecreate = updateSupported && isExpired && (isGrafanaFlavoredAlertmanager ? canCreate : updateAllowed);
-        const canEdit = updateSupported && !isExpired && (isGrafanaFlavoredAlertmanager ? canWrite : updateAllowed);
+        const canRecreate =
+          isSupported(updateAbility) &&
+          isExpired &&
+          (isGrafanaFlavoredAlertmanager ? canCreate : updateAbility.granted);
+        const canEdit =
+          isSupported(updateAbility) &&
+          !isExpired &&
+          (isGrafanaFlavoredAlertmanager ? canWrite : updateAbility.granted);
 
         return (
           <Stack gap={0.5} wrap="wrap">
@@ -421,7 +423,7 @@ function useColumns(alertManagerSourceName: string) {
       size: 5,
     });
     return columns;
-  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAllowed, updateSupported]);
+  }, [alertManagerSourceName, expireSilence, isGrafanaFlavoredAlertmanager, updateAbility]);
 }
 
 function SilencesTablePage() {

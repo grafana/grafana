@@ -132,7 +132,7 @@ const getStyles = () => ({
   }),
 });
 
-export function useRestoreDeletedRule() {
+function useRestoreDeletedRule() {
   const [addRuleToRuleGroup] = useAddRuleToRuleGroup();
 
   return useAsync(async (deletedRule: RulerGrafanaRuleDTO<GrafanaRuleDefinition>) => {

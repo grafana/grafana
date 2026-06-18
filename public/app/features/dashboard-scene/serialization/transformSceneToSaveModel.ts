@@ -756,7 +756,7 @@ function flattenRowItemToPanels(row: RowItem, panelsArray: Panel[], isSnapshot =
  * @param currentY - The current absolute Y position in the dashboard
  * @returns The next Y position after this tab's content
  */
-export function tabItemToSaveModel(
+function tabItemToSaveModel(
   tab: TabItem,
   panelsArray: Array<Panel | RowPanel>,
   isSnapshot = false,

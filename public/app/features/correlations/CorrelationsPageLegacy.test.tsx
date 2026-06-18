@@ -17,6 +17,7 @@ import {
   setAppEvents,
   setDataSourceSrv,
 } from '@grafana/runtime';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
@@ -205,6 +206,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 beforeAll(() => {
+  mockBoundingClientRect();
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
 });
 

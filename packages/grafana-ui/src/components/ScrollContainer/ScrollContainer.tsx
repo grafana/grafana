@@ -70,5 +70,9 @@ const getStyles = (
     overflowX,
     overflowY,
     scrollbarWidth,
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.accent.main}`,
+      outlineOffset: '-2px',
+    },
   }),
 });
