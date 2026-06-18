@@ -734,6 +734,8 @@ github.com/dimchansky/utfbom v1.1.1/go.mod h1:SxdoEBH5qIqFocHMyGOXVAybYJdr71b1Q/
 github.com/dlclark/regexp2 v1.11.4/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dnaeon/go-vcr v1.1.0 h1:ReYa/UBrRyQdant9B4fNHGoCNKw6qh6P0fsdGmZpR7c=
 github.com/dnaeon/go-vcr v1.1.0/go.mod h1:M7tiix8f0r6mKKJ3Yq/kqU1OYf3MnfmBWVbPx/yU9ko=
+github.com/docker/docker v28.5.2+incompatible h1:DBX0Y0zAjZbSrm1uzOkdr1onVghKaftjlSWt4AFexzM=
+github.com/docker/docker v28.5.2+incompatible/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/go-metrics v0.0.1 h1:AgB/0SvBxihN0X8OR4SjsblXkbMvalQ8cjmtKQ2rQV8=
 github.com/docker/go-metrics v0.0.1/go.mod h1:cG1hvH2utMXtqgqqYE9plW6lDxS3/5ayHzueweSI3Vw=
 github.com/docker/go-plugins-helpers v0.0.0-20240701071450-45e2431495c8 h1:IMfrF5LCzP2Vhw7j4IIH3HxPsCLuZYjDqFAM/C88ulg=
@@ -1281,6 +1283,8 @@ github.com/moby/sys/mountinfo v0.7.2/go.mod h1:1YOa8w8Ih7uW0wALDUgT1dTTSBrZ+HiBL
 github.com/moby/sys/reexec v0.1.0 h1:RrBi8e0EBTLEgfruBOFcxtElzRGTEUkeIFaVXgU7wok=
 github.com/moby/sys/reexec v0.1.0/go.mod h1:EqjBg8F3X7iZe5pU6nRZnYCMUTXoxsjiIfHup5wYIN8=
 github.com/moby/term v0.5.0/go.mod h1:8FzsFHVUBGZdbDsJw/ot+X+d5HLUbvklYLJ9uGfcI3Y=
+github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
+github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
 github.com/montanaflynn/stats v0.7.0/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
 github.com/montanaflynn/stats v0.7.1 h1:etflOAAHORrCC44V+aR6Ftzort912ZU+YLiSTuV8eaE=
 github.com/montanaflynn/stats v0.7.1/go.mod h1:etXPPgVO6n31NxCd9KQUMvCM+ve0ruNzt6R8Bnaayow=
@@ -1321,6 +1325,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal 
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.145.0/go.mod h1:mhoa9lipcEH0heeKf6+xHzGUrCuAgImQv4/Qpmu0+Fk=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.148.0 h1:CiTjQE/Hh5xK2t56ogrDK4nl0+tJPNmASCs4zEYZ/xU=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.148.0/go.mod h1:WUFkzTiOpt7EYyL67gv1GOf3RD8qKWGtin3lY9LYzW4=
+github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.153.0 h1:hrLQLVZ4YXs35G9QvPO+xcu6qMnUpCt3WOpBDM7dR+E=
+github.com/open-telemetry/opentelemetry-collector-contrib/internal/exp/metrics v0.153.0/go.mod h1:+qlIXDaBLIX+egj/okymUG88KSdAD8nIEHY8+tXt8+M=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.150.0 h1:OxBRYw+Osr57WASgaq0f231Xi7WZIvxq78cquNpzj+w=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.150.0/go.mod h1:oGYDjb1ASjyOVDoHNE6YAggHJhDkaDxvKIq7vdBA7x8=
 github.com/open-telemetry/opentelemetry-collector-contrib/internal/kafka v0.150.0 h1:09Y0upmS+bWi9MXd0NQ05E29Z0u5ps2BeiYajwKf9Oo=
@@ -1340,6 +1346,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.145.0
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.148.0/go.mod h1:P8hZEDIQk4REgUWyLhSVRHwTxK6KkifKfg36BmmQ/DI=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.150.0 h1:eMU3aV8tUWhTlZwrW/eHbw3JCxsUDXqLKqswqj/vtlQ=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.150.0/go.mod h1:qYh2PcJsgK0qJ0+vjLYow+E2DAJ7o1MuZ3r0hakgxiE=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.153.0 h1:kPPv0sQQH2R2CitTPYXDfq1z1ekStnmk39C8RkOrsbI=
+github.com/open-telemetry/opentelemetry-collector-contrib/pkg/pdatautil v0.153.0/go.mod h1:wFACQmv2KfJyvyiRtMrI/DmcOWKEk6SxY0nLduWFMC4=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/sampling v0.150.0 h1:j5iy9zW2retw7zReQaePhamvO1GirZyG6EeUNcrKs6o=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/sampling v0.150.0/go.mod h1:QJBpqumy1Wlr0pCJDbWkCzN76/W1JTUfSyE9EwAbqic=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/azure v0.150.0 h1:lz0XapQI68IXDBOQxwDBOSdZwuGgkyNLkg5SxW/GWUc=
@@ -1350,6 +1358,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/zipkin 
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.145.0/go.mod h1:osDRUOIfd7IiKkDvcE/VrPp9FFOPJmFp73RuvgOn5gE=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.148.0 h1:xgD/kNGp/wWY+bwY599Pc01OamYN17phRiTP934bM5Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.148.0/go.mod h1:ZK7wvaefla9lB3bAW0rNKt7IzRPcTRQoOFqr4sZy/XM=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.153.0 h1:3MR2JvG1KB4GUiMi5asE6K0Ln5cjWPEfVAIpUwf55Sk=
+github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.153.0/go.mod h1:0lEaZGCEjzb4R5J6F0NR1jF1KKc18IkvPRwLpQuyyjY=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.150.0 h1:k9qM0ZDmeuSVXr5YtwMpDWtyeBroF4fAYxBy9lLhKhA=
 github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.150.0/go.mod h1:8DNuhOER+xn6ldtNxXxobsPSJcXIAUvW2o3CBLla7YE=
 github.com/open-telemetry/opentelemetry-collector-contrib/receiver/jaegerreceiver v0.150.0 h1:iMZk4Mvbp8tYHoWbSqEzIIhu7P7AaeufaUKEcJQpY10=
@@ -1389,9 +1399,13 @@ github.com/pb33f/libopenapi v0.34.3 h1:3D1N56ayc7iOeEnKoy85QDe4tFbg5G1sj2J5UISi4
 github.com/pb33f/libopenapi v0.34.3/go.mod h1:sD2REdvz9QSFY9enfFHBCwwwZ41k/86krTM9qtKEBwQ=
 github.com/pb33f/libopenapi v0.34.4 h1:BWWXA3U4SlsHEvfczk+DJHu2O38ktgKw+zBEYaDZ2uI=
 github.com/pb33f/libopenapi v0.34.4/go.mod h1:MsDdUlQ1CdrIDO5v26JfgBxQs7kcaOUEpMP3EqU6bI4=
+github.com/pb33f/libopenapi v0.37.2 h1:4Kb4w/h2BVKb099oYIZqeDxEBhUioWA+z6WJhBOk2r8=
+github.com/pb33f/libopenapi v0.37.2/go.mod h1:MsDdUlQ1CdrIDO5v26JfgBxQs7kcaOUEpMP3EqU6bI4=
 github.com/pb33f/libopenapi-validator v0.13.0/go.mod h1:YZQRDh+8xap/H0GM0cJsBrqqT+XLlMivA/qwqRLiidQ=
 github.com/pb33f/libopenapi-validator v0.13.3 h1:5KW4Y/mMoQvt6d89rLiNmW1zSfln7Oua2A0BqPXpjro=
 github.com/pb33f/libopenapi-validator v0.13.3/go.mod h1:X58CRsmj/7l0iXethEMfq3OJIzQ5hces7EbJ071z6WI=
+github.com/pb33f/libopenapi-validator v0.13.8 h1:3t/5hUq8EYIWe6Uwj5RA7xFSWkleDbqsueA78/tIAo8=
+github.com/pb33f/libopenapi-validator v0.13.8/go.mod h1:mWwedExRS1L8gjK6BGE1oDA5wXLuxgU7EheNz703MCg=
 github.com/pb33f/ordered-map/v2 v2.3.0/go.mod h1:oe5ue+6ZNhy7QN9cPZvPA23Hx0vMHnNVeMg4fGdCANw=
 github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 h1:onHthvaw9LFnH4t2DcNVpwGmV9E1BkGknEliJkfwQj0=
 github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58/go.mod h1:DXv8WO4yhMYhSNPKjeNKa5WY9YCIEBRbNzFFPJbWO6Y=
@@ -1399,6 +1413,8 @@ github.com/pborman/getopt v0.0.0-20170112200414-7148bc3a4c30 h1:BHT1/DKsYDGkUgQ2
 github.com/pborman/uuid v1.2.0 h1:J7Q5mO4ysT1dv8hyrUGHb9+ooztCXu1D8MY8DZYsu3g=
 github.com/pelletier/go-toml/v2 v2.0.9/go.mod h1:tJU2Z3ZkXwnxa4DPO899bsyIoywizdUvyaeZurnPPDc=
 github.com/pelletier/go-toml/v2 v2.2.3/go.mod h1:MfCQTFTvCcUyyvvwm1+G6H/jORL20Xlb6rzQu9GuUkc=
+github.com/perimeterx/marshmallow v1.1.5 h1:a2LALqQ1BlHM8PZblsDdidgv1mWi1DgC2UmX50IvK2s=
+github.com/perimeterx/marshmallow v1.1.5/go.mod h1:dsXbUu8CRzfYP5a87xpp0xq9S3u0Vchtcl8we9tYaXw=
 github.com/peterbourgon/diskv v2.0.1+incompatible h1:UBdAOUP5p4RWqPBg048CAvpKN+vxiaj6gdUUzhl4XmI=
 github.com/peterbourgon/diskv v2.0.1+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
 github.com/philhofer/fwd v1.1.1/go.mod h1:gk3iGcWd9+svBvR0sR+KPcfE+RNWozjowpeBVG3ZVNU=
@@ -1584,6 +1600,8 @@ github.com/uber/jaeger-client-go v2.28.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMW
 github.com/uber/jaeger-lib v2.2.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
 github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVMw=
 github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLYF3GoBXY=
+github.com/ugorji/go/codec v1.2.11 h1:BMaWp1Bb6fHwEtbplGBGJ498wD+LKlNSl25MjdZY4dU=
+github.com/ugorji/go/codec v1.2.11/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/urfave/cli/v3 v3.7.0 h1:AGSnbUyjtLiM+WJUb4dzXKldl/gL+F8OwmRDtVr6g2U=
 github.com/urfave/cli/v3 v3.7.0/go.mod h1:ysVLtOEmg2tOy6PknnYVhDoouyC/6N42TMeoMzskhso=
 github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQD0Loo=
@@ -1594,6 +1612,8 @@ github.com/vmihailenco/msgpack/v5 v5.3.5/go.mod h1:7xyJ9e+0+9SaZT0Wt1RGleJXzli6Q
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
 github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
 github.com/woodsbury/decimal128 v1.3.0/go.mod h1:C5UTmyTjW3JftjUFzOVhC20BEQa2a4ZKOB5I6Zjb+ds=
+github.com/woodsbury/decimal128 v1.4.0 h1:xJATj7lLu4f2oObouMt2tgGiElE5gO6mSWUjQsBgUlc=
+github.com/woodsbury/decimal128 v1.4.0/go.mod h1:BP46FUrVjVhdTbKT+XuQh2xfQaGki9LMIRJSFuh6THU=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
 github.com/xdg-go/scram v1.2.0 h1:bYKF2AEwG5rqd1BumT4gAnvwU/M9nBp2pTSxeZw7Wvs=
 github.com/xdg-go/scram v1.2.0/go.mod h1:3dlrS0iBaWKYVt2ZfA4cj48umJZ+cAEbR6/SjLA88I8=
@@ -1664,6 +1684,8 @@ go.opentelemetry.io/collector/component v1.51.0/go.mod h1:Zlgwh4yTLDhJglOXqiyXZ7
 go.opentelemetry.io/collector/component v1.54.0/go.mod h1:yUMBYsySY/sDcXm8kOzEoZxt+JLdala6hxzSW0npOxY=
 go.opentelemetry.io/collector/component v1.56.0 h1:fOCs36Dxg95w2RQCVI2i5IsHc5IbZ99vmbipK9FM7pQ=
 go.opentelemetry.io/collector/component v1.56.0/go.mod h1:MkAjcSc2T0BiYf/uARZdTlfnxBB9BwmvY6v08D+qeY4=
+go.opentelemetry.io/collector/component v1.59.0 h1:WtulkwzsdAOM/LE0cH/IiudUgiyb2ueVDDeEh5HsXzo=
+go.opentelemetry.io/collector/component v1.59.0/go.mod h1:5eQCM0tS6qbG2XJ6Bt67kgCxuhCbg4csVv6SywyHZ6w=
 go.opentelemetry.io/collector/component/componentstatus v0.148.0/go.mod h1:yqg3SpGQc22W3wGICdnb+2kZVW9daBr3+LrGUCHkKfc=
 go.opentelemetry.io/collector/component/componentstatus v0.150.0 h1:Jy/9quAWwDN9BqMEzZn0BEzVxxWARa1b/wvBQW6yPxs=
 go.opentelemetry.io/collector/component/componentstatus v0.150.0/go.mod h1:FFmyHgPqwtvkezi9Z9NYgXxY0m3N0oUMMd/HIAEq8vY=
@@ -1696,10 +1718,14 @@ go.opentelemetry.io/collector/confmap v1.51.0/go.mod h1:uWi4b9lHfvEC2poJ2I2vXwGU
 go.opentelemetry.io/collector/confmap v1.54.0/go.mod h1:mQxG8bk0IWIt9gbWMvzE+cRkOuCuzbzkNGBq2YJ4wNM=
 go.opentelemetry.io/collector/confmap v1.56.0 h1:YjLll5L77Z3up94t/pdOMaH35kwd28EtjBORewfIjmA=
 go.opentelemetry.io/collector/confmap v1.56.0/go.mod h1:iprN8aL/euBXig6bpLZSZqi+8CZIgE9/Pm6y3qb1QWY=
+go.opentelemetry.io/collector/confmap v1.59.0 h1:asxEEiWwNuGfmTVSctYArOTF8jcxYpS4NmPtvvFhNNI=
+go.opentelemetry.io/collector/confmap v1.59.0/go.mod h1:X5SjFINrF0cb0hcM8PwnW2z+0L/pHA1H1yPPtm2j0tY=
 go.opentelemetry.io/collector/confmap/xconfmap v0.145.0/go.mod h1:zTSK+c76NAy/tI1R3xfZjdoI04D9EYDnzAHQQwl6AmA=
 go.opentelemetry.io/collector/confmap/xconfmap v0.148.0/go.mod h1:4qTMr3V0uSXXac9wVs/UD5fIqRKw5yIl58+Vjsc6RHM=
 go.opentelemetry.io/collector/confmap/xconfmap v0.150.0 h1:PR+c4/Ly4Plx862jJ1Cg+HFewMrHsWaN9eKxrYBhtK4=
 go.opentelemetry.io/collector/confmap/xconfmap v0.150.0/go.mod h1:WDLyne6Zmoi5OZ46Hfg4z/5KhsBG1mFuYjoK20VcDcA=
+go.opentelemetry.io/collector/confmap/xconfmap v0.153.0 h1:RSn7C87eBp1iuWip3hX8v9AR8adMze1usJxwumefkq4=
+go.opentelemetry.io/collector/confmap/xconfmap v0.153.0/go.mod h1:4SuPyutUiirRqQoPeY+13lLYkOQ2opMQgKvKACnXh1k=
 go.opentelemetry.io/collector/connector v0.150.0 h1:mjgqQd76ERdIbhvY2is0CVM++z9QDmyeL2piLbB4V3g=
 go.opentelemetry.io/collector/connector v0.150.0/go.mod h1:T6O62apu0yJMUZrfgQ0/oRV3xNIt2llZxXXeBWlCs4Y=
 go.opentelemetry.io/collector/connector/connectortest v0.150.0 h1:6fVpvAtWTT4bt6XrNlP3/7FU8mqAcv4cnV3ZgYkYy5w=
@@ -1710,6 +1736,8 @@ go.opentelemetry.io/collector/consumer v1.51.0/go.mod h1:Erk6qdfVj+24QTrGCpurcrF
 go.opentelemetry.io/collector/consumer v1.54.0/go.mod h1:1PC6XINTL9DdT1bwvfMdHE72EB4RWU/WcPemUrhqKN8=
 go.opentelemetry.io/collector/consumer v1.56.0 h1:olhuaTI3cic6VfcraXt3qqsv1v4Qxf55gHxOO1uIVXw=
 go.opentelemetry.io/collector/consumer v1.56.0/go.mod h1:FpnfeTLQAdcOtzrkQ36Z+E5aconIymkv9xpJuAdLvy0=
+go.opentelemetry.io/collector/consumer v1.59.0 h1:EFDQ8ZTWwHEratWusKgW26W20LeAWdXj235iD9MxpuA=
+go.opentelemetry.io/collector/consumer v1.59.0/go.mod h1:wrOSfXkKjzEeHYxhKGukuB9+NFV/CboWwEH1oEXhMtw=
 go.opentelemetry.io/collector/consumer/consumererror v0.150.0 h1:DC4QGlGGU6HoPChbCzAlNzv/diLTlbrJ/q6+1P+35zQ=
 go.opentelemetry.io/collector/consumer/consumererror v0.150.0/go.mod h1:rLkPStz81IOOMVzhmGiezt/Rf9l9jJg6bsCQ8Qbw6J0=
 go.opentelemetry.io/collector/consumer/consumererror/xconsumererror v0.150.0 h1:3VZ5vkkdrTO/jdVL7fOLwL2mvV881yWGCwOVP1MfD+M=
@@ -1754,6 +1782,8 @@ go.opentelemetry.io/collector/internal/componentalias v0.145.0/go.mod h1:sEKEAwA
 go.opentelemetry.io/collector/internal/componentalias v0.148.0/go.mod h1:uwKzfehzwRgHxdHgFXYSBHNBeWSSqsqQYGWr5fk08G0=
 go.opentelemetry.io/collector/internal/componentalias v0.150.0 h1:qvcJr0m/fFgsc3x6Oya3RNDOZp/WyfmOKIv9jtvoLYw=
 go.opentelemetry.io/collector/internal/componentalias v0.150.0/go.mod h1:abuQP8ELgPpCSq6xbHM1b2hPOGqaKxUeLgHHdU/XGP0=
+go.opentelemetry.io/collector/internal/componentalias v0.153.0 h1:tr5I5hsJPJBbVPGjvOVVPPK4dLR5ZLqVEckuOfnzzMs=
+go.opentelemetry.io/collector/internal/componentalias v0.153.0/go.mod h1:tFSKiuWKJJgfxANyVnbKPVZkOF7N0bFXvCxCEgqMKuo=
 go.opentelemetry.io/collector/internal/fanoutconsumer v0.150.0 h1:Q21K+3QD4izrbRNAzvbLh9YI5kNJcW6fxtEfe44dna0=
 go.opentelemetry.io/collector/internal/fanoutconsumer v0.150.0/go.mod h1:sdMjOLYMBsrWa+bXhApIJCIJxYTS8JoXt38+15xbnak=
 go.opentelemetry.io/collector/internal/sharedcomponent v0.150.0 h1:G+bQLseBFdkHYuN1FVrdp6DZCMkquVOnakZpgnT0RRc=
@@ -1780,12 +1810,16 @@ go.opentelemetry.io/collector/pipeline v1.51.0/go.mod h1:xUrAqiebzYbrgxyoXSkk6/Y
 go.opentelemetry.io/collector/pipeline v1.54.0/go.mod h1:RD90NG3Jbk965Xaqym3JyHkuol4uZJjQVUkD9ddXJIs=
 go.opentelemetry.io/collector/pipeline v1.56.0 h1:KfyCes/EPC2hpBhU28z9WnJzSRlBYS5FfMHOYAXHbXw=
 go.opentelemetry.io/collector/pipeline v1.56.0/go.mod h1:RD90NG3Jbk965Xaqym3JyHkuol4uZJjQVUkD9ddXJIs=
+go.opentelemetry.io/collector/pipeline v1.59.0 h1:AyEcAPy5ZuUFpqis9i97WEIAcFh/mEEo90+1wr4urNU=
+go.opentelemetry.io/collector/pipeline v1.59.0/go.mod h1:RD90NG3Jbk965Xaqym3JyHkuol4uZJjQVUkD9ddXJIs=
 go.opentelemetry.io/collector/pipeline/xpipeline v0.150.0 h1:Bm+xm9vFRuW2kkdRj/iF8aIvCJCDsUHe59FP9FRwuSA=
 go.opentelemetry.io/collector/pipeline/xpipeline v0.150.0/go.mod h1:iPY4PBBeih6Wn9SDbgHQY9FTx6WD5FvPLMhBmgsv1lI=
 go.opentelemetry.io/collector/processor v1.51.0/go.mod h1:rtIPFS+EFRAkG+CSwtjxs2IsIkuZStObvALeueD02XI=
 go.opentelemetry.io/collector/processor v1.54.0/go.mod h1:L0lA6DZ0VbrtQBg44cmYfSpRlgm4zxW1I6QfBnRizPw=
 go.opentelemetry.io/collector/processor v1.56.0 h1:5UGXZorhoWg0gnhvDZWYIOUp2dEWfWH28vE+/wV3cMA=
 go.opentelemetry.io/collector/processor v1.56.0/go.mod h1:ptpRRg6r9YdXGSKdQcsM6ePH6ZkkkMnlNY8OxIC4Q7c=
+go.opentelemetry.io/collector/processor v1.59.0 h1:uSIMwLaKLzHNiv8625LP3BLUMCqRaBc1ay2o7uW19PQ=
+go.opentelemetry.io/collector/processor v1.59.0/go.mod h1:IrCFcSdmqIWfNeTWOxncNcdQGVOf0LlKY6A3pHEpGiw=
 go.opentelemetry.io/collector/processor/processorhelper v0.150.0 h1:3SbVF+FbglKrUBQl9SJlQeiDFjdSqmGS0pAMJqeVdGY=
 go.opentelemetry.io/collector/processor/processorhelper v0.150.0/go.mod h1:Z15LjctXPaisovFoaxvkqfFXUCkFVgem2fkE0KKAKd0=
 go.opentelemetry.io/collector/processor/processorhelper/xprocessorhelper v0.150.0 h1:XmaS4eF+YHc0B4kKHX2vYJr2oox6EFcZqeh+5Zbv6iA=
@@ -2168,6 +2202,8 @@ google.golang.org/genproto/googleapis/bytestream v0.0.0-20260319201613-d00831a3d
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260319201613-d00831a3d3e7/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260427160629-7cedc36a6bc4 h1:vZSynqmtxmRfYL0QaV3UUWE/8BC6aqyIx+D+enkxybM=
 google.golang.org/genproto/googleapis/bytestream v0.0.0-20260427160629-7cedc36a6bc4/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20260523011958-0a33c5d7ca68 h1:oLrrfrPtevKV9DqgGDKHUxMfolE7ikepJ9j2vNQbGt8=
+google.golang.org/genproto/googleapis/bytestream v0.0.0-20260523011958-0a33c5d7ca68/go.mod h1:6TABGosqSqU2l1+fJ3jdvOYPPVryeKybxYF0cCZkTBE=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d/go.mod h1:+Bk1OCOj40wS2hwAMA+aCW9ypzm63QTBBHp6lQ3p+9M=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240415180920-8c6c420018be/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240429193739-8cf5692501f6/go.mod h1:WtryC6hu0hhx87FDGxWCDptyssuo68sk10vYjF+T9fY=
