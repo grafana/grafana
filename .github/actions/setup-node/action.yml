@@ -14,6 +14,8 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # pnpm isn't ambient like the yarn shim was; setup-node consumers run `pnpm` directly, so install it here.
+    - uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
     - uses: actions/setup-node@v6
       with:
         node-version-file: '${{ inputs.cwd }}/.nvmrc'
