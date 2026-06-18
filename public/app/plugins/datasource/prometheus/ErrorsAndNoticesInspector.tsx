@@ -6,6 +6,7 @@ import {
   type ErrorsAndNoticesInspectorProps,
   type GrafanaTheme2,
   type QueryResultMetaNotice,
+  renderMarkdown,
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -21,6 +22,8 @@ interface InspectableEntry {
   title: string;
   content: string;
   link?: string;
+  // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
+  isCode?: boolean;
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -57,6 +60,7 @@ function buildEntries(data: Props['data'], errors: DataQueryError[] | undefined)
       severity: 'error',
       title: error.message ?? error.data?.message ?? SEVERITY_LABELS.error(),
       content: formatError(error),
+      isCode: true,
     });
   }
 
@@ -128,7 +132,12 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
 
       {isOpen && (
         <div className={styles.body}>
-          <pre className={styles.code}>{entry.content}</pre>
+          {entry.isCode ? (
+            <pre className={styles.code}>{entry.content}</pre>
+          ) : (
+            // renderMarkdown sanitizes its output, so this is safe to set as HTML.
+            <div className={styles.markdown} dangerouslySetInnerHTML={{ __html: renderMarkdown(entry.content) }} />
+          )}
           {entry.link && (
             <TextLink href={textUtil.sanitizeUrl(entry.link)} external className={styles.link}>
               {t('grafana-prometheus.errors-and-notices-inspector.learn-more', 'Learn more')}
@@ -184,7 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   body: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(1.5),
+    padding: theme.spacing(1.5, 1.5, 1.5, 4.5),
   }),
   code: css({
     margin: 0,
@@ -197,9 +206,36 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wordBreak: 'break-word',
     overflowX: 'auto',
   }),
+  markdown: css({
+    fontSize: theme.typography.bodySmall.fontSize,
+    wordBreak: 'break-word',
+
+    // Tidy up the spacing of the rendered markdown block.
+    'p:first-child': {
+      marginTop: 0,
+    },
+    'p:last-child': {
+      marginBottom: 0,
+    },
+    a: {
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+    },
+    code: {
+      fontFamily: theme.typography.fontFamilyMonospace,
+      fontSize: theme.typography.bodySmall.fontSize,
+      backgroundColor: theme.colors.background.canvas,
+      padding: theme.spacing(0.25, 0.5),
+      borderRadius: theme.shape.radius.default,
+    },
+    'ul, ol': {
+      paddingLeft: theme.spacing(2.5),
+      margin: theme.spacing(0.5, 0),
+    },
+  }),
   link: css({
     display: 'inline-block',
-    marginTop: theme.spacing(1),
+    marginTop: theme.spacing(2),
   }),
   error: css({
     color: theme.colors.error.text,
