@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3/lock"
 )
 
 //go:embed migrations/*.sql
@@ -171,15 +173,30 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) e
 		}
 	}()
 
-	// Configure goose to use embedded migrations
-	goose.SetBaseFS(embedMigrations)
+	// The provider reads from the root of the fs, so re-root onto the migrations dir.
+	migrationsFS, err := fs.Sub(embedMigrations, "migrations")
+	if err != nil {
+		return fmt.Errorf("failed to sub migrations fs: %w", err)
+	}
 
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set goose dialect: %w", err)
+	// Use Postgres advisory locks to prevent multiple instances from running migrations concurrently
+	locker, err := lock.NewPostgresSessionLocker()
+	if err != nil {
+		return fmt.Errorf("failed to create session locker: %w", err)
+	}
+
+	provider, err := goose.NewProvider(
+		goose.DialectPostgres,
+		db,
+		migrationsFS,
+		goose.WithSessionLocker(locker),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
 	// Run all pending migrations
-	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
+	if _, err := provider.Up(ctx); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 
