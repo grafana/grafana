@@ -187,7 +187,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     toolbar: css({
       alignItems: 'center',
-      background: theme.colors.background.page,
+      // TODO change to page background when visual refresh is enabled
+      background: theme.colors.background.canvas,
       display: 'flex',
       gap: theme.spacing(2),
       justifyContent: 'space-between',

@@ -7,6 +7,7 @@ import { type DataSourceInstanceSettings, type RawTimeRange, type GrafanaTheme2 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   defaultIntervals,
   PageToolbar,
@@ -42,7 +43,7 @@ import { isLeftPaneSelector, isSplit, selectCorrelationDetails, selectPanesEntri
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
-const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
+const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled: boolean) => ({
   rotateIcon: css({
     '> div > svg': {
       transform: 'rotate(180deg)',
@@ -54,6 +55,9 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean) => ({
     marginRight: theme.spacing(0.5),
     width: splitted && theme.spacing(6),
   }),
+  pageToolbar: css({
+    background: theme.colors.background.page,
+  }),
 });
 
 interface Props {
@@ -64,9 +68,10 @@ interface Props {
 }
 
 export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle, isContentOutlineOpen }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const dispatch = useDispatch();
   const splitted = useSelector(isSplit);
-  const styles = useStyles2(getStyles, splitted);
+  const styles = useStyles2(getStyles, splitted, visualRefreshEnabled);
 
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
@@ -237,6 +242,9 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           />,
         ].filter(Boolean)}
         forceShowLeftItems
+        className={cx({
+          [styles.pageToolbar]: visualRefreshEnabled,
+        })}
       >
         {[
           !splitted ? (
