@@ -357,7 +357,7 @@ func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
 		legacyRule, status, _ := legacyClient.GetProvisioningAlertRule(t, created.Name)
 		require.Equal(t, 200, status)
 		require.NotNil(t, legacyRule)
-		require.Equal(t, ngmodels.ProvenanceAPI, legacyRule.Provenance,
+		require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), legacyRule.Provenance,
 			"terraform manager should map to ProvenanceAPI in legacy storage")
 
 		// k8s read-back should preserve ManagerKindTerraform

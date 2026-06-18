@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -340,6 +339,11 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, false, err
+	}
+
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, false, err
@@ -356,14 +360,16 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 	p, ok := old.(*model.AlertRule)
 	if !ok {
-		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
+		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
 	}
 
-	sourceProv := p.GetProvenanceStatus()
-	if !slices.Contains(model.AcceptedProvenanceStatuses, sourceProv) {
-		return nil, false, fmt.Errorf("invalid provenance status: %s", sourceProv)
+	// Derive manager properties the same way create/update do, so a resource managed
+	// by a specific manager (e.g. Terraform) is deleted with the matching manager and
+	// not the coarser provenance-derived equivalent.
+	_, managerProps, err := convertToDomainModel(info.OrgID, p)
+	if err != nil {
+		return nil, false, err
 	}
-	managerProps := ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv))
 
 	err = s.service.DeleteAlertRule(ctx, user, name, managerProps)
 	if err != nil {
