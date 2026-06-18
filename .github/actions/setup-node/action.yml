@@ -15,7 +15,12 @@ runs:
   using: "composite"
   steps:
     # pnpm isn't ambient like the yarn shim was; setup-node consumers run `pnpm` directly, so install it here.
+    # Point action-setup at the checkout dir's package.json to read the `packageManager` version —
+    # jobs that check out into a subdir (e.g. ./pr, ./base) pass `cwd`, and the workspace root has
+    # no package.json there for it to fall back on.
     - uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+      with:
+        package_json_file: '${{ inputs.cwd }}/package.json'
     - uses: actions/setup-node@v6
       with:
         node-version-file: '${{ inputs.cwd }}/.nvmrc'

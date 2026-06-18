@@ -64,6 +64,7 @@
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
+    "@rollup/plugin-node-resolve": "16.0.1",
     "@storybook/react": "10.3.6",
     "@storybook/react-webpack5": "10.3.6",
     "@testing-library/jest-dom": "^6.6.3",

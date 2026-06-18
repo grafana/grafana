@@ -30,6 +30,10 @@ runs:
   steps:
     - name: Install pnpm
       uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+      with:
+        # Read the pnpm version from the checkout dir's package.json — callers that install in a
+        # subdir (e.g. ./pr) pass cwd, and the workspace root has no package.json to fall back on.
+        package_json_file: '${{ inputs.cwd }}/package.json'
 
     - name: Setup Node.js
       uses: actions/setup-node@v6

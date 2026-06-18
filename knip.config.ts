@@ -147,6 +147,7 @@ const config: KnipConfig = {
     },
     'packages/grafana-api-clients': {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
+      ignoreDependencies: packageIgnoreDeps,
     },
     'packages/grafana-plugin-configs': {
       // this package contains shared code that isn't immediately used by the package

@@ -6,6 +6,7 @@
   "version": "13.1.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
+    "postinstall": "msw init public --no-save",
     "analytics-report": "node ./scripts/cli/analytics/main.mts",
     "analytics-report:test": "node --test ./scripts/cli/analytics/*.test.mts",
     "check-frontend-dev": "./scripts/check-frontend-dev.sh",
@@ -208,7 +209,7 @@
     "jest-watch-typeahead": "^2.2.2",
     "jimp": "^1.6.0",
     "json-schema-to-typescript": "15.0.4",
-    "knip": "^6.14.2",
+    "knip": "6.14.2",
     "lerna": "9.0.6",
     "madge": "^8.0.0",
     "mailparser": "3.9.8",
