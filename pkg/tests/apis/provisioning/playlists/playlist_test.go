@@ -3,6 +3,7 @@ package playlists
 import (
 	"context"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -192,15 +193,14 @@ func TestIntegrationProvisioning_SyncPlaylist(t *testing.T) {
 	}
 }
 
-// TestIntegrationProvisioning_PlaylistFilesEndpoint exercises the repository files
-// subresource for playlists. Create (POST) and delete (DELETE) both store/remove the file
-// and provision/deprovision the resource into Grafana.
+// TestIntegrationProvisioning_PlaylistFilesEndpoint exercises the full repository files
+// subresource round-trip for playlists: create (POST), update (PUT), move (POST with
+// originalPath), and delete (DELETE).
 //
-// Update (PUT) and move (POST with originalPath) are also exercised, but they currently fail
-// for playlists: both re-provision the resource as an update, and the playlist apiserver
-// rejects an update without metadata.resourceVersion (which a repository file does not
-// carry). This is a playlist round-trip limitation tracked under grafana/git-ui-sync-project#1199; the assertions below
-// pin the current behavior so this test will flag it if the limitation is ever lifted.
+// Update and move re-provision the resource as an update. The playlist apiserver rejects an
+// update without metadata.resourceVersion (which a repository file does not carry); the
+// parser now carries the existing object's resourceVersion into the update so these operations
+// round-trip cleanly (git-ui-sync-project#1199).
 func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
@@ -225,7 +225,8 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 	title, _, _ := unstructured.NestedString(got.Object, "spec", "title")
 	require.Equal(t, "Files Playlist", title)
 
-	// Update (known limitation): rejected because the dry-run update lacks resourceVersion.
+	// Update: re-provisions the playlist as an update. The parser carries the existing
+	// resourceVersion into the update so the playlist apiserver accepts it (git-ui-sync-project#1199).
 	updateErr := helper.AdminREST.Put().
 		Namespace("default").
 		Resource("repositories").
@@ -234,27 +235,51 @@ func TestIntegrationProvisioning_PlaylistFilesEndpoint(t *testing.T) {
 		Body(common.ResourceToJSON(t, common.NewPlaylist(name, "Files Playlist Updated"))).
 		SetHeader("Content-Type", "application/json").
 		Do(ctx).Error()
-	require.ErrorContains(t, updateErr, "resourceVersion", "playlist update via files PUT is a known limitation (git-ui-sync-project#1199)")
+	require.NoError(t, updateErr, "playlist update via files PUT should succeed")
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		got, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		title, _, _ := unstructured.NestedString(got.Object, "spec", "title")
+		assert.Equal(collect, "Files Playlist Updated", title, "the updated title should be reflected in Grafana")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist title should be updated after a files PUT")
 
-	// Move (known limitation): the move re-provisions as an update and is rejected (HTTP 422).
+	// Move (same directory level): re-provisions the playlist as an update at the new path.
+	// With the resourceVersion carried into the update, the move succeeds and the source-path
+	// annotation is refreshed.
+	//
+	// The move stays at the repository root on purpose: playlists are org-scoped, and moving
+	// one into a subdirectory derives a grafana.app/folder annotation that the playlist
+	// apiserver forbids ("folders are not supported"). That folder-scoping gap is independent
+	// of the resourceVersion round-trip exercised here.
+	const movedPath = "files-playlist-moved.json"
 	moveResp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
-		TargetPath:   "moved/" + path,
+		TargetPath:   movedPath,
 		OriginalPath: path,
 		Message:      "move playlist",
 	})
-	require.Equal(t, 422, moveResp.StatusCode, "playlist move via files endpoint is a known limitation (git-ui-sync-project#1199)")
+	moveBody, _ := io.ReadAll(moveResp.Body)
 	require.NoError(t, moveResp.Body.Close())
+	require.Equalf(t, 200, moveResp.StatusCode, "playlist move via files endpoint should succeed; body: %s", moveBody)
 
-	// Delete: removes the file and deprovisions the playlist.
-	delResult := helper.AdminREST.Delete().
-		Namespace("default").
-		Resource("repositories").
-		Name(repo).
-		SubResource("files", path).
-		Do(ctx)
-	require.NoError(t, delResult.Error(), "deleting a playlist file should succeed")
+	repoFiles := repositoryFilePaths(t, ctx, helper, repo)
+	require.NotContains(t, repoFiles, path, "the playlist file should no longer be at its original path")
+	require.Contains(t, repoFiles, movedPath, "the playlist file should be at the moved path")
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		got, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, movedPath, got.GetAnnotations()[utils.AnnoKeySourcePath],
+			"the source-path annotation should be refreshed to the moved path")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "playlist source path should be refreshed after a files move")
 
-	require.NotContains(t, repositoryFilePaths(t, ctx, helper, repo), path, "the playlist file should be removed from the repository")
+	// Delete: removes the (moved) file and deprovisions the playlist.
+	delResp := helper.NewFilesClient(repo).Delete(t, movedPath)
+	require.Equal(t, 200, delResp.StatusCode, "deleting a playlist file should succeed")
+
+	require.NotContains(t, repositoryFilePaths(t, ctx, helper, repo), movedPath, "the playlist file should be removed from the repository")
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		_, err := playlists.Resource.Get(ctx, name, metav1.GetOptions{})
 		assert.True(collect, apierrors.IsNotFound(err), "playlist should be removed from Grafana after a files DELETE, got: %v", err)
@@ -302,13 +327,13 @@ func TestIntegrationProvisioning_PlaylistDeleteJob(t *testing.T) {
 }
 
 // TestIntegrationProvisioning_PlaylistMoveJob verifies that a bulk move job relocates the
-// playlist files within the repository and the playlists remain in Grafana.
+// playlist files within the repository, the playlists remain in Grafana, and the post-move
+// full sync refreshes each moved playlist's source-path annotation.
 //
-// Note: the move job moves the files and then runs a full sync to reconcile. Updating the
-// moved playlist's source path is a no-op for now (the apiserver rejects the RV-less update,
-// reported as a job warning) — the playlist round-trip limitation tracked under grafana/git-ui-sync-project#1199. The
-// assertions therefore cover the repository file moves and the continued existence of the
-// playlists, not the refreshed source-path annotation.
+// The move job moves the files and then runs a full sync to reconcile, which re-upserts the
+// moved playlists as updates. The parser now carries the existing resourceVersion into the
+// update, so the re-upsert succeeds (the job completes without warnings) and the refreshed
+// source-path annotation is observable (git-ui-sync-project#1199).
 func TestIntegrationProvisioning_PlaylistMoveJob(t *testing.T) {
 	helper := sharedHelper(t)
 	ctx := context.Background()
@@ -331,19 +356,27 @@ func TestIntegrationProvisioning_PlaylistMoveJob(t *testing.T) {
 		t.Cleanup(func() { _ = playlists.Resource.Delete(ctx, names[i], metav1.DeleteOptions{}) })
 	}
 
-	// Bulk move both playlist files into a subdirectory in a single job.
-	helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+	// Bulk move both playlist files into a subdirectory in a single job. The move plus its
+	// post-move re-upsert must complete cleanly, without warnings.
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMove,
 		Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},
 	})
 
 	repoFiles := repositoryFilePaths(t, ctx, helper, repo)
 	for i := range paths {
+		movedPath := "archived/" + paths[i]
 		require.NotContains(t, repoFiles, paths[i], "%s should no longer be at its original path", paths[i])
-		require.Contains(t, repoFiles, "archived/"+paths[i], "%s should be moved under archived/", paths[i])
-		// The playlist resource survives the move (its source path is not refreshed; see git-ui-sync-project#1199).
-		_, err := playlists.Resource.Get(ctx, names[i], metav1.GetOptions{})
-		require.NoError(t, err, "%s should still exist in Grafana after the move job", names[i])
+		require.Contains(t, repoFiles, movedPath, "%s should be moved under archived/", paths[i])
+		// The moved playlist survives and its source path is refreshed to the new location.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			got, err := playlists.Resource.Get(ctx, names[i], metav1.GetOptions{})
+			if !assert.NoError(collect, err) {
+				return
+			}
+			assert.Equal(collect, movedPath, got.GetAnnotations()[utils.AnnoKeySourcePath],
+				"%s source path should be refreshed to the moved location", names[i])
+		}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "%s source path should be refreshed after the move job", names[i])
 	}
 }
 

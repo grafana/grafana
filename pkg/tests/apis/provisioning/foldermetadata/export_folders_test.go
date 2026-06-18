@@ -335,3 +335,78 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 		require.Equal(t, siblingBTitle, siblingBManifest.Spec.Title)
 	})
 }
+
+// TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata
+// verifies that a selective export of a single dashboard generates _folder.json
+// metadata for the dashboard's parent folder ancestry — even though those
+// folders were not named in the export — while leaving an unrelated folder
+// (and its metadata) out of the repository entirely.
+func TestIntegrationProvisioning_ExportJob_SelectiveGeneratesFolderMetadata(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
+		var manifest foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
+
+	helper := sharedHelper(t)
+
+	const repo = "selective-export-meta-repo"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:                   repo,
+		SyncTarget:             "instance",
+		Workflows:              []string{"write"},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	const (
+		parentUID   = "selective-meta-parent-uid"
+		parentTitle = "selective-meta-parent"
+		childUID    = "selective-meta-child-uid"
+		childTitle  = "selective-meta-child"
+
+		unrelatedUID   = "selective-meta-unrelated-uid"
+		unrelatedTitle = "selective-meta-unrelated"
+	)
+	createUnmanagedFolder(t, helper, parentUID, parentTitle)
+	createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
+	createUnmanagedFolder(t, helper, unrelatedUID, unrelatedTitle)
+
+	// The dashboard lives in the child folder; only it is named in the export.
+	selectedDash := helper.CreateUnmanagedDashboard(t, t.Context(), "selective-meta-dash", childUID)
+
+	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPush,
+		Push: &provisioning.ExportJobOptions{
+			Resources: []provisioning.ResourceRef{
+				{Name: selectedDash, Kind: "Dashboard", Group: "dashboard.grafana.app"},
+			},
+		},
+	})
+	job := &provisioning.Job{}
+	require.NoError(t, k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, job))
+	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "selective export job should succeed")
+
+	// The parent ancestry is generated with metadata even though it was not
+	// named: the dashboard's nested path must resolve to managed folders.
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle))
+	require.DirExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle))
+
+	parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+	require.Equal(t, parentUID, parentManifest.Name, "generated parent _folder.json should preserve the folder UID")
+	require.Equal(t, parentTitle, parentManifest.Spec.Title)
+
+	childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
+	require.Equal(t, childUID, childManifest.Name, "generated child _folder.json should preserve the folder UID")
+	require.Equal(t, childTitle, childManifest.Spec.Title)
+
+	// The dashboard itself lands inside the generated child folder.
+	require.FileExists(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "selective-meta-dash.json"))
+
+	// The unrelated folder must not be exported at all: no directory, no metadata.
+	_, err := os.Stat(filepath.Join(helper.ProvisioningPath, unrelatedTitle))
+	require.True(t, os.IsNotExist(err), "unrelated folder must not be exported during a selective export")
+}

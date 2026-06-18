@@ -23,7 +23,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 
@@ -40,7 +40,7 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
@@ -122,6 +122,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 		originalBuildTime,
 		be.opts.BuildVersion,
 		nil,
+		"",
 	)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = index.Close() })

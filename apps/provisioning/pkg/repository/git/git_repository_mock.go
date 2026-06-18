@@ -964,6 +964,11 @@ func (_c *MockGitRepository_Update_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// WithMaxFileSize provides a mock function with given fields: maxBytes
+func (_m *MockGitRepository) WithMaxFileSize(maxBytes int64) {
+	_m.Called(maxBytes)
+}
+
 // Write provides a mock function with given fields: ctx, path, ref, data, message
 func (_m *MockGitRepository) Write(ctx context.Context, path string, ref string, data []byte, message string) error {
 	ret := _m.Called(ctx, path, ref, data, message)

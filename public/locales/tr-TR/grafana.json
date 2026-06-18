@@ -4272,6 +4272,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Kaynaklar silinirken hata oluştu",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4295,7 @@
       "error-no-target-folder-path": "Hedef klasör yolu geçersiz veya boş, lütfen tekrar seçin.",
       "move-warning": "Bu işlem, seçilen klasörleri ve alt ögelerini taşıyacaktır. Kullanılabilir hedef klasörler, seçilen kaynaklara bağlıdır.",
       "move-warning-tooltip": "Sağlanan kaynakları yalnızca kendi klasörlerinde, yerel kaynakları ise yerel klasörlerde taşıyabilirsiniz.",
+      "success-title": "",
       "target-folder": "Hedef Klasör",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6212,7 +6214,17 @@
       "snapshot": {
         "tooltip": "Orijinal panoyu aç"
       },
-      "undo": "Geri al"
+      "undo": "Geri al",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Kaynak ({{provider}})",
@@ -6471,6 +6483,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": "Panel bulunamadı"
     },
     "viz-panel": {
@@ -13055,6 +13068,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Kurulumu atlayın ve <2>sonsuza kadar ücretsiz Grafana Cloud planı</2> ile Git Senkronizasyonunun tamamen Grafana Cloud üzerinde yönetilmesini ve barındırılmasını sağlayın.",

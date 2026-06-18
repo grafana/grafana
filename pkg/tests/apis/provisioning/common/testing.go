@@ -930,16 +930,32 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
 
-	// Verify initial state
+	// Verify initial state. ExpectedDashboards/ExpectedFolders count this
+	// repo's synced resources plus any unmanaged resources a test pre-seeds
+	// (e.g. the selective export/migrate tests). It deliberately does NOT
+	// count dangling orphans — resources still annotated as managed by a
+	// repository that no longer exists. Those can leak from a prior test: the
+	// per-test cleanup deletes a repo whose RemoveOrphanResources finalizer
+	// then enumerates its managed resources through the eventually-consistent
+	// search index; if that index lags and reports none, the finalizer deletes
+	// nothing and the folder survives as a managed orphan that surfaces later
+	// and would otherwise inflate this count.
 	if !repo.SkipResourceAssertions {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			existingRepos, err := h.repoNameSet(t.Context())
+			if err != nil {
+				collect.Errorf("could not list repositories: error: %s", err.Error())
+				return
+			}
+
 			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				collect.Errorf("could not list dashboards error: %s", err.Error())
 				return
 			}
-			if len(dashboards.Items) != repo.ExpectedDashboards {
-				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), repo.ExpectedDashboards)
+			dashboardCount := countNonOrphanedResources(dashboards.Items, existingRepos)
+			if dashboardCount != repo.ExpectedDashboards {
+				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", dashboardCount, repo.ExpectedDashboards)
 				return
 			}
 			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -947,14 +963,48 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 				collect.Errorf("could not list folders: error: %s", err.Error())
 				return
 			}
-			if len(folders.Items) != repo.ExpectedFolders {
-				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), repo.ExpectedFolders)
+			folderCount := countNonOrphanedResources(folders.Items, existingRepos)
+			if folderCount != repo.ExpectedFolders {
+				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", folderCount, repo.ExpectedFolders)
 				return
 			}
-			assert.Len(collect, dashboards.Items, repo.ExpectedDashboards)
-			assert.Len(collect, folders.Items, repo.ExpectedFolders)
 		}, WaitTimeoutDefault, WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 	}
+}
+
+// repoNameSet returns the set of repository names that currently exist.
+func (h *ProvisioningTestHelper) repoNameSet(ctx context.Context) (map[string]struct{}, error) {
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]struct{}, len(repos.Items))
+	for i := range repos.Items {
+		names[repos.Items[i].GetName()] = struct{}{}
+	}
+	return names, nil
+}
+
+// countNonOrphanedResources counts resources except dangling repo orphans:
+// resources annotated as managed by a repository (managedBy=repo) whose
+// repository no longer exists. Those leak from a prior test and would inflate
+// the count. Unmanaged resources and resources managed by other kinds
+// (kubectl, terraform, ...) are always counted, as are repo-managed resources
+// whose repository still exists.
+func countNonOrphanedResources(items []unstructured.Unstructured, existingRepos map[string]struct{}) int {
+	var count int
+	for i := range items {
+		annotations := items[i].GetAnnotations()
+		managerKind := annotations["grafana.app/managedBy"]
+		managerID := annotations["grafana.app/managerId"]
+		if managerKind == "repo" {
+			if _, ok := existingRepos[managerID]; !ok {
+				continue
+			}
+		}
+		count++
+	}
+	return count
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository

@@ -1,6 +1,5 @@
 import { render, screen } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -117,14 +116,14 @@ describe('AlertDetails', () => {
 
   describe('See source button — external source', () => {
     it('always shows See source button regardless of rule read permission', () => {
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION]);
       const alert = mockAlertmanagerAlert({
         status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
         generatorURL: 'https://external-alertmanager.example.com',
       });
 
-      renderAlertDetails(alert, MIMIR_DATASOURCE_UID);
+      renderAlertDetails(alert, amSource);
 
       expect(screen.getByRole('link', { name: /see source/i })).toBeInTheDocument();
     });

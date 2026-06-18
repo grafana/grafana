@@ -6028,9 +6028,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
@@ -13045,9 +13042,6 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
-      "error-quota-exceeded-message-onprem": "This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
-      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
@@ -13061,7 +13055,10 @@
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
       "update-configuration-action": "View configuration docs",
-      "upgrade-action": "Upgrade account"
+      "upgrade-action": "Upgrade account",
+      "warning-quota-may-exceed-message": "This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.",
+      "warning-quota-may-exceed-message-onprem": "This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.",
+      "warning-quota-may-exceed-title": "Resource limit may be exceeded"
     },
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
