@@ -95,7 +95,7 @@ export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
 // Supported dashboard elements
 // |* more element types in the future
-export type Element = PanelKind | LibraryPanelKind;
+export type Element = PanelKind | LibraryPanelKind | CellKind;
 
 export const defaultElement = (): Element => (defaultPanelKind());
 
@@ -675,6 +675,72 @@ export interface LibraryPanelRef {
 export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	name: "",
 	uid: "",
+});
+
+// A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
+// Panel cells are not represented here — they reuse PanelKind.
+export interface CellKind {
+	kind: "Cell";
+	spec: CellSpec;
+}
+
+export const defaultCellKind = (): CellKind => ({
+	kind: "Cell",
+	spec: defaultCellSpec(),
+});
+
+export interface CellSpec {
+	content: CellContentKind;
+}
+
+export const defaultCellSpec = (): CellSpec => ({
+	content: defaultCellContentKind(),
+});
+
+// Pluggable cell content discriminated by `kind`. New content types are added
+// by extending this union with another <Name>CellContentKind member.
+export type CellContentKind = MarkdownCellContentKind | CodeCellContentKind;
+
+export const defaultCellContentKind = (): CellContentKind => (defaultMarkdownCellContentKind());
+
+export interface MarkdownCellContentKind {
+	kind: "Markdown";
+	spec: MarkdownCellContentSpec;
+}
+
+export const defaultMarkdownCellContentKind = (): MarkdownCellContentKind => ({
+	kind: "Markdown",
+	spec: defaultMarkdownCellContentSpec(),
+});
+
+export interface MarkdownCellContentSpec {
+	text: string;
+}
+
+export const defaultMarkdownCellContentSpec = (): MarkdownCellContentSpec => ({
+	text: "",
+});
+
+export interface CodeCellContentKind {
+	kind: "Code";
+	spec: CodeCellContentSpec;
+}
+
+export const defaultCodeCellContentKind = (): CodeCellContentKind => ({
+	kind: "Code",
+	spec: defaultCodeCellContentSpec(),
+});
+
+export interface CodeCellContentSpec {
+	language: string;
+	code: string;
+	highlight?: number[];
+	annotation?: string;
+}
+
+export const defaultCodeCellContentSpec = (): CodeCellContentSpec => ({
+	language: "",
+	code: "",
 });
 
 export interface GridLayoutKind {
@@ -1453,6 +1519,48 @@ export const defaultSwitchVariableSpec = (): SwitchVariableSpec => ({
 	skipUrlSync: false,
 });
 
+export interface NotebookLayoutKind {
+	kind: "NotebookLayout";
+	spec: NotebookLayoutSpec;
+}
+
+export const defaultNotebookLayoutKind = (): NotebookLayoutKind => ({
+	kind: "NotebookLayout",
+	spec: defaultNotebookLayoutSpec(),
+});
+
+export interface NotebookLayoutSpec {
+	cells: NotebookLayoutItemKind[];
+}
+
+export const defaultNotebookLayoutSpec = (): NotebookLayoutSpec => ({
+	cells: [],
+});
+
+export interface NotebookLayoutItemKind {
+	kind: "NotebookLayoutItem";
+	spec: NotebookLayoutItemSpec;
+}
+
+export const defaultNotebookLayoutItemKind = (): NotebookLayoutItemKind => ({
+	kind: "NotebookLayoutItem",
+	spec: defaultNotebookLayoutItemSpec(),
+});
+
+// One ordered item in a notebook layout. `element` references either a CellKind
+// (markdown/code content) or a PanelKind in dashboard.spec.elements. `source`
+// records who authored the cell; `collapsed` hides the body in the UI.
+export interface NotebookLayoutItemSpec {
+	element: ElementReference;
+	source: "assistant" | "user";
+	collapsed?: boolean;
+}
+
+export const defaultNotebookLayoutItemSpec = (): NotebookLayoutItemSpec => ({
+	element: defaultElementReference(),
+	source: "assistant",
+});
+
 // Links with references to other dashboards or external resources
 export interface DashboardLink {
 	// Title to display with the link
@@ -1590,7 +1698,7 @@ export interface Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind | NotebookLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.

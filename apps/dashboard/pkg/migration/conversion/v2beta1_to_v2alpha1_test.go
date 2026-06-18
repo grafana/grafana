@@ -541,7 +541,7 @@ func TestV2beta1ToV2alpha1(t *testing.T) {
 								},
 							},
 						},
-						Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+						Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 							RowsLayoutKind: &dashv2beta1.DashboardRowsLayoutKind{
 								Kind: "RowsLayout",
 								Spec: dashv2beta1.DashboardRowsLayoutSpec{

@@ -21,6 +21,10 @@ export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot
 
 export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabKind {
   const layout = tab.state.layout.serialize(isSnapshot);
+  // NotebookLayout is a top-level dashboard layout only; it cannot nest inside a tab.
+  if (layout.kind === 'NotebookLayout') {
+    throw new Error('NotebookLayout cannot be nested inside a tab');
+  }
   const tabKind: TabsLayoutTabKind = {
     kind: 'TabsLayoutTab',
     spec: {

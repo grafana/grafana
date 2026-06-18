@@ -32,7 +32,11 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardAutoGridLayoutKind{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutKind(ref),
 		DashboardAutoGridLayoutSpec{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutSpec(ref),
 		DashboardAutoGridRepeatOptions{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref),
+		DashboardCellKind{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_DashboardCellKind(ref),
+		DashboardCellSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v2beta1_DashboardCellSpec(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1.DashboardClient": schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref),
+		DashboardCodeCellContentKind{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_DashboardCodeCellContentKind(ref),
+		DashboardCodeCellContentSpec{}.OpenAPIModelName():                                      schema_pkg_apis_dashboard_v2beta1_DashboardCodeCellContentSpec(ref),
 		DashboardConditionalRenderingDataKind{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataKind(ref),
 		DashboardConditionalRenderingDataSpec{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingDataSpec(ref),
 		DashboardConditionalRenderingGroupKind{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2beta1_DashboardConditionalRenderingGroupKind(ref),
@@ -65,6 +69,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardGridLayoutKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKind(ref),
 		DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(ref),
 		DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName():                                    schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(ref),
+		DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{}.OpenAPIModelName():                schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind(ref),
 		DashboardGridLayoutSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref),
 		DashboardGroupByVariableKind{}.OpenAPIModelName():                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref),
 		DashboardGroupByVariableSpec{}.OpenAPIModelName():                                                                                   schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref),
@@ -76,10 +81,17 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardLibraryPanelKindSpec{}.OpenAPIModelName():                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelKindSpec(ref),
 		DashboardLibraryPanelRef{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardLibraryPanelRef(ref),
 		DashboardList{}.OpenAPIModelName():                                                                                                  schema_pkg_apis_dashboard_v2beta1_DashboardList(ref),
+		DashboardMarkdownCellContentKind{}.OpenAPIModelName():                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentKind(ref),
+		DashboardMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentKindOrCodeCellContentKind(ref),
+		DashboardMarkdownCellContentSpec{}.OpenAPIModelName():                                                                               schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentSpec(ref),
 		DashboardMatcherConfig{}.OpenAPIModelName():                                                                                         schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref),
 		DashboardMetricFindValue{}.OpenAPIModelName():                                                                                       schema_pkg_apis_dashboard_v2beta1_DashboardMetricFindValue(ref),
+		DashboardNotebookLayoutItemKind{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutItemKind(ref),
+		DashboardNotebookLayoutItemSpec{}.OpenAPIModelName():                                                                                schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutItemSpec(ref),
+		DashboardNotebookLayoutKind{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutKind(ref),
+		DashboardNotebookLayoutSpec{}.OpenAPIModelName():                                                                                    schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutSpec(ref),
 		DashboardPanelKind{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2beta1_DashboardPanelKind(ref),
-		DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName():                                                                           schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref),
+		DashboardPanelKindOrLibraryPanelKindOrCellKind{}.OpenAPIModelName():                                                                 schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKindOrCellKind(ref),
 		DashboardPanelQueryKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardPanelQueryKind(ref),
 		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2beta1_DashboardPanelQuerySpec(ref),
 		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref),
@@ -1046,6 +1058,55 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridRepeatOptions(ref common
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardCellKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "A cell holds non-panel narrative content (markdown text, code) in a notebook layout. Panel cells are not represented here — they reuse PanelKind.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardCellSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardCellSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardCellSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"content": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"content"},
+			},
+		},
+		Dependencies: []string{
+			DashboardMarkdownCellContentKindOrCodeCellContentKind{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1063,6 +1124,81 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardClient(ref common.ReferenceCallb
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana-app-sdk/resource.TypedClient[T,L]"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardCodeCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardCodeCellContentSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardCodeCellContentSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardCodeCellContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"language": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"highlight": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: 0,
+										Type:    []string{"integer"},
+										Format:  "int64",
+									},
+								},
+							},
+						},
+					},
+					"annotation": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"language", "code"},
+			},
+		},
 	}
 }
 
@@ -2607,6 +2743,45 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOr
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"GridLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardGridLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+					"RowsLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardRowsLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+					"AutoGridLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardAutoGridLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+					"TabsLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardTabsLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+					"NotebookLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardNotebookLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardAutoGridLayoutKind{}.OpenAPIModelName(), DashboardGridLayoutKind{}.OpenAPIModelName(), DashboardNotebookLayoutKind{}.OpenAPIModelName(), DashboardRowsLayoutKind{}.OpenAPIModelName(), DashboardTabsLayoutKind{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3150,6 +3325,78 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardList(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardMarkdownCellContentSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardMarkdownCellContentSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentKindOrCodeCellContentKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"MarkdownCellContentKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardMarkdownCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+					"CodeCellContentKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardCodeCellContentKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardCodeCellContentKind{}.OpenAPIModelName(), DashboardMarkdownCellContentKind{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardMarkdownCellContentSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"text": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"text"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardMatcherConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3226,6 +3473,125 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardMetricFindValue(ref common.Refer
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutItemKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardNotebookLayoutItemSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardNotebookLayoutItemSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutItemSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in dashboard.spec.elements. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"element": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardElementReference{}.OpenAPIModelName()),
+						},
+					},
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"collapsed": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"element", "source"},
+			},
+		},
+		Dependencies: []string{
+			DashboardElementReference{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(DashboardNotebookLayoutSpec{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"kind", "spec"},
+			},
+		},
+		Dependencies: []string{
+			DashboardNotebookLayoutSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_DashboardNotebookLayoutSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cells": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(DashboardNotebookLayoutItemKind{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"cells"},
+			},
+		},
+		Dependencies: []string{
+			DashboardNotebookLayoutItemKind{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -3254,7 +3620,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKind(ref common.ReferenceCa
 	}
 }
 
-func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKindOrCellKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -3270,11 +3636,16 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref 
 							Ref: ref(DashboardLibraryPanelKind{}.OpenAPIModelName()),
 						},
 					},
+					"CellKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardCellKind{}.OpenAPIModelName()),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			DashboardLibraryPanelKind{}.OpenAPIModelName(), DashboardPanelKind{}.OpenAPIModelName()},
+			DashboardCellKind{}.OpenAPIModelName(), DashboardLibraryPanelKind{}.OpenAPIModelName(), DashboardPanelKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -4119,7 +4490,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardPanelKindOrLibraryPanelKindOrCellKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4127,7 +4498,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 					},
 					"layout": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName()),
+							Ref: ref(DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{}.OpenAPIModelName()),
 						},
 					},
 					"links": {
@@ -4213,7 +4584,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKindOrCellKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 

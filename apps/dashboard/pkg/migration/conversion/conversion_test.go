@@ -61,7 +61,7 @@ func TestMultiStepConversionPreservesStoredVersion(t *testing.T) {
 				},
 				Spec: dashv2beta1.DashboardSpec{
 					Title: "test dashboard",
-					Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					Layout: dashv2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 						GridLayoutKind: &dashv2beta1.DashboardGridLayoutKind{
 							Kind: "GridLayout",
 							Spec: dashv2beta1.DashboardGridLayoutSpec{},
@@ -83,7 +83,7 @@ func TestMultiStepConversionPreservesStoredVersion(t *testing.T) {
 				},
 				Spec: dashv2alpha1.DashboardSpec{
 					Title: "test dashboard",
-					Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{
 						GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
 							Kind: "GridLayout",
 							Spec: dashv2alpha1.DashboardGridLayoutSpec{},

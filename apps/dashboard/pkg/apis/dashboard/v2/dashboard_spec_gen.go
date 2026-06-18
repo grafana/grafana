@@ -152,11 +152,11 @@ func (DashboardDashboardCursorSync) OpenAPIModelName() string {
 // Supported dashboard elements
 // |* more element types in the future
 // +k8s:openapi-gen=true
-type DashboardElement = DashboardPanelKindOrLibraryPanelKind
+type DashboardElement = DashboardPanelKindOrLibraryPanelKindOrCellKind
 
 // NewDashboardElement creates a new DashboardElement object.
 func NewDashboardElement() *DashboardElement {
-	return NewDashboardPanelKindOrLibraryPanelKind()
+	return NewDashboardPanelKindOrLibraryPanelKindOrCellKind()
 }
 
 // +k8s:openapi-gen=true
@@ -1069,6 +1069,125 @@ func NewDashboardLibraryPanelRef() *DashboardLibraryPanelRef {
 // OpenAPIModelName returns the OpenAPI model name for DashboardLibraryPanelRef.
 func (DashboardLibraryPanelRef) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardLibraryPanelRef"
+}
+
+// A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
+// Panel cells are not represented here — they reuse PanelKind.
+// +k8s:openapi-gen=true
+type DashboardCellKind struct {
+	Kind string            `json:"kind"`
+	Spec DashboardCellSpec `json:"spec"`
+}
+
+// NewDashboardCellKind creates a new DashboardCellKind object.
+func NewDashboardCellKind() *DashboardCellKind {
+	return &DashboardCellKind{
+		Kind: "Cell",
+		Spec: *NewDashboardCellSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCellKind.
+func (DashboardCellKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardCellKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardCellSpec struct {
+	Content DashboardCellContentKind `json:"content"`
+}
+
+// NewDashboardCellSpec creates a new DashboardCellSpec object.
+func NewDashboardCellSpec() *DashboardCellSpec {
+	return &DashboardCellSpec{
+		Content: *NewDashboardCellContentKind(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCellSpec.
+func (DashboardCellSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardCellSpec"
+}
+
+// Pluggable cell content discriminated by `kind`. New content types are added
+// by extending this union with another <Name>CellContentKind member.
+// +k8s:openapi-gen=true
+type DashboardCellContentKind = DashboardMarkdownCellContentKindOrCodeCellContentKind
+
+// NewDashboardCellContentKind creates a new DashboardCellContentKind object.
+func NewDashboardCellContentKind() *DashboardCellContentKind {
+	return NewDashboardMarkdownCellContentKindOrCodeCellContentKind()
+}
+
+// +k8s:openapi-gen=true
+type DashboardMarkdownCellContentKind struct {
+	Kind string                           `json:"kind"`
+	Spec DashboardMarkdownCellContentSpec `json:"spec"`
+}
+
+// NewDashboardMarkdownCellContentKind creates a new DashboardMarkdownCellContentKind object.
+func NewDashboardMarkdownCellContentKind() *DashboardMarkdownCellContentKind {
+	return &DashboardMarkdownCellContentKind{
+		Kind: "Markdown",
+		Spec: *NewDashboardMarkdownCellContentSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMarkdownCellContentKind.
+func (DashboardMarkdownCellContentKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardMarkdownCellContentKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMarkdownCellContentSpec struct {
+	Text string `json:"text"`
+}
+
+// NewDashboardMarkdownCellContentSpec creates a new DashboardMarkdownCellContentSpec object.
+func NewDashboardMarkdownCellContentSpec() *DashboardMarkdownCellContentSpec {
+	return &DashboardMarkdownCellContentSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMarkdownCellContentSpec.
+func (DashboardMarkdownCellContentSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardMarkdownCellContentSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardCodeCellContentKind struct {
+	Kind string                       `json:"kind"`
+	Spec DashboardCodeCellContentSpec `json:"spec"`
+}
+
+// NewDashboardCodeCellContentKind creates a new DashboardCodeCellContentKind object.
+func NewDashboardCodeCellContentKind() *DashboardCodeCellContentKind {
+	return &DashboardCodeCellContentKind{
+		Kind: "Code",
+		Spec: *NewDashboardCodeCellContentSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCodeCellContentKind.
+func (DashboardCodeCellContentKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardCodeCellContentKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardCodeCellContentSpec struct {
+	Language   string  `json:"language"`
+	Code       string  `json:"code"`
+	Highlight  []int64 `json:"highlight,omitempty"`
+	Annotation *string `json:"annotation,omitempty"`
+}
+
+// NewDashboardCodeCellContentSpec creates a new DashboardCodeCellContentSpec object.
+func NewDashboardCodeCellContentSpec() *DashboardCodeCellContentSpec {
+	return &DashboardCodeCellContentSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardCodeCellContentSpec.
+func (DashboardCodeCellContentSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardCodeCellContentSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -2372,6 +2491,83 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardSwitchVariableSpec"
 }
 
+// +k8s:openapi-gen=true
+type DashboardNotebookLayoutKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardNotebookLayoutSpec `json:"spec"`
+}
+
+// NewDashboardNotebookLayoutKind creates a new DashboardNotebookLayoutKind object.
+func NewDashboardNotebookLayoutKind() *DashboardNotebookLayoutKind {
+	return &DashboardNotebookLayoutKind{
+		Kind: "NotebookLayout",
+		Spec: *NewDashboardNotebookLayoutSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNotebookLayoutKind.
+func (DashboardNotebookLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardNotebookLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardNotebookLayoutSpec struct {
+	Cells []DashboardNotebookLayoutItemKind `json:"cells"`
+}
+
+// NewDashboardNotebookLayoutSpec creates a new DashboardNotebookLayoutSpec object.
+func NewDashboardNotebookLayoutSpec() *DashboardNotebookLayoutSpec {
+	return &DashboardNotebookLayoutSpec{
+		Cells: []DashboardNotebookLayoutItemKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNotebookLayoutSpec.
+func (DashboardNotebookLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardNotebookLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardNotebookLayoutItemKind struct {
+	Kind string                          `json:"kind"`
+	Spec DashboardNotebookLayoutItemSpec `json:"spec"`
+}
+
+// NewDashboardNotebookLayoutItemKind creates a new DashboardNotebookLayoutItemKind object.
+func NewDashboardNotebookLayoutItemKind() *DashboardNotebookLayoutItemKind {
+	return &DashboardNotebookLayoutItemKind{
+		Kind: "NotebookLayoutItem",
+		Spec: *NewDashboardNotebookLayoutItemSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNotebookLayoutItemKind.
+func (DashboardNotebookLayoutItemKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardNotebookLayoutItemKind"
+}
+
+// One ordered item in a notebook layout. `element` references either a CellKind
+// (markdown/code content) or a PanelKind in dashboard.spec.elements. `source`
+// records who authored the cell; `collapsed` hides the body in the UI.
+// +k8s:openapi-gen=true
+type DashboardNotebookLayoutItemSpec struct {
+	Element   DashboardElementReference             `json:"element"`
+	Source    DashboardNotebookLayoutItemSpecSource `json:"source"`
+	Collapsed *bool                                 `json:"collapsed,omitempty"`
+}
+
+// NewDashboardNotebookLayoutItemSpec creates a new DashboardNotebookLayoutItemSpec object.
+func NewDashboardNotebookLayoutItemSpec() *DashboardNotebookLayoutItemSpec {
+	return &DashboardNotebookLayoutItemSpec{
+		Element: *NewDashboardElementReference(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNotebookLayoutItemSpec.
+func (DashboardNotebookLayoutItemSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardNotebookLayoutItemSpec"
+}
+
 // Links with references to other dashboards or external resources
 // +k8s:openapi-gen=true
 type DashboardDashboardLink struct {
@@ -2538,9 +2734,9 @@ type DashboardSpec struct {
 	// Description of dashboard.
 	Description *string `json:"description,omitempty"`
 	// Whether a dashboard is editable or not.
-	Editable *bool                                                                       `json:"editable,omitempty"`
-	Elements map[string]DashboardElement                                                 `json:"elements"`
-	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Editable *bool                                                                                           `json:"editable,omitempty"`
+	Elements map[string]DashboardElement                                                                     `json:"elements"`
+	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardDashboardLink `json:"links"`
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -2569,7 +2765,7 @@ func NewDashboardSpec() *DashboardSpec {
 		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
 		Elements:     map[string]DashboardElement{},
-		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
+		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind(),
 		Links:        []DashboardDashboardLink{},
 		Preload:      false,
 		Tags:         []string{},
@@ -2838,6 +3034,19 @@ func (DashboardCustomVariableSpecValuesFormat) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type DashboardNotebookLayoutItemSpecSource string
+
+const (
+	DashboardNotebookLayoutItemSpecSourceAssistant DashboardNotebookLayoutItemSpecSource = "assistant"
+	DashboardNotebookLayoutItemSpecSourceUser      DashboardNotebookLayoutItemSpecSource = "user"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardNotebookLayoutItemSpecSource.
+func (DashboardNotebookLayoutItemSpecSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardNotebookLayoutItemSpecSource"
+}
+
+// +k8s:openapi-gen=true
 type DashboardTimeSettingsSpecWeekStart string
 
 const (
@@ -2852,30 +3061,34 @@ func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardPanelKindOrLibraryPanelKind struct {
+type DashboardPanelKindOrLibraryPanelKindOrCellKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`
 	LibraryPanelKind *DashboardLibraryPanelKind `json:"LibraryPanelKind,omitempty"`
+	CellKind         *DashboardCellKind         `json:"CellKind,omitempty"`
 }
 
-// NewDashboardPanelKindOrLibraryPanelKind creates a new DashboardPanelKindOrLibraryPanelKind object.
-func NewDashboardPanelKindOrLibraryPanelKind() *DashboardPanelKindOrLibraryPanelKind {
-	return &DashboardPanelKindOrLibraryPanelKind{}
+// NewDashboardPanelKindOrLibraryPanelKindOrCellKind creates a new DashboardPanelKindOrLibraryPanelKindOrCellKind object.
+func NewDashboardPanelKindOrLibraryPanelKindOrCellKind() *DashboardPanelKindOrLibraryPanelKindOrCellKind {
+	return &DashboardPanelKindOrLibraryPanelKindOrCellKind{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardPanelKindOrLibraryPanelKind` as JSON.
-func (resource DashboardPanelKindOrLibraryPanelKind) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardPanelKindOrLibraryPanelKindOrCellKind` as JSON.
+func (resource DashboardPanelKindOrLibraryPanelKindOrCellKind) MarshalJSON() ([]byte, error) {
 	if resource.PanelKind != nil {
 		return json.Marshal(resource.PanelKind)
 	}
 	if resource.LibraryPanelKind != nil {
 		return json.Marshal(resource.LibraryPanelKind)
 	}
+	if resource.CellKind != nil {
+		return json.Marshal(resource.CellKind)
+	}
 
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardPanelKindOrLibraryPanelKind` from JSON.
-func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardPanelKindOrLibraryPanelKindOrCellKind` from JSON.
+func (resource *DashboardPanelKindOrLibraryPanelKindOrCellKind) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -2892,6 +3105,14 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 	}
 
 	switch discriminator {
+	case "Cell":
+		var dashboardCellKind DashboardCellKind
+		if err := json.Unmarshal(raw, &dashboardCellKind); err != nil {
+			return err
+		}
+
+		resource.CellKind = &dashboardCellKind
+		return nil
 	case "LibraryPanel":
 		var dashboardLibraryPanelKind DashboardLibraryPanelKind
 		if err := json.Unmarshal(raw, &dashboardLibraryPanelKind); err != nil {
@@ -2913,9 +3134,9 @@ func (resource *DashboardPanelKindOrLibraryPanelKind) UnmarshalJSON(raw []byte) 
 	return nil
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardPanelKindOrLibraryPanelKind.
-func (DashboardPanelKindOrLibraryPanelKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPanelKindOrLibraryPanelKind"
+// OpenAPIModelName returns the OpenAPI model name for DashboardPanelKindOrLibraryPanelKindOrCellKind.
+func (DashboardPanelKindOrLibraryPanelKindOrCellKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPanelKindOrLibraryPanelKindOrCellKind"
 }
 
 // +k8s:openapi-gen=true
@@ -3007,6 +3228,73 @@ func (resource *DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) Unmarsha
 // OpenAPIModelName returns the OpenAPI model name for DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap.
 func (DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap"
+}
+
+// +k8s:openapi-gen=true
+type DashboardMarkdownCellContentKindOrCodeCellContentKind struct {
+	MarkdownCellContentKind *DashboardMarkdownCellContentKind `json:"MarkdownCellContentKind,omitempty"`
+	CodeCellContentKind     *DashboardCodeCellContentKind     `json:"CodeCellContentKind,omitempty"`
+}
+
+// NewDashboardMarkdownCellContentKindOrCodeCellContentKind creates a new DashboardMarkdownCellContentKindOrCodeCellContentKind object.
+func NewDashboardMarkdownCellContentKindOrCodeCellContentKind() *DashboardMarkdownCellContentKindOrCodeCellContentKind {
+	return &DashboardMarkdownCellContentKindOrCodeCellContentKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardMarkdownCellContentKindOrCodeCellContentKind` as JSON.
+func (resource DashboardMarkdownCellContentKindOrCodeCellContentKind) MarshalJSON() ([]byte, error) {
+	if resource.MarkdownCellContentKind != nil {
+		return json.Marshal(resource.MarkdownCellContentKind)
+	}
+	if resource.CodeCellContentKind != nil {
+		return json.Marshal(resource.CodeCellContentKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardMarkdownCellContentKindOrCodeCellContentKind` from JSON.
+func (resource *DashboardMarkdownCellContentKindOrCodeCellContentKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "Code":
+		var dashboardCodeCellContentKind DashboardCodeCellContentKind
+		if err := json.Unmarshal(raw, &dashboardCodeCellContentKind); err != nil {
+			return err
+		}
+
+		resource.CodeCellContentKind = &dashboardCodeCellContentKind
+		return nil
+	case "Markdown":
+		var dashboardMarkdownCellContentKind DashboardMarkdownCellContentKind
+		if err := json.Unmarshal(raw, &dashboardMarkdownCellContentKind); err != nil {
+			return err
+		}
+
+		resource.MarkdownCellContentKind = &dashboardMarkdownCellContentKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardMarkdownCellContentKindOrCodeCellContentKind.
+func (DashboardMarkdownCellContentKindOrCodeCellContentKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardMarkdownCellContentKindOrCodeCellContentKind"
 }
 
 // +k8s:openapi-gen=true
@@ -3606,4 +3894,107 @@ func (resource *DashboardAutoGridLayoutKindOrGridLayoutKind) UnmarshalJSON(raw [
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKindOrGridLayoutKind.
 func (DashboardAutoGridLayoutKindOrGridLayoutKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKindOrGridLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind struct {
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
+	NotebookLayoutKind *DashboardNotebookLayoutKind `json:"NotebookLayoutKind,omitempty"`
+}
+
+// NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind creates a new DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind object.
+func NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind() *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind {
+	return &DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind` as JSON.
+func (resource DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind) MarshalJSON() ([]byte, error) {
+	if resource.GridLayoutKind != nil {
+		return json.Marshal(resource.GridLayoutKind)
+	}
+	if resource.RowsLayoutKind != nil {
+		return json.Marshal(resource.RowsLayoutKind)
+	}
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
+	}
+	if resource.TabsLayoutKind != nil {
+		return json.Marshal(resource.TabsLayoutKind)
+	}
+	if resource.NotebookLayoutKind != nil {
+		return json.Marshal(resource.NotebookLayoutKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind` from JSON.
+func (resource *DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
+	case "GridLayout":
+		var dashboardGridLayoutKind DashboardGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.GridLayoutKind = &dashboardGridLayoutKind
+		return nil
+	case "NotebookLayout":
+		var dashboardNotebookLayoutKind DashboardNotebookLayoutKind
+		if err := json.Unmarshal(raw, &dashboardNotebookLayoutKind); err != nil {
+			return err
+		}
+
+		resource.NotebookLayoutKind = &dashboardNotebookLayoutKind
+		return nil
+	case "RowsLayout":
+		var dashboardRowsLayoutKind DashboardRowsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.RowsLayoutKind = &dashboardRowsLayoutKind
+		return nil
+	case "TabsLayout":
+		var dashboardTabsLayoutKind DashboardTabsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.TabsLayoutKind = &dashboardTabsLayoutKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind.
+func (DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind"
 }

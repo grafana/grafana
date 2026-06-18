@@ -21,7 +21,7 @@ DashboardSpec: {
 
 	elements: [ElementReference.name]: Element | *{}
 
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind | NotebookLayoutKind
 
 	// Links with references to other dashboards or external websites.
 	links: [...DashboardLink] | *[]
@@ -51,7 +51,7 @@ DashboardSpec: {
 }
 
 // Supported dashboard elements
-Element: PanelKind | LibraryPanelKind // |* more element types in the future
+Element: PanelKind | LibraryPanelKind | CellKind // |* more element types in the future
 
 LibraryPanelKind: {
 	kind: "LibraryPanel"
@@ -701,6 +701,29 @@ TabsLayoutTabSpec: {
 	variables?: [...VariableKind]
 }
 
+NotebookLayoutKind: {
+	kind: "NotebookLayout"
+	spec: NotebookLayoutSpec
+}
+
+NotebookLayoutSpec: {
+	cells: [...NotebookLayoutItemKind]
+}
+
+NotebookLayoutItemKind: {
+	kind: "NotebookLayoutItem"
+	spec: NotebookLayoutItemSpec
+}
+
+// One ordered item in a notebook layout. `element` references either a CellKind
+// (markdown/code content) or a PanelKind in dashboard.spec.elements. `source`
+// records who authored the cell; `collapsed` hides the body in the UI.
+NotebookLayoutItemSpec: {
+	element:    ElementReference
+	source:     "assistant" | "user"
+	collapsed?: bool
+}
+
 PanelSpec: {
 	id:          number
 	title:       string
@@ -714,6 +737,42 @@ PanelSpec: {
 PanelKind: {
 	kind: "Panel"
 	spec: PanelSpec
+}
+
+// A cell holds non-panel narrative content (markdown text, code) in a notebook layout.
+// Panel cells are not represented here — they reuse PanelKind.
+CellKind: {
+	kind: "Cell"
+	spec: CellSpec
+}
+
+CellSpec: {
+	content: CellContentKind
+}
+
+// Pluggable cell content discriminated by `kind`. New content types are added
+// by extending this union with another <Name>CellContentKind member.
+CellContentKind: MarkdownCellContentKind | CodeCellContentKind
+
+MarkdownCellContentKind: {
+	kind: "Markdown"
+	spec: MarkdownCellContentSpec
+}
+
+MarkdownCellContentSpec: {
+	text: string
+}
+
+CodeCellContentKind: {
+	kind: "Code"
+	spec: CodeCellContentSpec
+}
+
+CodeCellContentSpec: {
+	language: string
+	code:     string
+	highlight?: [...int]
+	annotation?: string
 }
 
 ElementReference: {

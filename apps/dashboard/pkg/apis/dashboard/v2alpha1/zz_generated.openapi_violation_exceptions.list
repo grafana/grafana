@@ -6,6 +6,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAdhocVariableSpec,Filters
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAnnotationPanelFilter,Ids
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardAutoGridLayoutSpec,Items
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardCodeCellContentSpec,Highlight
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardConditionalRenderingGroupSpec,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardCustomVariableSpec,Options
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardDashboardLink,Tags
@@ -21,6 +22,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardInfinityOptions,Headers
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardInfinityOptions,QueryParams
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardIntervalVariableSpec,Options
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardNotebookLayoutSpec,Cells
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelSpec,Links
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardQueryGroupSpec,Queries
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardQueryGroupSpec,Transformations
@@ -49,10 +51,18 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind,GridLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind,RowsLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind,TabsLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind,AutoGridLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind,GridLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind,NotebookLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind,RowsLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrNotebookLayoutKind,TabsLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardIntervalVariableSpec,AutoCount
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardIntervalVariableSpec,AutoMin
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelKindOrLibraryPanelKind,LibraryPanelKind
-API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelKindOrLibraryPanelKind,PanelKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardMarkdownCellContentKindOrCodeCellContentKind,CodeCellContentKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardMarkdownCellContentKindOrCodeCellContentKind,MarkdownCellContentKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelKindOrLibraryPanelKindOrCellKind,CellKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelKindOrLibraryPanelKindOrCellKind,LibraryPanelKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardPanelKindOrLibraryPanelKindOrCellKind,PanelKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,AdhocVariableKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,ConstantVariableKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,CustomVariableKind
