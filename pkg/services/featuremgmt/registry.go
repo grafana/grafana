@@ -2386,15 +2386,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "opentsdbBackendMigration",
-			Description:     "Run queries through the data source backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDataSourcesPlugins,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "ttlPluginInstanceManager",
 			Description: "Enable TTL plugin instance manager",
 			Stage:       FeatureStageExperimental,

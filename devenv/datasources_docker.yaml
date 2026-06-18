@@ -60,14 +60,6 @@ datasources:
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
 
-  - name: gdev-opentsdb
-    type: opentsdb
-    access: proxy
-    url: http://opentsdb:4242
-    jsonData:
-      tsdbResolution: 1
-      tsdbVersion: 1
-
   - name: gdev-elasticsearch
     type: elasticsearch
     access: proxy

@@ -57,7 +57,6 @@ jobs:
               - '!public/app/plugins/datasource/loki/**'
               - '!public/app/plugins/datasource/mssql/**'
               - '!public/app/plugins/datasource/mysql/**'
-              - '!public/app/plugins/datasource/opentsdb/**'
               - '!public/app/plugins/datasource/parca/**'
               - '!public/app/plugins/datasource/tempo/**'
             backend_strict:
@@ -88,7 +87,6 @@ jobs:
               - 'public/app/plugins/datasource/loki/**'
               - 'public/app/plugins/datasource/mssql/**'
               - 'public/app/plugins/datasource/mysql/**'
-              - 'public/app/plugins/datasource/opentsdb/**'
               - 'public/app/plugins/datasource/parca/**'
               - 'public/app/plugins/datasource/tempo/**'
 

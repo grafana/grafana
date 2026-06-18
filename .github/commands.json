@@ -117,14 +117,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/OpenTSDB",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Loki",
     "action": "addToProject",
     "addToProject": {

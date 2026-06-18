@@ -109,7 +109,6 @@ datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch
-datasource/OpenTSDB
 datasource/Parca
 datasource/Phlare
 datasource/Postgres
