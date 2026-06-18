@@ -59,9 +59,6 @@ You have the following options to add new dashboards in your Git Sync connection
 
 To add a new dashboard from the Grafana UI:
 
-1. Log in to your Grafana account that has the Grafana Admin flag set.
-1. Select **Administration > General > Provisioning**.
-1. Go to the **Repositories** tab, and click on the **Dashboards** button.
 1. On the **Dashboards** tab, click on **New** on the top right corner and chose one of these options:
    - **New dashboard**. When you create a new dashboard in a provisioned folder associated with a Git repository, you follow the same process you use for any new dashboard. Refer to [Create a dashboard](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/create-dashboard/) for more information.
    - **Import dashboard**. Refer to [Add a dashboard using Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources##add-a-dashboard-using-import-dashboards) for more details.

@@ -119,11 +119,8 @@ For new provisioned folders managed with Git Sync, the metadata file is added au
 
 To add or modify folder permissions:
 
-1. Go to the **Repositories** tab.
-1. Click the **Folders** button.
-1. On the top right corner, select **Folder actions > Manage permissions**.
-
-To modify permissions using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
+- From the UI, select **Folder actions > Manage permissions** on the top right corner.
+- Using the API, refer to [Dashboard Permissions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard_permissions/).
 
 ### The Git Sync folder JSON metadata file
 
