@@ -330,7 +330,7 @@ func createNotificationTemplate(t *testing.T, ctx context.Context, service *Serv
 		Content: "This is a test template\n{{ .ExternalURL }}",
 	}
 
-	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl)
+	createdTemplate, err := service.ngAlert.Api.Templates.CreateTemplate(ctx, user.GetOrgID(), tmpl, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 	require.NoError(t, err)
 
 	return createdTemplate

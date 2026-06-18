@@ -6,6 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
@@ -13,10 +14,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func convertToK8sResources(orgID int64, list []v1.TemplateGroup, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TemplateGroupList, error) {
+func convertToK8sResources(orgID int64, list []v1.TemplateGroup, managerProps map[string]utils.ManagerProperties, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TemplateGroupList, error) {
 	result := &model.TemplateGroupList{}
 	for _, t := range list {
-		item := convertToK8sResource(orgID, t, namespacer)
+		item := convertToK8sResource(orgID, t, managerProps[t.ResourceID()], namespacer)
 		if selector != nil && !selector.Empty() && !selector.Matches(model.TemplateGroupSelectableFields(item)) {
 			continue
 		}
@@ -25,7 +26,7 @@ func convertToK8sResources(orgID int64, list []v1.TemplateGroup, namespacer requ
 	return result, nil
 }
 
-func convertToK8sResource(orgID int64, template v1.TemplateGroup, namespacer request.NamespaceMapper) *model.TemplateGroup {
+func convertToK8sResource(orgID int64, template v1.TemplateGroup, manager utils.ManagerProperties, namespacer request.NamespaceMapper) *model.TemplateGroup {
 	result := &model.TemplateGroup{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
@@ -44,15 +45,37 @@ func convertToK8sResource(orgID int64, template v1.TemplateGroup, namespacer req
 		},
 	}
 	result.SetProvenanceStatus(string(template.Provenance))
+
+	// Surface the richer ManagerProperties when present, falling back to deriving them from
+	// provenance so resources without a stored manager (incl. imported ones) are still labelled.
+	if manager.Kind == utils.ManagerKindUnknown {
+		manager = ngmodels.ProvenanceToManagerProperties(template.Provenance)
+	}
+	if manager.Kind != utils.ManagerKindUnknown {
+		if meta, err := utils.MetaAccessor(result); err == nil {
+			meta.SetManagerProperties(manager)
+		}
+	}
+
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result
 }
 
-func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, error) {
+func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, utils.ManagerProperties, error) {
 	prov, err := ngmodels.ProvenanceFromString(template.GetProvenanceStatus())
 	if err != nil {
-		return v1.TemplateGroup{}, err
+		return v1.TemplateGroup{}, utils.ManagerProperties{}, err
 	}
+
+	// Prefer explicit ManagerProperties annotations (set by app-platform tooling) over the
+	// coarser provenance annotation, so a richer manager kind/identity survives the write.
+	var manager utils.ManagerProperties
+	if meta, err := utils.MetaAccessor(template); err == nil {
+		if mp, ok := meta.GetManagerProperties(); ok {
+			manager = mp
+		}
+	}
+
 	return v1.TemplateGroup{
 		ResourceMetadata: v1.ResourceMetadata{
 			UID:        v1.ResourceUID(template.Name),
@@ -62,5 +85,5 @@ func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, erro
 		Title:   template.Spec.Title,
 		Content: template.Spec.Content,
 		Kind:    v1.TemplateKind(template.Spec.Kind),
-	}, nil
+	}, manager, nil
 }

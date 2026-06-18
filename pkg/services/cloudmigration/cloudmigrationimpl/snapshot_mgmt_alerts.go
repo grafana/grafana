@@ -55,7 +55,7 @@ type notificationTemplate struct {
 }
 
 func (s *Service) getNotificationTemplates(ctx context.Context, signedInUser *user.SignedInUser) ([]notificationTemplate, error) {
-	templates, err := s.ngAlert.Api.Templates.GetTemplates(ctx, signedInUser.OrgID)
+	templates, _, err := s.ngAlert.Api.Templates.GetTemplates(ctx, signedInUser.OrgID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching ngalert notification templates: %w", err)
 	}

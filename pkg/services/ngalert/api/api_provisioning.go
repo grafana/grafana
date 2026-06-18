@@ -50,10 +50,10 @@ type ContactPointService interface {
 }
 
 type TemplateService interface {
-	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, error)
-	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, error)
+	GetTemplates(ctx context.Context, orgID int64) ([]v1.TemplateGroup, map[string]utils.ManagerProperties, error)
+	GetTemplate(ctx context.Context, orgID int64, nameOrUid string) (v1.TemplateGroup, utils.ManagerProperties, error)
 	UpsertTemplate(ctx context.Context, orgID int64, tmpl v1.TemplateGroup) (v1.TemplateGroup, error)
-	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, provenance alerting_models.Provenance, version string) error
+	DeleteTemplate(ctx context.Context, orgID int64, nameOrUid string, manager utils.ManagerProperties, version string) error
 }
 
 type NotificationPolicyService interface {
@@ -224,7 +224,7 @@ func (srv *ProvisioningSrv) RouteDeleteContactPoint(c *contextmodel.ReqContext, 
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) response.Response {
-	templates, err := srv.templates.GetTemplates(c.Req.Context(), c.GetOrgID())
+	templates, _, err := srv.templates.GetTemplates(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -232,7 +232,7 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *contextmodel.ReqContext) respon
 }
 
 func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
-	template, err := srv.templates.GetTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid)
+	template, _, err := srv.templates.GetTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}
@@ -258,7 +258,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 
 func (srv *ProvisioningSrv) RouteDeleteTemplate(c *contextmodel.ReqContext, nameOrUid string) response.Response {
 	version := c.Query("version")
-	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, alerting_models.Provenance(determineProvenance(c)), version)
+	err := srv.templates.DeleteTemplate(c.Req.Context(), c.GetOrgID(), nameOrUid, alerting_models.ProvenanceToManagerProperties(alerting_models.Provenance(determineProvenance(c))), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
 	}

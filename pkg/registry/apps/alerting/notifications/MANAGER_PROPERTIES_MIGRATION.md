@@ -14,7 +14,7 @@ legacy storage without losing the managing system's identity.
 Resources in scope (all under `pkg/registry/apps/alerting/notifications/`):
 
 - [ ] `receiver` (contact points) — `ReceiverService`
-- [ ] `templategroup` (templates) — `TemplateService`
+- [x] `templategroup` (templates) — `TemplateService`  ← **done**
 - [x] `timeinterval` (mute timings) — `MuteTimingService`  ← **reference (done)**
 - [ ] `routingtree` (notification policies) — `NotificationPolicyService`
 - [ ] `inhibitionrule` — alertmanager-config backed
