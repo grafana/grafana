@@ -316,6 +316,92 @@ func TestK8sAdapter_List(t *testing.T) {
 	})
 }
 
+// TestK8sAdapter_MaxScopeCount pins the contract for Spec.Scopes cardinality
+// on both Create and Update:
+// - len(Scopes) <= maxScopeCount succeeds;
+// - over the limit returns 400 BadRequest and the annotation is not persisted/mutated.
+// maxScopeCount = 0 is the configured "no scopes allowed" mode.
+func TestK8sAdapter_MaxScopeCount(t *testing.T) {
+	ns := "org-1"
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+
+	buildScopes := func(n int) []string {
+		s := make([]string, n)
+		for i := range n {
+			s[i] = fmt.Sprintf("scope-%d", i)
+		}
+		return s
+	}
+
+	cases := []struct {
+		name          string
+		maxScopeCount int
+		scopeCount    int
+		expectErr     bool
+	}{
+		{"at limit succeeds", 3, 3, false},
+		{"over limit rejected", 3, 4, true},
+		{"zero allows no scopes", 0, 0, false},
+		{"zero rejects any scopes", 0, 1, true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := NewMemoryStore()
+			adapter := newTestAdapter(store, allowAll)
+			adapter.maxScopeCount = tc.maxScopeCount
+			ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+			name := "anno"
+			obj := &annotationV0.Annotation{
+				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+				Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(tc.scopeCount)},
+			}
+			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+
+			if !tc.expectErr {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+			assert.Contains(t, err.Error(), "max allowed")
+
+			_, getErr := store.Get(ctx, ns, name)
+			assert.ErrorIs(t, getErr, ErrNotFound, "annotation should not have been persisted")
+		})
+	}
+
+	t.Run("update over limit rejected", func(t *testing.T) {
+		store := NewMemoryStore()
+		adapter := newTestAdapter(store, allowAll)
+		adapter.maxScopeCount = 2
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		name := "original"
+		orig := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(1)},
+		}
+		_, err := adapter.Create(ctx, orig, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		updated := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(3)},
+		}
+		_, _, err = adapter.Update(ctx, name, &updatedObjectInfo{obj: updated}, nil, nil, false, &metav1.UpdateOptions{})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400 BadRequest, got %v", err)
+		assert.Contains(t, err.Error(), "max allowed")
+
+		stored, getErr := store.Get(ctx, ns, name)
+		require.NoError(t, getErr, "original annotation must still exist")
+		assert.Len(t, stored.Spec.Scopes, 1, "stored annotation must not have been mutated")
+	})
+}
+
 // compile-time assertion that errStore implements Store
 var _ Store = (*errStore)(nil)
 
