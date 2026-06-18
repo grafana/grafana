@@ -4272,6 +4272,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Fehler beim Löschen von Ressourcen",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4295,7 @@
       "error-no-target-folder-path": "Der Zielordnerpfad ist ungültig oder leer, bitte wählen Sie ihn erneut aus.",
       "move-warning": "Dadurch werden ausgewählte Ordner und deren Unterordner verschoben. Die verfügbaren Zielordner hängen von den ausgewählten Ressourcen ab.",
       "move-warning-tooltip": "Sie können bereitgestellte Ressourcen nur innerhalb ihres bereitgestellten Ordners und lokale Ressourcen nur in lokale Ordner verschieben.",
+      "success-title": "",
       "target-folder": "Zielordner",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6212,7 +6214,17 @@
       "snapshot": {
         "tooltip": "Original-Dashboard öffnen"
       },
-      "undo": "Rückgängig machen"
+      "undo": "Rückgängig machen",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Quelle ({{provider}})",
@@ -6471,6 +6483,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -13055,6 +13068,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Sparen Sie sich die Einrichtung und erhalten Sie Git Sync vollständig verwaltet und gehostet in Grafana Cloud – mit dem <2>jederzeit kostenlosen Grafana-Cloud-Plan</2>.",

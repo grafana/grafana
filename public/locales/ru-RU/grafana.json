@@ -4326,6 +4326,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Ошибка при удалении ресурсов",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_few": "",
       "folder-empty_many": "",
@@ -4352,6 +4353,7 @@
       "error-no-target-folder-path": "Недопустимый или пустой путь к целевой папке. Повторите попытку.",
       "move-warning": "Будут перемещены выбранные папки и их дочерние элементы. Доступные целевые папки зависят от выбранных ресурсов.",
       "move-warning-tooltip": "Подготовленные ресурсы можно перемещать только внутри подготовленной папки, а локальные ресурсы — в локальные папки.",
+      "success-title": "",
       "target-folder": "Целевая папка",
       "folder-not-empty_one": "",
       "folder-not-empty_few": "",
@@ -6280,7 +6282,17 @@
       "snapshot": {
         "tooltip": "Открытие исходного дашборда"
       },
-      "undo": "Отменить"
+      "undo": "Отменить",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Источник ({{provider}})",
@@ -6539,6 +6551,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": "Панель не найдена"
     },
     "viz-panel": {
@@ -13209,6 +13222,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Не тратьте время на настройку и получите полностью управляемое и размещенное на платформе Grafana Cloud решение Git Sync с <2>бессрочным бесплатным планом Grafana Cloud</2>.",
