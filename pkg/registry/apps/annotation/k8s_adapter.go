@@ -316,6 +316,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
 	}
 
+	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
+	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
+	if _, ok := getLegacyData(resource); !ok {
+		if existingData, ok := getLegacyData(existing); ok {
+			setLegacyData(resource, existingData)
+		}
+	}
+
 	updated, err := s.store.Update(ctx, resource)
 	if err != nil {
 		return nil, false, toAPIError(err, name)

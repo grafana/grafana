@@ -175,6 +175,58 @@ func TestTestdataScenarios(t *testing.T) {
 			require.True(t, maxNil)
 		})
 	})
+
+	t.Run("flaky query", func(t *testing.T) {
+		s := &Service{}
+		from := time.Now()
+		to := from.Add(5 * time.Minute)
+
+		makeReq := func(probability float64) *backend.QueryDataRequest {
+			return &backend.QueryDataRequest{
+				PluginContext: backend.PluginContext{},
+				Queries: []backend.DataQuery{
+					{
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: from,
+							To:   to,
+						},
+						Interval:      100 * time.Millisecond,
+						MaxDataPoints: 100,
+						JSON: []byte(fmt.Sprintf(
+							`{"stringInput":"0s","errorProbability":%v,"errorMessage":"test error","errorStatusCode":400,"errorSource":"downstream"}`,
+							probability,
+						)),
+					},
+				},
+			}
+		}
+
+		t.Run("returns error when probability is 100", func(t *testing.T) {
+			resp, err := s.handleFlakyQueryScenario(context.Background(), makeReq(100))
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses["A"]
+			require.True(t, exists)
+			require.Error(t, dResp.Error)
+			require.Equal(t, "test error", dResp.Error.Error())
+			require.Equal(t, backend.StatusBadRequest, dResp.Status)
+			require.Equal(t, backend.ErrorSourceDownstream, dResp.ErrorSource)
+			require.Empty(t, dResp.Frames)
+		})
+
+		t.Run("returns data when probability is 0", func(t *testing.T) {
+			resp, err := s.handleFlakyQueryScenario(context.Background(), makeReq(0))
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			dResp, exists := resp.Responses["A"]
+			require.True(t, exists)
+			require.NoError(t, dResp.Error)
+			require.Len(t, dResp.Frames, 1)
+		})
+	})
 }
 
 func TestParseLabels(t *testing.T) {
