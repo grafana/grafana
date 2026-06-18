@@ -97,6 +97,11 @@ function createInlineInputTheme(theme: GrafanaTheme2): Extension {
       color: theme.colors.text.primary,
       caretColor: theme.colors.text.primary,
     },
+    // `drawSelection` (on via basicSetup) hides the native caret and draws its
+    // own element, which defaults to black; color it for the dark surface.
+    '.cm-cursor, .cm-dropCursor': {
+      borderLeftColor: theme.colors.text.primary,
+    },
     '.cm-line': {
       padding: 0,
     },
