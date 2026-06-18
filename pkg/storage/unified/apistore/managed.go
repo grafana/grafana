@@ -198,7 +198,7 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
+	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP, utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
