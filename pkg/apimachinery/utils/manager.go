@@ -77,11 +77,12 @@ func ParseManagerKindString(v string) ManagerKind {
 // IsClassic returns true for shim kinds that represent legacy provisioning mechanisms.
 // Classic kinds do not require a manager Identity.
 func (k ManagerKind) IsClassic() bool {
-	switch k { //nolint:staticcheck
+	switch k { //nolint:staticcheck,exhaustive // only classic shim kinds are relevant here
 	case ManagerKindClassicFP, ManagerKindClassicAPI, ManagerKindClassicConvertedPrometheus:
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 // SourceProperties is used to identify the source of a provisioned resource.

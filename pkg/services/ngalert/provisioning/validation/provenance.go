@@ -23,12 +23,12 @@ func CanUpdateManagerInRuleGroup(stored, incoming utils.ManagerProperties) bool 
 	}
 	if incoming.Kind == utils.ManagerKindUnknown {
 		// Can reset to unmanaged only from api-style managers (not file/repo).
-		switch stored.Kind { //nolint:staticcheck
-		case utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus,
-			utils.ManagerKindTerraform, utils.ManagerKindKubectl:
+		switch stored.Kind {
+		case utils.ManagerKindClassicAPI, utils.ManagerKindClassicConvertedPrometheus, utils.ManagerKindTerraform, utils.ManagerKindKubectl: //nolint:staticcheck // only api-style managers may reset to unmanaged
 			return true
+		default:
+			return false
 		}
-		return false
 	}
 	return false
 }
