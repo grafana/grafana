@@ -163,7 +163,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -199,7 +199,7 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	mk := func(uid, sub, content string) Vector {
 		return Vector{
 			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
-			Subresource: sub, ResourceVersion: 10, Content: content,
+			Subresource: sub, ResourceVersion: 10, Content: content, Folder: "folder-a",
 			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		}
 	}
@@ -223,15 +223,16 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	}, []string{"panel/1", "panel/4"})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
+	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "a-1 updated",
 		"panel/4": "a-4 new",
 	}, stored, "stale subresources removed; new set is the exact replacement")
+	assert.Equal(t, "folder-a", folder, "stored folder is returned alongside content")
 
 	// dash-b must be untouched.
-	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	storedB, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "b-1",
@@ -272,7 +273,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 		[]string{"panel/1", "panel/2", "panel/3", "panel/9"},
 	))
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "p1",    // untouched (kept via desired, not in changed)
@@ -307,7 +308,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testin
 	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
 		nil, []string{"panel/1"}))
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "p1"}, stored)
 
@@ -327,7 +328,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 
 	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil))
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
 
@@ -365,7 +366,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	require.Error(t, err)
 
 	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
 		"failed batch leaves no half-applied state")

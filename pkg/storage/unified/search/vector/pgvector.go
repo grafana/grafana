@@ -282,9 +282,9 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	return err
 }
 
-func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error) {
+func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error) {
 	if err := validateResource(resource); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	req := &sqlVectorCollectionGetContentRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
@@ -296,16 +296,18 @@ func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, 
 	}
 	rows, err := dbutil.Query(ctx, b.db, sqlVectorCollectionGetContent, req)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if len(rows) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
 	out := make(map[string]string, len(rows))
 	for _, r := range rows {
 		out[r.Subresource] = r.Content
 	}
-	return out, nil
+	// Folder is written identically on every subresource of a resource,
+	// so any row is representative.
+	return out, rows[0].Folder, nil
 }
 
 func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error) {

@@ -248,7 +248,7 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res
 	f.subresourceDeletes = append(f.subresourceDeletes, deleteSubsCall{namespace, model, res, uid, subs})
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if existing, ok := f.existing[uid]; ok {
@@ -256,9 +256,9 @@ func (f *fakeVector) GetSubresourceContent(_ context.Context, _, _, _, uid strin
 		for k, v := range existing {
 			out[k] = v
 		}
-		return out, nil
+		return out, "", nil
 	}
-	return nil, nil
+	return nil, "", nil
 }
 func (f *fakeVector) Exists(_ context.Context, ns, model, res, uid string) (bool, error) {
 	f.mu.Lock()

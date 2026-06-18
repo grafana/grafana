@@ -30,8 +30,7 @@ type VectorBackend interface {
 	// upserts `changed` and deletes any stored subresource not listed in
 	// `desired`. `changed` is the subset whose content changed since the
 	// last write (so only those were re-embedded); `desired` is the full
-	// set of subresource keys that should exist afterwards. Pass
-	// `desired = keys(changed)` to replace the entire set.
+	// set of subresource keys that should exist afterwards.
 	//
 	// Every vector in `changed` must belong to the given (namespace,
 	// model, resource, uid). The stale-delete and the upsert commit
@@ -46,10 +45,14 @@ type VectorBackend interface {
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
-	// GetSubresourceContent returns subresource → stored content. Callers
-	// diff against candidate content to skip re-embedding unchanged rows.
-	// Used for deleting stale subresource embeddings.
-	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error)
+	// GetSubresourceContent returns subresource → stored content plus the
+	// stored folder for the resource (folder is uniform across a
+	// resource's subresources, so a single value is returned; "" when no
+	// rows exist). Callers diff candidate content against the returned
+	// content to skip re-embedding unchanged rows, and compare the folder
+	// so a folder move — which doesn't change content — still refreshes
+	// the stored folder used for search authz.
+	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (content map[string]string, folder string, err error)
 
 	// Exists returns true if any row exists for the (namespace, model,
 	// resource, uid). Cheap indexed lookup; backfill uses it to skip

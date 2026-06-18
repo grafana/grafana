@@ -708,11 +708,18 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// the vectors are stored under.
 	uid := items[0].UID
 
-	stored, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
+	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
 	if err != nil {
 		statusLabel = "get_content_error"
 		return fmt.Errorf("get stored content: %w", err)
 	}
+
+	// A folder move changes the stored `folder` (used for search authz)
+	// but not the embedded content, so it wouldn't trip the content diff.
+	// Detect it here and force a full re-embed. Folder is dashboard-wide,
+	// so items[0] is representative; the len(stored) guard distinguishes
+	// "no rows yet" from "rows stored under a different folder".
+	folderMoved := len(stored) > 0 && storedFolder != items[0].Folder
 
 	// Diff extracted content against what's stored. `desired` is every
 	// current subresource (the survivor set); `toEmbed` is just the new
@@ -723,7 +730,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	for _, it := range items {
 		desired = append(desired, it.Subresource)
 		desiredSet[it.Subresource] = struct{}{}
-		if prev, ok := stored[it.Subresource]; !ok || prev != it.Content {
+		if prev, ok := stored[it.Subresource]; folderMoved || !ok || prev != it.Content {
 			toEmbed = append(toEmbed, it)
 		}
 	}

@@ -89,8 +89,8 @@ func (f *fakeVectorBackend) Delete(context.Context, string, string, string, stri
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, error) {
-	return nil, nil
+func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, string, error) {
+	return nil, "", nil
 }
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil

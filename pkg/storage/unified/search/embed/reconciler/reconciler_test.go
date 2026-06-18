@@ -313,6 +313,45 @@ func TestReconciler_PartialReembed_NoChangeSkipsWrite(t *testing.T) {
 	assert.Equal(t, int64(200), vec.latestRV, "cursor still advances on a no-op write")
 }
 
+// dashboardInFolder builds a single-panel dashboard whose folder UID comes
+// from the grafana.app/folder annotation. Used to drive folder-move events.
+func dashboardInFolder(uid, title, folderUID string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"uid": uid, "title": title,
+		"metadata": map[string]any{
+			"annotations": map[string]any{"grafana.app/folder": folderUID},
+		},
+		"panels": []any{
+			map[string]any{"id": 1, "title": "CPU", "description": "CPU usage"},
+		},
+	})
+	return body
+}
+
+// TestReconciler_PartialReembed_FolderMoveReembeds guards the search-authz
+// correctness case: a folder move changes the stored folder but not the
+// embedded content, so the content diff alone would skip the write and
+// leave a stale folder. The folder check must force a re-embed.
+func TestReconciler_PartialReembed_FolderMoveReembeds(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, dashboardInFolder("dash-1", "Dash", "folder-a")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1)
+	require.Equal(t, "folder-a", vec.upserts[0][0].Folder)
+	require.Equal(t, 1, text.calls)
+
+	// Move to folder-b: panel content is byte-identical, only the folder
+	// annotation changed.
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, dashboardInFolder("dash-1", "Dash", "folder-b")))
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 2, "folder move re-embeds despite unchanged content")
+	assert.Equal(t, "folder-b", vec.upserts[1][0].Folder, "stored folder refreshed to the new folder")
+	assert.Equal(t, 2, text.calls)
+}
+
 func TestReconciler_MonotonicCheckpoint(t *testing.T) {
 	vec := newFakeVector()
 	s, text := newReconciler(t, &fakeStorage{}, vec)

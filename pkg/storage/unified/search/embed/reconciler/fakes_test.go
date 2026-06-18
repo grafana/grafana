@@ -163,7 +163,8 @@ type fakeVector struct {
 	upserts     [][]vector.Vector
 	deletes     []deleteCall
 	delsubs     []deleteSubsCall
-	storedSubs  map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedFolder map[string]string            // ns|model|res|uid -> folder
 	upsertErr   error
 	upsertErrFn func(vs []vector.Vector) error // dynamic error decision
 	deleteErr   error
@@ -196,7 +197,10 @@ type deleteSubsCall struct {
 }
 
 func newFakeVector() *fakeVector {
-	return &fakeVector{storedSubs: map[string]map[string]string{}}
+	return &fakeVector{
+		storedSubs:   map[string]map[string]string{},
+		storedFolder: map[string]string{},
+	}
 }
 
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
@@ -256,6 +260,7 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 			f.storedSubs[k] = map[string]string{}
 		}
 		f.storedSubs[k][v.Subresource] = v.Content
+		f.storedFolder[k] = v.Folder
 	}
 	return nil
 }
@@ -280,17 +285,18 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[subsKey(ns, model, res, uid)] {
+	for k, v := range f.storedSubs[key] {
 		out[k] = v
 	}
 	if len(out) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
-	return out, nil
+	return out, f.storedFolder[key], nil
 }
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
