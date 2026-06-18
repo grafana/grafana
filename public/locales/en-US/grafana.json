@@ -5856,6 +5856,7 @@
     },
     "inspect": {
       "data-tab": "Data",
+      "errors-and-notices-tab": "Errors and notices",
       "json-tab": "JSON",
       "meta-tab": "Meta data",
       "query-tab": "Query",
@@ -10249,6 +10250,8 @@
       "aria-label-toggle-collapse": "toggle collapse panel",
       "ariaLabel-panel-loading": "Panel loading bar",
       "ariaLabel-panel-status": "Panel status",
+      "errors-and-notices": "Errors and notices",
+      "inspect-errors-notices": "Inspect",
       "tooltip-cancel": "Cancel query",
       "tooltip-cancel-loading": "Cancel query",
       "tooltip-stop-streaming": "Stop streaming",

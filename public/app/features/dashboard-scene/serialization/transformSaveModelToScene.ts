@@ -60,7 +60,7 @@ import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { createVariablesForDashboard, createVariablesForSnapshot } from '../utils/variables';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
@@ -465,7 +465,11 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     })
   );
 
-  titleItems.push(new PanelNotices());
+  // The new errors & notices UI surfaces notices in the header popover instead, so the
+  // standalone notices title item is only shown with the legacy UI.
+  if (!isNewPanelQueryErrorsUIEnabled()) {
+    titleItems.push(new PanelNotices());
+  }
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift) && !panel.hideTimeOverride;
 
