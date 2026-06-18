@@ -1,5 +1,5 @@
 import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneGridItemLike } from '@grafana/scenes';
 import {
@@ -95,8 +95,9 @@ export async function trackDashboardSceneCreatedOrSaved(
   });
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false)) {
-    const isOnTemplateRoute = window.location.pathname === DASHBOARD_LIBRARY_ROUTES.Template;
-    const templateUid = new URLSearchParams(window.location.search).get('dashboardTemplateUid');
+    const { pathname, search } = locationService.getLocation();
+    const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
+    const templateUid = new URLSearchParams(search).get('dashboardTemplateUid');
     if (isOnTemplateRoute && templateUid) {
       CustomDashboardTemplateInteractions.dashboardSavedFromTemplate({
         dashboardUid: dashboard.state.uid ?? '',

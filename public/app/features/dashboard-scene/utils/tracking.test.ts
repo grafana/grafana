@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -30,7 +30,7 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
   useSaveDashboardMutation: () => [() => Promise.resolve({ data: { version: 2, uid: 'new-uid' } })],
 }));
 
-jest.mock('../analytics/main', () => ({
+jest.mock('../analytics/dashboard-templates/main', () => ({
   CustomDashboardTemplateInteractions: {
     dashboardSavedFromTemplate: jest.fn(),
   },
@@ -116,21 +116,14 @@ describe('dashboard tracking', () => {
   });
 
   describe('dashboardSavedFromTemplate', () => {
-    const originalLocation = window.location;
-    const setLocation = (pathname: string, search: string) => {
-      Object.defineProperty(window, 'location', {
-        value: { ...originalLocation, pathname, search },
-        writable: true,
-      });
-    };
     afterEach(() => {
-      Object.defineProperty(window, 'location', { value: originalLocation, writable: true });
       setTestFlags({});
+      locationService.push('/');
     });
 
     it('fires when on the template route with dashboardTemplateUid and the FF is enabled', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
-      setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
+      locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
 
@@ -142,7 +135,7 @@ describe('dashboard tracking', () => {
 
     it('does not fire when the route is something other than /dashboard/template', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
-      setLocation('/d/abc/my-dash', '?dashboardTemplateUid=tpl-42');
+      locationService.push('/d/abc/my-dash?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
 
@@ -151,7 +144,7 @@ describe('dashboard tracking', () => {
 
     it('does not fire when dashboardTemplateUid is missing from the URL', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': true });
-      setLocation('/dashboard/template', '');
+      locationService.push('/dashboard/template');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
 
@@ -160,7 +153,7 @@ describe('dashboard tracking', () => {
 
     it('does not fire when the feature flag is disabled', async () => {
       setTestFlags({ 'grafana.customDashboardTemplates': false });
-      setLocation('/dashboard/template', '?dashboardTemplateUid=tpl-42');
+      locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u' });
 
