@@ -6,7 +6,7 @@ import { Button, Field, RadioButtonList, Tooltip, Select, Combobox, useStyles2 }
 
 import { SORT_OPTIONS } from '../constants';
 
-export interface FilterState {
+interface FilterState {
   groupBy: string;
   categoryFilter: string;
   typeFilter: string;
@@ -14,7 +14,7 @@ export interface FilterState {
   sortBy: string;
 }
 
-export interface FilterHandlers {
+interface FilterHandlers {
   onCategoryFilterChange: (value: SelectableValue<string>) => void;
   onTypeFilterChange: (value: SelectableValue<string>) => void;
   onFilterByChange: (value: string) => void;
