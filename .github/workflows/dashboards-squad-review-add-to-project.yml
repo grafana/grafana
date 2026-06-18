@@ -1,0 +1,89 @@
+name: When the dashboards squad is requested for review, add the PR to the squad's GitHub projects
+on:
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] # no checkout/build of untrusted code; only adds the PR to projects via API
+    types: [review_requested]
+
+permissions: {}
+
+env:
+  ORGANIZATION: ${{ github.repository_owner }}
+  REQUESTED_TEAM: dashboards-squad
+  # Org-level GitHub Projects (github.com/orgs/grafana/projects/<number>) the PR should be added to.
+  PROJECT_NUMBERS: "928 933"
+
+concurrency:
+  group: dashboards-squad-review-add-to-project-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  add-to-projects:
+    name: Add PR to dashboards squad projects
+    if: github.repository == 'grafana/grafana' && github.event.requested_team.slug == env.REQUESTED_TEAM
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        with:
+          github_app: grafana-pr-automation
+      - name: Add PR to projects
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          ORGANIZATION: ${{ env.ORGANIZATION }}
+          PROJECT_NUMBERS: ${{ env.PROJECT_NUMBERS }}
+          CONTENT_ID: ${{ github.event.pull_request.node_id }}
+        run: |
+          set -euo pipefail
+
+          # shellcheck disable=SC2016 # we don't want the $s to be expanded
+          gh api graphql -f query='
+            query($id: ID!) {
+              node(id: $id) {
+                ... on PullRequest {
+                  projectItems(first: 50) {
+                    nodes {
+                      project {
+                        number
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f id="$CONTENT_ID" --jq '.data.node.projectItems.nodes[].project.number' > existing_projects.txt
+
+          for project_number in $PROJECT_NUMBERS; do
+            if grep -qx "$project_number" existing_projects.txt; then
+              echo "PR already in project $project_number, skipping"
+              continue
+            fi
+
+            echo "Resolving project $project_number in org $ORGANIZATION"
+            # shellcheck disable=SC2016 # we don't want the $s to be expanded
+            project_id=$(gh api graphql -f query='
+              query($org: String!, $number: Int!) {
+                organization(login: $org) {
+                  projectV2(number: $number) {
+                    id
+                  }
+                }
+              }' -f org="$ORGANIZATION" -F number="$project_number" --jq '.data.organization.projectV2.id')
+
+            if [ -z "$project_id" ] || [ "$project_id" = "null" ]; then
+              echo "::error::Could not resolve project $project_number for org $ORGANIZATION"
+              exit 1
+            fi
+
+            echo "Adding PR to project $project_number ($project_id)"
+            # shellcheck disable=SC2016 # we don't want the $s to be expanded
+            gh api graphql -f query='
+              mutation($project: ID!, $content: ID!) {
+                addProjectV2ItemById(input: {projectId: $project, contentId: $content}) {
+                  item {
+                    id
+                  }
+                }
+              }' -f project="$project_id" -f content="$CONTENT_ID"
+          done
