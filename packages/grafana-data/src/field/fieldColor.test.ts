@@ -38,7 +38,7 @@ function getCalculator(options: GetCalcOptions): FieldValueColorCalculator {
 describe('fieldColorModeRegistry', () => {
   it('Schemes should interpolate', () => {
     const calcFn = getCalculator({ mode: 'continuous-GrYlRd' });
-    expect(calcFn(70, 0.5, undefined)).toEqual('rgb(226, 192, 61)');
+    expect(calcFn(70, 0.5, undefined)).toEqual('rgb(227, 192, 61)');
   });
 
   it('Palette classic with series index 0', () => {

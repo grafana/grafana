@@ -162,6 +162,7 @@ export {
   getUniqueFieldName,
 } from './field/fieldState';
 export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta, getFieldSeriesColor } from './field/scale';
+export { quantizeInterpolator, paletteColorAt, CONTINUOUS_PALETTE_STEPS } from './field/colorQuantize';
 export {
   type ReduceDataOptions,
   VAR_SERIES_NAME,

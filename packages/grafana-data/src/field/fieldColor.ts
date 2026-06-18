@@ -18,6 +18,7 @@ import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
 import { type Threshold } from '../types/thresholds';
 import { Registry, type RegistryItem } from '../utils/Registry';
 
+import { CONTINUOUS_PALETTE_STEPS, paletteColorAt, quantizeInterpolator } from './colorQuantize';
 import { fallBackThreshold } from './thresholds';
 
 /**
@@ -326,8 +327,11 @@ class FieldColorSchemeMode implements FieldColorMode {
 
     if (this.isByValue) {
       if (this.isContinuous) {
+        // Precompute a quantized palette once and index into it per value, rather
+        // than calling the interpolator for every value.
+        const palette = quantizeInterpolator(this.getInterpolator(), CONTINUOUS_PALETTE_STEPS);
         return (_: number, percent: number, _threshold?: Threshold) => {
-          return this.getInterpolator()(percent);
+          return paletteColorAt(palette, percent);
         };
       } else {
         return (_: number, percent: number, _threshold?: Threshold) => {
