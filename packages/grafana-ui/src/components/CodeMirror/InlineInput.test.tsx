@@ -3,6 +3,8 @@ import { EditorView } from '@codemirror/view';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { createTheme } from '@grafana/data';
+
 import { CodeMirrorInlineInput, singleLineFilter, stripNewlinesOnPaste } from './InlineInput';
 
 describe('singleLineFilter', () => {
@@ -92,6 +94,8 @@ describe('stripNewlinesOnPaste', () => {
 });
 
 describe('CodeMirrorInlineInput', () => {
+  const theme = createTheme();
+
   it('renders an editable textbox', async () => {
     render(<CodeMirrorInlineInput value="" onChange={jest.fn()} />);
     expect(await screen.findByRole('textbox')).toBeInTheDocument();
@@ -141,5 +145,44 @@ describe('CodeMirrorInlineInput', () => {
     await user.keyboard('abc');
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls.at(-1)?.[0]).not.toContain('\n');
+  });
+
+  it('uses a monospace font by default', async () => {
+    const { container } = render(<CodeMirrorInlineInput value="x" onChange={jest.fn()} />);
+    await screen.findByRole('textbox');
+    // The editor theme sets font-family on the `.cm-editor` root (the `&` rule).
+    const editor = container.querySelector('.cm-editor');
+    expect(editor).not.toBeNull();
+    // Guard against a vacuous pass if jsdom failed to resolve the injected font.
+    expect(getComputedStyle(editor!).fontFamily).not.toBe('');
+    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamilyMonospace);
+  });
+
+  it('uses the body font when monospace is false', async () => {
+    const { container } = render(<CodeMirrorInlineInput value="x" onChange={jest.fn()} monospace={false} />);
+    await screen.findByRole('textbox');
+    const editor = container.querySelector('.cm-editor');
+    expect(editor).not.toBeNull();
+    // Guard against a vacuous pass if jsdom failed to resolve the injected font.
+    expect(getComputedStyle(editor!).fontFamily).not.toBe('');
+    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamily);
+  });
+
+  it('moves focus to the next element on Tab instead of indenting (no keyboard trap)', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+    render(
+      <>
+        <CodeMirrorInlineInput value="" onChange={onChange} />
+        <button>after</button>
+      </>
+    );
+    const textbox = await screen.findByRole('textbox');
+    await user.click(textbox);
+    expect(textbox).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'after' })).toHaveFocus();
+    // Tab must not have inserted whitespace into the single-line input.
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

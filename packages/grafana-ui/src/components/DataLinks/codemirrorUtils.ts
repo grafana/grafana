@@ -7,10 +7,16 @@ import { DataLinkBuiltInVars, type GrafanaTheme2, VariableOrigin, type VariableS
 // Matches a complete `${...}` variable reference anywhere in the document.
 const VARIABLE_PATTERN = /\$\{[^}]+\}/g;
 
-// Matches a variable being typed at the cursor: a `$`/`=` trigger, an optional
-// opening brace, and the variable name typed so far. `=` is the query-param
-// separator (`?key=`) — it triggers suggestions but is not part of the variable.
-const TRIGGER_PATTERN = /[$=]\{?[\w.]*$/;
+export type DataLinkInterpolationMode = 'url' | 'text';
+
+// Matches a variable being typed at the cursor: a trigger, an optional opening
+// brace, and the variable name typed so far.
+// - URL mode also treats `=` as a trigger: it's the query-param separator
+//   (`?key=`), so suggestions should open after it (the `=` itself is not part
+//   of the variable).
+// - Text mode (e.g. a link title) has no query params, so only `$` triggers.
+const URL_TRIGGER_PATTERN = /[$=]\{?[\w.]*$/;
+const TEXT_TRIGGER_PATTERN = /\$\{?[\w.]*$/;
 
 const VARIABLE_CLASS = 'cm-variable';
 
@@ -68,25 +74,29 @@ export function createDataLinkHighlighter(): Extension {
   );
 }
 
-function getApplyText(suggestion: VariableSuggestion): string {
-  if (suggestion.origin !== VariableOrigin.Template || suggestion.value === DataLinkBuiltInVars.includeVars) {
+function getApplyText(suggestion: VariableSuggestion, mode: DataLinkInterpolationMode): string {
+  if (
+    mode === 'text' ||
+    suggestion.origin !== VariableOrigin.Template ||
+    suggestion.value === DataLinkBuiltInVars.includeVars
+  ) {
     return `\${${suggestion.value}}`;
   }
   return `\${${suggestion.value}:queryparam}`;
 }
 
-function createCompletionOption(suggestion: VariableSuggestion): Completion {
+function createCompletionOption(suggestion: VariableSuggestion, mode: DataLinkInterpolationMode): Completion {
   return {
     label: suggestion.label,
     detail: suggestion.origin,
     info: suggestion.documentation ?? '',
-    apply: getApplyText(suggestion),
+    apply: getApplyText(suggestion, mode),
     type: 'variable',
   };
 }
 
 /**
- * Autocompletion source for data link variables, triggered by `$` and `=`.
+ * Autocompletion source for data link variables. Triggered by `$` — and, in `'url'` mode, also by `=` (the query-param separator) — or explicitly via Ctrl+Space.
  *
  * The applied text is always a full `${...}` reference, so the replaced range
  * must start at the right place:
@@ -96,22 +106,30 @@ function createCompletionOption(suggestion: VariableSuggestion): Completion {
  *
  * Filtering is done here against the typed name (`filter: false`) so the `${`
  * prefix in the replaced range doesn't defeat CodeMirror's label matching.
+ *
+ * Pass `{ mode: 'text' }` for plain-text fields (e.g. a link title): `=` no
+ * longer triggers and template variables are formatted as `${var}` without the
+ * URL-only `:queryparam` encoding.
  */
 export function dataLinkAutocompletion(
-  suggestions: VariableSuggestion[]
+  suggestions: VariableSuggestion[],
+  options: { mode?: DataLinkInterpolationMode } = {}
 ): (context: CompletionContext) => CompletionResult | null {
+  const { mode = 'url' } = options;
+  const triggerPattern = mode === 'url' ? URL_TRIGGER_PATTERN : TEXT_TRIGGER_PATTERN;
+
   return (context: CompletionContext): CompletionResult | null => {
     if (suggestions.length === 0) {
       return null;
     }
 
-    const word = context.matchBefore(TRIGGER_PATTERN);
+    const word = context.matchBefore(triggerPattern);
 
     // Outside a trigger, only respond when completion was explicitly requested
     // (Ctrl+Space): insert a fresh `${...}` at the cursor.
     if (!word) {
       return context.explicit
-        ? { from: context.pos, options: suggestions.map(createCompletionOption), filter: false }
+        ? { from: context.pos, options: suggestions.map((s) => createCompletionOption(s, mode)), filter: false }
         : null;
     }
 
@@ -132,7 +150,7 @@ export function dataLinkAutocompletion(
 
     return {
       from,
-      options: matches.map(createCompletionOption),
+      options: matches.map((s) => createCompletionOption(s, mode)),
       filter: false,
     };
   };

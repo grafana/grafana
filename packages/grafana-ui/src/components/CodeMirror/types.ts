@@ -80,4 +80,10 @@ export interface CodeMirrorEditorProps {
    * (dark or light) when omitted.
    */
   theme?: CodeMirrorEditorTheme;
+  /**
+   * When `true` (default), Tab indents the content (suited to a multi-line code
+   * editor). Pass `false` for single-line inputs so Tab moves focus to the next
+   * element instead of being captured as indentation (avoids a keyboard trap).
+   */
+  indentWithTab?: boolean;
 }

@@ -216,6 +216,32 @@ describe('codemirrorUtils', () => {
       });
     });
 
+    describe("mode: 'text'", () => {
+      it('does not trigger on = (= is not a separator in plain text)', () => {
+        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('param=', 6, false));
+        expect(result).toBeNull();
+      });
+
+      it('triggers on $', () => {
+        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('$', 1, false));
+        expect(result).not.toBeNull();
+        expect(result?.options).toHaveLength(4);
+        expect(result?.from).toBe(0);
+      });
+
+      it('formats a template variable as plain ${var} (no queryparam)', () => {
+        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('', 0, true));
+        const opt = result?.options.find((o) => o.label === 'myVar');
+        expect(opt?.apply).toBe('${myVar}');
+      });
+
+      it('formats a series variable as plain ${var}', () => {
+        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('', 0, true));
+        const opt = result?.options.find((o) => o.label === '__series.name');
+        expect(opt?.apply).toBe('${__series.name}');
+      });
+    });
+
     describe('option metadata', () => {
       it('includes detail (origin) for all options', () => {
         const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$', 1, false));

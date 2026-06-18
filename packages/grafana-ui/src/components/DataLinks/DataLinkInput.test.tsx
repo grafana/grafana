@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 import * as React from 'react';
 
-import { DataLinkBuiltInVars, VariableOrigin, type VariableSuggestion } from '@grafana/data';
+import { createTheme, DataLinkBuiltInVars, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
 import { DataLinkInput } from './DataLinkInput';
 
@@ -29,6 +29,8 @@ const mockSuggestions: VariableSuggestion[] = [
 ];
 
 describe('DataLinkInput', () => {
+  const theme = createTheme();
+
   it('renders with initial value displayed in editor', async () => {
     render(<DataLinkInput value="https://grafana.com" onChange={jest.fn()} suggestions={mockSuggestions} />);
     await waitFor(() => {
@@ -145,5 +147,55 @@ describe('DataLinkInput', () => {
     expect(await screen.findByRole('textbox')).toBeInTheDocument();
     rerender(<Wrapper initialValue="second" />);
     expect(await screen.findByRole('textbox')).toBeInTheDocument();
+  });
+
+  it('text interpolation mode applies a plain ${var} for template variables', async () => {
+    const onChange = jest.fn();
+    const user = userEvent.setup();
+
+    function Controlled() {
+      const [value, setValue] = React.useState('');
+      return (
+        <DataLinkInput
+          value={value}
+          interpolationMode="text"
+          onChange={(next) => {
+            onChange(next);
+            setValue(next);
+          }}
+          suggestions={mockSuggestions}
+        />
+      );
+    }
+
+    render(<Controlled />);
+    await screen.findByRole('textbox');
+    await user.click(screen.getByRole('textbox'));
+    // Type `$myVar` so the listbox filters down to the template variable, then accept.
+    await user.keyboard('$myVar');
+    await screen.findByRole('listbox');
+    await user.keyboard('{Enter}');
+    // URL mode would yield `${myVar:queryparam}`; text mode must be plain.
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('${myVar}'));
+  });
+
+  it('applies the given id to the wrapper around the editable element', async () => {
+    const { container } = render(
+      <DataLinkInput id="link-title" value="" onChange={jest.fn()} suggestions={mockSuggestions} />
+    );
+    await screen.findByRole('textbox');
+    expect(container.querySelector('#link-title [contenteditable="true"]')).not.toBeNull();
+  });
+
+  it('renders with a proportional font when monospace is false', async () => {
+    const { container } = render(
+      <DataLinkInput value="x" onChange={jest.fn()} suggestions={mockSuggestions} monospace={false} />
+    );
+    await screen.findByRole('textbox');
+    const editor = container.querySelector('.cm-editor');
+    expect(editor).not.toBeNull();
+    // Guard against a vacuous pass if jsdom failed to resolve the injected font.
+    expect(getComputedStyle(editor!).fontFamily).not.toBe('');
+    expect(getComputedStyle(editor!).fontFamily).toBe(theme.typography.fontFamily);
   });
 });

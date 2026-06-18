@@ -94,6 +94,7 @@ export const CodeEditor = memo(function CodeEditor({
   extensions: additionalExtensions,
   theme: themeOverride,
   basicSetup,
+  indentWithTab = true,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
@@ -125,6 +126,7 @@ export const CodeEditor = memo(function CodeEditor({
         extensions={extensions}
         onChange={onChange}
         basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
       />
     </>
   );

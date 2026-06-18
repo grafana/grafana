@@ -36,6 +36,12 @@ export interface CodeMirrorInlineInputProps {
    * to it.
    */
   id?: string;
+  /**
+   * When `true` (default) the field uses the monospace font, suited to code-ish
+   * content like URLs. Pass `false` for prose-like content (e.g. a title) to use
+   * the standard proportional UI font.
+   */
+  monospace?: boolean;
 }
 
 /**
@@ -83,18 +89,19 @@ const INLINE_BASIC_SETUP = {
   drawSelection: false,
 } as const;
 
-function createInlineInputTheme(theme: GrafanaTheme2): Extension {
+function createInlineInputTheme(theme: GrafanaTheme2, monospace: boolean): Extension {
+  const fontFamily = monospace ? theme.typography.fontFamilyMonospace : theme.typography.fontFamily;
   return EditorView.theme({
     '&': {
       fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
+      fontFamily,
       backgroundColor: 'transparent',
     },
     '&.cm-focused': {
       outline: 'none',
     },
     '.cm-scroller': {
-      fontFamily: theme.typography.fontFamilyMonospace,
+      fontFamily,
       overflowX: 'auto',
       overflowY: 'hidden',
       lineHeight: 'inherit',
@@ -156,7 +163,7 @@ function createInlineInputTheme(theme: GrafanaTheme2): Extension {
   });
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, monospace: boolean) => ({
   // Render the standard Grafana input chrome (border, background, radius,
   // typography) so the field reads like a normal text input. The inner editor
   // is transparent (see `createInlineInputTheme`), so this background — and the
@@ -197,7 +204,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     top: '50%',
     transform: 'translateY(-50%)',
     color: theme.colors.text.disabled,
-    fontFamily: theme.typography.fontFamilyMonospace,
+    fontFamily: monospace ? theme.typography.fontFamilyMonospace : theme.typography.fontFamily,
     fontSize: theme.typography.body.fontSize,
     pointerEvents: 'none',
     whiteSpace: 'nowrap',
@@ -219,11 +226,12 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledby,
   id,
+  monospace = true,
 }: CodeMirrorInlineInputProps) {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, monospace);
 
-  const editorTheme = useMemo(() => createInlineInputTheme(theme), [theme]);
+  const editorTheme = useMemo(() => createInlineInputTheme(theme, monospace), [theme, monospace]);
 
   const extensions = useMemo(
     () => [
@@ -257,6 +265,7 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
           extensions={extensions}
           aria-label={ariaLabel}
           aria-labelledby={ariaLabelledby}
+          indentWithTab={false}
         />
       </div>
       {placeholder && value.length === 0 && (
