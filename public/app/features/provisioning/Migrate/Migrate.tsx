@@ -87,6 +87,11 @@ export function Migrate() {
   const migratableUids = folders.filter(isMigratableFolder).map((f) => f.uid);
   const allSelected = migratableUids.length > 0 && migratableUids.every((uid) => selectedFolderUids.has(uid));
   const someSelected = selection.items > 0;
+  // "Migrate all" (everything) is valid whenever there are migratable folders;
+  // a partial selection needs at least one resolved dashboard ref — picking
+  // only empty folders resolves to nothing migratable, so don't allow it to
+  // silently fall through to a migrate-everything.
+  const canSubmit = allSelected ? migratableUids.length > 0 : selection.resources.length > 0;
 
   const closeDrawer = () => setDrawerScope(null);
   const clearSelection = () => {
@@ -137,6 +142,7 @@ export function Migrate() {
           // Selecting everything runs the legacy "migrate all unmanaged" job;
           // a partial selection scopes the job to the picked resources.
           onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}
+          submitDisabled={!canSubmit}
           canMigrate={hasWriteRepo}
           connectAction={<ConnectRepositoryButton items={repos ?? []} />}
         />
@@ -145,6 +151,7 @@ export function Migrate() {
       {drawerScope && (
         <MigrateDrawer
           repos={repos ?? []}
+          selective={drawerScope === 'selected'}
           resources={drawerScope === 'selected' ? selection.resources : undefined}
           selection={
             drawerScope === 'selected' ? { folders: selection.folders, dashboards: selection.dashboards } : undefined

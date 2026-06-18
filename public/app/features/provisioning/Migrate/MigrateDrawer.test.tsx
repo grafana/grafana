@@ -32,13 +32,19 @@ function mockRepositoryLookup(repository = createRepository()) {
 
 describe('MigrateDrawer', () => {
   it('pre-selects the repository when exactly one is connected', async () => {
-    render(<MigrateDrawer repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />);
+    render(<MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />);
 
     expect(await screen.findByRole('combobox')).toHaveValue('My only repo');
   });
 
   it('keeps the migrate button disabled until a repository is selected', async () => {
-    render(<MigrateDrawer repos={[makeRepo('a', 'Repo A'), makeRepo('b', 'Repo B')]} onDismiss={jest.fn()} />);
+    render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('a', 'Repo A'), makeRepo('b', 'Repo B')]}
+        onDismiss={jest.fn()}
+      />
+    );
 
     // The button keeps a tooltip while disabled, so Grafana renders it with
     // aria-disabled rather than the native disabled attribute.
@@ -47,7 +53,9 @@ describe('MigrateDrawer', () => {
 
   it('calls onDismiss when cancelled', async () => {
     const onDismiss = jest.fn();
-    const { user } = render(<MigrateDrawer repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={onDismiss} />);
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={onDismiss} />
+    );
 
     await user.click(await screen.findByRole('button', { name: /cancel/i }));
 
@@ -56,7 +64,13 @@ describe('MigrateDrawer', () => {
 
   it('blocks migration and warns when the repository cannot push to its configured branch', async () => {
     // A PR-only repository (no `write` workflow) can't run a migration.
-    render(<MigrateDrawer repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]} onDismiss={jest.fn()} />);
+    render(
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('pr-only', 'PR only repo', ['branch'])]}
+        onDismiss={jest.fn()}
+      />
+    );
 
     expect(await screen.findByText(/be used for migration/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
@@ -72,7 +86,9 @@ describe('MigrateDrawer', () => {
     );
     mockJobList(createJob());
 
-    const { user } = render(<MigrateDrawer repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />);
+    const { user } = render(
+      <MigrateDrawer selective={false} repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} />
+    );
     await user.click(screen.getByRole('button', { name: /migrate everything/i }));
 
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
@@ -89,7 +105,12 @@ describe('MigrateDrawer', () => {
     mockRepositoryLookup();
 
     const { user } = render(
-      <MigrateDrawer repos={[makeRepo('repo-1', 'My only repo')]} onDismiss={jest.fn()} onMigrated={onMigrated} />
+      <MigrateDrawer
+        selective={false}
+        repos={[makeRepo('repo-1', 'My only repo')]}
+        onDismiss={jest.fn()}
+        onMigrated={onMigrated}
+      />
     );
     await user.click(screen.getByRole('button', { name: /migrate everything/i }));
 
@@ -114,6 +135,7 @@ describe('MigrateDrawer', () => {
     it('labels the action "Migrate selected" and summarizes the selection', async () => {
       render(
         <MigrateDrawer
+          selective
           repos={[makeRepo('repo-1', 'My only repo')]}
           resources={resources}
           selection={{ folders: 1, dashboards: 2 }}
@@ -139,6 +161,7 @@ describe('MigrateDrawer', () => {
 
       const { user } = render(
         <MigrateDrawer
+          selective
           repos={[makeRepo('repo-1', 'My only repo')]}
           resources={resources}
           selection={{ folders: 1, dashboards: 2 }}

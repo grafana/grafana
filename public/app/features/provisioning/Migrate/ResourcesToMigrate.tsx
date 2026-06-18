@@ -25,6 +25,12 @@ interface Props {
   onToggleSelectAll: () => void;
   onMigrateSelected: () => void;
   /**
+   * Whether the current selection can actually be migrated. False when nothing
+   * is selected, or when the only picks resolve to no migratable resources
+   * (e.g. empty folders that aren't part of a migrate-everything).
+   */
+  submitDisabled: boolean;
+  /**
    * Whether migration is possible — i.e. a repository that can push to its
    * configured branch is connected. When false the footer shows `connectAction`
    * instead of the (otherwise dead) migrate button.
@@ -54,6 +60,7 @@ export function ResourcesToMigrate({
   someSelected,
   onToggleSelectAll,
   onMigrateSelected,
+  submitDisabled,
   canMigrate,
   connectAction,
 }: Props) {
@@ -216,7 +223,7 @@ export function ResourcesToMigrate({
         </Text>
         {unmanagedFolders.length > 0 &&
           (canMigrate ? (
-            <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={selectedCount === 0}>
+            <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={submitDisabled}>
               {allSelected
                 ? t('provisioning.migrate.resources-to-migrate-migrate-all', '', {
                     count: selectedCount,

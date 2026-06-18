@@ -39,6 +39,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
     someSelected: false,
     onToggleSelectAll: jest.fn(),
     onMigrateSelected: jest.fn(),
+    submitDisabled: false,
     canMigrate: true,
     connectAction: <button>Connect a repository</button>,
     ...overrides,
@@ -82,8 +83,9 @@ describe('ResourcesToMigrate', () => {
     expect(props.onToggleSelectAll).toHaveBeenCalled();
   });
 
-  it('disables the migrate button until something is selected', () => {
-    setup({ selectedCount: 0 });
+  it('disables the migrate button when the selection cannot be submitted', () => {
+    // e.g. nothing selected, or only empty folders that resolve to no resources.
+    setup({ selectedCount: 0, submitDisabled: true });
 
     expect(screen.getByRole('button', { name: /migrate selected \(0\)/i })).toBeDisabled();
   });

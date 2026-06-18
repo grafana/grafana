@@ -15,11 +15,13 @@ interface MigrateDrawerProps {
   /** Called once the migration job finishes successfully, so callers can refresh derived state. */
   onMigrated?: () => void;
   /**
-   * Dashboards to migrate. When omitted, every unmanaged dashboard and folder
-   * is migrated ("migrate everything"). When provided, only these dashboards
-   * are migrated — the folders that contain them come along so parent paths
-   * resolve.
+   * Whether to scope the migration to `resources` (selective) or migrate every
+   * unmanaged resource ("migrate everything"). Tracked explicitly rather than
+   * inferred from `resources.length`, so a selection that happens to resolve to
+   * no dashboard refs is never silently treated as a migrate-everything.
    */
+  selective: boolean;
+  /** Dashboard refs to migrate in selective mode. The folders that contain them come along. */
   resources?: ResourceRef[];
   /** Counts behind `resources`, used for the selective-mode summary copy. */
   selection?: { folders: number; dashboards: number };
@@ -35,8 +37,8 @@ interface MigrateDrawerProps {
  * dashboard and folder; selective (with `resources`) exports only the picked
  * dashboards.
  */
-export function MigrateDrawer({ repos, onDismiss, onMigrated, resources, selection }: MigrateDrawerProps) {
-  const isSelective = Boolean(resources && resources.length > 0);
+export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resources, selection }: MigrateDrawerProps) {
+  const isSelective = selective;
 
   const repoOptions = useMemo<Array<ComboboxOption<string>>>(
     () =>
