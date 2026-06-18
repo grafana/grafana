@@ -710,31 +710,24 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	}
 
 	// A folder move refreshes the stored folder (search authz) without
-	// changing content, so force a re-embed when it differs. The len
-	// guard skips this for a brand-new resource.
+	// changing content, so force a re-embed when it differs.
 	folderMoved := len(stored) > 0 && storedFolder != items[0].Folder
 
-	// desired = every current subresource (survivor set); toEmbed = the
-	// new or content-changed panels that need an embed call.
 	desired := make([]string, 0, len(items))
-	desiredSet := make(map[string]struct{}, len(items))
 	toEmbed := make([]embed.Item, 0, len(items))
+	matched := 0
 	for _, it := range items {
 		desired = append(desired, it.Subresource)
-		desiredSet[it.Subresource] = struct{}{}
-		if prev, ok := stored[it.Subresource]; folderMoved || !ok || prev != it.Content {
+		prev, ok := stored[it.Subresource]
+		if ok {
+			matched++
+		}
+		if folderMoved || !ok || prev != it.Content {
 			toEmbed = append(toEmbed, it)
 		}
 	}
 
-	// Skip the write entirely when nothing changed and nothing vanished.
-	staleExists := false
-	for sub := range stored {
-		if _, ok := desiredSet[sub]; !ok {
-			staleExists = true
-			break
-		}
-	}
+	staleExists := matched < len(stored)
 	if len(toEmbed) == 0 && !staleExists {
 		return nil
 	}
