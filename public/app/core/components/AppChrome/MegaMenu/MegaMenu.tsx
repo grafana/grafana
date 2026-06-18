@@ -8,6 +8,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { setBookmark } from 'app/core/reducers/navBarTree';
@@ -30,6 +31,7 @@ export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const navTree = useSelector((state) => state.navBarTree);
     const styles = useStyles2(getStyles);
+    const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
     const location = useLocation();
     const { chrome } = useGrafana();
     const dispatch = useDispatch();
@@ -108,7 +110,7 @@ export const MegaMenu = memo(
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={styles.content}>
-          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators>
+          <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
             <>
               <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
                 {navItems.map((link, index) => (
