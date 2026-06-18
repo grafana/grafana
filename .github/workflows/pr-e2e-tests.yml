@@ -108,6 +108,13 @@ jobs:
           NO_SOURCEMAP: '1' # Don't generate sourcemaps for CI builds to speed up webpack + packaging
         run: make build-js
 
+      # pnpm gives each plugin workspace under public/ its own node_modules of
+      # symlinks into the store. upload-artifact follows those symlinks and OOMs
+      # enumerating millions of files. Excluding them via the path list still
+      # makes the globber walk the whole symlinked tree, so remove them first.
+      - name: Remove plugin node_modules from build output
+        run: find public -name node_modules -type d -prune -exec rm -rf '{}' +
+
       - name: Upload frontend build artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -116,7 +123,6 @@ jobs:
             public/
             !**/*.ts
             !**/*.tsx
-            !public/**/node_modules/
             !public/locales/
           retention-days: 1
 

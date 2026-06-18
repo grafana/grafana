@@ -74,6 +74,12 @@ jobs:
       - uses: ./.github/actions/pnpm-install
       - name: Build frontend
         run: pnpm run build
+      # pnpm gives each plugin workspace under public/ its own node_modules of
+      # symlinks into the store. upload-artifact follows those symlinks and OOMs
+      # enumerating millions of files, so drop them before upload (they aren't
+      # part of the shipped frontend).
+      - name: Remove plugin node_modules from build output
+        run: find public -name node_modules -type d -prune -exec rm -rf '{}' +
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: pr-frontend
