@@ -39,11 +39,11 @@ type SnapshotMigrator interface {
 // snapshotMigrator handles migrating dashboard snapshots from legacy SQL storage.
 type snapshotMigrator struct {
 	sql     legacysql.LegacyDatabaseProvider
-	secrets secrets.Service
+	secrets secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 }
 
 // ProvideSnapshotMigrator creates a snapshotMigrator for use in wire DI.
-func ProvideSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) SnapshotMigrator {
+func ProvideSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) SnapshotMigrator { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return &snapshotMigrator{sql: sql, secrets: secretsSvc}
 }
 

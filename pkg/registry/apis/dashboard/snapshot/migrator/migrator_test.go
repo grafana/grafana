@@ -70,7 +70,7 @@ func insertSnapshot(t *testing.T, store db.DB, snap *dashboardsnapshots.Dashboar
 	require.NoError(t, err)
 }
 
-func newTestMigrator(sec secrets.Service, store db.DB) *snapshotMigrator {
+func newTestMigrator(sec secrets.Service, store db.DB) *snapshotMigrator { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	return &snapshotMigrator{sql: legacysql.NewDatabaseProvider(store), secrets: sec}
 }
 
