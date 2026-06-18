@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { Alert, EmptyState, Spinner, Stack } from '@grafana/ui';
+import { Alert, Button, EmptyState, Spinner, Stack } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -92,6 +92,11 @@ export function Migrate() {
   // only empty folders resolves to nothing migratable, so don't allow it to
   // silently fall through to a migrate-everything.
   const canSubmit = allSelected ? migratableUids.length > 0 : selection.resources.length > 0;
+  // Stats-derived: is there anything unmanaged at all? Used for the
+  // migrate-everything fallback when the folder list itself can't be loaded —
+  // that job is stats-driven and doesn't need the per-folder enumeration.
+  const hasUnmanaged =
+    Math.max(0, totals.instanceTotal - totals.managed) + Math.max(0, folderCounts.total - folderCounts.managed) > 0;
 
   const closeDrawer = () => setDrawerScope(null);
   const clearSelection = () => {
@@ -120,14 +125,27 @@ export function Migrate() {
           <Trans i18nKey="provisioning.migrate.loading-resources">Loading resources...</Trans>
         </Stack>
       ) : isFoldersError ? (
-        <Alert
-          severity="warning"
-          title={t('provisioning.migrate.folders-error-title', 'Could not load the list of resources to migrate')}
-        >
-          <Trans i18nKey="provisioning.migrate.folders-error-body">
-            The overview above is still accurate. Refresh the page to try loading the list again.
-          </Trans>
-        </Alert>
+        <Stack direction="column" gap={2} alignItems="flex-start">
+          <Alert
+            severity="warning"
+            title={t('provisioning.migrate.folders-error-title', 'Could not load the list of resources to migrate')}
+          >
+            <Trans i18nKey="provisioning.migrate.folders-error-body">
+              The overview above is still accurate. You can still migrate everything now, or refresh the page to load
+              the list and pick individual resources.
+            </Trans>
+          </Alert>
+          {/* Migrating everything is stats-driven and doesn't need the folder
+              list, so keep it reachable even when the list failed to load. */}
+          {hasUnmanaged &&
+            (hasWriteRepo ? (
+              <Button variant="primary" icon="upload" onClick={() => setDrawerScope('all')}>
+                <Trans i18nKey="provisioning.migrate.migrate-everything">Migrate everything</Trans>
+              </Button>
+            ) : (
+              <ConnectRepositoryButton items={repos ?? []} />
+            ))}
+        </Stack>
       ) : (
         <ResourcesToMigrate
           folders={folders}

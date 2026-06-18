@@ -196,6 +196,21 @@ describe('Migrate', () => {
       expect(screen.queryByRole('button', { name: /migrate (all|selected)/i })).not.toBeInTheDocument();
     });
 
+    it('still offers migrate-everything when the resource list fails to load', async () => {
+      server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+
+      const { user } = render(<Migrate />);
+
+      // The folder list errored, but the stats-driven migrate-everything stays
+      // reachable (it doesn't need the enumeration).
+      expect(await screen.findByText(/could not load the list of resources/i)).toBeInTheDocument();
+      const migrateEverything = await screen.findByRole('button', { name: /migrate everything/i });
+      await waitFor(() => expect(migrateEverything).toBeEnabled());
+      await user.click(migrateEverything);
+
+      expect(await screen.findByText(/all folders and resources will be migrated/i)).toBeInTheDocument();
+    });
+
     it('lists unmanaged folders in the Resources to migrate table', async () => {
       respondWithSearch([
         folderHit('team-a', 'Team A'),
