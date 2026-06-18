@@ -14,6 +14,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { dispatch } from 'app/store/store';
 
+import { findStarredNames, userStarsFieldSelector } from './utils';
+
 type StarItemArgs = {
   id: string;
   /** Title of the item - this is displayed in the nav */
@@ -63,10 +65,9 @@ export const useStarItem = (group: string, kind: string) => {
  */
 export const useStarredItems = (group: string, kind: string, options?: { skip?: boolean }) => {
   const skip = options?.skip ?? false;
-  const name = `user-${contextSrv.user.uid}`;
   const appPlatform = config.featureToggles.starsFromAPIServer;
   const legacyResponse = useLegacyGetStarsQuery(appPlatform || skip ? skipToken : undefined);
-  const queryArgs = !appPlatform || skip ? skipToken : { fieldSelector: `metadata.name=${name}` };
+  const queryArgs = !appPlatform || skip ? skipToken : { fieldSelector: userStarsFieldSelector() };
   const appPlatformResponse = useListStarsQuery(queryArgs);
 
   const appPlatformStarredItems = useMemo(() => {
@@ -82,12 +83,7 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
       return [];
     }
 
-    const starredItems = appPlatformResponse.data?.items || [];
-    if (!starredItems.length) {
-      return [];
-    }
-
-    return starredItems[0]?.spec.resource.find((info) => info.group === group && info.kind === kind)?.names || [];
+    return findStarredNames(data, group, kind);
   }, [appPlatformResponse, group, kind]);
 
   if (appPlatform) {

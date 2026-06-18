@@ -9,7 +9,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult, type NestedFolderDTO } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 import { type DashboardViewItem } from 'app/features/search/types';
-import { resolveStarredFolders, starredFolderUids } from 'app/features/stars/folders';
+import { resolveStarredFolders } from 'app/features/stars/folders';
+import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
@@ -59,36 +60,39 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
 
   let folders: DashboardQueryResult[] = foldersResults.view.toArray();
 
-  // Add shared with me item statically to the array as it is not returned from the
-  // API anymore. This also means we show it every time, whether it has children or not. This is the same as in folder
-  // picker for now. In the future we could to additional request to see if there are any children in it.
-  if (page === 1 && !parentUID && config.sharedWithMeFolderUID) {
-    folders.unshift({
-      ...virtualFolderBase,
-      uid: config.sharedWithMeFolderUID,
-      name: t('browse-dashboards.shared-with-me', 'Shared with me'),
-    });
-  }
+  // Virtual root folders are only injected at the top level (first page, no parent).
+  if (page === 1 && !parentUID) {
+    // Add shared with me item statically to the array as it is not returned from the
+    // API anymore. This also means we show it every time, whether it has children or not. This is the same as in folder
+    // picker for now. In the future we could to additional request to see if there are any children in it.
+    if (config.sharedWithMeFolderUID) {
+      folders.unshift({
+        ...virtualFolderBase,
+        uid: config.sharedWithMeFolderUID,
+        name: t('browse-dashboards.shared-with-me', 'Shared with me'),
+      });
+    }
 
-  // Add team folders virtual item
-  if (page === 1 && !parentUID && config.featureToggles.teamFolders) {
-    const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-    folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.my-team-folders', 'My team folders'),
-      uid: TEAM_FOLDERS_UID,
-    });
-  }
+    // Add team folders virtual item
+    if (config.featureToggles.teamFolders) {
+      const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+      folders.splice(insertIndex, 0, {
+        ...virtualFolderBase,
+        name: t('browse-dashboards.my-team-folders', 'My team folders'),
+        uid: TEAM_FOLDERS_UID,
+      });
+    }
 
-  // Add starred folders virtual item after the other virtual roots so root order is
-  // [Shared with me, Team folders, Starred folders, ...real folders]
-  if (page === 1 && !parentUID && starredFoldersEnabled()) {
-    const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + (config.featureToggles.teamFolders ? 1 : 0);
-    folders.splice(insertIndex, 0, {
-      ...virtualFolderBase,
-      name: t('browse-dashboards.starred-folders', 'Starred folders'),
-      uid: STARRED_FOLDERS_UID,
-    });
+    // Add starred folders virtual item after the other virtual roots so root order is
+    // [Shared with me, Team folders, Starred folders, ...real folders]
+    if (starredFoldersEnabled()) {
+      const insertIndex = (config.sharedWithMeFolderUID ? 1 : 0) + (config.featureToggles.teamFolders ? 1 : 0);
+      folders.splice(insertIndex, 0, {
+        ...virtualFolderBase,
+        name: t('browse-dashboards.starred-folders', 'Starred folders'),
+        uid: STARRED_FOLDERS_UID,
+      });
+    }
   }
 
   return folders.map<NestedFolderDTO>((item) => {
@@ -236,15 +240,14 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
 export async function listStarredFolders(): Promise<DashboardViewItem[]> {
   // For browse dashboards the caching is mostly handled in the custom redux slice and for it to work we need requests
   // here not to be cached.
-  const name = `user-${contextSrv.user.uid}`;
   const stars = await dispatch(
     collectionsAPIv1alpha1.endpoints.listStars.initiate(
-      { fieldSelector: `metadata.name=${name}` },
+      { fieldSelector: userStarsFieldSelector() },
       { forceRefetch: true }
     )
   ).unwrap();
 
-  const folders = await resolveStarredFolders(starredFolderUids(stars));
+  const folders = await resolveStarredFolders(findStarredNames(stars, 'folder.grafana.app', 'Folder'));
   return folders.map((folder) => ({
     kind: 'folder' as const,
     // Prefixed UID for independent tree state; the real UID drives the folder URL and picker selection.
