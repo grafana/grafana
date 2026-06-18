@@ -57,6 +57,8 @@ const getStyles = (theme: GrafanaTheme2, splitted: Boolean, visualRefreshEnabled
   }),
   pageToolbar: css({
     background: theme.colors.background.page,
+    borderTopLeftRadius: theme.shape.radius.lg,
+    borderTopRightRadius: theme.shape.radius.lg,
   }),
 });
 
