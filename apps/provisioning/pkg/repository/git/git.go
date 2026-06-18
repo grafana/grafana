@@ -10,7 +10,7 @@ type GitRepository interface {
 	repository.Repository
 	repository.Versioned
 	repository.Writer
-	repository.Reader
+	repository.SizeLimitedReader
 	repository.StageableRepository
 	repository.BranchHandler
 	URL() string
