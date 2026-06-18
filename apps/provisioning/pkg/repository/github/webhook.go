@@ -229,7 +229,7 @@ func (r *githubWebhookRepository) parsePullRequestEvent(event *github.PullReques
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubWebhookRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
 	ctx, _ = r.logger(ctx, "")
-	return r.gh.CreatePullRequestComment(ctx, r.owner, r.repo, prNumber, comment)
+	return r.gh.CreatePullRequestComment(ctx, prNumber, comment)
 }
 
 func (r *githubWebhookRepository) createWebhook(ctx context.Context) (WebhookConfig, error) {
@@ -246,7 +246,7 @@ func (r *githubWebhookRepository) createWebhook(ctx context.Context) (WebhookCon
 		Active:      true,
 	}
 
-	hook, err := r.gh.CreateWebhook(ctx, r.owner, r.repo, cfg)
+	hook, err := r.gh.CreateWebhook(ctx, cfg)
 	if err != nil {
 		return WebhookConfig{}, err
 	}
@@ -269,7 +269,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookCon
 		return hook, true, nil
 	}
 
-	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
+	hook, err := r.gh.GetWebhook(ctx, r.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
 		hook, err := r.createWebhook(ctx)
@@ -304,7 +304,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookCon
 		return WebhookConfig{}, false, fmt.Errorf("could not generate secret: %w", err)
 	}
 	hook.Secret = secret.String()
-	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
+	if err := r.gh.EditWebhook(ctx, hook); err != nil {
 		return WebhookConfig{}, false, fmt.Errorf("edit webhook: %w", err)
 	}
 
@@ -319,7 +319,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 
 	id := r.config.Status.Webhook.ID
 
-	err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id)
+	err := r.gh.DeleteWebhook(ctx, id)
 	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
@@ -449,7 +449,7 @@ func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]ma
 	ctx, logger := r.logger(ctx, "")
 	logger.Info("rotating webhook secret", "trigger", "rotation")
 
-	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
+	hook, err := r.gh.GetWebhook(ctx, r.config.Status.Webhook.ID)
 	switch {
 	case errors.Is(err, repository.ErrFileNotFound):
 		return []map[string]any{{
@@ -467,7 +467,7 @@ func (r *githubWebhookRepository) RotateWebhookSecret(ctx context.Context) ([]ma
 	}
 	hook.Secret = secret.String()
 
-	if err := r.gh.EditWebhook(ctx, r.owner, r.repo, hook); err != nil {
+	if err := r.gh.EditWebhook(ctx, hook); err != nil {
 		return nil, fmt.Errorf("edit webhook during rotation: %w", err)
 	}
 

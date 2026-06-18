@@ -94,68 +94,63 @@ jobs:
         with:
           github_app: grafana-releases-oss
 
+      # Use `gh workflow run` rather than the createWorkflowDispatch REST call so we can
+      # capture the triggered run's URL (gh returns it when available) and link it from the
+      # status comment. source_pr is passed so the builder can link the patch PR back here.
       - name: Dispatch create-patch in security-patch-actions
         if: ${{ steps.labels.outputs.vul_id != '' }}
-        uses: actions/github-script@v8
+        id: dispatch
         env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           COMMENT: "Closes: ${{ github.repository }}#${{ github.event.pull_request.number }}"
           VUL_ID: ${{ steps.labels.outputs.vul_id }}
           BACKPORT_REFS: ${{ steps.labels.outputs.backport_refs }}
-        with:
-          github-token: ${{ steps.get-github-app-token.outputs.token }}
-          script: |
-            const {REPO, SRC_REF, PATCH_REF, PATCH_PREFIX, SENDER, COMMENT, VUL_ID, BACKPORT_REFS} = process.env;
-            await github.rest.actions.createWorkflowDispatch({
-              owner: 'grafana',
-              repo: 'security-patch-actions',
-              workflow_id: 'create-patch.yml',
-              ref: 'main',
-              inputs: {
-                repo: REPO,
-                src_ref: SRC_REF,
-                patch_ref: PATCH_REF,
-                patch_repo: 'grafana/grafana-security-patches',
-                patch_prefix: PATCH_PREFIX,
-                vul_id: VUL_ID,
-                backport_refs: BACKPORT_REFS,
-                sender: SENDER,
-                comment: COMMENT,
-              },
-            })
+        run: |
+          set -euo pipefail
+          out=$(gh workflow run create-patch.yml \
+            --repo grafana/security-patch-actions \
+            --ref main \
+            -f "repo=${REPO}" \
+            -f "src_ref=${SRC_REF}" \
+            -f "patch_ref=${PATCH_REF}" \
+            -f "patch_repo=grafana/grafana-security-patches" \
+            -f "patch_prefix=${PATCH_PREFIX}" \
+            -f "vul_id=${VUL_ID}" \
+            -f "backport_refs=${BACKPORT_REFS}" \
+            -f "sender=${SENDER}" \
+            -f "comment=${COMMENT}" \
+            -f "source_pr=${PR_NUMBER}" 2>&1) || { echo "$out"; exit 1; }
+          echo "$out"
+          run_url=$(printf '%s\n' "$out" | grep -oE 'https://github\.com/[^[:space:]]+/actions/runs/[0-9]+' | head -1 || true)
+          echo "run_url=${run_url}" | tee -a "$GITHUB_OUTPUT"
 
-      # Sticky status comment so the mirror PR author can see what was dispatched and where
-      # to look. Updated in place on each run rather than posting a new comment every time.
-      - name: Update status comment
+      # Post a fresh status comment each run (no in-place updates) so every dispatch is a
+      # visible, self-contained notification with its own run link.
+      - name: Comment dispatch status
         if: ${{ steps.labels.outputs.vul_id != '' }}
         uses: actions/github-script@v8
         env:
           VUL_ID: ${{ steps.labels.outputs.vul_id }}
           BACKPORT_REFS: ${{ steps.labels.outputs.backport_refs }}
+          RUN_URL: ${{ steps.dispatch.outputs.run_url }}
         with:
           script: |
-            const {VUL_ID, BACKPORT_REFS, PATCH_REF, PR_NUMBER} = process.env;
+            const {VUL_ID, BACKPORT_REFS, PATCH_REF, PR_NUMBER, RUN_URL} = process.env;
             const targets = [PATCH_REF, ...(BACKPORT_REFS ? BACKPORT_REFS.split(' ') : [])];
-            const runsUrl = 'https://github.com/grafana/security-patch-actions/actions/workflows/create-patch.yml';
-            const marker = '<!-- security-patch-status -->';
+            // Link the exact triggered run when gh returned its URL; otherwise fall back
+            // to the workflow's runs page.
+            const runLink = RUN_URL
+              ? `[run](${RUN_URL})`
+              : '[security-patch-actions](https://github.com/grafana/security-patch-actions/actions/workflows/create-patch.yml)';
             const body = [
-              marker,
               `🔐 **Security patch dispatched** for \`${VUL_ID}\``,
               '',
               `Targets: ${targets.map(t => `\`${t}\``).join(', ')}`,
               '',
-              `Patch generation is running in [security-patch-actions](${runsUrl}). `
-                + `The PR in \`grafana-security-patches\` will appear/update on branch \`patch/${VUL_ID}\`.`,
+              `Patch generation is running: ${runLink}. `
+                + `The PR in \`grafana-security-patches\` will appear/update on branch \`patch/${VUL_ID}\` `
+                + `(a link will be posted here once it's created).`,
             ].join('\n');
-            const {data: comments} = await github.rest.issues.listComments({
-              owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER),
+            await github.rest.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER), body,
             });
-            const existing = comments.find(c => c.body && c.body.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(PR_NUMBER), body,
-              });
-            }
