@@ -82,7 +82,9 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
 
   const title = (
     <div className={styles.popoverHeader}>
-      <span>{t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}</span>
+      <span className={styles.popoverTitle}>
+        {t('grafana-ui.panel-chrome.errors-and-notices', 'Errors and notices')}
+      </span>
       {onInspect && (
         <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
           {t('grafana-ui.panel-chrome.inspect-errors-notices', 'Inspect')}
@@ -119,6 +121,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     width: '100%',
   }),
+  popoverTitle: css({
+    color: theme.colors.text.secondary,
+  }),
   item: css({
     display: 'flex',
     alignItems: 'baseline',
@@ -128,6 +133,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   itemText: css({
     minWidth: 0,
     fontSize: theme.typography.bodySmall.fontSize,
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical',
+    WebkitLineClamp: 2,
+    overflow: 'hidden',
   }),
   error: css({
     color: theme.colors.error.text,
