@@ -94,13 +94,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel }: PanelStatusPopoverP
   );
 
   return (
-    <Toggletip
-      title={title}
-      content={content}
-      placement="bottom-start"
-      closeButton={false}
-      fitContent
-    >
+    <Toggletip title={title} content={content} placement="bottom-start" closeButton={false} fitContent>
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}
