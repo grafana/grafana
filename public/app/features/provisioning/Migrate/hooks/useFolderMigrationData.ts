@@ -220,21 +220,20 @@ function aggregate(
     allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
   }));
 
-  // Only synthesize the General row when there are dashboards sitting directly
-  // at the root. Root-level *folders* are their own rows; an empty "General"
-  // row (no root dashboards) would otherwise show up as a bogus migration
-  // target now that empty folders are migratable.
-  if (rootTotalDashboards > 0) {
-    // The General "folder" doesn't have its own managedBy on the backend.
-    // Mirror the single-managed assumption from real folders: only treat the
-    // General row as managed when every root dashboard agrees on the *same*
-    // manager kind. A mix of repo-managed + terraform-managed dashboards, or
-    // any unmanaged dashboard, falls through to undefined so the row still
-    // appears as a migration target.
-    const generalManagedBy =
-      !rootHasUnmanaged && rootTotalDashboards > 0 && rootManagerKinds.size === 1
-        ? rootManagerKinds.values().next().value
-        : undefined;
+  // The General "folder" doesn't have its own managedBy on the backend. Mirror
+  // the single-managed assumption from real folders: only treat it as managed
+  // when every root dashboard agrees on the *same* manager kind.
+  const generalManagedBy =
+    !rootHasUnmanaged && rootTotalDashboards > 0 && rootManagerKinds.size === 1
+      ? rootManagerKinds.values().next().value
+      : undefined;
+  // Synthesize the General row only when it's meaningful: there are unmanaged
+  // root dashboards (a real migration target), or every root dashboard is
+  // managed by a single agreeing tool (a managed row the table filters out).
+  // Skip it when the root has only managed dashboards from mixed tools — there
+  // we'd otherwise emit an unmanaged-looking row with nothing to migrate.
+  // Root-level *folders* are their own rows, so they don't trigger this.
+  if (rootHasUnmanaged || generalManagedBy !== undefined) {
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.migrate.general-folder-title', 'General (root resources)'),

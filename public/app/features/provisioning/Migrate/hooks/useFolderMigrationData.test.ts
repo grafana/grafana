@@ -121,14 +121,15 @@ describe('useFolderMigrationData', () => {
     expect(general?.managedBy).toBeUndefined();
   });
 
-  it('leaves the General row unmanaged when root dashboards are managed by different tools', async () => {
+  it('omits the General row when root dashboards are all managed by different tools', async () => {
+    // Nothing unmanaged at the root and no single agreeing manager, so there's
+    // nothing to migrate — don't surface a bogus unmanaged-looking target.
     mockSearch([dashboard('r1', '', ManagerKind.Repo), dashboard('r2', '', ManagerKind.Terraform)]);
 
     const { result } = renderHook(() => useFolderMigrationData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    const general = result.current.data.find((f) => f.uid === 'general');
-    expect(general?.managedBy).toBeUndefined();
+    expect(result.current.data.find((f) => f.uid === 'general')).toBeUndefined();
   });
 
   it('excludes already-managed dashboards from a folder’s migratable counts and lists', async () => {
