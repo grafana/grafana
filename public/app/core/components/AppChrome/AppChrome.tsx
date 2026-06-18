@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'classnames';
 import { Resizable } from 're-resizable';
-import { type PropsWithChildren, useEffect, useState } from 'react';
+import { Fragment, type PropsWithChildren, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
@@ -15,6 +15,7 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
+import { AgentModePlatformBar } from './AgentMode/AgentModePlatformBar';
 import { AgentModeShell } from './AgentMode/AgentModeShell';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -111,7 +112,17 @@ export function AppChrome({ children }: Props) {
         'main-view--chrome-hidden': state.chromeless || agentMode,
       })}
     >
-      {outletHost && createPortal(children, outletHost)}
+      {outletHost &&
+        createPortal(
+          [
+            // In agent mode, a slim bar (hamburger + breadcrumbs) sits above the live
+            // page inside the Platform tab. Keys keep `children` at a stable position so
+            // toggling the bar never remounts the page.
+            agentMode ? <AgentModePlatformBar key="agent-platform-bar" /> : null,
+            <Fragment key="outlet">{children}</Fragment>,
+          ],
+          outletHost
+        )}
 
       {agentMode ? (
         <AgentModeShell outletRef={setOutletHost} />
