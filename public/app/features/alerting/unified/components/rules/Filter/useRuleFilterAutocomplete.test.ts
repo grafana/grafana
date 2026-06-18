@@ -64,6 +64,20 @@ function buildFolders(count: number): GrafanaPromRuleGroupDTO[] {
   }));
 }
 
+function buildExternalGroups(count: number) {
+  return Array.from({ length: count }, (_, i) => ({
+    name: `g${i}`,
+    file: `namespace-${i}`,
+    interval: 60,
+    rules: [],
+  }));
+}
+
+function buildExternalDataSource(uid: string) {
+  grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+  return alertingFactory.dataSource.build({ name: uid, uid, jsonData: { manageAlerts: true } });
+}
+
 describe('useNamespaceAndGroupOptions', () => {
   afterEach(() => {
     // grantUserPermissions mutates global permission state; reset so tests can't leak
@@ -88,86 +102,79 @@ describe('useNamespaceAndGroupOptions', () => {
       ]);
     });
 
-    it('returns an info option when there are more than 500 folders', async () => {
-      // 501 distinct folders pushes the derived namespace count past the threshold.
+    it('returns all grafana folders without an info option, since they are searched server-side', async () => {
+      // Grafana folders rely on server-side `search.folder`, so a large folder count no longer
+      // suppresses autocomplete the way it does for external sources.
       setGrafanaPromRules(buildFolders(501));
 
       const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
 
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
+      expect(options).toHaveLength(501);
+      expect(options.every((o) => o.description === 'Grafana folder')).toBe(true);
+    });
+
+    it.each([
+      { groupCount: 501, expectInfoOption: true },
+      { groupCount: 500, expectInfoOption: false },
+    ])(
+      'shows the info option when an external page exceeds the 500 limit (groups=$groupCount)',
+      async ({ groupCount, expectInfoOption }) => {
+        setGrafanaPromRules([]);
+        const externalDs = buildExternalDataSource('mimir-threshold');
+        setPrometheusRules(externalDs, buildExternalGroups(groupCount));
+
+        const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+        const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+        expect(options.some((o) => o.infoOption)).toBe(expectInfoOption);
+      }
+    );
+
+    it('shows the info option if any external source is capped, even when another is not', async () => {
+      setGrafanaPromRules([]);
+      const cappedDs = buildExternalDataSource('mimir-capped');
+      const smallDs = buildExternalDataSource('mimir-small');
+      setPrometheusRules(cappedDs, buildExternalGroups(501));
+      setPrometheusRules(smallDs, buildExternalGroups(2));
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
       expect(options).toEqual([
         {
-          label: 'Due to large number of folders, autocomplete is not available',
+          label: 'Due to a large number of groups, search might not be complete in external data sources.',
           value: '__GRAFANA_INFO_OPTION__',
           infoOption: true,
         },
       ]);
     });
 
-    it('still returns folder options at exactly the 500-folder threshold', async () => {
-      // Boundary: 500 folders is at (not over) the limit, so autocomplete stays available.
-      setGrafanaPromRules(buildFolders(500));
-
-      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
-
-      const options = await resolveOptions(() => result.current.namespaceOptions(''));
-
-      expect(options).toHaveLength(500);
-      expect(options.every((o) => o.description === 'Grafana folder')).toBe(true);
-    });
-
-    it('formats external (yaml) namespaces using the filename as the label', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+    it('formats external namespaces: yaml paths use the filename, long names are truncated', async () => {
       // Isolate the external path: no Grafana folders.
       setGrafanaPromRules([]);
+      const externalDs = buildExternalDataSource('mimir-ext');
 
-      const externalDs = alertingFactory.dataSource.build({
-        name: 'Mimir',
-        uid: 'mimir-ext',
-        jsonData: { manageAlerts: true },
-      });
+      const longNamespace = 'x'.repeat(120);
       setPrometheusRules(externalDs, [
-        { name: 'g1', file: '/etc/prometheus/rules/zebra.yml', interval: 60, rules: [] },
-        { name: 'g2', file: '/etc/prometheus/rules/alerts.yml', interval: 60, rules: [] },
+        { name: 'g1', file: '/etc/prometheus/rules/alerts.yml', interval: 60, rules: [] },
+        { name: 'g2', file: longNamespace, interval: 60, rules: [] },
       ]);
 
       const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
 
       const options = await resolveOptions(() => result.current.namespaceOptions(''));
 
-      // labels are the filenames, and external namespaces are sorted by label
+      // yaml path -> filename label; long plain name -> truncated label/description; sorted by label
       expect(options).toEqual([
         {
           label: 'alerts.yml',
           value: '/etc/prometheus/rules/alerts.yml',
           description: '/etc/prometheus/rules/alerts.yml',
         },
-        {
-          label: 'zebra.yml',
-          value: '/etc/prometheus/rules/zebra.yml',
-          description: '/etc/prometheus/rules/zebra.yml',
-        },
-      ]);
-    });
-
-    it('truncates long external (non-yaml) namespace labels and descriptions', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
-      setGrafanaPromRules([]);
-
-      const longNamespace = 'x'.repeat(120);
-      const externalDs = alertingFactory.dataSource.build({
-        name: 'Mimir',
-        uid: 'mimir-ext-long',
-        jsonData: { manageAlerts: true },
-      });
-      setPrometheusRules(externalDs, [{ name: 'g1', file: longNamespace, interval: 60, rules: [] }]);
-
-      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
-
-      const options = await resolveOptions(() => result.current.namespaceOptions(''));
-
-      expect(options).toEqual([
         {
           label: `${longNamespace.substring(0, 50)}...`,
           value: longNamespace,

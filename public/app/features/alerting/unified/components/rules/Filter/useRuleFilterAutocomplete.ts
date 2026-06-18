@@ -84,8 +84,8 @@ async function fetchGrafanaFolderNames(
   return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
 }
 
-async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGroups): Promise<Set<string>> {
-  const namespaceNameSet = new Set<string>();
+async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGroups): Promise<{ externalNamespaces: Set<string>, isLimitReached: boolean }> {
+  const externalNamespaces = new Set<string>();
   const calls = getExternalRuleDataSources().map((ds) =>
     fetchExternalGroups({
       ruleSource: { uid: ds.uid },
@@ -95,12 +95,15 @@ async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGro
     }).unwrap()
   );
   const results = await Promise.allSettled(calls);
+  let isLimitReached = false;
+
   for (const res of results) {
     if (res.status === STATUS_FULFILLED) {
-      res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
+      isLimitReached = isLimitReached || res.value.data.groups.length > NAMESPACE_THRESHOLD_LIMIT;
+      res.value.data.groups.forEach((group: { file?: string }) => externalNamespaces.add(group.file || 'default'));
     }
   }
-  return namespaceNameSet;
+  return { externalNamespaces, isLimitReached };
 }
 
 export function useNamespaceAndGroupOptions(): {
@@ -115,15 +118,14 @@ export function useNamespaceAndGroupOptions(): {
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
       const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups, inputValue);
-      const externalNamespaceNames = await fetchExternalNamespaceNames(fetchExternalGroups);
+      const { externalNamespaces, isLimitReached } = await fetchExternalNamespaceNames(fetchExternalGroups);
 
-      const totalNamespaces = grafanaFolderNames.length + externalNamespaceNames.size;
-      if (totalNamespaces > NAMESPACE_THRESHOLD_LIMIT) {
+      if (isLimitReached) {
         return [
           createInfoOption(
             t(
               'alerting.rules-filter.namespace-autocomplete-unavailable',
-              'Due to large number of folders, autocomplete is not available'
+              'Due to a large number of groups, search might not be complete in external data sources.'
             )
           ),
         ];
@@ -133,7 +135,7 @@ export function useNamespaceAndGroupOptions(): {
       // backend folder search, so they're filtered client-side here.
       return [
         ...toGrafanaFolderOptions(grafanaFolderNames),
-        ...filterBySearch(toExternalNamespaceOptions(externalNamespaceNames), inputValue),
+        ...filterBySearch(toExternalNamespaceOptions(externalNamespaces), inputValue),
       ];
     },
     [fetchGrafanaGroups, fetchExternalGroups]
