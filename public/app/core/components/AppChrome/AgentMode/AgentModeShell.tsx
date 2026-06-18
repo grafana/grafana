@@ -48,18 +48,9 @@ export function AgentModeShell({ outletRef }: Props) {
   return (
     <div className={styles.root}>
       <header className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <ToolbarButton
-            narrow
-            icon="bars"
-            tooltip="Open menu"
-            onClick={() => chrome.setMegaMenuOpen(!state.megaMenuOpen)}
-            aria-expanded={state.megaMenuOpen}
-          />
-          <ToolbarButton icon="arrow-left" onClick={() => chrome.setAgentMode(false)}>
-            Back to platform
-          </ToolbarButton>
-        </div>
+        <ToolbarButton icon="arrow-left" onClick={() => chrome.setAgentMode(false)}>
+          Back to platform
+        </ToolbarButton>
         <TopSearchBarCommandPaletteTrigger />
       </header>
       {state.megaMenuOpen && (
@@ -111,11 +102,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: getChromeHeaderLevelHeight(),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.primary,
-  }),
-  topBarLeft: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
   }),
   menuBackdrop: css({
     position: 'fixed',
