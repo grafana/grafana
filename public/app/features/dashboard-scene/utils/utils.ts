@@ -52,6 +52,16 @@ export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
 }
 
+/**
+ * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
+ *
+ * TODO: use `grafana.newPanelQueryErrorsUI` feature toggle
+ *   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
+ */
+export function isNewPanelQueryErrorsUIEnabled(): boolean {
+  return true;
+}
+
 export function getPanelIdForVizPanel(panel: SceneObject): number {
   return parseInt(panel.state.key!.replace('panel-', ''), 10);
 }

@@ -10,7 +10,12 @@ import { InspectTab } from 'app/features/inspector/types';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
-import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import {
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+  isNewPanelQueryErrorsUIEnabled,
+} from '../utils/utils';
 
 import { type DashboardScene } from './DashboardScene';
 
@@ -208,10 +213,16 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     return Promise.resolve(true);
   };
 
-  context.onOpenInspector = () => {
-    const dashboard = getDashboardSceneFor(vizPanel);
-    dashboard.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.ErrorsAndNotices }));
-  };
+  // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
+  // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
+  if (isNewPanelQueryErrorsUIEnabled()) {
+    context.onOpenInspector = () => {
+      const dashboard = getDashboardSceneFor(vizPanel);
+      dashboard.showModal(
+        new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.ErrorsAndNotices })
+      );
+    };
+  }
 }
 
 /**
