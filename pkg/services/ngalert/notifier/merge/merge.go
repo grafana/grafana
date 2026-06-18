@@ -30,6 +30,7 @@ import (
 type RenameResources struct {
 	Receivers     map[string]string
 	TimeIntervals map[string]string
+	Templates     map[string]string
 }
 
 // MergeResult describes what changed during a merge: which resources were added and which were renamed.
@@ -81,6 +82,13 @@ func (m MergeResult) LogContext() []any {
 		}
 		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
 	}
+	if len(m.Templates) > 0 {
+		tmplBuilder := strings.Builder{}
+		for from, to := range m.Templates {
+			_, _ = fmt.Fprintf(&tmplBuilder, "'%s'->'%s',", from, to)
+		}
+		logCtx = append(logCtx, "renamedTemplates", fmt.Sprintf("[%s]", tmplBuilder.String()[0:tmplBuilder.Len()-1]))
+	}
 	return logCtx
 }
 
@@ -107,8 +115,8 @@ func (m MergeResult) LogContext() []any {
 //  3. Inhibit Rule Merging:
 //     - All inhibit rules from the extra configuration are copied to the result
 //
-// provenance is applied to templates and inhibition rules produced by the merge.
-func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.Provenance) (v1.AMConfigV1, MergeResult, error) {
+// Templates and inhibition rules produced by the merge are created with ProvenanceNone; final provenance is assigned by the provisioning layer based on where the resource is stored.
+func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return *cfg, MergeResult{}, nil
 	}
@@ -149,17 +157,14 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to merge inhibition rules: %w", err)
 	}
 
-	var addedTemplates []string
-	templates := make(map[v1.ResourceUID]v1.TemplateGroup, len(cfg.Templates)+len(mimirCfg.TemplateFiles))
-	{
-		maps.Copy(templates, cfg.Templates)
-		for name, content := range mimirCfg.TemplateFiles {
-			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, provenance)
-			if _, ok := templates[tmpl.UID]; ok {
-				return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
-			}
-			templates[tmpl.UID] = tmpl
-			addedTemplates = append(addedTemplates, name)
+	templates, renamedTemplates, addedUIDs, err := MergeTemplates(cfg.Templates, mimirCfg.TemplateFiles, mimirCfg.Identifier)
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to merge template files: %w", err)
+	}
+	addedTemplates := make([]string, 0, len(addedUIDs))
+	for _, uid := range addedUIDs {
+		if tmpl, ok := templates[uid]; ok {
+			addedTemplates = append(addedTemplates, tmpl.Title)
 		}
 	}
 
@@ -179,7 +184,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 			ManagedRoutes:   managedRoutes,
 			InhibitionRules: managedInhibitionRules,
 		}, MergeResult{
-			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals},
+			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
 			AddedRoute:           mimirCfg.Identifier,
 			AddedReceivers:       addedReceivers,
 			AddedTimeIntervals:   addedTimeIntervals,
@@ -360,6 +365,50 @@ func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incomin
 		added = append(added, string(ir.UID))
 	}
 	return result, added, nil
+}
+
+// MergeTemplates merges the incoming templates with the existing ones, renaming conflicts.
+// When an incoming Mimir template name collides with an existing Mimir template name, the
+// incoming template is renamed by appending identifier as a suffix (same semantics as Receivers).
+// UIDs are derived from a stable hash of (finalName, content, identifier); collisions fall back
+// to a short random UID.
+// Returns the merged map, a rename map (original→final name), the UIDs of added templates,
+// and an error.
+func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[string]string, identifier string) (templates map[v1.ResourceUID]v1.TemplateGroup, renames map[string]string, added []v1.ResourceUID, err error) {
+	// Index existing Mimir template names to detect conflicts.
+	usedNames := make(map[string]struct{}, len(existing))
+	for _, tmpl := range existing {
+		if tmpl.Kind == v1.TemplateKindMimir {
+			usedNames[tmpl.Title] = struct{}{}
+		}
+	}
+
+	templates = make(map[v1.ResourceUID]v1.TemplateGroup, len(existing)+len(incoming))
+	maps.Copy(templates, existing)
+	renames = make(map[string]string)
+	added = make([]v1.ResourceUID, 0, len(incoming))
+
+	for _, name := range slices.Sorted(maps.Keys(incoming)) {
+		content := incoming[name]
+		finalName := name
+		if _, exists := usedNames[name]; exists {
+			finalName = getUniqueName(name, identifier, usedNames)
+			renames[name] = finalName
+		}
+		usedNames[finalName] = struct{}{}
+
+		hasher := fnv.New64a()
+		hash.DeepHashObject(hasher, []any{finalName, content, identifier})
+		uid := fmt.Sprintf("%x", hasher.Sum64())
+		if _, ok := templates[v1.ResourceUID(uid)]; ok || len(uid) > util.MaxUIDLength {
+			uid = util.GenerateShortUID()
+		}
+
+		tmpl := v1.NewTemplateGroup(v1.ResourceUID(uid), finalName, content, v1.TemplateKindMimir, models.ProvenanceNone)
+		templates[tmpl.UID] = tmpl
+		added = append(added, tmpl.UID)
+	}
+	return templates, renames, added, nil
 }
 
 func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
