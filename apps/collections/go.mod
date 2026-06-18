@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/collections
 go 1.26.4
 
 require (
-	github.com/grafana/grafana-app-sdk v0.56.0
+	github.com/grafana/grafana-app-sdk v0.56.2
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/stretchr/testify v1.11.1
 	k8s.io/apimachinery v0.36.1
@@ -35,7 +35,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.26.0 // indirect
 	github.com/go-openapi/testify/enable/yaml/v2 v2.5.1 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.55.0 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.56.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
