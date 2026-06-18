@@ -8,7 +8,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
-import { type ElementState } from 'app/features/canvas/runtime/element';
 import { frameSelection, reorderElements } from 'app/features/canvas/runtime/sceneElementManagement';
 
 import { getGlobalStyles } from '../../globalStyles';
@@ -18,7 +17,7 @@ import { doSelect, getElementTypes, onAddItem } from '../../utils';
 import { type TreeViewEditorProps } from '../element/elementEditor';
 
 import { TreeNodeTitle } from './TreeNodeTitle';
-import { getTreeData, onNodeDrop, type TreeElement } from './tree';
+import { findElementByUID, getTreeData, getTreeStructureKey, onNodeDrop, type TreeElement } from './tree';
 
 let allowSelection = true;
 
@@ -44,11 +43,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     [settings?.selected]
   );
 
+  // Recomputed every render (Scene.root is a stable ref whose .elements mutate in place),
+  // so the rebuild below also fires on structural changes like delete/add/reorder — not just
+  // selection. Otherwise stale tree nodes keep dataRef -> deleted ElementState alive.
+  const structureKey = getTreeStructureKey(item?.settings?.scene.root);
+
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));
     setSelectedKeys(selectionByUID);
     setAllowSelection();
-  }, [item?.settings?.scene.root, selectedBgColor, selection, selectionByUID]);
+  }, [item?.settings?.scene.root, selectedBgColor, selection, selectionByUID, structureKey]);
 
   if (!settings) {
     return (
@@ -67,9 +71,13 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     );
   }
 
-  const onSelect = (selectedKeys: Key[], info: { node: { dataRef: ElementState } }) => {
-    if (allowSelection && item.settings?.scene) {
-      doSelect(item.settings.scene, info.node.dataRef);
+  const onSelect = (selectedKeys: Key[], info: { node: { key: Key } }) => {
+    const scene = item.settings?.scene;
+    if (allowSelection && scene) {
+      const element = findElementByUID(scene.root, Number(info.node.key));
+      if (element) {
+        doSelect(scene, element);
+      }
     }
   };
 
@@ -81,13 +89,16 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
     const destPos = info.node.pos.split('-');
     const destPosition = info.dropPosition - Number(destPos[destPos.length - 1]);
 
-    const srcEl = info.dragNode.dataRef;
-    const destEl = info.node.dataRef;
+    const scene = item.settings?.scene;
+    const srcEl = scene && findElementByUID(scene.root, Number(info.dragNode.key));
+    const destEl = scene && findElementByUID(scene.root, Number(info.node.key));
 
     const data = onNodeDrop(info, treeData);
 
     setTreeData(data);
-    reorderElements(srcEl, destEl, info.dropToGap, destPosition);
+    if (srcEl && destEl) {
+      reorderElements(srcEl, destEl, info.dropToGap, destPosition);
+    }
   };
 
   const onExpand = (expandedKeys: Key[]) => {

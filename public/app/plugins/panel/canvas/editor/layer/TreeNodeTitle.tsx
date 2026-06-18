@@ -9,7 +9,7 @@ import { type ElementState } from 'app/features/canvas/runtime/element';
 import { LayerActionID } from '../../types';
 import { type TreeViewEditorProps } from '../element/elementEditor';
 
-import { type TreeElement } from './tree';
+import { findElementByUID, type TreeElement } from './tree';
 
 interface Props {
   settings: TreeViewEditorProps;
@@ -18,12 +18,11 @@ interface Props {
 }
 
 export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) => {
-  const element = nodeData.dataRef;
-  const name = nodeData.dataRef.getName();
-
   const styles = useStyles2(getStyles);
 
   const layer = settings.layer;
+  // Resolve the live element by UID; tree nodes deliberately don't store element refs (see tree.ts).
+  const element = findElementByUID(layer?.scene?.root, Number(nodeData.key));
 
   const getScene = () => {
     if (!settings?.layer) {
@@ -58,6 +57,13 @@ export const TreeNodeTitle = ({ settings, nodeData, setAllowSelection }: Props) 
   const getLayerInfo = (element: ElementState) => {
     return element.options.type;
   };
+
+  // The element was deleted but rc-tree briefly still renders its node — render nothing.
+  if (!element) {
+    return null;
+  }
+
+  const name = element.getName();
 
   return (
     <>

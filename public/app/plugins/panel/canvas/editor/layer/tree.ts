@@ -11,11 +11,58 @@ export interface TreeElement {
   title: string;
   selectable?: boolean;
   children?: TreeElement[];
-  dataRef: ElementState | FrameState;
   style?: CSSProperties;
 }
 
+// Resolve a tree node back to its live element by UID. Tree nodes intentionally do NOT
+// hold a reference to the ElementState: rc-tree caches node data internally (keyEntities),
+// so a stored element reference would survive deletion and keep the element (and its
+// detached DOM) from being garbage-collected. Look it up from the scene on demand instead.
+export function findElementByUID(
+  root: RootElement | FrameState | undefined,
+  uid: number
+): ElementState | FrameState | undefined {
+  if (!root) {
+    return undefined;
+  }
+  for (const item of root.elements) {
+    if (item.UID === uid) {
+      return item;
+    }
+    if (item instanceof FrameState) {
+      const found = findElementByUID(item, uid);
+      if (found) {
+        return found;
+      }
+    }
+  }
+  return undefined;
+}
+
 type TreeElementCallback = (item: TreeElement, index: number, arr: TreeElement[]) => void;
+
+// A signature of the current element tree (UIDs in order). Scene.root is a stable
+// reference whose .elements mutate in place, so a rebuild effect cannot key on it.
+// Without this, deleting an element leaves stale tree nodes holding dataRef -> the
+// deleted ElementState, which keeps it (and its detached DOM) from being collected.
+export function getTreeStructureKey(root?: RootElement | FrameState): string {
+  if (!root) {
+    return '';
+  }
+  const parts: string[] = [];
+  const walk = (frame: RootElement | FrameState) => {
+    for (const item of frame.elements) {
+      parts.push(String(item.UID));
+      if (item instanceof FrameState) {
+        parts.push('[');
+        walk(item);
+        parts.push(']');
+      }
+    }
+  };
+  walk(root);
+  return parts.join(',');
+}
 
 export function getTreeData(root?: RootElement | FrameState, selection?: string[], selectedColor?: string) {
   let elements: TreeElement[] = [];
@@ -26,7 +73,6 @@ export function getTreeData(root?: RootElement | FrameState, selection?: string[
         key: item.UID,
         title: item.getName(),
         selectable: true,
-        dataRef: item,
       };
 
       if (item instanceof FrameState) {
