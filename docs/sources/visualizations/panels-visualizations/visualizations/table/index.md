@@ -186,7 +186,7 @@ To display the filter icons, hover your cursor over the cell that has the value 
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-adhoc-filter-v12.2.png" max-width="500px" alt="Table with filter icon displayed on a cell" >}}
 
-For more information about applying filters this way, refer to [Dashboard drilldown with filters](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#dashboard-drilldown-with-filters).
+For more information about applying filters this way, refer to [Dashboard drilldown with filters](http://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#dashboard-drilldown-with-filters).
 
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
@@ -206,31 +206,6 @@ If the data queried contains multiple datasets, a table displays a drop-down lis
 This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
-
-## Nested tables
-
-{{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
-A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
-
-Click the expand icon on a row to toggle the visibility of its nested table:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="650px" alt="Table with two rows expanded showing nested sub-tables" >}}
-
-To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
-Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
-
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
-
-To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
-For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 
 ## Configuration options
 
@@ -498,18 +473,17 @@ It has the following options:
 
 #### Actions
 
-The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
+Actions add a button to a cell that triggers a basic, unauthenticated API call when clicked. Configure actions from **Data links and actions** or with field overrides.
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| URL                | Enter the request URL. |
+| Method             | Choose from **GET** and **POST**. |
+| Content-Type       | Select an option in the header editor. Choose from **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**. |
 | Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
+| Headers            | Enter as many **Key**, **Value** pairs as you need. |
+| Body               | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
@@ -611,20 +585,3 @@ The following image shows the "Info" field with the styling from the "Style" fie
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-#### Apply overrides to nested table fields
-
-{{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
-By default, field overrides apply only to columns in the parent table.
-To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
-
-All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="650px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}
