@@ -646,6 +646,7 @@ type Cfg struct {
 	NewsFeedEnabled bool
 
 	// Experimental scope settings
+	ScopesApiEnabled        bool
 	ScopesListScopesURL     string
 	ScopesListDashboardsURL string
 
