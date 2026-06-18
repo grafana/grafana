@@ -359,20 +359,24 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		}), tupleKeyStrings(tuples))
 	})
 
-	t.Run("scoped team-management permissions are dropped", func(t *testing.T) {
+	t.Run("scoped team-management permissions are translated to team tuples", func(t *testing.T) {
 		// Specific-team scopes (teams:id:<n>) cannot be expressed: the FGA teams
 		// type is uid-based while the legacy scope is id-based, so they are dropped.
 		// teams:create is exempt because the mapper authorizes it without a scope.
 		permissions := []RolePermission{
-			{Action: "teams:read", Kind: "teams", Identifier: "5"},
-			{Action: "teams:write", Kind: "teams", Identifier: "5"},
-			{Action: "teams.permissions:write", Kind: "teams", Identifier: "5"},
-			{Action: "teams.roles:read", Kind: "teams", Identifier: "5"},
+			{Action: "teams:read", Kind: "teams", Identifier: "t5"},
+			{Action: "teams:write", Kind: "teams", Identifier: "t5"},
+			{Action: "teams.permissions:write", Kind: "teams", Identifier: "t5"},
 		}
 
 		tuples, err := ConvertRolePermissionsToTuples("role-team-scoped", permissions)
 		require.NoError(t, err)
-		require.Empty(t, tuples)
+
+		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
+			{User: "role:role-team-scoped#assignee", Relation: "get", Object: "team:t5"},
+			{User: "role:role-team-scoped#assignee", Relation: "update", Object: "team:t5"},
+			{User: "role:role-team-scoped#assignee", Relation: "set_permissions", Object: "team:t5"},
+		}), tupleKeyStrings(tuples))
 	})
 }
 
@@ -459,7 +463,7 @@ func TestUserManagementToTuples(t *testing.T) {
 	})
 }
 
-func TestTeamManagementToTuples(t *testing.T) {
+func TestTeamRoleBindingManagementToTuples(t *testing.T) {
 	const subject = "role:role-1#assignee"
 	const teamsObject = "group_resource:iam.grafana.app/teams"
 	const roleBindingsObject = "group_resource:iam.grafana.app/rolebindings"
@@ -471,26 +475,6 @@ func TestTeamManagementToTuples(t *testing.T) {
 			identifier string
 			expected   []*openfgav1.TupleKey
 		}{
-			// teams:create carries no scope (skipScope) and always translates.
-			{"teams:create", "", "", []*openfgav1.TupleKey{
-				{User: subject, Relation: "create", Object: teamsObject},
-			}},
-			{"teams:read", "teams", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "get", Object: teamsObject},
-			}},
-			{"teams:write", "teams", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "update", Object: teamsObject},
-			}},
-			{"teams:delete", "teams", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "delete", Object: teamsObject},
-			}},
-			{"teams.permissions:read", "teams", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "get_permissions", Object: teamsObject},
-			}},
-			{"teams.permissions:write", "teams", "*", []*openfgav1.TupleKey{
-				{User: subject, Relation: "set_permissions", Object: teamsObject},
-			}},
-			// teams.roles:* gate rolebindings (same object as users.roles:*).
 			{"teams.roles:read", "teams", "*", []*openfgav1.TupleKey{
 				{User: subject, Relation: "get", Object: roleBindingsObject},
 			}},
@@ -505,7 +489,7 @@ func TestTeamManagementToTuples(t *testing.T) {
 
 		for _, tc := range cases {
 			t.Run(tc.action, func(t *testing.T) {
-				tuples := TeamManagementToTuples(subject, RolePermission{
+				tuples := TeamRoleBindingManagementToTuples(subject, RolePermission{
 					Action: tc.action, Kind: tc.kind, Identifier: tc.identifier,
 				})
 				require.ElementsMatch(t, tupleKeyStrings(tc.expected), tupleKeyStrings(tuples))
@@ -513,19 +497,15 @@ func TestTeamManagementToTuples(t *testing.T) {
 		}
 	})
 
-	t.Run("drops specific-instance scopes (except create)", func(t *testing.T) {
-		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams:read", Kind: "teams", Identifier: "5"}))
-		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams.roles:add", Kind: "teams", Identifier: "5"}))
-
-		require.ElementsMatch(t,
-			tupleKeyStrings([]*openfgav1.TupleKey{{User: subject, Relation: "create", Object: teamsObject}}),
-			tupleKeyStrings(TeamManagementToTuples(subject, RolePermission{Action: "teams:create", Kind: "teams", Identifier: "5"})),
-		)
+	t.Run("drops instance specific rolebinding permissions", func(t *testing.T) {
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:add", Kind: "teams", Identifier: "t5"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:remove", Kind: "teams", Identifier: "t5"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams.roles:read", Kind: "teams", Identifier: "t5"}))
 	})
 
-	t.Run("returns nil for non-team actions", func(t *testing.T) {
-		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "users:read", Kind: "users", Identifier: "*"}))
-		require.Nil(t, TeamManagementToTuples(subject, RolePermission{Action: "teams:enable", Kind: "teams", Identifier: "*"}))
+	t.Run("returns nil for non-team-rolebinding actions", func(t *testing.T) {
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "users:read", Kind: "users", Identifier: "*"}))
+		require.Nil(t, TeamRoleBindingManagementToTuples(subject, RolePermission{Action: "teams:enable", Kind: "teams", Identifier: "*"}))
 	})
 }
 

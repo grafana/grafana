@@ -117,20 +117,12 @@ var userManagementMappings = map[string]iamActionMapping{
 	actionUsersRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
 }
 
-// teamManagementMappings maps each team-management action to the iam group_resource
+// teamRoleBindingMappings maps each team-management action to the iam group_resource
 // relation(s) it grants, inverting the iam "teams" and "rolebindings" mapper entries.
 // Core team actions gate iam.grafana.app/teams; teams.roles:* gate
 // iam.grafana.app/rolebindings (the same resource user role-bindings gate — team and
 // user role-assignments are not distinguished at the group_resource level).
-var teamManagementMappings = map[string]iamActionMapping{
-	actionTeamsRead:   {resource: teamsResource, relations: []string{RelationGet}},
-	actionTeamsWrite:  {resource: teamsResource, relations: []string{RelationUpdate}},
-	actionTeamsCreate: {resource: teamsResource, relations: []string{RelationCreate}, skipScope: true},
-	actionTeamsDelete: {resource: teamsResource, relations: []string{RelationDelete}},
-
-	actionTeamsPermissionsRead:  {resource: teamsResource, relations: []string{RelationGetPermissions}},
-	actionTeamsPermissionsWrite: {resource: teamsResource, relations: []string{RelationSetPermissions}},
-
+var teamRoleBindingMappings = map[string]iamActionMapping{
 	actionTeamsRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
 	actionTeamsRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
 	actionTeamsRolesRemove: {resource: roleBindingsResource, relations: []string{RelationDelete}},
@@ -214,7 +206,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		// Team-management actions map onto iam group_resources via a dedicated path,
 		// like the user-management actions above (see TeamManagementToTuples).
 		if isTeamManagementAction(perm.Action) {
-			for _, t := range TeamManagementToTuples(subject, perm) {
+			for _, t := range TeamRoleBindingManagementToTuples(subject, perm) {
 				tupleMap[t.String()] = t
 			}
 			continue
@@ -405,17 +397,16 @@ func isAllUsersScope(kind, identifier string) bool {
 	return kind == scopeKindPermissions && identifier == scopeIdentifierDelegate
 }
 
-// TeamManagementToTuples translates a team-management permission into iam tuples.
-// Only "all" scopes translate (see isAllTeamsScope); specific-instance scopes are
-// dropped, since the FGA teams type is uid-based while the legacy scope is id-based
-// and rolebindings is wildcard-only. teams:create is unscoped and always translates.
-func TeamManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
-	m, ok := teamManagementMappings[permission.Action]
+// TeamRoleBindingManagementToTuples translates teams.roles:* actions into iam
+// group_resource tuples. Only wildcard scopes translate; specific-instance scopes
+// are dropped since rolebindings have no per-instance FGA type.
+func TeamRoleBindingManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	m, ok := teamRoleBindingMappings[permission.Action]
 	if !ok {
 		return nil
 	}
 
-	if !m.skipScope && !isAllTeamsScope(permission.Kind, permission.Identifier) {
+	if !isAllTeamsScope(permission.Kind, permission.Identifier) {
 		return nil
 	}
 
@@ -429,7 +420,7 @@ func TeamManagementToTuples(subject string, permission RolePermission) []*openfg
 // isTeamManagementAction reports whether the action is one of the team-management
 // actions handled by TeamManagementToTuples.
 func isTeamManagementAction(action string) bool {
-	_, ok := teamManagementMappings[action]
+	_, ok := teamRoleBindingMappings[action]
 	return ok
 }
 
