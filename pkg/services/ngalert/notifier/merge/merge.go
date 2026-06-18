@@ -115,7 +115,7 @@ func (m MergeResult) LogContext() []any {
 //  3. Inhibit Rule Merging:
 //     - All inhibit rules from the extra configuration are copied to the result
 //
-// provenance is applied to templates and inhibition rules produced by the merge.
+// Templates and inhibition rules produced by the merge are created with ProvenanceNone; final provenance is assigned by the provisioning layer based on where the resource is stored.
 func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return *cfg, MergeResult{}, nil
