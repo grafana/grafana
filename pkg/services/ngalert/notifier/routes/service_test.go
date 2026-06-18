@@ -460,3 +460,79 @@ func TestDeleteManagedRoute(t *testing.T) {
 		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 	})
 }
+
+// TestManagedRouteCRUD_DefaultTreeAlias verifies the CRUD methods accept the legacy/canonical alias
+// (models.DefaultRoutingTreeNameAlias, "default") as a reference to the default (root) routing tree,
+// behaving exactly as they do for the emitted name (models.DefaultRoutingTreeName, "user-defined").
+func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
+	orgID := int64(1)
+	user := &user.SignedInUser{OrgID: 1}
+
+	newSut := func(rev *legacy_storage.ConfigRevision, features featuremgmt.FeatureToggles, authz routeAccessControl) *Service {
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		return createServiceSut(configStore, fakes.NewFakeProvisioningStore(), features, authz)
+	}
+
+	t.Run("Get via alias resolves to the default route", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+		// The response echoes the requested alias, but the route resolves to the root route...
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, route.Name)
+		assert.Equal(t, rev.Config.AlertmanagerConfig.Route.Receiver, route.Receiver)
+		// ...and its identity canonicalizes to the default tree, so RBAC scopes are stable across names.
+		assert.Equal(t, models.DefaultRoutingTreeName, route.GetUID())
+	})
+
+	t.Run("Get via alias resolves to the default route even when the managed routes flag is disabled", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, route.Name)
+	})
+
+	t.Run("Update via alias updates the root route, not a managed route", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		// Fetch the current version so the optimistic concurrency check passes.
+		current, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+
+		updated, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, models.ProvenanceNone, current.Version, user)
+		require.NoError(t, err)
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, updated.Name)
+		assert.Equal(t, models.DefaultRoutingTreeName, updated.GetUID())
+		// The root route was modified in place; no managed route was created under the alias.
+		assert.Equal(t, "empty", rev.Config.AlertmanagerConfig.Route.Receiver)
+		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
+	})
+
+	t.Run("Delete via alias resets the default route and does not delete permissions", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		authz := &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{}
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), authz)
+
+		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, models.ProvenanceNone, "", user)
+		require.NoError(t, err)
+		// Same as deleting by the emitted name: it resets (not deletes) and keeps the route's permissions.
+		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+	})
+
+	t.Run("Create with the alias is rejected as a reserved name", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		require.ErrorIs(t, err, models.ErrRouteExists)
+		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
+	})
+}

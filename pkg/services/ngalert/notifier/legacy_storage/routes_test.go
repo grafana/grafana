@@ -222,6 +222,40 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 	})
 }
 
+func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
+	// The default (root) tree must be addressable by both its canonical name and the alias
+	// so existing clients that reference "user-defined" keep working.
+	require.Equal(t, models.DefaultRoutingTreeName, UserDefinedRoutingTreeName)
+
+	t.Run("both names resolve to the root route and echo the requested name", func(t *testing.T) {
+		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
+			t.Run(name, func(t *testing.T) {
+				rev := testConfig()
+				got := rev.GetManagedRoute(name)
+				require.NotNil(t, got)
+				// Name echoes the requested alias so the API response preserves the client's name.
+				assert.Equal(t, name, got.Name)
+				// The underlying route is the root route regardless of which alias was used.
+				assert.Equal(t, NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
+				// Identity is canonical so RBAC scopes and provenance keys are stable across aliases.
+				assert.Equal(t, models.DefaultRoutingTreeName, got.GetUID())
+				assert.Equal(t, "", got.ResourceID())
+			})
+		}
+	})
+
+	t.Run("both names are reserved and cannot be created as managed routes", func(t *testing.T) {
+		subtree := v1.Route{Receiver: testConfig().Config.AlertmanagerConfig.Receivers[0].Name}
+		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
+			t.Run(name, func(t *testing.T) {
+				_, err := testConfig().CreateManagedRoute(name, subtree)
+				assert.ErrorIs(t, err, models.ErrRouteExists)
+				assert.ErrorContains(t, err, "reserved")
+			})
+		}
+	})
+}
+
 func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 	rev := testConfig()
 

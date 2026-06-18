@@ -122,7 +122,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to get mimir alertmanager config: %w", err)
 	}
 
-	if _, ok := cfg.ManagedRoutes[mimirCfg.Identifier]; ok || mimirCfg.Identifier == models.DefaultRoutingTreeName {
+	if _, ok := cfg.ManagedRoutes[mimirCfg.Identifier]; ok || models.IsDefaultRoutingTreeName(mimirCfg.Identifier) {
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
 	}
 
