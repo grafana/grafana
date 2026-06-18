@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"path"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -1791,6 +1792,61 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestUserK8sService_UpdateLastSeenAt_UsesStatusSubresource(t *testing.T) {
+	var putPath string
+	var putBody map[string]any
+
+	serverFn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "UserList",
+				"items": []any{
+					map[string]any{
+						"apiVersion": v0alpha1.GroupVersion.Identifier(),
+						"kind":       "User",
+						"metadata": map[string]any{
+							"name":            "some-uid",
+							"namespace":       "org-1",
+							"resourceVersion": "123",
+							"labels":          map[string]any{"grafana.app/deprecatedInternalID": "42"},
+						},
+						"spec":   map[string]any{"login": "jdoe"},
+						"status": map[string]any{"lastSeenAt": 0},
+					},
+				},
+			})
+		case http.MethodPut:
+			putPath = r.URL.Path
+			_ = json.NewDecoder(r.Body).Decode(&putBody)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "User",
+				"metadata":   map[string]any{"name": "some-uid", "namespace": "org-1"},
+				"spec":       map[string]any{"login": "jdoe"},
+				"status":     map[string]any{"lastSeenAt": time.Now().Unix()},
+			})
+		}
+	}
+
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		cfg:            &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+		serverResponse: serverFn,
+	})
+
+	err := svc.UpdateLastSeenAt(ctx, &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1})
+	require.NoError(t, err)
+
+	require.True(t, strings.HasSuffix(putPath, "/users/some-uid/status"),
+		"expected update to target the status subresource, got %q", putPath)
+
+	status, ok := putBody["status"].(map[string]any)
+	require.True(t, ok, "expected status in PUT body, got %v", putBody)
+	require.NotZero(t, status["lastSeenAt"], "expected lastSeenAt to be set in the status update")
 }
 
 func TestUserK8sService_GetSignedInUser(t *testing.T) {

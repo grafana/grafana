@@ -6,8 +6,8 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/grafana/alerting v0.0.0-20260616104851-587c401ed754
 	github.com/grafana/dskit v0.0.0-20260427162712-0457a92dacc3
-	github.com/grafana/grafana-app-sdk v0.56.0
-	github.com/grafana/grafana-app-sdk/logging v0.55.0
+	github.com/grafana/grafana-app-sdk v0.56.2
+	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/prometheus/client_golang v1.23.2
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1

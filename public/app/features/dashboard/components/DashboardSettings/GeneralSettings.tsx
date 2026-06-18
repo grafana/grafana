@@ -3,7 +3,6 @@ import { connect, type ConnectedProps } from 'react-redux';
 
 import { type TimeZone } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
   Field,
@@ -139,7 +138,7 @@ export function GeneralSettingsUnconnected({
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
 
-                {config.featureToggles.dashgpt && <GenAIDashTitleButton onGenerate={onTitleChange} />}
+                <GenAIDashTitleButton onGenerate={onTitleChange} />
               </Stack>
             }
           >
@@ -157,7 +156,7 @@ export function GeneralSettingsUnconnected({
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
 
-                {config.featureToggles.dashgpt && <GenAIDashDescriptionButton onGenerate={onDescriptionChange} />}
+                <GenAIDashDescriptionButton onGenerate={onDescriptionChange} />
               </Stack>
             }
           >
