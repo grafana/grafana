@@ -106,7 +106,7 @@ export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabe
           <LogLabelStatsRow key={rows.activeRow.value} {...rows.activeRow} active {...rest} />
         )}
         {otherCount > 0 && (
-          <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} {...rest} />
+          <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />
         )}
       </div>
     </div>
