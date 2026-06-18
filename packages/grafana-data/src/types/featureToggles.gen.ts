@@ -1191,7 +1191,7 @@ export interface FeatureToggles {
   newClickhouseConfigPageDesign?: boolean;
   /**
   * Enables team folders functionality
-  * @default false
+  * @default true
   */
   teamFolders?: boolean;
   /**
