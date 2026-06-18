@@ -244,7 +244,7 @@ describe('useNotificationPolicyAbility', () => {
       expect(result.current.granted).toBe(true);
     });
 
-    it('should return Provisioned for Export when policy is provisioned', () => {
+    it('should grant Export when policy is provisioned — export is read-only', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION]);
 
@@ -253,7 +253,7 @@ describe('useNotificationPolicyAbility', () => {
         { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
-      expect(isProvisioned(result.current)).toBe(true);
+      expect(result.current.granted).toBe(true);
     });
 
     it('should return NotSupported for Export on external Mimir alertmanager — provisioning export is Grafana AM only', () => {
