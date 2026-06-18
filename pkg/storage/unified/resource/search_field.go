@@ -1,12 +1,19 @@
 package resource
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+var searchFieldLogger = log.New("search-field-hash")
 
 // SearchCapability identifies what a search field can be used for at query
 // time. The set is intentionally small and orthogonal; combinations produce
@@ -90,7 +97,44 @@ type SearchFieldDefinition struct {
 
 	// Description is informational; not used for indexing decisions.
 	Description string
+
+	// EmitZeroIfAbsent makes the path extractor emit the type's zero value
+	// (false, 0, 0.0, "", or an empty array) when Path resolves to nil.
+	// Without it, missing paths are skipped and the field is absent from the
+	// indexed document. Set this when sort or range queries depend on every
+	// document having the field present.
+	EmitZeroIfAbsent bool
+
+	// CopyFromStandard copies a value from one of the IndexableDocument's
+	// standard top-level fields into doc.Fields[Name]. Used to expose a
+	// standard field (e.g. Created) under a resource-specific name in the
+	// per-kind fields.* sub-document, because some top-level fields lack a
+	// bleve FieldMapping and are otherwise unindexed / unretrievable.
+	//
+	// Mutually exclusive with Path: when CopyFromStandard is set, the
+	// extractor reads from the already-built IndexableDocument instead of
+	// from the raw JSON.
+	//
+	// This is a workaround for the current top-level mapping asymmetry.
+	// A planned follow-up promotes Created, Updated and similar fields to
+	// StandardSearchFieldDefinitions with their own top-level
+	// FieldMappings; once that lands, kinds can read those fields directly
+	// and the CopyFromStandard mirror becomes redundant.
+	CopyFromStandard StandardField
 }
+
+// StandardField identifies a top-level field of IndexableDocument that
+// CopyFromStandard can mirror into doc.Fields. The set is intentionally
+// closed; adding a new value requires extending the switch in document.go.
+type StandardField string
+
+const (
+	StandardFieldUnknown   StandardField = ""
+	StandardFieldCreated   StandardField = "Created"
+	StandardFieldUpdated   StandardField = "Updated"
+	StandardFieldCreatedBy StandardField = "CreatedBy"
+	StandardFieldUpdatedBy StandardField = "UpdatedBy"
+)
 
 // HasCapability reports whether the field declares the given capability.
 func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
@@ -179,6 +223,18 @@ type SearchFieldsProvider interface {
 	// when the requested apiVersion is unknown. Returns the empty string
 	// when no preferred version has been registered.
 	PreferredVersion(group, resource string) string
+
+	// IndexAffectingHash returns a stable hex hash over every
+	// SearchFieldDefinition registered for (group, resource), across all
+	// versions. Only fields that change what gets indexed are mixed in:
+	// Name, Path, Type, Array, Capabilities (sorted), EmitZeroIfAbsent,
+	// CopyFromStandard. Description is intentionally excluded so
+	// presentation-only edits do not trigger a rebuild.
+	//
+	// Returns the empty string when no SearchFieldDefinitions are
+	// registered for the (group, resource). Callers treat "" as "no
+	// expected hash" and skip the rebuild check.
+	IndexAffectingHash(group, resource string) string
 }
 
 // mapProvider is an in-memory SearchFieldsProvider populated from Go-level
@@ -211,4 +267,80 @@ func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefin
 
 func (p *mapProvider) PreferredVersion(group, resource string) string {
 	return p.preferredVersion[schema.GroupResource{Group: group, Resource: resource}]
+}
+
+// hashableField is the canonical projection of a SearchFieldDefinition used
+// when computing the index-affecting hash. JSON tags are short so the
+// marshalled form stays compact. The wire format is never exposed to
+// callers, but it is the input to SHA-256 and the resulting hex is
+// persisted in every index's IndexBuildInfo. Any change to the field set,
+// tags, or sort order of this struct shifts every previously-computed hash
+// and triggers a one-time reindex for every kind that uses
+// SearchFieldsProvider — treat it as part of the on-disk format.
+type hashableField struct {
+	Name             string             `json:"n"`
+	Path             string             `json:"p,omitempty"`
+	Type             SearchFieldType    `json:"t"`
+	Array            bool               `json:"a,omitempty"`
+	Capabilities     []SearchCapability `json:"c,omitempty"`
+	EmitZeroIfAbsent bool               `json:"z,omitempty"`
+	CopyFromStandard StandardField      `json:"s,omitempty"`
+}
+
+type hashableVersion struct {
+	Version string          `json:"v"`
+	Fields  []hashableField `json:"f"`
+}
+
+func (p *mapProvider) IndexAffectingHash(group, resource string) string {
+	var versions []string
+	for gvr := range p.fields {
+		if gvr.Group == group && gvr.Resource == resource {
+			versions = append(versions, gvr.Version)
+		}
+	}
+	if len(versions) == 0 {
+		return ""
+	}
+	slices.Sort(versions)
+
+	payload := make([]hashableVersion, 0, len(versions))
+	for _, v := range versions {
+		gvr := schema.GroupVersionResource{Group: group, Version: v, Resource: resource}
+		sfds := p.fields[gvr]
+		fields := make([]hashableField, 0, len(sfds))
+		for _, sfd := range sfds {
+			caps := slices.Clone(sfd.Capabilities)
+			slices.Sort(caps)
+			fields = append(fields, hashableField{
+				Name:             sfd.Name,
+				Path:             sfd.Path,
+				Type:             sfd.Type,
+				Array:            sfd.Array,
+				Capabilities:     caps,
+				EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
+				CopyFromStandard: sfd.CopyFromStandard,
+			})
+		}
+		slices.SortFunc(fields, func(a, b hashableField) int {
+			return strings.Compare(a.Name, b.Name)
+		})
+		payload = append(payload, hashableVersion{Version: v, Fields: fields})
+	}
+
+	// json.Marshal can only return a non-nil error for inputs it cannot
+	// encode — cyclic graphs, channels/funcs, float NaN/Inf, or types with a
+	// failing MarshalJSON. payload is a slice of structs whose fields are
+	// strings, bools, and slices of strings, none of which can produce any of
+	// those failure modes today. The branch below is defensive: if a future
+	// change introduces a type that can fail, returning "" silently disables
+	// the search-field-change rebuild trigger for this kind — the log line
+	// is the only way an operator would notice.
+	blob, err := json.Marshal(payload)
+	if err != nil {
+		searchFieldLogger.Error("failed to marshal canonical search fields for hashing", "group", group, "resource", resource, "err", err)
+		return ""
+	}
+	sum := sha256.Sum256(blob)
+	return hex.EncodeToString(sum[:])
 }

@@ -6047,9 +6047,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
@@ -6233,7 +6230,17 @@
       "snapshot": {
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo"
+      "undo": "Undo",
+      "view-panel": {
+        "disabled": "Disabled",
+        "fanout-by-series": "By series",
+        "fanout-category": "Fan-out by series or label",
+        "fanout-labels": "Labels",
+        "fanout-no-labels": "Data has no labels",
+        "pane-header": "View panel",
+        "quick-toggles": "Quick toggles",
+        "title": "View panel controls"
+      }
     },
     "source-link": {
       "title": "Source ({{provider}})",
@@ -6492,6 +6499,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
     },
     "viz-panel": {
