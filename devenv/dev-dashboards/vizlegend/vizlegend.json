@@ -17,7 +17,6 @@
       "grafana.app/managedBy": "classic-file-provisioning",
       "grafana.app/managerId": "gdev dashboards",
       "grafana.app/sourceChecksum": "f75d253f3e28f5f166bd5c0ae186141e",
-      "grafana.app/sourcePath": "/run/media/leeoniya/57687111-e46f-4825-b212-1d049c44ba76/leeoniya/Desktop/grafana/devenv/dev-dashboards/vizlegend/vizlegend.json",
       "grafana.app/sourceTimestamp": "1781038680000",
       "grafana.app/folderTitle": "gdev dashboards",
       "grafana.app/folderUrl": "/dashboards/f/ednq5u6zf12wwb/gdev-dashboards"
