@@ -9,36 +9,37 @@ import (
 )
 
 func TestLoadAnnotationAppPlatformSettings_MaxScopeCount(t *testing.T) {
-	tests := []struct {
-		name      string
-		iniValue  *string // nil means no key set
-		expected  int
-		expectErr bool
+	cases := []struct {
+		name                  string
+		iniValue              *string // nil means no key set
+		expectedMaxScopeCount int
+		expectErr             bool
 	}{
-		{name: "default when key absent", expected: 5},
-		{name: "explicit positive", iniValue: new("10"), expected: 10},
-		{name: "zero is accepted", iniValue: new("0"), expected: 0},
+		{name: "default when key absent", expectedMaxScopeCount: 5},
+		{name: "explicit positive", iniValue: new("10"), expectedMaxScopeCount: 10},
+		{name: "zero is accepted", iniValue: new("0"), expectedMaxScopeCount: 0},
 		{name: "negative is rejected", iniValue: new("-1"), expectErr: true},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := ini.Empty()
-			if tt.iniValue != nil {
-				s, err := f.NewSection("annotations.app_platform")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			iniFile := ini.Empty()
+			if tc.iniValue != nil {
+				section, err := iniFile.NewSection("annotations.app_platform")
 				require.NoError(t, err)
-				_, err = s.NewKey("max_scope_count", *tt.iniValue)
+
+				_, err = section.NewKey("max_scope_count", *tc.iniValue)
 				require.NoError(t, err)
 			}
 
-			got, err := loadAnnotationAppPlatformSettings(f)
-			if tt.expectErr {
+			settings, err := loadAnnotationAppPlatformSettings(iniFile)
+			if tc.expectErr {
 				assert.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			assert.Equal(t, tt.expected, got.MaxScopeCount)
+			assert.Equal(t, tc.expectedMaxScopeCount, settings.MaxScopeCount)
 		})
 	}
 }

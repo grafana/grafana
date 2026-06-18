@@ -296,6 +296,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewBadRequest("namespace in URL does not match namespace in body")
 	}
 
+	if err := s.validateScopeCount(resource); err != nil {
+		return nil, false, err
+	}
+
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
