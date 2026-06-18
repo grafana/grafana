@@ -251,32 +251,41 @@ const LogLineDetailsField = ({
     });
   }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
 
-  const includeAdhocValue = useCallback((value: string) => {
-    onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+  const includeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
-      datasourceType: log.datasourceType,
-      filterType: 'include',
-      logRowUid: log.uid,
-    });
-  }, [onClickFilterLabel, reportInteractionWrapper, log, keys]);
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'include',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterLabel, reportInteractionWrapper, log, keys]
+  );
 
-  const excludeAdhocValue = useCallback((value: string) => {
-    onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+  const excludeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
-      datasourceType: log.datasourceType,
-      filterType: 'exclude',
-      logRowUid: log.uid,
-    });
-  }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys]);
+      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'exclude',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
+  );
 
-  const labelFilterActive = useCallback(async (value?: string) => {
-    if (isLabelFilterActive) {
-      return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
-    }
-    return false;
-  }, [isLabelFilterActive, keys, values, log.dataFrame?.refId]);
+  const labelFilterActive = useCallback(
+    async (value?: string) => {
+      if (isLabelFilterActive) {
+        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+      }
+      return false;
+    },
+    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+  );
 
   const showStats = useCallback(() => {
     setShowFieldStats((showFieldStats: boolean) => !showFieldStats);

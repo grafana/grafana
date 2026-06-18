@@ -69,7 +69,16 @@ export interface Props {
   value?: string;
 }
 
-export const LogLabelStatsRow = ({ active, count, proportion, value, iconSize, include, exclude, isValueActive }: Props) => {
+export const LogLabelStatsRow = ({
+  active,
+  count,
+  proportion,
+  value,
+  iconSize,
+  include,
+  exclude,
+  isValueActive,
+}: Props) => {
   const style = useStyles2(getStyles);
   const percent = `${Math.round(proportion * 100)}%`;
   const barStyle = { width: percent };

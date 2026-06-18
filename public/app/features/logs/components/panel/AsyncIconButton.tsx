@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
-import { type IconName } from "@grafana/data";
-import { type IconSize, IconButton } from "@grafana/ui";
+import { type IconName } from '@grafana/data';
+import { type IconSize, IconButton } from '@grafana/ui';
 
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
