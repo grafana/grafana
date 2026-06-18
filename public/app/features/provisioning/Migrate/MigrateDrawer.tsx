@@ -163,7 +163,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Alert>
         )}
 
-        <GitSyncLimitationsAlert syncTarget="instance" />
+        <GitSyncLimitationsAlert syncTarget={selectedRepoObj?.spec?.sync?.target} />
 
         <Stack direction="row" gap={2}>
           <Button variant="secondary" fill="outline" onClick={onDismiss}>

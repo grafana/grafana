@@ -76,6 +76,26 @@ describe('MigrateDrawer', () => {
     expect(screen.getByRole('button', { name: /migrate everything/i })).toHaveAttribute('aria-disabled', 'true');
   });
 
+  it('tailors the limitations alert to the repository sync target', async () => {
+    const instanceRepo = createRepository({
+      metadata: { name: 'inst' },
+      spec: { title: 'Instance repo', workflows: ['write'], sync: { target: 'instance', enabled: true } },
+    });
+    const { unmount } = render(<MigrateDrawer selective={false} repos={[instanceRepo]} onDismiss={jest.fn()} />);
+    // Instance sync loses alerts/library panels.
+    expect(await screen.findByText(/existing alerts and library panels will be lost/i)).toBeInTheDocument();
+    unmount();
+
+    const folderRepo = createRepository({
+      metadata: { name: 'fold' },
+      spec: { title: 'Folder repo', workflows: ['write'], sync: { target: 'folder', enabled: true } },
+    });
+    render(<MigrateDrawer selective={false} repos={[folderRepo]} onDismiss={jest.fn()} />);
+    // Folder sync replicates the folder structure and does NOT lose alerts instance-wide.
+    expect(await screen.findByText(/folder structure will be replicated/i)).toBeInTheDocument();
+    expect(screen.queryByText(/existing alerts and library panels will be lost/i)).not.toBeInTheDocument();
+  });
+
   it('runs a migrate job and shows its progress', async () => {
     let postedBody = '';
     server.use(
