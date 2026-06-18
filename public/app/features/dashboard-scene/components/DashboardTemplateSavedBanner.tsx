@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 import { getDashboardTemplateExtension } from 'app/features/dashboard-scene/settings/enterprise-components/DashboardTemplateExtension';
 
@@ -12,10 +13,12 @@ export function DashboardTemplateSavedBanner() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [templateName, setTemplateName] = useState<string | undefined>(undefined);
 
+  const isCustomDashboardTemplateEnabled = useFlagGrafanaCustomDashboardTemplates();
+
   const dashboardTemplateUid = searchParams.get('templateSaved') ?? undefined;
 
   useEffect(() => {
-    if (!dashboardTemplateUid) {
+    if (!dashboardTemplateUid || !isCustomDashboardTemplateEnabled) {
       return;
     }
     getDashboardTemplateExtension()
@@ -23,7 +26,7 @@ export function DashboardTemplateSavedBanner() {
       .then((resource) => {
         setTemplateName(resource.spec.title);
       });
-  }, [dashboardTemplateUid]);
+  }, [dashboardTemplateUid, isCustomDashboardTemplateEnabled]);
 
   const onDismiss = () => {
     searchParams.delete('templateSaved');
@@ -40,7 +43,7 @@ export function DashboardTemplateSavedBanner() {
   // redundant context there.
   const onSettingsTab = Boolean(searchParams.get('editview'));
 
-  if (!dashboardTemplateUid || !templateName || onSettingsTab) {
+  if (!dashboardTemplateUid || !templateName || onSettingsTab || !isCustomDashboardTemplateEnabled) {
     return null;
   }
 
