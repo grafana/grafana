@@ -32,8 +32,12 @@ function createInfoOption(message: string): ComboboxOption<string> {
   };
 }
 
+function isYAMLNamespace(namespaceName: string) {
+  return namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'));
+}
+
 function formatNamespaceOption(namespaceName: string): ComboboxOption {
-  if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
+  if (isYAMLNamespace(namespaceName)) {
     const filename = namespaceName.split('/').pop() || namespaceName;
     const maxDescriptionLength = 100;
     const truncatedDescription =
@@ -84,7 +88,9 @@ async function fetchGrafanaFolderNames(
   return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
 }
 
-async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGroups): Promise<{ externalNamespaces: Set<string>, isLimitReached: boolean }> {
+async function fetchExternalNamespaceNames(
+  fetchExternalGroups: FetchExternalGroups
+): Promise<{ externalNamespaces: Set<string>; isLimitReached: boolean }> {
   const externalNamespaces = new Set<string>();
   const calls = getExternalRuleDataSources().map((ds) =>
     fetchExternalGroups({
@@ -99,8 +105,9 @@ async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGro
 
   for (const res of results) {
     if (res.status === STATUS_FULFILLED) {
-      isLimitReached = isLimitReached || res.value.data.groups.length > NAMESPACE_THRESHOLD_LIMIT;
-      res.value.data.groups.forEach((group: { file?: string }) => externalNamespaces.add(group.file || 'default'));
+      const groups = res.value.data.groups;
+      isLimitReached = isLimitReached || groups.length > NAMESPACE_THRESHOLD_LIMIT;
+      groups.forEach((group: { file?: string }) => externalNamespaces.add(group.file || 'default'));
     }
   }
   return { externalNamespaces, isLimitReached };
