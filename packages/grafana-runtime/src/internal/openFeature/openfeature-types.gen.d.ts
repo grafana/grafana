@@ -11,6 +11,7 @@ import "@openfeature/core";
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
     | "lokiShardSplitting"
+    | "renderAuthJWT"
     | "faroSessionReplay"
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"

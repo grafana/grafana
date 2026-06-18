@@ -174,7 +174,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "faroDatasourceSelector",

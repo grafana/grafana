@@ -93,6 +93,8 @@ export const FlagKeys = {
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
+  /** Uses JWT-based auth for rendering instead of relying on remote cache */
+  RenderAuthJWT: "renderAuthJWT",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -545,6 +547,17 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
  */
 export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("recentlyViewedDashboards", false, options).value;
+};
+
+/**
+ * Uses JWT-based auth for rendering instead of relying on remote cache
+ *
+ * **Details:**
+ * - flag key: `renderAuthJWT`
+ * - default value: `true`
+ */
+export const useFlagRenderAuthJWT = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("renderAuthJWT", true, options).value;
 };
 
 /**
