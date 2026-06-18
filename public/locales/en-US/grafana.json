@@ -11222,6 +11222,8 @@
         }
       },
       "fields-section": "Fields",
+      "filter-for-log-line": "Filter for this log line",
+      "filter-out-log-line": "Filter out this log line",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
