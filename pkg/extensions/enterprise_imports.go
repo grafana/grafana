@@ -314,6 +314,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	_ "github.com/grafana/grafana/pkg/services/annotations"
+	_ "github.com/grafana/grafana/pkg/services/annotations/annotationsapi"
 	_ "github.com/grafana/grafana/pkg/services/annotations/annotationsimpl"
 	_ "github.com/grafana/grafana/pkg/services/anonymous"
 	_ "github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
