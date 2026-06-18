@@ -1482,7 +1482,7 @@ export interface FeatureToggles {
   alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
-  * @default false
+  * @default true
   */
   react19?: boolean;
   /**

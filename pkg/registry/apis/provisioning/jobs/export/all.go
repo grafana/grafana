@@ -29,13 +29,11 @@ func exportAll(ctx context.Context, repoName string, options provisioning.Export
 		return err
 	}
 
-	// Selective exports materialize only the folders required by the
-	// requested resources (ancestor chain of named dashboards, plus the
-	// folder + descendants of each named folder). The full-namespace folder
-	// walk only runs for the bulk path so unrelated folder directories are
-	// not written to the repository.
+	// A selective export must not pull in the entire instance folder tree: only
+	// the folders needed to place the requested resources are written, and each
+	// resource's missing parent folder is generated on demand from its ancestry.
 	if len(options.Resources) > 0 {
-		return ExportSpecificResources(ctx, options, clients, folderClient, repositoryResources, progress, generateNewUIDs)
+		return ExportSpecificResources(ctx, options, folderClient, clients, repositoryResources, progress, generateNewUIDs)
 	}
 
 	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {

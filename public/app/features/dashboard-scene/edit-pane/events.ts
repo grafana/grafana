@@ -1,5 +1,5 @@
 // Extracted from shared.ts to avoid circular dependency through DashboardScene.
-import { BusEventWithPayload } from '@grafana/data';
+import { BusEventBase, BusEventWithPayload } from '@grafana/data';
 import { type SceneObject } from '@grafana/scenes';
 
 export interface DashboardEditActionEventPayload {
@@ -21,4 +21,8 @@ export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditA
  */
 export class DashboardStateChangedEvent extends BusEventWithPayload<{ source: SceneObject }> {
   static type = 'dashboard-state-changed';
+}
+
+export class ToggleViewPanePaneEvent extends BusEventBase {
+  static type = 'toggle-view-pane-pane';
 }

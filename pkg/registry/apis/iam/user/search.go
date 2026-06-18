@@ -351,6 +351,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
+	} else {
+		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+		})
 	}
 
 	resp, err := s.client.Search(ctx, request)
