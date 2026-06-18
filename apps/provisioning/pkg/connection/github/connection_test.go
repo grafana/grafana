@@ -1819,7 +1819,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "connection is not a GitHub connection",
+			expectedError: "connection is not a GitHub-based connection",
 		},
 		{
 			name: "repository without GitHub config returns error",
@@ -1841,11 +1841,11 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: nil,
+					Type:   provisioning.GitLabRepositoryType,
+					GitLab: &provisioning.GitLabRepositoryConfig{},
 				},
 			},
-			expectedError: "repository is not a GitHub repo",
+			expectedError: "repository is not a GitHub-based repo",
 		},
 		{
 			name: "invalid repository URL returns error",

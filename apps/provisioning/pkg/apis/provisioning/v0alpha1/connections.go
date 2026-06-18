@@ -1,6 +1,8 @@
 package v0alpha1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -22,6 +24,64 @@ type Connection struct {
 
 func (Connection) OpenAPIModelName() string {
 	return OpenAPIPrefix + "Connection"
+}
+
+func (c *Connection) InstallationID() string {
+	switch c.Spec.Type {
+	case GithubConnectionType:
+		if c.Spec.GitHub != nil {
+			return c.Spec.GitHub.InstallationID
+		}
+	case GithubEnterpriseConnectionType:
+		if c.Spec.GitHubEnterprise != nil {
+			return c.Spec.GitHubEnterprise.InstallationID
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func (c *Connection) InstallationURL() string {
+	switch c.Spec.Type {
+	case GithubConnectionType:
+		return fmt.Sprintf("https://github.com/settings/installations/%s", c.InstallationID())
+	case GithubEnterpriseConnectionType:
+		return fmt.Sprintf("https://%s/settings/installations/%s", c.CustomServerURL(), c.InstallationID())
+	default:
+		return ""
+	}
+}
+
+func (c *Connection) AppID() string {
+	switch c.Spec.Type {
+	case GithubConnectionType:
+		if c.Spec.GitHub != nil {
+			return c.Spec.GitHub.AppID
+		}
+	case GithubEnterpriseConnectionType:
+		if c.Spec.GitHubEnterprise != nil {
+			return c.Spec.GitHubEnterprise.AppID
+		}
+	default:
+		return ""
+	}
+
+	return ""
+}
+
+func (c *Connection) CustomServerURL() string {
+	switch c.Spec.Type {
+	case GithubEnterpriseConnectionType:
+		if c.Spec.GitHubEnterprise != nil {
+			return c.Spec.GitHubEnterprise.ServerURL
+		}
+	default:
+		return ""
+	}
+
+	return ""
 }
 
 type ConnectionSecure struct {
@@ -146,6 +206,10 @@ type ConnectionSpec struct {
 
 	// Webhook configuration for this connection
 	Webhook *ConnectionWebhookConfig `json:"webhook,omitempty"`
+}
+
+func (c *ConnectionSpec) IsGitHub() bool {
+	return c.GitHub != nil || c.GitHubEnterprise != nil
 }
 
 func (ConnectionSpec) OpenAPIModelName() string {
