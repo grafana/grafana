@@ -213,7 +213,7 @@ func TestAddCapabilityFieldMappings_RetrieveOnly_NoMapping(t *testing.T) {
 	parent := bleve.NewDocumentMapping()
 	addCapabilityFieldMappings(parent, resource.SearchFieldDefinition{
 		Name:         "linkCount",
-		Type:         resource.SearchFieldTypeInt32,
+		Type:         resource.SearchFieldTypeInt64,
 		Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
 	})
 	assert.Empty(t, parent.Properties, "retrieve-only fields fall back to dynamic mapping")

@@ -23,6 +23,33 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  describe('header view toggle at narrow widths', () => {
+    // jsdom does no layout; drive the header's overflow measurement via the prototype getters.
+    function mockMeasuredWidths({ contentWidth, containerWidth }: { contentWidth: number; containerWidth: number }) {
+      jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(contentWidth);
+      jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(containerWidth);
+    }
+
+    it('shows tab labels when the toggle fits', () => {
+      mockMeasuredWidths({ contentWidth: 150, containerWidth: 200 });
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Mini} setSidebarSize={jest.fn()} />);
+
+      expect(screen.getByRole('radio', { name: 'Data' })).toHaveTextContent('Data');
+    });
+
+    it('drops tab labels but keeps accessible names when the toggle overflows', () => {
+      mockMeasuredWidths({ contentWidth: 150, containerWidth: 100 });
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Mini} setSidebarSize={jest.fn()} />);
+
+      const dataTab = screen.getByRole('radio', { name: 'Data' });
+      expect(dataTab).not.toHaveTextContent('Data');
+    });
+  });
+
   it('does not render bulk actions bar when fewer than 2 items are selected', () => {
     // Default state has no items selected (selectedQueryRefIds = [], selectedTransformationIds = [])
     renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);

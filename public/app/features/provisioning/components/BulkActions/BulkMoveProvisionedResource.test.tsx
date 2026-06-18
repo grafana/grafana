@@ -1,8 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 
@@ -20,6 +22,7 @@ jest.mock('app/features/browse-dashboards/components/BrowseActions/AffectedFolde
 }));
 
 jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('app/features/provisioning/hooks/useGetResourceRepositoryView'),
   useGetResourceRepositoryView: jest.fn(),
 }));
 
@@ -72,6 +75,17 @@ const mockUseGetResourceRepositoryView = jest.mocked(
 const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkActionJob);
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 const mockUseGetFolderQuery = jest.mocked(require('app/api/clients/folder/v1beta1').useGetFolderQuery);
+const mockJobStatus = jest.mocked(JobStatus);
+
+// jest.clearAllMocks() clears call history but not a custom mockImplementation, so a per-test
+// override of JobStatus would leak; restore the default in beforeEach.
+function resetJobStatusMock() {
+  mockJobStatus.mockImplementation(({ watch, jobType }) => (
+    <div data-testid="job-status">
+      Job Status - {jobType} - {watch?.status?.state || 'pending'}
+    </div>
+  ));
+}
 
 function setup(
   repository: RepositoryView | null,
@@ -110,6 +124,7 @@ function setup(
       : null,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
+    isMissingRepo: false,
   });
 
   mockUseBulkActionJob.mockReturnValue({
@@ -133,6 +148,7 @@ function setup(
 describe('BulkMoveProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    resetJobStatusMock();
 
     mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: 'test-folder',
@@ -193,6 +209,7 @@ describe('BulkMoveProvisionedResource', () => {
       defaultRepository,
       expect.objectContaining({
         action: 'move',
+        message: expect.stringContaining('Move resources'),
         move: expect.objectContaining({
           targetPath: expect.any(String),
           resources: expect.arrayContaining([
@@ -317,6 +334,7 @@ describe('BulkMoveProvisionedResource', () => {
       },
       isInstanceManaged: false,
       isReadOnlyRepo: false,
+      isMissingRepo: false,
     });
 
     const mockCreateBulkJob = jest.fn().mockResolvedValue({
@@ -351,6 +369,7 @@ describe('BulkMoveProvisionedResource', () => {
       folder: null,
       isInstanceManaged: false,
       isReadOnlyRepo: false,
+      isMissingRepo: true,
     });
 
     mockUseBulkActionJob.mockReturnValue({
@@ -380,6 +399,7 @@ describe('BulkMoveProvisionedResource', () => {
       folder: null,
       isInstanceManaged: false,
       isReadOnlyRepo: true,
+      isMissingRepo: false,
     });
 
     mockUseBulkActionJob.mockReturnValue({
@@ -423,6 +443,7 @@ describe('BulkMoveProvisionedResource', () => {
           folder: null,
           isInstanceManaged: false,
           isReadOnlyRepo: false,
+          isMissingRepo: false,
         };
       }
       return {
@@ -430,6 +451,7 @@ describe('BulkMoveProvisionedResource', () => {
         folder: null,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
+        isMissingRepo: true,
       };
     });
 
@@ -458,5 +480,45 @@ describe('BulkMoveProvisionedResource', () => {
 
     expect(screen.getByTestId('job-status')).toBeInTheDocument();
     expect(screen.queryByText(/Repository not found/)).not.toBeInTheDocument();
+  });
+
+  it('shows the branch success message when the job completes on the branch workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    // Default repo has workflows ['branch', 'write'], so the default workflow is 'branch'.
+    const { user } = setup(null);
+
+    await user.click(screen.getByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(await screen.findByText('Requested changes were pushed to a branch')).toBeInTheDocument();
+  });
+
+  it('shows the configured-branch success message when the job completes on the write workflow', async () => {
+    mockJobStatus.mockImplementation(({ onStatusChange }) => {
+      useEffect(() => {
+        onStatusChange?.({ status: 'success' });
+      }, [onStatusChange]);
+      return <div data-testid="job-status" />;
+    });
+
+    const writeOnlyRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['write'],
+    };
+    const { user } = setup(writeOnlyRepository);
+
+    await user.click(screen.getByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(await screen.findByText('Resources moved successfully')).toBeInTheDocument();
   });
 });

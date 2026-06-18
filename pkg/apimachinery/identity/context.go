@@ -173,6 +173,8 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"playlists:read",        // playlist.ActionPlaylistsRead
+	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
 	"users:read",           // accesscontrol.ActionUsersRead,
@@ -185,6 +187,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
+	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
 	"datasource.grafana.app:*",

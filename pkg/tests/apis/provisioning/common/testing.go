@@ -930,16 +930,32 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 		h.DebugState(t, repo.Name, "AFTER REPO CREATION")
 	}
 
-	// Verify initial state
+	// Verify initial state. ExpectedDashboards/ExpectedFolders count this
+	// repo's synced resources plus any unmanaged resources a test pre-seeds
+	// (e.g. the selective export/migrate tests). It deliberately does NOT
+	// count dangling orphans — resources still annotated as managed by a
+	// repository that no longer exists. Those can leak from a prior test: the
+	// per-test cleanup deletes a repo whose RemoveOrphanResources finalizer
+	// then enumerates its managed resources through the eventually-consistent
+	// search index; if that index lags and reports none, the finalizer deletes
+	// nothing and the folder survives as a managed orphan that surfaces later
+	// and would otherwise inflate this count.
 	if !repo.SkipResourceAssertions {
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			existingRepos, err := h.repoNameSet(t.Context())
+			if err != nil {
+				collect.Errorf("could not list repositories: error: %s", err.Error())
+				return
+			}
+
 			dashboards, err := h.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
 			if err != nil {
 				collect.Errorf("could not list dashboards error: %s", err.Error())
 				return
 			}
-			if len(dashboards.Items) != repo.ExpectedDashboards {
-				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", len(dashboards.Items), repo.ExpectedDashboards)
+			dashboardCount := countNonOrphanedResources(dashboards.Items, existingRepos)
+			if dashboardCount != repo.ExpectedDashboards {
+				collect.Errorf("should have the expected dashboards after sync. got: %d. expected: %d", dashboardCount, repo.ExpectedDashboards)
 				return
 			}
 			folders, err := h.Folders.Resource.List(t.Context(), metav1.ListOptions{})
@@ -947,14 +963,48 @@ func (h *ProvisioningTestHelper) CreateLocalRepo(t *testing.T, repo TestRepo) {
 				collect.Errorf("could not list folders: error: %s", err.Error())
 				return
 			}
-			if len(folders.Items) != repo.ExpectedFolders {
-				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", len(folders.Items), repo.ExpectedFolders)
+			folderCount := countNonOrphanedResources(folders.Items, existingRepos)
+			if folderCount != repo.ExpectedFolders {
+				collect.Errorf("should have the expected folders after sync. got: %d. expected: %d", folderCount, repo.ExpectedFolders)
 				return
 			}
-			assert.Len(collect, dashboards.Items, repo.ExpectedDashboards)
-			assert.Len(collect, folders.Items, repo.ExpectedFolders)
 		}, WaitTimeoutDefault, WaitIntervalDefault, "should have the expected dashboards and folders after sync")
 	}
+}
+
+// repoNameSet returns the set of repository names that currently exist.
+func (h *ProvisioningTestHelper) repoNameSet(ctx context.Context) (map[string]struct{}, error) {
+	repos, err := h.Repositories.Resource.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	names := make(map[string]struct{}, len(repos.Items))
+	for i := range repos.Items {
+		names[repos.Items[i].GetName()] = struct{}{}
+	}
+	return names, nil
+}
+
+// countNonOrphanedResources counts resources except dangling repo orphans:
+// resources annotated as managed by a repository (managedBy=repo) whose
+// repository no longer exists. Those leak from a prior test and would inflate
+// the count. Unmanaged resources and resources managed by other kinds
+// (kubectl, terraform, ...) are always counted, as are repo-managed resources
+// whose repository still exists.
+func countNonOrphanedResources(items []unstructured.Unstructured, existingRepos map[string]struct{}) int {
+	var count int
+	for i := range items {
+		annotations := items[i].GetAnnotations()
+		managerKind := annotations["grafana.app/managedBy"]
+		managerID := annotations["grafana.app/managerId"]
+		if managerKind == "repo" {
+			if _, ok := existingRepos[managerID]; !ok {
+				continue
+			}
+		}
+		count++
+	}
+	return count
 }
 
 // WaitForResourceQuotaLimit waits until the repository's Status.Quota.MaxResourcesPerRepository
@@ -1178,6 +1228,84 @@ func WaitForResourcesDeleted(t *testing.T, ctx context.Context, client dynamic.R
 		}
 		assert.Empty(collect, items.Items, "expected %s to be deleted", resourceKind)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %s to be deleted", resourceKind)
+}
+
+// RequireResource polls until the named resource is gettable via client and returns it.
+// Use after a write/sync to assert a resource has been provisioned into Grafana.
+func RequireResource(t *testing.T, ctx context.Context, client dynamic.ResourceInterface, name string) *unstructured.Unstructured {
+	t.Helper()
+	var got *unstructured.Unstructured
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := client.Get(ctx, name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "get %q", name) {
+			return
+		}
+		got = obj
+	}, WaitTimeoutDefault, WaitIntervalDefault, "resource %q should be provisioned", name)
+	return got
+}
+
+// ResourceToJSON marshals an unstructured resource to JSON, e.g. for a files-endpoint write.
+func ResourceToJSON(t *testing.T, obj *unstructured.Unstructured) []byte {
+	t.Helper()
+	data, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	return data
+}
+
+// ExportedResourceFiles walks the repository directory and returns the paths of files whose
+// apiVersion has the given group prefix (e.g. "playlist.grafana.app/"). It lets export tests
+// assert what was written without hard-coding the generated file names.
+func (h *ProvisioningTestHelper) ExportedResourceFiles(t *testing.T, groupPrefix string) []string {
+	t.Helper()
+	var matches []string
+	err := filepath.WalkDir(h.ProvisioningPath, func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		switch strings.ToLower(filepath.Ext(p)) {
+		case ".json", ".yaml", ".yml":
+		default:
+			return nil
+		}
+		apiVersion, _, _ := unstructured.NestedString(h.LoadYAMLOrJSONFile(p).Object, "apiVersion")
+		if strings.HasPrefix(apiVersion, groupPrefix) {
+			matches = append(matches, p)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	return matches
+}
+
+// PlaylistGVR is the playlist resource served by the App SDK apiserver.
+var PlaylistGVR = schema.GroupVersionResource{
+	Group:    "playlist.grafana.app",
+	Version:  "v1",
+	Resource: "playlists",
+}
+
+// NewPlaylist builds a minimal playlist resource for provisioning tests.
+func NewPlaylist(name, title string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": PlaylistGVR.GroupVersion().String(),
+			"kind":       "Playlist",
+			"metadata": map[string]any{
+				"name": name,
+			},
+			"spec": map[string]any{
+				"title":    title,
+				"interval": "5m",
+				"items": []any{
+					map[string]any{"type": "dashboard_by_tag", "value": "provisioning"},
+				},
+			},
+		},
+	}
 }
 
 // GrafanaOption is a functional option for RunGrafana.
@@ -1659,6 +1787,24 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// ListRepositoryFiles returns the file listing from the repository's files endpoint
+// (GET .../files/). It is a directory listing only — it does not parse resources or run
+// a dry-run, so it is safe to call regardless of whether the files are already
+// provisioned in Grafana.
+func (h *ProvisioningTestHelper) ListRepositoryFiles(t *testing.T, ctx context.Context, repo string) []provisioning.FileItem {
+	t.Helper()
+	rsp := h.AdminREST.Get().
+		Namespace("default").
+		Resource("repositories").
+		Name(repo).
+		Suffix("files/").
+		Do(ctx)
+	require.NoError(t, rsp.Error(), "listing repository files should succeed")
+	list := &provisioning.FileList{}
+	require.NoError(t, rsp.Into(list))
+	return list.Items
 }
 
 // FilesClient provides convenience methods for interacting with the provisioning
