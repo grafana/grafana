@@ -15,9 +15,15 @@ Resources in scope (all under `pkg/registry/apps/alerting/notifications/`):
 
 - [ ] `receiver` (contact points) — `ReceiverService`
 - [ ] `templategroup` (templates) — `TemplateService`
-- [ ] `timeinterval` (mute timings) — `MuteTimingService`  ← **reference resource**
+- [x] `timeinterval` (mute timings) — `MuteTimingService`  ← **reference (done)**
 - [ ] `routingtree` (notification policies) — `NotificationPolicyService`
 - [ ] `inhibitionrule` — alertmanager-config backed
+
+> **Done so far:** the shared `GetManagerPropertiesByType` store primitive (+ interface/mock/fake)
+> and the `timeinterval` resource end-to-end (service write/read, conversions, legacy storage,
+> HTTP + file-provisioning + cloud-migration callers), with unit tests green. Remaining: an
+> integration round-trip test for timeinterval (mirroring the rules `compat` tests) and the
+> other four resources.
 
 (`historian`, `alertenrichment` don't use provenance — out of scope.)
 

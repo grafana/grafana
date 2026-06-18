@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -22,10 +23,10 @@ var (
 )
 
 type TimeIntervalService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance definitions.Provenance, version string) error
+	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, map[string]utils.ManagerProperties, error)
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error)
+	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, manager utils.ManagerProperties, version string) error
 }
 
 type legacyStorage struct {
@@ -62,12 +63,12 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	res, err := s.service.GetMuteTimings(ctx, orgId)
+	res, managerProps, err := s.service.GetMuteTimings(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
 
-	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	return ConvertToK8sResources(orgId, res, managerProps, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -76,14 +77,14 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 		return nil, err
 	}
 
-	timings, err := s.service.GetMuteTimings(ctx, info.OrgID)
+	timings, managerProps, err := s.service.GetMuteTimings(ctx, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, mt := range timings {
 		if mt.UID == uid {
-			return ConvertToK8sResource(info.OrgID, mt, s.namespacer)
+			return ConvertToK8sResource(info.OrgID, mt, managerProps[mt.Name], s.namespacer)
 		}
 	}
 	return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
@@ -110,15 +111,15 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	mt, err := convertToDomainModel(p)
+	mt, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.CreateMuteTiming(ctx, mt, info.OrgID)
+	out, err := s.service.CreateMuteTiming(ctx, mt, info.OrgID, manager)
 	if err != nil {
 		return nil, err
 	}
-	return ConvertToK8sResource(info.OrgID, out, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, out, manager, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -151,7 +152,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected time-interval but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	interval, err := convertToDomainModel(p)
+	interval, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
 	}
@@ -160,12 +161,12 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, errors.NewBadRequest("title of cannot be changed. Consider creating a new resource.")
 	}
 
-	updated, err := s.service.UpdateMuteTiming(ctx, interval, info.OrgID)
+	updated, err := s.service.UpdateMuteTiming(ctx, interval, info.OrgID, manager)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r, err := ConvertToK8sResource(info.OrgID, updated, s.namespacer)
+	r, err := ConvertToK8sResource(info.OrgID, updated, manager, s.namespacer)
 	return r, false, err
 }
 
@@ -197,8 +198,17 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(prov), version) // TODO add support for dry-run option
-	return old, false, err                                                                           // false - will be deleted async
+	// Prefer the richer manager from the object's annotations so a resource managed by a
+	// specific manager (e.g. Terraform) is deleted with the matching manager rather than the
+	// coarser provenance-derived equivalent; fall back to provenance when no manager is set.
+	manager := ngmodels.ProvenanceToManagerProperties(prov)
+	if meta, mErr := utils.MetaAccessor(p); mErr == nil {
+		if mp, ok := meta.GetManagerProperties(); ok {
+			manager = mp
+		}
+	}
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, manager, version) // TODO add support for dry-run option
+	return old, false, err                                                      // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {

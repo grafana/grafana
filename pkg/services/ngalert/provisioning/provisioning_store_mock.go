@@ -354,6 +354,34 @@ func (_m *MockProvisioningStore) GetManagerPropertiesByUIDs(ctx context.Context,
 	return r0, r1
 }
 
+// GetManagerPropertiesByType provides a mock function with given fields: ctx, org, resourceType
+func (_m *MockProvisioningStore) GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error) {
+	ret := _m.Called(ctx, org, resourceType)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetManagerPropertiesByType")
+	}
+
+	var r0 map[string]utils.ManagerProperties
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (map[string]utils.ManagerProperties, error)); ok {
+		return rf(ctx, org, resourceType)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) map[string]utils.ManagerProperties); ok {
+		r0 = rf(ctx, org, resourceType)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]utils.ManagerProperties)
+		}
+	}
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, org, resourceType)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
 // SetManagerProperties provides a mock function with given fields: ctx, o, org, m
 func (_m *MockProvisioningStore) SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error {
 	ret := _m.Called(ctx, o, org, m)
@@ -428,6 +456,36 @@ func (_c *MockProvisioningStore_GetManagerPropertiesByUIDs_Call) Return(_a0 map[
 }
 
 func (_c *MockProvisioningStore_GetManagerPropertiesByUIDs_Call) RunAndReturn(run func(context.Context, int64, string, []string) (map[string]utils.ManagerProperties, error)) *MockProvisioningStore_GetManagerPropertiesByUIDs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MockProvisioningStore_GetManagerPropertiesByType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetManagerPropertiesByType'
+type MockProvisioningStore_GetManagerPropertiesByType_Call struct {
+	*mock.Call
+}
+
+// GetManagerPropertiesByType is a helper method to define mock.On call
+//   - ctx context.Context
+//   - org int64
+//   - resourceType string
+func (_e *MockProvisioningStore_Expecter) GetManagerPropertiesByType(ctx interface{}, org interface{}, resourceType interface{}) *MockProvisioningStore_GetManagerPropertiesByType_Call {
+	return &MockProvisioningStore_GetManagerPropertiesByType_Call{Call: _e.mock.On("GetManagerPropertiesByType", ctx, org, resourceType)}
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByType_Call) Run(run func(ctx context.Context, org int64, resourceType string)) *MockProvisioningStore_GetManagerPropertiesByType_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int64), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByType_Call) Return(_a0 map[string]utils.ManagerProperties, _a1 error) *MockProvisioningStore_GetManagerPropertiesByType_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockProvisioningStore_GetManagerPropertiesByType_Call) RunAndReturn(run func(context.Context, int64, string) (map[string]utils.ManagerProperties, error)) *MockProvisioningStore_GetManagerPropertiesByType_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -33,7 +33,7 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 	for _, file := range files {
 		for _, muteTiming := range file.MuteTimes {
 			if _, exists := cache[muteTiming.OrgID]; !exists {
-				intervals, err := c.muteTimingService.GetMuteTimings(ctx, muteTiming.OrgID)
+				intervals, _, err := c.muteTimingService.GetMuteTimings(ctx, muteTiming.OrgID)
 				if err != nil {
 					return err
 				}
@@ -44,13 +44,13 @@ func (c *defaultMuteTimesProvisioner) Provision(ctx context.Context,
 			}
 			muteTiming.MuteTime.Provenance = definitions.Provenance(models.ProvenanceFile)
 			if _, exists := cache[muteTiming.OrgID][muteTiming.MuteTime.Name]; exists {
-				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
+				_, err := c.muteTimingService.UpdateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 				if err != nil {
 					return err
 				}
 				continue
 			}
-			_, err := c.muteTimingService.CreateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID)
+			_, err := c.muteTimingService.CreateMuteTiming(ctx, muteTiming.MuteTime, muteTiming.OrgID, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 			if err != nil {
 				return err
 			}
@@ -63,7 +63,7 @@ func (c *defaultMuteTimesProvisioner) Unprovision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, deleteMuteTime := range file.DeleteMuteTimes {
-			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, definitions.Provenance(models.ProvenanceFile), "")
+			err := c.muteTimingService.DeleteMuteTiming(ctx, deleteMuteTime.Name, deleteMuteTime.OrgID, models.ProvenanceToManagerProperties(models.ProvenanceFile), "")
 			if err != nil {
 				return err
 			}

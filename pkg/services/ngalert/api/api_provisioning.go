@@ -64,11 +64,11 @@ type NotificationPolicyService interface {
 }
 
 type MuteTimingService interface {
-	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
+	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, map[string]utils.ManagerProperties, error)
 	GetMuteTimingByName(ctx context.Context, name string, orgID int64) (definitions.MuteTimeInterval, error)
-	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, name string, orgID int64, provenance definitions.Provenance, version string) error
+	CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error)
+	UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error)
+	DeleteMuteTiming(ctx context.Context, name string, orgID int64, manager utils.ManagerProperties, version string) error
 }
 
 type AlertRuleService interface {
@@ -274,7 +274,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTiming(c *contextmodel.ReqContext, name 
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext, name string) response.Response {
-	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
+	timings, _, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
 	}
@@ -288,7 +288,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimingExport(c *contextmodel.ReqContext,
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) response.Response {
-	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
+	timings, _, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
 	}
@@ -296,7 +296,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimings(c *contextmodel.ReqContext) resp
 }
 
 func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext) response.Response {
-	timings, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
+	timings, _, err := srv.muteTimings.GetMuteTimings(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to get mute timings", err)
 	}
@@ -306,7 +306,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	mt.Provenance = determineProvenance(c)
-	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.GetOrgID())
+	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), mt, c.GetOrgID(), utils.ManagerProperties{})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create mute timing", err)
 	}
@@ -323,7 +323,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 		mt.UID = name
 	}
 	mt.Provenance = determineProvenance(c)
-	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.GetOrgID())
+	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), mt, c.GetOrgID(), utils.ManagerProperties{})
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update mute timing", err)
 	}
@@ -332,7 +332,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 
 func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *contextmodel.ReqContext, name string) response.Response {
 	version := c.Query("version")
-	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.GetOrgID(), determineProvenance(c), version)
+	err := srv.muteTimings.DeleteMuteTiming(c.Req.Context(), name, c.GetOrgID(), alerting_models.ProvenanceToManagerProperties(alerting_models.Provenance(determineProvenance(c))), version)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to delete mute timing", err)
 	}

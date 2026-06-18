@@ -503,6 +503,7 @@ type provisioningStore interface {
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
 	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
 	GetManagerPropertiesByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]utils.ManagerProperties, error)
+	GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 

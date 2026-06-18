@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -72,22 +73,30 @@ func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
 }
 
 // GetMuteTimings returns a slice of all mute timings within the specified org.
-func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
+// GetMuteTimings returns all mute timings for the org along with their ManagerProperties,
+// keyed by resource ID. The manager map lets app-platform callers surface the richer
+// manager kind/identity; legacy callers can ignore it and rely on each interval's Provenance.
+func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, map[string]utils.ManagerProperties, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	grafanaIntervals := getGrafanaTimeIntervals(rev)
 	importedIntervals := svc.getImportedTimeIntervals(rev)
 
 	if len(grafanaIntervals)+len(importedIntervals) == 0 {
-		return []definitions.MuteTimeInterval{}, nil
+		return []definitions.MuteTimeInterval{}, map[string]utils.ManagerProperties{}, nil
 	}
 
-	provenances, err := svc.provenanceStore.GetProvenances(ctx, orgID, (&definitions.MuteTimeInterval{}).ResourceType())
+	resourceType := (&definitions.MuteTimeInterval{}).ResourceType()
+	provenances, err := svc.provenanceStore.GetProvenances(ctx, orgID, resourceType)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	managerProps, err := svc.provenanceStore.GetManagerPropertiesByType(ctx, orgID, resourceType)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	result := make([]definitions.MuteTimeInterval, 0, len(grafanaIntervals))
@@ -108,7 +117,7 @@ func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) (
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	return result, nil
+	return result, managerProps, nil
 }
 
 // GetMuteTimingByUID returns a mute timing by UID
@@ -168,7 +177,9 @@ func (svc *MuteTimingService) getMuteTiming(ctx context.Context, revision *legac
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
-func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error) {
+// When manager carries a rich manager kind (e.g. Terraform), the full ManagerProperties are persisted
+// atomically; otherwise the mute timing's Provenance is persisted as before.
+func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
@@ -192,7 +203,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
+		return svc.persistManagerOrProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance), manager)
 	})
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
@@ -201,8 +212,19 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 	return newMuteTimingInterval(v1.MuteTimeInterval(mt.MuteTimeInterval), mt.Provenance), nil
 }
 
+// persistManagerOrProvenance stores the full ManagerProperties when manager carries a rich kind
+// (so app-platform managers such as Terraform are preserved losslessly), and otherwise falls back
+// to the legacy provenance write. Exactly one store setter runs per logical write, and both the
+// provenance and manager_kind columns are kept consistent by the store, so the two views cannot diverge.
+func (svc *MuteTimingService) persistManagerOrProvenance(ctx context.Context, o models.Provisionable, orgID int64, provenance models.Provenance, manager utils.ManagerProperties) error {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return svc.provenanceStore.SetManagerProperties(ctx, o, orgID, manager)
+	}
+	return svc.provenanceStore.SetProvenance(ctx, o, orgID, provenance)
+}
+
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
-func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64) (definitions.MuteTimeInterval, error) {
+func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
@@ -269,7 +291,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return svc.provenanceStore.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
+		return svc.persistManagerOrProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance), manager)
 	})
 	if err != nil {
 		return definitions.MuteTimeInterval{}, err
@@ -279,7 +301,9 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 }
 
 // DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
-func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance definitions.Provenance, version string) error {
+// The provenance used for validation is derived from manager so callers continue to speak provenance semantics.
+func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, manager utils.ManagerProperties, version string) error {
+	provenance := definitions.Provenance(models.ManagerPropertiesToProvenance(manager))
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err

@@ -28,7 +28,7 @@ type muteTimeInterval struct {
 }
 
 func (s *Service) getAlertMuteTimings(ctx context.Context, signedInUser *user.SignedInUser) ([]muteTimeInterval, error) {
-	muteTimings, err := s.ngAlert.Api.MuteTimings.GetMuteTimings(ctx, signedInUser.OrgID)
+	muteTimings, _, err := s.ngAlert.Api.MuteTimings.GetMuteTimings(ctx, signedInUser.OrgID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching ngalert mute timings: %w", err)
 	}
