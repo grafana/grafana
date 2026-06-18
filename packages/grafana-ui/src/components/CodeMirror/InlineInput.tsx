@@ -1,6 +1,6 @@
 import { autocompletion } from '@codemirror/autocomplete';
 import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView, placeholder as placeholderExtension } from '@codemirror/view';
+import { EditorView, placeholder as placeholderExtension, tooltips } from '@codemirror/view';
 import { css, cx } from '@emotion/css';
 import { memo, useMemo } from 'react';
 
@@ -104,12 +104,30 @@ function createInlineInputTheme(theme: GrafanaTheme2): Extension {
       color: theme.colors.text.disabled,
       fontStyle: 'normal',
     },
+    // The popup is parented to `document.body` (see `tooltips` extension) so it
+    // escapes the modal's clipping/stacking context; lift it above the modal.
+    '.cm-tooltip': {
+      zIndex: theme.zIndex.portal,
+    },
     // Autocomplete dropdown — match Grafana surfaces rather than the editor theme.
     '.cm-tooltip.cm-tooltip-autocomplete': {
       backgroundColor: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
+    },
+    // The detail panel ("info" / documentation). CodeMirror gives it no color of
+    // its own, so without this it falls back to the editor's light/dark base
+    // theme and is unreadable on Grafana surfaces.
+    '.cm-tooltip.cm-completionInfo': {
+      backgroundColor: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z3,
+      padding: theme.spacing(0.5, 1),
+      fontFamily: theme.typography.fontFamily,
+      fontSize: theme.typography.bodySmall.fontSize,
     },
     '.cm-tooltip.cm-tooltip-autocomplete > ul': {
       fontFamily: theme.typography.fontFamily,
@@ -174,6 +192,9 @@ export const CodeMirrorInlineInput = memo(function CodeMirrorInlineInput({
     () => [
       singleLineFilter,
       stripNewlinesOnPaste,
+      // Render tooltips (the completion popup) in `document.body` so they aren't
+      // clipped by, or stacked beneath, a containing modal's scroll/footer.
+      tooltips({ parent: document.body }),
       ...(placeholder ? [placeholderExtension(placeholder)] : []),
       // Configure autocompletion directly (rather than via the base's
       // `completionSources` prop) so `interactionDelay` can be disabled: Enter
