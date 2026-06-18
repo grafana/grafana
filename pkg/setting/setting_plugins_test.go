@@ -281,6 +281,30 @@ func Test_readPluginSettings(t *testing.T) {
 	})
 }
 
+func TestCanvasExternalPluginPreinstall(t *testing.T) {
+	t.Run("adds canvas to preinstall when canvasExternalPlugin flag is enabled", func(t *testing.T) {
+		cfg := NewCfgWithFeatures(func(key string) bool { return key == "canvasExternalPlugin" })
+		_, err := cfg.Raw.NewSection("plugins")
+		require.NoError(t, err)
+
+		err = cfg.readPluginSettings(cfg.Raw)
+		require.NoError(t, err)
+
+		assert.Contains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"canvas", "", ""})
+	})
+
+	t.Run("does not add canvas to preinstall when canvasExternalPlugin flag is disabled", func(t *testing.T) {
+		cfg := NewCfgWithFeatures(func(key string) bool { return false })
+		_, err := cfg.Raw.NewSection("plugins")
+		require.NoError(t, err)
+
+		err = cfg.readPluginSettings(cfg.Raw)
+		require.NoError(t, err)
+
+		assert.NotContains(t, cfg.PreinstallPluginsAsync, InstallPlugin{"canvas", "", ""})
+	})
+}
+
 func Test_readGrafanaComSettings_GrafanaComProxyAPIToken(t *testing.T) {
 	t.Run("reads proxy_token into GrafanaComProxyAPIToken when set", func(t *testing.T) {
 		t.Setenv("GF_GRAFANA_COM_PROXY_TOKEN", "test-gnet-proxy-token")
