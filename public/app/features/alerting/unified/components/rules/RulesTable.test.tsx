@@ -18,6 +18,7 @@ import {
   useRuleSilenceAbility,
 } from '../../hooks/abilities/rules/rulerRuleAbilities';
 import { type Ability, Granted, InsufficientPermissions, NotSupported } from '../../hooks/abilities/types';
+import { AlertRuleAction, useGrafanaPromRuleAbilities, useRulerRuleAbilities } from '../../hooks/useAbilities';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mimirDataSource } from '../../mocks/server/configure';
 
@@ -36,6 +37,13 @@ jest.mock('../../hooks/abilities/rules/ruleAbilities', () => ({
   useRuleExploreAbility: jest.fn(),
 }));
 jest.mock('../../hooks/abilities/otherAbilities');
+
+// Also mock useAbilities which is used by AlertRuleMenu
+jest.mock('../../hooks/useAbilities', () => ({
+  ...jest.requireActual('../../hooks/useAbilities'),
+  useRulerRuleAbilities: jest.fn(),
+  useGrafanaPromRuleAbilities: jest.fn(),
+}));
 
 /** Denied Ability for simple cases */
 const Denied: Ability = NotSupported;
@@ -101,6 +109,9 @@ const mocks = {
   usePromRuleSilenceAbility: jest.mocked(usePromRuleSilenceAbility),
   usePromRuleExportAbility: jest.mocked(usePromRuleExportAbility),
   useEnrichmentAbility: jest.mocked(useEnrichmentAbility),
+  // Also mock the old hooks used by AlertRuleMenu
+  useRulerRuleAbilities: jest.mocked(useRulerRuleAbilities),
+  useGrafanaPromRuleAbilities: jest.mocked(useGrafanaPromRuleAbilities),
 };
 
 setPluginLinksHook(() => ({
@@ -124,6 +135,38 @@ setupMswServer();
 
 const { dataSource: mimirDs } = mimirDataSource();
 
+// Helper to create mock return value for useRulerRuleAbilities/useGrafanaPromRuleAbilities
+// based on the actions requested and an abilities object
+function createAbilitiesMock(abilities: RuleEditAbilityResult) {
+  return (_rule: unknown, _groupIdOrActions: unknown, actions?: AlertRuleAction[]) => {
+    // Handle both signature forms:
+    // useRulerRuleAbilities(rule, groupIdentifier, actions)
+    // useGrafanaPromRuleAbilities(rule, actions)
+    const actualActions = Array.isArray(_groupIdOrActions) ? _groupIdOrActions : actions;
+    if (!actualActions) {
+      return [];
+    }
+    return actualActions.map((action: AlertRuleAction) => {
+      switch (action) {
+        case AlertRuleAction.Update:
+          return abilities.update.granted ? [true, true] : [true, false];
+        case AlertRuleAction.Delete:
+          return abilities.delete.granted ? [true, true] : [true, false];
+        case AlertRuleAction.Pause:
+          return abilities.pause.granted ? [true, true] : [true, false];
+        case AlertRuleAction.Duplicate:
+          return abilities.duplicate.granted ? [true, true] : [true, false];
+        case AlertRuleAction.Silence:
+          return [true, true]; // Default to allowed
+        case AlertRuleAction.ModifyExport:
+          return [true, true]; // Default to allowed
+        default:
+          return [false, false];
+      }
+    });
+  };
+}
+
 describe('RulesTable RBAC', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -139,6 +182,10 @@ describe('RulesTable RBAC', () => {
     mocks.usePromRuleSilenceAbility.mockReturnValue(Denied);
     mocks.usePromRuleExportAbility.mockReturnValue(Denied);
     mocks.useEnrichmentAbility.mockReturnValue(Denied);
+
+    // Default: nothing granted for old hooks used by AlertRuleMenu
+    mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(deniedEditAbility()));
+    mocks.useGrafanaPromRuleAbilities.mockImplementation(createAbilitiesMock(deniedPromAdminAbility()));
   });
 
   describe('Grafana rules action buttons', () => {
@@ -160,14 +207,18 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
+      const deniedAbilities = deniedEditAbility();
       mocks.useRuleAdministrationAbility.mockReturnValue({
-        ...deniedEditAbility(),
+        ...deniedAbilities,
         delete: InsufficientPermissions([]),
       });
       mocks.usePromRuleAdministrationAbility.mockReturnValue({
         ...deniedPromAdminAbility(),
         delete: InsufficientPermissions([]),
       });
+      // Also set up the old hooks
+      mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(deniedAbilities));
+      mocks.useGrafanaPromRuleAbilities.mockImplementation(createAbilitiesMock(deniedPromAdminAbility()));
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -192,14 +243,17 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useRuleAdministrationAbility.mockReturnValue({
-        ...deniedEditAbility(),
-        delete: Granted,
-      });
+      const grantedAbilities = { ...deniedEditAbility(), delete: Granted };
+      mocks.useRuleAdministrationAbility.mockReturnValue(grantedAbilities);
       mocks.usePromRuleAdministrationAbility.mockReturnValue({
         ...deniedPromAdminAbility(),
         delete: Granted,
       });
+      // Also set up the old hooks with delete granted
+      mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(grantedAbilities));
+      mocks.useGrafanaPromRuleAbilities.mockImplementation(
+        createAbilitiesMock({ ...deniedPromAdminAbility(), delete: Granted })
+      );
 
       render(<RulesTable rules={[grafanaRule]} />);
 
@@ -219,6 +273,8 @@ describe('RulesTable RBAC', () => {
       beforeEach(() => {
         mocks.useRuleAdministrationAbility.mockReturnValue(grantedEditAbility());
         mocks.usePromRuleAdministrationAbility.mockReturnValue(grantedPromAdminAbility());
+        mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(grantedEditAbility()));
+        mocks.useGrafanaPromRuleAbilities.mockImplementation(createAbilitiesMock(grantedPromAdminAbility()));
       });
 
       it('does not render View button when rule is creating', async () => {
@@ -263,14 +319,17 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should not render Delete button for users without the delete permission', async () => {
+      const deniedAbilities = deniedEditAbility();
       mocks.useRuleAdministrationAbility.mockReturnValue({
-        ...deniedEditAbility(),
+        ...deniedAbilities,
         delete: InsufficientPermissions([]),
       });
       mocks.usePromRuleAdministrationAbility.mockReturnValue({
         ...deniedPromAdminAbility(),
         delete: InsufficientPermissions([]),
       });
+      mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(deniedAbilities));
+      mocks.useGrafanaPromRuleAbilities.mockImplementation(createAbilitiesMock(deniedPromAdminAbility()));
 
       render(<RulesTable rules={[cloudRule]} />);
 
@@ -294,14 +353,16 @@ describe('RulesTable RBAC', () => {
     });
 
     it('Should render Delete button for users with the delete permission', async () => {
-      mocks.useRuleAdministrationAbility.mockReturnValue({
-        ...deniedEditAbility(),
-        delete: Granted,
-      });
+      const grantedAbilities = { ...deniedEditAbility(), delete: Granted };
+      mocks.useRuleAdministrationAbility.mockReturnValue(grantedAbilities);
       mocks.usePromRuleAdministrationAbility.mockReturnValue({
         ...deniedPromAdminAbility(),
         delete: Granted,
       });
+      mocks.useRulerRuleAbilities.mockImplementation(createAbilitiesMock(grantedAbilities));
+      mocks.useGrafanaPromRuleAbilities.mockImplementation(
+        createAbilitiesMock({ ...deniedPromAdminAbility(), delete: Granted })
+      );
 
       render(<RulesTable rules={[cloudRule]} />);
 
