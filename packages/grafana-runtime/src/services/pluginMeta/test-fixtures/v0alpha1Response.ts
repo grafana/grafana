@@ -1,6 +1,6 @@
 /* eslint-disable @grafana/no-restricted-img-srcs */
-import type {PluginMetasResponse} from '../types';
-import type {Meta} from '../types/meta/meta_object_gen';
+import type { PluginMetasResponse } from '../types';
+import type { Meta } from '../types/meta/meta_object_gen';
 
 export const myOrgTestAppMeta: Meta = structuredClone({
   kind: 'Meta',
