@@ -106,6 +106,13 @@ For more information about applying filters this way, refer to [Dashboard drilld
 <!-- vale Grafana.Spelling = YES -->
 <!-- vale Grafana.WordList = YES -->
 
+## Transform override property
+
+Use the **Graph styles > Transform** [override property](#field-overrides) to transform series values without affecting the values shown in the tooltip, context menu, or legend. Choose from the following transform options:
+
+- **Constant** - Show the first value as a constant line.
+- **Negative Y transform** - Flip the results to negative values on the y-axis.
+
 ## Configuration options
 
 {{< docs/shared lookup="visualizations/config-options-intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
