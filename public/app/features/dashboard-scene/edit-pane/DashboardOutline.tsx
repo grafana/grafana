@@ -7,13 +7,13 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { Box, Icon, ScrollContainer, Sidebar, Text, Tooltip, useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardLinksSet } from '../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../settings/links/LinkAddEditableElement';
 import { DashboardFiltersSet } from '../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { getEditableElementFor } from './shared';
 import { type DashboardEditPaneLike } from './types';
@@ -57,7 +57,7 @@ export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
 }
 
 function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
-  const dashboard = getDashboardSceneFor(model);
+  const dashboard = getDashboardSceneLike(model);
   const { isEditing } = dashboard.useState();
 
   return (

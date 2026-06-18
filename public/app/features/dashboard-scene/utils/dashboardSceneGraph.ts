@@ -5,6 +5,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
+import { type DashboardSceneLike } from '../scene/types/dashboard';
 
 import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
@@ -63,7 +64,7 @@ function getPanelIdGenerator(scene: SceneObject): PanelIdGenerator {
   return () => id++;
 }
 
-function getDataLayers(scene: DashboardScene): DashboardDataLayerSet {
+function getDataLayers(scene: DashboardSceneLike): DashboardDataLayerSet {
   const data = sceneGraph.getData(scene);
 
   if (!(data instanceof DashboardDataLayerSet)) {

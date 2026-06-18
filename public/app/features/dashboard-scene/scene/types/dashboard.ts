@@ -10,6 +10,7 @@ import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
 import { type DashboardLayoutManager } from './DashboardLayoutManager';
+import { LayoutParent } from './LayoutParent';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** Dashboard-specific preferences **/
@@ -75,7 +76,7 @@ interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
-export interface DashboardSceneLike extends SceneObject<DashboardSceneState> {
+export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
 }
 
