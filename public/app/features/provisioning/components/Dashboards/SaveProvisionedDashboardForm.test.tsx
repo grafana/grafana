@@ -1,4 +1,4 @@
-import { HttpResponse, delay, http } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type Dashboard } from '@grafana/schema';
@@ -475,10 +475,14 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('shows the in-progress state on Save while an existing dashboard is being written', async () => {
+    // Hold the write open so the in-progress state stays observable without a timing race.
+    let resolveWrite: () => void;
+    const writeInFlight = new Promise<void>((resolve) => {
+      resolveWrite = resolve;
+    });
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
-        // Keep the write in flight so the in-progress state is observable.
-        await delay(50);
+        await writeInFlight;
         const url = new URL(request.url);
         capturedRequest = { url, body: await request.json() };
         return HttpResponse.json({
@@ -539,7 +543,12 @@ describe('SaveProvisionedDashboardForm', () => {
     // The in-progress state shows for edits too, while the write is in flight.
     const savingButton = await screen.findByRole('button', { name: /saving/i });
     expect(savingButton).toBeDisabled();
+    expect(capturedRequest).toBeNull();
 
+    // Release the write and let it complete.
+    await act(async () => {
+      resolveWrite();
+    });
     await waitFor(() => expect(capturedRequest).not.toBeNull());
   });
 
