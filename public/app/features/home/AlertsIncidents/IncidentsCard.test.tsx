@@ -102,12 +102,22 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
-  it('shows a retryable warning when loading incidents fails', async () => {
+  it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
+    server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 404 })));
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
+  });
+
+  it('shows a retryable error for genuine failures (5xx)', async () => {
     server.use(http.post(QUERY_PREVIEWS_PATH, () => new HttpResponse(null, { status: 500 })));
 
     render(<IncidentsCard />);
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
   });
 });

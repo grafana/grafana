@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { isFetchError } from '@grafana/runtime';
 import { Alert, Badge, type BadgeColor, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
@@ -48,6 +49,11 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
 
   const { data: incidents, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
 
+  // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
+  // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
+  // error (401/403/5xx/network) is genuine and surfaced to the user.
+  const loadError = !!error && !(isFetchError(error) && error.status === 404);
+
   // Most recent first, then capped client-side so the card never relies on server ordering.
   const displayed = useMemo(
     () =>
@@ -76,7 +82,7 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
           </Stack>
         )}
 
-        {!!error && (
+        {loadError && (
           <Alert
             severity="warning"
             title={t('home.incidents-card.error-title', 'Could not load active incidents')}
@@ -88,7 +94,7 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
           />
         )}
 
-        {!isLoading && !error && displayed.length === 0 && (
+        {!isLoading && !loadError && displayed.length === 0 && (
           <Stack direction="column" alignItems="center">
             <Text color="secondary">
               <Trans i18nKey="home.incidents-card.empty">No active incidents.</Trans>
@@ -96,7 +102,7 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
           </Stack>
         )}
 
-        {!isLoading && !error && displayed.length > 0 && (
+        {!isLoading && !loadError && displayed.length > 0 && (
           <ul className={styles.list}>
             {displayed.map((incident) => (
               <li key={incident.incidentID} className={styles.row}>
@@ -119,7 +125,7 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
         )}
 
         {/* Footer */}
-        {!isLoading && !error && (
+        {!isLoading && !loadError && (
           <Stack direction="row" justifyContent="flex-end">
             <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
               <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
