@@ -688,6 +688,7 @@ export {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DataSourceGetRecommendedDrilldownsOptions,
   type MetadataInspectorProps,
+  type ErrorsAndNoticesInspectorProps,
   type LegacyMetricFindQueryOptions,
   type QueryEditorProps,
   type QueryEditorHelpProps,
