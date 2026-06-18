@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { fireEvent, render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -352,7 +352,7 @@ describe('NestedFolderPicker', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer'] });
+    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
 
     beforeEach(() => {
       setTestFlags({ 'grafana.starredFolders': true });
@@ -385,6 +385,20 @@ describe('NestedFolderPicker', () => {
 
       expect(mockOnChange).toHaveBeenCalledWith('starred-folder-1', 'Starred Folder One');
     });
+
+    it('forwards the picker permission to starred folder resolution', async () => {
+      const { user } = render(<NestedFolderPicker permission="view" onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      await waitFor(() => expect(resolveStarredFoldersMock).toHaveBeenCalledWith(['starred-folder-1'], 'view'));
+    });
+
+    it('defaults to edit permission when no permission prop is set', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      await waitFor(() => expect(resolveStarredFoldersMock).toHaveBeenCalledWith(['starred-folder-1'], 'edit'));
+    });
   });
 
   describe('when starredFolders is enabled but starsFromAPIServer is disabled', () => {
@@ -406,6 +420,28 @@ describe('NestedFolderPicker', () => {
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByLabelText('Starred folders')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Starred Folder One')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when starredFolders is enabled but foldersAppPlatformAPI is disabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer'], disable: ['foldersAppPlatformAPI'] });
+
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('does not render starred folders (hard gate on the app-platform folder API)', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      // Anchor on a real folder to confirm the tree rendered before asserting starred absence.
+      expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
+      expect(screen.queryByLabelText('Starred folders')).toBeNull();
+      expect(screen.queryByLabelText('Starred Folder One')).toBeNull();
     });
   });
 });

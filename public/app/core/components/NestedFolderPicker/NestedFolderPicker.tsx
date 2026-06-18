@@ -118,7 +118,7 @@ export function NestedFolderPicker({
     error: teamFoldersError,
   } = useTeamFolders(foldersOpenState, value, onChange);
 
-  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState);
+  const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
   const {
@@ -475,7 +475,7 @@ function useTeamFolders(
   };
 }
 
-function useStarredFolders(foldersOpenState: Record<string, boolean>) {
+function useStarredFolders(foldersOpenState: Record<string, boolean>, permission?: PermissionLevel) {
   const { data: uids, error } = useStarredItems('folder.grafana.app', 'Folder', { skip: !starredFoldersEnabled() });
 
   const [folders, setFolders] = useState<DashboardViewItem[]>([]);
@@ -488,7 +488,7 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>) {
     }
 
     let cancelled = false;
-    resolveStarredFolders(uids)
+    resolveStarredFolders(uids, permission)
       .then((items) => {
         if (!cancelled) {
           setFolders(items);
@@ -500,7 +500,7 @@ function useStarredFolders(foldersOpenState: Record<string, boolean>) {
     return () => {
       cancelled = true;
     };
-  }, [uids]);
+  }, [uids, permission]);
 
   const starredFolderTreeItems = useMemo(() => {
     if (folders.length === 0) {
