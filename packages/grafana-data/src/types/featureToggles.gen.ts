@@ -164,11 +164,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
-  /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
   */

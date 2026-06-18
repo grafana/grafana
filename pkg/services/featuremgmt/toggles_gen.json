@@ -1616,7 +1616,8 @@
       "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-08-30T20:22:05Z"
+        "creationTimestamp": "2023-08-30T20:22:05Z",
+        "deletionTimestamp": "2026-06-18T13:02:15Z"
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
