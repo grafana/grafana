@@ -477,10 +477,10 @@ func (s *UserK8sService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateU
 
 	existing.Status.LastSeenAt = time.Now().Unix()
 
-	_, err = client.UpdateStatus(ctx, resource.Identifier{
-		Namespace: existing.Namespace,
-		Name:      existing.Name,
-	}, existing.Status, resource.UpdateOptions{ResourceVersion: existing.ResourceVersion})
+	_, err = client.Update(ctx, existing, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: existing.ResourceVersion,
+	})
 	if err != nil {
 		ctxLogger.Error("k8s user update status failed", "namespace", namespace, "orgID", cmd.OrgID, "userID", cmd.UserID, "err", err)
 		span.RecordError(err)

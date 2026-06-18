@@ -163,15 +163,6 @@ func (g *genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old r
 	newMeta.SetLabels(oldMeta.GetLabels())
 	newMeta.SetFinalizers(oldMeta.GetFinalizers())
 	newMeta.SetOwnerReferences(oldMeta.GetOwnerReferences())
-
-	// A status update must not change the spec. Callers that target the status
-	// subresource may send an object with an empty (or partial) spec; restoring
-	// the old spec here prevents those writes from clobbering stored spec data.
-	spec, err := oldMeta.GetSpec()
-	if err != nil {
-		return
-	}
-	_ = newMeta.SetSpec(spec)
 }
 
 func (g *genericStatusStrategy) AllowCreateOnUpdate() bool {
