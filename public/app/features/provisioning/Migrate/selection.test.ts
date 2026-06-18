@@ -8,7 +8,6 @@ function folder(uid: string, dashboardUids: string[], overrides: Partial<FolderR
     title: uid,
     dashboardCount: dashboards.length,
     directDashboards: dashboards,
-    subfolders: [],
     allDashboards: dashboards,
     ...overrides,
   };

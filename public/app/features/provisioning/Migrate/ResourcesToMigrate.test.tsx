@@ -12,7 +12,6 @@ const folders: FolderRow[] = [
       { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
       { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
     ],
-    subfolders: [],
     allDashboards: [
       { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
       { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
@@ -24,7 +23,6 @@ const folders: FolderRow[] = [
     managedBy: 'repo',
     dashboardCount: 3,
     directDashboards: [],
-    subfolders: [],
     allDashboards: [],
   },
 ];
@@ -146,7 +144,6 @@ describe('ResourcesToMigrate', () => {
           { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
           { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
         ],
-        subfolders: [],
         allDashboards: [
           { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
           { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
@@ -157,7 +154,6 @@ describe('ResourcesToMigrate', () => {
         title: 'Beta',
         dashboardCount: 5,
         directDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
-        subfolders: [],
         allDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
       },
     ];
@@ -191,7 +187,6 @@ describe('ResourcesToMigrate', () => {
         title: 'Parent',
         dashboardCount: 3,
         directDashboards: [],
-        subfolders: [{ uid: 'child', title: 'Child', dashboardCount: 3 }],
         allDashboards: [{ uid: 'c1', title: 'C1', url: '/d/c1' }],
       };
       const { user } = setup({ folders: [subfoldersOnly] });

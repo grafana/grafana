@@ -7,17 +7,16 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 
 const PAGE_SIZE = 200;
+// Safety guardrail so a pathological response (or an enormous instance) can't
+// spin off unbounded requests. Generous on purpose — well past any realistic
+// folder/dashboard count — so it never truncates normal instances; the proper
+// fix is the backend roll-up the hook's JSDoc points at.
+const MAX_PAGES = 200;
 
 interface FolderPeekDashboard {
   uid: string;
   title: string;
   url: string;
-}
-
-interface FolderPeekSubfolder {
-  uid: string;
-  title: string;
-  dashboardCount: number;
 }
 
 export interface FolderRow {
@@ -33,8 +32,6 @@ export interface FolderRow {
   dashboardCount: number;
   /** Dashboards directly in this folder (not nested), used by the expand view. */
   directDashboards: FolderPeekDashboard[];
-  /** Folders directly under this folder. */
-  subfolders: FolderPeekSubfolder[];
   /**
    * Every dashboard anywhere in this folder's subtree. Used by the migrate
    * call (which only accepts dashboard refs, not folder refs) and by the
@@ -66,79 +63,66 @@ function readImmediateParent(location: unknown): string | undefined {
   return trimmed;
 }
 
-async function fetchAllFolders(): Promise<
-  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
-> {
+/**
+ * Pages through every item of a kind via the unified searcher. The first page
+ * also reports `totalRows`, so the remaining pages are fetched concurrently
+ * rather than one sequential round-trip at a time. Bounded by MAX_PAGES.
+ */
+async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQueryResult[]> {
   const searcher = getGrafanaSearcher();
-  const rows: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }> = [];
-  // Use the searcher with `kind: ['folder']` and no location filter so we get
-  // every folder on the instance — root-level *and* nested. listFolders only
-  // returns immediate children of a single parent, which would silently drop
-  // subfolders. Page until the searcher has no more rows to give: a short page
-  // means we've reached the end, and `totalRows` is the upper bound that stops
-  // us once everything that exists has been collected. No fixed page cap — the
-  // table is meant to show the whole instance.
-  let totalRows = Number.POSITIVE_INFINITY;
-  for (let page = 0; rows.length < totalRows; page++) {
-    const result = await searcher.search({
-      kind: ['folder'],
+  const searchPage = (page: number) =>
+    searcher.search({
+      kind: [kind],
       query: '*',
       from: page * PAGE_SIZE,
       offset: page * PAGE_SIZE,
       limit: PAGE_SIZE,
     });
-    const items: DashboardQueryResult[] = result.view.toArray();
-    if (typeof result.totalRows === 'number') {
-      totalRows = result.totalRows;
-    }
-    for (const item of items) {
-      rows.push({
-        uid: item.uid,
-        title: item.name,
-        parentUid: readImmediateParent(item.location),
-        managedBy: extractManagerKind(item.managedBy),
-      });
-    }
-    if (items.length < PAGE_SIZE) {
-      break;
-    }
+
+  const first = await searchPage(0);
+  const firstItems: DashboardQueryResult[] = first.view.toArray();
+  const total = typeof first.totalRows === 'number' ? first.totalRows : firstItems.length;
+  const pageCount = Math.min(Math.max(1, Math.ceil(total / PAGE_SIZE)), MAX_PAGES);
+
+  if (pageCount <= 1) {
+    return firstItems;
   }
-  return rows;
+
+  const rest = await Promise.all(
+    Array.from({ length: pageCount - 1 }, (_, index) => searchPage(index + 1).then((result) => result.view.toArray()))
+  );
+  return firstItems.concat(...rest);
+}
+
+// `kind: ['folder']` with no location filter returns every folder on the
+// instance — root-level *and* nested. listFolders only returns immediate
+// children of a single parent, which would silently drop subfolders.
+async function fetchAllFolders(): Promise<
+  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
+> {
+  const items = await fetchAllPages('folder');
+  return items.map((item) => ({
+    uid: item.uid,
+    title: item.name,
+    parentUid: readImmediateParent(item.location),
+    managedBy: extractManagerKind(item.managedBy),
+  }));
 }
 
 async function fetchAllDashboards(): Promise<
   Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
 > {
-  const searcher = getGrafanaSearcher();
-  const rows: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }> = [];
-  let totalRows = Number.POSITIVE_INFINITY;
-  for (let page = 0; rows.length < totalRows; page++) {
-    const result = await searcher.search({
-      kind: ['dashboard'],
-      query: '*',
-      from: page * PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
-    });
-    const items: DashboardQueryResult[] = result.view.toArray();
-    if (typeof result.totalRows === 'number') {
-      totalRows = result.totalRows;
-    }
-    for (const item of items) {
-      const view = queryResultToViewItem(item, result.view);
-      rows.push({
-        uid: view.uid,
-        title: view.title,
-        parentUid: readImmediateParent(item.location),
-        managedBy: view.managedBy,
-        url: view.url ?? '',
-      });
-    }
-    if (items.length < PAGE_SIZE) {
-      break;
-    }
-  }
-  return rows;
+  const items = await fetchAllPages('dashboard');
+  return items.map((item) => {
+    const view = queryResultToViewItem(item);
+    return {
+      uid: view.uid,
+      title: view.title,
+      parentUid: readImmediateParent(item.location),
+      managedBy: view.managedBy,
+      url: view.url ?? '',
+    };
+  });
 }
 
 function aggregate(
@@ -227,30 +211,12 @@ function aggregate(
     pushTo(directDashboardsByFolder, ancestors[0], dashItem);
   }
 
-  // Group folders by parent so each row knows its direct subfolders.
-  const subfoldersByParent = new Map<string, FolderPeekSubfolder[]>();
-  for (const folder of folders) {
-    const parent = folder.parentUid && folder.parentUid !== GENERAL_FOLDER_UID ? folder.parentUid : GENERAL_FOLDER_UID;
-    const sub: FolderPeekSubfolder = {
-      uid: folder.uid,
-      title: folder.title,
-      dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
-    };
-    const existing = subfoldersByParent.get(parent);
-    if (existing) {
-      existing.push(sub);
-    } else {
-      subfoldersByParent.set(parent, [sub]);
-    }
-  }
-
   const rows: FolderRow[] = folders.map((folder) => ({
     uid: folder.uid,
     title: folder.title,
     managedBy: folder.managedBy,
     dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
     directDashboards: directDashboardsByFolder.get(folder.uid) ?? [],
-    subfolders: subfoldersByParent.get(folder.uid) ?? [],
     allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
   }));
 
@@ -275,7 +241,6 @@ function aggregate(
       managedBy: generalManagedBy,
       dashboardCount: rootDashboardCount,
       directDashboards: rootDirectDashboards,
-      subfolders: subfoldersByParent.get(GENERAL_FOLDER_UID) ?? [],
       allDashboards: rootDirectDashboards,
     });
   }
