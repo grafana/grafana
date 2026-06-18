@@ -64,7 +64,3 @@ function enrichNodeWithActiveState(node: NavModelItem, activeId: string): NavMod
 
   return node;
 }
-
-export const getTitleFromNavModel = (navModel: NavModel) => {
-  return `${navModel.main.text}${navModel.node.text ? ': ' + navModel.node.text : ''}`;
-};

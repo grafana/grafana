@@ -4216,6 +4216,10 @@
             "type": "string",
             "default": ""
           },
+          "internalId": {
+            "type": "integer",
+            "format": "int64"
+          },
           "memberCount": {
             "type": "integer",
             "format": "int64"
@@ -4268,7 +4272,20 @@
       },
       "GetSearchUsersUserHit": {
         "type": "object",
-        "required": ["name", "title", "login", "email", "role", "lastSeenAt", "lastSeenAtAge", "provisioned", "score"],
+        "required": [
+          "name",
+          "title",
+          "login",
+          "email",
+          "role",
+          "lastSeenAt",
+          "lastSeenAtAge",
+          "provisioned",
+          "disabled",
+          "internalId",
+          "created",
+          "score"
+        ],
         "properties": {
           "accessControl": {
             "type": "object",
@@ -4277,9 +4294,25 @@
               "default": false
             }
           },
+          "created": {
+            "description": "Creation timestamp, in epoch milliseconds.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
+          },
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
           "email": {
             "type": "string",
             "default": ""
+          },
+          "internalId": {
+            "description": "Deprecated internal (legacy SQL) id of the user.",
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "lastSeenAt": {
             "type": "integer",

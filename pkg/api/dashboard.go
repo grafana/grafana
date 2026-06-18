@@ -55,7 +55,7 @@ const (
 //
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
-// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
 //
 // Deprecated: true
 //
@@ -304,7 +304,7 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid s
 //
 // Will delete the dashboard given the specified unique identifier (uid).
 //
-// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}
 //
 // Deprecated: true
 //
@@ -353,7 +353,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 // Creates a new dashboard or updates an existing dashboard.
 // Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
 //
-// Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards
+// Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards
 //
 // Deprecated: true
 //
@@ -979,7 +979,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 // swagger:route POST /dashboards/uid/{uid}/restore dashboards versions restoreDashboardVersionByUID
 //
 // Restore a dashboard to a given dashboard version using UID.
-// This API will be removed when /apis/dashboards.grafana.app/v1 is released.
+// This API will be removed when /apis/dashboard.grafana.app/v1 is released.
 // You can restore a dashboard by reading it from history, then creating it again.
 //
 // Deprecated: true

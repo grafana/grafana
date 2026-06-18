@@ -323,7 +323,7 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

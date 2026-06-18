@@ -50,6 +50,22 @@ describe('formValuesFromQueryParams', () => {
     expect(result).toEqual(defaultFormValues);
   });
 
+  it('should preserve evaluateEvery when provided', () => {
+    // "Continue in Alerting" from the panel drawer passes the rule's interval through this param;
+    // it must not be overwritten with the default.
+    const ruleDefinition = JSON.stringify({ evaluateEvery: '5m' });
+
+    const result = formValuesFromQueryParams(ruleDefinition, RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe('5m');
+  });
+
+  it('should fall back to the default evaluateEvery when not provided', () => {
+    const result = formValuesFromQueryParams(JSON.stringify({}), RuleFormType.grafana);
+
+    expect(result.evaluateEvery).toBe(defaultFormValues.evaluateEvery);
+  });
+
   it('should normalize annotations', () => {
     const ruleDefinition = JSON.stringify({
       annotations: [

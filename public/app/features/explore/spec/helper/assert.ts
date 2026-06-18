@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 
-import { withinQueryHistory, withinQueryLibrary } from './setup';
+import { withinQueryHistory } from './setup';
 
 export const assertQueryHistoryExists = async (query: string) => {
   const selector = withinQueryHistory();
@@ -19,28 +19,6 @@ export const assertQueryHistory = async (expectedQueryTexts: string[]) => {
     expectedQueryTexts.forEach((expectedQueryText, queryIndex) => {
       expect(queryTexts[queryIndex]).toHaveTextContent(expectedQueryText);
     });
-  });
-};
-
-export const assertQueryLibraryTemplateExists = async (datasource: string, description: string) => {
-  const selector = withinQueryLibrary();
-  await waitFor(() => {
-    const cell = selector.getByRole('radio', {
-      name: description,
-    });
-
-    expect(cell).toBeInTheDocument();
-  });
-};
-
-export const assertQueryLibraryTemplateDoesNotExists = async (description: string) => {
-  const selector = withinQueryLibrary();
-  await waitFor(() => {
-    const cell = selector.queryByRole('radio', {
-      name: description,
-    });
-
-    expect(cell).not.toBeInTheDocument();
   });
 };
 

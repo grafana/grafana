@@ -302,7 +302,7 @@ const getStyles = (
     background: theme.colors.background.elevated,
     boxShadow: theme.shadows.z3,
     width: `${isFullscreen ? '546px' : '262px'}`,
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     border: `1px solid ${theme.colors.border.weak}`,
     [`${isReversed ? 'left' : 'right'}`]: 0,
     display: 'flex',

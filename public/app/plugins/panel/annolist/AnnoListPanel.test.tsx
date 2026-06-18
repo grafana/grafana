@@ -4,6 +4,8 @@ import { BehaviorSubject } from 'rxjs';
 
 import {
   type AnnotationEvent,
+  arrayToDataFrame,
+  DataFrameView,
   type FieldConfigSource,
   getDefaultTimeRange,
   LoadingState,
@@ -16,6 +18,8 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import { backendSrv } from '../../../core/services/backend_srv';
 import { isAnnotationApiAvailable } from '../../../features/annotations/isAnnotationApiAvailable';
 import { type DashboardSrv, setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
+import { getGrafanaSearcher } from '../../../features/search/service/searcher';
+import { type QueryResponse } from '../../../features/search/service/types';
 
 import { AnnoListPanel, type Props } from './AnnoListPanel';
 import { type Options } from './panelcfg.gen';
@@ -31,9 +35,24 @@ jest.mock('@grafana/runtime/internal', () => ({
   getFeatureFlagClient: jest.fn(),
 }));
 
+jest.mock('../../../features/search/service/searcher', () => ({
+  getGrafanaSearcher: jest.fn(),
+}));
+
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
 const getBooleanValueFn = jest.fn();
+const mockGetGrafanaSearcher = jest.mocked(getGrafanaSearcher);
+const searchMock = jest.fn();
+
+function buildSearchResponse(items: Array<{ uid: string; url: string }>): QueryResponse {
+  return {
+    view: new DataFrameView(arrayToDataFrame(items)),
+    totalRows: items.length,
+    loadMoreItems: jest.fn(),
+    isItemLoaded: jest.fn(),
+  };
+}
 
 function stubFFEnabled(enabled: boolean) {
   getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
@@ -88,6 +107,10 @@ async function setupTestContext({
 
   const getMock = jest.spyOn(backendSrv, 'get');
   getMock.mockResolvedValue(results);
+
+  searchMock.mockReset();
+  searchMock.mockResolvedValue(buildSearchResponse([{ uid: defaultResult.uid, url: defaultResult.url }]));
+  mockGetGrafanaSearcher.mockReturnValue({ search: searchMock } as unknown as ReturnType<typeof getGrafanaSearcher>);
 
   const dash = { uid: 'srx16xR4z', formatDate: (time: number) => new Date(time).toISOString() };
   const dashSrv = { getCurrent: () => dash } as DashboardSrv;
@@ -244,14 +267,13 @@ describe('AnnoListPanel', () => {
 
     describe('and the user clicks on the annotation', () => {
       it('then it should navigate to the dashboard connected to the annotation', async () => {
-        const { getMock, pushSpy } = await setupTestContext();
+        const { pushSpy } = await setupTestContext();
 
-        getMock.mockClear();
         expect(await screen.findByRole('button', { name: /result text/i })).toBeInTheDocument();
         await userEvent.click(await screen.findByRole('button', { name: /result text/i }));
-        await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(searchMock).toHaveBeenCalledTimes(1));
 
-        expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
+        expect(searchMock).toHaveBeenCalledWith({ uid: ['7MeksYbmk'], kind: ['dashboard'], limit: 1 });
         expect(pushSpy).toHaveBeenCalledTimes(1);
         expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
       });
@@ -282,6 +304,35 @@ describe('AnnoListPanel', () => {
         expect(getMock).not.toHaveBeenCalled();
         expect(partialSpy).toHaveBeenCalledTimes(1);
         expect(partialSpy).toHaveBeenCalledWith({ from: 1609458600000, to: 1609459800000, viewPanel: 13 });
+      });
+    });
+
+    describe('and the user clicks directly on the annotation title text', () => {
+      it('then it should navigate, even when the click lands on the heading text', async () => {
+        const { pushSpy } = await setupTestContext();
+
+        // Click the heading element itself (not the row padding) to guard against the
+        // heading swallowing clicks and blocking row navigation.
+        await userEvent.click(await screen.findByText(/result text/i));
+        await waitFor(() => expect(searchMock).toHaveBeenCalledTimes(1));
+
+        expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
+      });
+    });
+
+    describe('and the user clicks a link rendered inside the annotation title', () => {
+      silenceConsoleOutput();
+
+      it('then the link handles its own navigation and the row does not open the annotation', async () => {
+        const { pushSpy, partialSpy } = await setupTestContext({
+          results: [{ ...defaultResult, text: '<a href="/path">embedded link</a>' }],
+        });
+
+        await userEvent.click(await screen.findByRole('link', { name: /embedded link/i }));
+
+        expect(searchMock).not.toHaveBeenCalled();
+        expect(pushSpy).not.toHaveBeenCalled();
+        expect(partialSpy).not.toHaveBeenCalled();
       });
     });
 

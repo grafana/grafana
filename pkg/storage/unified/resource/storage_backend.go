@@ -88,6 +88,7 @@ type kvStorageBackend struct {
 	eventPruningInterval    time.Duration
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
+	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	//reg     prometheus.Registerer
@@ -145,6 +146,16 @@ type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+
+	// KV returns the underlying KV store. Exposed so other subsystems
+	// (e.g. search snapshot storage) can share the same store rather than
+	// opening a second connection.
+	KV() KV
+
+	// LeaseManager returns the lease manager used by this backend, or nil
+	// if leases are disabled. Exposed so other subsystems can share the
+	// same manager and avoid running a second heartbeat loop.
+	LeaseManager() *lease.Manager
 }
 
 type KVBackendOptions struct {
@@ -155,6 +166,9 @@ type KVBackendOptions struct {
 	Reg                  prometheus.Registerer // TODO add metrics
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
+
+	// GCGate defers the start of the GC until released (optional).
+	GCGate *GCGate
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -266,6 +280,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
@@ -470,6 +485,17 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	return nil
 }
 
+// KV returns the KV store backing this storage backend. See KVBackend.KV.
+func (b *kvStorageBackend) KV() KV {
+	return b.kv
+}
+
+// LeaseManager returns the lease manager owned by this backend, or nil
+// if leases are disabled. See KVBackend.LeaseManager.
+func (b *kvStorageBackend) LeaseManager() *lease.Manager {
+	return b.leaseManager
+}
+
 func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	b.log.Info("starting garbage collection loop")
 
@@ -479,6 +505,10 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	}
 
 	go func() {
+		if !b.gcGate.Wait(ctx, ctx.Done()) {
+			return
+		}
+
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
 		select {

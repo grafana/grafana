@@ -18,6 +18,9 @@
     "primary": {
       "main": "#00FFFF"
     },
+    "accent": {
+      "main": "#00FFFF"
+    },
     "secondary": {
       "main": "#0b2e36",
       "text": "rgba(224, 224, 224, 0.75)",

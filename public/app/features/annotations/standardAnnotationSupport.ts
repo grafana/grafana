@@ -57,7 +57,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
  * Flatten all frames into a single frame with mergeTransformer.
  */
 
-export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
+function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
   return (source) =>
     source.pipe(
       mergeMap((data) => {
@@ -146,7 +146,7 @@ export const getAnnotationEventNames: () => AnnotationFieldInfo[] = () => [
   },
 ];
 
-export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+const publicDashboardEventNames: AnnotationFieldInfo[] = [
   {
     key: 'color',
   },

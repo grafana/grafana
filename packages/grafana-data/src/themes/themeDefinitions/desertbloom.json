@@ -35,6 +35,16 @@
       "contrastText": "#4c4339",
       "borderTransparent": "#FFFFFF40"
     },
+    "accent": {
+      "main": "#FF6F61",
+      "text": "#FE6F61",
+      "border": "#E55B4D",
+      "name": "primary",
+      "shade": "#E55B4D",
+      "transparent": "#FF6F6126",
+      "contrastText": "#FFFFFF",
+      "borderTransparent": "#FF6F6140"
+    },
     "info": {
       "main": "#1A82E2"
     },

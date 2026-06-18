@@ -38,7 +38,7 @@ interface State {
   folders?: Array<SelectableValue<string>>;
 }
 
-export class UnthemedQueryEditor extends React.PureComponent<Props, State> {
+class UnthemedQueryEditor extends React.PureComponent<Props, State> {
   state: State = { channels: [], channelFields: {} };
 
   queryTypes: Array<SelectableValue<GrafanaQueryType>> = [

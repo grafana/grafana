@@ -1,90 +1,130 @@
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import { isResourceList } from 'app/features/apiserver/guards';
-import { AnnoKeyUpdatedBy, type ResourceList } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyUpdatedBy,
+  EMPTY_TABLE_RESPONSE,
+  type TableResponse,
+  type TableRow,
+} from 'app/features/apiserver/types';
+import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 import { dispatch } from 'app/types/store';
 
 import { getMessageFromError } from '../../../core/utils/errors';
 
 import { type SearchHit } from './unified';
-import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, resourceToSearchResult } from './utils';
+import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 /**
- * Caches the deleted-dashboards `ResourceList` and the resolved deleter display names.
- * `clear()` invalidates the list but keeps `displayNameCache` — display names are
+ * Caches the deleted-dashboards `TableResponse` and the resolved deleter display names.
+ * `clear()` invalidates the table but keeps `displayNameCache` — display names are
  * identity-scoped, so Restore/Delete actions don't stale them.
  *
- * The `SearchHit[]` projection (`get()`) is computed per call — it's an O(items) loop
- * over the cached `ResourceList` + Map lookups, no network. This lets
+ * The `SearchHit[]` projection (`get()`) is computed per call — it's an O(rows) loop
+ * over the cached `TableResponse` + Map lookups, no network. This lets
  * `DELETED_BY_UNKNOWN` entries self-heal across calls when IAM retries succeed.
  */
 class DeletedDashboardsCache {
-  private resourceListCache: ResourceList<DashboardDataDTO> | null = null;
-  private resourceListPromise: Promise<ResourceList<DashboardDataDTO>> | null = null;
+  private tableCache: TableResponse | null = null;
+  private tablePromise: Promise<TableResponse> | null = null;
   private displayNameCache: Map<string, string> = new Map();
 
   async get(): Promise<SearchHit[]> {
-    const resourceList = await this.getAsResourceList();
+    const table = await this.getAsTable();
     const uids = new Set<string>();
-    for (const item of resourceList.items) {
-      const uid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
+    for (const row of table.rows) {
+      const uid = row.object.metadata.annotations?.[AnnoKeyUpdatedBy];
       if (uid) {
         uids.add(uid);
       }
     }
     const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
-    return resourceToSearchResult(resourceList, deletedByDisplayMap);
+    return tableToSearchResult(table, deletedByDisplayMap);
   }
 
-  async getAsResourceList(): Promise<ResourceList<DashboardDataDTO>> {
-    if (this.resourceListCache !== null) {
-      return this.resourceListCache;
+  async getAsTable(): Promise<TableResponse> {
+    if (this.tableCache !== null) {
+      return this.tableCache;
     }
 
-    if (this.resourceListPromise !== null) {
-      return this.resourceListPromise;
+    if (this.tablePromise !== null) {
+      return this.tablePromise;
     }
 
-    this.resourceListPromise = this.fetchResourceList();
+    this.tablePromise = this.fetchTable();
 
     try {
-      this.resourceListCache = await this.resourceListPromise;
-      return this.resourceListCache;
+      this.tableCache = await this.tablePromise;
+      return this.tableCache;
     } catch (error) {
-      this.resourceListPromise = null;
+      this.tablePromise = null;
       throw error;
     }
   }
 
   clear(): void {
-    this.resourceListCache = null;
-    this.resourceListPromise = null;
+    this.tableCache = null;
+    this.tablePromise = null;
   }
 
-  private async fetchResourceList(): Promise<ResourceList<DashboardDataDTO>> {
+  removeItems(uids: string[]): void {
+    if (!this.tableCache) {
+      return;
+    }
+    const uidSet = new Set(uids);
+    this.tableCache = {
+      ...this.tableCache,
+      rows: this.tableCache.rows.filter((row) => !uidSet.has(row.object.metadata.name)),
+    };
+  }
+
+  private async fetchTable(): Promise<TableResponse> {
     try {
       const api = await getDashboardAPI();
-      const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
+      // The backend may return multiple soft-deleted versions of the same dashboard
+      // after restore+re-delete cycles. Dedup by UID as we page so the limit counts
+      // unique dashboards, keeping the newest resourceVersion per UID.
+      const deduped = new Map<string, TableRow>();
+      let continueToken: string | undefined;
+      let lastResponse: TableResponse | undefined;
 
-      if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-        return deletedResponse;
+      do {
+        const response = await api.listDeletedDashboards({
+          limit: DELETED_DASHBOARDS_LIMIT - deduped.size,
+          continue: continueToken,
+        });
+
+        if (!response.rows) {
+          break;
+        }
+
+        for (const row of response.rows) {
+          const uid = row.object.metadata.name;
+          const existing = deduped.get(uid);
+          if (
+            !existing ||
+            (row.object.metadata.resourceVersion ?? '') > (existing.object.metadata.resourceVersion ?? '')
+          ) {
+            deduped.set(uid, row);
+          }
+        }
+
+        continueToken = response.metadata.continue;
+        lastResponse = response;
+      } while (deduped.size < DELETED_DASHBOARDS_LIMIT && continueToken);
+
+      if (!lastResponse) {
+        return EMPTY_TABLE_RESPONSE;
       }
 
       return {
-        apiVersion: 'v1',
-        kind: 'List',
-        metadata: { resourceVersion: '0' },
-        items: [],
+        ...lastResponse,
+        metadata: { ...lastResponse.metadata, continue: continueToken },
+        rows: Array.from(deduped.values()),
       };
     } catch (error) {
       console.error('Failed to fetch deleted dashboards:', error);
-      return {
-        apiVersion: 'v1',
-        kind: 'List',
-        metadata: { resourceVersion: '0' },
-        items: [],
-      };
+      return EMPTY_TABLE_RESPONSE;
     }
   }
 }
@@ -100,13 +140,14 @@ const IAM_DISPLAY_BATCH_SIZE = 200;
 /**
  * Resolves display names for `uids` in batches of `IAM_DISPLAY_BATCH_SIZE`.
  *
- * Reuses `cache` to skip already-resolved UIDs and re-tries any cached as
- * `DELETED_BY_UNKNOWN`. Newly resolved entries are written back to `cache`.
+ * Entries already present in `cache` are skipped.  Successful lookups are
+ * written into `cache` so that future calls for the same UIDs are free.
  *
- * Returns a map keyed by every UID in `uids`. Each value is one of:
- *   - a real display name (IAM hit)
- *   - `DELETED_BY_REMOVED` (lookup succeeded, no entry — account was deleted)
- *   - `DELETED_BY_UNKNOWN` (batch failed)
+ * **Failed batches**: UIDs belonging to a batch that failed (network / 5xx)
+ * are **not** written into the cache.  The next call to `get()` will retry
+ * them while still reading any previously resolved UIDs from the cache.
+ * This means transient IAM failures are self-healing without needing a full
+ * cache clear.
  */
 export async function resolveDeletedByDisplayMap(
   uids: Set<string>,
@@ -201,4 +242,39 @@ function extractDisplayData(
     return undefined;
   }
   return settled.value.data;
+}
+
+/**
+ * Converts a Table response to SearchHit[] for the deleted dashboards view.
+ * Column indices are resolved by name from `columnDefinitions` — order is not guaranteed
+ * across API versions.
+ */
+function tableToSearchResult(table: TableResponse, deletedByDisplayMap?: Map<string, string>): SearchHit[] {
+  const titleIdx = table.columnDefinitions.findIndex((c) => c.name.toLowerCase() === 'title');
+  const tagsIdx = table.columnDefinitions.findIndex((c) => c.name.toLowerCase() === 'tags');
+
+  return table.rows.map((row) => {
+    const meta = row.object.metadata;
+    const field: Record<string, string | number> = {};
+    if (meta.deletionTimestamp) {
+      field.deletionTimestamp = meta.deletionTimestamp;
+    }
+    const deletedByUid = meta.annotations?.[AnnoKeyUpdatedBy];
+    if (deletedByUid) {
+      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
+    }
+
+    const folder = meta.annotations?.[AnnoKeyFolder] ?? 'general';
+
+    return {
+      resource: 'dashboards',
+      name: meta.name,
+      title: titleIdx >= 0 ? String(row.cells[titleIdx] ?? '') : '',
+      location: folder || 'general',
+      folder: folder || 'general',
+      tags: tagsIdx >= 0 && Array.isArray(row.cells[tagsIdx]) ? row.cells[tagsIdx] : [],
+      field,
+      url: '',
+    };
+  });
 }
