@@ -3,4 +3,3 @@
 # pkg/build/daggerbuild/arguments/catalog_plugins.go.
 elasticsearch
 zipkin
-opentsdb
