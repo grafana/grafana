@@ -12,6 +12,7 @@ import (
 	promModel "github.com/prometheus/common/model"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -19,7 +20,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
-func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
+func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, managerProps map[string]utils.ManagerProperties, namespacer request.NamespaceMapper, accesses map[string]ngmodels.RoutePermissionSet) (*model.RoutingTreeList, error) {
 	result := &model.RoutingTreeList{
 		Items: make([]model.RoutingTree, 0, len(routes)),
 	}
@@ -30,7 +31,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 				access = &a
 			}
 		}
-		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer, access)
+		k8sResource, err := ConvertToK8sResource(orgID, r, managerProps[r.ResourceID()], namespacer, access)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
 		}
@@ -39,7 +40,7 @@ func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, nam
 	return result, nil
 }
 
-func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
+func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, manager utils.ManagerProperties, namespacer request.NamespaceMapper, access *ngmodels.RoutePermissionSet) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupBy,
@@ -81,6 +82,18 @@ func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespace
 		}
 	}
 	result.SetProvenanceStatus(string(r.Provenance))
+
+	// Surface the richer ManagerProperties when present, falling back to deriving them from
+	// provenance so resources without a stored manager (incl. imported ones) are still labelled.
+	if manager.Kind == utils.ManagerKindUnknown {
+		manager = ngmodels.ProvenanceToManagerProperties(r.Provenance)
+	}
+	if manager.Kind != utils.ManagerKindUnknown {
+		if meta, err := utils.MetaAccessor(result); err == nil {
+			meta.SetManagerProperties(manager)
+		}
+	}
+
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result, nil
 }
@@ -157,7 +170,7 @@ func convertRouteToK8sSubRoute(r *v1.Route) model.RoutingTreeRoute {
 	return result
 }
 
-func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, error) {
+func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, utils.ManagerProperties, error) {
 	defaults := obj.Spec.Defaults
 	result := v1.Route{
 		Receiver:   defaults.Receiver,
@@ -166,6 +179,15 @@ func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, error) {
 	}
 	path := "."
 	var errs []error
+
+	// Prefer explicit ManagerProperties annotations (set by app-platform tooling) over the
+	// coarser provenance annotation, so a richer manager kind/identity survives the write.
+	var manager utils.ManagerProperties
+	if meta, err := utils.MetaAccessor(obj); err == nil {
+		if mp, ok := meta.GetManagerProperties(); ok {
+			manager = mp
+		}
+	}
 
 	result.GroupWait = parsePrometheusDuration(defaults.GroupWait, func(err error) {
 		errs = append(errs, fmt.Errorf("obj '%s' has invalid format of 'groupWait': %w", path, err))
@@ -187,10 +209,10 @@ func convertToDomainModel(obj *model.RoutingTree) (v1.Route, string, error) {
 		}
 	}
 	if len(errs) > 0 {
-		return v1.Route{}, "", errors.Join(errs...)
+		return v1.Route{}, "", utils.ManagerProperties{}, errors.Join(errs...)
 	}
 	result.Provenance = ""
-	return result, obj.ResourceVersion, nil
+	return result, obj.ResourceVersion, manager, nil
 }
 
 func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (v1.Route, []error) {

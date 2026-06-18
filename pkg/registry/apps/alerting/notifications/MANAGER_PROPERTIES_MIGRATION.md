@@ -16,7 +16,7 @@ Resources in scope (all under `pkg/registry/apps/alerting/notifications/`):
 - [ ] `receiver` (contact points) — `ReceiverService`
 - [x] `templategroup` (templates) — `TemplateService`  ← **done**
 - [x] `timeinterval` (mute timings) — `MuteTimingService`  ← **reference (done)**
-- [ ] `routingtree` (notification policies) — `NotificationPolicyService`
+- [x] `routingtree` (notification policies) — `routes.Service`  ← **done**
 - [ ] `inhibitionrule` — alertmanager-config backed
 
 > **Done so far:** the shared `GetManagerPropertiesByType` store primitive (+ interface/mock/fake)

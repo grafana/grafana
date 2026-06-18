@@ -12,6 +12,7 @@ import (
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	alerting_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,9 +27,10 @@ var (
 type RouteService interface {
 	GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error)
 	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
+	GetManagerProperties(ctx context.Context, orgID int64) (map[string]utils.ManagerProperties, error)
 	DeleteManagedRoute(ctx context.Context, orgID int64, name string, p alerting_models.Provenance, version string, user identity.Requester) error
-	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error)
-	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
+	CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, manager utils.ManagerProperties, user identity.Requester) (*legacy_storage.ManagedRoute, error)
+	UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p alerting_models.Provenance, manager utils.ManagerProperties, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error)
 }
 
 type MetadataService interface {
@@ -84,7 +86,11 @@ func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions
 	if err != nil {
 		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
 	}
-	return ConvertToK8sResources(orgId, managedRoutes, s.namespacer, set)
+	managerProps, err := s.service.GetManagerProperties(ctx, orgId)
+	if err != nil {
+		return nil, err
+	}
+	return ConvertToK8sResources(orgId, managedRoutes, managerProps, s.namespacer, set)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -110,7 +116,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 	if a, ok := accesses[managedRoute.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, &managedRoute, s.namespacer, access)
+	managerProps, err := s.service.GetManagerProperties(ctx, info.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	return ConvertToK8sResource(info.OrgID, &managedRoute, managerProps[managedRoute.ResourceID()], s.namespacer, access)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -136,7 +146,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	domainModel, _, err := convertToDomainModel(p)
+	domainModel, _, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +154,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, user)
+	created, err := s.service.CreateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, manager, user)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +167,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if a, ok := accesses[created.GetUID()]; ok {
 		access = &a
 	}
-	return ConvertToK8sResource(info.OrgID, created, s.namespacer, access)
+	return ConvertToK8sResource(info.OrgID, created, manager, s.namespacer, access)
 }
 
 func (s *legacyStorage) Update(
@@ -197,7 +207,7 @@ func (s *legacyStorage) Update(
 		return nil, false, err
 	}
 
-	domainModel, version, err := convertToDomainModel(p)
+	domainModel, version, manager, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, false, err
 	}
@@ -205,7 +215,7 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, version, user)
+	updated, err := s.service.UpdateManagedRoute(ctx, info.OrgID, p.Name, domainModel, prov, manager, version, user)
 	if err != nil {
 		return nil, false, err
 	}
@@ -218,7 +228,7 @@ func (s *legacyStorage) Update(
 	if a, ok := accesses[updated.GetUID()]; ok {
 		access = &a
 	}
-	obj, err = ConvertToK8sResource(info.OrgID, updated, s.namespacer, access)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, manager, s.namespacer, access)
 	return obj, false, err
 }
 

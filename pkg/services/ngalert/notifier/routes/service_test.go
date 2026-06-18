@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -364,7 +365,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, utils.ManagerProperties{}, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
@@ -385,7 +386,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, utils.ManagerProperties{}, user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
 	})
@@ -401,7 +402,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, utils.ManagerProperties{}, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }

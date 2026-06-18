@@ -774,7 +774,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
-	v1intervals, err := timeinterval.ConvertToK8sResources(orgID, mtis, func(int64) string { return "default" }, nil)
+	v1intervals, err := timeinterval.ConvertToK8sResources(orgID, mtis, nil, func(int64) string { return "default" }, nil)
 	require.NoError(t, err)
 	for _, interval := range v1intervals.Items {
 		_, err := adminClient.Create(ctx, &interval, resource.CreateOptions{})

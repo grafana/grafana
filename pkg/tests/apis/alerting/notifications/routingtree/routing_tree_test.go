@@ -28,6 +28,7 @@ import (
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -573,7 +574,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 		managedRoute := legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, utils.ManagerProperties{}, func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -1545,7 +1546,7 @@ func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree 
 	allPermissions.Set(models.RoutePermissionWrite, true)
 	allPermissions.Set(models.RoutePermissionDelete, true)
 	allPermissions.Set(models.RoutePermissionAdmin, true)
-	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, utils.ManagerProperties{}, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
 		Kind:       v1beta1.RoutingTreeKind().Kind(),

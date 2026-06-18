@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -23,6 +24,9 @@ type routeProvenanceStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 	SetProvenance(ctx context.Context, o models.Provisionable, org int64, p models.Provenance) error
 	DeleteProvenance(ctx context.Context, o models.Provisionable, org int64) error
+	GetManagerProperties(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
+	GetManagerPropertiesByType(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
+	SetManagerProperties(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
 }
 
 type transactionManager interface {
@@ -208,7 +212,24 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+// persistManagerOrProvenance stores the full ManagerProperties when manager carries a rich kind
+// (so app-platform managers such as Terraform are preserved losslessly) in the caller's transaction,
+// otherwise it falls back to the legacy provenance write. Exactly one store setter runs per write,
+// and the store keeps the provenance and manager_kind columns consistent, so the views can't diverge.
+func (nps *Service) persistManagerOrProvenance(ctx context.Context, o models.Provisionable, orgID int64, provenance models.Provenance, manager utils.ManagerProperties) error {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return nps.provenanceStore.SetManagerProperties(ctx, o, orgID, manager)
+	}
+	return nps.provenanceStore.SetProvenance(ctx, o, orgID, provenance)
+}
+
+// GetManagerProperties returns ManagerProperties for all managed routes in the org, keyed by
+// resource ID, so the app-platform layer can surface the richer manager kind/identity.
+func (nps *Service) GetManagerProperties(ctx context.Context, orgID int64) (map[string]utils.ManagerProperties, error) {
+	return nps.provenanceStore.GetManagerPropertiesByType(ctx, orgID, (&legacy_storage.ManagedRoute{}).ResourceType())
+}
+
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, manager utils.ManagerProperties, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -276,7 +297,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, updated, orgID, p)
+		return nps.persistManagerOrProvenance(ctx, updated, orgID, p, manager)
 	})
 	if err != nil {
 		return nil, err
@@ -378,7 +399,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree v1.Route, p models.Provenance, manager utils.ManagerProperties, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -429,7 +450,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.routeAccess.SetDefaultPermissions(ctx, user, created); err != nil {
 			return err
 		}
-		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)
+		return nps.persistManagerOrProvenance(ctx, created, orgID, p, manager)
 	})
 	if err != nil {
 		return nil, err

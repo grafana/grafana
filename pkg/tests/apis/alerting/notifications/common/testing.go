@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -72,7 +73,7 @@ func UpdateDefaultRoute(t *testing.T, user apis.User, r *definitions.Route) {
 	require.NoError(t, err)
 	route := legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, v1.RouteToModel(r))
 	route.Version = "" // Avoid version conflict.
-	v1route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), route, func(int64) string { return apis.DefaultNamespace }, nil)
+	v1route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), route, utils.ManagerProperties{}, func(int64) string { return apis.DefaultNamespace }, nil)
 	require.NoError(t, err)
 	_, err = routeClient.Update(context.Background(), v1route, resource.UpdateOptions{})
 	require.NoError(t, err)
