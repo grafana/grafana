@@ -106,7 +106,7 @@ These options allow you to limit alerts shown to only those that match the query
 | Alert name | Filter alerts by name. |
 | Alert instance label | Filter alert instances using [label](ref:alert-label) querying. For example,`{severity="critical", instance=~"cluster-us-.+"}`. |
 | Datasource | Filter alerts from the selected data source. |
-| Folder | Filter Grafana-managed alert rules by alert rule folder. This option is available only when **Datasource** is empty or **Grafana**. It doesn't filter by dashboard folder. |
+| Folder | Filter Grafana-managed alert rules by alert rule folder. This option is available only when **Datasource** is empty or set to **Grafana**. It doesn't filter by dashboard folder. |
 | Show alerts with 0 instances | Filter for alert rules with no instances. Alert rules with 0 (zero) instances are hidden by default. You can choose to show them by toggling this switch. Because these rules have no instances, they remain hidden if the **Alert instance label** filter is configured. |
 
 ### Alert state filter options
