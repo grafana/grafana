@@ -12,7 +12,7 @@ import (
 const LabelKeyLegacyID = "grafana.app/legacyID"
 
 // AnnotationKeyLegacyData is an annotation key used to store raw JSON
-// associated with a legacy annotation data on the Kubernetes object.
+// associated with legacy annotation data on the Kubernetes object.
 const AnnotationKeyLegacyData = "grafana.app/legacyData"
 
 // getLegacyID reads the legacy numeric ID from the object's labels.
