@@ -39,6 +39,11 @@ interface MigrateDrawerProps {
  */
 export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resources, selection }: MigrateDrawerProps) {
   const isSelective = selective;
+  // In selective mode there must be at least one dashboard ref to send.
+  // Otherwise `startJob(true, { resources: [] })` collapses to migrate-everything
+  // server-side, which would contradict the user's selection — so guard against
+  // it here in the drawer too, not just in the caller.
+  const hasResourcesToMigrate = !isSelective || (resources?.length ?? 0) > 0;
 
   const repoOptions = useMemo<Array<ComboboxOption<string>>>(
     () =>
@@ -69,7 +74,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
   const blockedByWorkflow = Boolean(selectedRepo) && !canPushToConfiguredBranch;
 
   const startMigration = async () => {
-    if (!selectedRepo) {
+    if (!selectedRepo || !hasResourcesToMigrate) {
       return;
     }
     await startJob(true, isSelective ? { resources } : undefined);
@@ -166,7 +171,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           </Button>
           <Button
             variant="primary"
-            disabled={!selectedRepo || isLoading || blockedByWorkflow}
+            disabled={!selectedRepo || isLoading || blockedByWorkflow || !hasResourcesToMigrate}
             onClick={startMigration}
             tooltip={
               !selectedRepo
@@ -176,7 +181,9 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
                       'provisioning.migrate.migrate-button-blocked-tooltip',
                       'This repository can’t push to its configured branch'
                     )
-                  : undefined
+                  : !hasResourcesToMigrate
+                    ? t('provisioning.migrate.migrate-button-empty-tooltip', 'Select at least one resource to migrate')
+                    : undefined
             }
           >
             {isSelective ? (

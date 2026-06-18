@@ -9,8 +9,9 @@ import { extractManagerKind, queryResultToViewItem } from 'app/features/search/s
 const PAGE_SIZE = 200;
 // Safety guardrail so a pathological response (or an enormous instance) can't
 // spin off unbounded requests. Generous on purpose — well past any realistic
-// folder/dashboard count — so it never truncates normal instances; the proper
-// fix is the backend roll-up the hook's JSDoc points at.
+// folder/dashboard count. Exceeding it throws (rather than returning a
+// truncated list) so the page fails loudly; the proper fix is the backend
+// roll-up the hook's JSDoc points at.
 const MAX_PAGES = 200;
 
 interface FolderPeekDashboard {
@@ -82,7 +83,14 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
   const first = await searchPage(0);
   const firstItems: DashboardQueryResult[] = first.view.toArray();
   const total = typeof first.totalRows === 'number' ? first.totalRows : firstItems.length;
-  const pageCount = Math.min(Math.max(1, Math.ceil(total / PAGE_SIZE)), MAX_PAGES);
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Fail loudly rather than silently truncating: a partial list would drop rows
+  // from the table and, worse, from the selective-migration payload. The error
+  // surfaces the migrate-everything fallback, which doesn't need the full list.
+  if (pageCount > MAX_PAGES) {
+    throw new Error(`Too many ${kind}s to enumerate (${total}); aborting to avoid an incomplete migration list.`);
+  }
 
   if (pageCount <= 1) {
     return firstItems;

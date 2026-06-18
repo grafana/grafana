@@ -163,6 +163,21 @@ describe('useFolderMigrationData', () => {
     expect(result.current.data).toHaveLength(201);
   });
 
+  it('fails loudly instead of truncating when results exceed the page cap', async () => {
+    // Report far more rows than the hook can page through; it should error
+    // rather than return a silently truncated (incomplete) list.
+    server.use(
+      http.get(searchRoute, () =>
+        HttpResponse.json({ totalHits: 999999, hits: [{ resource: 'folders', name: 'f', title: 'f', folder: '' }] })
+      )
+    );
+
+    const { result } = renderHook(() => useFolderMigrationData());
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isError).toBe(true);
+  });
+
   it('sets isError when the search request fails', async () => {
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 

@@ -13468,6 +13468,7 @@
       "migrate-button": "Migrate everything",
       "migrate-button-blocked-tooltip": "This repository can’t push to its configured branch",
       "migrate-button-disabled-tooltip": "Select a target repository first",
+      "migrate-button-empty-tooltip": "Select at least one resource to migrate",
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",

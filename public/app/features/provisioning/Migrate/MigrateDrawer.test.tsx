@@ -149,6 +149,21 @@ describe('MigrateDrawer', () => {
       expect(screen.getByText(/2 selected resources/i)).toBeInTheDocument();
     });
 
+    it('disables migration in selective mode when there are no resources to send', async () => {
+      // Guards against a selective click collapsing to migrate-everything.
+      render(
+        <MigrateDrawer
+          selective
+          repos={[makeRepo('repo-1', 'My only repo')]}
+          resources={[]}
+          selection={{ folders: 0, dashboards: 0 }}
+          onDismiss={jest.fn()}
+        />
+      );
+
+      expect(await screen.findByRole('button', { name: /migrate selected/i })).toHaveAttribute('aria-disabled', 'true');
+    });
+
     it('runs a migrate job scoped to the selected dashboard resources', async () => {
       let postedBody = '';
       server.use(
