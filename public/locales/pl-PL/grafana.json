@@ -4326,6 +4326,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Błąd podczas usuwania zasobów",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_few": "",
       "folder-empty_many": "",
@@ -4352,6 +4353,7 @@
       "error-no-target-folder-path": "Ścieżka do folderu docelowego jest nieprawidłowa lub pusta. Wybierz ponownie.",
       "move-warning": "Spowoduje to przeniesienie wybranych folderów i ich elementów podrzędnych. Dostępne foldery docelowe zależą od wybranych zasobów.",
       "move-warning-tooltip": "Zasoby aprowizowane możesz przenosić tylko w ramach ich aprowizowanego folderu, a zasoby lokalne – do folderów lokalnych.",
+      "success-title": "",
       "target-folder": "Folder docelowy",
       "folder-not-empty_one": "",
       "folder-not-empty_few": "",
@@ -6280,7 +6282,17 @@
       "snapshot": {
         "tooltip": "Otwórz oryginalny pulpit"
       },
-      "undo": "Cofnij"
+      "undo": "Cofnij",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Źródło ({{provider}})",
@@ -6539,6 +6551,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -10780,10 +10793,34 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_few": "",
+      "critical-count_many": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_few": "",
+      "high-count_many": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10798,6 +10835,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10805,15 +10847,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -13183,6 +13223,9 @@
       "label-name-template": "",
       "placeholder-name-template": ""
     },
+    "bulk-action": {
+      "success-title-branch": ""
+    },
     "cloud-info-box": {
       "body": "Pomiń konfigurację i wybierz w pełni zarządzaną synchronizację z serwisem Git hostowanym przez Grafana Cloud w ramach <2>planu Grafana Cloud, który będzie zawsze bezpłatny</2>.",
       "title": "Możesz również korzystać z synchronizacji z Git w usłudze Grafana Cloud"
@@ -13576,9 +13619,26 @@
       "truncated": "Wiadomość obcięta"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Nie udało się zweryfikować, czy ten folder zawiera plik metadanych. Spróbuj ponownie później.",
@@ -14238,9 +14298,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",

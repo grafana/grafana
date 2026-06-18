@@ -474,7 +474,7 @@ func TestSyncExternalAMs_IdentifierMismatchClassifiedOnMetric(t *testing.T) {
 	_, err := moa.SaveAndApplyExtraConfiguration(seedCtx, 1, seedUser, syncBypassAuthz{}, v1.ExtraConfiguration{
 		Identifier:         "existing-uid",
 		AlertmanagerConfig: amConfig,
-	}, false, false)
+	}, false, false, false)
 	require.NoError(t, err)
 	rowsBefore := len(cs.historicConfigs[1])
 
