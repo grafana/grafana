@@ -2443,6 +2443,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.newPanelQueryErrorsUI",
+        "resourceVersion": "1781775898347",
+        "creationTimestamp": "2026-06-18T09:44:58Z"
+      },
+      "spec": {
+        "description": "Enables a new UI for query errors and notices",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
