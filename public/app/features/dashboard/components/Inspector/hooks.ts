@@ -23,9 +23,7 @@ export async function getDataSourceWithInspector(data?: PanelData): Promise<Data
  * Returns the data source when it implements an ErrorsAndNoticesInspector and the response
  * actually has errors or result notices to show.
  */
-export async function getDataSourceWithErrorsAndNoticesInspector(
-  data?: PanelData
-): Promise<DataSourceApi | undefined> {
+export async function getDataSourceWithErrorsAndNoticesInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
   const targets = data?.request?.targets || [];
 
   if (!data || !targets.length) {
