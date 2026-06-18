@@ -53,18 +53,28 @@ func (v *ReferencedByRepositoriesValidator) Validate(ctx context.Context, a admi
 		return fmt.Errorf("failed to check for referencing repositories: %w", err)
 	}
 
-	if len(repos) > 0 {
-		repoNames := make([]string, len(repos))
-		for i, repo := range repos {
-			repoNames[i] = repo.GetName()
+	// Only repositories that are not themselves being deleted block the connection
+	// delete. Repository deletion is asynchronous (finalizer-driven): a repository
+	// keeps appearing in this listing, with its DeletionTimestamp set, until its
+	// finalizers complete. Counting such a terminating repository would reject the
+	// connection delete during that eventual-consistency window — e.g. when a client
+	// deletes a repository and the connection it references back-to-back — even
+	// though the reference is already on its way out.
+	var blockingNames []string
+	for _, repo := range repos {
+		if repo.GetDeletionTimestamp() != nil {
+			continue
 		}
+		blockingNames = append(blockingNames, repo.GetName())
+	}
 
+	if len(blockingNames) > 0 {
 		return apierrors.NewInvalid(
 			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
 			connectionName,
 			field.ErrorList{field.Forbidden(
 				field.NewPath("metadata", "name"),
-				fmt.Sprintf("cannot delete connection: referenced by %d repository(s): %v", len(repos), repoNames),
+				fmt.Sprintf("cannot delete connection: referenced by %d repository(s): %v", len(blockingNames), blockingNames),
 			)},
 		)
 	}
