@@ -16,7 +16,6 @@ import { constructDataSourceExploreUrl } from '../utils';
 import {
   initDataSourceSettings,
   testDataSource,
-  loadDataSource,
   loadDataSources,
   loadDataSourcePlugins,
   addDataSource,
@@ -58,14 +57,6 @@ export const useLoadDataSources = () => {
   }, [dispatch]);
 
   return { isLoading, dataSources };
-};
-
-export const useLoadDataSource = (uid: string) => {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(loadDataSource(uid));
-  }, [dispatch, uid]);
 };
 
 export const useLoadDataSourcePlugins = () => {

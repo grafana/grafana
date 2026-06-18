@@ -6,13 +6,7 @@
  * and inferred from Zod schemas.
  */
 
-import type {
-  AnnotationQueryKind,
-  AutoGridLayoutItemKind,
-  Element,
-  GridLayoutItemKind,
-  VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import type { AutoGridLayoutItemKind, Element, GridLayoutItemKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
 export interface MutationRequest {
   type: string;
@@ -27,7 +21,7 @@ export interface MutationResult {
   data?: unknown;
 }
 
-export interface MutationChange {
+interface MutationChange {
   path: string;
   previousValue: unknown;
   newValue: unknown;
@@ -38,7 +32,7 @@ export interface MutationClient {
   getAvailableCommands(): string[];
 }
 
-export type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
+type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
 
 export interface PanelElementEntry {
   element: Element;
@@ -47,12 +41,4 @@ export interface PanelElementEntry {
 
 export interface PanelElementsData {
   elements: PanelElementEntry[];
-}
-
-export interface ListVariablesData {
-  variables: VariableKind[];
-}
-
-export interface ListAnnotationsData {
-  annotations: AnnotationQueryKind[];
 }

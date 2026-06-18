@@ -102,9 +102,24 @@ describe('SidebarFooter', () => {
       expect(screen.getByRole('button', { name: /select multiple items/i })).toHaveTextContent('Select...');
     });
 
+    it('drops the select button label but keeps its accessible name when the counts row overflows', () => {
+      // jsdom does no layout; drive the overflow measurement via the prototype getters.
+      jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(150);
+      jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(100);
+
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      const selectButton = screen.getByRole('button', { name: /select multiple items/i });
+      expect(selectButton).not.toHaveTextContent('Select...');
+
+      jest.restoreAllMocks();
+    });
+
     it('should enable multi-select mode and track when select is clicked', async () => {
       const setMultiSelectMode = jest.fn();
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
       const { user } = renderWithQueryEditorProvider(<SidebarFooter />, {
+        queries,
         uiStateOverrides: { setMultiSelectMode },
       });
 
@@ -112,8 +127,22 @@ describe('SidebarFooter', () => {
 
       expect(setMultiSelectMode).toHaveBeenCalledWith(true);
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_panel_edit_next_interaction', {
-        action: 'click_multi_select',
+        action: 'toggle_multi_select',
+        direction: 'enter',
       });
+    });
+
+    it('should disable the select button when there are no items', () => {
+      renderWithQueryEditorProvider(<SidebarFooter />);
+
+      expect(screen.getByRole('button', { name: /select multiple items/i })).toBeDisabled();
+    });
+
+    it('should enable the select button when there is at least one item', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      renderWithQueryEditorProvider(<SidebarFooter />, { queries });
+
+      expect(screen.getByRole('button', { name: /select multiple items/i })).toBeEnabled();
     });
   });
 
@@ -127,15 +156,16 @@ describe('SidebarFooter', () => {
       { transformId: 'tx-1', registryItem: undefined, transformConfig: { id: 'reduce', options: {} } },
     ];
 
-    it('does not render the bar in the footer when multi-select mode is on but nothing is selected', () => {
-      // Multi-select mode without any actionable selection is a degenerate
-      // state — the bar deliberately stays hidden.
+    it('keeps the bar in the footer when multi-select mode is on but nothing is selected', () => {
+      // An empty selection is a valid multi-select state: the bar stays mounted so the user can
+      // always exit the mode, even after unchecking every card.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
         uiStateOverrides: { selectedQueryRefIds: [], multiSelectMode: true },
       });
 
-      expect(screen.queryByRole('toolbar', { name: /bulk actions/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /exit multi-select/i })).toBeInTheDocument();
     });
 
     it('does not render the bar in the footer when multi-select mode is off and nothing is selected', () => {
@@ -156,18 +186,20 @@ describe('SidebarFooter', () => {
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
     });
 
-    it('does not keep the count layout in the DOM while the bar is shown (a11y)', () => {
-      // The bar and the counts render mutually exclusively so the obscured
-      // Select… button and item-count text aren't left in the tab order /
-      // screen-reader sequence.
+    it('hides the count layout from the a11y tree while the bar is shown (a11y)', () => {
+      // The counts stay mounted underneath the bar but are marked inert +
+      // aria-hidden, so the obscured Select… button and item-count text are kept
+      // out of the tab order / screen-reader sequence.
       renderWithQueryEditorProvider(<SidebarFooter />, {
         queries,
         uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], multiSelectMode: true },
       });
 
       expect(screen.getByRole('toolbar', { name: /bulk actions/i })).toBeInTheDocument();
+      // Role queries respect the a11y tree, so the obscured control resolves as absent.
       expect(screen.queryByRole('button', { name: /select multiple items/i })).not.toBeInTheDocument();
-      expect(screen.queryByText('2 items')).not.toBeInTheDocument();
+      // The count text is still in the DOM, but inside the aria-hidden counts layer.
+      expect(screen.getByText('2 items').closest('[aria-hidden="true"]')).toBeInTheDocument();
     });
 
     it('does not render the bar when items are selected but multi-select mode is off', () => {

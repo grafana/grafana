@@ -19,8 +19,6 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the created by me search filter on the browse dashboards page */
-  CreatedByMeSearchFilter: "createdByMeSearchFilter",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -55,6 +53,10 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the sidebar pane with new toggles and options in panel view mode */
+  GrafanaViewPanelPane: "grafana.viewPanelPane",
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -132,17 +134,6 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
-};
-
-/**
- * Enables the created by me search filter on the browse dashboards page
- *
- * **Details:**
- * - flag key: `createdByMeSearchFilter`
- * - default value: `false`
- */
-export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("createdByMeSearchFilter", false, options).value;
 };
 
 /**
@@ -333,6 +324,28 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables the sidebar pane with new toggles and options in panel view mode
+ *
+ * **Details:**
+ * - flag key: `grafana.viewPanelPane`
+ * - default value: `false`
+ */
+export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.viewPanelPane", false, options).value;
+};
+
+/**
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
+};
+
+/**
  * Enables an inline version of Log Details that creates no new scrolls
  *
  * **Details:**
@@ -370,10 +383,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newLogContext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", false, options).value;
+  return useFlag("newLogContext", true, options).value;
 };
 
 /**
@@ -458,10 +471,10 @@ export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationO
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**

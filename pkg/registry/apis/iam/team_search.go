@@ -314,6 +314,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EMAIL,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
+			teamsearch.LegacyIDField,
 		},
 	}
 

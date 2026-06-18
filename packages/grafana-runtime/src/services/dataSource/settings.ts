@@ -6,12 +6,13 @@ import {
   matchPluginId,
 } from '@grafana/data';
 
-import { ExpressionDatasourceRef, isExpressionReference } from '../../utils/DataSourceWithBackend';
-import { getCachedPromise } from '../../utils/getCachedPromise';
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
 import { getBackendSrv } from '../backendSrv';
-import { type GetDataSourceListFilters } from '../dataSourceSrv';
+import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { clearPluginCache } from './pluginCache';
 
 let byName: Record<string, DataSourceInstanceSettings> = {};
@@ -70,12 +71,46 @@ async function fetchAndPopulate(): Promise<void> {
   defaultName = settings.defaultDatasource;
 }
 
-export async function reloadDataSourceInstanceSettings(): Promise<void> {
+async function performReload(): Promise<void> {
+  const srv = getDataSourceSrv();
+  if (srv) {
+    await srv.reload();
+    return;
+  }
   clearPluginCache();
-  await getCachedPromise(fetchAndPopulate, {
-    cacheKey: RELOAD_CACHE_KEY,
-    invalidate: true,
-  });
+  await fetchAndPopulate();
+}
+
+export async function reloadDataSourceInstanceSettings(): Promise<void> {
+  // Coalesce concurrent reloads into a single in-flight request via the shared promise
+  // cache, then invalidate so a later call refetches rather than returning a stale result.
+  try {
+    await getCachedPromise(performReload, { cacheKey: RELOAD_CACHE_KEY });
+  } finally {
+    invalidateCachedPromise(RELOAD_CACHE_KEY);
+  }
+}
+
+interface SyncDataSourceSettings {
+  datasources: Record<string, DataSourceInstanceSettings>;
+  defaultDatasource: string;
+}
+
+/**
+ * Sync the instance-settings cache from an already-fetched `/api/frontend/settings`
+ * payload, without issuing another backend request. Built-in (e.g. expression) and
+ * runtime data sources survive because `populateMaps` re-applies them.
+ *
+ * Transition-period helper: while both the legacy `DataSourceSrv` and the new async
+ * datasource APIs exist, `DataSourceSrv.reload()` calls this so a single fetch updates
+ * both caches. Remove once `DataSourceSrv` is gone.
+ *
+ * @internal
+ */
+export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
+  clearPluginCache();
+  populateMaps(settings.datasources);
+  defaultName = settings.defaultDatasource;
 }
 
 /**
@@ -124,7 +159,7 @@ function lookupFromMaps(
   scopedVars: ScopedVars | undefined
 ): DataSourceInstanceSettings | undefined {
   if (isExpressionReference(ref)) {
-    return byUid[ExpressionDatasourceRef.uid];
+    return getExpressionDataSourceSettings();
   }
 
   const nameOrUid = getNameOrUid(ref);
@@ -302,4 +337,5 @@ export function _resetForTests(): void {
   byId = {};
   runtimeByUid = {};
   defaultName = '';
+  resetExpressionDs();
 }

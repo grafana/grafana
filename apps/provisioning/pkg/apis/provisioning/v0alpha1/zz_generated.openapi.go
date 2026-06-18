@@ -26,6 +26,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionSecure{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		ConnectionSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
 		ConnectionStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
+		ConnectionWebhookConfig{}.OpenAPIModelName():          schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
 		DeleteJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
 		ErrorDetails{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
 		ExportJobOptions{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
@@ -226,8 +227,37 @@ func schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref common.ReferenceCal
 					},
 					"enforceTemplate": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting.",
+							Description: "When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only.",
 							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"signerName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to \"Grafana\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signerEmail": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to \"noreply@grafana.com\".",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"signingMethod": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Method used to sign commits with the key in secure.commitSigningKey. One of \"gpg\", \"ssh\", or \"smime\". When empty, commits are not signed.\n\nPossible enum values:\n - `\"gpg\"`\n - `\"smime\"`\n - `\"ssh\"`",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"gpg", "smime", "ssh"},
+						},
+					},
+					"smimeCertificate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is \"smime\". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats.",
+							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
@@ -459,12 +489,18 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(GitlabConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Webhook configuration for this connection",
+							Ref:         ref(ConnectionWebhookConfig{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"title", "type"},
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -539,6 +575,25 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 		},
 		Dependencies: []string{
 			ErrorDetails{}.OpenAPIModelName(), HealthStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.Condition"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -3277,6 +3332,13 @@ func schema_pkg_apis_provisioning_v0alpha1_SecureValues(ref common.ReferenceCall
 							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
 						},
 					},
+					"commitSigningKey": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(commonv0alpha1.InlineSecureValue{}.OpenAPIModelName()),
+						},
+					},
 				},
 			},
 		},
@@ -3558,6 +3620,13 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
 							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"disabled": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+							Type:        []string{"boolean"},
 							Format:      "",
 						},
 					},

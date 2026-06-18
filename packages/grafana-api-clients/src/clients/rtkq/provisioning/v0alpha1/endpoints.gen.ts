@@ -1476,6 +1476,10 @@ export type GitlabConnectionConfig = {
   /** App client ID */
   clientID: string;
 };
+export type ConnectionWebhookConfig = {
+  /** Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
+};
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
@@ -1499,6 +1503,8 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'githubEnterprise' | 'gitlab';
   /** The connection URL */
   url?: string;
+  /** Webhook configuration for this connection */
+  webhook?: ConnectionWebhookConfig;
 };
 export type Condition = {
   /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
@@ -1791,6 +1797,8 @@ export type JobList = {
   metadata?: ListMeta;
 };
 export type SecureValues = {
+  /** Private key used to sign commits the repository writes back. The format is selected by spec.commit.signingMethod. When unset, commits are unsigned. */
+  commitSigningKey?: InlineSecureValue;
   /** Token used to connect the configured repository */
   token?: InlineSecureValue;
   /** Some webhooks (including github) require a secret key value */
@@ -1815,10 +1823,23 @@ export type BranchOptions = {
   nameTemplate?: string;
 };
 export type CommitOptions = {
-  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. The Grafana-saved-by trailer is always appended regardless of this setting. */
+  /** When true, the Comment field in Save drawers is pre-filled from SingleResourceMessageTemplate and rendered read-only. */
   enforceTemplate?: boolean;
+  /** Email used as the commit signer. Must match the signing key's identity and a verified email on the account where the matching public key is registered. When empty, defaults to "noreply@grafana.com". */
+  signerEmail?: string;
+  /** Name used as the commit signer. Required for the signing key's identity to match the commit, which providers need to mark commits as Verified. When empty, defaults to "Grafana". */
+  signerName?: string;
+  /** Method used to sign commits with the key in secure.commitSigningKey. One of "gpg", "ssh", or "smime". When empty, commits are not signed.
+    
+    Possible enum values:
+     - `"gpg"`
+     - `"smime"`
+     - `"ssh"` */
+  signingMethod?: 'gpg' | 'smime' | 'ssh';
   /** Template for commit messages produced by single-resource UI operations (dashboard save/delete/move, folder create/rename/delete). Bulk operations and sync jobs are out of scope and build their own messages. Supports variables: {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}, {{userName}}, {{userLogin}}, {{userEmail}}. When empty, a built-in default is used (e.g. "Save dashboard: <title>"). */
   singleResourceMessageTemplate?: string;
+  /** PEM-encoded X.509 certificate paired with secure.commitSigningKey when signingMethod is "smime". This is public (not a secret) and is embedded in the commit signature. Unused for the gpg and ssh formats. */
+  smimeCertificate?: string;
 };
 export type ConnectionInfo = {
   name: string;
@@ -1894,6 +1915,8 @@ export type SyncOptions = {
 export type WebhookConfig = {
   /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
   baseUrl?: string;
+  /** Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet. */
+  disabled?: boolean;
 };
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */

@@ -165,6 +165,14 @@ type RepositoryWithURLs interface {
 	RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error)
 }
 
+// WebhookRepository is implemented by repositories that can receive and handle
+// incoming webhook requests from their git provider.
+type WebhookRepository interface {
+	Repository
+
+	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
+}
+
 // Hooks called after the repository has been created, updated or deleted
 type Hooks interface {
 	Repository

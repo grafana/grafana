@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import { isEmpty, pick } from 'lodash';
 
 import {
@@ -20,8 +19,6 @@ import {
   type AlertmanagerAlert,
   type AlertmanagerGroup,
   type AlertmanagerStatus,
-  type GrafanaManagedReceiverConfig,
-  MatcherOperator,
   type Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -353,10 +350,10 @@ export const mockSilence = (partial: Partial<Silence> = {}): Silence => {
 
 export const MOCK_SILENCE_ID_EXISTING = 'f209e273-0e4e-434f-9f66-e72f092025a2';
 export const MOCK_SILENCE_ID_EXISTING_ALERT_RULE_UID = '5f7d08cd-ac62-432e-8449-8c20c95c19b6';
-export const MOCK_SILENCE_ID_EXPIRED = '145884a8-ee20-4864-9f84-661305fb7d82';
+const MOCK_SILENCE_ID_EXPIRED = '145884a8-ee20-4864-9f84-661305fb7d82';
 export const MOCK_SILENCE_ID_LACKING_PERMISSIONS = '31063317-f0d2-4d98-baf3-ec9febc1fa83';
-export const MOCK_SILENCE_ID_DANGLING_ALERT_RULE = '8d2c3d6a-3e2c-4d44-9b8e-5e5fa3ab2f9c';
-export const MOCK_DANGLING_ALERT_RULE_UID = 'deleted-rule-uid-0001';
+const MOCK_SILENCE_ID_DANGLING_ALERT_RULE = '8d2c3d6a-3e2c-4d44-9b8e-5e5fa3ab2f9c';
+const MOCK_DANGLING_ALERT_RULE_UID = 'deleted-rule-uid-0001';
 
 export const mockSilences = [
   mockSilence({ id: MOCK_SILENCE_ID_EXISTING, comment: 'Happy path silence' }),
@@ -395,7 +392,7 @@ export const mockSilences = [
   }),
 ];
 
-export const mockNotifiersState = (partial: Partial<NotifiersState> = {}): NotifiersState => {
+const mockNotifiersState = (partial: Partial<NotifiersState> = {}): NotifiersState => {
   return {
     email: [
       {
@@ -418,46 +415,6 @@ export const mockReceiversState = (partial: Partial<ReceiversState> = {}): Recei
     },
     ...partial,
   };
-};
-
-export const mockGrafanaReceiver = (
-  type: string,
-  overrides: Partial<GrafanaManagedReceiverConfig> = {}
-): GrafanaManagedReceiverConfig => ({
-  type: type,
-  name: type,
-  disableResolveMessage: false,
-  settings: {},
-  ...overrides,
-});
-
-export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
-  template_files: {
-    'first template': 'first template content',
-    'second template': 'second template content',
-    'third template': 'third template',
-  },
-  alertmanager_config: {
-    route: {
-      receiver: 'default',
-      routes: [
-        {
-          receiver: 'critical',
-          object_matchers: [['severity', MatcherOperator.equal, 'critical']],
-        },
-      ],
-    },
-    receivers: [
-      {
-        name: 'default',
-        grafana_managed_receiver_configs: [mockGrafanaReceiver('email')],
-      },
-      {
-        name: 'critical',
-        grafana_managed_receiver_configs: [mockGrafanaReceiver('slack'), mockGrafanaReceiver('pagerduty')],
-      },
-    ],
-  },
 };
 
 /** @deprecated Move into alertmanager status entities */
@@ -668,12 +625,6 @@ export function mockUnifiedAlertingStore(unifiedAlerting?: Partial<StoreState['u
       ...unifiedAlerting,
     },
   });
-}
-
-export function mockStore(recipe: (state: StoreState) => void) {
-  const defaultState = configureStore().getState();
-
-  return configureStore(produce(defaultState, recipe));
 }
 
 export function mockAlertQuery(query: Partial<AlertQuery> = {}): AlertQuery {

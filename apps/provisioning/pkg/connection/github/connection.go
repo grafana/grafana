@@ -234,7 +234,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	}
 
 	// Validate the app's permissions.
-	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions)
+	permissionErrors := validatePermissions(permissionTargetApp, c.obj.Spec.GitHub.AppID, app.Permissions, c.obj.Spec.Webhook != nil && c.obj.Spec.Webhook.Disabled)
 	if len(permissionErrors) > 0 {
 		logger.Info("GitHub App permission validation failed", "appID", c.obj.Spec.GitHub.AppID, "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
@@ -328,7 +328,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// Validate that the installation has accepted the required permissions.
 	// Installation permissions may lag behind App permissions when the App owner added new
 	// permissions but the installation owner has not yet accepted them on GitHub.
-	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions)
+	installationPermErrors := validatePermissions(permissionTargetInstallation, c.obj.Spec.GitHub.InstallationID, installation.Permissions, c.obj.Spec.Webhook != nil && c.obj.Spec.Webhook.Disabled)
 	if len(installationPermErrors) > 0 {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
@@ -477,7 +477,9 @@ const (
 // validatePermissions checks if the given app or installation has required permissions.
 // For installations, permissions may differ from App permissions when the App's permissions
 // were updated but the installation owner has not yet accepted them on GitHub.
-func validatePermissions(target permissionTarget, id string, permissions Permissions) []provisioning.ErrorDetails {
+// When webhookDisabled is true, the webhooks:write check is skipped because webhook
+// integration has been explicitly disabled for this connection.
+func validatePermissions(target permissionTarget, id string, permissions Permissions, webhookDisabled bool) []provisioning.ErrorDetails {
 	var errs []provisioning.ErrorDetails
 
 	requiredPerms := map[string]struct {
@@ -496,10 +498,16 @@ func validatePermissions(target permissionTarget, id string, permissions Permiss
 			current:  permissions.PullRequests,
 			required: PermissionWrite,
 		},
-		"webhooks": {
+	}
+
+	if !webhookDisabled {
+		requiredPerms["webhooks"] = struct {
+			current  Permission
+			required Permission
+		}{
 			current:  permissions.Webhooks,
 			required: PermissionWrite,
-		},
+		}
 	}
 
 	for name, perm := range requiredPerms {

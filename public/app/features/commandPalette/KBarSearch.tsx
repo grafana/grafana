@@ -5,8 +5,8 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-export const KBAR_LISTBOX = 'kbar-listbox';
-export const getListboxItemId = (id: number) => `kbar-listbox-item-${id}`;
+const KBAR_LISTBOX = 'kbar-listbox';
+const getListboxItemId = (id: number) => `kbar-listbox-item-${id}`;
 
 export function KBarSearch(
   props: React.InputHTMLAttributes<HTMLInputElement> & {

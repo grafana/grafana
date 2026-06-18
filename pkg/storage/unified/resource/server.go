@@ -275,6 +275,13 @@ type SearchOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	SelectableFieldsForKinds map[string][]string
 
+	// Map "group/resource" -> hash of the SearchFieldDefinition slices
+	// registered for that (group, resource), across every version. The
+	// search server compares this against the value stored in each index's
+	// IndexBuildInfo and triggers a rebuild on mismatch. Keys must be
+	// lower-case. Entries with empty hash strings are ignored.
+	SearchFieldsHashesForKinds map[string]string
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
@@ -380,15 +387,10 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
-	// VectorBackfiller, when non-nil, is launched in a background
-	// goroutine after Init. The server tracks it in its WaitGroup so
-	// Stop blocks until it returns. nil = backfill feature off.
-	VectorBackfiller Runnable
-
-	// VectorReconciler, when non-nil, is launched alongside the
-	// backfiller; the server attaches its own broadcaster to it before
-	// starting Run so the reconciler's watch path lights up. nil =
-	// reconciler feature off.
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
 }
 
@@ -539,7 +541,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
-		vectorBackfiller:               opts.VectorBackfiller,
 		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
@@ -646,9 +647,8 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
-	// Async vector indexers (backfiller + reconciler).
-	// Started in Init, joined in Stop via indexersWG.
-	vectorBackfiller      Runnable
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
 }
@@ -685,18 +685,11 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-// startVectorIndexers launches the configured backfiller and
-// reconciler. Both are optional (nil = feature off). The reconciler
-// gets the server's broadcaster via UseBroadcaster before Run; the
-// backfiller doesn't need the watch path.
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
 func (s *server) startVectorIndexers() {
-	if s.vectorBackfiller != nil {
-		s.indexersWG.Go(func() {
-			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector backfiller stopped", "err", err)
-			}
-		})
-	}
 	if s.vectorWriteReconciler != nil {
 		if s.broadcaster != nil {
 			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
@@ -1705,8 +1698,20 @@ func (s *server) initWatcher() error {
 }
 
 //nolint:gocyclo
-func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
+func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+
+	// When our context is canceled (e.g. client disconnects), downstream calls
+	// like srv.Send may surface that cancellation back to us. Treat it as a
+	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
+	// branch in the watch loop. Context errors from other contexts are still
+	// propagated.
+	defer func() {
+		if retErr != nil && ctx.Err() != nil &&
+			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
+			retErr = nil
+		}
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {

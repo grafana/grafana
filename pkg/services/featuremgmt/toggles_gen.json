@@ -473,15 +473,17 @@
     {
       "metadata": {
         "name": "alertingMultiplePolicies",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781102456776",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 14:40:56.776063699 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the ability to create multiple alerting policies",
-        "stage": "experimental",
+        "description": "Enables the ability to create multiple notification policies in alerting",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1127,12 +1129,26 @@
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-10-12T16:56:49Z"
+        "creationTimestamp": "2023-10-12T16:56:49Z",
+        "deletionTimestamp": "2026-06-17T10:14:08Z"
       },
       "spec": {
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "canvasExternalPlugin",
+        "resourceVersion": "1780948766147",
+        "creationTimestamp": "2026-06-08T19:59:26Z"
+      },
+      "spec": {
+        "description": "Load Canvas panel from an external plugin instead of the bundled core plugin",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
         "expression": "false"
       }
     },
@@ -1311,7 +1327,8 @@
       "metadata": {
         "name": "compiledBootScript",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-08T09:00:55Z"
       },
       "spec": {
         "description": "Boots the frontend using the boot.js script built from TS instead of the embedded boot script",
@@ -1368,13 +1385,28 @@
       "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-16T13:48:37Z"
       },
       "spec": {
         "description": "Enables the created by me search filter on the browse dashboards page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboard.vectorSearch",
+        "resourceVersion": "1781031364322",
+        "creationTimestamp": "2026-06-09T18:56:04Z",
+        "deletionTimestamp": "2026-06-09T20:44:47Z"
+      },
+      "spec": {
+        "description": "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },
@@ -1464,6 +1496,23 @@
     },
     {
       "metadata": {
+        "name": "dashboardNotebookLayout",
+        "resourceVersion": "1781098889122",
+        "creationTimestamp": "2026-06-10T13:08:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 13:41:29.122290475 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardSectionVariables",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -1546,6 +1595,20 @@
         "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardVectorSearch",
+        "resourceVersion": "1781031335424",
+        "creationTimestamp": "2026-06-09T18:55:35Z",
+        "deletionTimestamp": "2026-06-09T18:56:04Z"
+      },
+      "spec": {
+        "description": "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },
@@ -2457,6 +2520,36 @@
     },
     {
       "metadata": {
+        "name": "grafana.viewPanelPane",
+        "resourceVersion": "1778761195995",
+        "creationTimestamp": "2026-05-14T12:19:55Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar pane with new toggles and options in panel view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.visualDesignRefresh",
+        "resourceVersion": "1781257253520",
+        "creationTimestamp": "2026-06-12T09:40:53Z"
+      },
+      "spec": {
+        "description": "Enables the new visual design refresh for the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-06T20:21:21Z"
@@ -2532,7 +2625,8 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-02-06T11:08:04Z"
+        "creationTimestamp": "2025-02-06T11:08:04Z",
+        "deletionTimestamp": "2026-06-08T15:48:46Z"
       },
       "spec": {
         "description": "Enables the temporary themes for GrafanaCon",
@@ -3483,15 +3577,18 @@
     {
       "metadata": {
         "name": "newLogContext",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "resourceVersion": "1781279681608",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
+        }
       },
       "spec": {
         "description": "New Log Context component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3971,7 +4068,8 @@
       "metadata": {
         "name": "preventPanelChromeOverflow",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-17T14:40:08Z"
+        "creationTimestamp": "2025-10-17T14:40:08Z",
+        "deletionTimestamp": "2026-06-16T13:33:46Z"
       },
       "spec": {
         "description": "Restrict PanelChrome contents with overflow: hidden;",
@@ -3984,14 +4082,17 @@
     {
       "metadata": {
         "name": "profilesExemplars",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-01-07T12:25:42Z"
+        "resourceVersion": "1780997707204",
+        "creationTimestamp": "2026-01-07T12:25:42Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-09 09:35:07.204275 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables profiles exemplars support in profiles drilldown",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4081,15 +4182,18 @@
     {
       "metadata": {
         "name": "provisioning.readmes",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781078230859",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-10 07:57:10.859008 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4365,14 +4469,17 @@
     {
       "metadata": {
         "name": "react19",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781168092989",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-11 08:54:52.989837 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Whether to use the new React 19 runtime",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

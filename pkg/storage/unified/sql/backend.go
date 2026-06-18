@@ -108,6 +108,7 @@ func NewStorageBackend(
 	storageMetrics *resource.StorageMetrics,
 	disableStorageServices bool,
 	kvStore kv.KV,
+	gcGate *resource.GCGate,
 ) (resource.StorageBackend, error) {
 	storageType := options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").
 		MustString(string(options.StorageTypeUnified)))
@@ -129,6 +130,7 @@ func NewStorageBackend(
 			IsHA:                 isHA,
 			storageMetrics:       storageMetrics,
 			LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+			GCGate:               gcGate,
 			GarbageCollection: GarbageCollectionConfig{
 				Enabled:          cfg.EnableGarbageCollection,
 				Interval:         cfg.GarbageCollectionInterval,
@@ -139,6 +141,8 @@ func NewStorageBackend(
 			},
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
+			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
+			MigrationChunkMaxBytes:  cfg.MigrationChunkMaxBytes,
 			TmpDir:                  tmpDir(cfg.DataPath),
 			DisableStorageServices:  disableStorageServices,
 			DisablePruner:           cfg.DisablePruner,
@@ -177,6 +181,7 @@ func NewStorageBackend(
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
 		TenantDeleterConfig:  tenantDeleterCfg,
+		GCGate:               gcGate,
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
@@ -208,7 +213,7 @@ func NewStorageBackend(
 
 	if cfg.EnableKVLeases {
 		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = resolveLeaseHolder(cfg)
+		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
@@ -225,7 +230,11 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	})
 }
 
-func resolveLeaseHolder(cfg *setting.Cfg) string {
+// ResolveLeaseHolder builds a stable-per-process identifier used for KV
+// lease ownership. Exported so other unified-storage backend wirings
+// (e.g. the enterprise unified-kv-grpc backend) can produce the same
+// holder format without duplicating the logic.
+func ResolveLeaseHolder(cfg *setting.Cfg) string {
 	id := "unknown"
 	if cfg.InstanceID != "" {
 		id = cfg.InstanceID
@@ -248,6 +257,9 @@ type BackendOptions struct {
 	storageMetrics    *resource.StorageMetrics
 	GarbageCollection GarbageCollectionConfig
 
+	// GCGate defers the start of the GC until released (optional).
+	GCGate *resource.GCGate
+
 	DisableStorageServices bool
 	DisablePruner          bool
 
@@ -255,6 +267,14 @@ type BackendOptions struct {
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	MigrationParquetBuffer bool
+
+	// When true, bulk migrations write data in chunks, each in its own transaction.
+	// Requires migration_locking=true for safe HA operation.
+	MigrationChunkedWrites bool
+
+	// MigrationChunkMaxBytes is the soft maximum byte budget per migration chunk
+	// when MigrationChunkedWrites is enabled.
+	MigrationChunkMaxBytes int64
 
 	// Directory for temporary Parquet files during bulk migration.
 	// Defaults to the OS temp dir when empty. Set to cfg.DataPath/tmp to
@@ -305,10 +325,13 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		analyzeBulkRowThreshold: analyzeResourceHistoryRowThreshold,
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
+		migrationChunkedWrites:  opts.MigrationChunkedWrites,
+		migrationChunkMaxBytes:  opts.MigrationChunkMaxBytes,
 		tmpDir:                  opts.TmpDir,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
+		gcGate:                  opts.GCGate,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -361,6 +384,8 @@ type backend struct {
 
 	// testing
 	simulatedNetworkLatency time.Duration
+	// bulkCommitObserver is used by tests to check the committed bytes per chunk.
+	bulkCommitObserver func(phase string, bytes int64)
 
 	disablePruner           bool
 	dashboardVersionsToKeep int
@@ -368,9 +393,15 @@ type backend struct {
 	historyPruner           resource.Pruner
 
 	garbageCollection GarbageCollectionConfig
+	gcGate            *resource.GCGate
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
+
+	// When true, bulk migrations write data in chunks, each in its own transaction.
+	migrationChunkedWrites bool
+	// migrationChunkMaxBytes is the soft maximum byte budget per migration chunk.
+	migrationChunkMaxBytes int64
 
 	// tmpDir is the directory for temporary Parquet files; empty means OS default.
 	tmpDir string
@@ -515,6 +546,12 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 	b.log.Info("starting garbage collection loop")
 
 	go func() {
+		// Wait for the migration gate so GC never prunes rows an in-process
+		// chunked migration is still committing. A nil gate proceeds immediately.
+		if !b.gcGate.Wait(ctx, b.done) {
+			return
+		}
+
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		if b.garbageCollection.Interval > 0 {
 			jitter := time.Duration(rand.Int63n(b.garbageCollection.Interval.Nanoseconds()))
