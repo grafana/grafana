@@ -40,6 +40,9 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 
 	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 	connInformer := informerFactory.Provisioning().V0alpha1().Connections()
+	// The connection controller watches repositories to know when a connection
+	// being deleted is no longer referenced and its finalizer can be removed.
+	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
 
 	// Setup connection factory and tester
 	connectionFactory, err := controllerCfg.ConnectionFactory()
@@ -55,6 +58,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	connController, err := controller.NewConnectionController(
 		provisioningClient.ProvisioningV0alpha1(),
 		connInformer,
+		repoInformer,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(
 			connection.NewSimpleConnectionTester(connectionFactory),
@@ -71,7 +75,7 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	informerFactory.Start(ctx.Done())
-	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced) {
+	if !cache.WaitForCacheSync(ctx.Done(), connInformer.Informer().HasSynced, repoInformer.Informer().HasSynced) {
 		return fmt.Errorf("connection controller cache sync failed")
 	}
 

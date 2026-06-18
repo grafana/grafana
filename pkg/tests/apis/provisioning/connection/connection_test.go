@@ -128,9 +128,13 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 			}
 			return true
 		}, 5*time.Second, 100*time.Millisecond, "should successfully delete resource")
-		list, err = helper.Connections.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err, "failed to list resources")
-		assert.Equal(t, 0, len(list.Items), "should have no connections")
+		// Deletion is gated by a finalizer the connection controller removes once no
+		// repository references the connection, so the object disappears asynchronously.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			list, err := helper.Connections.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(collect, err, "failed to list resources")
+			assert.Equal(collect, 0, len(list.Items), "should have no connections")
+		}, 10*time.Second, 100*time.Millisecond, "should have no connections after deletion")
 	})
 
 	t.Run("viewer can't create or get connection", func(t *testing.T) {
@@ -1752,9 +1756,13 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 		err := helper.Connections.Resource.Delete(ctx, connectionName, deleteOptions)
 		require.NoError(t, err, "expected deletion to succeed for unreferenced connection")
 
-		// Verify connection is deleted
-		_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
-		assert.True(t, k8serrors.IsNotFound(err), "connection should be deleted")
+		// Connection deletion is gated by a finalizer that the connection controller
+		// removes once no repository references the connection, so the object is
+		// removed asynchronously rather than synchronously on DELETE.
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			_, err = helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
+			assert.True(collect, k8serrors.IsNotFound(err), "connection should be deleted")
+		}, 10*time.Second, 100*time.Millisecond, "connection should be deleted")
 	})
 }
 

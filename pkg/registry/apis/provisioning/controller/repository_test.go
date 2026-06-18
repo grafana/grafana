@@ -118,7 +118,8 @@ func (m mockRepoInterface) ApplyStatus(ctx context.Context, repository *provisio
 }
 
 type mockConnectionInterface struct {
-	getFunc func(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Connection, error)
+	getFunc   func(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Connection, error)
+	patchFunc func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Connection, error)
 }
 
 func (m mockConnectionInterface) Create(_ context.Context, _ *provisioning.Connection, _ metav1.CreateOptions) (*provisioning.Connection, error) {
@@ -156,7 +157,10 @@ func (m mockConnectionInterface) Watch(_ context.Context, _ metav1.ListOptions) 
 	panic("not needed for testing")
 }
 
-func (m mockConnectionInterface) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ metav1.PatchOptions, _ ...string) (*provisioning.Connection, error) {
+func (m mockConnectionInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Connection, error) {
+	if m.patchFunc != nil {
+		return m.patchFunc(ctx, name, pt, data, opts, subresources...)
+	}
 	panic("not needed for testing")
 }
 

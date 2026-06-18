@@ -1082,6 +1082,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connController, err := controller.NewConnectionController(
 				b.GetClient(),
 				connInformer,
+				repoInformer,
 				connStatusPatcher,
 				connHealthChecker,
 				b.connectionFactory,
@@ -1092,7 +1093,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
-			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+			// The connection controller reads the repository cache to decide when a
+			// connection being deleted is no longer referenced, so wait for both.
+			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced, repoInformer.Informer().HasSynced) {
 				// WaitForCacheSync only returns false when the hook context is
 				// cancelled, which happens on apiserver shutdown. A sync aborted
 				// by shutdown is expected, not a startup failure — returning an

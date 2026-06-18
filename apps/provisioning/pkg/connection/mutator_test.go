@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -120,6 +121,67 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			if tt.obj != nil {
 				require.Contains(t, tt.obj.(*provisioning.Connection).Name, tt.expectObjectNameContains)
 			}
+		})
+	}
+}
+
+func TestAdmissionMutator_Mutate_Finalizers(t *testing.T) {
+	deleting := &metav1.Time{Time: time.Unix(1, 0)}
+
+	tests := []struct {
+		name           string
+		conn           *provisioning.Connection
+		op             admission.Operation
+		wantFinalizers []string
+	}{
+		{
+			name: "adds finalizer on create",
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			op:             admission.Create,
+			wantFinalizers: []string{ReferencedByRepositoriesFinalizer},
+		},
+		{
+			name: "does not duplicate finalizer when already present",
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{ReferencedByRepositoriesFinalizer}},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			op:             admission.Update,
+			wantFinalizers: []string{ReferencedByRepositoriesFinalizer},
+		},
+		{
+			name: "preserves other finalizers and adds ours",
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"other"}},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			op:             admission.Update,
+			wantFinalizers: []string{"other", ReferencedByRepositoriesFinalizer},
+		},
+		{
+			name: "does not add finalizer to a connection being deleted",
+			conn: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", DeletionTimestamp: deleting},
+				Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+			},
+			op:             admission.Update,
+			wantFinalizers: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewMockFactory(t)
+			factory.EXPECT().Mutate(mock.Anything, mock.Anything).Return(nil).Maybe()
+
+			m := NewAdmissionMutator(factory)
+			attr := newMutatorTestAttributes(tt.conn, nil, tt.op)
+
+			require.NoError(t, m.Mutate(context.Background(), attr, nil))
+			assert.Equal(t, tt.wantFinalizers, tt.conn.Finalizers)
 		})
 	}
 }

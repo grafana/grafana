@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/util/retry"
 	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -27,6 +32,10 @@ const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
+	// connectionDeleteRequeueDelay is how long to wait before re-checking whether
+	// the repositories that reference a connection being deleted have finished
+	// terminating, so its finalizer can be removed.
+	connectionDeleteRequeueDelay = 5 * time.Second
 )
 
 type connectionQueueItem struct {
@@ -45,6 +54,7 @@ type ConnectionStatusPatcher interface {
 type ConnectionController struct {
 	client     client.ProvisioningV0alpha1Interface
 	connLister listers.ConnectionLister
+	repoLister listers.RepositoryLister
 	connSynced cache.InformerSynced
 	logger     logging.Logger
 
@@ -65,6 +75,7 @@ type ConnectionController struct {
 func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	connInformer informer.ConnectionInformer,
+	repoInformer informer.RepositoryInformer,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,
 	connectionFactory connection.Factory,
@@ -75,6 +86,7 @@ func NewConnectionController(
 	cc := &ConnectionController{
 		client:     provisioningClient,
 		connLister: connInformer.Lister(),
+		repoLister: repoInformer.Lister(),
 		connSynced: connInformer.Informer().HasSynced,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
@@ -221,10 +233,9 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	logger = logger.With("namespace", namespace, "connection", name)
 	ctx = logging.Context(ctx, logger)
 
-	// Skip if being deleted
+	// Handle deletion: gate removal until no repository references this connection.
 	if conn.DeletionTimestamp != nil {
-		logger.Info("connection is being deleted, skipping")
-		return nil
+		return cc.handleDelete(ctx, conn, item)
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
@@ -327,6 +338,63 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
+	return nil
+}
+
+// handleDelete gates connection deletion on its referencing repositories.
+//
+// A connection must outlive the repositories that reference it: repository
+// deletion is asynchronous (finalizer-driven), and a repository's own finalizers
+// may still need the connection's credentials while terminating. We keep the
+// connection's finalizer in place until no referencing repository remains, then
+// remove it so the API server can complete the deletion. While references remain
+// the item is requeued after a short delay (the connection informer does not
+// observe repository deletions, so we poll rather than wait for an event).
+func (cc *ConnectionController) handleDelete(ctx context.Context, conn *provisioning.Connection, item *connectionQueueItem) error {
+	logger := logging.FromContext(ctx)
+
+	if !slices.Contains(conn.Finalizers, connection.ReferencedByRepositoriesFinalizer) {
+		logger.Info("connection is being deleted, no finalizer to process")
+		return nil
+	}
+
+	repos, err := cc.repoLister.Repositories(conn.Namespace).List(labels.Everything())
+	if err != nil {
+		return fmt.Errorf("list repositories for connection %q: %w", conn.Name, err)
+	}
+
+	var referencing int
+	for _, repo := range repos {
+		if repo.ConnectionName() == conn.Name {
+			referencing++
+		}
+	}
+
+	if referencing > 0 {
+		logger.Info("waiting for referencing repositories before deleting connection", "referencing", referencing)
+		cc.queue.AddAfter(item, connectionDeleteRequeueDelay)
+		return nil
+	}
+
+	logger.Info("no referencing repositories remain, removing connection finalizer")
+
+	// Connections only ever carry the single finalizer added by the mutator, so
+	// removing the whole list is safe and matches the repository controller. Retry
+	// on optimistic-concurrency conflicts: the apiserver turns this JSON Patch into
+	// a read-modify-write that can race with concurrent writes on the connection.
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		_, err := cc.client.Connections(conn.GetNamespace()).
+			Patch(ctx, conn.Name, types.JSONPatchType, []byte(`[
+				{ "op": "remove", "path": "/metadata/finalizers" }
+			]`), metav1.PatchOptions{
+				FieldManager: "provisioning-connection-controller",
+			})
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("remove connection finalizer: %w", err)
+	}
+
 	return nil
 }
 
