@@ -19,7 +19,7 @@ import (
 
 //go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
 type GithubFactory interface {
-	New(ctx context.Context, ghToken common.RawSecureValue) Client
+	New(ctx context.Context, ghToken common.RawSecureValue, customServerURL string) (Client, error)
 }
 
 type ConnectionSecrets struct {
@@ -173,7 +173,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}
 	}
 
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	if err != nil {
+		return nil, err
+	}
 
 	app, err := ghClient.GetApp(ctx)
 	if err != nil {
@@ -419,7 +422,10 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	if err != nil {
+		return nil, err
+	}
 
 	// Create an installation access token scoped to this repository
 	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), repoName)
@@ -449,14 +455,20 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	if err != nil {
+		return nil, err
+	}
 
 	token, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	installationGhClient := c.ghFactory.New(ctx, common.RawSecureValue(token.Token))
+	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), c.obj.CustomServerURL())
+	if err != nil {
+		return nil, err
+	}
 
 	repos, err := installationGhClient.ListInstallationRepositories(ctx)
 	if err != nil {
