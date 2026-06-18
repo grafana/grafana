@@ -1,8 +1,10 @@
 package embed
 
-import "encoding/json"
+import (
+	"encoding/json"
 
-const LabelPendingDelete = "cloud.grafana.com/pending-delete"
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+)
 
 func HasPendingDeleteLabel(value []byte) bool {
 	if len(value) == 0 {
@@ -16,5 +18,5 @@ func HasPendingDeleteLabel(value []byte) bool {
 	if err := json.Unmarshal(value, &obj); err != nil {
 		return false
 	}
-	return obj.Metadata.Labels[LabelPendingDelete] == "true"
+	return obj.Metadata.Labels[controller.LabelPendingDelete] == "true"
 }
