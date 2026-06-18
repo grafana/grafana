@@ -381,12 +381,20 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 }
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
-// Used for job types that are restricted to administrators.
+// Used for job types that are restricted to administrators: pull,
+// releaseResources, and deleteResources.
+//
+// These are gated on repositories:write (VerbUpdate) - an admin-only action -
+// rather than jobs:create. jobs:create is granted to Editor (editors legitimately
+// create move/delete/push jobs), and there is no way to distinguish admin-only jobs
+// from editor jobs at the jobs:create level. Requiring "can manage the repository"
+// is therefore the gate for these destructive/repository-wide operations. The Admin
+// fallback role still admits admins whose fine-grained RBAC is not explicitly set up.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
 	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
-		Resource:  provisioning.JobResourceInfo.GetName(),
+		Resource:  provisioning.RepositoryResourceInfo.GetName(),
 		Namespace: cfg.Namespace,
 	}, "")
 }
