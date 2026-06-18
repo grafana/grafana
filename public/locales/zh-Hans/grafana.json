@@ -4245,6 +4245,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "删除资源时出错",
+      "success-title": "",
       "folder-empty_other": "",
       "folder-not-empty_other": ""
     },
@@ -4265,6 +4266,7 @@
       "error-no-target-folder-path": "目标文件夹路径无效或为空，请再次选择。",
       "move-warning": "此操作将移动所选文件夹及其子文件夹。可用的目标文件夹取决于所选资源。",
       "move-warning-tooltip": "您只能在相应的预置文件夹内移动已预置的资源，而本地资源只能移动到本地文件夹中。",
+      "success-title": "",
       "target-folder": "目标文件夹",
       "folder-not-empty_other": ""
     },
@@ -6178,7 +6180,17 @@
       "snapshot": {
         "tooltip": "打开原始数据面板"
       },
-      "undo": "撤销"
+      "undo": "撤销",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "来源 ({{provider}})",
@@ -6437,6 +6449,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -10597,10 +10610,28 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_other": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10615,6 +10646,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10622,15 +10658,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -12958,6 +12992,9 @@
       "label-name-template": "",
       "placeholder-name-template": ""
     },
+    "bulk-action": {
+      "success-title-branch": ""
+    },
     "cloud-info-box": {
       "body": "通过<2>永久免费的 Grafana Cloud 套餐</2>，您可以省去设置步骤，在 Grafana Cloud 上获得完全管理和托管式的 Git 同步服务。",
       "title": "您还可以在 Grafana Cloud 上使用 Git 同步"
@@ -13342,9 +13379,26 @@
       "truncated": "消息已截断"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "无法验证此文件夹是否包含元数据文件。请稍后重试。",
@@ -13977,9 +14031,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",

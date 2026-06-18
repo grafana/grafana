@@ -1622,6 +1622,25 @@ describe('LokiDatasource', () => {
           'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
         );
       });
+
+      it('inherits step from the original log query', () => {
+        const query = ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsVolume },
+          {
+            expr: '{label="value"}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+            step: '2m',
+            resolution: 2,
+          }
+        );
+        expect(query).toBeDefined();
+        expect(query?.step).toBe('2m');
+        expect(query?.resolution).toBe(2);
+        expect(query?.expr).toEqual(
+          'sum by (level, detected_level) (count_over_time({label="value"} | drop __error__[$__auto]))'
+        );
+      });
     });
 
     describe('logs sample', () => {
