@@ -10672,6 +10672,7 @@
       "declare": "Declare an incident",
       "empty": "No active incidents.",
       "error-title": "Could not load active incidents",
+      "retry": "Retry",
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
