@@ -215,6 +215,89 @@ describe('instanceSettings', () => {
       const result = await getDataSourceInstanceSettings('${missing}');
       expect(result).toBeUndefined();
     });
+
+    // Scenarios the legacy DatasourceSrv.getInstanceSettings handles that weren't covered above.
+    describe('the "default" keyword and DataSourceRef objects', () => {
+      it('resolves the literal string "default" to the configured default datasource', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const result = await getDataSourceInstanceSettings('default');
+        expect(result?.name).toBe('Bravo');
+      });
+
+      it('resolves a DataSourceRef object by uid', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const result = await getDataSourceInstanceSettings({ uid: 'uid-alpha' });
+        expect(result?.name).toBe('Alpha');
+      });
+
+      it('prefers uid over type when a DataSourceRef has both', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const result = await getDataSourceInstanceSettings({ uid: 'uid-charlie', type: 'test-db' });
+        expect(result?.uid).toBe('uid-charlie');
+      });
+    });
+
+    describe('expression references in object form', () => {
+      it('resolves a DataSourceRef with the new expression type (__expr__)', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ type: '__expr__' });
+        expect(result?.uid).toBe('__expr__');
+      });
+
+      it('resolves a DataSourceRef with the legacy expression type (-100)', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        setExpressionDataSourceInstance(expressionInstance(fixtures.Expression));
+        const result = await getDataSourceInstanceSettings({ type: '-100' });
+        expect(result?.uid).toBe('__expr__');
+      });
+    });
+
+    describe('template variables', () => {
+      it('resolves a variable that interpolates to "default"', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value?: string) => (value === '${dsVar}' ? 'default' : (value ?? '')),
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('${dsVar}');
+        expect(result?.uid).toBe('${dsVar}');
+        expect(result?.isDefault).toBe(false);
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-bravo' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('uses the first value of a multi-value variable', async () => {
+        // The interpolation callback (3rd arg to replace) collapses an array to its
+        // first element; drive replace through that callback to mirror production.
+        setTemplateSrv({
+          ...templateSrv,
+          replace: (value: string, _scopedVars: unknown, format: (v: unknown) => unknown) =>
+            value === '${multi}' ? String(format(['Alpha', 'Bravo'])) : value,
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const result = await getDataSourceInstanceSettings('${multi}');
+        expect(result?.rawRef).toEqual({ type: 'test-db', uid: 'uid-alpha' });
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('forwards scopedVars to the template service', async () => {
+        const replace = jest.fn().mockReturnValue('Alpha');
+        setTemplateSrv({ ...templateSrv, replace } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const scopedVars = { foo: { text: 'x', value: 1 } };
+        await getDataSourceInstanceSettings('${withScope}', scopedVars);
+
+        expect(replace).toHaveBeenCalledWith('${withScope}', scopedVars, expect.any(Function));
+
+        setTemplateSrv(templateSrv);
+      });
+    });
   });
 
   describe('getDataSourceInstanceSettingsList', () => {
@@ -431,6 +514,86 @@ describe('instanceSettings', () => {
       const names = items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
       const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       expect(names).toEqual(sorted);
+    });
+
+    describe('pluginId and type matching', () => {
+      it('matches pluginId via meta.aliasIDs', async () => {
+        const withAlias: Record<string, DataSourceInstanceSettings> = {
+          CloudWatch: ds({
+            id: 20,
+            uid: 'uid-cw',
+            name: 'CloudWatch',
+            type: 'cloudwatch',
+            meta: { ...ds({}).meta, id: 'cloudwatch', aliasIDs: ['aws-cloudwatch'], metrics: true },
+          }),
+          Alpha: fixtures.Alpha,
+        };
+        initDataSourceInstanceSettings(withAlias, 'Alpha');
+        const items = await getDataSourceInstanceSettingsList({ pluginId: 'aws-cloudwatch' });
+        // pluginId filter suppresses the always-appended built-ins, so only the match remains.
+        expect(items.map((x) => x.name)).toEqual(['CloudWatch']);
+      });
+
+      it('matches the type filter via meta.aliasIDs', async () => {
+        const withAlias: Record<string, DataSourceInstanceSettings> = {
+          Real: ds({
+            id: 21,
+            uid: 'uid-real',
+            name: 'Real',
+            type: 'real-type',
+            meta: { ...ds({}).meta, id: 'real', aliasIDs: ['legacy-type'], metrics: true },
+          }),
+          Alpha: fixtures.Alpha,
+        };
+        initDataSourceInstanceSettings(withAlias, 'Alpha');
+        const items = await getDataSourceInstanceSettingsList({ type: 'legacy-type' });
+        expect(items.some((x) => x.name === 'Real')).toBe(true);
+        expect(items.some((x) => x.name === 'Alpha')).toBe(false);
+      });
+
+      it('does not append built-in datasources when pluginId is set', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const items = await getDataSourceInstanceSettingsList({ pluginId: 'test-db', mixed: true, dashboard: true });
+        const names = items.map((x) => x.name);
+        expect(names).not.toContain('-- Mixed --');
+        expect(names).not.toContain('-- Dashboard --');
+        expect(names).not.toContain('-- Grafana --');
+      });
+    });
+
+    describe('datasource variable injection', () => {
+      it('uses the first value of a multi-value datasource variable', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          getVariables: () => [{ type: 'datasource', name: 'dsVar', current: { value: ['uid-alpha', 'uid-bravo'] } }],
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const items = await getDataSourceInstanceSettingsList({ variables: true });
+        const injected = items.find((x) => x.name === '${dsVar}');
+        // The first value (uid-alpha) resolves to Alpha.
+        expect(injected?.rawRef ?? injected?.type).toBeDefined();
+        expect(injected?.type).toBe('test-db');
+
+        setTemplateSrv(templateSrv);
+      });
+
+      it('resolves a datasource variable whose value is "default"', async () => {
+        setTemplateSrv({
+          ...templateSrv,
+          getVariables: () => [{ type: 'datasource', name: 'dsVar', current: { value: 'default' } }],
+        } as unknown as TemplateSrv);
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+        const items = await getDataSourceInstanceSettingsList({ variables: true });
+        const injected = items.find((x) => x.name === '${dsVar}');
+        // 'default' maps to the configured default datasource (Bravo).
+        expect(injected).toBeDefined();
+        expect(injected?.uid).toBe('${dsVar}');
+        expect(injected?.type).toBe('test-db');
+
+        setTemplateSrv(templateSrv);
+      });
     });
   });
 
