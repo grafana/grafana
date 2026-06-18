@@ -1449,6 +1449,11 @@
       "count": 1
     }
   },
+  "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    }
+  },
   "public/app/features/correlations/Forms/ConfigureCorrelationBasicInfoForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
