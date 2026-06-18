@@ -21,9 +21,9 @@ func (_m *MockClient) EXPECT() *MockClient_Expecter {
 	return &MockClient_Expecter{mock: &_m.Mock}
 }
 
-// Commits provides a mock function with given fields: ctx, owner, repository, path, branch
-func (_m *MockClient) Commits(ctx context.Context, owner string, repository string, path string, branch string) ([]Commit, error) {
-	ret := _m.Called(ctx, owner, repository, path, branch)
+// Commits provides a mock function with given fields: ctx, path, branch
+func (_m *MockClient) Commits(ctx context.Context, path string, branch string) ([]Commit, error) {
+	ret := _m.Called(ctx, path, branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Commits")
@@ -31,19 +31,19 @@ func (_m *MockClient) Commits(ctx context.Context, owner string, repository stri
 
 	var r0 []Commit
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]Commit, error)); ok {
-		return rf(ctx, owner, repository, path, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]Commit, error)); ok {
+		return rf(ctx, path, branch)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) []Commit); ok {
-		r0 = rf(ctx, owner, repository, path, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []Commit); ok {
+		r0 = rf(ctx, path, branch)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]Commit)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, path, branch)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, path, branch)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,17 +58,15 @@ type MockClient_Commits_Call struct {
 
 // Commits is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - path string
 //   - branch string
-func (_e *MockClient_Expecter) Commits(ctx interface{}, owner interface{}, repository interface{}, path interface{}, branch interface{}) *MockClient_Commits_Call {
-	return &MockClient_Commits_Call{Call: _e.mock.On("Commits", ctx, owner, repository, path, branch)}
+func (_e *MockClient_Expecter) Commits(ctx interface{}, path interface{}, branch interface{}) *MockClient_Commits_Call {
+	return &MockClient_Commits_Call{Call: _e.mock.On("Commits", ctx, path, branch)}
 }
 
-func (_c *MockClient_Commits_Call) Run(run func(ctx context.Context, owner string, repository string, path string, branch string)) *MockClient_Commits_Call {
+func (_c *MockClient_Commits_Call) Run(run func(ctx context.Context, path string, branch string)) *MockClient_Commits_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -78,22 +76,22 @@ func (_c *MockClient_Commits_Call) Return(_a0 []Commit, _a1 error) *MockClient_C
 	return _c
 }
 
-func (_c *MockClient_Commits_Call) RunAndReturn(run func(context.Context, string, string, string, string) ([]Commit, error)) *MockClient_Commits_Call {
+func (_c *MockClient_Commits_Call) RunAndReturn(run func(context.Context, string, string) ([]Commit, error)) *MockClient_Commits_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreatePullRequestComment provides a mock function with given fields: ctx, owner, repository, number, body
-func (_m *MockClient) CreatePullRequestComment(ctx context.Context, owner string, repository string, number int, body string) error {
-	ret := _m.Called(ctx, owner, repository, number, body)
+// CreatePullRequestComment provides a mock function with given fields: ctx, number, body
+func (_m *MockClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
+	ret := _m.Called(ctx, number, body)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreatePullRequestComment")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, string) error); ok {
-		r0 = rf(ctx, owner, repository, number, body)
+	if rf, ok := ret.Get(0).(func(context.Context, int, string) error); ok {
+		r0 = rf(ctx, number, body)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -108,17 +106,15 @@ type MockClient_CreatePullRequestComment_Call struct {
 
 // CreatePullRequestComment is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - number int
 //   - body string
-func (_e *MockClient_Expecter) CreatePullRequestComment(ctx interface{}, owner interface{}, repository interface{}, number interface{}, body interface{}) *MockClient_CreatePullRequestComment_Call {
-	return &MockClient_CreatePullRequestComment_Call{Call: _e.mock.On("CreatePullRequestComment", ctx, owner, repository, number, body)}
+func (_e *MockClient_Expecter) CreatePullRequestComment(ctx interface{}, number interface{}, body interface{}) *MockClient_CreatePullRequestComment_Call {
+	return &MockClient_CreatePullRequestComment_Call{Call: _e.mock.On("CreatePullRequestComment", ctx, number, body)}
 }
 
-func (_c *MockClient_CreatePullRequestComment_Call) Run(run func(ctx context.Context, owner string, repository string, number int, body string)) *MockClient_CreatePullRequestComment_Call {
+func (_c *MockClient_CreatePullRequestComment_Call) Run(run func(ctx context.Context, number int, body string)) *MockClient_CreatePullRequestComment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int), args[4].(string))
+		run(args[0].(context.Context), args[1].(int), args[2].(string))
 	})
 	return _c
 }
@@ -128,14 +124,14 @@ func (_c *MockClient_CreatePullRequestComment_Call) Return(_a0 error) *MockClien
 	return _c
 }
 
-func (_c *MockClient_CreatePullRequestComment_Call) RunAndReturn(run func(context.Context, string, string, int, string) error) *MockClient_CreatePullRequestComment_Call {
+func (_c *MockClient_CreatePullRequestComment_Call) RunAndReturn(run func(context.Context, int, string) error) *MockClient_CreatePullRequestComment_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateWebhook provides a mock function with given fields: ctx, owner, repository, cfg
-func (_m *MockClient) CreateWebhook(ctx context.Context, owner string, repository string, cfg WebhookConfig) (WebhookConfig, error) {
-	ret := _m.Called(ctx, owner, repository, cfg)
+// CreateWebhook provides a mock function with given fields: ctx, cfg
+func (_m *MockClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error) {
+	ret := _m.Called(ctx, cfg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateWebhook")
@@ -143,17 +139,17 @@ func (_m *MockClient) CreateWebhook(ctx context.Context, owner string, repositor
 
 	var r0 WebhookConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, WebhookConfig) (WebhookConfig, error)); ok {
-		return rf(ctx, owner, repository, cfg)
+	if rf, ok := ret.Get(0).(func(context.Context, WebhookConfig) (WebhookConfig, error)); ok {
+		return rf(ctx, cfg)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, WebhookConfig) WebhookConfig); ok {
-		r0 = rf(ctx, owner, repository, cfg)
+	if rf, ok := ret.Get(0).(func(context.Context, WebhookConfig) WebhookConfig); ok {
+		r0 = rf(ctx, cfg)
 	} else {
 		r0 = ret.Get(0).(WebhookConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, WebhookConfig) error); ok {
-		r1 = rf(ctx, owner, repository, cfg)
+	if rf, ok := ret.Get(1).(func(context.Context, WebhookConfig) error); ok {
+		r1 = rf(ctx, cfg)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -168,16 +164,14 @@ type MockClient_CreateWebhook_Call struct {
 
 // CreateWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - cfg WebhookConfig
-func (_e *MockClient_Expecter) CreateWebhook(ctx interface{}, owner interface{}, repository interface{}, cfg interface{}) *MockClient_CreateWebhook_Call {
-	return &MockClient_CreateWebhook_Call{Call: _e.mock.On("CreateWebhook", ctx, owner, repository, cfg)}
+func (_e *MockClient_Expecter) CreateWebhook(ctx interface{}, cfg interface{}) *MockClient_CreateWebhook_Call {
+	return &MockClient_CreateWebhook_Call{Call: _e.mock.On("CreateWebhook", ctx, cfg)}
 }
 
-func (_c *MockClient_CreateWebhook_Call) Run(run func(ctx context.Context, owner string, repository string, cfg WebhookConfig)) *MockClient_CreateWebhook_Call {
+func (_c *MockClient_CreateWebhook_Call) Run(run func(ctx context.Context, cfg WebhookConfig)) *MockClient_CreateWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(WebhookConfig))
+		run(args[0].(context.Context), args[1].(WebhookConfig))
 	})
 	return _c
 }
@@ -187,22 +181,22 @@ func (_c *MockClient_CreateWebhook_Call) Return(_a0 WebhookConfig, _a1 error) *M
 	return _c
 }
 
-func (_c *MockClient_CreateWebhook_Call) RunAndReturn(run func(context.Context, string, string, WebhookConfig) (WebhookConfig, error)) *MockClient_CreateWebhook_Call {
+func (_c *MockClient_CreateWebhook_Call) RunAndReturn(run func(context.Context, WebhookConfig) (WebhookConfig, error)) *MockClient_CreateWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
-func (_m *MockClient) DeleteWebhook(ctx context.Context, owner string, repository string, webhookID int64) error {
-	ret := _m.Called(ctx, owner, repository, webhookID)
+// DeleteWebhook provides a mock function with given fields: ctx, webhookID
+func (_m *MockClient) DeleteWebhook(ctx context.Context, webhookID int64) error {
+	ret := _m.Called(ctx, webhookID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteWebhook")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) error); ok {
-		r0 = rf(ctx, owner, repository, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, webhookID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -217,16 +211,14 @@ type MockClient_DeleteWebhook_Call struct {
 
 // DeleteWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - webhookID int64
-func (_e *MockClient_Expecter) DeleteWebhook(ctx interface{}, owner interface{}, repository interface{}, webhookID interface{}) *MockClient_DeleteWebhook_Call {
-	return &MockClient_DeleteWebhook_Call{Call: _e.mock.On("DeleteWebhook", ctx, owner, repository, webhookID)}
+func (_e *MockClient_Expecter) DeleteWebhook(ctx interface{}, webhookID interface{}) *MockClient_DeleteWebhook_Call {
+	return &MockClient_DeleteWebhook_Call{Call: _e.mock.On("DeleteWebhook", ctx, webhookID)}
 }
 
-func (_c *MockClient_DeleteWebhook_Call) Run(run func(ctx context.Context, owner string, repository string, webhookID int64)) *MockClient_DeleteWebhook_Call {
+func (_c *MockClient_DeleteWebhook_Call) Run(run func(ctx context.Context, webhookID int64)) *MockClient_DeleteWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int64))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
@@ -236,22 +228,22 @@ func (_c *MockClient_DeleteWebhook_Call) Return(_a0 error) *MockClient_DeleteWeb
 	return _c
 }
 
-func (_c *MockClient_DeleteWebhook_Call) RunAndReturn(run func(context.Context, string, string, int64) error) *MockClient_DeleteWebhook_Call {
+func (_c *MockClient_DeleteWebhook_Call) RunAndReturn(run func(context.Context, int64) error) *MockClient_DeleteWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// EditWebhook provides a mock function with given fields: ctx, owner, repository, cfg
-func (_m *MockClient) EditWebhook(ctx context.Context, owner string, repository string, cfg WebhookConfig) error {
-	ret := _m.Called(ctx, owner, repository, cfg)
+// EditWebhook provides a mock function with given fields: ctx, cfg
+func (_m *MockClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error {
+	ret := _m.Called(ctx, cfg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EditWebhook")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, WebhookConfig) error); ok {
-		r0 = rf(ctx, owner, repository, cfg)
+	if rf, ok := ret.Get(0).(func(context.Context, WebhookConfig) error); ok {
+		r0 = rf(ctx, cfg)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -266,16 +258,14 @@ type MockClient_EditWebhook_Call struct {
 
 // EditWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - cfg WebhookConfig
-func (_e *MockClient_Expecter) EditWebhook(ctx interface{}, owner interface{}, repository interface{}, cfg interface{}) *MockClient_EditWebhook_Call {
-	return &MockClient_EditWebhook_Call{Call: _e.mock.On("EditWebhook", ctx, owner, repository, cfg)}
+func (_e *MockClient_Expecter) EditWebhook(ctx interface{}, cfg interface{}) *MockClient_EditWebhook_Call {
+	return &MockClient_EditWebhook_Call{Call: _e.mock.On("EditWebhook", ctx, cfg)}
 }
 
-func (_c *MockClient_EditWebhook_Call) Run(run func(ctx context.Context, owner string, repository string, cfg WebhookConfig)) *MockClient_EditWebhook_Call {
+func (_c *MockClient_EditWebhook_Call) Run(run func(ctx context.Context, cfg WebhookConfig)) *MockClient_EditWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(WebhookConfig))
+		run(args[0].(context.Context), args[1].(WebhookConfig))
 	})
 	return _c
 }
@@ -285,14 +275,14 @@ func (_c *MockClient_EditWebhook_Call) Return(_a0 error) *MockClient_EditWebhook
 	return _c
 }
 
-func (_c *MockClient_EditWebhook_Call) RunAndReturn(run func(context.Context, string, string, WebhookConfig) error) *MockClient_EditWebhook_Call {
+func (_c *MockClient_EditWebhook_Call) RunAndReturn(run func(context.Context, WebhookConfig) error) *MockClient_EditWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetBranchProtection provides a mock function with given fields: ctx, owner, repository, branch
-func (_m *MockClient) GetBranchProtection(ctx context.Context, owner string, repository string, branch string) (*BranchProtection, error) {
-	ret := _m.Called(ctx, owner, repository, branch)
+// GetBranchProtection provides a mock function with given fields: ctx, branch
+func (_m *MockClient) GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error) {
+	ret := _m.Called(ctx, branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBranchProtection")
@@ -300,19 +290,19 @@ func (_m *MockClient) GetBranchProtection(ctx context.Context, owner string, rep
 
 	var r0 *BranchProtection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*BranchProtection, error)); ok {
-		return rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*BranchProtection, error)); ok {
+		return rf(ctx, branch)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *BranchProtection); ok {
-		r0 = rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *BranchProtection); ok {
+		r0 = rf(ctx, branch)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*BranchProtection)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, branch)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -327,16 +317,14 @@ type MockClient_GetBranchProtection_Call struct {
 
 // GetBranchProtection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - branch string
-func (_e *MockClient_Expecter) GetBranchProtection(ctx interface{}, owner interface{}, repository interface{}, branch interface{}) *MockClient_GetBranchProtection_Call {
-	return &MockClient_GetBranchProtection_Call{Call: _e.mock.On("GetBranchProtection", ctx, owner, repository, branch)}
+func (_e *MockClient_Expecter) GetBranchProtection(ctx interface{}, branch interface{}) *MockClient_GetBranchProtection_Call {
+	return &MockClient_GetBranchProtection_Call{Call: _e.mock.On("GetBranchProtection", ctx, branch)}
 }
 
-func (_c *MockClient_GetBranchProtection_Call) Run(run func(ctx context.Context, owner string, repository string, branch string)) *MockClient_GetBranchProtection_Call {
+func (_c *MockClient_GetBranchProtection_Call) Run(run func(ctx context.Context, branch string)) *MockClient_GetBranchProtection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -346,14 +334,14 @@ func (_c *MockClient_GetBranchProtection_Call) Return(_a0 *BranchProtection, _a1
 	return _c
 }
 
-func (_c *MockClient_GetBranchProtection_Call) RunAndReturn(run func(context.Context, string, string, string) (*BranchProtection, error)) *MockClient_GetBranchProtection_Call {
+func (_c *MockClient_GetBranchProtection_Call) RunAndReturn(run func(context.Context, string) (*BranchProtection, error)) *MockClient_GetBranchProtection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRepository provides a mock function with given fields: ctx, owner, repository
-func (_m *MockClient) GetRepository(ctx context.Context, owner string, repository string) (Repository, error) {
-	ret := _m.Called(ctx, owner, repository)
+// GetRepository provides a mock function with given fields: ctx
+func (_m *MockClient) GetRepository(ctx context.Context) (Repository, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRepository")
@@ -361,17 +349,17 @@ func (_m *MockClient) GetRepository(ctx context.Context, owner string, repositor
 
 	var r0 Repository
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (Repository, error)); ok {
-		return rf(ctx, owner, repository)
+	if rf, ok := ret.Get(0).(func(context.Context) (Repository, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) Repository); ok {
-		r0 = rf(ctx, owner, repository)
+	if rf, ok := ret.Get(0).(func(context.Context) Repository); ok {
+		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(Repository)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, owner, repository)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -386,15 +374,13 @@ type MockClient_GetRepository_Call struct {
 
 // GetRepository is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
-func (_e *MockClient_Expecter) GetRepository(ctx interface{}, owner interface{}, repository interface{}) *MockClient_GetRepository_Call {
-	return &MockClient_GetRepository_Call{Call: _e.mock.On("GetRepository", ctx, owner, repository)}
+func (_e *MockClient_Expecter) GetRepository(ctx interface{}) *MockClient_GetRepository_Call {
+	return &MockClient_GetRepository_Call{Call: _e.mock.On("GetRepository", ctx)}
 }
 
-func (_c *MockClient_GetRepository_Call) Run(run func(ctx context.Context, owner string, repository string)) *MockClient_GetRepository_Call {
+func (_c *MockClient_GetRepository_Call) Run(run func(ctx context.Context)) *MockClient_GetRepository_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -404,14 +390,14 @@ func (_c *MockClient_GetRepository_Call) Return(_a0 Repository, _a1 error) *Mock
 	return _c
 }
 
-func (_c *MockClient_GetRepository_Call) RunAndReturn(run func(context.Context, string, string) (Repository, error)) *MockClient_GetRepository_Call {
+func (_c *MockClient_GetRepository_Call) RunAndReturn(run func(context.Context) (Repository, error)) *MockClient_GetRepository_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRulesets provides a mock function with given fields: ctx, owner, repository, branch
-func (_m *MockClient) GetRulesets(ctx context.Context, owner string, repository string, branch string) (*Rulesets, error) {
-	ret := _m.Called(ctx, owner, repository, branch)
+// GetRulesets provides a mock function with given fields: ctx, branch
+func (_m *MockClient) GetRulesets(ctx context.Context, branch string) (*Rulesets, error) {
+	ret := _m.Called(ctx, branch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRulesets")
@@ -419,19 +405,19 @@ func (_m *MockClient) GetRulesets(ctx context.Context, owner string, repository 
 
 	var r0 *Rulesets
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*Rulesets, error)); ok {
-		return rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*Rulesets, error)); ok {
+		return rf(ctx, branch)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *Rulesets); ok {
-		r0 = rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *Rulesets); ok {
+		r0 = rf(ctx, branch)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*Rulesets)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, owner, repository, branch)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, branch)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -446,16 +432,14 @@ type MockClient_GetRulesets_Call struct {
 
 // GetRulesets is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - branch string
-func (_e *MockClient_Expecter) GetRulesets(ctx interface{}, owner interface{}, repository interface{}, branch interface{}) *MockClient_GetRulesets_Call {
-	return &MockClient_GetRulesets_Call{Call: _e.mock.On("GetRulesets", ctx, owner, repository, branch)}
+func (_e *MockClient_Expecter) GetRulesets(ctx interface{}, branch interface{}) *MockClient_GetRulesets_Call {
+	return &MockClient_GetRulesets_Call{Call: _e.mock.On("GetRulesets", ctx, branch)}
 }
 
-func (_c *MockClient_GetRulesets_Call) Run(run func(ctx context.Context, owner string, repository string, branch string)) *MockClient_GetRulesets_Call {
+func (_c *MockClient_GetRulesets_Call) Run(run func(ctx context.Context, branch string)) *MockClient_GetRulesets_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -465,14 +449,14 @@ func (_c *MockClient_GetRulesets_Call) Return(_a0 *Rulesets, _a1 error) *MockCli
 	return _c
 }
 
-func (_c *MockClient_GetRulesets_Call) RunAndReturn(run func(context.Context, string, string, string) (*Rulesets, error)) *MockClient_GetRulesets_Call {
+func (_c *MockClient_GetRulesets_Call) RunAndReturn(run func(context.Context, string) (*Rulesets, error)) *MockClient_GetRulesets_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
-func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository string, webhookID int64) (WebhookConfig, error) {
-	ret := _m.Called(ctx, owner, repository, webhookID)
+// GetWebhook provides a mock function with given fields: ctx, webhookID
+func (_m *MockClient) GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error) {
+	ret := _m.Called(ctx, webhookID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetWebhook")
@@ -480,17 +464,17 @@ func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository s
 
 	var r0 WebhookConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) (WebhookConfig, error)); ok {
-		return rf(ctx, owner, repository, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (WebhookConfig, error)); ok {
+		return rf(ctx, webhookID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64) WebhookConfig); ok {
-		r0 = rf(ctx, owner, repository, webhookID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) WebhookConfig); ok {
+		r0 = rf(ctx, webhookID)
 	} else {
 		r0 = ret.Get(0).(WebhookConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, int64) error); ok {
-		r1 = rf(ctx, owner, repository, webhookID)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, webhookID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -505,16 +489,14 @@ type MockClient_GetWebhook_Call struct {
 
 // GetWebhook is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - webhookID int64
-func (_e *MockClient_Expecter) GetWebhook(ctx interface{}, owner interface{}, repository interface{}, webhookID interface{}) *MockClient_GetWebhook_Call {
-	return &MockClient_GetWebhook_Call{Call: _e.mock.On("GetWebhook", ctx, owner, repository, webhookID)}
+func (_e *MockClient_Expecter) GetWebhook(ctx interface{}, webhookID interface{}) *MockClient_GetWebhook_Call {
+	return &MockClient_GetWebhook_Call{Call: _e.mock.On("GetWebhook", ctx, webhookID)}
 }
 
-func (_c *MockClient_GetWebhook_Call) Run(run func(ctx context.Context, owner string, repository string, webhookID int64)) *MockClient_GetWebhook_Call {
+func (_c *MockClient_GetWebhook_Call) Run(run func(ctx context.Context, webhookID int64)) *MockClient_GetWebhook_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int64))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
@@ -524,14 +506,14 @@ func (_c *MockClient_GetWebhook_Call) Return(_a0 WebhookConfig, _a1 error) *Mock
 	return _c
 }
 
-func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, string, string, int64) (WebhookConfig, error)) *MockClient_GetWebhook_Call {
+func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, int64) (WebhookConfig, error)) *MockClient_GetWebhook_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListPullRequestFiles provides a mock function with given fields: ctx, owner, repository, number
-func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, repository string, number int) ([]CommitFile, error) {
-	ret := _m.Called(ctx, owner, repository, number)
+// ListPullRequestFiles provides a mock function with given fields: ctx, number
+func (_m *MockClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
+	ret := _m.Called(ctx, number)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPullRequestFiles")
@@ -539,19 +521,19 @@ func (_m *MockClient) ListPullRequestFiles(ctx context.Context, owner string, re
 
 	var r0 []CommitFile
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) ([]CommitFile, error)); ok {
-		return rf(ctx, owner, repository, number)
+	if rf, ok := ret.Get(0).(func(context.Context, int) ([]CommitFile, error)); ok {
+		return rf(ctx, number)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) []CommitFile); ok {
-		r0 = rf(ctx, owner, repository, number)
+	if rf, ok := ret.Get(0).(func(context.Context, int) []CommitFile); ok {
+		r0 = rf(ctx, number)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]CommitFile)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, int) error); ok {
-		r1 = rf(ctx, owner, repository, number)
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, number)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -566,16 +548,14 @@ type MockClient_ListPullRequestFiles_Call struct {
 
 // ListPullRequestFiles is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
 //   - number int
-func (_e *MockClient_Expecter) ListPullRequestFiles(ctx interface{}, owner interface{}, repository interface{}, number interface{}) *MockClient_ListPullRequestFiles_Call {
-	return &MockClient_ListPullRequestFiles_Call{Call: _e.mock.On("ListPullRequestFiles", ctx, owner, repository, number)}
+func (_e *MockClient_Expecter) ListPullRequestFiles(ctx interface{}, number interface{}) *MockClient_ListPullRequestFiles_Call {
+	return &MockClient_ListPullRequestFiles_Call{Call: _e.mock.On("ListPullRequestFiles", ctx, number)}
 }
 
-func (_c *MockClient_ListPullRequestFiles_Call) Run(run func(ctx context.Context, owner string, repository string, number int)) *MockClient_ListPullRequestFiles_Call {
+func (_c *MockClient_ListPullRequestFiles_Call) Run(run func(ctx context.Context, number int)) *MockClient_ListPullRequestFiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int))
+		run(args[0].(context.Context), args[1].(int))
 	})
 	return _c
 }
@@ -585,14 +565,14 @@ func (_c *MockClient_ListPullRequestFiles_Call) Return(_a0 []CommitFile, _a1 err
 	return _c
 }
 
-func (_c *MockClient_ListPullRequestFiles_Call) RunAndReturn(run func(context.Context, string, string, int) ([]CommitFile, error)) *MockClient_ListPullRequestFiles_Call {
+func (_c *MockClient_ListPullRequestFiles_Call) RunAndReturn(run func(context.Context, int) ([]CommitFile, error)) *MockClient_ListPullRequestFiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListWebhooks provides a mock function with given fields: ctx, owner, repository
-func (_m *MockClient) ListWebhooks(ctx context.Context, owner string, repository string) ([]WebhookConfig, error) {
-	ret := _m.Called(ctx, owner, repository)
+// ListWebhooks provides a mock function with given fields: ctx
+func (_m *MockClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListWebhooks")
@@ -600,19 +580,19 @@ func (_m *MockClient) ListWebhooks(ctx context.Context, owner string, repository
 
 	var r0 []WebhookConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]WebhookConfig, error)); ok {
-		return rf(ctx, owner, repository)
+	if rf, ok := ret.Get(0).(func(context.Context) ([]WebhookConfig, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []WebhookConfig); ok {
-		r0 = rf(ctx, owner, repository)
+	if rf, ok := ret.Get(0).(func(context.Context) []WebhookConfig); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]WebhookConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, owner, repository)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -627,15 +607,13 @@ type MockClient_ListWebhooks_Call struct {
 
 // ListWebhooks is a helper method to define mock.On call
 //   - ctx context.Context
-//   - owner string
-//   - repository string
-func (_e *MockClient_Expecter) ListWebhooks(ctx interface{}, owner interface{}, repository interface{}) *MockClient_ListWebhooks_Call {
-	return &MockClient_ListWebhooks_Call{Call: _e.mock.On("ListWebhooks", ctx, owner, repository)}
+func (_e *MockClient_Expecter) ListWebhooks(ctx interface{}) *MockClient_ListWebhooks_Call {
+	return &MockClient_ListWebhooks_Call{Call: _e.mock.On("ListWebhooks", ctx)}
 }
 
-func (_c *MockClient_ListWebhooks_Call) Run(run func(ctx context.Context, owner string, repository string)) *MockClient_ListWebhooks_Call {
+func (_c *MockClient_ListWebhooks_Call) Run(run func(ctx context.Context)) *MockClient_ListWebhooks_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -645,7 +623,7 @@ func (_c *MockClient_ListWebhooks_Call) Return(_a0 []WebhookConfig, _a1 error) *
 	return _c
 }
 
-func (_c *MockClient_ListWebhooks_Call) RunAndReturn(run func(context.Context, string, string) ([]WebhookConfig, error)) *MockClient_ListWebhooks_Call {
+func (_c *MockClient_ListWebhooks_Call) RunAndReturn(run func(context.Context) ([]WebhookConfig, error)) *MockClient_ListWebhooks_Call {
 	_c.Call.Return(run)
 	return _c
 }
