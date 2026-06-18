@@ -39,7 +39,8 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
     someSelected: false,
     onToggleSelectAll: jest.fn(),
     onMigrateSelected: jest.fn(),
-    migrateDisabled: false,
+    canMigrate: true,
+    connectAction: <button>Connect a repository</button>,
     ...overrides,
   };
   return { props, ...render(<ResourcesToMigrate {...props} />) };
@@ -120,12 +121,15 @@ describe('ResourcesToMigrate', () => {
     expect(selectAll.indeterminate).toBe(true);
   });
 
-  it('shows a tooltip and keeps the button disabled when no repository is connected', () => {
-    setup({ selectedCount: 1, migrateDisabled: true, migrateTooltip: 'Connect a repository before migrating.' });
+  it('shows the connect action instead of a dead migrate button when migration is not possible', () => {
+    setup({
+      selectedCount: 1,
+      canMigrate: false,
+      connectAction: <button>Connect a repository</button>,
+    });
 
-    // Disabled-with-tooltip buttons render with aria-disabled rather than the
-    // native disabled attribute.
-    expect(screen.getByRole('button', { name: /migrate selected \(1\)/i })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: /connect a repository/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
   it('renders the all-managed empty state when there are no unmanaged folders', () => {

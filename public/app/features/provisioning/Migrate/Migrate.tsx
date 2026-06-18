@@ -5,6 +5,7 @@ import { Alert, EmptyState, Spinner, Stack } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
 import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
 import { useRepositoryList } from '../hooks/useRepositoryList';
 
 import { MigrateDrawer } from './MigrateDrawer';
@@ -77,7 +78,10 @@ export function Migrate() {
     );
   }
 
-  const hasRepo = (repos ?? []).length > 0;
+  // Migration writes to a repository's configured branch, so it needs a repo
+  // with the `write` workflow — matching the guard in the drawer. Without one,
+  // the table footer surfaces a connect action instead of a dead button.
+  const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
   // Select-all and the "migrate everything" affordance operate on the full set
   // of migratable folders, not just the search-filtered view.
   const migratableUids = folders.filter(isMigratableFolder).map((f) => f.uid);
@@ -133,11 +137,8 @@ export function Migrate() {
           // Selecting everything runs the legacy "migrate all unmanaged" job;
           // a partial selection scopes the job to the picked resources.
           onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}
-          migrateDisabled={!hasRepo}
-          migrateTooltip={t(
-            'provisioning.migrate.resources-to-migrate-no-repo-tooltip',
-            'Connect a repository before migrating.'
-          )}
+          canMigrate={hasWriteRepo}
+          connectAction={<ConnectRepositoryButton items={repos ?? []} />}
         />
       )}
 

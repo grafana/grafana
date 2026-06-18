@@ -184,6 +184,18 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all folders and resources will be migrated/i)).toBeInTheDocument();
     });
 
+    it('offers a connect action instead of migrate when no write-capable repo is connected', async () => {
+      // A PR-only repo can't run a migration, matching the drawer's guard.
+      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      render(<Migrate />);
+
+      expect(await screen.findByText('Team A')).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /configure/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /migrate (all|selected)/i })).not.toBeInTheDocument();
+    });
+
     it('lists unmanaged folders in the Resources to migrate table', async () => {
       respondWithSearch([
         folderHit('team-a', 'Team A'),

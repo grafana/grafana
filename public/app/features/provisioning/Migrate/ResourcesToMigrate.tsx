@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -24,8 +24,14 @@ interface Props {
   someSelected: boolean;
   onToggleSelectAll: () => void;
   onMigrateSelected: () => void;
-  migrateDisabled: boolean;
-  migrateTooltip?: string;
+  /**
+   * Whether migration is possible — i.e. a repository that can push to its
+   * configured branch is connected. When false the footer shows `connectAction`
+   * instead of the (otherwise dead) migrate button.
+   */
+  canMigrate: boolean;
+  /** Reachable "connect a repository" action, shown when `canMigrate` is false. */
+  connectAction: ReactNode;
 }
 
 /**
@@ -48,8 +54,8 @@ export function ResourcesToMigrate({
   someSelected,
   onToggleSelectAll,
   onMigrateSelected,
-  migrateDisabled,
-  migrateTooltip,
+  canMigrate,
+  connectAction,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
@@ -208,27 +214,24 @@ export function ResourcesToMigrate({
             defaultValue_other: 'Showing {{shown}} of {{count}} folders',
           })}
         </Text>
-        {unmanagedFolders.length > 0 && (
-          <Button
-            variant="primary"
-            icon="upload"
-            onClick={onMigrateSelected}
-            disabled={selectedCount === 0 || migrateDisabled}
-            tooltip={migrateDisabled ? migrateTooltip : undefined}
-          >
-            {allSelected
-              ? t('provisioning.migrate.resources-to-migrate-migrate-all', '', {
-                  count: selectedCount,
-                  defaultValue_one: 'Migrate all ({{count}})',
-                  defaultValue_other: 'Migrate all ({{count}})',
-                })
-              : t('provisioning.migrate.resources-to-migrate-migrate-selected', '', {
-                  count: selectedCount,
-                  defaultValue_one: 'Migrate selected ({{count}})',
-                  defaultValue_other: 'Migrate selected ({{count}})',
-                })}
-          </Button>
-        )}
+        {unmanagedFolders.length > 0 &&
+          (canMigrate ? (
+            <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={selectedCount === 0}>
+              {allSelected
+                ? t('provisioning.migrate.resources-to-migrate-migrate-all', '', {
+                    count: selectedCount,
+                    defaultValue_one: 'Migrate all ({{count}})',
+                    defaultValue_other: 'Migrate all ({{count}})',
+                  })
+                : t('provisioning.migrate.resources-to-migrate-migrate-selected', '', {
+                    count: selectedCount,
+                    defaultValue_one: 'Migrate selected ({{count}})',
+                    defaultValue_other: 'Migrate selected ({{count}})',
+                  })}
+            </Button>
+          ) : (
+            connectAction
+          ))}
       </Stack>
     </div>
   );
