@@ -70,6 +70,8 @@ The following documentation helps you set up and use the Elasticsearch data sour
 
 Starting with Grafana v13.0, the Elasticsearch data source is a standalone plugin, pre-installed in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
 
+The standalone plugin requires Grafana 12.2.0 or later. The Elasticsearch data source bundled with Grafana 12.1 and earlier continues to work as before — these versions are unaffected by the externalisation. Users running Grafana 12.2.x through 12.6.x can install the standalone plugin from the plugin catalog if they want the latest features ahead of Grafana 13.0.
+
 To adjust this behavior:
 
 - **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
