@@ -84,7 +84,7 @@ export function CommitOptionsSection<T extends FieldValues>({
 
   return (
     <ControlledCollapse
-      label={t('provisioning.commit-options.label-commit-options', 'Commit options (advanced)')}
+      label={t('provisioning.commit-options.label-commit-options', 'Commit options')}
       isOpen={signingEnabled}
     >
       <Stack direction="column" gap={2}>

@@ -176,6 +176,57 @@ func mockClientWithHits() *MockClient {
 	}
 }
 
+func TestSearchSort(t *testing.T) {
+	loginField := resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN
+	emailField := resource.SEARCH_FIELD_PREFIX + builders.USER_EMAIL
+
+	tests := []struct {
+		name     string
+		url      string
+		expected []*resourcepb.ResourceSearchRequest_Sort
+	}{
+		{
+			name:     "no sort param defaults to login ascending",
+			url:      "/searchUsers",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: false}},
+		},
+		{
+			name:     "explicit ascending sort is respected",
+			url:      "/searchUsers?sort=email",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: emailField, Desc: false}},
+		},
+		{
+			name:     "explicit descending sort is respected",
+			url:      "/searchUsers?sort=-login",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: true}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockClient := mockClientWithHits()
+			searchHandler := NewSearchHandler(
+				tracing.NewNoopTracerService(),
+				mockClient,
+				featuremgmt.WithFeatures(),
+				&setting.Cfg{},
+				authlib.FixedAccessClient(true),
+			)
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, mockClient.LastSearchRequest)
+			require.Equal(t, tc.expected, mockClient.LastSearchRequest.SortBy)
+		})
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
@@ -409,8 +460,8 @@ func TestParseResults(t *testing.T) {
 		{Name: builders.USER_LAST_SEEN_AT},
 		{Name: builders.USER_ROLE},
 		{Name: builders.USER_DISABLED},
-		{Name: resource.SEARCH_FIELD_CREATED},
-		{Name: resource.SEARCH_FIELD_LEGACY_ID},
+		{Name: builders.USER_CREATED},
+		{Name: legacyIDField},
 	}
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC).UnixMilli()
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC).Unix()
@@ -465,7 +516,7 @@ func TestParseResults(t *testing.T) {
 							[]byte("Admin"),
 							{1},
 							i64(created),
-							i64(42),
+							[]byte("42"),
 						},
 					},
 					// Second row exercises zero/empty cells -> fields keep zero values.

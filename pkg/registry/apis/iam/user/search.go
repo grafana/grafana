@@ -296,7 +296,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 		Query:  searchQuery,
-		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_LEGACY_ID},
+		Fields: []string{resource.SEARCH_FIELD_TITLE, fieldEmail, fieldLogin, fieldLastSeenAt, fieldRole, fieldDisabled, fieldCreated, legacyIDField},
 		// The query is a wildcard (*...*), so only Name is used from each
 		// QueryField to specify which fields to search in (Type and Boost
 		// are ignored for wildcard queries).
@@ -351,6 +351,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
+	} else {
+		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+		})
 	}
 
 	resp, err := s.client.Search(ctx, request)
@@ -475,13 +479,16 @@ func parseUserHit(row *resourcepb.ResourceTableRow, colIdx map[string]int) iamv0
 	}
 
 	hit := iamv0.GetSearchUsersUserHit{
-		Name:       row.Key.Name,
-		Title:      string(cell(resource.SEARCH_FIELD_TITLE)),
-		Email:      string(cell(builders.USER_EMAIL)),
-		Login:      string(cell(builders.USER_LOGIN)),
-		Role:       string(cell(builders.USER_ROLE)),
-		Created:    asInt64(resource.SEARCH_FIELD_CREATED),
-		InternalId: asInt64(resource.SEARCH_FIELD_LEGACY_ID),
+		Name:    row.Key.Name,
+		Title:   string(cell(resource.SEARCH_FIELD_TITLE)),
+		Email:   string(cell(builders.USER_EMAIL)),
+		Login:   string(cell(builders.USER_LOGIN)),
+		Role:    string(cell(builders.USER_ROLE)),
+		Created: asInt64(builders.USER_CREATED),
+	}
+
+	if id, err := strconv.ParseInt(string(cell(legacyIDField)), 10, 64); err == nil {
+		hit.InternalId = id
 	}
 
 	if b := cell(builders.USER_DISABLED); len(b) > 0 {

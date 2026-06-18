@@ -27,7 +27,6 @@ declare module "@openfeature/core" {
     | "newLogsPanel"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
-    | "createdByMeSearchFilter"
     | "otelLogsFormatting"
     | "newLogContext"
     | "plugins.useMTPlugins"
@@ -37,6 +36,7 @@ declare module "@openfeature/core" {
     | "managedPluginsV2"
     | "analyticsFramework"
     | "grafana.scenesFlickeringFix"
+    | "grafana.viewPanelPane"
     | "datasourcesApiServerEnableHealthEndpointFrontend"
     | "flameGraphWithCallTree"
     | "inlineLogDetailsNoScrolls"
@@ -52,7 +52,8 @@ declare module "@openfeature/core" {
     | "grafana.enableScopesFirstMode"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
-    | "grafana.panelEditNextFeedbackEvent";
+    | "grafana.panelEditNextFeedbackEvent"
+    | "grafana.visualDesignRefresh";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

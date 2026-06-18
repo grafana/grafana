@@ -43,6 +43,32 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
 }
 
+// TestMapperRegistry_Playlist verifies playlists map to their real two-action model
+// (playlists:read / playlists:write) rather than the default create/delete actions, and
+// that create skips scope since playlists are neither folder-scoped nor scope-checked.
+// This is what lets the provisioning export preflight authorize playlists.
+func TestMapperRegistry_Playlist(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("playlist.grafana.app", "playlists", "")
+	require.True(t, ok, "playlists should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:read", action, "verb %q should map to read", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "playlists:write", action, "verb %q should map to write (no playlists:create/delete action exists)", verb)
+	}
+
+	assert.True(t, mapping.SkipScope(utils.VerbCreate), "create must skip scope; playlists are not folder-scoped")
+	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
+}
+
 // TestFindGroupKey_WildcardMatching exercises findGroupKey via a minimal mapper.
 // It covers: exact match, wildcard match, group starts with *, key not wildcard (continue),
 // suffix mismatch, empty group, and no match.
