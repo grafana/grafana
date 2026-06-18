@@ -695,7 +695,7 @@ export function EvaluationGroupCreationModal({
   );
 }
 
-function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,
