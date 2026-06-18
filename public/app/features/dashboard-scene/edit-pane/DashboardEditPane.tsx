@@ -16,12 +16,12 @@ import {
   DashboardEditActionEvent,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
-  getEditableElementFor,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
   RepeatsUpdatedEvent,
-} from './shared';
+} from './events';
+import { getEditableElementFor } from './shared';
 import { type DashboardSidebarPane, type DashboardEditPaneLike, type DashboardEditPaneState } from './types';
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements DashboardEditPaneLike {

@@ -12,7 +12,8 @@ import {
 import { type ConditionalRenderingGroupKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Stack } from '@grafana/ui';
 
-import { ConditionalRenderingChangedEvent, dashboardEditActions } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../edit-pane/shared';
+import { ConditionalRenderingChangedEvent } from '../../edit-pane/events';
 import { getUserDefinedVariables, useUserDefinedVariables } from '../../utils/variables';
 import { ConditionalRenderingData } from '../conditions/ConditionalRenderingData';
 import { ConditionalRenderingTimeRangeSize } from '../conditions/ConditionalRenderingTimeRangeSize';

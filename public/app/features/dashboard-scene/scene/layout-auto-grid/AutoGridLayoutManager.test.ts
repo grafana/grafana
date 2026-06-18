@@ -10,7 +10,7 @@ import {
 
 import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { DashboardEditActionEvent } from '../../edit-pane/shared';
+import { DashboardEditActionEvent } from '../../edit-pane/events';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
