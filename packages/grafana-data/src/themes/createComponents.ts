@@ -80,7 +80,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
   };
 
   const menu: MenuComponentTokens = {
-    borderRadius: 'default',
+    borderRadius: 'lg',
     padding: 0.5,
   };
 
