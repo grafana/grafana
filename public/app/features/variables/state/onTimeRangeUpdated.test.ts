@@ -1,5 +1,5 @@
 import { dateTime, type TimeRange, VariableRefresh } from '@grafana/data';
-import { config, type DataSourceSrv } from '@grafana/runtime';
+import { type DataSourceSrv } from '@grafana/runtime';
 import * as runtime from '@grafana/runtime';
 import { type DashboardState } from 'app/types/dashboard';
 
@@ -16,11 +16,10 @@ import { createDataSourceVariableAdapter } from '../datasource/adapter';
 import { createIntervalVariableAdapter } from '../interval/adapter';
 import { createIntervalOptions } from '../interval/reducer';
 import { createQueryVariableAdapter } from '../query/adapter';
-import { constantBuilder, intervalBuilder, queryBuilder, datasourceBuilder } from '../shared/testing/builders';
+import { constantBuilder, intervalBuilder } from '../shared/testing/builders';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { onTimeRangeUpdated, type OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';
-import * as actions from './actions';
 import { getPreloadedState, getRootReducer, type RootReducerType } from './helpers';
 import { toKeyedAction } from './keyedVariablesReducer';
 import {
@@ -101,108 +100,6 @@ const getTestContext = (dashboard: DashboardModel) => {
     variables: {
       'interval-0': { ...interval },
       'constant-1': { ...constant },
-    },
-  };
-  const preloadedState = {
-    dashboard: dashboardState,
-    ...getPreloadedState(key, templatingState),
-  } as unknown as RootReducerType;
-
-  return {
-    key,
-    interval,
-    range,
-    dependencies,
-    adapterInterval,
-    adapterQuery,
-    preloadedState,
-    updateTimeRangeMock,
-    templateVariableValueUpdatedMock,
-    startRefreshMock,
-  };
-};
-
-const getTestContextVariables = (dashboard: DashboardModel, customeVariables?: object) => {
-  jest.clearAllMocks();
-
-  const key = 'key';
-  const interval = intervalBuilder()
-    .withId('interval-0')
-    .withRootStateKey(key)
-    .withName('interval-0')
-    .withOptions('1m', '10m', '30m', '1h', '6h', '12h', '1d', '7d', '14d', '30d')
-    .withCurrent('1m')
-    .build();
-
-  const constant = constantBuilder()
-    .withId('constant-1')
-    .withRootStateKey(key)
-    .withName('constant-1')
-    .withOptions('a constant')
-    .withCurrent('a constant')
-    .build();
-
-  const queryA = queryBuilder()
-    .withId('a')
-    .withRootStateKey(key)
-    .withName('a')
-    .withQuery('query')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  const queryB = queryBuilder()
-    .withId('b')
-    .withRootStateKey(key)
-    .withName('b')
-    .withQuery('$a')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  const queryC = queryBuilder()
-    .withId('c')
-    .withRootStateKey(key)
-    .withName('c')
-    .withQuery('$a')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  const varQueryWithNoDependentNodes = queryBuilder()
-    .withId('d')
-    .withRootStateKey(key)
-    .withName('queryDNoDependentNodes')
-    .withQuery('test query')
-    .withRefresh(VariableRefresh.onTimeRangeChanged)
-    .build();
-
-  const range: TimeRange = {
-    from: dateTime(new Date().getTime()).subtract(1, 'minutes'),
-    to: dateTime(new Date().getTime()),
-    raw: {
-      from: 'now-1m',
-      to: 'now',
-    },
-  };
-  const updateTimeRangeMock = jest.fn();
-  const templateSrvMock = { updateTimeRange: updateTimeRangeMock } as unknown as TemplateSrv;
-  const dependencies: OnTimeRangeUpdatedDependencies = { templateSrv: templateSrvMock, events: appEvents };
-  const templateVariableValueUpdatedMock = jest.fn();
-  const startRefreshMock = jest.fn();
-  dashboard.templateVariableValueUpdated = templateVariableValueUpdatedMock;
-  dashboard.startRefresh = startRefreshMock;
-  const dashboardState = {
-    getModel: () => dashboard,
-  } as unknown as DashboardState;
-  const adapterInterval = variableAdapters.get('interval');
-  const adapterQuery = variableAdapters.get('query');
-  const templatingState = {
-    variables: {
-      'interval-0': { ...interval },
-      'constant-1': { ...constant },
-      a: { ...queryA },
-      b: { ...queryB },
-      c: { ...queryC },
-      d: { ...varQueryWithNoDependentNodes },
-      ...customeVariables,
     },
   };
   const preloadedState = {
