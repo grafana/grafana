@@ -817,8 +817,8 @@ type Cfg struct {
 	EnableKubernetesAggregator bool
 
 	// EnableDataplaneAggregator enables Grafana's own aggregation layer, which proxies
-	// API requests to plugins via DataPlaneService registrations. 
-	EnableDataplaneAggregator  bool
+	// API requests to plugins via DataPlaneService registrations.
+	EnableDataplaneAggregator bool
 }
 
 type UnifiedStorageConfig struct {
