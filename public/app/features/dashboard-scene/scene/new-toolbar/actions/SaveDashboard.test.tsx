@@ -22,7 +22,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('app/features/dashboard-scene/analytics/main', () => ({
+jest.mock('app/features/dashboard-scene/analytics/dashboard-templates/main', () => ({
   CustomDashboardTemplateInteractions: {
     saveAsOpened: jest.fn(),
   },
@@ -196,7 +196,6 @@ describe('SaveDashboard (toolbar)', () => {
 
       expect(CustomDashboardTemplateInteractions.saveAsOpened).toHaveBeenCalledWith({
         dashboardUid: 'my-dash',
-        isNewDashboard: false,
       });
     });
   });
