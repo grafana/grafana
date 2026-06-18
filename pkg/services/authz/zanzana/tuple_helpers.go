@@ -53,14 +53,6 @@ const (
 // Team-management actions. Hardcoded for the same reason as the user-management
 // actions above (the enterprise-only teams.roles:* actions live in pkg/extensions).
 const (
-	actionTeamsCreate = "teams:create"
-	actionTeamsRead   = "teams:read"
-	actionTeamsWrite  = "teams:write"
-	actionTeamsDelete = "teams:delete"
-
-	actionTeamsPermissionsRead  = "teams.permissions:read"
-	actionTeamsPermissionsWrite = "teams.permissions:write"
-
 	actionTeamsRolesRead   = "teams.roles:read"
 	actionTeamsRolesAdd    = "teams.roles:add"
 	actionTeamsRolesRemove = "teams.roles:remove"
