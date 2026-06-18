@@ -5,12 +5,21 @@ import { css } from '@emotion/css';
 import { type RefCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, usePluginComponent } from '@grafana/runtime';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { TopSearchBarCommandPaletteTrigger } from '../TopBar/TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
+
+// The assistant plugin exposes the real workspace (chat + canvas + Platform tab) and
+// hands its Platform-tab DOM node back to us via `registerPlatformHost` so we can
+// portal the live page into it. Until the plugin loads, we fall back to a local stub.
+const AGENT_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/agent-mode-workspace/v1';
+
+interface AgentWorkspaceProps {
+  registerPlatformHost?: RefCallback<HTMLDivElement>;
+}
 
 interface Props {
   // The live page outlet is portaled into this node by AppChrome. The Platform tab
@@ -28,6 +37,9 @@ interface Props {
 export function AgentModeShell({ outletRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
+  const { component: PluginWorkspace, isLoading } = usePluginComponent<AgentWorkspaceProps>(
+    AGENT_WORKSPACE_COMPONENT_ID
+  );
 
   return (
     <div className={styles.root}>
@@ -37,23 +49,27 @@ export function AgentModeShell({ outletRef }: Props) {
         </ToolbarButton>
         <TopSearchBarCommandPaletteTrigger />
       </header>
-      <div className={styles.panes}>
-        <aside className={styles.chatStub}>
-          <div>chat goes here</div>
-          {/* Prove that locationService drives the portaled outlet in place. */}
-          <ToolbarButton onClick={() => locationService.push('/dashboards')}>→ dashboards</ToolbarButton>
-          <ToolbarButton onClick={() => locationService.push('/explore')}>→ explore</ToolbarButton>
-        </aside>
-        <section className={styles.canvas}>
-          <div className={styles.tabStrip}>
-            <span>Platform</span>
-            <span className={styles.tabDisabled}>Chart</span>
-            <span className={styles.tabDisabled}>Hypothesis</span>
-            <span className={styles.tabDisabled}>Report</span>
-          </div>
-          <div className={styles.platformTabHost} ref={outletRef} />
-        </section>
-      </div>
+      {PluginWorkspace ? (
+        <PluginWorkspace registerPlatformHost={outletRef} />
+      ) : (
+        <div className={styles.panes}>
+          <aside className={styles.chatStub}>
+            <div>{isLoading ? 'loading assistant…' : 'assistant plugin unavailable'}</div>
+            {/* Fallback stub — also proves locationService drives the portaled outlet. */}
+            <ToolbarButton onClick={() => locationService.push('/dashboards')}>→ dashboards</ToolbarButton>
+            <ToolbarButton onClick={() => locationService.push('/explore')}>→ explore</ToolbarButton>
+          </aside>
+          <section className={styles.canvas}>
+            <div className={styles.tabStrip}>
+              <span>Platform</span>
+              <span className={styles.tabDisabled}>Chart</span>
+              <span className={styles.tabDisabled}>Hypothesis</span>
+              <span className={styles.tabDisabled}>Report</span>
+            </div>
+            <div className={styles.platformTabHost} ref={outletRef} />
+          </section>
+        </div>
+      )}
     </div>
   );
 }
