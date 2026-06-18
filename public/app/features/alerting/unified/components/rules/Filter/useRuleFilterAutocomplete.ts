@@ -10,6 +10,9 @@ import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 import { prometheusApi } from '../../../api/prometheusApi';
 import { getRulesDataSources } from '../../../utils/datasource';
 
+type FetchGrafanaGroups = ReturnType<typeof prometheusApi.useLazyGetGrafanaGroupsQuery>[0];
+type FetchExternalGroups = ReturnType<typeof prometheusApi.useLazyGetGroupsQuery>[0];
+
 // Module-scope utilities
 const collator = new Intl.Collator();
 function getExternalRuleDataSources() {
@@ -28,6 +31,72 @@ function createInfoOption(message: string): ComboboxOption<string> {
   };
 }
 
+function formatNamespaceOption(namespaceName: string): ComboboxOption {
+  if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
+    const filename = namespaceName.split('/').pop() || namespaceName;
+    const maxDescriptionLength = 100;
+    const truncatedDescription =
+      namespaceName.length > maxDescriptionLength
+        ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+        : namespaceName;
+    return { label: filename, value: namespaceName, description: truncatedDescription };
+  }
+
+  const maxLength = 50;
+  const maxDescriptionLength = 100;
+  const truncatedName = namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
+  const truncatedDescription =
+    namespaceName.length > maxDescriptionLength
+      ? `${namespaceName.substring(0, maxDescriptionLength)}...`
+      : namespaceName;
+  return { label: truncatedName, value: namespaceName, description: truncatedDescription };
+}
+
+function sortByLabel(options: ComboboxOption[]): ComboboxOption[] {
+  return options.sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
+}
+
+function toGrafanaFolderOptions(folderNames: string[]): ComboboxOption[] {
+  return sortByLabel(
+    folderNames.map((name) => ({
+      label: name,
+      value: name,
+      description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
+    }))
+  );
+}
+
+function toExternalNamespaceOptions(namespaceNames: Iterable<string>): ComboboxOption[] {
+  return sortByLabel(Array.from(namespaceNames).map(formatNamespaceOption));
+}
+
+async function fetchGrafanaFolderNames(fetchGrafanaGroups: FetchGrafanaGroups): Promise<string[]> {
+  const response = await fetchGrafanaGroups({
+    limitAlerts: 0,
+    groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+  }).unwrap();
+  return Array.from(new Set(response.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default')));
+}
+
+async function fetchExternalNamespaceNames(fetchExternalGroups: FetchExternalGroups): Promise<Set<string>> {
+  const namespaceNameSet = new Set<string>();
+  const calls = getExternalRuleDataSources().map((ds) =>
+    fetchExternalGroups({
+      ruleSource: { uid: ds.uid },
+      excludeAlerts: true,
+      groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
+      notificationOptions: { showErrorAlert: false },
+    }).unwrap()
+  );
+  const results = await Promise.allSettled(calls);
+  for (const res of results) {
+    if (res.status === 'fulfilled') {
+      res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
+    }
+  }
+  return namespaceNameSet;
+}
+
 export function useNamespaceAndGroupOptions(): {
   namespaceOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
   groupOptions: (inputValue: string) => Promise<Array<ComboboxOption<string>>>;
@@ -37,60 +106,12 @@ export function useNamespaceAndGroupOptions(): {
   const [fetchGrafanaGroups] = prometheusApi.useLazyGetGrafanaGroupsQuery();
   const [fetchExternalGroups] = prometheusApi.useLazyGetGroupsQuery();
 
-  // Formats a raw namespace string into a user-friendly combobox option.
-  const formatNamespaceOption = useCallback((namespaceName: string): ComboboxOption<string> => {
-    if (namespaceName.includes('/') && (namespaceName.endsWith('.yml') || namespaceName.endsWith('.yaml'))) {
-      const filename = namespaceName.split('/').pop() || namespaceName;
-      const maxDescriptionLength = 100;
-      const truncatedDescription =
-        namespaceName.length > maxDescriptionLength
-          ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-          : namespaceName;
-      return { label: filename, value: namespaceName, description: truncatedDescription };
-    }
-
-    const maxLength = 50;
-    const maxDescriptionLength = 100;
-    const truncatedName =
-      namespaceName.length > maxLength ? `${namespaceName.substring(0, maxLength)}...` : namespaceName;
-    const truncatedDescription =
-      namespaceName.length > maxDescriptionLength
-        ? `${namespaceName.substring(0, maxDescriptionLength)}...`
-        : namespaceName;
-    return { label: truncatedName, value: namespaceName, description: truncatedDescription };
-  }, []);
-
   const namespaceOptions = useCallback(
     async (inputValue: string) => {
-      // Grafana namespaces - fetch with limit to check threshold
-      const grafanaResponse = await fetchGrafanaGroups({
-        limitAlerts: 0,
-        groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
-      }).unwrap();
-      const grafanaFolderNames = Array.from(
-        new Set(grafanaResponse.data.groups.map((g: GrafanaPromRuleGroupDTO) => g.file || 'default'))
-      );
+      const grafanaFolderNames = await fetchGrafanaFolderNames(fetchGrafanaGroups);
+      const externalNamespaceNames = await fetchExternalNamespaceNames(fetchExternalGroups);
 
-      // External namespaces
-      const namespaceNameSet = new Set<string>();
-      const calls = getExternalRuleDataSources().map((ds) =>
-        fetchExternalGroups({
-          ruleSource: { uid: ds.uid },
-          excludeAlerts: true,
-          groupLimit: NAMESPACE_THRESHOLD_LIMIT + 1,
-          notificationOptions: { showErrorAlert: false },
-        }).unwrap()
-      );
-      const results = await Promise.allSettled(calls);
-      for (const res of results) {
-        if (res.status === 'fulfilled') {
-          res.value.data.groups.forEach((group: { file?: string }) => namespaceNameSet.add(group.file || 'default'));
-        }
-      }
-
-      const totalNamespaces = grafanaFolderNames.length + namespaceNameSet.size;
-
-      // If we have more than NAMESPACE_THRESHOLD_LIMIT unique namespaces, show info message
+      const totalNamespaces = grafanaFolderNames.length + externalNamespaceNames.size;
       if (totalNamespaces > NAMESPACE_THRESHOLD_LIMIT) {
         return [
           createInfoOption(
@@ -102,23 +123,13 @@ export function useNamespaceAndGroupOptions(): {
         ];
       }
 
-      const grafanaFolders: Array<ComboboxOption<string>> = grafanaFolderNames
-        .map((name) => ({
-          label: name,
-          value: name,
-          description: t('alerting.rules-filter.grafana-folder', 'Grafana folder'),
-        }))
-        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-
-      const externalNamespaces = Array.from(namespaceNameSet)
-        .map(formatNamespaceOption)
-        .sort((a, b) => collator.compare(a.label ?? '', b.label ?? ''));
-
-      const options = [...grafanaFolders, ...externalNamespaces];
-      const filtered = filterBySearch(options, inputValue);
-      return filtered;
+      const options = [
+        ...toGrafanaFolderOptions(grafanaFolderNames),
+        ...toExternalNamespaceOptions(externalNamespaceNames),
+      ];
+      return filterBySearch(options, inputValue);
     },
-    [fetchGrafanaGroups, fetchExternalGroups, formatNamespaceOption]
+    [fetchGrafanaGroups, fetchExternalGroups]
   );
 
   const groupOptions = useCallback(
