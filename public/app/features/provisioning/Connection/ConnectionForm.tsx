@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
+import { Alert, Button, Checkbox, Combobox, Field, Stack } from '@grafana/ui';
 import { type Connection } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
@@ -38,12 +38,14 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       appID: data?.spec?.github?.appID || '',
       installationID: data?.spec?.github?.installationID || '',
       privateKey: '',
+      webhookDisabled: data?.spec?.webhook?.disabled ?? false,
     },
   });
 
   const {
     handleSubmit,
     reset,
+    register,
     control,
     formState: { isDirty },
     getValues,
@@ -87,6 +89,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           appID: form.appID,
           installationID: form.installationID,
         },
+        ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
       };
 
       await submitData(spec, form.privateKey);
@@ -144,6 +147,17 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
           </Field>
 
           <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} />
+
+          <Field noMargin>
+            <Checkbox
+              {...register('webhookDisabled')}
+              label={t('provisioning.connection-form.label-webhook-disabled', 'Disable webhook integration')}
+              description={t(
+                'provisioning.connection-form.description-webhook-disabled',
+                'When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.'
+              )}
+            />
+          </Field>
 
           <Stack gap={2}>
             <Button type="submit" disabled={request.isLoading}>

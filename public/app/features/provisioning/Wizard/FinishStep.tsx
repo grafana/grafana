@@ -146,7 +146,13 @@ export const FinishStep = memo(function FinishStep() {
         </>
       )}
 
-      {isGithub && <WebhookSection<WizardFormData> register={register} name="repository.webhook.baseUrl" />}
+      {isGithub && (
+        <WebhookSection<WizardFormData>
+          register={register}
+          name="repository.webhook.baseUrl"
+          disabledName="repository.webhook.disabled"
+        />
+      )}
     </Stack>
   );
 });
