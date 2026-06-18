@@ -781,30 +781,7 @@ describe('Layout mutation commands', () => {
       expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(2);
     });
 
-    it('preserves the panel id when moving between rows', async () => {
-      const scene = buildRowsSceneWithPanels();
-      const executor = new DashboardMutationClient(scene);
-      const body = scene.state.body as unknown as RowsLayoutManager;
-
-      const result = await executor.execute({
-        type: 'MOVE_PANEL',
-        payload: {
-          element: { name: 'elem-a' },
-          toParent: '/rows/1',
-        },
-      });
-
-      expect(result.success).toBe(true);
-
-      const movedPanel = body.state.rows[1].state.layout.getVizPanels().find((p) => p.state.title === 'Panel A')!;
-      expect(movedPanel.state.key).toBe('panel-1');
-    });
-
-    it('keeps grid item keys unique when moving several low-id panels into one row', async () => {
-      // Reproduces the duplicate-key crash: addPanel() keys the wrapping grid
-      // item via getNextPanelId(), which keeps returning the same value once the
-      // moved panels have their (low) ids restored — every grid item would
-      // collide on the same key.
+    it('preserves panel ids and keeps grid item keys unique when moving panels', async () => {
       const panel1 = new VizPanel({ key: 'panel-1', title: 'P1', pluginId: 'timeseries' });
       const panel2 = new VizPanel({ key: 'panel-2', title: 'P2', pluginId: 'timeseries' });
       const panel3 = new VizPanel({ key: 'panel-3', title: 'P3', pluginId: 'timeseries' });
@@ -840,7 +817,9 @@ describe('Layout mutation commands', () => {
 
       const panels = (scene.state.body as unknown as RowsLayoutManager).state.rows[0].state.layout.getVizPanels();
       expect(panels).toHaveLength(3);
+      // Panel ids are preserved (no bump) ...
       expect(panels.map((p) => p.state.key).sort()).toEqual(['panel-1', 'panel-2', 'panel-3']);
+      // ... and each grid item key stays unique (no React duplicate-key collision).
       const gridItemKeys = panels.map((p) => p.parent?.state.key);
       expect(new Set(gridItemKeys).size).toBe(3);
     });
