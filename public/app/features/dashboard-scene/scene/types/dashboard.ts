@@ -1,4 +1,4 @@
-import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
@@ -78,6 +78,8 @@ interface DashboardScenePreferences {
 
 export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
+
+  copyPanel(vizPanel: VizPanel): void;
 }
 
 function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {

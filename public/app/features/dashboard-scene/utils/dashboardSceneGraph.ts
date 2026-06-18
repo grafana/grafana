@@ -1,7 +1,6 @@
 import { VizPanel, sceneGraph, behaviors, type SceneObject, SceneGridRow } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { type DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -9,11 +8,11 @@ import { type DashboardSceneLike } from '../scene/types/dashboard';
 
 import { getDashboardSceneFor, getLayoutManagerFor, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
 
-function getTimePicker(scene: DashboardScene) {
+function getTimePicker(scene: DashboardSceneLike) {
   return scene.state.controls?.state.timePicker;
 }
 
-function getRefreshPicker(scene: DashboardScene) {
+function getRefreshPicker(scene: DashboardSceneLike) {
   return scene.state.controls?.state.refreshPicker;
 }
 
@@ -27,7 +26,7 @@ function getPanelLinks(panel: VizPanel) {
   return null;
 }
 
-function getVizPanels(scene: DashboardScene): VizPanel[] {
+function getVizPanels(scene: DashboardSceneLike): VizPanel[] {
   return scene.state.body.getVizPanels();
 }
 
@@ -74,7 +73,7 @@ function getDataLayers(scene: DashboardSceneLike): DashboardDataLayerSet {
   return data;
 }
 
-function getCursorSync(scene: DashboardScene) {
+function getCursorSync(scene: DashboardSceneLike) {
   const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
 
   if (cursorSync instanceof behaviors.CursorSync) {
