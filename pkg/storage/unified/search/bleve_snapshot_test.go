@@ -1147,8 +1147,12 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
+	uploadedKey, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
+	// UploadIndexSnapshot derives the persisted UploadTimestamp from a freshly
+	// generated ULID, not from the caller's meta. Use that as the expected value
+	// so the assertion below is exact and not subject to scheduling delays.
+	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
 	// Fresh backend pointing at the same bucket should download instead of building.
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
@@ -1183,7 +1187,8 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	trackedAt, tracked := be.getUploadTracking(key)
 	require.True(t, tracked)
-	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+	assert.True(t, expectedUploadedAt.Equal(trackedAt),
+		"trackedAt %s should equal manifest UploadTimestamp %s", trackedAt, expectedUploadedAt)
 
 	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)
