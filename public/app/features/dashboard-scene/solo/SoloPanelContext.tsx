@@ -4,7 +4,9 @@ import { Trans } from '@grafana/i18n';
 import { LazyLoader, type VizPanel } from '@grafana/scenes';
 import { Box, Spinner } from '@grafana/ui';
 
-import { type DashboardScene } from './DashboardScene';
+import { type DashboardScene } from '../scene/DashboardScene';
+
+import { ViewPanelWrapper } from './ViewPanelWrapper';
 
 export interface SoloPanelContextValue {
   matches: (VizPanel: VizPanel) => boolean;
@@ -83,7 +85,7 @@ export function renderMatchingSoloPanels(
           </LazyLoader>
         );
       } else {
-        matches.push(<panel.Component model={panel} key={panel.state.key} />);
+        matches.push(<ViewPanelWrapper panel={panel} key={panel.state.key} />);
       }
     }
   }
