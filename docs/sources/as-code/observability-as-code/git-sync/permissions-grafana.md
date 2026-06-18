@@ -120,7 +120,11 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 **Organization-level capabilities**:
 
 - View dashboard preview links in pull requests
-- Trigger manual sync operations via jobs API
+- Push their dashboard and folder changes to Git, including opening pull requests, via the jobs API
+
+{{< admonition type="note" >}}
+Triggering a manual sync (**pull** from Git) and orphan-resource cleanup are admin-only operations. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+{{< /admonition >}}
 
 **Resource access** depends on folder/dashboard permissions:
 
@@ -205,10 +209,14 @@ Users with the `Admin` role receive full access to Git Sync infrastructure:
 
 Users with the `Editor` role can manage sync operations but not infrastructure configuration:
 
-| Permission Category  | Specific Permissions                                                                                              | What This Allows                                                                              |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| **Jobs**             | `provisioning.jobs:create`<br>`provisioning.jobs:read`<br>`provisioning.jobs:write`<br>`provisioning.jobs:delete` | Trigger manual syncs<br>View sync jobs<br>Modify sync job settings<br>Cancel/delete sync jobs |
-| **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                      |
+| Permission Category  | Specific Permissions                                                                                              | What This Allows                                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Jobs**             | `provisioning.jobs:create`<br>`provisioning.jobs:read`<br>`provisioning.jobs:write`<br>`provisioning.jobs:delete` | Push changes and open pull requests<br>View sync jobs<br>Modify sync job settings<br>Cancel/delete sync jobs |
+| **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                                     |
+
+{{< admonition type="note" >}}
+`provisioning.jobs:create` lets editors create jobs that push their changes (subject to the relevant `dashboards:*` and `folders:*` permissions), but it does **not** allow admin-only job actions such as a manual **pull** from Git or orphan-resource cleanup. Those require `provisioning.repositories:write`. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+{{< /admonition >}}
 
 `Editors` can access resources based on the folder/dashboard assignments:
 
@@ -239,6 +247,31 @@ The following applies for Git Sync:
 - Users do **not** need repository write/delete or connection permissions to edit dashboards
 - Dashboard-level permissions override folder-level permissions
 - Changes made by users with appropriate permissions automatically sync to Git
+
+### Job actions and required permissions
+
+Git Sync operations run as jobs. While `provisioning.jobs:create` is required to create any job, some job actions are additionally restricted to administrators and are gated on `provisioning.repositories:write` (an admin-only action). This prevents editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
+
+| Job action                          | Required permission                                                                   | Who can run it                                            |
+| ----------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| Push changes / open pull request    | `provisioning.jobs:create` plus the relevant `dashboards:*` / `folders:*` permissions | Editors and Admins, on the resources they can modify      |
+| Migrate resources                   | `provisioning.jobs:create` plus read/write on the affected resource types             | Editors and Admins with the required resource permissions |
+| Manual sync (pull from Git)         | `provisioning.repositories:write`                                                     | Admins only                                               |
+| Release / delete orphaned resources | `provisioning.repositories:write`                                                     | Admins only                                               |
+
+### Repository subresource access
+
+The repository API exposes several subresources. The following table shows the permission each one is gated on. Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), the `refs` subresource accepts either an admin (`repositories:write`) or an editor (`jobs:create`) check.
+
+| Subresource                      | Purpose                                    | Required permission                                                     | Who can access it       |
+| -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
+| `files`                          | Read and write provisioned resource files  | Authenticated access, then standard `dashboards:*` / `folders:*` checks | All authenticated users |
+| `refs`                           | List repository branches and commits       | `provisioning.repositories:write` **or** `provisioning.jobs:create`     | Admins and Editors      |
+| `resources`, `history`, `status` | Repository management and inspection views | `provisioning.repositories:write`                                       | Admins only             |
+
+{{< admonition type="note" >}}
+The management and inspection views (`resources`, `history`, `status`) are gated on `provisioning.repositories:write` rather than `repositories:read`, because there's no admin-only read action on the `repositories` resource. As a result, only users who can manage a repository can inspect its management views; Viewers and Editors can't access these views.
+{{< /admonition >}}
 
 ## Configure Git repository protection
 
