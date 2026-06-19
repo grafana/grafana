@@ -111,7 +111,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
-		AppTitle:                   "Grafana",
+		AppTitle:                   "AeroMed Intelligence Center",
 		AppSubUrl:                  p.config.AppSubURL,
 		IsDevelopmentEnv:           p.config.Env == setting.Dev,
 		Assets:                     assetsManifest,
