@@ -3,31 +3,56 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
-import { getDashboardSnapshotSrv, type Snapshot } from 'app/features/dashboard/services/SnapshotSrv';
+import { Box, Button, ConfirmModal, EmptyState, ScrollContainer, Stack, TextLink } from '@grafana/ui';
+import {
+  getDashboardSnapshotSrv,
+  type Snapshot,
+  type SnapshotListOptions,
+  type SnapshotListPage,
+} from 'app/features/dashboard/services/SnapshotSrv';
 
 import { SnapshotListTableRow } from './SnapshotListTableRow';
 
-export async function getSnapshots() {
-  return getDashboardSnapshotSrv()
-    .getSnapshots()
-    .then((result: Snapshot[]) => {
-      return result.map((snapshot) => ({
-        ...snapshot,
-        url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
-      }));
-    });
+export async function getSnapshots(opts?: SnapshotListOptions): Promise<SnapshotListPage> {
+  const page = await getDashboardSnapshotSrv().getSnapshots(opts);
+  return {
+    items: page.items.map((snapshot) => ({
+      ...snapshot,
+      url: `${config.appUrl}dashboard/snapshot/${snapshot.key}`,
+    })),
+    continueToken: page.continueToken,
+  };
 }
+
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
-  const [isFetching, setIsFetching] = useState(false);
+  const [continueToken, setContinueToken] = useState<string | undefined>();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
+
   useAsync(async () => {
-    setIsFetching(true);
-    const response = await getSnapshots();
-    setIsFetching(false);
-    setSnapshots(response);
-  }, [setSnapshots]);
+    const page = await getSnapshots();
+    setSnapshots(page.items);
+    setContinueToken(page.continueToken);
+    setIsInitialLoading(false);
+    setHasLoadedOnce(true);
+  }, []);
+
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !continueToken) {
+      return;
+    }
+    setIsLoadingMore(true);
+    try {
+      const page = await getSnapshots({ continue: continueToken });
+      setSnapshots((prev) => [...prev, ...page.items]);
+      setContinueToken(page.continueToken);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [continueToken, isLoadingMore]);
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
@@ -42,7 +67,7 @@ export const SnapshotListTable = () => {
     [snapshots]
   );
 
-  if (!isFetching && snapshots.length === 0) {
+  if (hasLoadedOnce && snapshots.length === 0) {
     return (
       <EmptyState
         variant="call-to-action"
@@ -82,7 +107,7 @@ export const SnapshotListTable = () => {
           </tr>
         </thead>
         <tbody>
-          {isFetching ? (
+          {isInitialLoading ? (
             <>
               <SnapshotListTableRow.Skeleton />
               <SnapshotListTableRow.Skeleton />
@@ -99,6 +124,14 @@ export const SnapshotListTable = () => {
           )}
         </tbody>
       </table>
+
+      {!isInitialLoading && continueToken && (
+        <Box paddingTop={2}>
+          <Stack>
+            <LoadMoreButton onClick={loadMore} loading={isLoadingMore} />
+          </Stack>
+        </Box>
+      )}
 
       <ConfirmModal
         isOpen={!!removeSnapshot}
@@ -118,3 +151,26 @@ export const SnapshotListTable = () => {
     </ScrollContainer>
   );
 };
+
+interface LoadMoreButtonProps {
+  onClick: () => void;
+  loading: boolean;
+}
+
+function LoadMoreButton({ onClick, loading }: LoadMoreButtonProps) {
+  return (
+    <Button
+      data-testid="load-more-snapshots"
+      type="button"
+      variant="secondary"
+      onClick={onClick}
+      disabled={loading}
+    >
+      {loading ? (
+        <Trans i18nKey="snapshot.load-more.loading">Loading more snapshots…</Trans>
+      ) : (
+        <Trans i18nKey="snapshot.load-more.label">Show more snapshots</Trans>
+      )}
+    </Button>
+  );
+}

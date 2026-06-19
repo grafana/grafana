@@ -14869,6 +14869,10 @@
       "more-info": "You can create a snapshot of any dashboard through the <1>Share</1> modal. <4>Learn more</4>"
     },
     "external-badge": "External",
+    "load-more": {
+      "label": "Show more snapshots",
+      "loading": "Loading more snapshots…"
+    },
     "name-column-header": "Name",
     "share": {
       "cancel-button": "Cancel",
