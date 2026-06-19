@@ -727,8 +727,23 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		}
 	}
 
-	hasStale := len(present) < len(stored)
-	if len(toEmbed) == 0 && !hasStale {
+	extracted, embedded, deleted := len(desired), len(toEmbed), len(stored)-len(present)
+	span.SetAttributes(
+		attribute.Int("subresources.extracted", extracted),
+		attribute.Int("subresources.embedded", embedded),
+		attribute.Int("subresources.deleted", deleted),
+	)
+	recordCounts := func() {
+		if s.metrics == nil {
+			return
+		}
+		s.metrics.ReconcilerSubresourcesExtractedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(extracted))
+		s.metrics.ReconcilerSubresourcesEmbeddedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(embedded))
+		s.metrics.ReconcilerSubresourcesDeletedTotal.WithLabelValues(ev.group, ev.resource).Add(float64(deleted))
+	}
+
+	if embedded == 0 && deleted == 0 {
+		recordCounts()
 		return nil
 	}
 
@@ -748,6 +763,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		statusLabel = "upsert_error"
 		return fmt.Errorf("upsert: %w", err)
 	}
+	recordCounts()
 	return nil
 }
 
