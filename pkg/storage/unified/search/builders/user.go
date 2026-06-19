@@ -127,9 +127,10 @@ func GetUserBuilder() (resource.DocumentBuilderInfo, error) {
 
 	gr := iamv0.UserResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource:    gr,
-		Fields:           fields,
-		Builder:          resource.StandardDocumentBuilderWithFields(iamManifests, provider),
-		SearchFieldsHash: provider.IndexAffectingHash(gr.Group, gr.Resource),
+		GroupResource:        gr,
+		Fields:               fields,
+		Builder:              resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash:     provider.IndexAffectingHash(gr.Group, gr.Resource),
+		SearchFieldsProvider: provider,
 	}, nil
 }
