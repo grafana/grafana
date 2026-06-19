@@ -1425,7 +1425,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  urlRepo,
-					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, urlRepo, accessMock, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1466,7 +1466,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
