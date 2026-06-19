@@ -106,7 +106,7 @@ export function RecentlyDeletedActions() {
       // The RV on a trash row is the delete event's RV, which points at the
       // tombstone (and on some storage backends returns 404). Step back by one
       // so the read resolves to the dashboard as it was just before delete.
-      const previousRV = (BigInt(deleteRV) - 1n).toString();
+      const previousRV = (BigInt(deleteRV) - BigInt(1)).toString();
 
       const api = await getDashboardAPI();
       const dashboard = await api.getDashboard(uid, { resourceVersion: previousRV });
