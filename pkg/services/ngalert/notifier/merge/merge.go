@@ -11,13 +11,14 @@ package merge
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"math"
 	"slices"
 	"strings"
 
+	"github.com/grafana/alerting/utils/hash"
 	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -29,6 +30,7 @@ import (
 type RenameResources struct {
 	Receivers     map[string]string
 	TimeIntervals map[string]string
+	Templates     map[string]string
 }
 
 // MergeResult describes what changed during a merge: which resources were added and which were renamed.
@@ -80,6 +82,13 @@ func (m MergeResult) LogContext() []any {
 		}
 		logCtx = append(logCtx, "renamedTimeIntervals", fmt.Sprintf("[%s]", intervalBuilder.String()[0:intervalBuilder.Len()-1]))
 	}
+	if len(m.Templates) > 0 {
+		tmplBuilder := strings.Builder{}
+		for from, to := range m.Templates {
+			_, _ = fmt.Fprintf(&tmplBuilder, "'%s'->'%s',", from, to)
+		}
+		logCtx = append(logCtx, "renamedTemplates", fmt.Sprintf("[%s]", tmplBuilder.String()[0:tmplBuilder.Len()-1]))
+	}
 	return logCtx
 }
 
@@ -106,8 +115,8 @@ func (m MergeResult) LogContext() []any {
 //  3. Inhibit Rule Merging:
 //     - All inhibit rules from the extra configuration are copied to the result
 //
-// provenance is applied to templates and inhibition rules produced by the merge.
-func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.Provenance) (v1.AMConfigV1, MergeResult, error) {
+// Templates and inhibition rules produced by the merge are created with ProvenanceNone; final provenance is assigned by the provisioning layer based on where the resource is stored.
+func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, MergeResult, error) {
 	if len(cfg.ExtraConfigs) == 0 {
 		return *cfg, MergeResult{}, nil
 	}
@@ -143,31 +152,19 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 		managedRoutes[mimirCfg.Identifier] = extraRoute
 	}
 
-	var addedInhibitionRules []string
-	managedInhibitionRules := make(map[v1.ResourceUID]v1.InhibitionRule, len(mcfg.InhibitRules)+len(cfg.InhibitionRules))
-	{
-		maps.Copy(managedInhibitionRules, cfg.InhibitionRules)
-		importedRules, err := BuildManagedInhibitionRules(mimirCfg.Identifier, mcfg.InhibitRules, provenance)
-		if err != nil {
-			return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to build managed inhibition rules for imported configuration: %w", err)
-		}
-		for uid := range importedRules {
-			addedInhibitionRules = append(addedInhibitionRules, string(uid))
-		}
-		maps.Copy(managedInhibitionRules, importedRules)
+	managedInhibitionRules, addedInhibitionRules, err := MergeInhibitionRules(cfg.InhibitionRules, mcfg.InhibitRules, mimirCfg.Identifier)
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to merge inhibition rules: %w", err)
 	}
 
-	var addedTemplates []string
-	templates := make(map[v1.ResourceUID]v1.TemplateGroup, len(cfg.Templates)+len(mimirCfg.TemplateFiles))
-	{
-		maps.Copy(templates, cfg.Templates)
-		for name, content := range mimirCfg.TemplateFiles {
-			tmpl := v1.NewTemplateGroup(name, content, v1.TemplateKindMimir, provenance)
-			if _, ok := templates[tmpl.UID]; ok {
-				return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("template [%s] of %s kind already exists", name, v1.TemplateKindMimir)
-			}
-			templates[tmpl.UID] = tmpl
-			addedTemplates = append(addedTemplates, name)
+	templates, renamedTemplates, addedUIDs, err := MergeTemplates(cfg.Templates, mimirCfg.TemplateFiles, mimirCfg.Identifier)
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to merge template files: %w", err)
+	}
+	addedTemplates := make([]string, 0, len(addedUIDs))
+	for _, uid := range addedUIDs {
+		if tmpl, ok := templates[uid]; ok {
+			addedTemplates = append(addedTemplates, tmpl.Title)
 		}
 	}
 
@@ -187,7 +184,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1, provenance models.P
 			ManagedRoutes:   managedRoutes,
 			InhibitionRules: managedInhibitionRules,
 		}, MergeResult{
-			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals},
+			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
 			AddedRoute:           mimirCfg.Identifier,
 			AddedReceivers:       addedReceivers,
 			AddedTimeIntervals:   addedTimeIntervals,
@@ -336,54 +333,94 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 	return usedNames
 }
 
-func BuildManagedInhibitionRules(identifier string, rules []config.InhibitRule, provenance models.Provenance) (map[v1.ResourceUID]v1.InhibitionRule, error) {
-	scopedRules := applyManagedRouteMatcher(identifier, rules)
-
-	res := make(map[v1.ResourceUID]v1.InhibitionRule, len(scopedRules))
-	for i, rule := range scopedRules {
-		namePrefix := fmt.Sprintf("%s-imported-inhibition-rule-", identifier)
-
-		intFmt := "%d"
-		if padLength := util.MaxUIDLength - len(namePrefix); padLength >= 0 {
-			intFmt = fmt.Sprintf("%%0%dd", padLength+1)
+// MergeInhibitionRules merges incoming Alertmanager inhibition rules into an existing set of Grafana-managed ones.
+// Each incoming rule is scoped to the given identifier by appending a matcher on models.NamedRouteLabel,
+// and all deprecated match/match_re fields are folded into the modern matchers slice.
+// UIDs are derived from a stable hash of (rule, index, identifier); collisions fall back to a short random UID.
+// Returns the merged map (existing + incoming) and the UIDs of the newly added rules.
+func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []config.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
+	added = make([]string, 0, len(incoming))
+	result = make(map[v1.ResourceUID]v1.InhibitionRule, len(incoming)+len(existing))
+	maps.Copy(result, existing)
+	matcher := v1.NewMatcher(v1.MatcherEqual, models.NamedRouteLabel, identifier)
+	for idx, rule := range incoming {
+		var name string
+		{
+			hasher := fnv.New64a()
+			hash.DeepHashObject(hasher, []any{rule, idx, identifier})
+			name = fmt.Sprintf("%x", hasher.Sum64()) // uid is a hash of the rule and the index, which guarantees uniqueness
+			// try to generate a stable name for the rule. Fallback to uuid if the name is already taken.
+			if _, ok := result[v1.ResourceUID(name)]; ok || len(name) > util.MaxUIDLength {
+				name = util.GenerateShortUID()
+			}
 		}
-		name := fmt.Sprintf(namePrefix+intFmt, i)
 
-		ir := v1.NewInhibitionRule(name, v1.MatchersToModel(rule.SourceMatchers), v1.MatchersToModel(rule.TargetMatchers), rule.Equal, provenance)
+		source := append(foldMatchers(rule.SourceMatch, rule.SourceMatchRE, rule.SourceMatchers), matcher)
+		target := append(foldMatchers(rule.TargetMatch, rule.TargetMatchRE, rule.TargetMatchers), matcher)
+		ir := v1.NewInhibitionRule(name, source, target, rule.Equal, models.ProvenanceNone)
 		if err := ir.Validate(); err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("cannot convert inhibition rule at index %d: %w", idx, err)
 		}
-
-		res[ir.UID] = ir
+		result[ir.UID] = ir
+		added = append(added, string(ir.UID))
 	}
-
-	return res, nil
+	return result, added, nil
 }
 
-func applyManagedRouteMatcher(identifier string, rules []config.InhibitRule) []config.InhibitRule {
-	result := make([]config.InhibitRule, 0, len(rules))
-	matcher := &labels.Matcher{
-		Type:  labels.MatchEqual,
-		Name:  models.NamedRouteLabel,
-		Value: identifier,
+// MergeTemplates merges the incoming templates with the existing ones, renaming conflicts.
+// When an incoming Mimir template name collides with an existing Mimir template name, the
+// incoming template is renamed by appending identifier as a suffix (same semantics as Receivers).
+// UIDs are derived from a stable hash of (finalName, content, identifier); collisions fall back
+// to a short random UID.
+// Returns the merged map, a rename map (original→final name), the UIDs of added templates,
+// and an error.
+func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[string]string, identifier string) (templates map[v1.ResourceUID]v1.TemplateGroup, renames map[string]string, added []v1.ResourceUID, err error) {
+	// Index existing Mimir template names to detect conflicts.
+	usedNames := make(map[string]struct{}, len(existing))
+	for _, tmpl := range existing {
+		if tmpl.Kind == v1.TemplateKindMimir {
+			usedNames[tmpl.Title] = struct{}{}
+		}
 	}
 
-	for _, rule := range rules {
-		sm := make(config.Matchers, 0, len(rule.SourceMatchers)+1)
-		sm = append(sm, matcher)
-		sm = append(sm, rule.SourceMatchers...)
+	templates = make(map[v1.ResourceUID]v1.TemplateGroup, len(existing)+len(incoming))
+	maps.Copy(templates, existing)
+	renames = make(map[string]string)
+	added = make([]v1.ResourceUID, 0, len(incoming))
 
-		tm := make(config.Matchers, 0, len(rule.TargetMatchers)+1)
-		tm = append(tm, matcher)
-		tm = append(tm, rule.TargetMatchers...)
+	for _, name := range slices.Sorted(maps.Keys(incoming)) {
+		content := incoming[name]
+		finalName := name
+		if _, exists := usedNames[name]; exists {
+			finalName = getUniqueName(name, identifier, usedNames)
+			renames[name] = finalName
+		}
+		usedNames[finalName] = struct{}{}
 
-		result = append(result, config.InhibitRule{
-			SourceMatchers: sm,
-			TargetMatchers: tm,
-			Equal:          slices.Clone(rule.Equal),
-		})
+		hasher := fnv.New64a()
+		hash.DeepHashObject(hasher, []any{finalName, content, identifier})
+		uid := fmt.Sprintf("%x", hasher.Sum64())
+		if _, ok := templates[v1.ResourceUID(uid)]; ok || len(uid) > util.MaxUIDLength {
+			uid = util.GenerateShortUID()
+		}
+
+		tmpl := v1.NewTemplateGroup(v1.ResourceUID(uid), finalName, content, v1.TemplateKindMimir, models.ProvenanceNone)
+		templates[tmpl.UID] = tmpl
+		added = append(added, tmpl.UID)
 	}
-	return result
+	return templates, renames, added, nil
+}
+
+func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
+	out := make([]v1.Matcher, 0, len(match)+len(matchRE)+len(matchers))
+	out = append(out, v1.MatchersToModel(matchers)...)
+	for _, ln := range slices.Sorted(maps.Keys(match)) {
+		out = append(out, v1.NewMatcher(v1.MatcherEqual, ln, match[ln]))
+	}
+	for _, ln := range slices.Sorted(maps.Keys(matchRE)) {
+		out = append(out, v1.NewMatcher(v1.MatcherEqualRegex, ln, matchRE[ln].String()))
+	}
+	return out
 }
 
 func getUniqueName[T any](name string, suffix string, usedNames map[string]T) string {

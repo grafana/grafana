@@ -131,7 +131,7 @@ export const PopupCard = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   popover: css({
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     boxShadow: theme.shadows.z3,
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,

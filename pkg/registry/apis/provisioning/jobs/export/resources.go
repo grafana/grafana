@@ -63,12 +63,16 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 // Each reference is resolved against its own kind/group via discovery, so any
 // kind the admission validator accepts can be selectively exported. The
 // dashboard conversion shim is applied only to dashboards; other kinds are
-// written as returned. Folders are exported as a tree by ExportFolders, so a
-// folder reference is skipped here to avoid writing a conflicting standalone
-// file. A reference whose kind cannot be resolved is recorded as a failed item
-// so a misconfigured caller surfaces in the job summary rather than silently
-// failing.
-func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
+// written as returned. A reference whose kind cannot be resolved is recorded as
+// a failed item so a misconfigured caller surfaces in the job summary rather
+// than silently failing.
+//
+// Unlike the full export, this does not write the entire instance folder tree.
+// Only the folders the requested resources need are exported: an explicitly
+// named folder, and the parent-folder ancestry of every requested resource.
+// A resource whose folder was not named still lands at its nested path because
+// that folder (and its ancestors) is generated on demand from the folder API.
+func ExportSpecificResources(ctx context.Context, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, generateNewUIDs bool) error {
 	progress.SetMessage(ctx, "start selective resource export")
 
 	// resolvedKind caches the per-kind client and (for dashboards only) the
@@ -80,6 +84,20 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 		shim   conversionShim
 	}
 	resolved := make(map[schema.GroupVersionKind]resolvedKind)
+
+	// pendingResource pairs a fetched, non-folder resource with the shim needed
+	// to write it. Resources are written only after their folder ancestry has
+	// been exported so each one resolves to its correct nested path.
+	type pendingResource struct {
+		item *unstructured.Unstructured
+		shim conversionShim
+	}
+	var pending []pendingResource
+
+	// folderUIDs accumulates every folder whose ancestry must be written:
+	// explicitly named folders plus the parent folder of each requested
+	// resource. Duplicates are harmless; collectFolderAncestry de-duplicates.
+	var folderUIDs []string
 
 	for _, ref := range options.Resources {
 		// ForKind resolves the preferred version when Version is empty.
@@ -110,11 +128,10 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			resolved[gvk] = rk
 		}
 
-		// Folders are exported as a tree by ExportFolders; skip them here so we
-		// don't write a conflicting standalone folder file.
+		// An explicitly named folder is exported as part of the folder tree
+		// (with its ancestry) rather than as a standalone resource file.
 		if rk.gvr.GroupResource() == resources.FolderResource.GroupResource() {
-			result.WithAction(repository.FileActionIgnored)
-			progress.Record(ctx, result.Build())
+			folderUIDs = append(folderUIDs, ref.Name)
 			continue
 		}
 
@@ -132,7 +149,23 @@ func ExportSpecificResources(ctx context.Context, options provisioning.ExportJob
 			continue
 		}
 
-		if err := exportItem(ctx, item, options, rk.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
+		// Record the parent folder so its ancestry is exported before the
+		// resource is written. Meta extraction failures are surfaced by
+		// exportItem when the resource is written below.
+		if meta, err := utils.MetaAccessor(item); err == nil {
+			if folder := meta.GetFolder(); folder != "" {
+				folderUIDs = append(folderUIDs, folder)
+			}
+		}
+		pending = append(pending, pendingResource{item: item, shim: rk.shim})
+	}
+
+	if err := exportFolderAncestry(ctx, options, folderClient, repositoryResources, progress, folderUIDs); err != nil {
+		return err
+	}
+
+	for _, p := range pending {
+		if err := exportItem(ctx, p.item, options, p.shim, repositoryResources, progress, generateNewUIDs, true); err != nil {
 			return err
 		}
 	}

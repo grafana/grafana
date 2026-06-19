@@ -6,7 +6,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
 import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaWarning } from './logging';
+import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
@@ -96,11 +96,13 @@ async function initDatasourcePluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
+    logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with bootdata values', {});
     return;
   }
 
   const metas = await initPluginMetas();
   setMetas(metas);
+  logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with meta values', {});
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {

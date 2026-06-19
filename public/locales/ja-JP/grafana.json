@@ -29,7 +29,7 @@
       "add-label": "権限を追加する",
       "loading": "権限を読み込み中...",
       "no-permissions": "権限がありません",
-      "permissions-change-warning": "これにより、このフォルダとそのすべての子孫のアクセス許可が変更されます。合計で、これは次のように影響します：",
+      "permissions-change-warning": "",
       "role": "役割",
       "serviceaccount": "サービスアカウント",
       "team": "チーム",
@@ -2794,7 +2794,9 @@
           "alerting": "このアラートルールの評価を一時停止するには、オンにします。",
           "recording": "この記録ルールの評価を一時停止するには、オンにします。"
         },
-        "select-folder-before": "評価グループと間隔を設定する前にフォルダを選択してください"
+        "select-folder-before": "評価グループと間隔を設定する前にフォルダを選択してください",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4200,13 +4202,9 @@
       "cancel-button": "キャンセル",
       "confirmation-text": "削除",
       "delete-button": "削除",
-      "delete-modal-invalid-text": "1つ以上のフォルダにライブラリパネルまたはアラートルールが含まれています。続行するには、まずこれらを削除してください。",
-      "delete-modal-invalid-title": "フォルダを削除できません",
       "delete-modal-restore-dashboards-common": "削除されたダッシュボードは最大12か月間履歴に保存されます。削除権限を持つユーザーは、削除したダッシュボードを復元できます。また、管理者は、どのユーザーが削除したダッシュボードでも復元できます。履歴に保存されるのは、最大1,000件のダッシュボードです。制限に達した場合、古いダッシュボードは所定の期間より早めに削除される可能性があります。",
       "delete-modal-restore-dashboards-prefix-folder": "この操作により、選択したフォルダがすぐに削除されます。",
       "delete-modal-restore-dashboards-suffix-folder": "フォルダは復元できません。",
-      "delete-modal-text": "この操作により、次のコンテンツが削除されます：",
-      "delete-modal-text-one-folder": "この操作により、フォルダ「<1>{{ folderName }}</1>」と次のコンテンツが削除されます。",
       "delete-modal-title": "削除",
       "delete-provisioned-folder": "プロビジョニングされたフォルダを削除",
       "deleting": "削除中…",
@@ -4214,8 +4212,6 @@
       "move-button": "移動",
       "move-modal-alert": "このアイテムを移動すると、そのアクセス許可が変更される可能性があります。",
       "move-modal-field-label": "フォルダ名",
-      "move-modal-text": "この操作により、次のコンテンツが移動されます。",
-      "move-modal-text-one-folder": "この操作により、フォルダ「<1>{{ folderName }}</1>」と次のコンテンツが移動されます。",
       "move-modal-title": "移動",
       "move-provisioned-folder": "プロビジョニングされたフォルダを移動",
       "moving": "移動中…",
@@ -4225,11 +4221,15 @@
       "new-folder-owner-selector-checkbox": "フォルダに所有者を割り当てる",
       "rename-provisioned-folder": "プロビジョニングされたフォルダの名前を変更",
       "selected-mix-resources-modal-text": "プロビジョニング済みのリソースと未プロビジョニングのリソースの両方が選択されています。これらは同時に処理できません。プロビジョニングされたリソースのみまたはプロビジョニングされていないリソースのみを選択して、再試行してください。",
-      "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました"
+      "selected-mix-resources-modal-title": "混在したリソースタイプが選択されました",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "最近削除された"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "フォルダが見つかりません",
       "title-ruler-namespace-error": "ルールを読み込めません"
@@ -4244,13 +4244,18 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
-      "delete-warning": "これにより、選択したフォルダとその子フォルダが削除されます。影響のある項目は次のとおりです。",
-      "error-deleting-resources": "リソースの削除中にエラーが発生しました"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "リソースの削除中にエラーが発生しました",
+      "success-title": "",
+      "folder-empty_other": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "キャンセル",
       "button-move": "移動",
       "button-moving": "移動中…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "ターゲットに直接アクセスできる場合は、ターゲットリポジトリで直接変更してください。",
         "read-only-saving-message": "リポジトリは読み取り専用で、gitでプロビジョニングされます。{{readOnlyMessage}}",
@@ -4261,17 +4266,11 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "リソースの移動中にエラーが発生しました",
       "error-no-target-folder-path": "ターゲットフォルダパスが無効または空です。もう一度選択してください。",
-      "move-total": "全体で次に影響します：",
       "move-warning": "これにより、選択したフォルダとその配下のフォルダが移動されます。利用可能なターゲットフォルダは、選択したリソースによって異なります。",
       "move-warning-tooltip": "プロビジョニングされたリソースは、プロビジョニングされたフォルダ内にのみ移動でき、ローカルリソースはローカルフォルダにのみ移動できます。",
-      "target-folder": "移動先フォルダ"
-    },
-    "counts": {
-      "alertRule_other": "{{count}}件のアラートルール",
-      "dashboard_other": "{{count}}個のダッシュボード",
-      "folder_other": "{{count}}フォルダ",
-      "libraryPanel_other": "{{count}}個のライブラリパネル",
-      "total_other": "{{count}}個のアイテム"
+      "success-title": "",
+      "target-folder": "移動先フォルダ",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4300,12 +4299,11 @@
       "button-cancel": "キャンセル",
       "button-delete": "削除",
       "button-deleting": "削除中…",
-      "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。影響のある項目は次のとおりです。",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "必須フィールドが不足しています",
       "success-message": "フォルダが正常に削除されました"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "下位情報を取得できません"
     },
     "empty-state": {
       "button-title": "ダッシュボードを作成",
@@ -5207,10 +5205,6 @@
       },
       "pane-header": "追加"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "「パネルを追加」ウィジェットを閉じる",
-      "tooltip-close-widget": "ウィジェットを閉じる"
-    },
     "add-menu": {
       "import": "ライブラリからインポート",
       "paste-panel": "パネルを貼り付け",
@@ -6002,12 +5996,6 @@
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "ローデータ"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "パネルリンク"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "クエリに戻る"
     },
@@ -6045,18 +6033,6 @@
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
       "confirmText-restore-version": "バージョン{{version}}に復元",
       "title-restore-version": "バージョンの復元"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "行オプション"
-    },
-    "row-options-form": {
-      "cancel": "キャンセル",
-      "label-repeat-for": "繰り返す",
-      "label-title": "タイトル",
-      "update": "アップデート"
-    },
-    "row-options-modal": {
-      "title-row-options": "行オプション"
     },
     "rows-layout": {
       "cancel": "キャンセル",
@@ -6203,7 +6179,17 @@
       "snapshot": {
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す"
+      "undo": "元に戻す",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "ソース（{{provider}}）",
@@ -6418,16 +6404,6 @@
       "discard": "破棄",
       "title-unsaved-changes": "未保存の変更"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "この行のパネルは、{{SHARED_DASHBOARD_QUERY}}のデータソースを使用します。これらのパネルは、繰り返された行のパネルではなく、元の行のパネルを参照します。"
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "行を削除する",
-      "learn-more": "もっと詳しく",
-      "title": {
-        "delete-row": "行を削除する"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "有効なGrafana.com IDが見つかりませんでした",
       "invalid-json": "無効なJSON",
@@ -6472,6 +6448,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8677,7 +8654,9 @@
       "query-history-button": "クエリ履歴",
       "query-history-button-aria-label": "クエリ履歴",
       "query-inspector-button": "クエリ検査",
-      "query-inspector-button-aria-label": "クエリ検査"
+      "query-inspector-button-aria-label": "クエリ検査",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "すべてのスパンを表示",
     "span-bar": {
@@ -8897,6 +8876,11 @@
     },
     "sql-expr": {
       "button-run-query": "クエリを実行"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "エラー",
@@ -10627,10 +10611,28 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_other": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10645,6 +10647,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10652,15 +10659,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -12107,8 +12112,10 @@
       "undock": "メニューの固定を解除"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "セクションを折りたたむ：{{sectionName}}",
-      "expand-aria-label": "セクションを展開：{{sectionName}}"
+      "expand-aria-label": "セクションを展開：{{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "組織を変更"
@@ -12961,9 +12968,6 @@
       "description-clear-repository-connection": "この名前は、リポジトリ接続と、UIに表示されるフォルダに使用されます",
       "empty": "空",
       "error-field-required": "このフィールドは必須です。",
-      "error-quota-exceeded-message": "このリポジトリフォルダには、{{fileCount}}件のリソースが含まれており、アカウントの上限（{{limit}}件）を超えています。このリポジトリを同期するには、アカウントをアップグレードするか、同期するリソースの数を減らしてください。",
-      "error-quota-exceeded-message-onprem": "このリポジトリフォルダには、{{fileCount}}件のリソースが件含まれており、インスタンスの上限（{{limit}}件）を超えています。このリポジトリを同期するには、Grafanaの構成を更新するか、同期するリソースの数を減らしてください。",
-      "error-quota-exceeded-title": "リソースクォータを超えました",
       "error-repository-status-unhealthy-message": "リポジトリへの接続中に問題が発生しました。リポジトリの設定を確認して、もう一度お試しください。",
       "error-repository-status-unhealthy-title": "リポジトリの状態が正常ではありません",
       "external-storage-label": "外部ストレージ",
@@ -12974,6 +12978,9 @@
       "unmanaged-resources-label": "管理されていないリソース",
       "update-configuration-action": "設定ドキュメントを表示",
       "upgrade-action": "アカウントをアップグレード",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_other": "{{count}}個のダッシュボード",
       "files-count_other": "{{count}}個のファイル",
       "folders-count_other": "{{count}}個のフォルダ"
@@ -12985,6 +12992,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "<2>永久無料のGrafana Cloudプラン</2>を利用すれば、セットアップを省略して、Grafana Cloudでフルマネージドかつホスト済みのGit Syncを利用できます。",
@@ -13008,7 +13018,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "リポジトリ設定を保存しました",
@@ -13039,13 +13056,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "私の設定"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Webhook登録用に自動検出されたURLを上書きします。",
-      "description-webhook-url-learn-more": "詳細を見る",
-      "label-git-hub-features": "GitHub機能",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13194,28 +13204,22 @@
     },
     "finish-step": {
       "description-enable-previews": "プルリクエストによるダッシュボードの変更の画像プレビューを追加します。Grafanaダッシュボードの画像はGitリポジトリで共有され、リポジトリにアクセスできる全ユーザーが閲覧できます。",
-      "description-generate-dashboard-previews": "プルリクエストのプレビューリンクを作成する",
       "description-image-rendering": "画像レンダリングが必要です。<2>画像レンダリングを設定</2>",
-      "description-preview-requirements": "(<2>画像レンダリング</2>と公開アクセスが有効になっている必要があります)",
       "description-read-only": "Grafanaではリソースを変更できません。",
       "description-sync-interval": "リポジトリからの変更を同期する頻度",
-      "description-webhook-url": "Webhook登録用に自動検出されたURLを上書きします。",
       "error-sync-interval-required": "同期間隔が必要です",
       "label-enable-previews": "プルリクエストでダッシュボードのプレビューを有効にする",
-      "label-generate-dashboard-previews": "ダッシュボードプレビューを生成",
       "label-read-only": "読み出しのみ",
-      "label-sync-interval": "同期間隔 (秒)",
-      "label-webhook-url": "Webhook URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "同期間隔 (秒)"
     },
     "fix-folder-metadata": {
       "button": "フォルダIDを修正"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "キャンセル",
+      "default-commit-message": "",
       "error-message": "フォルダのメタデータ修正ジョブを開始できませんでした。再度お試しください。",
       "error-title": "フォルダのメタデータ修正時のエラー",
-      "loading": "リポジトリを読み込み中...",
       "read-only-message": "フォルダのメタデータは自動的に修正できません。",
       "submit": "フォルダIDを修正",
       "submitting": "修正中…",
@@ -13376,9 +13380,26 @@
       "truncated": "メッセージが切り捨てられました"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "このフォルダにメタデータファイルがあるかどうかを確認できませんでした。後でもう一度お試しください。",
@@ -13610,11 +13631,24 @@
     "shared": {
       "branch-description": "プロビジョニングに使用するブランチ",
       "branch-label": "ブランチ",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "オプション。同期するリソースが含まれるサブディレクトリへのパス。",
       "path-label": "パス",
       "progress-bar": {
         "aria-label": "進捗バー"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "ユーザー名",
       "url-label": "リポジトリURL",
       "url-pattern": "有効なリポジトリURL（https://hostname/owner/repo）でなければなりません"
@@ -13682,6 +13716,13 @@
     "watch-stream": {
       "error-description": "リアルタイム更新を開始できませんでした。最新のデータを確認するには、ページを更新してください。",
       "error-title": "ライブ更新が利用できません"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "次の制限事項に注意してください。詳細については、<2>Git Syncドキュメント</2>をご覧ください。",
@@ -13987,15 +14028,16 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14147,6 +14189,55 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {
