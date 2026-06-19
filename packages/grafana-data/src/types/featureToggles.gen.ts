@@ -1336,7 +1336,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;

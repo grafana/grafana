@@ -3511,12 +3511,15 @@
     {
       "metadata": {
         "name": "multiPropsVariables",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-09T17:11:49Z"
+        "resourceVersion": "1781873846528",
+        "creationTimestamp": "2025-12-09T17:11:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-19 12:57:26.528739 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables support for variables whose values can have multiple properties",
-        "stage": "GA",
+        "description": "Deprecated. Enables support for variables whose values can have multiple properties",
+        "stage": "deprecated",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "true"
