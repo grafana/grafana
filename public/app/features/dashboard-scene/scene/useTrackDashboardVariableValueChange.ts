@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { SceneVariableValueChangedEvent, type SceneVariable } from '@grafana/scenes';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
@@ -28,11 +28,11 @@ export function useTrackDashboardVariableValueChange(variable: SceneVariable) {
   }, [isMobile, variable]);
 
   return {
-    markUserInitiated: () => {
+    markUserInitiated: useCallback(() => {
       if (!isMobile) {
         return;
       }
       userInitiatedRef.current = true;
-    },
+    }, [isMobile]),
   };
 }

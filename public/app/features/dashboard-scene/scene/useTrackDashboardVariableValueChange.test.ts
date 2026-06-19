@@ -53,7 +53,7 @@ describe('useTrackDashboardVariableValueChange', () => {
     });
 
     expect(reportInteraction).toHaveBeenCalledWith('dashboards_variable_value_changed', {
-      type: 'custom', 
+      type: 'custom',
       isDynamicDashboard: true,
     });
   });
