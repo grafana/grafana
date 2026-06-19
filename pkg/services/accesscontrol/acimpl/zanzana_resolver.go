@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -41,7 +41,7 @@ type ZanzanaPermissionResolver struct {
 func NewZanzanaPermissionResolver(
 	client zanzana.Client,
 	userSvc user.Service,
-	configProvider apiserver.RestConfigProvider,
+	configProvider restcfg.RestConfigProvider,
 	useExternalGroups bool,
 ) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
@@ -514,10 +514,10 @@ var teamGVR = schema.GroupVersionResource{
 type uidToIDResolver struct {
 	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
-	configProvider apiserver.RestConfigProvider
+	configProvider restcfg.RestConfigProvider
 }
 
-func newUIDToIDResolver(configProvider apiserver.RestConfigProvider) *uidToIDResolver {
+func newUIDToIDResolver(configProvider restcfg.RestConfigProvider) *uidToIDResolver {
 	return &uidToIDResolver{
 		clients:        make(map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface),
 		configProvider: configProvider,
