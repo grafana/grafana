@@ -16,7 +16,7 @@
     "secondary": {
       "main": "palette.ink700",
       "border": "palette.ink600",
-      "text": "palette.ink300",
+      "text": "palette.ink200",
       "contrastText": "palette.ink200"
     },
     "tertiary": {
@@ -43,9 +43,9 @@
       "border": "palette.blue900"
     },
     "text": {
-      "primary": "palette.ink200",
-      "secondary": "palette.ink300",
-      "disabled": "palette.ink500",
+      "primary": "palette.ink100",
+      "secondary": "palette.ink200",
+      "disabled": "palette.ink300",
       "link": "palette.orange400"
     },
     "border": {
