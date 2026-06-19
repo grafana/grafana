@@ -18,7 +18,7 @@ An announcement banner shows at the top of every page in Grafana. You can use th
 
 ## Create or update an announcement banner
 
-By default, only organization administrators can create announcement banners. You can customize who can create announcement banners with [Role-based access control](/docs/grafarna/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/).
+By default, only organization administrators can create announcement banners. You can customize who can create announcement banners with [Role-based access control](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/).
 
 To create or update an announcement banner, follow these steps:
 
