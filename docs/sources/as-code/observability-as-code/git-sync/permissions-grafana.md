@@ -261,7 +261,14 @@ Git Sync operations run as jobs. You need the `provisioning.jobs:create` permiss
 
 ### Repository subresource access
 
-The repository API exposes several subresources. The following table shows the permission each one is gated on. Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), the `refs` subresource accepts either an admin (`repositories:write`) or an editor (`jobs:create`) check.
+The repository API exposes several subresources. The following table shows the permission each one is gated on.
+
+The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
+
+- **Editors pushing changes**: When an editor saves changes or opens a pull request through the push-job flow, Grafana needs the branch list. This is authorized with `provisioning.jobs:create`.
+- **Admins configuring a repository**: When an admin or repository owner sets up or edits a repository and picks a target branch, Grafana updates the `Repository` resource info. This is authorized with `provisioning.repositories:write`.
+
+Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
 
 | Subresource                      | Purpose                                    | Required permission                                                     | Who can access it       |
 | -------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------- | ----------------------- |
