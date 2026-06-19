@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { Resizable } from 're-resizable';
 import { Fragment, type PropsWithChildren, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useObservable } from 'react-use';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -76,7 +77,11 @@ export function AppChrome({ children }: Props) {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
 
-  const { pathname, search } = locationService.getLocation();
+  // Subscribe to location so the URL-driven effects below (kiosk / agentMode) re-run on
+  // SPA navigation, not just on mount — AppChrome otherwise doesn't re-render on a pure
+  // location change.
+  const location = useObservable(locationService.getLocationObservable(), locationService.getLocation());
+  const { pathname, search } = location;
   const url = pathname + search;
   const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
@@ -93,6 +98,17 @@ export function AppChrome({ children }: Props) {
   useEffect(() => {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
+  }, [chrome, search]);
+
+  // `?agentMode=1` is a one-shot request to enter agent mode (e.g. from the assistant
+  // plugin's "Open in Workspace"). Consume it: enter agent mode and clear the param so
+  // it doesn't re-trigger or leak onto subsequent platform navigation.
+  useEffect(() => {
+    const queryParams = locationSearchToObject(search);
+    if (queryParams.agentMode === '1' || queryParams.agentMode === true) {
+      chrome.setAgentMode(true);
+      locationService.partial({ agentMode: null });
+    }
   }, [chrome, search]);
 
   const agentMode = isAgentModeEnabled && Boolean(state.agentMode);
