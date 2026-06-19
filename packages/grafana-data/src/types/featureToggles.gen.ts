@@ -389,11 +389,6 @@ export interface FeatureToggles {
   */
   feedbackButton?: boolean;
   /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
-  /**
   * Enables generating table data as PDF in reporting
   * @default false
   */
