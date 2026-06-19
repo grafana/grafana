@@ -4844,6 +4844,20 @@
     },
     {
       "metadata": {
+        "name": "splunk.useLegacyResultsApi",
+        "resourceVersion": "1781865637365",
+        "creationTimestamp": "2026-06-19T10:40:37Z"
+      },
+      "spec": {
+        "description": "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2024-02-27T21:16:00Z"
