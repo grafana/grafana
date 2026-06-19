@@ -27,11 +27,6 @@ export function AgentModePlatformBar() {
   const styles = useStyles2(getStyles);
   const homeNav = useSelector((s) => s.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(state.sectionNav.node, state.pageNav, homeNav);
-
-  // The Platform-tab mega menu is local to agent mode: it always starts collapsed and its
-  // open/close never touches Grafana's global mega-menu state (megaMenuOpen/Docked), so a
-  // menu left open or docked in non-agent Grafana doesn't carry into the Platform tab, and
-  // toggling it here doesn't change non-agent Grafana.
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
