@@ -17,7 +17,8 @@ jobs:
     runs-on: ubuntu-arm64-small
     if: |
       github.event.label.name == 'pr/external' &&
-      !contains(github.event.pull_request.labels.*.name, 'pr/auto-triaged')
+      !contains(github.event.pull_request.labels.*.name, 'pr/auto-triaged') &&
+      contains(fromJSON('["NONE", "FIRST_TIME_CONTRIBUTOR", "FIRST_TIMER", "CONTRIBUTOR"]'), github.event.pull_request.author_association)
 
     steps:
       - name: Save PR number for handler workflow
