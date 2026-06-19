@@ -34,7 +34,11 @@ jobs:
   setup:
     name: setup
     runs-on: ubuntu-x64-small
-    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
+    # grafana/grafana builds only main (push/schedule/dispatch); release-candidate builds
+    # now run in the mirror.
+    if: >-
+      (github.repository == 'grafana/grafana' && github.ref_name == 'main') ||
+      (github.repository == 'grafana/grafana-security-mirror' && endsWith(github.ref_name, '#patched'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
@@ -46,7 +50,13 @@ jobs:
           persist-credentials: false
       - name: Set up version (Release Branches)
         if: startsWith(github.ref_name, 'release-')
-        run: echo "${REF_NAME#release-}" > VERSION
+        # Drop the leading release- and any trailing #patched (the patched mirror branch
+        # suffix) so the version is clean, e.g. release-13.0.0#patched -> 13.0.0. A
+        # +security suffix is preserved (release-13.0.0+security-01 -> 13.0.0+security-01).
+        run: |
+          version="${REF_NAME#release-}"
+          version="${version%\#patched}"
+          echo "$version" > VERSION
         env:
           REF_NAME: ${{ github.ref_name }}
       - name: Set up version (Non-release branches)
@@ -88,6 +98,9 @@ jobs:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            // grafana-enterprise has no #patched branches, so dispatch it on the plain
+            // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
+            const enterpriseRef = REF.replace(/#patched$/, '');
             let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
@@ -102,7 +115,7 @@ jobs:
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
                 workflow_id: workflow,
-                ref:  REF,
+                ref:  enterpriseRef,
                 inputs: {
                   "version": VERSION,
                   "build-id": String(BUILD_ID),
