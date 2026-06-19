@@ -10,10 +10,12 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -21,21 +23,24 @@ import (
 
 var logger = log.New("accesscontrol.zanzana_resolver")
 
+const (
+	readPageSize           = 100
+	maxConcurrentReadTasks = 8
+)
+
 // ZanzanaPermissionResolver handles resolving user permissions using Zanzana
 type ZanzanaPermissionResolver struct {
-	client  zanzana.Client
-	userSvc user.Service
-	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
-	// team memberships are sent as Zanzana contextual tuples for the current user, so the
-	// merged permissions match what the forward Check path (which uses the groups claim)
-	// enforces.
+	client            zanzana.Client
+	userSvc           user.Service
+	actionResolver    ac.ActionResolver
 	useExternalGroups bool
 }
 
-func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service, useExternalGroups bool) *ZanzanaPermissionResolver {
+func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service, actionResolver ac.ActionResolver, useExternalGroups bool) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
 		client:            client,
 		userSvc:           userSvc,
+		actionResolver:    actionResolver,
 		useExternalGroups: useExternalGroups,
 	}
 }
@@ -52,11 +57,130 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 	return usr.GetGroups()
 }
 
-// ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
+// ResolveCurrentUserPermissions reads direct stored Zanzana tuples for the signed-in identity
+// and maps them to legacy-shaped anchor permissions (no inherited subtree expansion).
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
-	subject := usr.GetUID()
 	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
-	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
+	return r.resolveDirectGrants(ctx, namespace, r.subjectsFor(usr))
+}
+
+func (r *ZanzanaPermissionResolver) subjectsFor(usr identity.Requester) []string {
+	subjects := []string{usr.GetUID()}
+	for _, teamUID := range r.teamsForCurrentUser(usr) {
+		subjects = append(subjects, common.NewTupleEntry(common.TypeTeam, teamUID, common.RelationTeamMember))
+	}
+	for _, role := range ac.GetOrgRoles(usr) {
+		if basicRole := common.TranslateBasicRole(role); basicRole != "" {
+			subjects = append(subjects, common.NewTupleEntry(common.TypeRole, basicRole, common.RelationAssignee))
+		}
+	}
+	return subjects
+}
+
+var readObjectPrefixes = []string{
+	common.TypeFolderPrefix,
+	common.TypeResourcePrefix,
+	common.TypeGroupResoucePrefix,
+}
+
+func (r *ZanzanaPermissionResolver) resolveDirectGrants(ctx context.Context, namespace string, subjects []string) ([]ac.Permission, error) {
+	type readTask struct {
+		subject string
+		prefix  string
+	}
+
+	tasks := make([]readTask, 0, len(subjects)*len(readObjectPrefixes))
+	for _, subject := range subjects {
+		for _, prefix := range readObjectPrefixes {
+			tasks = append(tasks, readTask{subject: subject, prefix: prefix})
+		}
+	}
+
+	var (
+		mu          sync.Mutex
+		permissions []ac.Permission
+	)
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(maxConcurrentReadTasks)
+	for _, task := range tasks {
+		task := task
+		g.Go(func() error {
+			tuples, err := r.readAllTuples(gctx, namespace, task.subject, task.prefix)
+			if err != nil {
+				return err
+			}
+			var batch []ac.Permission
+			for _, t := range tuples {
+				key := t.GetKey()
+				if key == nil {
+					continue
+				}
+				mapped, ok := common.PermissionsFromStoredTuple(key.GetObject(), key.GetRelation(), key.GetCondition())
+				if !ok {
+					continue
+				}
+				for _, m := range mapped {
+					batch = append(batch, ac.Permission{Action: m.Action, Scope: m.Scope})
+				}
+			}
+			if len(batch) > 0 {
+				mu.Lock()
+				permissions = append(permissions, batch...)
+				mu.Unlock()
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	if r.actionResolver != nil {
+		permissions = r.actionResolver.ExpandActionSets(permissions)
+	}
+	return dedupePermissions(permissions), nil
+}
+
+func (r *ZanzanaPermissionResolver) readAllTuples(ctx context.Context, namespace, subject, objectPrefix string) ([]*authzextv1.Tuple, error) {
+	var out []*authzextv1.Tuple
+	token := ""
+	for {
+		req := &authzextv1.ReadRequest{
+			Namespace: namespace,
+			TupleKey: &authzextv1.ReadRequestTupleKey{
+				User:   subject,
+				Object: objectPrefix,
+			},
+			PageSize:          wrapperspb.Int32(readPageSize),
+			ContinuationToken: token,
+		}
+		res, err := r.client.Read(ctx, req)
+		if err != nil {
+			return nil, fmt.Errorf("zanzana read failed: %w", err)
+		}
+		out = append(out, res.GetTuples()...)
+		token = res.GetContinuationToken()
+		if token == "" {
+			return out, nil
+		}
+	}
+}
+
+func dedupePermissions(permissions []ac.Permission) []ac.Permission {
+	if len(permissions) == 0 {
+		return permissions
+	}
+	seen := make(map[permKey]struct{}, len(permissions))
+	out := make([]ac.Permission, 0, len(permissions))
+	for _, p := range permissions {
+		k := permKey{p.Action, p.Scope}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		out = append(out, p)
+	}
+	return out
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana

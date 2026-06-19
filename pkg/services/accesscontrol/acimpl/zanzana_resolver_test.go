@@ -13,9 +13,24 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
+
+type capturingReadClient struct {
+	fakeZanzanaClient
+	mu        sync.Mutex
+	readCalls []*authzextv1.ReadRequest
+}
+
+func (c *capturingReadClient) Read(_ context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	c.mu.Lock()
+	c.readCalls = append(c.readCalls, req)
+	c.mu.Unlock()
+	return &authzextv1.ReadResponse{}, nil
+}
 
 // capturingZanzanaClient records every ListRequest it receives so tests can
 // assert on the group / resource / verb / subject sent to Zanzana.
@@ -658,18 +673,17 @@ func TestLegacyZanzanaParity(t *testing.T) {
 	}
 }
 
-// TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups verifies the merge
-// resolver sends the signed-in user's team memberships as List `Teams`, so team-based
-// grants (resolved via contextual team:<name>#member tuples) surface in the merged
-// permissions. It mirrors the id token groups claim: external (proxy/IdP) groups when
-// id_use_external_groups_for_groups_claim is set, otherwise stored team memberships.
-func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.T) {
+// TestResolveCurrentUserPermissions_ReadsTeamAndRoleSubjects verifies the merge
+// resolver issues Read requests for the signed-in user, their team memberships,
+// and org role subjects.
+func TestResolveCurrentUserPermissions_ReadsTeamAndRoleSubjects(t *testing.T) {
 	newReq := func(stored, external []string) identity.Requester {
 		return &identity.StaticRequester{
 			Type:           claims.TypeUser,
 			UserID:         1,
 			UserUID:        "u1",
 			OrgID:          1,
+			OrgRole:        identity.RoleAdmin,
 			Groups:         stored,
 			ExternalGroups: external,
 		}
@@ -678,29 +692,111 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 	cases := []struct {
 		name              string
 		useExternalGroups bool
-		wantTeams         []string
+		wantTeamSubjects  []string
 	}{
-		{"external groups when configured", true, []string{"team_a", "everyone"}},
-		{"stored team memberships otherwise", false, []string{"stored-team"}},
+		{"external groups when configured", true, []string{
+			common.NewTupleEntry(common.TypeTeam, "team_a", common.RelationTeamMember),
+			common.NewTupleEntry(common.TypeTeam, "everyone", common.RelationTeamMember),
+		}},
+		{"stored team memberships otherwise", false, []string{
+			common.NewTupleEntry(common.TypeTeam, "stored-team", common.RelationTeamMember),
+		}},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cap := &capturingZanzanaClient{}
-			cap.listResp = &authzv1.ListResponse{}
-			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, tc.useExternalGroups)
+			cap := &capturingReadClient{}
+			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, resourcepermissions.NewActionSetService(), tc.useExternalGroups)
 
 			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
 			require.NoError(t, err)
-			require.NotEmpty(t, cap.listCalls, "expected the resolver to issue List requests")
-			for _, c := range cap.listCalls {
-				require.Equal(t, tc.wantTeams, c.Teams, "every List request must carry the user's teams")
+			require.NotEmpty(t, cap.readCalls, "expected Read requests")
+
+			users := map[string]struct{}{}
+			for _, c := range cap.readCalls {
+				users[c.GetTupleKey().GetUser()] = struct{}{}
 			}
+			require.Contains(t, users, claims.NewTypeID(claims.TypeUser, "u1"))
+			for _, teamSubject := range tc.wantTeamSubjects {
+				require.Contains(t, users, teamSubject)
+			}
+			require.Contains(t, users, common.NewTupleEntry(common.TypeRole, common.TranslateBasicRole("Admin"), common.RelationAssignee))
 		})
 	}
 }
 
-// permScopes returns the scopes the resolver produced for the given action.
+func TestResolveCurrentUserPermissions_ReturnsAnchorOnly(t *testing.T) {
+	subject := claims.NewTypeID(claims.TypeUser, "u1")
+	folderObject := common.NewFolderIdent("top-folder")
+	var readCount int
+	client := &fakeZanzanaClient{
+		readFunc: func(req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+			readCount++
+			if req.GetTupleKey().GetUser() == subject && req.GetTupleKey().GetObject() == common.TypeFolderPrefix {
+				return &authzextv1.ReadResponse{
+					Tuples: []*authzextv1.Tuple{{
+						Key: &authzextv1.TupleKey{
+							User:     subject,
+							Relation: common.RelationGet,
+							Object:   folderObject,
+						},
+					}},
+				}, nil
+			}
+			return &authzextv1.ReadResponse{}, nil
+		},
+	}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, resourcepermissions.NewActionSetService(), false)
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserUID: "u1",
+		OrgID:   1,
+		OrgRole: identity.RoleViewer,
+	})
+	require.NoError(t, err)
+	require.Equal(t, []ac.Permission{
+		{Action: "folders:read", Scope: ac.Scope("folders", "uid", "top-folder")},
+	}, perms)
+	require.Greater(t, readCount, 0)
+}
+
+func TestResolveCurrentUserPermissions_ReadPagination(t *testing.T) {
+	subject := claims.NewTypeID(claims.TypeUser, "u1")
+	page := 0
+	client := &fakeZanzanaClient{
+		readFunc: func(req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+			if req.GetTupleKey().GetUser() != subject || req.GetTupleKey().GetObject() != common.TypeFolderPrefix {
+				return &authzextv1.ReadResponse{}, nil
+			}
+			page++
+			if req.GetContinuationToken() == "" {
+				return &authzextv1.ReadResponse{
+					Tuples: []*authzextv1.Tuple{{
+						Key: &authzextv1.TupleKey{
+							User: subject, Relation: common.RelationGet, Object: common.NewFolderIdent("a"),
+						},
+					}},
+					ContinuationToken: "more",
+				}, nil
+			}
+			return &authzextv1.ReadResponse{
+				Tuples: []*authzextv1.Tuple{{
+					Key: &authzextv1.TupleKey{
+						User: subject, Relation: common.RelationGet, Object: common.NewFolderIdent("b"),
+					},
+				}},
+			}, nil
+		},
+	}
+	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, resourcepermissions.NewActionSetService(), false)
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+		Type: claims.TypeUser, UserUID: "u1", OrgID: 1, OrgRole: identity.RoleViewer,
+	})
+	require.NoError(t, err)
+	require.Len(t, perms, 2)
+	require.Equal(t, 2, page)
+}
+
 func permScopes(perms []ac.Permission, action string) []string {
 	var out []string
 	for _, p := range perms {

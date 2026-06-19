@@ -8,6 +8,7 @@ import (
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	authlib "github.com/grafana/authlib/types"
+	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +22,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/client"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -31,6 +33,9 @@ type fakeZanzanaClient struct {
 	client.NoopClient
 	listResp *authzv1.ListResponse
 	listErr  error
+	readResp *authzextv1.ReadResponse
+	readErr  error
+	readFunc func(req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error)
 }
 
 func (f *fakeZanzanaClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
@@ -49,8 +54,17 @@ func (f *fakeZanzanaClient) List(context.Context, *authzv1.ListRequest) (*authzv
 	return f.listResp, f.listErr
 }
 
-func (f *fakeZanzanaClient) Read(context.Context, *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
-	return nil, nil
+func (f *fakeZanzanaClient) Read(_ context.Context, req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	if f.readFunc != nil {
+		return f.readFunc(req)
+	}
+	if f.readErr != nil {
+		return nil, f.readErr
+	}
+	if f.readResp != nil {
+		return f.readResp, nil
+	}
+	return &authzextv1.ReadResponse{}, nil
 }
 
 func (f *fakeZanzanaClient) Write(context.Context, *authzextv1.WriteRequest) error {
@@ -63,6 +77,27 @@ func (f *fakeZanzanaClient) Mutate(context.Context, *authzextv1.MutateRequest) e
 
 func (f *fakeZanzanaClient) Query(context.Context, *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
 	return nil, nil
+}
+
+func testActionResolver() accesscontrol.ActionResolver {
+	return resourcepermissions.NewActionSetService()
+}
+
+func readResponseForDashboard(subject, dashUID string) func(req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+	gr := dashboards.DashboardResourceInfo.GroupResource()
+	tuple := common.NewResourceTuple(subject, common.RelationGet, gr.Group, gr.Resource, "", dashUID)
+	key := common.ToAuthzExtTupleKey(tuple)
+	return func(req *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
+		if req.GetTupleKey().GetObject() != common.TypeResourcePrefix {
+			return &authzextv1.ReadResponse{}, nil
+		}
+		if req.GetTupleKey().GetUser() != subject {
+			return &authzextv1.ReadResponse{}, nil
+		}
+		return &authzextv1.ReadResponse{
+			Tuples: []*authzextv1.Tuple{{Key: key}},
+		}, nil
+	}
 }
 
 func sortPermissions(perms []accesscontrol.Permission) {
@@ -218,13 +253,16 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 	})
 
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{readErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, testActionResolver(), false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("success unions zanzana permissions", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, false)
+		subject := authlib.NewTypeID(authlib.TypeUser, "user_test_uid")
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{
+			readFunc: readResponseForDashboard(subject, "zanzana-dash"),
+		}, &usertest.FakeUserService{}, testActionResolver(), false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
@@ -245,7 +283,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil).Maybe()
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc, testActionResolver(), false)
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
@@ -257,7 +295,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil)
 		// "legacy" overlaps an existing scope (must dedup), "zanzana" is new (must be added).
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc, false)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc, testActionResolver(), false)
 
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, base, log.New("test"))
 
@@ -277,7 +315,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 		nil, permreg.ProvidePermissionRegistry(), nil,
 	)
 	if zClient != nil {
-		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, false)
+		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, testActionResolver(), false)
 	}
 	return svc
 }
@@ -363,8 +401,9 @@ func TestService_GetUserPermissions_MergesLegacyAndZanzana(t *testing.T) {
 			{Action: "dashboards:read", Scope: "dashboards:uid:legacy"},
 		},
 	}
+	subject := authlib.NewTypeID(authlib.TypeUser, "user_test_uid")
 	zClient := &fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+		readFunc: readResponseForDashboard(subject, "zanzana-dash"),
 	}
 
 	svc := setupServiceWithFakeStore(t, store, zClient, &usertest.FakeUserService{})
@@ -399,7 +438,7 @@ func TestService_GetUserPermissions_UsesLegacyWhenZanzanaFails(t *testing.T) {
 		},
 	}
 	zClient := &fakeZanzanaClient{
-		listErr: errors.New("zanzana unavailable"),
+		readErr: errors.New("zanzana unavailable"),
 	}
 
 	svc := setupServiceWithFakeStore(t, store, zClient, &usertest.FakeUserService{})
