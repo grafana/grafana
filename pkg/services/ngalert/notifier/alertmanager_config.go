@@ -90,7 +90,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 		if err := moa.Crypto.DecryptExtraConfigs(ctx, prepared); err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 		}
-		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared, models.ProvenanceConvertedPrometheus)
+		mergedConfig, _, err := merge.MergeExtraConfig(ctx, prepared)
 		if err != nil {
 			return alertingNotify.NotificationsConfiguration{}, fmt.Errorf("failed to merge external configuration: %w", err)
 		}
@@ -380,11 +380,7 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		}
 	}
 
-	provenance := models.ProvenanceConvertedPrometheus
-	if promote {
-		provenance = models.ProvenanceNone
-	}
-	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg, provenance)
+	mergedConfig, mergeResult, err := merge.MergeExtraConfig(ctx, cfg)
 	if err != nil {
 		return merge.MergeResult{}, fmt.Errorf("cannot merge imported configuration into Grafana: %w", err)
 	}
