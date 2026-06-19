@@ -964,6 +964,21 @@
     },
     {
       "metadata": {
+        "name": "assistant.agentMode",
+        "resourceVersion": "1781883172884",
+        "creationTimestamp": "2026-06-19T15:32:52Z",
+        "deletionTimestamp": "2026-06-19T15:35:58Z"
+      },
+      "spec": {
+        "description": "Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.frontend.tools.dashboardTemplates",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -972,6 +987,21 @@
         "description": "Enables the template dashboard assistant",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "assistantAgentMode",
+        "resourceVersion": "1781883358898",
+        "creationTimestamp": "2026-06-19T15:35:58Z",
+        "deletionTimestamp": "2026-06-19T16:04:49Z"
+      },
+      "spec": {
+        "description": "Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "expression": "false"
       }

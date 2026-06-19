@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
+import { useFlagAssistantAgentMode } from '@grafana/runtime/internal';
 import { type IconName, ToolbarButton } from '@grafana/ui';
 
 import { AssistantToolbarButtons } from '../AgentMode/AssistantToolbarButtons';
@@ -30,6 +31,7 @@ function ExtensionToolbarItemButtonComponent(
   { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
+  const agentModeEnabled = useFlagAssistantAgentMode();
   const icon = getPluginIcon(pluginId);
   const tooltip = (() => {
     if (isOpen) {
@@ -41,8 +43,7 @@ function ExtensionToolbarItemButtonComponent(
     return t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
   })();
 
-  // The assistant renders own buttons with custom styling
-  if (pluginId === 'grafana-assistant-app') {
+  if (agentModeEnabled && pluginId === 'grafana-assistant-app') {
     return <AssistantToolbarButtons ref={ref} isOpen={isOpen} onClick={onClick} />;
   }
 
