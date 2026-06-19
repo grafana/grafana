@@ -23,7 +23,7 @@ env:
   # community-triage logic version this repo is pinned to (main as of PR #6).
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: b049434431cbb50ca99422fab8b7b9dce1726d46
+  TRIAGE_REF: 6973c706825731056dbf71693614c17d086e3f49
 
 jobs:
   triage:
@@ -298,7 +298,7 @@ jobs:
           # Pin one resolved IPv4 and expose it for --add-host on the container,
           # so the container needs NO DNS. DNS egress is then dropped (no port-53
           # ACCEPT below) to close the DNS-exfiltration channel — SECURITY-REVIEW.md #2.
-          WARP_IP=$(printf '%s\n' $WARP_IPS | grep -Eo '^[0-9]+(\.[0-9]+){3}$' | head -1)
+          WARP_IP=$(printf '%s\n' "$WARP_IPS" | grep -Eo '^[0-9]+(\.[0-9]+){3}$' | head -1)
           if [ -z "$WARP_IP" ]; then
             echo "::error::could not resolve app.warp.dev to an IPv4 address"
             exit 1
@@ -307,6 +307,7 @@ jobs:
 
           sudo iptables -N OZ_EGRESS 2>/dev/null || sudo iptables -F OZ_EGRESS
           sudo iptables -A OZ_EGRESS -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+          # shellcheck disable=SC2086
           for ip in $WARP_IPS; do
             sudo iptables -A OZ_EGRESS -d "$ip" -j ACCEPT
             echo "Allowed: $ip"
@@ -351,7 +352,7 @@ jobs:
             --security-opt=no-new-privileges \
             --pids-limit=256 \
             --memory=2g \
-            --add-host app.warp.dev:${WARP_IP} \
+            --add-host "app.warp.dev:${WARP_IP}" \
             -v "/tmp/repo-clean:/repo:ro" \
             -v "/tmp/oz-context:/context:ro" \
             -v "/tmp/oz-output:/output" \
