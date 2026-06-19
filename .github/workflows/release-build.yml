@@ -42,6 +42,7 @@ jobs:
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
+      public-commit: ${{ steps.output.outputs.public_commit }}
     permissions:
       contents: read
     steps:
@@ -66,9 +67,27 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           BUILD_ID: ${{ github.run_id }}
       - id: output
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          # grafana_commit is the source pin (#patched HEAD in the mirror) — it drives every
+          # clone/checkout (enterprise/upstream + the build checkouts). Do NOT repoint it.
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+
+          # public_commit is the commit STAMPED into the binary (-X main.commit). For a mirror
+          # #patched build it's the sibling unpatched branch HEAD — a real grafana/grafana
+          # commit — so artifacts advertise a public commit instead of the mirror-only one.
+          # Everywhere else it's just the checkout HEAD. This value is only ever passed to the
+          # Makefile's COMMIT_SHA; it is never used as a checkout/clone ref.
+          if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *'#patched' ]]; then
+            sibling="${REF_NAME%\#patched}"
+            public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${sibling}" --jq '.object.sha')
+          else
+            public_commit=$(git rev-parse HEAD)
+          fi
+          echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
 
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
@@ -92,12 +111,13 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          PUBLIC_COMMIT: ${{ needs.setup.outputs.public-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
             // grafana-enterprise has no #patched branches, so dispatch it on the plain
             // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
             const enterpriseRef = REF.replace(/#patched$/, '');
@@ -111,19 +131,26 @@ jobs:
               workflow = 'release-build-nightly.yml';
             }
 
+            const inputs = {
+              "version": VERSION,
+              "build-id": String(BUILD_ID),
+              "bucket": BUCKET,
+              "grafana-commit": GRAFANA_COMMIT,
+              "source-event": SOURCE_EVENT,
+              "upstream": REPO,
+            };
+            // Only release-build-enterprise.yml accepts (and stamps) the public commit;
+            // pro/nightly build from main where the stamped commit is already the HEAD.
+            if (workflow === 'release-build-enterprise.yml') {
+              inputs["grafana-public-commit"] = PUBLIC_COMMIT;
+            }
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
                 workflow_id: workflow,
                 ref:  enterpriseRef,
-                inputs: {
-                  "version": VERSION,
-                  "build-id": String(BUILD_ID),
-                  "bucket": BUCKET,
-                  "grafana-commit": GRAFANA_COMMIT,
-                  "source-event": SOURCE_EVENT,
-                  "upstream": REPO,
-                }
+                inputs,
             })
 
   build-frontend:
@@ -203,6 +230,9 @@ jobs:
           arm: ${{ matrix.arm }}
           build-number: ${{ github.run_id }}
           build-version: ${{ needs.setup.outputs.version }}
+          # Stamp the public (non-#patched) commit while still compiling the #patched
+          # source that was checked out above. See the build invariant in the plan.
+          commit: ${{ needs.setup.outputs.public-commit }}
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: release-backend-${{ matrix.name }}
