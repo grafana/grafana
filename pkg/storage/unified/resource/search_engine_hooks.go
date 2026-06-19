@@ -16,6 +16,9 @@ type SearchEngineHooks struct {
 	// SkipLegacyIndex skips bleve getOrCreateIndex before engine Search when the
 	// remote engine owns index freshness (e.g. Elasticsearch).
 	SkipLegacyIndex bool
+	// PushOnWrite indexes synchronously on the storage write path (remote engines).
+	// When true, sleepAfterSuccessfulWriteOperation is skipped on the server.
+	PushOnWrite bool
 }
 
 // EngineSetupConfig carries the searchServer state needed to wire an engine

@@ -15,6 +15,7 @@ type engineProvider struct {
 	engine          engine.SearchEngine
 	server          *resourceSearchBridge
 	skipLegacyIndex bool
+	pushOnWrite     bool
 }
 
 func (p *engineProvider) Hooks() resource.SearchEngineHooks {
@@ -22,6 +23,7 @@ func (p *engineProvider) Hooks() resource.SearchEngineHooks {
 		Index:           p.index,
 		Search:          p.search,
 		SkipLegacyIndex: p.skipLegacyIndex,
+		PushOnWrite:     p.pushOnWrite,
 	}
 }
 
@@ -43,20 +45,33 @@ func (p *engineProvider) index(ctx context.Context, key resource.NamespacedResou
 				Doc:    doc,
 			})
 		case resource.ActionDelete:
-			indexItems = append(indexItems, &resourcepb.IndexItem{
+			idxItem := &resourcepb.IndexItem{
 				Action: resourcepb.IndexItem_ACTION_DELETE,
 				Key:    item.Key,
-			})
+			}
+			if item.RV > 0 {
+				idxItem.Doc = &resourcepb.Document{
+					Key:             item.Key,
+					ResourceVersion: item.RV,
+				}
+			}
+			indexItems = append(indexItems, idxItem)
 		}
 	}
-	_, err := p.engine.Index(ctx, &resourcepb.IndexRequest{
+	rsp, err := p.engine.Index(ctx, &resourcepb.IndexRequest{
 		Index:           engine.ToIndexKey(key),
 		Schema:          schema,
 		SchemaHash:      hash,
 		Items:           indexItems,
 		ResourceVersion: rv,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if rsp != nil && rsp.Error != nil {
+		return engineIndexError(fmt.Errorf("%s", rsp.Error.Message))
+	}
+	return nil
 }
 
 func (p *engineProvider) search(ctx context.Context, req *resourcepb.ResourceSearchRequest, stats *resource.SearchStats) (*resourcepb.ResourceSearchResponse, error) {
@@ -118,6 +133,7 @@ func newElasticEngineProvider(eng *ElasticSearchEngine, bridge *resourceSearchBr
 			engine:          eng,
 			server:          bridge,
 			skipLegacyIndex: true,
+			pushOnWrite:     true,
 		},
 	}
 }

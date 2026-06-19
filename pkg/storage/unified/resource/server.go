@@ -1059,7 +1059,9 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 			return nil, status.Error(codes.Aborted, err.Error())
 		}
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
+	s.pushSearchIndex(ctx, req.Key, rsp.ResourceVersion, req.Value, false)
 	return rsp, nil
 }
 
@@ -1072,6 +1074,9 @@ type responseWithErrorResult interface {
 //
 // This sleep is performed to guarantee search-after-write consistency, when rate-limiting updates to search index.
 func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operation string, key *resourcepb.ResourceKey, res responseWithErrorResult, err error) bool {
+	if s.search != nil && s.search.PushOnWrite() {
+		return false
+	}
 	if s.artificialSuccessfulWriteDelay <= 0 {
 		return false
 	}
@@ -1103,6 +1108,23 @@ func (s *server) sleepAfterSuccessfulWriteOperation(ctx context.Context, operati
 	case <-ctx.Done():
 	}
 	return true
+}
+
+func (s *server) pushSearchIndex(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte, deleted bool) {
+	if s.search == nil {
+		return
+	}
+	if err := s.search.PushWrite(ctx, key, rv, value, deleted); err != nil {
+		s.log.Warn("search engine push-on-write failed",
+			"error", err,
+			"group", key.Group,
+			"resource", key.Resource,
+			"namespace", key.Namespace,
+			"name", key.Name,
+			"resourceVersion", rv,
+			"deleted", deleted,
+		)
+	}
 }
 
 func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
@@ -1198,7 +1220,9 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
+	s.pushSearchIndex(ctx, req.Key, rsp.ResourceVersion, req.Value, false)
 	return rsp, nil
 }
 
@@ -1314,7 +1338,9 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
+		return rsp, nil
 	}
+	s.pushSearchIndex(ctx, req.Key, rsp.ResourceVersion, nil, true)
 	return rsp, nil
 }
 

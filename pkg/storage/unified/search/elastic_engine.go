@@ -59,25 +59,27 @@ func (e *ElasticSearchEngine) Index(ctx context.Context, req *resourcepb.IndexRe
 			}
 			id := esDocID(item.Doc.Key)
 			lines = append(lines, mustJSON(map[string]any{
-				"index": map[string]any{"_index": index, "_id": id},
+				"index": esBulkActionMeta(index, id, item.Doc.ResourceVersion),
 			}))
 			lines = append(lines, mustJSON(documentToES(item.Doc)))
 		case resourcepb.IndexItem_ACTION_DELETE:
 			key := item.Key
+			deleteRV := int64(0)
 			if key == nil && item.Doc != nil {
 				key = item.Doc.Key
+				deleteRV = item.Doc.ResourceVersion
 			}
 			if key == nil {
 				continue
 			}
 			id := esDocID(key)
 			lines = append(lines, mustJSON(map[string]any{
-				"delete": map[string]any{"_index": index, "_id": id},
+				"delete": esBulkActionMeta(index, id, deleteRV),
 			}))
 		}
 	}
 	if len(lines) > 0 {
-		if err := e.client.bulk(ctx, lines, "wait_for"); err != nil {
+		if _, err := e.client.bulk(ctx, lines, "wait_for"); err != nil {
 			return &resourcepb.IndexResponse{Error: resource.AsErrorResult(err)}, nil
 		}
 	}

@@ -137,35 +137,67 @@ func (c *esClient) ensureIndexSettings(ctx context.Context, index string) error 
 	return err
 }
 
-func (c *esClient) bulk(ctx context.Context, lines []string, refresh string) error {
+type esBulkResult struct {
+	Applied int
+	Skipped int // version conflicts (409)
+}
+
+func (c *esClient) bulk(ctx context.Context, lines []string, refresh string) (esBulkResult, error) {
 	if len(lines) == 0 {
-		return nil
+		return esBulkResult{}, nil
 	}
 	body := strings.Join(lines, "\n") + "\n"
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/_bulk?refresh="+refresh, strings.NewReader(body))
 	if err != nil {
-		return err
+		return esBulkResult{}, err
 	}
 	req.Header.Set("Content-Type", "application/x-ndjson")
 	rsp, err := c.http.Do(req)
 	if err != nil {
-		return err
+		return esBulkResult{}, err
 	}
 	defer func() { _ = rsp.Body.Close() }()
 	raw, err := io.ReadAll(rsp.Body)
 	if err != nil {
-		return err
+		return esBulkResult{}, err
 	}
 	if rsp.StatusCode >= 400 {
-		return fmt.Errorf("elasticsearch bulk: status %d: %s", rsp.StatusCode, string(raw))
+		return esBulkResult{}, fmt.Errorf("elasticsearch bulk: status %d: %s", rsp.StatusCode, string(raw))
 	}
+	return parseESBulkResponse(raw)
+}
+
+func parseESBulkResponse(raw []byte) (esBulkResult, error) {
 	var parsed struct {
 		Errors bool `json:"errors"`
+		Items  []map[string]struct {
+			Status int `json:"status"`
+			Error  struct {
+				Type string `json:"type"`
+			} `json:"error"`
+		} `json:"items"`
 	}
-	if err := json.Unmarshal(raw, &parsed); err == nil && parsed.Errors {
-		return fmt.Errorf("elasticsearch bulk reported errors: %s", string(raw))
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return esBulkResult{}, fmt.Errorf("elasticsearch bulk: parse response: %w", err)
 	}
-	return nil
+	if !parsed.Errors {
+		return esBulkResult{Applied: len(parsed.Items)}, nil
+	}
+
+	var result esBulkResult
+	for _, item := range parsed.Items {
+		for _, action := range item {
+			switch {
+			case action.Status == http.StatusConflict:
+				result.Skipped++
+			case action.Status >= 400:
+				return result, fmt.Errorf("elasticsearch bulk item error: status %d type %q", action.Status, action.Error.Type)
+			default:
+				result.Applied++
+			}
+		}
+	}
+	return result, nil
 }
 
 func (c *esClient) search(ctx context.Context, index string, body map[string]any) (map[string]any, error) {

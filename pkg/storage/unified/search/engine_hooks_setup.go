@@ -20,6 +20,11 @@ func BleveEngineHooksSetup(cfg resource.EngineSetupConfig) (resource.SearchEngin
 
 // ElasticEngineHooksSetup wires ElasticSearchEngine into searchServer. Bleve is
 // still used for index-build orchestration but reads/writes go to Elasticsearch.
+//
+// Durability backstop (fast follow): subscribe a search-index consumer to the
+// resource server broadcaster (see embed/reconciler) and run periodic
+// ListModifiedSince since a checkpoint so missed push-on-write events are
+// repaired. All writes use external_gte CAS so push and reconciler are idempotent.
 func ElasticEngineHooksSetup(addresses []string, indexPrefix string) resource.EngineProviderSetup {
 	return func(cfg resource.EngineSetupConfig) (resource.SearchEngineHooks, error) {
 		if len(addresses) == 0 {

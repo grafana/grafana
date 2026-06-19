@@ -1597,3 +1597,118 @@ func TestSumDocCount(t *testing.T) {
 	require.Equal(t, int64(10), got)
 	require.Equal(t, []string{"root", "a", "b"}, idx.calls)
 }
+
+func TestPushWriteNoOpWithoutPushOnWrite(t *testing.T) {
+	support := &searchServer{
+		useSearchEngine: true,
+		engineHooks: SearchEngineHooks{
+			PushOnWrite: false,
+			Index: func(context.Context, NamespacedResource, []*BulkIndexItem, int64) error {
+				t.Fatal("index should not be called")
+				return nil
+			},
+		},
+	}
+	err := support.PushWrite(t.Context(), &resourcepb.ResourceKey{
+		Namespace: "ns", Group: "g", Resource: "r", Name: "n",
+	}, 1, []byte(`{}`), false)
+	require.NoError(t, err)
+}
+
+func TestPushWriteIndexesUpsert(t *testing.T) {
+	key := &resourcepb.ResourceKey{
+		Namespace: "ns",
+		Group:     dashboardv1.GROUP,
+		Resource:  dashboardv1.DASHBOARD_RESOURCE,
+		Name:      "d1",
+	}
+	value := []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"d1"},"spec":{"title":"CPU"}}`)
+
+	var indexed []*BulkIndexItem
+	support, err := newSearchServer(SearchOptions{
+		Backend:         &manifestSearchBackend{ok: false},
+		Resources:       &TestDocumentBuilderSupplier{GroupsResources: map[string]string{dashboardv1.GROUP: dashboardv1.DASHBOARD_RESOURCE}},
+		UseSearchEngine: true,
+		EngineProviderSetup: func(_ EngineSetupConfig) (SearchEngineHooks, error) {
+			return SearchEngineHooks{
+				PushOnWrite: true,
+				Index: func(_ context.Context, nsr NamespacedResource, items []*BulkIndexItem, rv int64) error {
+					require.Equal(t, NamespacedResource{Namespace: "ns", Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}, nsr)
+					require.Equal(t, int64(42), rv)
+					indexed = items
+					return nil
+				},
+			}, nil
+		},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	err = support.PushWrite(t.Context(), key, 42, value, false)
+	require.NoError(t, err)
+	require.Len(t, indexed, 1)
+	require.Equal(t, ActionIndex, indexed[0].Action)
+	require.Equal(t, "CPU", indexed[0].Doc.Title)
+}
+
+func TestPushWriteIndexesDeleteWithRV(t *testing.T) {
+	key := &resourcepb.ResourceKey{
+		Namespace: "ns",
+		Group:     dashboardv1.GROUP,
+		Resource:  dashboardv1.DASHBOARD_RESOURCE,
+		Name:      "d1",
+	}
+
+	var indexed []*BulkIndexItem
+	support, err := newSearchServer(SearchOptions{
+		Backend:         &manifestSearchBackend{ok: false},
+		Resources:       &TestDocumentBuilderSupplier{GroupsResources: map[string]string{dashboardv1.GROUP: dashboardv1.DASHBOARD_RESOURCE}},
+		UseSearchEngine: true,
+		EngineProviderSetup: func(_ EngineSetupConfig) (SearchEngineHooks, error) {
+			return SearchEngineHooks{
+				PushOnWrite: true,
+				Index: func(_ context.Context, _ NamespacedResource, items []*BulkIndexItem, rv int64) error {
+					require.Equal(t, int64(99), rv)
+					indexed = items
+					return nil
+				},
+			}, nil
+		},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	err = support.PushWrite(t.Context(), key, 99, nil, true)
+	require.NoError(t, err)
+	require.Len(t, indexed, 1)
+	require.Equal(t, ActionDelete, indexed[0].Action)
+	require.Equal(t, int64(99), indexed[0].RV)
+	require.Equal(t, key, indexed[0].Key)
+}
+
+func TestPushWriteIncrementsFailureMetric(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	metrics := ProvideIndexMetrics(reg)
+	key := &resourcepb.ResourceKey{
+		Namespace: "ns",
+		Group:     dashboardv1.GROUP,
+		Resource:  dashboardv1.DASHBOARD_RESOURCE,
+		Name:      "d1",
+	}
+	support, err := newSearchServer(SearchOptions{
+		Backend:         &manifestSearchBackend{ok: false},
+		Resources:       &TestDocumentBuilderSupplier{GroupsResources: map[string]string{dashboardv1.GROUP: dashboardv1.DASHBOARD_RESOURCE}},
+		UseSearchEngine: true,
+		EngineProviderSetup: func(_ EngineSetupConfig) (SearchEngineHooks, error) {
+			return SearchEngineHooks{
+				PushOnWrite: true,
+				Index: func(context.Context, NamespacedResource, []*BulkIndexItem, int64) error {
+					return errors.New("boom")
+				},
+			}, nil
+		},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, metrics, nil, nil)
+	require.NoError(t, err)
+
+	err = support.PushWrite(t.Context(), key, 1, []byte(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":"d1"},"spec":{"title":"CPU"}}`), false)
+	require.Error(t, err)
+	require.Equal(t, float64(1), testutil.ToFloat64(metrics.EnginePushFailures))
+}

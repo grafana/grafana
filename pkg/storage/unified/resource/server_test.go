@@ -705,6 +705,21 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }
 
+func TestArtificialDelaySkippedWhenPushOnWrite(t *testing.T) {
+	ctx := t.Context()
+	s := &server{
+		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
+		log:                            log.NewNopLogger(),
+		search: &searchServer{
+			useSearchEngine: true,
+			engineHooks: SearchEngineHooks{
+				PushOnWrite: true,
+			},
+		},
+	}
+	require.False(t, s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, &resourcepb.CreateResponse{}, nil))
+}
+
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 

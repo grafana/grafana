@@ -85,6 +85,7 @@ type BulkIndexItem struct {
 	Action IndexAction
 	Key    *resourcepb.ResourceKey // Only used for delete actions
 	Doc    *IndexableDocument      // Only used for index actions
+	RV     int64                   // Resource version for delete CAS (push-on-write)
 }
 
 type BulkIndexRequest struct {
@@ -1708,6 +1709,62 @@ func (s *searchServer) bulkIndex(ctx context.Context, key NamespacedResource, in
 	return index.BulkIndex(&BulkIndexRequest{Items: items, ResourceVersion: rv})
 }
 
+// PushOnWrite reports whether the configured engine indexes synchronously on writes.
+func (s *searchServer) PushOnWrite() bool {
+	return s.useSearchEngine && s.engineHooks.PushOnWrite
+}
+
+// PushWrite indexes a single write into the search engine on the storage write path.
+func (s *searchServer) PushWrite(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte, deleted bool) error {
+	if !s.useSearchEngine || !s.engineHooks.PushOnWrite || s.engineHooks.Index == nil {
+		return nil
+	}
+	if key == nil || s.builders == nil {
+		return nil
+	}
+	nsr := NamespacedResource{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}
+	if !s.builders.supportsKey(nsr) {
+		return nil
+	}
+
+	failPush := func(err error) error {
+		if err != nil && s.indexMetrics != nil {
+			s.indexMetrics.EnginePushFailures.Inc()
+		}
+		return err
+	}
+
+	var items []*BulkIndexItem
+	if deleted {
+		items = []*BulkIndexItem{{
+			Action: ActionDelete,
+			Key:    key,
+			RV:     rv,
+		}}
+	} else {
+		builder, err := s.builders.get(ctx, nsr)
+		if err != nil {
+			return failPush(fmt.Errorf("push-on-write document builder: %w", err))
+		}
+		doc, err := builder.BuildDocument(ctx, key, rv, value)
+		if err != nil {
+			return failPush(fmt.Errorf("push-on-write build document: %w", err))
+		}
+		items = []*BulkIndexItem{{
+			Action: ActionIndex,
+			Doc:    doc,
+		}}
+	}
+	if err := s.engineHooks.Index(ctx, nsr, items, rv); err != nil {
+		return failPush(fmt.Errorf("push-on-write index: %w", err))
+	}
+	return nil
+}
+
 //nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
@@ -1883,6 +1940,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				items = append(items, &BulkIndexItem{
 					Action: ActionDelete,
 					Key:    &res.Key,
+					RV:     res.ResourceVersion,
 				})
 			default:
 				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
@@ -2006,6 +2064,15 @@ func newBuilderCache(cfg []DocumentBuilderInfo, nsCacheSize int, ttl time.Durati
 
 func (s *builderCache) GetFields(key NamespacedResource) SearchableDocumentFields {
 	return s.fields[schema.GroupResource{Group: key.Group, Resource: key.Resource}]
+}
+
+func (s *builderCache) supportsKey(key NamespacedResource) bool {
+	g, ok := s.lookup[key.Group]
+	if !ok {
+		return false
+	}
+	_, ok = g[key.Resource]
+	return ok
 }
 
 // context is typically background.  Holds an LRU cache for a

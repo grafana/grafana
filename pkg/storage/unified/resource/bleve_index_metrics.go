@@ -33,6 +33,8 @@ type BleveIndexMetrics struct {
 
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
+
+	EnginePushFailures prometheus.Counter
 }
 
 var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
@@ -149,6 +151,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "index_server_disk_cleanup_dirs_deleted_total",
 			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
 		}, []string{"kind", "outcome"}), // kind: index, snapshot_staging. outcome: success, error
+		EnginePushFailures: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "index_server_engine_push_failures_total",
+			Help: "Number of failed synchronous search-engine push-on-write attempts.",
+		}),
 	}
 
 	// Always-on label series. Snapshot-specific series are initialised separately
