@@ -139,18 +139,6 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		dbCfg.Key("path").SetValue(testDB.Path)
 	}
 
-	if db.IsTestDbSQLite() {
-		// Force BEGIN IMMEDIATE on SQLite write transactions via the connection string.
-		// SQLite only allows a single writer, and with the default deferred transactions a
-		// read-then-write tx fails immediately with SQLITE_BUSY when it tries to upgrade its
-		// lock while another connection is writing (busy_timeout does not apply to lock
-		// upgrades). Acquiring the write lock up front makes busy_timeout apply, so concurrent
-		// startup writers (e.g. the access-control seeder racing the unified-storage reconciler)
-		// queue instead of erroring. Setting connection_string makes buildConnectionString use
-		// this verbatim, so no production database wiring is affected.
-		dbCfg.Key("connection_string").SetValue(testDB.ConnStr + "&_txlock=immediate")
-	}
-
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
 	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
