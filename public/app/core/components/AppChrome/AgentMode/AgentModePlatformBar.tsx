@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -26,7 +27,13 @@ export function AgentModePlatformBar() {
   const styles = useStyles2(getStyles);
   const homeNav = useSelector((s) => s.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(state.sectionNav.node, state.pageNav, homeNav);
-  const closeMenu = () => chrome.setMegaMenuOpen(false);
+
+  // The Platform-tab mega menu is local to agent mode: it always starts collapsed and its
+  // open/close never touches Grafana's global mega-menu state (megaMenuOpen/Docked), so a
+  // menu left open or docked in non-agent Grafana doesn't carry into the Platform tab, and
+  // toggling it here doesn't change non-agent Grafana.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <>
@@ -35,12 +42,12 @@ export function AgentModePlatformBar() {
           narrow
           icon="bars"
           tooltip={t('navigation.megamenu.open', 'Open menu')}
-          aria-expanded={state.megaMenuOpen}
-          onClick={() => chrome.setMegaMenuOpen(!state.megaMenuOpen)}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
         />
         <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
       </div>
-      {state.megaMenuOpen && (
+      {menuOpen && (
         <>
           <div className={styles.backdrop} onClick={closeMenu} role="presentation" />
           <nav className={styles.drawer} aria-label={t('navigation.megamenu.dialog-label', 'Navigation')}>
