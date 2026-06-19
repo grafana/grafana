@@ -123,7 +123,7 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 - Push their dashboard and folder changes to Git, including opening pull requests, via the jobs API
 
 {{< admonition type="note" >}}
-Triggering a manual sync (**pull** from Git) and orphan-resource cleanup are admin-only operations. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+**Only Admins can trigger a manual sync (**pull** from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
 {{< /admonition >}}
 
 **Resource access** depends on folder/dashboard permissions:
@@ -215,7 +215,7 @@ Users with the `Editor` role can manage sync operations but not infrastructure c
 | **Read-Only Access** | `provisioning.repositories:read`<br>`provisioning.settings:read`                                                  | View repository configurations<br>View Git Sync settings                                                     |
 
 {{< admonition type="note" >}}
-`provisioning.jobs:create` lets editors create jobs that push their changes (subject to the relevant `dashboards:*` and `folders:*` permissions), but it does **not** allow admin-only job actions such as a manual **pull** from Git or orphan-resource cleanup. Those require `provisioning.repositories:write`. Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+`provisioning.jobs:create` allows editors to create jobs to push their changes, subject to the relevant `dashboards:*` and `folders:*` permissions. However, **it doesn't allow admin-only job actions** such as a manual **pull** from Git or orphan-resource cleanup, which require the `provisioning.repositories:write` permission. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
 {{< /admonition >}}
 
 `Editors` can access resources based on the folder/dashboard assignments:
@@ -250,7 +250,7 @@ The following applies for Git Sync:
 
 ### Job actions and required permissions
 
-Git Sync operations run as jobs. While `provisioning.jobs:create` is required to create any job, some job actions are additionally restricted to administrators and are gated on `provisioning.repositories:write` (an admin-only action). This prevents editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
+Git Sync operations run as jobs. You need the `provisioning.jobs:create` permission to create any job. Moreover, **some job actions are restricted to administrators** and require the `provisioning.repositories:write` permission. This prevents editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
 | Job action                          | Required permission                                                                   | Who can run it                                            |
 | ----------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------- |
