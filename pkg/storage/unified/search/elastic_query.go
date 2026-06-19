@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -59,12 +62,11 @@ func esSearchBody(req *resourcepb.SearchRequest) map[string]any {
 			if f == nil {
 				continue
 			}
-			field := esFilterField(f.Field)
 			switch f.Op {
 			case resourcepb.FilterOp_FILTER_OP_NOT_IN:
-				mustNot = append(mustNot, map[string]any{"terms": map[string]any{field: f.Values}})
+				mustNot = append(mustNot, esTermsClause(f.Field, f.Values))
 			default:
-				filter = append(filter, map[string]any{"terms": map[string]any{field: f.Values}})
+				filter = append(filter, esTermsClause(f.Field, f.Values))
 			}
 		}
 		for _, l := range req.Query.Labels {
@@ -86,7 +88,7 @@ func esSearchBody(req *resourcepb.SearchRequest) map[string]any {
 			// no authz filter
 		} else {
 			if len(req.Authz.Folders) > 0 {
-				filter = append(filter, map[string]any{"terms": map[string]any{"folder": req.Authz.Folders}})
+				filter = append(filter, esFolderTermsClause(expandESFolderFilterValues(req.Authz.Folders)))
 			}
 			if len(req.Authz.Names) > 0 {
 				filter = append(filter, map[string]any{"terms": map[string]any{"name": req.Authz.Names}})
@@ -182,6 +184,45 @@ func esFilterField(field string) string {
 		return field
 	}
 	return "fields." + field + ".keyword"
+}
+
+func esTermsClause(field string, values []string) map[string]any {
+	publicField := strings.TrimPrefix(field, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+	publicField = strings.TrimPrefix(publicField, resource.SEARCH_FIELD_PREFIX)
+	if publicField == resource.SEARCH_FIELD_FOLDER {
+		return esFolderTermsClause(expandESFolderFilterValues(values))
+	}
+	return map[string]any{"terms": map[string]any{esFilterField(field): values}}
+}
+
+func esFolderTermsClause(values []string) map[string]any {
+	// Match bleve root-folder expansion and tolerate indices where folder was
+	// dynamically mapped as text+keyword (folder.keyword) vs keyword (folder).
+	return map[string]any{
+		"bool": map[string]any{
+			"should": []any{
+				map[string]any{"terms": map[string]any{"folder": values}},
+				map[string]any{"terms": map[string]any{"folder.keyword": values}},
+			},
+			"minimum_should_match": 1,
+		},
+	}
+}
+
+func expandESFolderFilterValues(values []string) []string {
+	expanded := false
+	out := make([]string, 0, len(values)+1)
+	for _, val := range values {
+		if !foldermodel.IsRootFolderUID(val) {
+			out = append(out, val)
+			continue
+		}
+		if !expanded {
+			out = append(out, "", foldermodel.GeneralFolderUID)
+			expanded = true
+		}
+	}
+	return out
 }
 
 func esSortField(field string) string {
@@ -333,8 +374,59 @@ func parseESHit(hit map[string]any, req *resourcepb.SearchRequest) *resourcepb.H
 			}
 		}
 		h.Key = key
+		h.Fields = esSourceToFields(src, req)
 	}
 	return h
+}
+
+func esSourceToFields(src map[string]any, req *resourcepb.SearchRequest) []*resourcepb.FieldValue {
+	if src == nil {
+		return nil
+	}
+	out := make([]*resourcepb.FieldValue, 0, 4)
+	addStringField := func(name string, v any) {
+		if v == nil {
+			return
+		}
+		s := fmt.Sprint(v)
+		out = append(out, &resourcepb.FieldValue{
+			Name:   name,
+			Values: []*structpb.Value{structpb.NewStringValue(s)},
+		})
+	}
+	addStringField(resource.SEARCH_FIELD_NAME, src["name"])
+	addStringField(resource.SEARCH_FIELD_TITLE, src["title"])
+	addStringField(resource.SEARCH_FIELD_FOLDER, src["folder"])
+
+	if req == nil {
+		return out
+	}
+	nested, _ := src["fields"].(map[string]any)
+	for _, f := range req.Fields {
+		fieldName := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
+		if _, seen := fieldByName(out, fieldName); seen {
+			continue
+		}
+		if v, ok := src[fieldName]; ok {
+			addStringField(fieldName, v)
+			continue
+		}
+		if nested != nil {
+			if v, ok := nested[fieldName]; ok {
+				addStringField(fieldName, v)
+			}
+		}
+	}
+	return out
+}
+
+func fieldByName(fields []*resourcepb.FieldValue, name string) (*resourcepb.FieldValue, bool) {
+	for _, fv := range fields {
+		if fv != nil && fv.Name == name {
+			return fv, true
+		}
+	}
+	return nil, false
 }
 
 // parseResourceKeyFromIndexName maps an Elasticsearch index name back to a

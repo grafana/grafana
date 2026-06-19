@@ -123,6 +123,7 @@ func (c *esClient) ensureIndex(ctx context.Context, index string) error {
 	}
 	_, _, err = c.do(ctx, http.MethodPut, "/"+index, map[string]any{
 		"settings": esIndexSettings(),
+		"mappings": esMappingFromSchema(nil),
 	})
 	return err
 }

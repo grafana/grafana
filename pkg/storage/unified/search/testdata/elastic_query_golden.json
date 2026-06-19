@@ -16,17 +16,48 @@
           }
         },
         {
-          "terms": {
-            "folder": [
-              "platform"
+          "bool": {
+            "minimum_should_match": 1,
+            "should": [
+              {
+                "terms": {
+                  "folder": [
+                    "platform"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "folder.keyword": [
+                    "platform"
+                  ]
+                }
+              }
             ]
           }
         },
         {
-          "terms": {
-            "folder": [
-              "platform",
-              "general"
+          "bool": {
+            "minimum_should_match": 1,
+            "should": [
+              {
+                "terms": {
+                  "folder": [
+                    "platform",
+                    "",
+                    "general"
+                  ]
+                }
+              },
+              {
+                "terms": {
+                  "folder.keyword": [
+                    "platform",
+                    "",
+                    "general"
+                  ]
+                }
+              }
             ]
           }
         }
