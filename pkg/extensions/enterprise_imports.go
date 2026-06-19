@@ -329,6 +329,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/apiserver/client"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/options"
+	_ "github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	_ "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	_ "github.com/grafana/grafana/pkg/services/auth"
