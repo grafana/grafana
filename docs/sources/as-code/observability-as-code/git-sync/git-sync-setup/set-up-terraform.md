@@ -43,9 +43,9 @@ Save all of the following Terraform configuration files in the same directory.
 
 ## Configure the Grafana provider
 
-Use this Terraform configuration to set up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide the authentication required to configure Git Sync.
+Use this Terraform configuration to configure the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) with the authentication required to set up Git Sync.
 
-1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Creating and managing a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/).
+1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Create and manage a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/).
 
 1. Make sure that the token has the Admin or the `Provisioning:Repositories` writer permission.
 
@@ -62,17 +62,25 @@ Use this Terraform configuration to set up the [Grafana provider](https://regist
       }
 
       provider "grafana" {
-        cloud_api_url = "<STACK_URL>"
-        stack_id = "<STACK_ID>"
-        cloud_access_policy_token = "<SERVICE_ACCOUNT_TOKEN>"
+        url = "https://<your-stack>.grafana.net/"
+        auth = var.grafana_service_account_token   
+        stack_id = var.grafana_stack_id              
       }
    ```
 
 Replace the following field values:
 
-- `STACK_URL` with the URL of your Grafana stack, for example `https://my-stack.grafana.net/`
-- `<STACK_ID>` with the Grafana stack ID, if you are using a Grafana Cloud stack
-- `SERVICE_ACCOUNT_TOKEN` with the service account token that you created
+- `https://<your-stack>.grafana.net/` with the URL of your Grafana stack
+- `var.grafana_service_account_token` with the service account token that you're using to authenticate, or "username:password"
+- `var.grafana_stack_id` with the Grafana stack ID, if you are using a Grafana Cloud stack
+
+{{< admonition type="caution" >}}
+
+The Terraform provider is an App Platform resource and talks directly to the Grafana stack's API. 
+
+**Do not use Grafana Cloud arguments in the configuration**. Configure the provider with `url` and `auth` (not `cloud_api_url` and `cloud_access_policy_token`), and set the stack Id:
+
+{{< /admonition >}}
 
 ## Create the resources to use Git Sync
 
