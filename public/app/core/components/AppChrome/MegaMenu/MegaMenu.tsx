@@ -116,7 +116,7 @@ export const MegaMenu = memo(
                     key={link.text}
                     link={link}
                     isPinned={isPinned}
-                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    onClick={state.megaMenuDocked && !state.agentMode ? undefined : onClose}
                     activeItem={activeItem}
                     onPin={onPinItem}
                     loadingChildren={link.id === 'starred' && starredItemsLoading}
