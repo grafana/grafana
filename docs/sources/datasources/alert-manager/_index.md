@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../data-sources/alertmanager/
-  - ../features/datasources/alertmanager/
 description: Guide for using Alertmanager as a data source in Grafana
 keywords:
   - grafana
