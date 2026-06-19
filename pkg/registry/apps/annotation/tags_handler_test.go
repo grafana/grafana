@@ -7,14 +7,17 @@ import (
 	"net/url"
 	"testing"
 
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -67,7 +70,8 @@ func TestTagsHandler(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	handler := newTagsHandler(store.(TagProvider), tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+	allowAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
+	handler := newTagsHandler(store.(TagProvider), allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
 		name         string
@@ -216,6 +220,83 @@ func TestTagsHandler(t *testing.T) {
 
 				assert.Equal(t, tt.expectedTags, actualTags, "Tags and counts should match expected values")
 			}
+		})
+	}
+}
+
+func TestTagsHandlerAuthorization(t *testing.T) {
+	store := NewMemoryStore()
+	anno := &annotationV0.Annotation{
+		ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
+		Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"secret-canary"}},
+	}
+	setupCtx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), anno.Namespace)
+	_, err := store.Create(setupCtx, anno)
+	require.NoError(t, err)
+
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
+
+	tests := []struct {
+		name string
+		// allowedScope is the annotation scope (the BatchCheckItem.Name) the caller
+		// is authorized to read. The handler only checks the "organization" scope,
+		// so a caller authorized solely for "dashboard" is denied.
+		allowedScope  string
+		expectAllowed bool
+	}{
+		{
+			name:          "allows callers with organization annotation read",
+			allowedScope:  "organization",
+			expectAllowed: true,
+		},
+		{
+			name:          "denies callers with only dashboard annotation read",
+			allowedScope:  "dashboard",
+			expectAllowed: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			accessClient := &fakeAccessClient{fn: func(item authtypes.BatchCheckItem) bool {
+				return item.Group == "annotation.grafana.app" &&
+					item.Resource == "annotations" &&
+					item.Name == tt.allowedScope &&
+					item.Verb == utils.VerbList
+			}}
+			handler := newTagsHandler(store.(TagProvider), accessClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+
+			u := &url.URL{
+				Scheme: "http",
+				Host:   "localhost",
+				Path:   "/apis/annotation.grafana.app/v0alpha1/namespaces/" + metav1.NamespaceDefault + "/tags",
+			}
+			req := &app.CustomRouteRequest{
+				ResourceIdentifier: resource.FullIdentifier{Namespace: metav1.NamespaceDefault},
+				URL:                u,
+				Method:             "GET",
+			}
+			writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
+
+			err := handler(ctx, writer, req)
+
+			if !tt.expectAllowed {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+				assert.NotContains(t, writer.body.String(), "secret-canary", "tag metadata must not be leaked on denial")
+				return
+			}
+
+			require.NoError(t, err)
+			var result TagResponse
+			require.NoError(t, json.Unmarshal(writer.body.Bytes(), &result))
+			found := false
+			for _, tag := range result.Tags {
+				if tag.Tag == "secret-canary" {
+					found = true
+				}
+			}
+			assert.True(t, found, "expected tags to be returned for an authorized org reader")
 		})
 	}
 }

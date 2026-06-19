@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
@@ -127,4 +128,31 @@ func resolveDashboardFolders(ctx context.Context, folderResolver DashboardFolder
 		out[uid] = folder
 	}
 	return out, nil
+}
+
+// authorizeReadOrgAnnotations gates org-wide annotation reads such as the tags
+// aggregate. Tags are an org-wide aggregate with no per-dashboard scope (the tag
+// table carries no scope; only the annotation does), so this mirrors the
+// org-level annotations:read gate on the legacy /api/annotations/tags route
+// rather than the per-annotation checks used for get/list/search.
+func authorizeReadOrgAnnotations(ctx context.Context, accessClient authtypes.AccessClient, namespace string) error {
+	authInfo, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewUnauthorized("no identity found for request")
+	}
+
+	resp, err := accessClient.Check(ctx, authInfo, authtypes.CheckRequest{
+		Namespace: namespace,
+		Group:     "annotation.grafana.app",
+		Resource:  "annotations",
+		Name:      "organization",
+		Verb:      utils.VerbList,
+	}, "") // organization-scoped annotations have no parent folder
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("annotation authz check failed: %w", err))
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(annotationGR, "tags", fmt.Errorf("requires the annotations:read permission with the organization scope"))
+	}
+	return nil
 }
