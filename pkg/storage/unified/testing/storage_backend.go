@@ -46,6 +46,7 @@ const (
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
 	TestReadAtRVBeforeDelete      = "read at RV before delete"
+	TestReadAtDeleteRV            = "read at delete RV"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -97,6 +98,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
 		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVBeforeDelete},
+		{TestReadAtDeleteRV, runTestIntegrationBackendReadAtDeleteRV},
 	}
 
 	for _, tc := range cases {
@@ -1986,6 +1988,49 @@ func runTestIntegrationBackendReadAtRVBeforeDelete(t *testing.T, backend resourc
 	require.Nil(t, resp.Error)
 	require.Equal(t, rvMod2, resp.ResourceVersion)
 	require.Contains(t, string(resp.Value), "target MODIFIED")
+}
+
+// runTestIntegrationBackendReadAtDeleteRV probes how each backend answers a
+// read at exactly the delete-event RV. Semantically the resource does not
+// exist at that revision, so we expect NotFound. The SQL backend reads from
+// resource_history with "resource_version <= rv" and no action filter, while
+// the KV backend's iterator explicitly skips deleted candidates; this test
+// guards against (or surfaces) any divergence between the two.
+func runTestIntegrationBackendReadAtDeleteRV(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-at-del-rv"
+
+	rvAdd, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvMod, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvAdd))
+	require.NoError(t, err)
+
+	rvDel, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvMod))
+	require.NoError(t, err)
+	require.Greater(t, rvDel, rvMod)
+
+	// Activity after the delete must not influence the read at rvDel.
+	_, err = WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Name:      "target",
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		},
+		ResourceVersion: rvDel,
+	})
+
+	// Reading at the exact delete RV should report the resource as not found,
+	// the same as reading the latest version after a delete.
+	require.NotNil(t, resp.Error, "expected NotFound when reading at delete RV, got value=%q rv=%d", string(resp.Value), resp.ResourceVersion)
+	require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns
