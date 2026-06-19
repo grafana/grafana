@@ -95,20 +95,9 @@ export const SingleTopBar = memo(function SingleTopBar({
           <TopBarExtensionPoint />
           <TopSearchBarCommandPaletteTrigger />
           {!isSmallScreen && <QuickAdd />}
+          <HelpTopBarButton isSmallScreen={isSmallScreen} />
           <NavToolbarSeparator />
           {!isSmallScreen && <ExtensionToolbarItem compact={isSmallScreen} />}
-          <button
-            type="button"
-            className={styles.agentModeButton}
-            onClick={() => chrome.setAgentMode(true)}
-            aria-label={t('navigation.agent-mode.enter', 'Enter Agent mode')}
-          >
-            <span className={styles.agentModeIcon}>
-              <Icon name="ai-sparkle" size="md" />
-            </span>
-            <span className={styles.agentModeText}>{t('navigation.agent-mode.enter', 'Enter Agent mode')}</span>
-          </button>
-          <HelpTopBarButton isSmallScreen={isSmallScreen} />
           {!showToolbarLevel && actions}
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <NavRightButton />
@@ -149,34 +138,5 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
     [theme.breakpoints.down('lg')]: {
       display: 'none',
     },
-  }),
-  // Agent-mode entry button, adapted from the workspace prototype: a compact bordered
-  // pill with a gradient label.
-  agentModeButton: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.75),
-    height: theme.spacing(3.5),
-    padding: theme.spacing(0, 1.25),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: 'transparent',
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      background: theme.colors.action.hover,
-    },
-  }),
-  agentModeIcon: css({
-    display: 'inline-flex',
-    color: '#ff8a2b',
-  }),
-  agentModeText: css({
-    background: 'linear-gradient(90deg, #ff8a2b, #f2546b, #e07be0, #9b8cff)',
-    WebkitBackgroundClip: 'text',
-    backgroundClip: 'text',
-    color: 'transparent',
   }),
 });
