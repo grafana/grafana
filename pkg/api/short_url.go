@@ -57,44 +57,6 @@ func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, shortURLDTO)
 }
 
-func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
-	shortURLUID := web.Params(c.Req)[":uid"]
-
-	if !util.IsValidShortUID(shortURLUID) {
-		return
-	}
-
-	shortURL, err := hs.ShortURLService.GetShortURLByUID(c.Req.Context(), c.SignedInUser, shortURLUID)
-	if err != nil {
-		// If we didn't get the URL for whatever reason, we redirect to the
-		// main page, otherwise we get into an endless loops of redirects, as
-		// we would try to redirect again.
-		if shorturls.ErrShortURLNotFound.Is(err) {
-			hs.log.Debug("Not redirecting short URL since not found", "uid", shortURLUID)
-			c.Redirect(hs.Cfg.AppURL, http.StatusPermanentRedirect)
-			return
-		}
-		hs.log.Error("Short URL redirection error", "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusTemporaryRedirect)
-		return
-	}
-
-	// Failure to update LastSeenAt should still allow to redirect
-	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
-		hs.log.Error("Failed to update short URL last seen at", "error", err)
-	}
-
-	// Safety net: validate stored path before redirecting to prevent open redirects
-	if err := shorturls.ValidateRelativePath(shortURL.Path); err != nil {
-		hs.log.Error("Short URL has invalid path, refusing to redirect", "path", shortURL.Path, "err", err)
-		c.Redirect(hs.Cfg.AppURL, http.StatusFound)
-		return
-	}
-
-	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
-	c.Redirect(setting.ToAbsUrl(shortURL.Path), http.StatusFound)
-}
-
 // getShortURL handles requests to get short URLs.
 func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response {
 	shortURLUID := web.Params(c.Req)[":uid"]
