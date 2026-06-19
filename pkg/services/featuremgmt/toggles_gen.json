@@ -1616,7 +1616,8 @@
       "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-08-30T20:22:05Z"
+        "creationTimestamp": "2023-08-30T20:22:05Z",
+        "deletionTimestamp": "2026-06-18T13:02:15Z"
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
@@ -2438,6 +2439,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.newPanelQueryErrorsUI",
+        "resourceVersion": "1781775898347",
+        "creationTimestamp": "2026-06-18T09:44:58Z"
+      },
+      "spec": {
+        "description": "Enables a new UI for query errors and notices",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -3721,7 +3736,8 @@
       "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-11-03T12:15:54Z"
+        "creationTimestamp": "2023-11-03T12:15:54Z",
+        "deletionTimestamp": "2026-06-19T07:57:25Z"
       },
       "spec": {
         "description": "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
@@ -4789,7 +4805,8 @@
       "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "deletionTimestamp": "2026-06-18T17:19:31Z"
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
@@ -4824,6 +4841,20 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "splunk.useLegacyResultsApi",
+        "resourceVersion": "1781865637365",
+        "creationTimestamp": "2026-06-19T10:40:37Z"
+      },
+      "spec": {
+        "description": "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

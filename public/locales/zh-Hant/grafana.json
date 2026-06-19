@@ -2794,7 +2794,9 @@
           "alerting": "開啟以暫停評估此警報規則。",
           "recording": "開啟以暫停評估此錄製規則。"
         },
-        "select-folder-before": "在設定評估群組和間隔之前，請選擇一個資料夾"
+        "select-folder-before": "在設定評估群組和間隔之前，請選擇一個資料夾",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -5994,9 +5996,6 @@
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
     },
-    "panel-links": {
-      "aria-label-panel-links": "面板連結"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "返回查詢"
     },
@@ -8655,7 +8654,9 @@
       "query-history-button": "查詢歷史記錄",
       "query-history-button-aria-label": "查詢歷史記錄",
       "query-inspector-button": "查詢檢查器",
-      "query-inspector-button-aria-label": "查詢檢查器"
+      "query-inspector-button-aria-label": "查詢檢查器",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "顯示所有跨度",
     "span-bar": {
@@ -12967,9 +12968,6 @@
       "description-clear-repository-connection": "此名稱將用於儲存庫連線以及使用者介面中顯示的資料夾",
       "empty": "空",
       "error-field-required": "此為必填欄位。",
-      "error-quota-exceeded-message": "此儲存庫資料夾包含 {{fileCount}} 個資源，超過了您帳戶的 {{limit}} 上限。若要同步此儲存庫，請升級您的帳戶或減少要同步的資源數量。",
-      "error-quota-exceeded-message-onprem": "此儲存庫資料夾包含 {{fileCount}} 個資源，超過了您執行個體的 {{limit}} 上限。若要同步此儲存庫，請更新您的 Grafana 設定或減少要同步的資源數量。",
-      "error-quota-exceeded-title": "已超過資源配額",
       "error-repository-status-unhealthy-message": "連接到儲存庫時發生問題。請檢查儲存庫設定，然後再試一次。",
       "error-repository-status-unhealthy-title": "儲存庫狀態不佳",
       "external-storage-label": "外部儲存空間",
@@ -12980,6 +12978,9 @@
       "unmanaged-resources-label": "未受管理的資源",
       "update-configuration-action": "檢視設定文件",
       "upgrade-action": "升級帳戶",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
       "folders-count_other": "{{count}} 個資料夾"
@@ -14188,6 +14189,55 @@
       "show-response": "顯示回應"
     },
     "query-editor-not-exported": "資料來源外掛程式不匯出任何查詢編輯器元件"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

@@ -12,6 +12,7 @@ import (
 	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	_ "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	_ "github.com/grafana/grafana/pkg/infra/db/dbtest"
 	_ "github.com/grafana/grafana/pkg/infra/log/logtest"
 	_ "github.com/grafana/grafana/pkg/models/usertoken"
@@ -40,6 +41,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	_ "github.com/grafana/grafana/pkg/storage/unified/testing"
+	_ "github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	_ "github.com/grafana/grafana/pkg/tests/testinfra"
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
@@ -62,4 +64,5 @@ import (
 	_ "k8s.io/component-base/featuregate/testing"
 	_ "pgregory.net/rapid"
 	_ "sigs.k8s.io/randfill"
+	_ "sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 )
