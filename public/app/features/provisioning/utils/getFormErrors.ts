@@ -132,6 +132,7 @@ export const getConfigFormErrors = (data: ErrorDetails[] | Status): ConfigFormEr
     token: 'token',
     tokenUser: 'tokenUser',
     'sync.intervalSeconds': 'sync.intervalSeconds',
+    'webhook.disabled': 'webhook.disabled',
   };
 
   const errors = extractFormErrors(data);

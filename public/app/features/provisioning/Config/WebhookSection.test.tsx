@@ -8,8 +8,10 @@ import { type RepositoryFormData } from '../types';
 import { WebhookSection } from './WebhookSection';
 
 function Wrapper() {
-  const { register } = useForm<RepositoryFormData>();
-  return <WebhookSection register={register} name="webhook.baseUrl" disabledName="webhook.disabled" />;
+  const { register, control } = useForm<RepositoryFormData>();
+  return (
+    <WebhookSection register={register} control={control} name="webhook.baseUrl" disabledName="webhook.disabled" />
+  );
 }
 
 describe('WebhookSection', () => {
@@ -30,6 +32,18 @@ describe('WebhookSection', () => {
     expect(screen.queryByText('Webhook URL')).not.toBeInTheDocument();
   });
 
+  it('renders the disable webhook checkbox under webhook.disabled when expanded', async () => {
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook options'));
+
+    expect(screen.getByText('Disable webhook integration')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toHaveAttribute(
+      'name',
+      'webhook.disabled'
+    );
+  });
+
   it('registers the webhook URL input under webhook.baseUrl when expanded', async () => {
     const { user } = render(<Wrapper />);
 
@@ -37,6 +51,15 @@ describe('WebhookSection', () => {
 
     expect(screen.getByText('Webhook URL')).toBeInTheDocument();
     expect(screen.getByRole('textbox')).toHaveAttribute('name', 'webhook.baseUrl');
+  });
+
+  it('disables the webhook URL input when the disable checkbox is checked', async () => {
+    const { user } = render(<Wrapper />);
+
+    await user.click(screen.getByText('Webhook options'));
+    await user.click(screen.getByRole('checkbox', { name: /disable webhook integration/i }));
+
+    expect(screen.getByRole('textbox')).toBeDisabled();
   });
 
   it('shows the learn more link on private instances', async () => {

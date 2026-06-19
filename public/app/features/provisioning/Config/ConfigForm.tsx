@@ -85,7 +85,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const [tokenConfigured, setTokenConfigured] = useState(isEdit);
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
-  const [type, readOnly] = watch(['type', 'readOnly']);
+  const [type, readOnly, watchedConnectionName] = watch(['type', 'readOnly', 'connectionName']);
   const targetOptions = useMemo(() => getTargetOptions(settings.data?.allowedTargets || ['folder']), [settings.data]);
   const isGitBased = isGitProvider(type);
 
@@ -95,7 +95,20 @@ export function ConfigForm({ data }: ConfigFormProps) {
   const connectionName = data?.spec?.connection?.name;
   const usesGitHubApp = Boolean(connectionName && type === 'github');
 
-  const { options: connectionOptions, isLoading: connectionsLoading } = useConnectionOptions(usesGitHubApp);
+  const {
+    options: connectionOptions,
+    isLoading: connectionsLoading,
+    connections,
+  } = useConnectionOptions(usesGitHubApp);
+
+  const selectedConnection = connections.find((c) => c.metadata?.name === watchedConnectionName);
+  const connectionWebhookDisabled = Boolean(selectedConnection?.spec?.webhook?.disabled);
+
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   const {
     data: refsData,
@@ -418,8 +431,10 @@ export function ConfigForm({ data }: ConfigFormProps) {
         {type === 'github' && (
           <WebhookSection<RepositoryFormData>
             register={register}
+            control={control}
             name="webhook.baseUrl"
             disabledName="webhook.disabled"
+            connectionWebhookDisabled={connectionWebhookDisabled}
           />
         )}
 

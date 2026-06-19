@@ -1,4 +1,5 @@
-import { memo, useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { memo, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -9,6 +10,7 @@ import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { WebhookSection } from '../Config/WebhookSection';
+import { useConnectionList } from '../hooks/useConnectionList';
 import { isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
@@ -25,15 +27,35 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const [type, readOnly, wizardConnectionName] = watch([
+    'repository.type',
+    'repository.readOnly',
+    'githubApp.connectionName',
+  ]);
 
   const isGithub = type === 'github';
   const isGitBased = isGitProvider(type);
+
+  const [connections] = useConnectionList(isGithub ? {} : skipToken);
+  const connectionWebhookDisabled = useMemo(() => {
+    if (!wizardConnectionName || !connections) {
+      return false;
+    }
+    const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);
+    return Boolean(conn?.spec?.webhook?.disabled);
+  }, [wizardConnectionName, connections]);
 
   // Set sync enabled by default
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
+
+  // Auto-set webhook disabled when the selected connection requires it
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('repository.webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   useEffect(() => {
     if (!hasStepError) {
@@ -149,8 +171,10 @@ export const FinishStep = memo(function FinishStep() {
       {isGithub && (
         <WebhookSection<WizardFormData>
           register={register}
+          control={control}
           name="repository.webhook.baseUrl"
           disabledName="repository.webhook.disabled"
+          connectionWebhookDisabled={connectionWebhookDisabled}
         />
       )}
     </Stack>

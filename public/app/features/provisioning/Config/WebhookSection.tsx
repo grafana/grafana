@@ -1,4 +1,4 @@
-import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
+import { type Control, type FieldValues, type Path, type UseFormRegister, useWatch } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { Checkbox, ControlledCollapse, Field, Input, Stack, TextLink } from '@grafana/ui';
@@ -8,28 +8,54 @@ import { GETTING_STARTED_URL } from '../constants';
 
 export interface WebhookSectionProps<T extends FieldValues> {
   register: UseFormRegister<T>;
+  control: Control<T>;
   name: Path<T>;
   disabledName: Path<T>;
+  connectionWebhookDisabled?: boolean;
 }
 
-export function WebhookSection<T extends FieldValues>({ register, name, disabledName }: WebhookSectionProps<T>) {
+export function WebhookSection<T extends FieldValues>({
+  register,
+  control,
+  name,
+  disabledName,
+  connectionWebhookDisabled,
+}: WebhookSectionProps<T>) {
   const isPublic = checkPublicAccess();
+  const webhookDisabled = Boolean(useWatch({ control, name: disabledName }));
+  const urlDisabled = webhookDisabled || Boolean(connectionWebhookDisabled);
 
   return (
     <ControlledCollapse label={t('provisioning.webhook-section.label-webhook', 'Webhook options')} isOpen={false}>
       <Stack direction="column" gap={2}>
-        <Field noMargin>
+        <Field
+          noMargin
+          description={
+            connectionWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-forced',
+                  'Webhook integration is disabled because the referenced GitHub App connection has webhook integration disabled.'
+                )
+              : undefined
+          }
+        >
           <Checkbox
             {...register(disabledName)}
+            disabled={connectionWebhookDisabled}
             label={t('provisioning.webhook-section.label-webhook-disabled', 'Disable webhook integration')}
-            description={t(
-              'provisioning.webhook-section.description-webhook-disabled',
-              'When enabled, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.'
-            )}
+            description={
+              connectionWebhookDisabled
+                ? undefined
+                : t(
+                    'provisioning.webhook-section.description-webhook-disabled',
+                    'When checked, Grafana will not register or receive webhook events and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.'
+                  )
+            }
           />
         </Field>
         <Field
           noMargin
+          disabled={urlDisabled}
           label={t('provisioning.webhook-section.label-webhook-url', 'Webhook URL')}
           description={
             <>
@@ -49,6 +75,7 @@ export function WebhookSection<T extends FieldValues>({ register, name, disabled
         >
           <Input
             {...register(name)}
+            disabled={urlDisabled}
             placeholder={t('provisioning.webhook-section.placeholder-webhook-url', 'https://grafana.example.com')}
           />
         </Field>
