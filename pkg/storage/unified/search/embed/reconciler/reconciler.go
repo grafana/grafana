@@ -627,7 +627,7 @@ func (s *Reconciler) processEvents(ctx context.Context, sinceRv int64, batch []*
 // reconciler_process_duration histogram observed in the deferred closure.
 //
 // On a write, only panels whose content changed are re-embedded;
-// unchanged panels stay and vanished ones are deleted.
+// unchanged panels stay and stale ones are deleted.
 func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev *pendingEvent) (retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.reconciler.processEvent")
 	defer span.End()
@@ -683,7 +683,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)
 	}
-	// Cap before the diff so desired and the embed set use the same items.
 	if maxItems := builder.MaxItemsPerResource(); maxItems > 0 && len(items) > maxItems {
 		items = items[:maxItems]
 	}
@@ -700,7 +699,6 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		return nil
 	}
 
-	// All items from one Extract share the dashboard UID.
 	uid := items[0].UID
 
 	stored, storedFolder, err := s.vectorBackend.GetSubresourceContent(ctx, ev.namespace, model, builder.Resource(), uid)
