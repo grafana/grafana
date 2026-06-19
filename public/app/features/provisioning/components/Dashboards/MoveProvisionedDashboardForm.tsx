@@ -125,6 +125,32 @@ export function MoveProvisionedDashboardForm({
     });
   };
 
+  const onBranchSuccess = (urls: Record<string, string> | undefined, info: ProvisionedOperationInfo) => {
+    dashboard.setState({ isDirty: false });
+    panelEditor?.onDiscard();
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: info.repoType,
+    });
+    navigate(url);
+  };
+
+  const { handleSuccess } = useProvisionedRequestHandler({
+    workflow,
+    resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
+    successMessage: t(
+      'dashboard-scene.move-provisioned-dashboard-form.success-message',
+      'Dashboard moved successfully'
+    ),
+    handlers: {
+      onBranchSuccess: ({ urls }, info) => onBranchSuccess(urls, info),
+      onDismiss,
+    },
+  });
+
   const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     if (!repo || !repository) {
       showError();
@@ -177,7 +203,7 @@ export function MoveProvisionedDashboardForm({
       const branchRef = ref;
 
       try {
-        await moveFile({
+        const data = await moveFile({
           name: repo,
           path: targetPath,
           ref: branchRef,
@@ -185,6 +211,7 @@ export function MoveProvisionedDashboardForm({
           body: currentFileData.resource.file,
           originalPath: path,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -225,17 +252,6 @@ export function MoveProvisionedDashboardForm({
     }
   };
 
-  const onBranchSuccess = (info: ProvisionedOperationInfo) => {
-    dashboard.setState({ isDirty: false });
-    panelEditor?.onDiscard();
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue: moveRequest?.data?.urls?.newPullRequestURL,
-      repoType: info.repoType,
-    });
-    navigate(url);
-  };
-
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success') {
@@ -250,23 +266,6 @@ export function MoveProvisionedDashboardForm({
     },
     [dashboard, panelEditor, navigate]
   );
-
-  useProvisionedRequestHandler({
-    request: moveRequest,
-    workflow,
-    resourceType: 'dashboard',
-    repository,
-    selectedBranch: ref || loadedFromRef,
-    successMessage: t(
-      'dashboard-scene.move-provisioned-dashboard-form.success-message',
-      'Dashboard moved successfully'
-    ),
-    handlers: {
-      onBranchSuccess: (_, info) => onBranchSuccess(info),
-      onDismiss,
-      onError: showError,
-    },
-  });
 
   const isLoading = isCreatingJob || moveRequest.isLoading;
 

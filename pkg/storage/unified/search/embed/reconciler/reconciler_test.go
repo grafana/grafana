@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -968,6 +969,56 @@ func TestReconciler_ProcessBatch_RequeuesOnSetLatestRVFailure(t *testing.T) {
 	assert.Len(t, vec.upserts, 2, "embeds happen even when SetLatestRV errors")
 	assert.Equal(t, int64(50), vec.latestRV, "cursor stays put on SetLatestRV failure")
 	assert.Equal(t, 2, s.pendingLen(), "both events re-enqueued so the next cycle retries the advance")
+}
+
+func labeledDashboard(uid, title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"name":   uid,
+			"labels": map[string]any{controller.LabelPendingDelete: "true"},
+		},
+		"spec": map[string]any{"uid": uid, "title": title},
+	})
+	return body
+}
+
+func TestReconciler_PendingDeleteLabel_SkipsUpsertAndAdvancesCursor(t *testing.T) {
+	vec := newFakeVector()
+	s, text := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 100, labeledDashboard("dash-1", "Dash 1")))
+	s.enqueue(dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash-2", 200, minimalDashboard("dash-2", "Dash 2")))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the unlabeled resource should be embedded")
+	assert.Equal(t, 1, text.calls, "skipped event must not call the embedder")
+	assert.Equal(t, int64(200), vec.latestRV, "skips count as processed so the cursor advances")
+	assert.Equal(t, 0, s.pendingLen(), "skipped events are not retried")
+}
+
+func TestReconciler_PendingDeleteLabel_DeleteEventStillProcessed(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_DELETED, "ns", "dash-x", 50, nil))
+
+	s.processPending(context.Background())
+
+	require.Len(t, vec.deletes, 1, "deletes must still drop vectors regardless of labels")
+}
+
+func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
+	vec := newFakeVector()
+	s, _ := newReconciler(t, &fakeStorage{}, vec)
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 100, labeledDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Empty(t, vec.upserts, "labeled resource is skipped")
+
+	s.enqueue(dashEvent(resourcepb.WatchEvent_MODIFIED, "ns", "dash-1", 200, minimalDashboard("dash-1", "Dash 1")))
+	s.processPending(context.Background())
+	require.Len(t, vec.upserts, 1, "unlabeled (restored) resource embeds again")
 }
 
 // TestReconciler_Run_BroadcasterDeliversWatchEvents pins the watch

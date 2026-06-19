@@ -2794,7 +2794,9 @@
           "alerting": "Aktifkan untuk menjeda evaluasi untuk aturan peringatan ini.",
           "recording": "Aktifkan untuk menjeda evaluasi untuk aturan pencatatan ini."
         },
-        "select-folder-before": "Pilih folder sebelum mengatur grup evaluasi dan interval"
+        "select-folder-before": "Pilih folder sebelum mengatur grup evaluasi dan interval",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4245,6 +4247,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Kesalahan saat menghapus sumber daya",
+      "success-title": "",
       "folder-empty_other": "",
       "folder-not-empty_other": ""
     },
@@ -4265,6 +4268,7 @@
       "error-no-target-folder-path": "Jalur folder target tidak valid atau kosong, harap pilih lagi.",
       "move-warning": "Ini akan memindahkan folder yang dipilih dan turunannya. Folder target yang tersedia bergantung pada sumber daya yang dipilih.",
       "move-warning-tooltip": "Anda hanya dapat memindahkan sumber daya yang disediakan dalam folder yang disediakan, dan sumber daya lokal ke folder lokal.",
+      "success-title": "",
       "target-folder": "Folder Target",
       "folder-not-empty_other": ""
     },
@@ -5992,9 +5996,6 @@
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Tautan panel"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Kembali ke Kueri"
     },
@@ -6178,7 +6179,17 @@
       "snapshot": {
         "tooltip": "Buka dasbor asli"
       },
-      "undo": "Batalkan"
+      "undo": "Batalkan",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Sumber ({{provider}})",
@@ -6437,6 +6448,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": "Panel tidak ditemukan"
     },
     "viz-panel": {
@@ -8642,7 +8654,9 @@
       "query-history-button": "Riwayat kueri",
       "query-history-button-aria-label": "Riwayat kueri",
       "query-inspector-button": "Pemeriksa kueri",
-      "query-inspector-button-aria-label": "Pemeriksa kueri"
+      "query-inspector-button-aria-label": "Pemeriksa kueri",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Tampilkan semua rentang",
     "span-bar": {
@@ -12954,9 +12968,6 @@
       "description-clear-repository-connection": "Nama ini akan digunakan untuk koneksi repositori dan folder yang ditampilkan di UI",
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
-      "error-quota-exceeded-message": "Folder repositori ini berisi {{fileCount}} sumber daya, yang melebihi batas akun Anda sebesar {{limit}}. Untuk menyinkronkan repositori ini, upgrade akun Anda atau kurangi jumlah sumber daya yang akan disinkronkan.",
-      "error-quota-exceeded-message-onprem": "Folder repositori ini berisi {{fileCount}} sumber daya, yang melebihi batas instance Anda sebesar {{limit}}. Untuk menyinkronkan repositori ini, perbarui konfigurasi Grafana Anda atau kurangi jumlah sumber daya yang akan disinkronkan.",
-      "error-quota-exceeded-title": "Kuota sumber daya terlampaui",
       "error-repository-status-unhealthy-message": "Terjadi masalah saat menghubungkan ke repositori. Harap periksa pengaturan repositori dan coba lagi.",
       "error-repository-status-unhealthy-title": "Status repositori tidak sehat",
       "external-storage-label": "Penyimpanan eksternal",
@@ -12967,6 +12978,9 @@
       "unmanaged-resources-label": "Sumber daya yang tidak dikelola",
       "update-configuration-action": "Lihat dokumen konfigurasi",
       "upgrade-action": "Tingkatkan akun",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
       "folders-count_other": "{{count}} folder"
@@ -12978,6 +12992,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Lewati proses penyiapan dan dapatkan Sinkronisasi Git yang dikelola sepenuhnya dan di-host di Grafana Cloud dengan <2>paket Grafana Cloud gratis selamanya</2>.",
@@ -14172,6 +14189,55 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

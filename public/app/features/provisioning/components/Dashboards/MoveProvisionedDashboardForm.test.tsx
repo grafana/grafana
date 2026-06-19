@@ -1,22 +1,19 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { HttpResponse, delay, http } from 'msw';
+import { render, screen, waitFor, act } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
-import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
-import {
-  useCreateRepositoryFilesWithPathMutation,
-  useCreateRepositoryJobsMutation,
-  useGetRepositoryFilesWithPathQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { FOLDER_BY_NAME_URL, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
-import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { createJob } from '../../mocks/factories';
+import { getMockLiveSrv, setupProvisioningMswServer } from '../../mocks/server';
 
 import { MoveProvisionedDashboardForm, type Props } from './MoveProvisionedDashboardForm';
+
+setupProvisioningMswServer();
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -26,42 +23,49 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
-  useGetRepositoryFilesWithPathQuery: jest.fn(),
-  useCreateRepositoryFilesWithPathMutation: jest.fn(),
-  useCreateRepositoryJobsMutation: jest.fn(),
-  provisioningAPIv0alpha1: {
-    endpoints: {
-      listRepository: {
-        select: jest.fn(() => () => ({ data: { items: [] } })),
-      },
-    },
-  },
-}));
-
-jest.mock('app/api/clients/folder/v1beta1', () => ({
-  useGetFolderQuery: jest.fn(),
-}));
-
-jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
-  useProvisionedRequestHandler: jest.fn(),
-}));
-
+const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
-  useNavigate: () => jest.fn(),
+  ...jest.requireActual('react-router-dom-v5-compat'),
+  useNavigate: () => mockNavigate,
 }));
 
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
   ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
 }));
 
-function setup(props: Partial<Props> = {}) {
-  const user = userEvent.setup();
+// Default movable-file response (the provisioning files GET defaults to 404).
+function fileResponse(sourcePath = 'folder1/dashboard.json') {
+  return {
+    resource: {
+      file: { spec: { title: 'Test Dashboard' } },
+      dryRun: {
+        metadata: {
+          annotations: { [AnnoKeySourcePath]: sourcePath },
+        },
+      },
+    },
+  };
+}
 
+// Folder GET-by-name response carrying the sourcePath annotation the path calc reads.
+function folderResponse(sourcePath: string) {
+  return {
+    kind: 'Folder',
+    apiVersion: 'folder.grafana.app/v1beta1',
+    metadata: {
+      name: 'target-folder-uid',
+      annotations: { [AnnoKeySourcePath]: sourcePath },
+    },
+    spec: { title: 'Target Folder' },
+  };
+}
+
+function setup(props: Partial<Props> = {}) {
   const mockDashboard = {
     useState: jest.fn().mockReturnValue({
       editPanel: null,
     }),
+    setState: jest.fn(),
     state: {
       title: 'Test Dashboard',
       meta: {
@@ -99,65 +103,37 @@ function setup(props: Partial<Props> = {}) {
   };
 
   return {
-    user,
-    ...render(
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <MoveProvisionedDashboardForm {...defaultProps} />
-      </OpenFeatureProvider>
-    ),
+    ...render(<MoveProvisionedDashboardForm {...defaultProps} />),
     props: defaultProps,
   };
 }
 
-const mockCreateRequest = {
-  isSuccess: false,
-  isError: false,
-  isLoading: false,
-  error: null,
+const branchDefaultValues: Props['defaultValues'] = {
+  repo: 'test-repo',
+  path: 'folder1/dashboard.json',
+  ref: 'feature/move',
+  workflow: 'branch',
+  comment: '',
+  title: 'Test Dashboard',
+  description: '',
+  folder: { uid: '', title: '' },
 };
 
 describe('MoveProvisionedDashboardForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Setup default mocks
     const mockAppEvents = {
       publish: jest.fn(),
     };
     (getAppEvents as jest.Mock).mockReturnValue(mockAppEvents);
 
-    // Mock hooks
-    (useGetRepositoryFilesWithPathQuery as jest.Mock).mockReturnValue({
-      data: {
-        resource: {
-          file: { spec: { title: 'Test Dashboard' } },
-          dryRun: {
-            metadata: {
-              annotations: {
-                [AnnoKeySourcePath]: 'folder1/dashboard.json',
-              },
-            },
-          },
-        },
-      },
-      isLoading: false,
-    });
-
-    (useGetFolderQuery as jest.Mock).mockReturnValue({
-      data: {
-        metadata: {
-          annotations: {
-            [AnnoKeySourcePath]: 'target-folder',
-          },
-        },
-      },
-      isLoading: false,
-    });
-
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
-    (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([jest.fn(), mockCreateRequest]);
-
-    (useProvisionedRequestHandler as jest.Mock).mockReturnValue(undefined);
+    // Defaults: a movable file in folder1 and a distinct target folder, so most
+    // tests render with the move button enabled and the "already in target" guard clear.
+    server.use(
+      http.get(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json(fileResponse())),
+      http.get(FOLDER_BY_NAME_URL, () => HttpResponse.json(folderResponse('target-folder')))
+    );
   });
 
   it('should render the form with correct title and subtitle', () => {
@@ -167,28 +143,27 @@ describe('MoveProvisionedDashboardForm', () => {
     expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
   });
 
-  it('should render form even when currentFileData is not available', () => {
-    (useGetRepositoryFilesWithPathQuery as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: false,
-    });
+  it('should render form even when currentFileData is not available', async () => {
+    server.use(http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status: 404 })));
 
     setup();
 
     // Form should still render, but move button should be disabled
     expect(screen.getByText('Move Provisioned Dashboard')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /move dashboard/i })).toBeDisabled();
+    expect(await screen.findByRole('button', { name: /move dashboard/i })).toBeDisabled();
   });
 
-  it('should show loading spinner when file data is loading', () => {
-    (useGetRepositoryFilesWithPathQuery as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: true,
-    });
+  it('should show loading spinner when file data is loading', async () => {
+    server.use(
+      http.get(`${BASE}/repositories/:name/files/*`, async () => {
+        await delay('infinite');
+        return HttpResponse.json(fileResponse());
+      })
+    );
 
     setup();
 
-    expect(screen.getByText('Loading dashboard data')).toBeInTheDocument();
+    expect(await screen.findByText('Loading dashboard data')).toBeInTheDocument();
   });
 
   it('should show read-only alert when repository is read-only', () => {
@@ -198,48 +173,47 @@ describe('MoveProvisionedDashboardForm', () => {
     expect(screen.getByText(/This dashboard cannot be moved directly from Grafana/)).toBeInTheDocument();
   });
 
-  it('should show target path input with calculated path', () => {
+  it('should show target path input with calculated path', async () => {
     setup();
 
-    expect(screen.getByDisplayValue('target-folder/dashboard.json')).toBeInTheDocument();
+    expect(await screen.findByDisplayValue('target-folder/dashboard.json')).toBeInTheDocument();
   });
 
-  it('should show error alert when file data has errors', () => {
-    (useGetRepositoryFilesWithPathQuery as jest.Mock).mockReturnValue({
-      data: {
-        errors: ['File not found', 'Permission denied'],
-        resource: null,
-      },
-      isLoading: false,
-    });
+  it('should show error alert when file data has errors', async () => {
+    server.use(
+      http.get(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({ errors: ['File not found', 'Permission denied'], resource: null })
+      )
+    );
 
     setup();
 
-    expect(screen.getByText('Error loading dashboard')).toBeInTheDocument();
+    expect(await screen.findByText('Error loading dashboard')).toBeInTheDocument();
     expect(screen.getByText('File not found')).toBeInTheDocument();
     expect(screen.getByText('Permission denied')).toBeInTheDocument();
   });
 
-  it('should disable move button when form is submitting', () => {
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([
-      jest.fn(),
-      {
-        ...mockCreateRequest,
-        isLoading: true,
-      },
-    ]);
+  it('should disable move button when form is submitting', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async () => {
+        await delay('infinite');
+        return HttpResponse.json({ resource: {} });
+      })
+    );
 
-    setup();
+    const { user } = setup({ defaultValues: branchDefaultValues });
 
-    const moveButton = screen.getByRole('button', { name: /moving/i });
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+
+    const moveButton = await screen.findByRole('button', { name: /moving/i });
     expect(moveButton).toBeDisabled();
     expect(moveButton).toHaveTextContent('Moving...');
   });
 
-  it('should show move dashboard button when not loading', () => {
+  it('should show move dashboard button when not loading', async () => {
     setup();
 
-    expect(screen.getByRole('button', { name: /move dashboard/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /move dashboard/i })).toBeInTheDocument();
   });
 
   it('should call onDismiss when cancel button is clicked', async () => {
@@ -252,50 +226,40 @@ describe('MoveProvisionedDashboardForm', () => {
   });
 
   it('does not submit a move job when the dashboard is already at the target path', async () => {
-    const createJob = jest.fn();
-    (useCreateRepositoryJobsMutation as jest.Mock).mockReturnValue([createJob, mockCreateRequest]);
-    (useGetFolderQuery as jest.Mock).mockReturnValue({
-      data: {
-        metadata: {
-          annotations: {
-            [AnnoKeySourcePath]: 'folder1',
-          },
-        },
-      },
-      isLoading: false,
-    });
+    let jobPosted = false;
+    // Target folder resolves to the same folder the dashboard already lives in.
+    server.use(
+      http.get(FOLDER_BY_NAME_URL, () => HttpResponse.json(folderResponse('folder1'))),
+      http.post(`${BASE}/repositories/:name/jobs`, () => {
+        jobPosted = true;
+        return HttpResponse.json(createJob({ status: { state: 'pending' } }));
+      })
+    );
 
     const { user } = setup();
 
-    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
 
-    expect(createJob).not.toHaveBeenCalled();
-    expect(getAppEvents().publish).toHaveBeenCalledWith({
-      type: AppEvents.alertError.name,
-      payload: ['Failed to move dashboard', 'Dashboard is already in the selected folder.'],
+    await waitFor(() => {
+      expect(getAppEvents().publish).toHaveBeenCalledWith({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to move dashboard', 'Dashboard is already in the selected folder.'],
+      });
     });
+    expect(jobPosted).toBe(false);
   });
 
   it('renders the message from the repo commit template when comment is empty', async () => {
-    const moveFile = jest.fn().mockReturnValue({ unwrap: jest.fn().mockResolvedValue({}) });
-    (useCreateRepositoryFilesWithPathMutation as jest.Mock).mockReturnValue([moveFile, mockCreateRequest]);
-    // upstream isResourceAlreadyInTarget guard requires currentSourcePath !== targetFolderPath
-    (useGetFolderQuery as jest.Mock).mockReturnValue({
-      data: { metadata: { annotations: { [AnnoKeySourcePath]: 'target-folder' } } },
-      isLoading: false,
-    });
+    let capturedMessage: string | null = null;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+        capturedMessage = new URL(request.url).searchParams.get('message');
+        return HttpResponse.json({ resource: {} });
+      })
+    );
 
     const { user } = setup({
-      defaultValues: {
-        repo: 'test-repo',
-        path: 'folder1/dashboard.json',
-        ref: 'feature/move',
-        workflow: 'branch',
-        comment: '',
-        title: 'Test Dashboard',
-        description: '',
-        folder: { uid: '', title: '' },
-      },
+      defaultValues: branchDefaultValues,
       repository: {
         type: 'github',
         name: 'test-repo',
@@ -306,10 +270,102 @@ describe('MoveProvisionedDashboardForm', () => {
       },
     });
 
-    await user.click(screen.getByRole('button', { name: /move dashboard/i }));
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
 
-    expect(moveFile).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'chore(dashboards): move Test Dashboard' })
+    await waitFor(() => {
+      expect(capturedMessage).toBe('chore(dashboards): move Test Dashboard');
+    });
+  });
+
+  it('navigates to the PR redirect URL and dismisses the drawer on branch workflow success', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({
+          ref: 'feature/move',
+          path: 'target-folder/dashboard.json',
+          urls: { newPullRequestURL: 'https://github.com/test/repo/compare/main...feature/move' },
+          resource: {
+            upsert: {
+              apiVersion: 'v1',
+              kind: 'Dashboard',
+              metadata: { name: 'dashboard-uid', uid: 'dashboard-uid' },
+              spec: { title: 'Test Dashboard' },
+            },
+          },
+        })
+      )
     );
+
+    const { user, props } = setup({ defaultValues: branchDefaultValues });
+
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/dashboards?new_pull_request_url=https%3A%2F%2Fgithub.com%2Ftest%2Frepo%2Fcompare%2Fmain...feature%2Fmove&repo_type=github'
+      );
+    });
+    expect(props.dashboard.setState).toHaveBeenCalledWith({ isDirty: false });
+    expect(props.onDismiss).toHaveBeenCalled();
+  });
+
+  it('publishes a single error alert when the branch workflow move fails', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({ message: 'merge conflict' }, { status: 500 })
+      )
+    );
+
+    const { user, props } = setup({ defaultValues: branchDefaultValues });
+
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+
+    await waitFor(() => {
+      expect(getAppEvents().publish).toHaveBeenCalledWith({
+        type: AppEvents.alertError.name,
+        payload: ['Failed to move dashboard', expect.anything()],
+      });
+    });
+    // The hook-level onError handler was removed — the form's own catch is the only error surface
+    expect(getAppEvents().publish).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(props.onDismiss).not.toHaveBeenCalled();
+  });
+
+  it('navigates to /dashboards when the write workflow job completes via a watch event', async () => {
+    const pendingJob = createJob({ status: { state: 'pending' } });
+    const workingJob = createJob();
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(pendingJob)),
+      http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [workingJob], metadata: { resourceVersion: '1' } })),
+      // FinishedJobStatus looks up the job's repository (by the job's repository label) to render the link
+      http.get(`${BASE}/repositories/:name`, ({ params }) =>
+        HttpResponse.json({
+          kind: 'Repository',
+          apiVersion: 'provisioning.grafana.app/v0alpha1',
+          metadata: { name: params.name },
+          spec: { title: 'Test Repo', type: 'github', github: { url: 'https://github.com/test/repo', branch: 'main' } },
+          status: {},
+        })
+      )
+    );
+
+    const { user } = setup();
+
+    await user.click(await screen.findByRole('button', { name: /move dashboard/i }));
+
+    // JobStatus has mounted and is watching the job
+    expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+
+    act(() => {
+      getMockLiveSrv().emitWatchEvent('jobs', {
+        type: 'MODIFIED',
+        object: createJob({ status: { state: 'success' } }),
+      });
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboards');
+    });
   });
 });

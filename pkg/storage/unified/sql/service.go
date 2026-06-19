@@ -629,6 +629,7 @@ func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, log
 	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
 		KV:               kvBackend.KV(),
 		LeaseManager:     leaseMgr,
+		ChunkSize:        int64(cfg.IndexSnapshotKVChunkSizeMiB) * 1024 * 1024,
 		ChunkConcurrency: cfg.IndexSnapshotKVChunkConcurrency,
 	})
 	if err != nil {

@@ -93,6 +93,33 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
+  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
+  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
+    panelEditor?.onDiscard();
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: info.repoType,
+      action: 'delete',
+    });
+    navigate(url);
+  };
+
+  const { handleSuccess } = useProvisionedRequestHandler({
+    workflow,
+    resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
+    successMessage: t(
+      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
+      'Dashboard deleted successfully'
+    ),
+    handlers: {
+      onDismiss,
+      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
+    },
+  });
+
   const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
@@ -116,12 +143,13 @@ export function DeleteProvisionedDashboardForm({
       const branchRef = ref;
 
       try {
-        await deleteRepoFile({
+        const data = await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
           message,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -161,18 +189,6 @@ export function DeleteProvisionedDashboardForm({
     }
   };
 
-  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
-  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
-    panelEditor?.onDiscard();
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue: urls?.newPullRequestURL,
-      repoType: info.repoType,
-      action: 'delete',
-    });
-    navigate(url);
-  };
-
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success') {
@@ -186,23 +202,6 @@ export function DeleteProvisionedDashboardForm({
     },
     [panelEditor, navigate]
   );
-
-  useProvisionedRequestHandler({
-    request,
-    workflow,
-    resourceType: 'dashboard',
-    repository,
-    selectedBranch: ref || loadedFromRef,
-    successMessage: t(
-      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
-      'Dashboard deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
-      onError: showError,
-    },
-  });
 
   return (
     <Drawer
