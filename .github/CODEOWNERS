@@ -1,3 +1,4 @@
 * @ni/grafana-codeowners-team
 
-/.snyk @chris468 @cameronwaterman @BKnight760 @rbell517 @jattasNI @prestwick
+/.snyk @ni/security-scanning-owners
+/.wiz @ni/security-scanning-owners

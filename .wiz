@@ -1,0 +1,9 @@
+# Wiz Code global path exclusions for this repository.
+#
+# NOTE: Both /* and /**/* patterns are required per directory due to a known
+# Wiz glob bug (WZ-81029) where /**/* does not match direct children of a
+# directory. The /* pattern catches direct children while /**/* catches nested
+# files. This duplication can be removed once the bug is fixed.
+
+ignore:
+  global_paths: {}

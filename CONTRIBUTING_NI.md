@@ -80,13 +80,7 @@ See the validation instructions in the [`Skyline/Grafana README.md`](https://dev
 
 ### Security scanning with Snyk
 
-This repository uses [Snyk](https://snyk.io/) for security scanning to identify and fix vulnerabilities in code before they reach production. Snyk provides Static Application Security Testing (SAST) that scans your code for security issues as you develop.
-
-- **IDE integration**: Install the Snyk extension for [Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=snyk-security.snyk-vulnerability-scanner) or [Visual Studio](https://marketplace.visualstudio.com/items?itemName=snyk-security.snyk-vulnerability-scanner-vs-2022) to get real-time security feedback while writing code. To suggest the Snyk extension to contributors, add `.vscode/extensions.json` or `.vsconfig` files to your project root. The VSCode Snyk extension has a richer feature set and is the preferred IDE for working with Snyk.
-- **Pull request scanning**: Snyk automatically scans PRs and posts comments for high/critical vulnerabilities.
-- **Post-merge monitoring**: Automated bugs are created for unresolved issues after code is merged.
-
-**Contributors within NI/Emerson**: For detailed guidance on working with Snyk, including how to address security issues and create ignore records, see the [Snyk reference](https://dev.azure.com/ni/DevCentral/_wiki/wikis/Stratus/146862/Snyk-reference).
+**Contributors within NI/Emerson**: See the [security scanning reference](https://dev.azure.com/ni/DevCentral/_wiki/wikis/Stratus/160265/Security-scanning-reference) for information on security scanning tools, workflows, and best practices.
 
 **Contributors outside of NI/Emerson**: If you are having issues resolving a vulnerability Snyk identifies on your PR, consult with a code owner to understand your options for resolution.
 
@@ -94,7 +88,7 @@ This repository uses [Snyk](https://snyk.io/) for security scanning to identify 
 
 #### Setup
 
-First, make sure to read and follow the directions of the [Developer Guide](./contribute/developer-guide.md). 
+First, make sure to read and follow the directions of the [Developer Guide](./contribute/developer-guide.md).
 
 #### Windows users
 
@@ -104,11 +98,10 @@ In Docker Desktop make sure to enable the WSL distribution you intend to use (vi
 
 #### Compiling/running backend
 
-In Visual Studio Code, you may want to add the WSL extension (Microsoft). In an Ubuntu (or appropriate WSL distro) terminal, you may have to run `make run` for the first compile of the backend (which is a long process). Successive compiles, after you alter either configuration files (like `defaults.ini`, or more appropriately `custom.ini`), or  backend code (e.g. Go files in the `pkg` folder directory) can normally be successful using **`make run-go`**, which is a _much_ faster compile process.
+In Visual Studio Code, you may want to add the WSL extension (Microsoft). In an Ubuntu (or appropriate WSL distro) terminal, you may have to run `make run` for the first compile of the backend (which is a long process). Successive compiles, after you alter either configuration files (like `defaults.ini`, or more appropriately `custom.ini`), or backend code (e.g. Go files in the `pkg` folder directory) can normally be successful using **`make run-go`**, which is a _much_ faster compile process.
 
 Generally, you will want to use the [**`ni.ini`** configuration file](./conf/ni.ini) when starting the backend, which has settings to enable it to run within the SLE Grafana web app. To do this, you _must_ copy it to a file named **`custom.ini`** in the same directory. This file will be ignored by Github.
 
 #### Compiling/running frontend
 
 Instead of using `yarn start` as the blog indicates, you can likely start with just using **`yarn start:noLint`** which avoids both the linting and type-checking process. This is a substantially faster compile process than using `yarn start`.
-
