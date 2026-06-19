@@ -202,10 +202,15 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	legacyIndexViewData := dtos.IndexViewData{
 		Settings: &dtos.FrontendSettingsDTO{
 			BuildInfo: data.Settings.BuildInfo,
+			Licensing: &dtos.FrontendSettingsLicensingDTO{},
 		},
 	}
 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+
+	if data.FullSettings != nil {
+		data.FullSettings.Licensing = legacyIndexViewData.Settings.Licensing
+	}
 }
