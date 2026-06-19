@@ -41,8 +41,7 @@ function ExtensionToolbarItemButtonComponent(
     return t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
   })();
 
-  // The assistant renders its own labelled "Chat" + "Enter Agent mode" pills; everything
-  // else keeps the icon-only toolbar button.
+  // The assistant renders own buttons with custom styling
   if (pluginId === 'grafana-assistant-app') {
     return <AssistantToolbarButtons ref={ref} isOpen={isOpen} onClick={onClick} />;
   }

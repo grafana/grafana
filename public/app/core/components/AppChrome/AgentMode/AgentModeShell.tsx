@@ -2,19 +2,14 @@ import { css } from '@emotion/css';
 import { type RefCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { locationService, usePluginComponent } from '@grafana/runtime';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { usePluginComponent } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-// The assistant plugin exposes the real workspace (chat + canvas + Platform tab) and
-// hands its Platform-tab DOM node back to us via `registerPlatformHost` so we can
-// portal the live page into it. Until the plugin loads, we fall back to a local stub.
 const AGENT_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/agent-mode-workspace/v1';
 
 interface AgentWorkspaceProps {
   registerPlatformHost?: RefCallback<HTMLDivElement>;
-  // The plugin renders its own "Back to platform" button (in the workspace header) and
-  // calls this to exit agent mode — so we don't render a separate agent-mode top bar.
   onExitAgentMode?: () => void;
 }
 
