@@ -111,22 +111,19 @@ export function TraceView(props: Props) {
     []
   );
 
-  const isRestoredByAdaptiveTraces = useMemo(
-    () => {
-      if (!isAdaptiveTracesAppInstalled) {
-        return false;
-      }
+  const isRestoredByAdaptiveTraces = useMemo(() => {
+    if (!isAdaptiveTracesAppInstalled) {
+      return false;
+    }
 
-      return (
-        traceProp?.spans?.some((span) =>
-          span.tags?.some(
-            (tag) => tag.key === 'grafana.adaptivetraces.restored' && (tag.value === true || tag.value === 'true')
-          )
-        ) ?? false
-      );
-    },
-    [isAdaptiveTracesAppInstalled, traceProp]
-  );
+    return (
+      traceProp?.spans?.some((span) =>
+        span.tags?.some(
+          (tag) => tag.key === 'grafana.adaptivetraces.restored' && (tag.value === true || tag.value === 'true')
+        )
+      ) ?? false
+    );
+  }, [isAdaptiveTracesAppInstalled, traceProp]);
   const { search, setSearch, spanFilterMatches } = useSearch(exploreId, traceProp?.spans, spanFilters, criticalPath);
 
   const [focusedSpanIdForSearch, setFocusedSpanIdForSearch] = useState('');
