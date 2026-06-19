@@ -41,7 +41,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const [workflow] = watch(['workflow']);
 
   const showError = (error: unknown) => {
     setError(
@@ -85,13 +85,11 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     onDismiss?.();
   };
 
-  useProvisionedRequestHandler({
-    request,
+  const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType: 'folder',
     folderUID: folder.uid,
     repository,
-    selectedBranch: ref,
     successMessage: t(
       'browse-dashboards.rename-provisioned-folder-form.success-message',
       'Folder renamed successfully'
@@ -100,7 +98,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       onDismiss,
       onWriteSuccess,
       onBranchSuccess,
-      onError: showError,
     },
   });
 
@@ -123,24 +120,28 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // Success/error handling is done by useProvisionedRequestHandler via the `request` object.
-    replaceFile({
-      name: repoName,
-      path: folderPath,
-      ref: branchRef,
-      message: getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'rename',
-        resourceKind: 'folder',
-        resourceID: folder.uid,
-        title,
-        ...getCurrentCommitUser(),
-      }),
-      body: {
-        spec: { title },
-      },
-    });
+    try {
+      const data = await replaceFile({
+        name: repoName,
+        path: folderPath,
+        ref: branchRef,
+        message: getSingleResourceCommitMessage({
+          comment,
+          repository,
+          action: 'rename',
+          resourceKind: 'folder',
+          resourceID: folder.uid,
+          title,
+          ...getCurrentCommitUser(),
+        }),
+        body: {
+          spec: { title },
+        },
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch: ref });
+    } catch (err) {
+      showError(err);
+    }
   };
 
   return (

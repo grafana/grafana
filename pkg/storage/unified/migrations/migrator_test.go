@@ -66,6 +66,17 @@ func TestIntegrationMigrations(t *testing.T) {
 	runMigrationTestSuite(t, defaultMigrationTestCases(), migrationTestOptions{})
 }
 
+// TestIntegrationMigrationsChunked same as TestIntegrationMigrations but with the chunked bulk writes (multiple txs).
+func TestIntegrationMigrationsChunked(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("chunked migration write path is non-sqlite only; run with GRAFANA_TEST_DB=mysql or postgres")
+	}
+	runMigrationTestSuite(t, defaultMigrationTestCases(), migrationTestOptions{
+		chunkMaxBytes: 64 * 1024, // small chunks to force multiple txs
+	})
+}
+
 // TestIntegrationKVMigrations runs the same migration test suite as TestIntegrationMigrations
 // but with the KV storage backend enabled instead of the SQL backend.
 func TestIntegrationKVMigrations(t *testing.T) {
@@ -78,6 +89,8 @@ type migrationTestOptions struct {
 	// extraMigrationIDs adds migration IDs (and their default status) to the verification map.
 	// Used by enterprise tests to include enterprise-only migrations.
 	extraMigrationIDs map[string]bool
+	// chunkMaxBytes, if > 0, enables chunked migration and sets chunk size
+	chunkMaxBytes int64
 }
 
 // runMigrationTestSuite executes the migration test suite for the given test cases
@@ -301,6 +314,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				APIServerStorageType:   "unified",
 				UnifiedStorageConfig:   unifiedConfig,
 				MigrationParquetBuffer: true,
+				MigrationChunkMaxBytes: opts.chunkMaxBytes,
 				EnableFeatureToggles:   featureToggles,
 				EnableSQLKVBackend:     opts.enableSQLKVBackend,
 			},
