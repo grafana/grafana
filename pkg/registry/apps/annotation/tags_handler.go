@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 type TagResponse struct {
@@ -40,10 +41,9 @@ func newTagsHandler(
 		start := time.Now()
 		defer func() { observe(ctx, logger, metrics.RequestDuration, "tags", start, err) }()
 
-		// Tags are an org-wide aggregate, so gate the request on org-level
-		// annotation read before exposing any tag metadata.
-		if err = authorizeReadOrganizationAnnotations(ctx, accessClient, namespace); err != nil {
-			return err
+		if authzErr := authorizeReadOrganizationAnnotations(ctx, accessClient, namespace); authzErr != nil {
+			errhttp.Write(ctx, authzErr, writer)
+			return nil
 		}
 
 		opts := TagListOptions{}

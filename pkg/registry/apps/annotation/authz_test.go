@@ -2,6 +2,7 @@ package annotation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -364,13 +365,13 @@ func TestAuthorizeReadOrganizationAnnotations(t *testing.T) {
 		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
 		err := authorizeReadOrganizationAnnotations(ctx, ac, "default")
 		require.Error(t, err)
-		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+		assert.True(t, errors.Is(err, errReadOrgAnnotationsForbidden), "expected Forbidden, got %v", err)
 	})
 
 	t.Run("unauthorized when no identity is present", func(t *testing.T) {
 		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
 		err := authorizeReadOrganizationAnnotations(t.Context(), ac, "default")
 		require.Error(t, err)
-		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
+		assert.True(t, errors.Is(err, errReadOrgAnnotationsUnauthorized), "expected Unauthorized, got %v", err)
 	})
 }

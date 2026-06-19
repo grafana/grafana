@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -18,6 +19,19 @@ import (
 type DashboardFolderResolver interface {
 	ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error)
 }
+
+// errutil errors render with the correct HTTP status
+var (
+	errReadOrgAnnotationsUnauthorized = errutil.Unauthorized(
+		"annotation.tags.unauthorized",
+		errutil.WithPublicMessage("authentication is required to read annotations"),
+	)
+	errReadOrgAnnotationsForbidden = errutil.Forbidden(
+		"annotation.tags.forbidden",
+		errutil.WithPublicMessage("requires the annotations:read permission with the organization scope"),
+	)
+	errReadOrgAnnotationsAuthz = errutil.Internal("annotation.tags.authzError")
+)
 
 // GetAuthorizer returns the authorizer for the annotation app.
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
@@ -134,7 +148,7 @@ func resolveDashboardFolders(ctx context.Context, folderResolver DashboardFolder
 func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient authtypes.AccessClient, namespace string) error {
 	authInfo, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
-		return apierrors.NewUnauthorized("no identity found for request")
+		return errReadOrgAnnotationsUnauthorized.Errorf("no identity found for request")
 	}
 
 	resp, err := accessClient.Check(ctx, authInfo, authtypes.CheckRequest{
@@ -145,10 +159,10 @@ func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient auth
 		Verb:      utils.VerbList,
 	}, "") // organization-scoped annotations have no parent folder
 	if err != nil {
-		return apierrors.NewInternalError(fmt.Errorf("annotation authz check failed: %w", err))
+		return errReadOrgAnnotationsAuthz.Errorf("annotation authz check failed: %w", err)
 	}
 	if !resp.Allowed {
-		return apierrors.NewForbidden(annotationGR, "tags", fmt.Errorf("requires the annotations:read permission with the organization scope"))
+		return errReadOrgAnnotationsForbidden.Errorf("user is not allowed to read organization annotations")
 	}
 	return nil
 }
