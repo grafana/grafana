@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -13,7 +13,7 @@ interface ToolbarItemButtonProps {
   pluginId?: string;
 }
 
-function getPluginIcon(pluginId?: string): string {
+function getPluginIcon(pluginId?: string): IconName {
   switch (pluginId) {
     // The docs plugin ID is transitioning from grafana-grafanadocsplugin-app to grafana-pathfinder-app.
     // Support both until that migration is complete.
