@@ -973,4 +973,8 @@ const (
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagSplunkUseLegacyResultsApi
+	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
+	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 )

@@ -16,7 +16,7 @@ interface SaveButtonProps {
 export function SaveButton({ parentRef }: SaveButtonProps) {
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
   const { selectedQuery, setSelectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
-  const { updateSelectedQuery, runQueries } = useActionsContext();
+  const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
 
   const onUpdateSuccess = useCallback(() => {
     // Exit query library editing mode after successful save
@@ -49,6 +49,36 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     [selectedQuery, updateSelectedQuery, setSelectedQuery, runQueries]
   );
 
+  // Callback when the user selects a multi-query entry (e.g. a recent entry that ran several
+  // queries together). Replaces the selected query in place with the first and inserts the rest
+  // right after it, preserving order. The first reuses the original refId; the rest get fresh ones.
+  const onSelectQueries = useCallback(
+    (queries: DataQuery[]) => {
+      if (!selectedQuery || queries.length === 0) {
+        return;
+      }
+
+      const originalRefId = selectedQuery.refId;
+      const [first, ...rest] = queries;
+
+      const replacement = { ...first, refId: originalRefId };
+      updateSelectedQuery(replacement, originalRefId);
+      setSelectedQuery(replacement);
+
+      // Insert the remaining queries after the replaced one, chaining so order is preserved.
+      let afterRefId = originalRefId;
+      for (const query of rest) {
+        const newRefId = addQuery(query, afterRefId);
+        if (newRefId) {
+          afterRefId = newRefId;
+        }
+      }
+
+      runQueries();
+    },
+    [selectedQuery, updateSelectedQuery, setSelectedQuery, addQuery, runQueries]
+  );
+
   // Only queries can be saved to library (expressions/transformations can't)
   if (cardType !== QueryEditorType.Query) {
     return null;
@@ -66,16 +96,16 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
 
   const datasource = selectedQueryDsData?.datasource;
 
-  return renderSavedQueryButtons(
-    {
+  return renderSavedQueryButtons({
+    query: {
       ...selectedQuery,
       datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
     },
-    CoreApp.PanelEditor,
+    app: CoreApp.PanelEditor,
     onUpdateSuccess,
     onSelectQuery,
-    undefined,
     parentRef,
-    true
-  );
+    showAsButtonHeader: true,
+    onSelectQueries,
+  });
 }

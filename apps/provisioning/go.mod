@@ -9,8 +9,8 @@ require (
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a
-	github.com/grafana/grafana-app-sdk v0.56.0
-	github.com/grafana/grafana-app-sdk/logging v0.55.0
+	github.com/grafana/grafana-app-sdk v0.56.2
+	github.com/grafana/grafana-app-sdk/logging v0.56.2
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
@@ -78,7 +78,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.68.0 // indirect
+	github.com/prometheus/common v0.68.1 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/smallstep/pkcs7 v0.2.1 // indirect
@@ -86,9 +86,10 @@ require (
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.43.0 // indirect
-	go.opentelemetry.io/otel/metric v1.43.0 // indirect
-	go.opentelemetry.io/otel/trace v1.43.0 // indirect
+	go.opentelemetry.io/otel v1.44.0 // indirect
+	go.opentelemetry.io/otel/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
+	go.opentelemetry.io/otel/trace v1.44.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
@@ -100,7 +101,7 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect

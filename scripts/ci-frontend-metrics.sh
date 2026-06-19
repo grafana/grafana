@@ -9,7 +9,7 @@ BARREL_IMPORTS="$(grep -r -oP '@todo: replace barrel import path' public/app | w
 CLASSNAME_PROP="$(grep -r -o -E --include="*.ts*" "\.*.className=\W.*\W.*" public/app | wc -l)"
 EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
-SCSS_FILES="$(find public packages -name '*.scss' | wc -l)"
+SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
 CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"

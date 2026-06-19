@@ -1,4 +1,4 @@
-package iam
+package team
 
 import (
 	"context"
@@ -60,7 +60,7 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 	{action: "teams.roles:read", group: iamv0alpha1.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
-type TeamSearchHandler struct {
+type SearchHandler struct {
 	log          log.Logger
 	client       resourcepb.ResourceIndexClient
 	tracer       trace.Tracer
@@ -69,10 +69,10 @@ type TeamSearchHandler struct {
 	teamGetter   k8srest.Getter
 }
 
-func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
+func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *SearchHandler {
 	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher)
 
-	return &TeamSearchHandler{
+	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.teams.search"),
 		tracer:       tracer,
@@ -81,7 +81,12 @@ func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTea
 	}
 }
 
-func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+// SetTeamGetter sets the getter used to resolve teams for member-count enrichment.
+func (s *SearchHandler) SetTeamGetter(getter k8srest.Getter) {
+	s.teamGetter = getter
+}
+
+func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
 	searchResults := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GetSearchTeams"].Schema
 
 	return &builder.APIRoutes{
@@ -255,7 +260,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefini
 }
 
 // nolint:gocyclo
-func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
+func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 	ctx, span := s.tracer.Start(r.Context(), "team.search")
 	defer span.End()
 
@@ -428,7 +433,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
+func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identity.Requester, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
 	namespace := requester.GetNamespace()
 
 	items := func(yield func(teamAccessControlCheck) bool) {
@@ -474,7 +479,7 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 // from len(team.Spec.Members) — the team is the source of truth for membership.
 // errgroup is used as a bounded concurrency pool (SetLimit); the first error
 // from any goroutine is propagated to the caller.
-func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
+func (s *SearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
 	if len(hits) == 0 {
 		return nil
 	}
@@ -505,7 +510,7 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 	return g.Wait()
 }
 
-func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {
+func (s *SearchHandler) write(w http.ResponseWriter, obj any) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(obj)
 }

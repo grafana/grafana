@@ -8,6 +8,7 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -17,13 +18,14 @@ interface Props {}
 
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
   const ref = useRef(null);
   const backdropRef = useRef(null);
   const animationSpeed = theme.transitions.duration.shortest;
-  const animationStyles = useStyles2(getAnimStyles, animationSpeed);
+  const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
@@ -45,7 +47,7 @@ export function AppChromeMenu({}: Props) {
     ref
   );
   const { dialogProps } = useDialog({ 'aria-label': t('navigation.megamenu.dialog-label', 'Navigation') }, ref);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
 
   return (
     <div className={styles.wrapper}>
@@ -79,7 +81,7 @@ export function AppChromeMenu({}: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     backdrop: css({
       backgroundColor: theme.components.overlay.background,
@@ -100,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: 0,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
@@ -117,7 +119,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
+const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number, visualRefreshEnabled: boolean) => {
   const commonTransition = {
     [theme.transitions.handleMotion('no-preference')]: {
       transitionDuration: `${animationDuration}ms`,
@@ -145,7 +147,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number) => {
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },
