@@ -167,6 +167,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	section := cfg.Raw.Section("unified_storage")
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
+	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
+	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
@@ -263,6 +265,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
 	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
 	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
+	cfg.IndexSnapshotKVChunkSizeMiB = section.Key("index_snapshot_kv_chunk_size_mib").MustInt(0)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
 	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
 		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)

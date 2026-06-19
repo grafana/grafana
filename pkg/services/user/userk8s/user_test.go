@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -647,6 +649,193 @@ func TestUserK8sService_GetByUID(t *testing.T) {
 			assert.Equal(t, tt.expectUser.Name, result.Name)
 			assert.Equal(t, tt.expectUser.IsAdmin, result.IsAdmin)
 			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
+		})
+	}
+}
+
+func TestUserK8sService_ListByIdOrUID(t *testing.T) {
+	mkUser := func(uid string) v0alpha1.User {
+		return v0alpha1.User{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: v0alpha1.GroupVersion.Identifier(),
+				Kind:       "User",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      uid,
+				Namespace: "org-1",
+				Labels:    map[string]string{"grafana.app/deprecatedInternalID": "42"},
+			},
+			Spec: v0alpha1.UserSpec{Login: uid, Email: uid + "@example.com"},
+		}
+	}
+
+	// makeHandler dispatches list-by-internal-ID (labelSelector query) and
+	// get-by-UID (resource name in path) requests against the fake apiserver.
+	makeHandler := func(byUID map[string]v0alpha1.User, byInternalID []v0alpha1.User) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			if r.URL.Query().Get("labelSelector") != "" {
+				items := make([]any, 0, len(byInternalID))
+				for _, u := range byInternalID {
+					items = append(items, u)
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{"apiVersion": "v1", "kind": "List", "items": items})
+				return
+			}
+			if u, ok := byUID[path.Base(r.URL.Path)]; ok {
+				_ = json.NewEncoder(w).Encode(u)
+				return
+			}
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(metav1.Status{
+				TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+				Status:   metav1.StatusFailure,
+				Reason:   metav1.StatusReasonNotFound,
+				Code:     http.StatusNotFound,
+			})
+		}
+	}
+
+	serverErr := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(metav1.Status{
+			TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+			Status:   metav1.StatusFailure,
+			Code:     http.StatusInternalServerError,
+		})
+	}
+
+	tests := []struct {
+		name           string
+		uids           []string
+		ids            []int64
+		requesterOrgID int64
+		serverResponse func(http.ResponseWriter, *http.Request)
+		nilProvider    bool
+		noReqContext   bool
+		noRequester    bool
+		expectErr      bool
+		expectUIDs     []string
+	}{
+		{
+			name:           "resolves users by UID",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a", "uid-b"},
+			serverResponse: makeHandler(map[string]v0alpha1.User{
+				"uid-a": mkUser("uid-a"),
+				"uid-b": mkUser("uid-b"),
+			}, nil),
+			expectUIDs: []string{"uid-a", "uid-b"},
+		},
+		{
+			name:           "resolves users by internal ID",
+			requesterOrgID: 1,
+			ids:            []int64{7},
+			serverResponse: makeHandler(nil, []v0alpha1.User{mkUser("uid-c")}),
+			expectUIDs:     []string{"uid-c"},
+		},
+		{
+			name:           "deduplicates users matched by both UID and internal ID",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a"},
+			ids:            []int64{7},
+			serverResponse: makeHandler(
+				map[string]v0alpha1.User{"uid-a": mkUser("uid-a")},
+				[]v0alpha1.User{mkUser("uid-a")},
+			),
+			expectUIDs: []string{"uid-a"},
+		},
+		{
+			name:           "skips UIDs that are not found",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a", "missing"},
+			serverResponse: makeHandler(map[string]v0alpha1.User{"uid-a": mkUser("uid-a")}, nil),
+			expectUIDs:     []string{"uid-a"},
+		},
+		{
+			name:           "skips internal IDs that resolve to no user",
+			requesterOrgID: 1,
+			ids:            []int64{99},
+			serverResponse: makeHandler(nil, nil),
+			expectUIDs:     []string{},
+		},
+		{
+			name:           "skips empty UID strings without calling the server",
+			requesterOrgID: 1,
+			uids:           []string{""},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				t.Errorf("server should not be called for an empty UID")
+			},
+			expectUIDs: []string{},
+		},
+		{
+			name:           "propagates non-not-found error on UID get",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a"},
+			serverResponse: serverErr,
+			expectErr:      true,
+		},
+		{
+			name:           "propagates error on internal ID list",
+			requesterOrgID: 1,
+			ids:            []int64{7},
+			serverResponse: serverErr,
+			expectErr:      true,
+		},
+		{
+			name:           "returns error when multiple users found for an internal ID",
+			requesterOrgID: 1,
+			ids:            []int64{5},
+			serverResponse: makeHandler(nil, []v0alpha1.User{mkUser("uid-a"), mkUser("uid-b")}),
+			expectErr:      true,
+		},
+		{
+			name:           "returns error when config provider not initialized",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a"},
+			nilProvider:    true,
+			expectErr:      true,
+		},
+		{
+			name:           "returns error when no request context",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a"},
+			noReqContext:   true,
+			expectErr:      true,
+		},
+		{
+			name:           "returns error when no requester in context",
+			requesterOrgID: 1,
+			uids:           []string{"uid-a"},
+			noRequester:    true,
+			expectErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				nilProvider:    tt.nilProvider,
+				noReqContext:   tt.noReqContext,
+				noRequester:    tt.noRequester,
+				requesterOrgID: tt.requesterOrgID,
+				serverResponse: tt.serverResponse,
+			})
+
+			result, err := svc.ListByIdOrUID(ctx, tt.uids, tt.ids)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			gotUIDs := make([]string, 0, len(result))
+			for _, u := range result {
+				gotUIDs = append(gotUIDs, u.UID)
+			}
+			assert.Equal(t, tt.expectUIDs, gotUIDs)
 		})
 	}
 }
@@ -1707,6 +1896,61 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestUserK8sService_UpdateLastSeenAt_UsesStatusSubresource(t *testing.T) {
+	var putPath string
+	var putBody map[string]any
+
+	serverFn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "UserList",
+				"items": []any{
+					map[string]any{
+						"apiVersion": v0alpha1.GroupVersion.Identifier(),
+						"kind":       "User",
+						"metadata": map[string]any{
+							"name":            "some-uid",
+							"namespace":       "org-1",
+							"resourceVersion": "123",
+							"labels":          map[string]any{"grafana.app/deprecatedInternalID": "42"},
+						},
+						"spec":   map[string]any{"login": "jdoe"},
+						"status": map[string]any{"lastSeenAt": 0},
+					},
+				},
+			})
+		case http.MethodPut:
+			putPath = r.URL.Path
+			_ = json.NewDecoder(r.Body).Decode(&putBody)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "User",
+				"metadata":   map[string]any{"name": "some-uid", "namespace": "org-1"},
+				"spec":       map[string]any{"login": "jdoe"},
+				"status":     map[string]any{"lastSeenAt": time.Now().Unix()},
+			})
+		}
+	}
+
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		cfg:            &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+		serverResponse: serverFn,
+	})
+
+	err := svc.UpdateLastSeenAt(ctx, &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1})
+	require.NoError(t, err)
+
+	require.True(t, strings.HasSuffix(putPath, "/users/some-uid/status"),
+		"expected update to target the status subresource, got %q", putPath)
+
+	status, ok := putBody["status"].(map[string]any)
+	require.True(t, ok, "expected status in PUT body, got %v", putBody)
+	require.NotZero(t, status["lastSeenAt"], "expected lastSeenAt to be set in the status update")
 }
 
 func TestUserK8sService_GetSignedInUser(t *testing.T) {

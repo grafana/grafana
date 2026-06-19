@@ -2812,7 +2812,9 @@
           "alerting": "Attiva per mettere in pausa la valutazione per questa regola di avviso.",
           "recording": "Attiva per mettere in pausa la valutazione per questa regola di registrazione."
         },
-        "select-folder-before": "Seleziona una cartella prima di impostare il gruppo e l'intervallo di valutazione"
+        "select-folder-before": "Seleziona una cartella prima di impostare il gruppo e l'intervallo di valutazione",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4272,6 +4274,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Errore durante l'eliminazione delle risorse",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4297,7 @@
       "error-no-target-folder-path": "Il percorso della cartella di destinazione non è valido o è vuoto, prova a selezionarlo di nuovo.",
       "move-warning": "Questa operazione sposterà le cartelle selezionate e i relativi discendenti. Le cartelle di destinazione disponibili dipendono dalle risorse selezionate.",
       "move-warning-tooltip": "È possibile spostare solo le risorse sottoposte a provisioning all'interno della relativa cartella sottoposta a provisioning e le risorse locali nelle cartelle locali.",
+      "success-title": "",
       "target-folder": "Cartella di destinazione",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6026,9 +6030,6 @@
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Collegamenti del pannello"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Torna alle Query"
     },
@@ -6212,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Apri la dashboard originale"
       },
-      "undo": "Annulla"
+      "undo": "Annulla",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Origine ({{provider}})",
@@ -6471,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8693,7 +8705,9 @@
       "query-history-button": "Cronologia query",
       "query-history-button-aria-label": "Cronologia query",
       "query-inspector-button": "Ispettore query",
-      "query-inspector-button-aria-label": "Ispettore query"
+      "query-inspector-button-aria-label": "Ispettore query",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Mostra tutti gli intervalli",
     "span-bar": {
@@ -10658,10 +10672,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10676,6 +10710,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10683,15 +10722,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -13005,9 +13042,6 @@
       "description-clear-repository-connection": "Questo nome verrà utilizzato per la connessione al repository e per la cartella visualizzata nell'interfaccia utente",
       "empty": "Vuoto",
       "error-field-required": "Questo campo è obbligatorio.",
-      "error-quota-exceeded-message": "Questa cartella del repository contiene {{fileCount}} risorse, superando così il limite del tuo account, ovvero {{limit}}. Per sincronizzare questo repository, effettua l'upgrade del tuo account o riduci il numero di risorse da sincronizzare.",
-      "error-quota-exceeded-message-onprem": "Questa cartella del repository contiene {{fileCount}} risorse, superando così il limite della tua istanza, ovvero {{limit}}. Per sincronizzare questo repository, aggiorna la configurazione di Grafana o riduci il numero di risorse da sincronizzare.",
-      "error-quota-exceeded-title": "Quota di risorse superata",
       "error-repository-status-unhealthy-message": "Si è verificato un problema durante la connessione al repository. Verifica le impostazioni del repository e riprova.",
       "error-repository-status-unhealthy-title": "Stato del repository non integro",
       "external-storage-label": "Memoria esterna",
@@ -13018,6 +13052,9 @@
       "unmanaged-resources-label": "Risorse non gestite",
       "update-configuration-action": "Visualizza la documentazione per la configurazione",
       "upgrade-action": "Effettua l'upgrade dell'account",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} file",
@@ -13032,6 +13069,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Ignora la configurazione e utilizza Git Sync completamente gestito e ospitato su Grafana Cloud con il <2>piano Grafana Cloud gratuito per sempre</2>.",
@@ -13420,9 +13460,26 @@
       "truncated": "Messaggio troncato"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Non è stato possibile verificare se questa cartella contiene un file di metadati. Riprova più tardi.",
@@ -14064,9 +14121,10 @@
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
       "exit-multi-select": "",
       "hide": "",
@@ -14226,6 +14284,56 @@
       "show-response": "Mostra la risposta"
     },
     "query-editor-not-exported": "Il plug-in dell'origine dati non esporta alcun componente dell'editor di query"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

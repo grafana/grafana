@@ -81,6 +81,13 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:          kinds.TestDataQueryTypeFlakyQuery,
+		Name:        "Flaky Query",
+		StringInput: "5s",
+		handler:     s.handleFlakyQueryScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeNoDataPoints,
 		Name:    "No Data Points",
 		handler: s.handleClientSideScenario,
@@ -452,6 +459,49 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 		stringInput := model.StringInput
 		parsedInterval, _ := time.ParseDuration(stringInput)
 		time.Sleep(parsedInterval)
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+func (s *Service) handleFlakyQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	shouldError := false
+	if len(req.Queries) > 0 {
+		if model, err := GetJSONModel(req.Queries[0].JSON); err == nil && model.ErrorProbability > 0 {
+			if rand.Float64()*100 < model.ErrorProbability {
+				shouldError = true
+			}
+		}
+	}
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		stringInput := model.StringInput
+		parsedInterval, _ := time.ParseDuration(stringInput)
+		time.Sleep(parsedInterval)
+
+		if shouldError {
+			status := backend.Status(model.ErrorStatusCode)
+			if status == 0 {
+				status = backend.StatusBadRequest
+			}
+			src := backend.ErrorSourcePlugin
+			if model.ErrorSource == kinds.ErrorSourceDownstream {
+				src = backend.ErrorSourceDownstream
+			}
+			resp.Responses[q.RefID] = backend.ErrDataResponseWithSource(status, src, model.ErrorMessage)
+			continue
+		}
 
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
