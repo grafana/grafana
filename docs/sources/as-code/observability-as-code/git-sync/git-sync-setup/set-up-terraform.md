@@ -63,8 +63,8 @@ Use this Terraform configuration to configure the [Grafana provider](https://reg
 
       provider "grafana" {
         url = "https://<your-stack>.grafana.net/"
-        auth = var.grafana_service_account_token   
-        stack_id = var.grafana_stack_id              
+        auth = var.grafana_service_account_token
+        stack_id = var.grafana_stack_id
       }
    ```
 
