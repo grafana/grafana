@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -23,7 +25,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		cfg := setting.NewCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
-		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license)
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
 		require.NoError(t, err)
 		require.NotNil(t, settings)
 
@@ -49,7 +51,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
-		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license)
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
 		require.NoError(t, err)
 		require.NotNil(t, settings)
 
@@ -65,7 +67,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
-		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license)
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
 		require.NoError(t, err)
 		assert.True(t, settings.TrustedTypesDefaultPolicyEnabled)
 	})
@@ -77,10 +79,34 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
-		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license)
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
 		require.NoError(t, err)
 		require.NotNil(t, settings.UnifiedAlerting.StateHistory)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.StateHistory.Backend)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
+	})
+
+	t.Run("populates plugins CDN base URL when the CDN is enabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		pluginsCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+		})
+
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, pluginsCDN)
+		require.NoError(t, err)
+		assert.Equal(t, "https://cdn.example.com", settings.PluginsCDNBaseURL)
+	})
+
+	t.Run("leaves plugins CDN base URL empty when the CDN is disabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		license := &licensing.OSSLicensingService{Cfg: cfg}
+
+		pluginsCDN := pluginscdn.ProvideService(&config.PluginManagementCfg{})
+
+		settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, pluginsCDN)
+		require.NoError(t, err)
+		assert.Empty(t, settings.PluginsCDNBaseURL)
 	})
 }
