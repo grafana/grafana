@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -27,6 +28,11 @@ import (
 )
 
 var annotationGR = annotationV0.AnnotationKind().GroupVersionResource().GroupResource()
+
+// maxSafeJSInt is 2^52 - 1. IDs are masked to this range so they remain
+// lossless when serialised to JSON and consumed by JavaScript.
+// This follows the convention in pkg/storage/unified/apistore/prepare.go.
+const maxSafeJSInt = (1 << 52) - 1
 
 // toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
 // status + telemetry classification agree. Already-typed apierrors and unknown
@@ -69,6 +75,13 @@ type k8sRESTAdapter struct {
 	accessClient   authtypes.AccessClient
 	folderResolver DashboardFolderResolver
 	installer      *AppInstaller
+
+	snowflakeNode *snowflake.Node
+
+	// maxScopeCount caps how many scopes may be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected by the settings loader.
+	maxScopeCount int
 
 	tracer  trace.Tracer
 	metrics *Metrics
@@ -218,11 +231,22 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
+	if err := s.validateScopeCount(annotation); err != nil {
+		return nil, err
+	}
+
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("failed to get requester from context")
 	}
 	annotation.SetCreatedBy(user.GetUID())
+
+	if s.snowflakeNode != nil {
+		if getLegacyID(annotation) == 0 {
+			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
+			setLegacyID(annotation, id)
+		}
+	}
 
 	created, err := s.store.Create(ctx, annotation)
 	if err != nil {
@@ -272,6 +296,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewBadRequest("namespace in URL does not match namespace in body")
 	}
 
+	if err := s.validateScopeCount(resource); err != nil {
+		return nil, false, err
+	}
+
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
@@ -286,6 +314,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
+	}
+
+	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
+	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
+	if _, ok := getLegacyData(resource); !ok {
+		if existingData, ok := getLegacyData(existing); ok {
+			setLegacyData(resource, existingData)
+		}
 	}
 
 	updated, err := s.store.Update(ctx, resource)
@@ -362,9 +398,23 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 				return fmt.Errorf("invalid timeEnd value %q: %w", r.Value, err)
 			}
 			opts.To = v
+		case "metadata.legacyID":
+			v, err := strconv.ParseInt(r.Value, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid legacyID value %q: %w", r.Value, err)
+			}
+			opts.LegacyID = v
 		default:
 			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
+	}
+	return nil
+}
+
+func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
+	if len(a.Spec.Scopes) > s.maxScopeCount {
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
 	}
 	return nil
 }

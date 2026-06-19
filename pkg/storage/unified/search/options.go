@@ -86,6 +86,18 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
+		// docs is optional in some tests; only consult it when present so the
+		// hash check is a no-op rather than a nil deref. Real callers always
+		// pass a non-nil supplier.
+		var searchFieldsHashes map[string]string
+		if docs != nil {
+			builders, err := docs.GetDocumentBuilders()
+			if err != nil {
+				return resource.SearchOptions{}, err
+			}
+			searchFieldsHashes = resource.SearchFieldsHashesForBuilders(builders)
+		}
+
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,
 			FileThreshold:                  int64(cfg.IndexFileThreshold), // fewer than X items will use a memory index
@@ -94,6 +106,7 @@ func NewSearchOptions(
 			OwnsIndex:                      ownsIndexFn,
 			IndexMinUpdateInterval:         cfg.IndexMinUpdateInterval,
 			SelectableFieldsForKinds:       resource.SelectableFields(),
+			SearchFieldsHashesForKinds:     searchFieldsHashes,
 			Snapshot:                       snapshot,
 			DiskCleanupInterval:            cfg.DiskIndexCleanupInterval,
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
@@ -127,6 +140,7 @@ func NewSearchOptions(
 			IndexSnapshotLockTTL:            DefaultSnapshotLockTTL,
 			IndexSnapshotCleanupInterval:    DefaultSnapshotCleanupInterval,
 			IndexSnapshotCleanupGracePeriod: cleanupGracePeriodOrDefault(cfg.IndexSnapshotCleanupGracePeriod),
+			SearchFieldsHashesForKinds:      searchFieldsHashes,
 		}, nil
 	}
 	return resource.SearchOptions{

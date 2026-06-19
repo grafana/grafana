@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -543,20 +544,48 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "files":
 		return authorizer.DecisionAllow, "", nil
 
-	// refs subresource - editors need to see branches to push changes
+	// refs subresource - lists the branches/commits of the repository.
+	//
+	// Two distinct flows legitimately need refs, and the repositories resource has no
+	// Editor tier to express both (repositories:read is granted to Viewer, write/create/
+	// delete to Admin), so we authorize with an OR of two semantically-correct checks:
+	//   1. Admins / repository owners setting up or editing a repository pick a target
+	//      branch -> repositories:write (VerbUpdate), scoped to this repository.
+	//   2. Editors saving changes or opening a PR via the files/push-job flow need the
+	//      branch list -> jobs:create (VerbCreate), namespace-scoped (as authorizeAdminJob).
+	// Viewers satisfy neither and are denied, which is the intended tightening. Each check
+	// uses its own correct resource, so this stays coherent under future per-repository
+	// scoping (unlike borrowing the jobs resource with the repository name).
 	case "refs":
-		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+		if err := b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
+		}, ""); err == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbCreate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only)
+	// Read-only subresources: resources, history, status (admin only).
+	//
+	// These expose repository management/inspection views and must be admin-only. We gate
+	// on repositories:write (VerbUpdate) - an admin-only action - rather than
+	// repositories:read, which is granted to Viewer and would expose these views to
+	// viewers/editors. There is no admin-only *read* action on the repositories resource,
+	// so write is the honest gate ("you can inspect a repository's management views if you
+	// can manage it"). We keep the repositories resource with the repository Name rather
+	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
+	// access is later scoped to individual repositories.
 	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
@@ -739,7 +768,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
 
 	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaGetter)
-	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator)
+	connWebhookValidator := repogithub.NewConnectionWebhookValidator(b)
+	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator, connWebhookValidator)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory, b.minSyncInterval))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
@@ -1338,7 +1368,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 							Examples: map[string]*spec3.Example{
 								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: dashboards.grafana.app/v0alpha1
+										Value: `apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 spec:
   title: Sample dashboard
@@ -1588,6 +1618,18 @@ func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection
 		return nil, err
 	}
 	return b.asConnection(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetConnectionSpec(ctx context.Context, name string) (*provisioning.Connection, error) {
+	obj, err := b.connectionStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	c, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return nil, fmt.Errorf("unexpected connection type %T", obj)
+	}
+	return c, nil
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {

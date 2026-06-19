@@ -42,7 +42,7 @@ export function getEditorType(
   return QueryEditorType.Query;
 }
 
-export function isDataTransformerConfig(
+function isDataTransformerConfig(
   transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
   return transformation !== null && 'id' in transformation && !('refId' in transformation);
@@ -94,6 +94,13 @@ export function getEditorBorderColor({
 
   const typeConfig = getQueryEditorTypeConfig(theme);
   return typeConfig[editorType].color;
+}
+
+export function getHiddenMaskStyles(theme: GrafanaTheme2) {
+  return {
+    opacity: theme.isDark ? 0.6 : 0.7,
+    filter: 'grayscale(0.8)',
+  };
 }
 
 export interface TransformerCategoryOption {

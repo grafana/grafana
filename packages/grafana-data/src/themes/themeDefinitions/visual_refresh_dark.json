@@ -1,0 +1,17 @@
+{
+  "name": "Visual Refresh (Dark)",
+  "id": "visual_refresh_dark",
+  "colors": {
+    "mode": "dark",
+    "primary": {
+      "main": "palette.ink100"
+    },
+    "accent": {
+      "main": "palette.orange400",
+      "text": "palette.orange400"
+    },
+    "text": {
+      "link": "palette.orange400"
+    }
+  }
+}

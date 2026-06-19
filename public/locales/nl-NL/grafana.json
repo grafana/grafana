@@ -29,7 +29,7 @@
       "add-label": "Een toestemming toevoegen",
       "loading": "Machtigingen worden geladen …",
       "no-permissions": "Er zijn geen toestemmingen",
-      "permissions-change-warning": "Dit wijzigt de toestemmingen voor deze map en alle onderliggende mappen. In totaal heeft dit invloed op:",
+      "permissions-change-warning": "",
       "role": "Rol",
       "serviceaccount": "Serviceaccount",
       "team": "Team",
@@ -1103,9 +1103,6 @@
       },
       "unknown": "Onbekend"
     },
-    "disabled-tooltip": {
-      "content-appear-compatible-datasources": "Je hebt blijkbaar geen compatibele gegevensbronnen."
-    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluaties om te beginnen met waarschuwen",
       "pending-period": "Wachttijd",
@@ -1183,12 +1180,6 @@
       "label-metric": "Metrisch",
       "label-pending-period": "Wachttijd"
     },
-    "evaluation-group": {
-      "label-delete": "Verwijderen",
-      "label-export": "Exporteren",
-      "label-reorder-rules": "Regels opnieuw ordenen",
-      "text-provisioned": "Provisioned"
-    },
     "evaluation-group-creation-modal": {
       "description-group-name": "Een groep evalueert al zijn regels over hetzelfde evaluatie-interval.",
       "description-often-rules-group-evaluated": "Hoe vaak alle regels in de groep worden geëvalueerd.",
@@ -1197,9 +1188,6 @@
       },
       "placeholder-enter-a-name": "Voer een naam in",
       "title-new-evaluation-group": "Nieuwe evaluatiegroep"
-    },
-    "evaluation-group-loader": {
-      "title-something-wrong-trying-fetch-group-details": "Er is iets misgegaan bij het ophalen van de groepsgegevens"
     },
     "existing-rule-editor": {
       "sorry-permission": "Sorry! Je hebt geen toestemming om deze regel te bewerken.",
@@ -1970,9 +1958,7 @@
     },
     "list-view": {
       "empty": {
-        "ds-no-rules": "Deze gegevensbron heeft geen regels geconfigureerd",
         "new-alert-rule": "Nieuwe waarschuwingsregel",
-        "new-ds-managed-alerting-rule": "Nieuwe regel voor door gegevensbron beheerde waarschuwingen",
         "new-ds-managed-recording-rule": "Nieuwe regel voor door gegevensbron beheerde opnamen",
         "new-grafana-alerting-rule": "Nieuwe waarschuwingsregel",
         "new-grafana-recording-rule": "Nieuwe opnameregel",
@@ -2543,22 +2529,9 @@
         "aria-label": "beleid toevoegen",
         "text": "Nieuw meldingsbeleid"
       },
-      "delete-reasons": {
-        "no-permissions": "Je hebt niet de vereiste toestemming om dit meldingsbeleid te verwijderen",
-        "provisioned": "Meldingsbeleid is geprovisioneerd en kan niet worden verwijderd via de gebruikersinterface"
-      },
-      "delete-text": "Meldingsbeleid kan niet worden verwijderd om de volgende redenen:",
-      "empty-state": {
-        "message": "Geen beleid gevonden"
-      },
       "fetch": {
         "error": "Kan beleid niet ophalen"
       },
-      "reset-reasons": {
-        "no-permissions": "Je hebt niet de vereiste toestemming om dit meldingsbeleid opnieuw in te stellen",
-        "provisioned": "Meldingsbeleid is geprovisioneerd en kan niet worden gereset via de gebruikersinterface"
-      },
-      "reset-text": "Meldingsbeleid kan niet worden gereset om de volgende redenen:",
       "text-loading": "Laden...."
     },
     "policies-tree-wrapper": {
@@ -2768,16 +2741,6 @@
       "label-override-timings": "Timings overschrijven",
       "repeat-interval": "Herhalingsinterval: <strong>{{repeatIntervalValue}}</strong>"
     },
-    "routing-tree-filter": {
-      "aria-label-clear": "wissen",
-      "aria-label-search-routing-trees": "routeringsbomen zoeken",
-      "clear": "Wissen",
-      "label-search-by-name-or-receiver": "Zoeken op beleidsnaam of contactpunt",
-      "placeholder-search": "Zoeken"
-    },
-    "routing-tree-header": {
-      "reset": "Resetten"
-    },
     "rule-actions-buttons": {
       "title-edit": "Bewerken",
       "title-view": "Weergave"
@@ -2849,7 +2812,9 @@
           "alerting": "Schakel in om de evaluatie voor deze waarschuwingsregel te pauzeren.",
           "recording": "Schakel in om de evaluatie voor deze opnameregel te pauzeren."
         },
-        "select-folder-before": "Selecteer een map voordat je de evaluatiegroep en het interval instelt"
+        "select-folder-before": "Selecteer een map voordat je de evaluatiegroep en het interval instelt",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -2983,7 +2948,6 @@
       "return-button": {
         "title": "Waarschuwingsregels"
       },
-      "rulerrule-loading-error": "Kan de regel niet laden",
       "toggle": {
         "use-new-experience": "Nieuwe ervaring gebruiken",
         "view-previous-experience": "Terug naar de vorige ervaring"
@@ -3580,9 +3544,6 @@
       "collapse": "Samenvouwen",
       "collapse-all": "Alles samenvouwen",
       "collapse-sidebar": "Zijbalk samenvouwen",
-      "compact-firing": "geactiveerd",
-      "compact-pending": "in behandeling",
-      "compact-rules": "regels",
       "error-loading-rule": "Fout bij het laden van de regel",
       "expand": "Uitvouwen",
       "expand-all": "Alles uitvouwen",
@@ -4265,13 +4226,9 @@
       "cancel-button": "Annuleren",
       "confirmation-text": "Verwijderen",
       "delete-button": "Verwijderen",
-      "delete-modal-invalid-text": "Een of meer mappen bevatten bibliotheekpanelen of waarschuwingsregels. Verwijder deze eerst om verder te gaan.",
-      "delete-modal-invalid-title": "Kan de map niet verwijderen",
       "delete-modal-restore-dashboards-common": "Verwijderde dashboards worden maximaal 12 maanden in de geschiedenis bewaard. Gebruikers met verwijderingsmachtigingen kunnen de dashboards die ze hebben verwijderd herstellen en beheerders kunnen dashboards herstellen die door een gebruiker zijn verwijderd. De geschiedenis is beperkt tot 1000 dashboards. Oudere dashboards kunnen eerder worden verwijderd als de limiet is bereikt.",
       "delete-modal-restore-dashboards-prefix-folder": "Met deze actie worden de geselecteerde mappen onmiddellijk verwijderd.",
       "delete-modal-restore-dashboards-suffix-folder": "Mappen kunnen niet worden hersteld.",
-      "delete-modal-text": "Met deze actie wordt de volgende inhoud verwijderd:",
-      "delete-modal-text-one-folder": "Met deze actie worden de map \"<1>{{ folderName }}</1>\" en de volgende inhoud verwijderd:",
       "delete-modal-title": "Verwijderen",
       "delete-provisioned-folder": "Geprovisioneerde map verwijderen",
       "deleting": "Bezig met verwijderen ...",
@@ -4279,8 +4236,6 @@
       "move-button": "Verplaatsen",
       "move-modal-alert": "Het verplaatsen van dit item kan de toestemmingen wijzigen.",
       "move-modal-field-label": "Mapnaam",
-      "move-modal-text": "Met deze actie wordt de volgende inhoud verplaatst:",
-      "move-modal-text-one-folder": "Met deze actie wordt de map \"<1>{{ folderName }}</1>\" en de volgende inhoud verplaatst:",
       "move-modal-title": "Verplaatsen",
       "move-provisioned-folder": "Geprovisioneerde map verplaatsen",
       "moving": "Bezig met verplaatsen ...",
@@ -4290,11 +4245,18 @@
       "new-folder-owner-selector-checkbox": "Een eigenaar aan de map toewijzen",
       "rename-provisioned-folder": "Geprovisioneerde map hernoemen",
       "selected-mix-resources-modal-text": "Je hebt zowel toegewezen als niet-toegewezen bronnen geselecteerd. Deze kunnen niet samen worden verwerkt. Selecteer alleen toegewezen bronnen of alleen niet-toegewezen bronnen en probeer het opnieuw.",
-      "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd"
+      "selected-mix-resources-modal-title": "Gemengde brontypes geselecteerd",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Onlangs verwijderd"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Map niet gevonden",
       "title-ruler-namespace-error": "Kan regels niet laden"
@@ -4309,13 +4271,20 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "delete-warning": "Hiermee worden geselecteerde mappen en hun afgeleiden verwijderd. In totaal heeft dit invloed op:",
-      "error-deleting-resources": "Fout bij verwijderen van bronnen"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Fout bij verwijderen van bronnen",
+      "success-title": "",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuleren",
       "button-move": "Verplaatsen",
       "button-moving": "Bezig met verplaatsen...",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Als je direct toegang hebt tot het doel, voer de wijzigingen dan rechtstreeks door in de doelrepository.",
         "read-only-saving-message": "De repository is alleen-lezen en is aangemaakt in Git. {{readOnlyMessage}}",
@@ -4326,22 +4295,12 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Fout bij verplaatsen van bronnen",
       "error-no-target-folder-path": "Pad naar doelmap is ongeldig of leeg, selecteer opnieuw.",
-      "move-total": "In totaal heeft dit invloed op:",
       "move-warning": "Dit verplaatst de geselecteerde mappen en alle onderliggende items. Beschikbare doelmappen zijn afhankelijk van de geselecteerde bronnen.",
       "move-warning-tooltip": "Je kunt alleen geprovisioneerde bronnen verplaatsen binnen hun geprovisioneerde map en lokale bronnen naar lokale mappen.",
-      "target-folder": "Doelmap"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} waarschuwingsregel",
-      "alertRule_other": "{{count}} waarschuwingsregel",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
-      "folder_one": "{{count}} map",
-      "folder_other": "{{count}} map",
-      "libraryPanel_one": "{{count}} bibliotheekpaneel",
-      "libraryPanel_other": "{{count}} bibliotheekpaneel",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "success-title": "",
+      "target-folder": "Doelmap",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4370,12 +4329,11 @@
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
       "button-deleting": "Bezig met verwijderen...",
-      "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Ontbrekende verplichte velden",
       "success-message": "Map is verwijderd"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Kan afgeleide informatie niet ophalen"
     },
     "empty-state": {
       "button-title": "Dashboard maken",
@@ -5280,10 +5238,6 @@
       },
       "pane-header": "Toevoegen"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Widget 'Paneel toevoegen' sluiten",
-      "tooltip-close-widget": "Widget sluiten"
-    },
     "add-menu": {
       "import": "Importeren uit bibliotheek",
       "paste-panel": "Paneel plakken",
@@ -5376,6 +5330,8 @@
     },
     "code-pane": {
       "collapse": "Editor samenvouwen",
+      "copy-as-resource": "",
+      "copy-as-resource-tooltip": "",
       "expand": "Editor uitvouwen",
       "header": "Bewerken als code",
       "modal-title": "Dashboard bewerken als code"
@@ -5675,8 +5631,7 @@
           "apply": "Toepassen",
           "change-value": "Variabele waarde wijzigen",
           "discard": "Negeren",
-          "modal-title": "Aangepaste opties",
-          "values": "Waarden gescheiden door komma"
+          "modal-title": "Aangepaste opties"
         },
         "datasource-options": {
           "name-filter": "Filter een naam geven",
@@ -5901,7 +5856,6 @@
     },
     "inspect": {
       "data-tab": "Gegevens",
-      "error-tab": "Fout",
       "json-tab": "JSON",
       "meta-tab": "Metagegevens",
       "query-tab": "Query",
@@ -5938,9 +5892,6 @@
       "panel-spec-label": "Paneelspecificatie",
       "select-source": "Bron selecteren",
       "unknown": "Onbekend object: {{show}}"
-    },
-    "inspect-meta": {
-      "no-inspector": "Geen metagegevensinspecteur"
     },
     "inspect-stats": {
       "data-title": "Statistieken van gegevensbron",
@@ -6022,13 +5973,6 @@
         }
       }
     },
-    "on-create-new-widget-panel": {
-      "new-panel": {
-        "title": {
-          "widget-title": "Widget-titel"
-        }
-      }
-    },
     "options": {
       "description": "Beschrijving",
       "title-option": "Titel"
@@ -6086,12 +6030,6 @@
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Onbewerkte gegevens"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "Paneellinks"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Terug naar Query's"
     },
@@ -6129,18 +6067,6 @@
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
       "confirmText-restore-version": "Herstellen naar versie {{version}}",
       "title-restore-version": "Versie herstellen"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Opties voor rijen"
-    },
-    "row-options-form": {
-      "cancel": "Annuleren",
-      "label-repeat-for": "Herhalen voor",
-      "label-title": "Titel",
-      "update": "Bijwerken"
-    },
-    "row-options-modal": {
-      "title-row-options": "Opties voor rijen"
     },
     "rows-layout": {
       "cancel": "Annuleren",
@@ -6287,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Origineel dashboard openen"
       },
-      "undo": "Ongedaan maken"
+      "undo": "Ongedaan maken",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Bron ({{provider}})",
@@ -6421,7 +6357,6 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
-      "read-only": "Alleen lezen",
       "refresh": "Dashboard vernieuwen",
       "save": "Dashboard opslaan",
       "save-as-template": {
@@ -6503,16 +6438,6 @@
       "discard": "Negeren",
       "title-unsaved-changes": "Onopgeslagen wijzigingen"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Panelen in deze rij gebruiken de {{SHARED_DASHBOARD_QUERY}}-gegevensbron. Deze panelen verwijzen naar het paneel in de oorspronkelijke rij, niet naar die in de herhaalde rijen."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Rij verwijderen",
-      "learn-more": "Meer informatie",
-      "title": {
-        "delete-row": "Rij verwijderen"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
       "invalid-json": "Ongeldige JSON",
@@ -6557,29 +6482,8 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
-    },
-    "visualization-button": {
-      "aria-label-change-visualization": "Visualisatie wijzigen",
-      "aria-label-close": "Deelvenster Opties sluiten",
-      "aria-label-show": "Deelvenster Opties weergeven",
-      "tooltip-click-to-change-visualization": "Klik om de visualisatie te wijzigen",
-      "tooltip-close": "Deelvenster Opties sluiten",
-      "tooltip-show": "Deelvenster Opties weergeven"
-    },
-    "visualization-select-pane": {
-      "placeholder-search-for": "Zoeken naar...",
-      "radio-options": {
-        "description": {
-          "reusable-panels-share-between-multiple-dashboards": "Herbruikbare panelen die je kunt delen tussen meerdere dashboards."
-        },
-        "label": {
-          "library-panels": "Bibliotheekpanelen",
-          "suggestions": "Suggesties",
-          "visualizations": "Visualisaties"
-        }
-      },
-      "title-close": "Sluiten"
     },
     "viz-panel": {
       "delete-panel-text": "Als je dit paneel verwijdert, worden ook alle vragen verwijderd. Weet je zeker dat je wilt doorgaan?",
@@ -8801,7 +8705,9 @@
       "query-history-button": "Querygeschiedenis",
       "query-history-button-aria-label": "Querygeschiedenis",
       "query-inspector-button": "Querycontrole",
-      "query-inspector-button-aria-label": "Querycontrole"
+      "query-inspector-button-aria-label": "Querycontrole",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Alle spans weergeven",
     "span-bar": {
@@ -8809,19 +8715,6 @@
     },
     "span-bar-row": {
       "tooltip-adaptive-traces-restored": ""
-    },
-    "span-bar-section": {
-      "description-link": "Voeg extra informatie toe naast de service en bewerking op een spanbalkrij in de traceerweergave.",
-      "title-span-bar": "Spanbalk"
-    },
-    "span-bar-settings": {
-      "aria-label-selectlabelname": "Selecteer labelnaam",
-      "label-label": "Label",
-      "label-tag-key": "Labelsleutel",
-      "placeholder-duration": "Duur",
-      "placeholder-enter-tag-key": "Labelsleutel invoeren",
-      "tooltip-default-duration": "Standaard: duur",
-      "tooltip-tag-key": "Labelsleutel die zal worden gebruikt om de labelwaarde op te halen. De attributen en bronnen van een span worden doorzocht op de labelsleutel"
     },
     "span-detail": {
       "label": {
@@ -9035,6 +8928,11 @@
     "sql-expr": {
       "button-run-query": "Query uitvoeren"
     },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
+    },
     "sql-schema": {
       "error-title": "Fout",
       "loading": "Schema-informatie laden ...",
@@ -9052,9 +8950,6 @@
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
-  "folder-repo": {
-    "read-only-badge": "Alleen lezen"
-  },
   "folders": {
     "api": {
       "anonymous-user": "",
@@ -9062,13 +8957,6 @@
       "folder-deleted-success": "Map verwijderd",
       "folder-move-error-provisioned": "Kan de geprovisioneerde map niet verplaatsen. Om deze te verplaatsen, verplaats je de map in de repository en synchroniseer je ze om de wijzigingen toe te passen.",
       "folder-moved-success": "Map verplaatst"
-    },
-    "get-loading-nav": {
-      "main": {
-        "title": {
-          "loading": "Bezig met laden"
-        }
-      }
     }
   },
   "forgot-password": {
@@ -10784,10 +10672,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10802,6 +10710,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10809,15 +10722,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -11032,6 +10943,7 @@
   },
   "legend": {
     "container": {
+      "series-color-and-icon": "",
       "show-all-series": "...alle {{total}} items weergeven"
     }
   },
@@ -11053,10 +10965,6 @@
   "library-panels": {
     "add-library-panel-modal": {
       "title-create-library-panel": "Bibliotheekpaneel aanmaken"
-    },
-    "change-library-panel-modal": {
-      "confirmText-change": "Wijzigen",
-      "confirmText-replace": "Vervangen"
     },
     "confirm": {
       "delete-panel": "Wil je dit paneel verwijderen?"
@@ -11097,9 +11005,6 @@
       "title": "Paneel bekijken in dashboard",
       "body_one": "Dit paneel wordt gebruikt in {{count}} dashboard. Kies in welk dashboard je het paneel wilt bekijken:",
       "body_other": "Dit paneel wordt gebruikt in {{count}} dashboard. Kies in welk dashboard je het paneel wilt bekijken:"
-    },
-    "panel-library-options-group": {
-      "create-new-library-panel": "Nieuw bibliotheekpaneel maken"
     },
     "save": {
       "error": "Fout bij opslaan bibliotheekpaneel: '{{errorMsg}}'",
@@ -11654,11 +11559,6 @@
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
   },
   "migrate-to-cloud": {
-    "build-snapshot": {
-      "description": "Deze tool kan sommige bronnen van deze installatie naar je cloudstack migreren. Om aan de slag te gaan, moet je een snapshot van deze installatie maken. Het maken van een snapshot duurt meestal minder dan twee minuten. De snapshot wordt naast deze Grafana-installatie opgeslagen.",
-      "title": "Er bestaat geen snapshot",
-      "when-complete": "Zodra de snapshot is voltooid, kun je deze uploaden naar je cloudstack."
-    },
     "building-snapshot": {
       "description": "We verzamelen je bronnen voor migratie naar Grafana Cloud. Dit duurt maar even.",
       "description-eta": "Het maken van een snapshot duurt meestal minder dan twee minuten.",
@@ -12283,8 +12183,10 @@
       "undock": "Menu ontkoppelen"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Sectie samenvouwen: {{sectionName}}",
-      "expand-aria-label": "Sectie uitvouwen: {{sectionName}}"
+      "expand-aria-label": "Sectie uitvouwen: {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Organisatie wijzigen"
@@ -12515,13 +12417,6 @@
       "recently-viewed-dashboards": "Recent bekeken dashboards",
       "search": "Zoeken",
       "starred-dashboards": "Favoriete dashboards"
-    },
-    "get-calculation-value-data-links-variable-suggestions": {
-      "value-calc-var": {
-        "label": {
-          "calculation-name": "Naam van berekening"
-        }
-      }
     },
     "get-data-links-variable-suggestions": {
       "value-time-var": {
@@ -13147,9 +13042,6 @@
       "description-clear-repository-connection": "Deze naam wordt gebruikt voor de repositoryverbinding en de map die in de gebruikersinterface wordt weergegeven",
       "empty": "Leeg",
       "error-field-required": "Dit veld is verplicht.",
-      "error-quota-exceeded-message": "Deze repository-map bevat {{fileCount}} bronnen, wat de limiet voor je account van {{limit}} overschrijdt. Om deze repository te synchroniseren, moet je je account upgraden of het aantal te synchroniseren bronnen verminderen.",
-      "error-quota-exceeded-message-onprem": "Deze repository-map bevat {{fileCount}} bronnen, wat de limiet voor je instantie van {{limit}} overschrijdt. Om deze repository te synchroniseren, moet je je Grafana-configuratie bijwerken of het aantal te synchroniseren bronnen verminderen.",
-      "error-quota-exceeded-title": "Bronquotum overschreden",
       "error-repository-status-unhealthy-message": "Er is een probleem opgetreden bij het verbinden met de repository. Controleer de repository-instellingen en probeer het opnieuw.",
       "error-repository-status-unhealthy-title": "Repository-status ongezond",
       "external-storage-label": "Externe opslag",
@@ -13160,12 +13052,26 @@
       "unmanaged-resources-label": "Niet-beheerde bronnen",
       "update-configuration-action": "Configuratiedocumenten bekijken",
       "upgrade-action": "Account upgraden",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
       "files-count_one": "{{count}} bestanden",
       "files-count_other": "{{count}} bestanden",
       "folders-count_one": "{{count}} map",
       "folders-count_other": "{{count}} map"
+    },
+    "branch-options": {
+      "description-enforce-template": "",
+      "description-name-template": "",
+      "label-branch-options": "",
+      "label-enforce-template": "",
+      "label-name-template": "",
+      "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Sla de installatie over en krijg Git Sync volledig beheerd en gehost op Grafana Cloud met het <2>altijd gratis Grafana Cloud-abonnement</2>.",
@@ -13185,6 +13091,18 @@
       "folder-move-default": "",
       "folder-rename-default": "",
       "folder-update-default": ""
+    },
+    "commit-options": {
+      "description-enforce-template": "",
+      "label-commit-options": "",
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Instellingen voor repository zijn opgeslagen",
@@ -13215,13 +13133,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Mijn configuratie"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Overschrijft de automatisch gedetecteerde URL voor het registreren van webhooks.",
-      "description-webhook-url-learn-more": "Meer informatie",
-      "label-git-hub-features": "GitHub-functies",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13371,28 +13282,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Voegt een afbeeldingsvoorbeeld toe van dashboardwijzigingen in pull requests. Afbeeldingen van je Grafana-dashboards worden gedeeld in je Git-repository en zijn zichtbaar voor iedereen met toegang tot de repository.",
-      "description-generate-dashboard-previews": "Voorbeeldlinks maken voor pull-verzoeken",
       "description-image-rendering": "Vereist beeldweergave. <2>Beeldweergave instellen</2>",
-      "description-preview-requirements": "(vereist <2>afbeeldingsweergave</2> en ingeschakelde openbare toegang)",
       "description-read-only": "Bronnen kunnen niet worden gewijzigd via Grafana.",
       "description-sync-interval": "Hoe vaak wijzigingen uit de repository moeten worden gesynchroniseerd",
-      "description-webhook-url": "Overschrijft de automatisch gedetecteerde URL voor het registreren van webhooks.",
       "error-sync-interval-required": "Synchronisatie-interval is vereist",
       "label-enable-previews": "Dashboardvoorbeelden inschakelen in pull requests",
-      "label-generate-dashboard-previews": "Dashboardvoorbeeldweergaven genereren",
       "label-read-only": "Alleen lezen",
-      "label-sync-interval": "Synchronisatie-interval (seconden)",
-      "label-webhook-url": "Webhook-URL",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Synchronisatie-interval (seconden)"
     },
     "fix-folder-metadata": {
       "button": "Map-ID's herstellen"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Annuleren",
+      "default-commit-message": "",
       "error-message": "Kan de taak voor het herstellen van mapmetadata niet starten. Probeer het opnieuw.",
       "error-title": "Er is een fout opgetreden bij het herstellen van de mapmetadata",
-      "loading": "Repository aan het laden...",
       "read-only-message": "Mapmetadata kunnen niet automatisch worden hersteld.",
       "submit": "Map-ID's herstellen",
       "submitting": "Herstellen...",
@@ -13555,9 +13460,26 @@
       "truncated": "Bericht afgekapt"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Kan niet verifiëren of deze map een metadatabestand heeft. Probeer het later opnieuw.",
@@ -13623,6 +13545,14 @@
         }
       }
     },
+    "pull-request-options": {
+      "description-enforce-template": "",
+      "description-title-template": "",
+      "label-enforce-template": "",
+      "label-pull-request-options": "",
+      "label-title-template": "",
+      "placeholder-title-template": ""
+    },
     "quota-limit": {
       "note": "Opmerking:",
       "to-increase-limits": "Om meer {{type}} toe te voegen,",
@@ -13645,6 +13575,9 @@
       "message-resource-onprem_one": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository.",
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
+    "read-only-badge": {
+      "text": ""
+    },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "recent-jobs": {
@@ -13665,7 +13598,6 @@
     },
     "repository-card": {
       "last-sync": "Laatste synchronisatie: {{date}}",
-      "read-only-badge": "Alleen lezen",
       "settings": "Instellingen",
       "view": "Weergave"
     },
@@ -13787,11 +13719,24 @@
     "shared": {
       "branch-description": "De branch die moet worden gebruikt voor provisioning",
       "branch-label": "Branch",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Optioneel. Pad naar de submap met de bronnen die je wilt synchroniseren.",
       "path-label": "Pad",
       "progress-bar": {
         "aria-label": "Voortgangsbalk"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Gebruikersnaam",
       "url-label": "Repository-URL",
       "url-pattern": "Moet een geldige repository-URL zijn (https://hostname/owner/repo)"
@@ -13859,6 +13804,13 @@
     "watch-stream": {
       "error-description": "Realtime updates konden niet worden gestart. Vernieuw de pagina om de meest recente gegevens te zien.",
       "error-title": "Live-updates niet beschikbaar"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Houd rekening met de volgende beperkingen. Zie de <2>Git Sync-documentatie</2> voor meer informatie.",
@@ -14165,15 +14117,16 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14250,6 +14203,10 @@
       "query": "",
       "transformation": ""
     },
+    "queries-empty-state": {
+      "add-query": "",
+      "message": ""
+    },
     "sidebar": {
       "add-below": "Onder {{id}} toevoegen",
       "add-expression": "Expressie toevoegen",
@@ -14268,9 +14225,11 @@
       "footer-select": "",
       "footer-select-label": "",
       "new-type": "Nieuw {{type}}",
+      "queries-empty": "",
       "queries-expressions": "Queries en expressies",
       "toggle-size": "Grootte van zijbalk in-/uitschakelen",
       "transformations": "Transformaties",
+      "transformations-empty": "",
       "view-toggle": "Bekijken",
       "alerts_one": "Waarschuwingen ({{count}})",
       "alerts_other": "Waarschuwingen ({{count}})",
@@ -14325,6 +14284,56 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {
@@ -16638,9 +16647,6 @@
     },
     "no-unknowns": {
       "no-renamed-or-missing-variables-found": "Geen hernoemde of ontbrekende variabelen gevonden."
-    },
-    "picker-renderer": {
-      "couldnt-load-variable": "Kan variabele niet laden"
     },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Wanneer de waarden van deze variabele moeten worden bijgewerkt",

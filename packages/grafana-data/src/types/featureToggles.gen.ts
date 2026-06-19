@@ -164,11 +164,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
-  /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
   */
@@ -288,11 +283,6 @@ export interface FeatureToggles {
   * @default false
   */
   cloudWatchBatchQueries?: boolean;
-  /**
-  * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-  * @default false
-  */
-  cachingOptimizeSerializationMemoryUsage?: boolean;
   /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   * @default false
@@ -418,6 +408,11 @@ export interface FeatureToggles {
   * @default false
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Load Canvas panel from an external plugin instead of the bundled core plugin
+  * @default false
+  */
+  canvasExternalPlugin?: boolean;
   /**
   * Enables time comparison option in supported panels
   * @default false
@@ -1090,11 +1085,6 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
-  * Enables the created by me search filter on the browse dashboards page
-  * @default false
-  */
-  createdByMeSearchFilter?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1124,11 +1114,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableDMAinUI?: boolean;
-  /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
   /**
   * Prefer library panel title over viz panel title.
   * @default false
@@ -1186,7 +1171,7 @@ export interface FeatureToggles {
   favoriteDatasources?: boolean;
   /**
   * New Log Context component
-  * @default false
+  * @default true
   */
   newLogContext?: boolean;
   /**
@@ -1196,7 +1181,7 @@ export interface FeatureToggles {
   newClickhouseConfigPageDesign?: boolean;
   /**
   * Enables team folders functionality
-  * @default false
+  * @default true
   */
   teamFolders?: boolean;
   /**
@@ -1280,11 +1265,6 @@ export interface FeatureToggles {
   * @default false
   */
   pieChartGradientColorScheme?: boolean;
-  /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
-  */
-  preventPanelChromeOverflow?: boolean;
   /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
@@ -1387,7 +1367,7 @@ export interface FeatureToggles {
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
   * Enables profiles exemplars support in profiles drilldown
-  * @default false
+  * @default true
   */
   profilesExemplars?: boolean;
   /**
@@ -1456,8 +1436,8 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
-  * @default false
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**
@@ -1492,7 +1472,7 @@ export interface FeatureToggles {
   alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
-  * @default false
+  * @default true
   */
   react19?: boolean;
   /**

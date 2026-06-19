@@ -28,7 +28,7 @@ import jsonMarkup from './jsonMarkup';
 
 const copyIconClassName = 'copyIcon';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     KeyValueTable: css({
       label: 'KeyValueTable',

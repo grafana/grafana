@@ -350,6 +350,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return nil
 	}
 
+	if embed.HasPendingDeleteLabel(iter.Value()) {
+		statusLabel = "skipped_pending_delete"
+		return nil
+	}
+
 	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
 		statusLabel = "skipped_zero_views"
 		return nil

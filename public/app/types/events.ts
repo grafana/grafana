@@ -5,15 +5,6 @@ import { type ButtonVariant } from '@grafana/ui';
  * Event Payloads
  */
 
-interface ShowModalPayload {
-  model?: any;
-  modalClass?: string;
-  src?: string;
-  templateHtml?: string;
-  backdrop?: any;
-  scope?: any;
-}
-
 export interface ShowModalReactPayload {
   component: React.ComponentType<any>;
   props?: any;
@@ -87,10 +78,6 @@ export class DashboardMetaChangedEvent extends BusEventBase {
   static type = 'dashboard-meta-changed';
 }
 
-export class PanelDirectiveReadyEvent extends BusEventBase {
-  static type = 'panel-directive-ready';
-}
-
 export class RenderEvent extends BusEventBase {
   static type = 'render';
 }
@@ -146,13 +133,6 @@ export class RemovePanelEvent extends BusEventWithPayload<number> {
   static type = 'remove-panel';
 }
 
-/**
- * @deprecated use ShowModalReactEvent instead that has this capability built in
- */
-export class ShowModalEvent extends BusEventWithPayload<ShowModalPayload> {
-  static type = 'show-modal';
-}
-
 export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalPayload> {
   static type = 'show-confirm-modal';
 }
@@ -171,13 +151,6 @@ export class CloseExtensionSidebarEvent extends BusEventBase {
 
 export class ToggleExtensionSidebarEvent extends BusEventWithPayload<ToggleExtensionSidebarPayload> {
   static type = 'toggle-extension-sidebar';
-}
-
-/**
- * @deprecated use ShowModalReactEvent instead that has this capability built in
- */
-export class HideModalEvent extends BusEventBase {
-  static type = 'hide-modal';
 }
 
 export class DashboardSavedEvent extends BusEventBase {

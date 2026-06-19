@@ -93,10 +93,8 @@ export interface ListFolderQueryArgs {
 const folderListTag = { type: 'getFolder' as const, id: 'LIST' };
 const invalidateFolderListOnSuccess = (_result: unknown, error: unknown) => (error ? [] : [folderListTag]);
 
-// TODO: Once backend returns alert rule counts, set this back to true
-// when this is merged https://github.com/grafana/grafana/pull/67259
 const deleteFolderParams = {
-  forceDeleteRules: false,
+  forceDeleteRules: true,
 } as const;
 
 export const browseDashboardsAPI = createApi({
@@ -577,13 +575,12 @@ function getDashboardFolder(dashboardUid?: string) {
 }
 
 export const {
-  endpoints,
   useDeleteFolderMutation,
   useDeleteFoldersMutation,
   useDeleteDashboardsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
-  useLazyGetFolderQuery,
+
   useMoveFolderMutation,
   useMoveDashboardsMutation,
   useMoveFoldersMutation,
@@ -591,5 +588,4 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
   useRestoreDashboardMutation,
-  useListDeletedDashboardsQuery,
 } = browseDashboardsAPI;

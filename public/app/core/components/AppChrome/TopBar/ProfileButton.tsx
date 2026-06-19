@@ -45,14 +45,16 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
             label={t('navigation.rss-button', 'Latest from the blog')}
           />
         )}
-        <Menu.Divider />
         {!config.auth.disableSignoutMenu && (
-          <MenuItem
-            url={`${config.appSubUrl}/logout`}
-            label={t('nav.sign-out.title', 'Sign out')}
-            icon="arrow-from-right"
-            target={'_self'}
-          />
+          <>
+            <Menu.Divider />
+            <MenuItem
+              url={`${config.appSubUrl}/logout`}
+              label={t('nav.sign-out.title', 'Sign out')}
+              icon="arrow-from-right"
+              target={'_self'}
+            />
+          </>
         )}
       </>
     </TopNavBarMenu>

@@ -29,7 +29,7 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
 
   return (
-    <Stack wrap="wrap">
+    <Stack wrap="wrap" alignItems="center">
       {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
       <StatusBadge repo={repository} displayOnly />
       {repoHref && (
