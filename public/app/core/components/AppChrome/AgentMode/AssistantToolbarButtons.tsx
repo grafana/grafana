@@ -61,8 +61,6 @@ export const AssistantToolbarButtons = forwardRef<HTMLButtonElement, Props>(func
   );
 });
 
-// Purple "Ask assistant" pill (from the workspace prototype), matching the agent-mode
-// button shape; applied to the assistant toolbar buttons only.
 const getStyles = (theme: GrafanaTheme2) => ({
   assistantPill: css({
     display: 'inline-flex',
@@ -83,14 +81,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: 'rgba(155, 140, 255, 0.12)',
     },
   }),
-  // Active (sidebar open): accent purple border + soft ring.
   assistantPillActive: css({
     borderColor: '#9b8cff',
     background: 'rgba(155, 140, 255, 0.12)',
     boxShadow: '0 0 0 1px rgba(155, 140, 255, 0.35)',
   }),
-  // Agent-mode entry button, adapted from the workspace prototype: a compact bordered
-  // pill with a gradient label.
   agentModeButton: css({
     display: 'inline-flex',
     alignItems: 'center',
