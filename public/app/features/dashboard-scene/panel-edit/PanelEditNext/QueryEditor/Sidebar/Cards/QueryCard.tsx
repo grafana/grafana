@@ -11,6 +11,7 @@ import {
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
 } from '../../QueryEditorContext';
+import { usePanelScopedVars } from '../../hooks/usePanelScopedVars';
 import { getEditorType } from '../../utils';
 
 import { CardTitle } from './CardTitle';
@@ -19,7 +20,8 @@ import { SidebarCard } from './SidebarCard';
 
 export const QueryCard = ({ query }: { query: DataQuery }) => {
   const editorType = getEditorType(query);
-  const queryDsSettings = useDatasource(query.datasource);
+  const scopedVars = usePanelScopedVars();
+  const queryDsSettings = useDatasource(query.datasource, scopedVars);
   const {
     selectedQuery,
     setSelectedQuery,
