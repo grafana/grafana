@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	authlib "github.com/grafana/authlib/types"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models"
@@ -61,20 +60,30 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 	} else {
 		path = path + "?kiosk"
 	}
-	// Render in the org that owns the repository so the dashboard resolves in
-	// multi-org/Cloud setups. The render key carries this org id, and the
-	// headless browser authenticates as a synthetic render user in that org.
-	orgID := int64(1)
-	if ns, err := authlib.ParseNamespace(repo.Namespace); err == nil && ns.OrgID > 0 {
-		orgID = ns.OrgID
+	// Render as the worker identity already on the context (set by the job
+	// driver for the repository's org) so the dashboard resolves in
+	// multi-org/Cloud setups. The render key carries only {OrgID, UserID,
+	// OrgRole}; the worker identity supplies UserID 0, which the render authn
+	// client maps to a synthetic render-service identity pinned to that org. A
+	// real user id would instead make OrgRedirect try to switch that user's
+	// active org while rendering.
+	orgID, userID, orgRole := int64(1), int64(0), identity.RoleAdmin
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		if id := requester.GetOrgID(); id > 0 {
+			orgID = id
+			if uid, idErr := requester.GetInternalID(); idErr == nil {
+				userID = uid
+			}
+			orgRole = requester.GetOrgRole()
+		}
 	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
 			Path: path,
 			AuthOpts: rendering.AuthOpts{
 				OrgID:   orgID,
-				UserID:  1,
-				OrgRole: identity.RoleAdmin,
+				UserID:  userID,
+				OrgRole: orgRole,
 			},
 			TimeoutOpts: rendering.TimeoutOpts{
 				Timeout: time.Second * 30,

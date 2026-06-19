@@ -312,7 +312,13 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 		logging.FromContext(ctx).Warn("invalid", "url", grafanaURL, "err", err)
 		return "", err
 	}
-	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
+	// orgId belongs only on the human-facing comment link, where OrgRedirect
+	// switches the viewer's org on click. The render callback already
+	// authenticates in the repository's org via the render-service identity, so
+	// an orgId here would make OrgRedirect try to switch the render user instead.
+	query := parsed.Query()
+	query.Del("orgId")
+	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), query)
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot: %w", err)

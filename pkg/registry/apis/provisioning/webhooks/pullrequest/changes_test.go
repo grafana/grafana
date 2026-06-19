@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -100,6 +101,84 @@ func TestCalculateChanges(t *testing.T) {
 					},
 					GrafanaURL:           "http://host/d/the-uid/hello-world",
 					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+					PreviewScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+				}},
+			},
+		},
+		{
+			name: "non-default org strips orgId from render callback but keeps it on comment links",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "org-2",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "org-2",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				// The render callback must NOT carry orgId: it would make
+				// OrgRedirect try to switch the render user's org. orgId stays
+				// only on the comment-facing links below.
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything,
+					mock.MatchedBy(func(v url.Values) bool { return !v.Has("orgId") })).
+					Return(getDummyRenderedURL("x"), nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world?orgId=2",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?orgId=2&pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 					GrafanaScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
 					PreviewScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
 				}},
