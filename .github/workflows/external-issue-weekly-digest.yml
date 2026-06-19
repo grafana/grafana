@@ -1,4 +1,4 @@
-name: External FR Weekly Digest
+name: External Issue Weekly Digest
 
 # Thin wiring. Mints a community-triage token via the broker, checks out the
 # private logic repo (scripts + docker + skills) at a pinned SHA into
@@ -25,7 +25,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: fr-weekly-digest
+  group: issue-weekly-digest
   cancel-in-progress: false
 
 env:
@@ -35,11 +35,11 @@ env:
 
 jobs:
   digest:
-    name: Generate FR weekly digest
+    name: Generate issue weekly digest
     runs-on: ubuntu-latest
     permissions:
       contents: read  # checkout config + community-triage logic
-      issues: read    # query feature request issues
+      issues: read    # query issues
       id-token: write # vault OIDC + broker token exchange
     environment: ${{ github.event_name == 'workflow_dispatch' && 'manual-trigger' || '' }}
 
@@ -109,30 +109,30 @@ jobs:
           fi
           node -e "JSON.parse(require('fs').readFileSync('.github/team-notifications-config.json', 'utf-8')); console.log('Configuration file validated successfully');"
 
-      - name: Fetch feature requests
-        id: fetch-frs
+      - name: Fetch issues
+        id: fetch-issues
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-digest.mts fetch
+        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
 
       - name: Build analysis container
-        if: steps.fetch-frs.outputs.has_frs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: docker build -t oz-review ./community-triage/docker/oz-review/
 
       - name: Stage clean repo mount
-        if: steps.fetch-frs.outputs.has_frs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: |
           rsync -a --exclude='.git' --exclude='community-triage' "${GITHUB_WORKSPACE}/" /tmp/repo-clean/
           # Overlay the analysis skills from community-triage so the Oz entrypoint
-          # (which copies /repo/.agents into its workspace) finds digest-fr-analysis.
+          # (which copies /repo/.agents into its workspace) finds digest-issue-analysis.
           cp -r ./community-triage/.agents /tmp/repo-clean/.agents
           echo "Staged repo: $(find /tmp/repo-clean -type f | wc -l) files (no .git)"
 
       - name: Restrict container egress to Warp API
         id: egress
-        if: steps.fetch-frs.outputs.has_frs == 'true'
+        if: steps.fetch-issues.outputs.has_issues == 'true'
         run: |
           WARP_IPS=$(dig +short app.warp.dev A | head -3)
           echo "Resolved app.warp.dev → $WARP_IPS"
@@ -157,17 +157,17 @@ jobs:
 
           sudo iptables -I DOCKER-USER -j OZ_EGRESS
 
-      - name: Run FR digest analysis in Docker
+      - name: Run issue digest analysis in Docker
         id: digest-analysis
-        if: steps.fetch-frs.outputs.has_frs == 'true' && env.WARP_API_KEY != ''
+        if: steps.fetch-issues.outputs.has_issues == 'true' && env.WARP_API_KEY != ''
         continue-on-error: true
         env:
           WARP_IP: ${{ steps.egress.outputs.warp_ip }}
-          DATA_FILE: ${{ steps.fetch-frs.outputs.data_file }}
+          DATA_FILE: ${{ steps.fetch-issues.outputs.data_file }}
         run: |
           mkdir -p /tmp/oz-output /tmp/oz-context
 
-          cp "$DATA_FILE" /tmp/oz-context/frs.json
+          cp "$DATA_FILE" /tmp/oz-context/issues.json
           chmod -R a+rX /tmp/repo-clean /tmp/oz-context
           chmod 777 /tmp/oz-output
 
@@ -182,8 +182,8 @@ jobs:
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
             -e OZ_MODEL="claude-4-6-opus-high" \
-            -e OZ_SKILL="digest-fr-analysis" \
-            -e OZ_PROMPT="Analyze the open feature requests in frs.json. Use the repository source at /repo to understand code relationships. Output analysis.json with insights." \
+            -e OZ_SKILL="digest-issue-analysis" \
+            -e OZ_PROMPT="Analyze the open issues in issues.json. Use the repository source at /repo to understand code relationships and recently-changed areas. Output analysis.json with insights and regressions." \
             oz-review
 
           if [ -f /tmp/oz-output/analysis.json ]; then
@@ -202,11 +202,11 @@ jobs:
           sudo iptables -F OZ_EGRESS 2>/dev/null || true
           sudo iptables -X OZ_EGRESS 2>/dev/null || true
 
-      - name: Run FR Weekly Digest
+      - name: Run Issue Weekly Digest
         env:
           GH_TOKEN: ${{ github.token }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
-          DATA_FILE: ${{ steps.fetch-frs.outputs.data_file }}
+          DATA_FILE: ${{ steps.fetch-issues.outputs.data_file }}
           ANALYSIS_FILE: ${{ steps.digest-analysis.outputs.analysis_file || '' }}
           DRY_RUN: ${{ inputs.dry_run || 'false' }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
@@ -222,4 +222,4 @@ jobs:
           echo "Analysis file: ${ANALYSIS_FILE:-none}"
           echo "::endgroup::"
 
-          node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-digest.mts process
+          node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts process
