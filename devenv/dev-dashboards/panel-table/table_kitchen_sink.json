@@ -2088,6 +2088,148 @@
       ],
       "title": "Multi-frame table",
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-testdata-datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "img_loaded"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "image"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Image (loaded)"
+              },
+              {
+                "id": "custom.width",
+                "value": 140
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "img_loaded_title"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "title": "Grafana logo",
+                  "type": "image"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Image (loaded, with title)"
+              },
+              {
+                "id": "custom.width",
+                "value": 180
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "img_broken_alt"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "alt": "Image failed to load",
+                  "type": "image"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Image (broken, with alt)"
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "img_broken_noalt"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "image"
+                }
+              },
+              {
+                "id": "displayName",
+                "value": "Image (broken, no alt)"
+              },
+              {
+                "id": "custom.width",
+                "value": 200
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "csvContent": "img_loaded,img_loaded_title,img_broken_alt,img_broken_noalt\nhttps://grafana.com/media/menus/products/grafana-menu-icon.svg,https://grafana.com/media/menus/products/grafana-menu-icon.svg,https://example.com/does-not-exist.png,https://example.com/does-not-exist.png",
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Image cell table",
+      "type": "table"
     }
   ],
   "preload": false,
