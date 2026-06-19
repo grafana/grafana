@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { IconName, ToolbarButton } from '@grafana/ui';
+import { type IconName, ToolbarButton } from '@grafana/ui';
 
 import { AssistantToolbarButtons } from '../AgentMode/AssistantToolbarButtons';
 
