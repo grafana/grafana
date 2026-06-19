@@ -1406,11 +1406,6 @@
       "count": 1
     }
   },
-  "public/app/features/annotations/components/StandardAnnotationQueryEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/annotations/events_processing.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
