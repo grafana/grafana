@@ -47,6 +47,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
+2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-31,kubernetesShortURLs,GA,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false

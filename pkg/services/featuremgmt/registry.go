@@ -424,6 +424,15 @@ var (
 			Generate:        Generate{React: true},
 		},
 		{
+			Name:            "grafana.newPanelQueryErrorsUI",
+			Description:     "Enables a new UI for query errors and notices",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{React: true},
+		},
+		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short URL API and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageGeneralAvailability,
