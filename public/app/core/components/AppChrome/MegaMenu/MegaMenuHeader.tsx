@@ -33,18 +33,22 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         <OrganizationSwitcher />
       </Stack>
       <div className={styles.flexGrow} />
-      <IconButton
-        id={DOCK_MENU_BUTTON_ID}
-        className={styles.dockMenuButton}
-        tooltip={
-          state.megaMenuDocked
-            ? t('navigation.megamenu.undock', 'Undock menu')
-            : t('navigation.megamenu.dock', 'Dock menu')
-        }
-        name="web-section-alt"
-        onClick={handleDockedMenu}
-        variant="secondary"
-      />
+      {/* Docking isn't supported in agent mode (the menu is a Platform-tab overlay, not
+          part of the chrome layout), so hide the dock toggle there. */}
+      {!state.agentMode && (
+        <IconButton
+          id={DOCK_MENU_BUTTON_ID}
+          className={styles.dockMenuButton}
+          tooltip={
+            state.megaMenuDocked
+              ? t('navigation.megamenu.undock', 'Undock menu')
+              : t('navigation.megamenu.dock', 'Dock menu')
+          }
+          name="web-section-alt"
+          onClick={handleDockedMenu}
+          variant="secondary"
+        />
+      )}
       <IconButton
         aria-label={t('navigation.megamenu.close', 'Close menu')}
         tooltip={t('navigation.megamenu.close', 'Close menu')}
