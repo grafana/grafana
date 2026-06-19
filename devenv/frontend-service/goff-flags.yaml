@@ -1,9 +1,9 @@
-flagName:
+react19:
   variations:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
 
 reportRenderBinding:
   variations:
@@ -53,4 +53,4 @@ frontendService.reducedBootDataAPI:
     enabled: true
     disabled: false
   defaultRule:
-    variation: disabled
+    variation: enabled
