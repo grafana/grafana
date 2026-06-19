@@ -8,8 +8,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -187,6 +189,52 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 		store := &fakeFolderStore{getErr: errors.New("boom")}
 		require.Error(t, ensureTerminationMetadata(context.Background(), store, "f"))
 	})
+}
+
+func TestCheckDeletePreconditions(t *testing.T) {
+	folder := func(uid, rv string) *foldersv1.Folder {
+		return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", UID: types.UID(uid), ResourceVersion: rv}}
+	}
+	uidPtr := func(s string) *types.UID { u := types.UID(s); return &u }
+	rvPtr := func(s string) *string { return &s }
+
+	t.Run("nil options or preconditions is a no-op", func(t *testing.T) {
+		require.NoError(t, checkDeletePreconditions(folder("u", "1"), nil))
+		require.NoError(t, checkDeletePreconditions(folder("u", "1"), &metav1.DeleteOptions{}))
+	})
+
+	t.Run("matching resource version and uid pass", func(t *testing.T) {
+		require.NoError(t, checkDeletePreconditions(folder("u", "7"), &metav1.DeleteOptions{
+			Preconditions: &metav1.Preconditions{UID: uidPtr("u"), ResourceVersion: rvPtr("7")},
+		}))
+	})
+
+	t.Run("mismatched resource version conflicts", func(t *testing.T) {
+		err := checkDeletePreconditions(folder("u", "7"), &metav1.DeleteOptions{
+			Preconditions: &metav1.Preconditions{ResourceVersion: rvPtr("6")},
+		})
+		require.True(t, apierrors.IsConflict(err))
+	})
+
+	t.Run("mismatched uid conflicts", func(t *testing.T) {
+		err := checkDeletePreconditions(folder("u", "7"), &metav1.DeleteOptions{
+			Preconditions: &metav1.Preconditions{UID: uidPtr("other")},
+		})
+		require.True(t, apierrors.IsConflict(err))
+	})
+}
+
+func TestOptionsWithoutPreconditions(t *testing.T) {
+	require.Nil(t, optionsWithoutPreconditions(nil))
+
+	noPre := &metav1.DeleteOptions{}
+	require.Same(t, noPre, optionsWithoutPreconditions(noPre), "no preconditions: options returned unchanged")
+
+	rv := "5"
+	orig := &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &rv}}
+	got := optionsWithoutPreconditions(orig)
+	require.Nil(t, got.Preconditions, "returned copy must have preconditions cleared")
+	require.NotNil(t, orig.Preconditions, "original options must be left untouched")
 }
 
 func TestRemoveTerminationMetadata(t *testing.T) {

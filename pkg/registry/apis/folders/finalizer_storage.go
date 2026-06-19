@@ -16,6 +16,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 	"k8s.io/client-go/util/retry"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -53,10 +54,33 @@ func (s *finalizerStorage) Delete(
 	deleteValidation rest.ValidateObjectFunc,
 	options *metav1.DeleteOptions,
 ) (runtime.Object, bool, error) {
-	// A dry-run must not mutate anything: pass straight through with the real validation.
+	// A dry-run must not mutate anything: pass straight through with the real validation (which also
+	// enforces any precondition) so nothing is stamped.
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return s.Store.Delete(ctx, name, deleteValidation, options)
 	}
+
+	// Run admission and any caller-supplied precondition BEFORE mutating metadata. Both the cascade
+	// stamp and the vestigial-finalizer strip below are Updates that advance the resource version, so
+	// mutating first would (a) make a conditional delete (Preconditions.ResourceVersion) fail against
+	// the bumped RV, and (b) on the cascade path, persist the terminating label even when the delete
+	// is about to be rejected -- the poller would then resume a delete the caller saw fail. We enforce
+	// admission and the precondition here against the current object, then pass a no-op validator with
+	// the precondition cleared to the embedded store (we have already evaluated both), so admission
+	// runs exactly once and the RV bump we cause cannot reject an otherwise-valid delete.
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, false, err
+	}
+	if deleteValidation != nil {
+		if err := deleteValidation(ctx, obj); err != nil {
+			return nil, false, err
+		}
+	}
+	if err := checkDeletePreconditions(obj, options); err != nil {
+		return nil, false, err
+	}
+	innerOptions := optionsWithoutPreconditions(options)
 
 	// Cascade disabled: the finalizer (stamped while the feature was on) is now vestigial and would
 	// otherwise block deletion forever, since nothing drives it to completion. Strip it, then delete
@@ -66,22 +90,7 @@ func (s *finalizerStorage) Delete(
 		if err := removeTerminationMetadata(ctx, s.Store, name); err != nil && !apierrors.IsNotFound(err) {
 			return nil, false, err
 		}
-		return s.Store.Delete(ctx, name, deleteValidation, options)
-	}
-
-	// Validate the delete BEFORE marking anything terminating. Marking stamps the terminating label
-	// and kicks off the asynchronous subtree marking, so a delete that admission rejects (e.g. a
-	// non-force delete of a non-empty folder) must not leave the tree half-cascaded. We run
-	// deleteValidation against the current object here and pass a no-op validator to the embedded
-	// store below so admission is evaluated exactly once.
-	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
-	if err != nil {
-		return nil, false, err
-	}
-	if deleteValidation != nil {
-		if err := deleteValidation(ctx, obj); err != nil {
-			return nil, false, err
-		}
+		return s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, innerOptions)
 	}
 
 	// Stamp the terminating label and finalizer BEFORE the deletion timestamp, so the folder is
@@ -96,12 +105,49 @@ func (s *finalizerStorage) Delete(
 	// completes), then mark its subtree asynchronously off the request path -- deleting a large tree
 	// must not block (or time out) the request. The cascade poller is the backstop: it completes any
 	// marking this best-effort pass does not finish and removes finalizers once children are gone.
-	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, options)
+	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, innerOptions)
 	if err != nil {
 		return out, deleted, err
 	}
 	s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	return out, deleted, nil
+}
+
+// checkDeletePreconditions enforces DeleteOptions.Preconditions (UID / ResourceVersion) against the
+// current object, mirroring the embedded store's own check. We run it before stamping termination
+// metadata, since that stamp advances the resource version and would otherwise make a valid
+// conditional delete fail -- and would persist the terminating label for a delete that should be
+// rejected.
+func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions) error {
+	if options == nil || options.Preconditions == nil {
+		return nil
+	}
+	accessor, err := meta.Accessor(obj)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+	}
+	gr := folders.FolderResourceInfo.GroupVersionResource().GroupResource()
+	if uid := options.Preconditions.UID; uid != nil && *uid != accessor.GetUID() {
+		return apierrors.NewConflict(gr, accessor.GetName(),
+			fmt.Errorf("the UID in the precondition (%v) does not match the UID in record (%v)", *uid, accessor.GetUID()))
+	}
+	if rv := options.Preconditions.ResourceVersion; rv != nil && *rv != accessor.GetResourceVersion() {
+		return apierrors.NewConflict(gr, accessor.GetName(),
+			fmt.Errorf("the ResourceVersion in the precondition (%v) does not match the ResourceVersion in record (%v)", *rv, accessor.GetResourceVersion()))
+	}
+	return nil
+}
+
+// optionsWithoutPreconditions returns a copy of options with Preconditions cleared, leaving the
+// original untouched. We pass this to the embedded store after enforcing the precondition ourselves,
+// so the store does not re-check it against the resource version our metadata stamp just advanced.
+func optionsWithoutPreconditions(options *metav1.DeleteOptions) *metav1.DeleteOptions {
+	if options == nil || options.Preconditions == nil {
+		return options
+	}
+	cp := *options
+	cp.Preconditions = nil
+	return &cp
 }
 
 // markSubtreeAsync launches a detached, best-effort DFS that marks every descendant of name
