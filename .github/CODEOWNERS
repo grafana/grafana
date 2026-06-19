@@ -1242,6 +1242,7 @@ embed.go @grafana/grafana-as-code
 /.github/PULL_REQUEST_TEMPLATE.md @torkelo
 /.github/bot.md @torkelo
 /.github/commands.json @torkelo
+/.github/community-champions.json @grafana/grafana-community-support
 /.github/dependabot.yml @grafana/frontend-ops
 /.github/issue-opened.json @grafana/grafana-community-support
 /.github/team-notifications-config.json @grafana/grafana-community-support
