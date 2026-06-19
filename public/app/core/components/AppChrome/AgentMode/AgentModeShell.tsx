@@ -42,41 +42,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100vh',
     background: theme.colors.background.canvas,
   }),
-  panes: css({
-    display: 'flex',
-    flexGrow: 1,
-    minHeight: 0,
-  }),
-  chatStub: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    width: 360,
-    padding: theme.spacing(2),
-    borderRight: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
-  }),
-  canvas: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-    minWidth: 0,
-  }),
-  tabStrip: css({
-    display: 'flex',
-    gap: theme.spacing(2),
-    padding: theme.spacing(1, 2),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
-  }),
-  tabDisabled: css({
-    color: theme.colors.text.disabled,
-  }),
-  platformTabHost: css({
-    display: 'flex',
-    flexDirection: 'column',
-    flexGrow: 1,
-    overflow: 'auto',
-    minHeight: 0,
-  }),
 });

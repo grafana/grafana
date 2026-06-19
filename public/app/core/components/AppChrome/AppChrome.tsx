@@ -103,11 +103,6 @@ export function AppChrome({ children }: Props) {
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
-  //
-  // The live page (`children`) is rendered once via a portal into `outletHost`,
-  // whose DOM node is swapped between the normal <main> and the agent-mode Platform
-  // tab. Keeping `children` at a stable position in the React tree means toggling
-  // agent mode only moves its DOM -> no remount, no reload, live state preserved.
   return (
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
@@ -119,8 +114,7 @@ export function AppChrome({ children }: Props) {
         createPortal(
           [
             // In agent mode, a slim bar (hamburger + breadcrumbs) sits above the live
-            // page inside the Platform tab. Keys keep `children` at a stable position so
-            // toggling the bar never remounts the page.
+            // page inside the Platform tab
             agentMode ? <AgentModePlatformBar key="agent-platform-bar" /> : null,
             <Fragment key="outlet">{children}</Fragment>,
           ],
@@ -156,8 +150,6 @@ export function AppChrome({ children }: Props) {
           </header>
         </>
       )}
-      {/* Agent mode swaps the page content for the assistant workspace shell; both render
-          `children` via the portal above, only the outlet host node differs. */}
       {agentMode ? (
         <AgentModeShell outletRef={setOutletHost} />
       ) : (
