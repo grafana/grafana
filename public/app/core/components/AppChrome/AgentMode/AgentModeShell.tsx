@@ -9,7 +9,6 @@ import { locationService, usePluginComponent } from '@grafana/runtime';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { MegaMenu, MENU_WIDTH } from '../MegaMenu/MegaMenu';
 import { TopSearchBarCommandPaletteTrigger } from '../TopBar/TopSearchBarCommandPaletteTrigger';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
@@ -38,12 +37,9 @@ interface Props {
 export function AgentModeShell({ outletRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
-  const state = chrome.useState();
   const { component: PluginWorkspace, isLoading } = usePluginComponent<AgentWorkspaceProps>(
     AGENT_WORKSPACE_COMPONENT_ID
   );
-
-  const closeMenu = () => chrome.setMegaMenuOpen(false);
 
   return (
     <div className={styles.root}>
@@ -53,14 +49,6 @@ export function AgentModeShell({ outletRef }: Props) {
         </ToolbarButton>
         <TopSearchBarCommandPaletteTrigger />
       </header>
-      {state.megaMenuOpen && (
-        <>
-          <div className={styles.menuBackdrop} onClick={closeMenu} role="presentation" />
-          <nav className={styles.menuDrawer} aria-label="Navigation">
-            <MegaMenu onClose={closeMenu} />
-          </nav>
-        </>
-      )}
       {PluginWorkspace ? (
         <PluginWorkspace registerPlatformHost={outletRef} />
       ) : (
@@ -102,25 +90,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: getChromeHeaderLevelHeight(),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     background: theme.colors.background.primary,
-  }),
-  menuBackdrop: css({
-    position: 'fixed',
-    inset: 0,
-    zIndex: theme.zIndex.modalBackdrop,
-    background: theme.components.overlay.background,
-  }),
-  menuDrawer: css({
-    position: 'fixed',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: MENU_WIDTH,
-    zIndex: theme.zIndex.modal,
-    display: 'flex',
-    flexDirection: 'column',
-    background: theme.colors.background.primary,
-    borderRight: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
   }),
   panes: css({
     display: 'flex',
