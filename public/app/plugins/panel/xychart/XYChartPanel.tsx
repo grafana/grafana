@@ -84,7 +84,7 @@ export const XYChartPanel2 = (props: Props2) => {
       }
     });
 
-    const { placement, displayMode, width, sortBy, sortDesc } = props.options.legend;
+    const { placement, displayMode, width, sortBy, sortDesc, overflow } = props.options.legend;
 
     return (
       <VizLayout.Legend placement={placement} width={width}>
@@ -96,6 +96,7 @@ export const XYChartPanel2 = (props: Props2) => {
           sortBy={sortBy}
           sortDesc={sortDesc}
           isSortable={true}
+          overflow={overflow}
         />
       </VizLayout.Legend>
     );

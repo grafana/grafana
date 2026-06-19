@@ -93,7 +93,7 @@ export function CommitOptionsSection<T extends FieldValues>({
           label={t('provisioning.config-form.label-commit-message-template', 'Commit message template')}
           description={t(
             'provisioning.config-form.description-commit-message-template',
-            'Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.',
+            'The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.',
             {
               actionVar: '{{action}}',
               kindVar: '{{resourceKind}}',

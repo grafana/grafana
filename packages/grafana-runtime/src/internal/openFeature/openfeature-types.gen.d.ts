@@ -18,6 +18,7 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "grafana.kubernetesAnnotationsClient"
+    | "grafana.newPanelQueryErrorsUI"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
