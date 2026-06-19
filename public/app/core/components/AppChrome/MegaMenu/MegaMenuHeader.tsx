@@ -33,8 +33,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         <OrganizationSwitcher />
       </Stack>
       <div className={styles.flexGrow} />
-      {/* Docking isn't supported in agent mode (the menu is a Platform-tab overlay, not
-          part of the chrome layout), so hide the dock toggle there. */}
+      {/* Docking is intentionally not allowed in agent mode */}
       {!state.agentMode && (
         <IconButton
           id={DOCK_MENU_BUTTON_ID}
