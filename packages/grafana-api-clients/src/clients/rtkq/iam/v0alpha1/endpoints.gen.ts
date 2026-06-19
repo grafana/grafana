@@ -1633,7 +1633,7 @@ export type GetTeamGroupsResponse = {
   kind?: string;
 };
 export type UserExternalAuthInfo = {
-  authIDHash: string;
+  authID: string;
   externalUID?: string;
   module: string;
 };

@@ -5632,9 +5632,9 @@
       },
       "UserExternalAuthInfo": {
         "type": "object",
-        "required": ["module", "authIDHash"],
+        "required": ["module", "authID"],
         "properties": {
-          "authIDHash": {
+          "authID": {
             "type": "string",
             "default": ""
           },

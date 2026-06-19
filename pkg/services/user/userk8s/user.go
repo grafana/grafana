@@ -828,7 +828,7 @@ func toExternalAuthInfo(in []user.ExternalAuthInfo) []iamv0alpha1.UserExternalAu
 	}
 	out := make([]iamv0alpha1.UserExternalAuthInfo, 0, len(in))
 	for _, l := range in {
-		info := iamv0alpha1.UserExternalAuthInfo{Module: l.Module, AuthIDHash: l.AuthIDHash}
+		info := iamv0alpha1.UserExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
 		if l.ExternalUID != "" {
 			externalUID := l.ExternalUID
 			info.ExternalUID = &externalUID
@@ -844,7 +844,7 @@ func fromExternalAuthInfo(in []iamv0alpha1.UserExternalAuthInfo) []user.External
 	}
 	out := make([]user.ExternalAuthInfo, 0, len(in))
 	for _, l := range in {
-		info := user.ExternalAuthInfo{Module: l.Module, AuthIDHash: l.AuthIDHash}
+		info := user.ExternalAuthInfo{Module: l.Module, AuthID: l.AuthID}
 		if l.ExternalUID != nil {
 			info.ExternalUID = *l.ExternalUID
 		}

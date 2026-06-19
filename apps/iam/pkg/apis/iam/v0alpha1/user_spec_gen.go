@@ -5,7 +5,7 @@ package v0alpha1
 // +k8s:openapi-gen=true
 type UserExternalAuthInfo struct {
 	Module      string  `json:"module"`
-	AuthIDHash  string  `json:"authIDHash"`
+	AuthID      string  `json:"authID"`
 	ExternalUID *string `json:"externalUID,omitempty"`
 }
 
