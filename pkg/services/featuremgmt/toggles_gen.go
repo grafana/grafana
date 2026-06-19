@@ -139,10 +139,6 @@ const (
 	// Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned
 	FlagKubernetesFolderCascadeDelete = "kubernetesFolderCascadeDelete"
 
-	// FlagKubernetesShortURLs
-	// Enables k8s short URL API and uses it under the hood when handling legacy /api
-	FlagKubernetesShortURLs = "kubernetesShortURLs"
-
 	// FlagKubernetesCorrelations
 	// Adds support for Kubernetes correlations
 	FlagKubernetesCorrelations = "kubernetesCorrelations"

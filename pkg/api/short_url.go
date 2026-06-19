@@ -23,7 +23,6 @@ import (
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,17 +33,10 @@ import (
 func (hs *HTTPServer) registerShortURLAPI(apiRoute routing.RouteRegister) {
 	reqSignedIn := middleware.ReqSignedIn
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesShortURLs) {
-		handler := newShortURLK8sHandler(hs)
-		apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
-		apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
-	} else {
-		apiRoute.Post("/api/short-urls", reqSignedIn, hs.createShortURL)
-		apiRoute.Get("/api/short-urls/:uid", reqSignedIn, hs.getShortURL)
-		apiRoute.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
-	}
+	handler := newShortURLK8sHandler(hs)
+	apiRoute.Post("/api/short-urls", reqSignedIn, handler.createKubernetesShortURLsHandler)
+	apiRoute.Get("/api/short-urls/:uid", reqSignedIn, handler.getKubernetesShortURLsHandler)
+	apiRoute.Get("/goto/:uid", reqSignedIn, handler.getKubernetesRedirectFromShortURL, hs.Index)
 }
 
 // createShortURL handles requests to create short URLs.
