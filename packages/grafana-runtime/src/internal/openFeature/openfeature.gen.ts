@@ -43,6 +43,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables a new UI for query errors and notices */
+  GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -53,6 +55,8 @@ export const FlagKeys = {
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the sidebar pane with new toggles and options in panel view mode */
+  GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
@@ -267,6 +271,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
 };
 
 /**
+ * Enables a new UI for query errors and notices
+ *
+ * **Details:**
+ * - flag key: `grafana.newPanelQueryErrorsUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
+};
+
+/**
  * Whether to use the new SharedPreferences functional component
  *
  * **Details:**
@@ -322,6 +337,17 @@ export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptio
 };
 
 /**
+ * Enables the sidebar pane with new toggles and options in panel view mode
+ *
+ * **Details:**
+ * - flag key: `grafana.viewPanelPane`
+ * - default value: `false`
+ */
+export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.viewPanelPane", false, options).value;
+};
+
+/**
  * Enables the new visual design refresh for the Grafana UI
  *
  * **Details:**
@@ -370,10 +396,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newLogContext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", false, options).value;
+  return useFlag("newLogContext", true, options).value;
 };
 
 /**

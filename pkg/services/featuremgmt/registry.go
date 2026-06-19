@@ -424,6 +424,15 @@ var (
 			Generate:        Generate{React: true},
 		},
 		{
+			Name:            "grafana.newPanelQueryErrorsUI",
+			Description:     "Enables a new UI for query errors and notices",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{React: true},
+		},
+		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short URL API and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageGeneralAvailability,
@@ -581,14 +590,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "cachingOptimizeSerializationMemoryUsage",
-			Description: "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
 		},
 		{
 			Name:        "alertmanagerRemoteSecondary",
@@ -2035,14 +2036,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "sharingDashboardImage",
-			Description: "Enables image sharing functionality for dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2139,10 +2132,10 @@ var (
 		{
 			Name:        "newLogContext",
 			Description: "New Log Context component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "newClickhouseConfigPageDesign",
@@ -2158,7 +2151,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "interactiveLearning",
@@ -2703,10 +2696,10 @@ var (
 		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "frontendServiceUseSettingsService",
@@ -2778,6 +2771,15 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.viewPanelPane",
+			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3168,6 +3170,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "dashboard.vectorSearch",
+			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

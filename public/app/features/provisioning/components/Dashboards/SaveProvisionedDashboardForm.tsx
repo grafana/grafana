@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { Button, Field, Input, Stack, TextArea, Switch } from '@grafana/ui';
-import { type RepositoryView, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, type ResourceWrapper, type Unstructured } from 'app/api/clients/provisioning/v0alpha1';
 import kbn from 'app/core/utils/kbn';
 import { type Resource } from 'app/features/apiserver/types';
 import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/saving/SaveDashboardForm';
@@ -68,7 +68,7 @@ export function SaveProvisionedDashboardForm({
     register,
     setValue,
     getValues,
-    formState: { dirtyFields },
+    formState: { dirtyFields, isSubmitting, isValidating },
   } = methods;
 
   const path = watch('path');
@@ -150,17 +150,20 @@ export function SaveProvisionedDashboardForm({
     [navigate, defaultValues.repo]
   );
 
-  const handleDismiss = useCallback(() => {
-    const model = dashboard.getSaveModel();
-    const resourceData = request?.data?.resource.upsert || request?.data?.resource.dryRun;
-    const saveResponse = createSaveResponseFromResource(resourceData);
-    dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
-    dashboardWatcher.clearIgnoreSave();
-  }, [dashboard, defaultValues.folder?.uid, request?.data?.resource]);
+  const handleDismiss = useCallback(
+    (wrapper: ResourceWrapper) => {
+      const model = dashboard.getSaveModel();
+      const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
+      const saveResponse = createSaveResponseFromResource(resourceData);
+      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      dashboardWatcher.clearIgnoreSave();
+    },
+    [dashboard, defaultValues.folder?.uid]
+  );
 
   const onWriteSuccess = useCallback(
-    (upsert: Resource<Dashboard>) => {
-      handleDismiss();
+    (upsert: Resource<Dashboard>, wrapper: ResourceWrapper) => {
+      handleDismiss(wrapper);
       if (isNew && upsert?.metadata.name) {
         handleNewDashboard(upsert);
       }
@@ -180,8 +183,14 @@ export function SaveProvisionedDashboardForm({
   );
 
   const onBranchSuccess = useCallback(
-    (ref: string, path: string, info: ProvisionedOperationInfo, upsert: Resource<Dashboard>) => {
-      handleDismiss();
+    (
+      ref: string,
+      path: string,
+      info: ProvisionedOperationInfo,
+      upsert: Resource<Dashboard>,
+      wrapper: ResourceWrapper
+    ) => {
+      handleDismiss(wrapper);
       if (isNew && upsert?.metadata?.name) {
         handleNewDashboard(upsert);
       } else {
@@ -191,22 +200,13 @@ export function SaveProvisionedDashboardForm({
     [isNew, navigateToPreview, handleNewDashboard, handleDismiss]
   );
 
-  useProvisionedRequestHandler<Dashboard>({
+  const { handleSuccess } = useProvisionedRequestHandler<Dashboard>({
     folderUID: defaultValues.folder?.uid,
-    request,
-    workflow,
     resourceType: 'dashboard',
     repository,
-    selectedBranch: methods.getValues().ref,
     handlers: {
-      onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
+      onBranchSuccess: ({ ref, path }, info, resource, wrapper) => onBranchSuccess(ref, path, info, resource, wrapper),
       onWriteSuccess,
-      onError: (err) => {
-        // Release suppression so later live save/conflict events from other sessions
-        // aren't hidden while the user retries or abandons the save.
-        dashboardWatcher.clearIgnoreSave();
-        showError(err);
-      },
     },
   });
 
@@ -265,15 +265,23 @@ export function SaveProvisionedDashboardForm({
     // Git operations can exceed the default 5s ignoreNextSave window.
     dashboardWatcher.ignoreSaveIndefinitely();
 
-    createOrUpdateFile({
-      // Skip adding ref to the default branch request
-      ref: ref === repository?.branch ? undefined : ref,
-      name: repo,
-      path,
-      message,
-      body,
-      originalPath: isRename ? originalPath : undefined,
-    });
+    try {
+      const data = await createOrUpdateFile({
+        // Skip adding ref to the default branch request
+        ref: ref === repository?.branch ? undefined : ref,
+        name: repo,
+        path,
+        message,
+        body,
+        originalPath: isRename ? originalPath : undefined,
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch: ref });
+    } catch (err) {
+      // Release suppression so later live save/conflict events from other sessions
+      // aren't hidden while the user retries or abandons the save.
+      dashboardWatcher.clearIgnoreSave();
+      showError(err);
+    }
   };
 
   return (
@@ -371,8 +379,12 @@ export function SaveProvisionedDashboardForm({
             <Button variant="secondary" onClick={drawer.onClose} fill="outline">
               <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cancel">Cancel</Trans>
             </Button>
-            <Button variant="primary" type="submit" disabled={request.isLoading || readOnly || !isDirtyState}>
-              {request.isLoading
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating}
+            >
+              {request.isLoading || isSubmitting || isValidating
                 ? t('dashboard-scene.save-provisioned-dashboard-form.saving', 'Saving...')
                 : t('dashboard-scene.save-provisioned-dashboard-form.save', 'Save')}
             </Button>

@@ -45,6 +45,31 @@ type DocumentBuilderInfo struct {
 
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced NamespacedDocumentSupplier
+
+	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
+	// slices registered for GroupResource across every version. The hash is
+	// stored in IndexBuildInfo when an index is built and re-checked on
+	// startup so the index is rebuilt automatically when index-affecting
+	// search-field metadata changes.
+	//
+	// Empty when the builder does not use a SearchFieldsProvider.
+	SearchFieldsHash string
+}
+
+// SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
+// of SearchFieldsHash values collected from the given DocumentBuilderInfo
+// entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
+// shorthand for "no expected hash".
+func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]string {
+	out := map[string]string{}
+	for _, b := range builders {
+		if b.SearchFieldsHash == "" {
+			continue
+		}
+		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
+		out[key] = b.SearchFieldsHash
+	}
+	return out
 }
 
 type DocumentBuilderSupplier interface {
@@ -308,6 +333,19 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		return
 	}
 	for _, def := range defs {
+		if def.CopyFromStandard != StandardFieldUnknown {
+			if v, ok := standardFieldValue(doc, def.CopyFromStandard); ok {
+				if doc.Fields == nil {
+					doc.Fields = make(map[string]any)
+				}
+				doc.Fields[def.Name] = v
+			} else {
+				s.log.Warn("unknown CopyFromStandard target",
+					"group", gvr.Group, "version", gvr.Version, "resource", gvr.Resource,
+					"field", def.Name, "target", def.CopyFromStandard)
+			}
+			continue
+		}
 		if def.Path == "" {
 			continue
 		}
@@ -319,6 +357,13 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 			continue
 		}
 		if raw == nil {
+			if !def.EmitZeroIfAbsent {
+				continue
+			}
+			if doc.Fields == nil {
+				doc.Fields = make(map[string]any)
+			}
+			doc.Fields[def.Name] = zeroValueForFieldDefinition(def)
 			continue
 		}
 		coerced, ok := coerceToFieldShape(raw, def.Type, def.Array)
@@ -334,6 +379,48 @@ func (s *standardDocumentBuilder) extractDeclaredFields(_ context.Context, tmp *
 		}
 		doc.Fields[def.Name] = coerced
 	}
+}
+
+// standardFieldValue returns the value of a top-level IndexableDocument field
+// referenced by CopyFromStandard. The set of supported targets is closed and
+// matches the StandardField* constants in search_field.go.
+func standardFieldValue(doc *IndexableDocument, target StandardField) (any, bool) {
+	switch target {
+	case StandardFieldCreated:
+		return doc.Created, true
+	case StandardFieldUpdated:
+		return doc.Updated, true
+	case StandardFieldCreatedBy:
+		return doc.CreatedBy, true
+	case StandardFieldUpdatedBy:
+		return doc.UpdatedBy, true
+	case StandardFieldUnknown:
+		return nil, false
+	}
+	return nil, false
+}
+
+// zeroValueForFieldDefinition returns the type-appropriate zero value for a
+// declared field. Used when Path resolves to nil and EmitZeroIfAbsent is set,
+// so the indexed document still carries the field. Returns nil for unknown
+// types so the caller drops the field instead of indexing a typeless value.
+func zeroValueForFieldDefinition(def SearchFieldDefinition) any {
+	if def.Array {
+		return []any{}
+	}
+	switch def.Type {
+	case SearchFieldTypeBoolean:
+		return false
+	case SearchFieldTypeInt64:
+		return int64(0)
+	case SearchFieldTypeDouble:
+		return float64(0)
+	case SearchFieldTypeString, SearchFieldTypeDate:
+		return ""
+	case SearchFieldTypeUnknown:
+		return nil
+	}
+	return nil
 }
 
 // gvrForLookup resolves the GroupVersionResource the provider should be
@@ -541,7 +628,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp", // date?
+				Description: "created timestamp (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_UPDATED,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "updated timestamp (unix millis)",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED_BY,

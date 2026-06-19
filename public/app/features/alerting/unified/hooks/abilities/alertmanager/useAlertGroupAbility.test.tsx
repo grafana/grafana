@@ -1,6 +1,5 @@
 import { renderHook } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
@@ -11,10 +10,10 @@ import { AlertGroupAction } from '../types';
 import {
   EXTERNAL_AM_VISIBILITY_PERMISSION,
   GRAFANA_AM_VISIBILITY_PERMISSION,
+  UNRESOLVED_ALERTMANAGER_SOURCE,
   createAlertmanagerWrapper,
   setupGrafanaAlertmanager,
   setupMimirAlertmanager,
-  setupVanillaPrometheusAlertmanager,
 } from './abilityTestUtils';
 import { useAlertGroupAbility, useGlobalAlertGroupAbility } from './useAlertGroupAbility';
 
@@ -84,22 +83,22 @@ describe('useAlertGroupAbility', () => {
 
   describe('external (Mimir) alertmanager', () => {
     it('should grant View when AlertingInstancesExternalRead is held', () => {
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstancesExternalRead]);
 
       const { result } = renderHook(() => useAlertGroupAbility(AlertGroupAction.View), {
-        wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID),
+        wrapper: createAlertmanagerWrapper(amSource),
       });
 
       expect(result.current.granted).toBe(true);
     });
 
     it('should deny View when only the Grafana AM read permission is held', () => {
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingInstanceRead]);
 
       const { result } = renderHook(() => useAlertGroupAbility(AlertGroupAction.View), {
-        wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID),
+        wrapper: createAlertmanagerWrapper(amSource),
       });
 
       expect(result.current.granted).toBe(false);
@@ -108,15 +107,12 @@ describe('useAlertGroupAbility', () => {
 
   describe('unresolved alertmanager (selectedAlertmanager is undefined)', () => {
     it('should return Loading for View when no AM resolves in context', () => {
-      // setupVanillaPrometheusAlertmanager returns 'does-not-exist' as the source name,
-      // which won't match any available AM. Grant no permissions so neither the
-      // Grafana AM nor any external AM appears in availableAlertManagers, ensuring
-      // selectedAlertmanager stays undefined in AlertmanagerContext.
-      const amSource = setupVanillaPrometheusAlertmanager();
+      // Grant no permissions so neither the Grafana AM nor any external AM appears in
+      // availableAlertManagers, ensuring selectedAlertmanager stays undefined in AlertmanagerContext.
       grantUserPermissions([]);
 
       const { result } = renderHook(() => useAlertGroupAbility(AlertGroupAction.View), {
-        wrapper: createAlertmanagerWrapper(amSource),
+        wrapper: createAlertmanagerWrapper(UNRESOLVED_ALERTMANAGER_SOURCE),
       });
 
       expect(isLoading(result.current)).toBe(true);

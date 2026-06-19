@@ -47,6 +47,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-25,kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-05-22,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
+2026-06-18,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-31,kubernetesShortURLs,GA,@grafana/grafana-app-platform-squad,false,true,false
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
@@ -65,7 +66,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourcesApiServerEnableResourceEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasourcesApiserverEnableResourceEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/data-sources-plugins,false,false,false
-2023-10-12,cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 2025-11-13,alertingUIUseBackendFilters,preview,@grafana/alerting-squad,false,false,false
@@ -236,7 +236,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
-2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
@@ -248,7 +247,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
 2025-07-31,restrictedPluginApis,GA,@grafana/grafana-catalog,false,false,true
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
-2025-07-31,newLogContext,experimental,@grafana/observability-logs,false,false,true
+2025-07-31,newLogContext,GA,@grafana/observability-logs,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2025-07-31,teamFolders,preview,@grafana/grafana-frontend-navigation,false,false,false
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
@@ -314,7 +313,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,alertingNotificationHistoryGlobal,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryTriage,experimental,@grafana/alerting-squad,false,false,false
 2026-05-22,alertingNotificationHistoryDetail,experimental,@grafana/alerting-squad,false,false,false
-2026-05-22,react19,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-05-22,react19,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,frontendServiceUseSettingsService,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,frontendService.settingsSourceFilter,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
@@ -323,6 +322,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
+2026-05-14,grafana.viewPanelPane,experimental,@grafana/dashboards-squad,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
@@ -369,3 +369,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-27,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-06-12,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-06-09,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
