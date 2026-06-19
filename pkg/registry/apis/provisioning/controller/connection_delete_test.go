@@ -153,3 +153,72 @@ func TestConnectionController_handleDelete(t *testing.T) {
 		require.NotNil(t, gotPatch)
 	})
 }
+
+func TestConnectionController_reconcileFinalizer(t *testing.T) {
+	const (
+		namespace = "default"
+		connName  = "test-conn"
+	)
+	conn := func(finalizers ...string) *provisioning.Connection {
+		return &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace, Finalizers: finalizers},
+		}
+	}
+
+	newController := func(gotPatch *[]byte, repos ...*provisioning.Repository) *ConnectionController {
+		return &ConnectionController{
+			repoLister: newRepoListerWith(t, repos...),
+			client: &mockProvisioningV0alpha1Interface{
+				connectionsFunc: func(string) client.ConnectionInterface {
+					return mockConnectionInterface{patchFunc: func(_ context.Context, _ string, _ types.PatchType, data []byte, _ metav1.PatchOptions, _ ...string) (*provisioning.Connection, error) {
+						*gotPatch = data
+						return &provisioning.Connection{}, nil
+					}}
+				},
+			},
+			logger: logging.DefaultLogger,
+		}
+	}
+
+	t.Run("adds finalizer when a repository references the connection", func(t *testing.T) {
+		var gotPatch []byte
+		cc := newController(&gotPatch, repoForConnection("repo-1", namespace, connName))
+
+		changed, err := cc.reconcileFinalizer(context.Background(), conn())
+		require.NoError(t, err)
+		assert.True(t, changed)
+		require.NotNil(t, gotPatch)
+		assert.Contains(t, string(gotPatch), connection.ReferencedByRepositoriesFinalizer)
+	})
+
+	t.Run("no-op when referenced and finalizer already present", func(t *testing.T) {
+		var gotPatch []byte
+		cc := newController(&gotPatch, repoForConnection("repo-1", namespace, connName))
+
+		changed, err := cc.reconcileFinalizer(context.Background(), conn(connection.ReferencedByRepositoriesFinalizer))
+		require.NoError(t, err)
+		assert.False(t, changed)
+		assert.Nil(t, gotPatch, "should not patch when already in desired state")
+	})
+
+	t.Run("removes finalizer when no repository references the connection", func(t *testing.T) {
+		var gotPatch []byte
+		cc := newController(&gotPatch) // no repos
+
+		changed, err := cc.reconcileFinalizer(context.Background(), conn(connection.ReferencedByRepositoriesFinalizer))
+		require.NoError(t, err)
+		assert.True(t, changed)
+		require.NotNil(t, gotPatch)
+		assert.Contains(t, string(gotPatch), `"path":"/metadata/finalizers","value":[]`)
+	})
+
+	t.Run("no-op when unreferenced and finalizer absent", func(t *testing.T) {
+		var gotPatch []byte
+		cc := newController(&gotPatch, repoForConnection("repo-other", namespace, "another-conn"))
+
+		changed, err := cc.reconcileFinalizer(context.Background(), conn())
+		require.NoError(t, err)
+		assert.False(t, changed)
+		assert.Nil(t, gotPatch)
+	})
+}

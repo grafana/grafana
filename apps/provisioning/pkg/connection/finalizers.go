@@ -10,6 +10,8 @@ package connection
 // referencing repository's finalizers may still need the connection's
 // credentials (for example to refresh a token and clean up a webhook).
 //
-// The connection controller removes this finalizer — allowing the API server to
-// complete the deletion — once no referencing repositories remain.
+// The connection controller manages this finalizer: it adds it only while a
+// repository references the connection and removes it once none remain. An
+// unreferenced connection never carries the finalizer and so deletes
+// synchronously.
 const ReferencedByRepositoriesFinalizer = "await-referencing-repositories"

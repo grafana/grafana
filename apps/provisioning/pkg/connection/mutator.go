@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"slices"
 	"sync"
 	"time"
 
@@ -43,16 +42,6 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	namePrefix := fmt.Sprintf("%s-", c.Spec.Type)
 	if a.GetOperation() == admission.Create && c.GetName() == "" {
 		c.SetName(cmp.Or(c.GetGenerateName(), namePrefix) + generateShortUID())
-	}
-
-	// Ensure the finalizer is present on connections that are not being deleted, so
-	// deletion is gated until no repository references the connection. The guard on
-	// DeletionTimestamp is what lets the controller's finalizer-removal patch stick:
-	// once deletion has started we must not re-add the finalizer.
-	if c.DeletionTimestamp == nil || c.DeletionTimestamp.IsZero() {
-		if !slices.Contains(c.Finalizers, ReferencedByRepositoriesFinalizer) {
-			c.Finalizers = append(c.Finalizers, ReferencedByRepositoriesFinalizer)
-		}
 	}
 
 	return m.factory.Mutate(ctx, c)

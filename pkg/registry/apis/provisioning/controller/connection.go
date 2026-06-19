@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -32,10 +33,12 @@ const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
-	// connectionDeleteRequeueDelay is how long to wait before re-checking whether
+	// connectionDeleteRequeueDelay is the backstop interval for re-checking whether
 	// the repositories that reference a connection being deleted have finished
-	// terminating, so its finalizer can be removed.
-	connectionDeleteRequeueDelay = 5 * time.Second
+	// terminating, so its finalizer can be removed. Repository deletions also
+	// enqueue the connection directly (see enqueueConnectionForRepo), so this is a
+	// safety net rather than the primary trigger.
+	connectionDeleteRequeueDelay = 10 * time.Second
 )
 
 type connectionQueueItem struct {
@@ -113,6 +116,20 @@ func NewConnectionController(
 		return nil, err
 	}
 
+	// React to repository changes so the connection's finalizer is kept in sync
+	// with whether any repository references it, and so a connection being deleted
+	// is reaped promptly once its last referencing repository is gone.
+	_, err = repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: cc.enqueueConnectionForRepo,
+		UpdateFunc: func(_, newObj interface{}) {
+			cc.enqueueConnectionForRepo(newObj)
+		},
+		DeleteFunc: cc.enqueueConnectionForRepo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	cc.processFn = cc.process
 
 	return cc, nil
@@ -125,6 +142,29 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 		return
 	}
 	cc.queue.Add(&connectionQueueItem{key: key})
+}
+
+// enqueueConnectionForRepo enqueues the connection referenced by a repository so
+// that repository add/update/delete events drive the connection's finalizer
+// reconciliation.
+func (cc *ConnectionController) enqueueConnectionForRepo(obj interface{}) {
+	repo, ok := obj.(*provisioning.Repository)
+	if !ok {
+		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+		if !ok {
+			return
+		}
+		repo, ok = tombstone.Obj.(*provisioning.Repository)
+		if !ok {
+			return
+		}
+	}
+
+	connName := repo.ConnectionName()
+	if connName == "" {
+		return
+	}
+	cc.queue.Add(&connectionQueueItem{key: repo.GetNamespace() + "/" + connName})
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -244,6 +284,17 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
+	// Keep the finalizer in sync with whether any repository references this
+	// connection. If this changed the connection, stop here: the patch re-enqueues
+	// the connection, and the next pass reconciles health/token against fresh state.
+	changed, err := cc.reconcileFinalizer(ctx, conn)
+	if err != nil {
+		return err
+	}
+	if changed {
+		return nil
+	}
+
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 
@@ -339,6 +390,58 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
+}
+
+// reconcileFinalizer ensures the connection carries the referencing-repositories
+// finalizer if and only if at least one repository references it. Keeping the
+// finalizer off unreferenced connections lets them delete synchronously; it is
+// present only while a referencing repository exists, which is exactly the window
+// where the connection must be gated from removal so a terminating repository's
+// own finalizers can still complete. It returns true if it patched the connection.
+func (cc *ConnectionController) reconcileFinalizer(ctx context.Context, conn *provisioning.Connection) (bool, error) {
+	repos, err := cc.repoLister.Repositories(conn.GetNamespace()).List(labels.Everything())
+	if err != nil {
+		return false, fmt.Errorf("list repositories for connection %q: %w", conn.GetName(), err)
+	}
+
+	var referenced bool
+	for _, repo := range repos {
+		if repo.ConnectionName() == conn.GetName() {
+			referenced = true
+			break
+		}
+	}
+
+	has := slices.Contains(conn.Finalizers, connection.ReferencedByRepositoriesFinalizer)
+	switch {
+	case referenced && !has:
+		return true, cc.setFinalizers(ctx, conn, append(slices.Clone(conn.Finalizers), connection.ReferencedByRepositoriesFinalizer))
+	case !referenced && has:
+		return true, cc.setFinalizers(ctx, conn, slices.DeleteFunc(slices.Clone(conn.Finalizers), func(f string) bool {
+			return f == connection.ReferencedByRepositoriesFinalizer
+		}))
+	default:
+		return false, nil
+	}
+}
+
+// setFinalizers replaces the connection's finalizers via a JSON patch, retrying on
+// optimistic-concurrency conflicts (the apiserver turns this into a
+// read-modify-write with PreviousRV set, so concurrent writes race with it).
+func (cc *ConnectionController) setFinalizers(ctx context.Context, conn *provisioning.Connection, finalizers []string) error {
+	value, err := json.Marshal(finalizers)
+	if err != nil {
+		return err
+	}
+	// "add" creates the member if absent and replaces it otherwise.
+	patch := fmt.Appendf(nil, `[{"op":"add","path":"/metadata/finalizers","value":%s}]`, value)
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		_, err := cc.client.Connections(conn.GetNamespace()).
+			Patch(ctx, conn.GetName(), types.JSONPatchType, patch, metav1.PatchOptions{
+				FieldManager: "provisioning-connection-controller",
+			})
+		return err
+	})
 }
 
 // handleDelete gates connection deletion on its referencing repositories.

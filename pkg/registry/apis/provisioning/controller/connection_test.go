@@ -1226,6 +1226,7 @@ func TestConnectionController_process(t *testing.T) {
 			mockLister, mockHealthChecker, mockStatusPatcher, mockFactory := tt.setupMocks()
 			cc := &ConnectionController{
 				connLister:        mockLister,
+				repoLister:        newRepoListerWith(t),
 				healthChecker:     mockHealthChecker,
 				statusPatcher:     mockStatusPatcher,
 				connectionFactory: mockFactory,
@@ -1391,6 +1392,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			// Create controller
 			cc := &ConnectionController{
 				connLister:        mockLister,
+				repoLister:        newRepoListerWith(t),
 				connectionFactory: mockFactory,
 				healthChecker:     mockHealthChecker,
 				connSynced:        func() bool { return true },

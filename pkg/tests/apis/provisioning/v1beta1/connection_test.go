@@ -3,7 +3,6 @@ package v1beta1
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -445,11 +444,8 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 	err = client.Resource.Delete(ctx, "test-delete-connection", metav1.DeleteOptions{})
 	require.NoError(t, err)
 
-	// Verify it's deleted. Deletion is gated by a finalizer that the connection
-	// controller removes once no repository references the connection, so the
-	// object is removed asynchronously rather than synchronously on DELETE.
-	require.Eventually(t, func() bool {
-		_, err := client.Resource.Get(ctx, "test-delete-connection", metav1.GetOptions{})
-		return apierrors.IsNotFound(err)
-	}, 10*time.Second, 100*time.Millisecond, "Expected NotFound error after deletion")
+	// Verify it's deleted
+	_, err = client.Resource.Get(ctx, "test-delete-connection", metav1.GetOptions{})
+	require.Error(t, err)
+	require.True(t, apierrors.IsNotFound(err), "Expected NotFound error after deletion")
 }
