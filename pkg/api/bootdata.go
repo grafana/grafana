@@ -126,7 +126,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	c, span := hs.injectSpan(c, "api.getFrontendSettings")
 	defer span.End()
 
-	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg, hs.License)
+	frontendSettings, err := frontendsettings.GetBaseFrontendSettings(c, hs.Cfg, hs.License, hs.pluginsCDNService)
 
 	if err != nil {
 		return nil, err
@@ -248,15 +248,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagScopeFilters) {
 		frontendSettings.ListScopesEndpoint = hs.Cfg.ScopesListScopesURL
 		frontendSettings.ListDashboardScopesEndpoint = hs.Cfg.ScopesListDashboardsURL
-	}
-
-	// [TODO] Move back to GetBaseFrontendSettings
-	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
-		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
-		if err != nil {
-			return nil, fmt.Errorf("plugins cdn base url: %w", err)
-		}
-		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
 	return frontendSettings, nil

@@ -11,6 +11,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -204,11 +206,17 @@ func TestNewFSRequestConfig(t *testing.T) {
 		return cfg
 	}
 
+	newPluginsCDN := func() *pluginscdn.Service {
+		return pluginscdn.ProvideService(&config.PluginManagementCfg{
+			PluginsCDNURLTemplate: "https://cdn.example.com",
+		})
+	}
+
 	t.Run("does not build full frontend settings when flag disabled", func(t *testing.T) {
 		cfg := newCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
-		config, err := NewFSRequestConfig(context.Background(), cfg, license, false)
+		config, err := NewFSRequestConfig(context.Background(), cfg, license, newPluginsCDN(), false)
 		require.NoError(t, err)
 
 		assert.Nil(t, config.FullFrontendSettings)
@@ -227,10 +235,12 @@ func TestNewFSRequestConfig(t *testing.T) {
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)
 
-		config, err := NewFSRequestConfig(ctx, cfg, license, true)
+		config, err := NewFSRequestConfig(ctx, cfg, license, newPluginsCDN(), true)
 		require.NoError(t, err)
 
 		require.NotNil(t, config.FullFrontendSettings)
 		assert.Equal(t, "https://grafana.example.com", config.FullFrontendSettings.AppUrl)
+		// The plugins CDN base URL is sourced from the plugins CDN service.
+		assert.Equal(t, "https://cdn.example.com", config.FullFrontendSettings.PluginsCDNBaseURL)
 	})
 }
