@@ -27,11 +27,14 @@ type ConnectionSecrets struct {
 	Token      common.RawSecureValue
 }
 
-// GithubConnection exposes the GitHub-specific parameters a connection needs.
-type GithubConnection interface {
+// ConnectionConfig exposes the GitHub parameters a connection needs. The github.com
+// implementation (config) reads them from spec.Github; GitHub Enterprise injects its
+// own implementation via NewConnectionWithCustomConfig.
+//
+//go:generate mockery --name ConnectionConfig --structname MockConnectionConfig --inpackage --filename connectionconfig_mock.go --with-expecter
+type ConnectionConfig interface {
 	AppID() string
 	InstallationID() string
-	InstallationURL() string
 	CustomServerURL() string
 }
 
@@ -39,10 +42,10 @@ type Connection struct {
 	obj       *provisioning.Connection
 	ghFactory GithubFactory
 	secrets   ConnectionSecrets
-
-	params GithubConnection
+	cfg       ConnectionConfig
 }
 
+// NewConnection builds a github.com connection whose parameters are resolved from spec.Github.
 func NewConnection(
 	obj *provisioning.Connection,
 	factory GithubFactory,
@@ -52,42 +55,50 @@ func NewConnection(
 		obj:       obj,
 		ghFactory: factory,
 		secrets:   secrets,
+		cfg:       config{obj: obj},
 	}
 }
 
-// SetParams overrides how this connection resolves its GitHub-specific parameters.
-func (c *Connection) SetParams(p GithubConnection) {
-	c.params = p
-}
-
-func (c *Connection) ghParams() GithubConnection {
-	if c.params != nil {
-		return c.params
+// NewConnectionWithCustomConfig builds a connection whose GitHub parameters are resolved by
+// the given config. Used by GitHub Enterprise to read from spec.githubEnterprise.
+func NewConnectionWithCustomConfig(
+	obj *provisioning.Connection,
+	factory GithubFactory,
+	secrets ConnectionSecrets,
+	config ConnectionConfig,
+) Connection {
+	return Connection{
+		obj:       obj,
+		ghFactory: factory,
+		secrets:   secrets,
+		cfg:       config,
 	}
-	return c
 }
 
-func (c *Connection) AppID() string {
+// config is the github.com ConnectionConfig, reading from spec.github.
+type config struct {
+	obj *provisioning.Connection
+}
+
+func (c config) AppID() string {
 	if c.obj.Spec.GitHub == nil {
 		return ""
 	}
 	return c.obj.Spec.GitHub.AppID
 }
 
-func (c *Connection) InstallationID() string {
+func (c config) InstallationID() string {
 	if c.obj.Spec.GitHub == nil {
 		return ""
 	}
 	return c.obj.Spec.GitHub.InstallationID
 }
 
-func (c *Connection) InstallationURL() string {
-	return fmt.Sprintf("https://github.com/settings/installations/%s", c.ghParams().InstallationID())
-}
-
-func (c *Connection) CustomServerURL() string {
+func (c config) CustomServerURL() string {
 	return ""
 }
+
+var _ ConnectionConfig = config{}
 
 // Test validates the appID and installationID against the given github token.
 func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error) {
@@ -97,10 +108,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	if c.secrets.Token.IsZero() || !c.obj.Secure.PrivateKey.Create.IsZero() {
 		// In case the token is not generated, we create one on the fly
 		// to testing that the other fields are valid.
-		token, err := GenerateJWTToken(c.ghParams().AppID(), c.secrets.PrivateKey)
+		token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
-			logger.Info("JWT token generation failed during connection test", "appID", c.ghParams().AppID())
+			logger.Info("JWT token generation failed during connection test", "appID", c.cfg.AppID())
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -124,7 +135,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 		if err != nil {
 			// Error parsing JWT token means the given private key is invalid
-			logger.Info("JWT token parsing failed during connection test", "appID", c.ghParams().AppID())
+			logger.Info("JWT token parsing failed during connection test", "appID", c.cfg.AppID())
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -141,8 +152,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		}
-		if claims.Issuer != c.ghParams().AppID() {
-			logger.Info("JWT issuer mismatch", "expected", c.ghParams().AppID(), "got", claims.Issuer)
+		if claims.Issuer != c.cfg.AppID() {
+			logger.Info("JWT issuer mismatch", "expected", c.cfg.AppID(), "got", claims.Issuer)
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -155,7 +166,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "invalid app ID",
-						BadValue: c.ghParams().AppID(),
+						BadValue: c.cfg.AppID(),
 					},
 				},
 			}, nil
@@ -185,7 +196,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "verify appID is correct",
-						BadValue: c.ghParams().AppID(),
+						BadValue: c.cfg.AppID(),
 					},
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
@@ -207,7 +218,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueNotFound,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "app not found",
-						BadValue: c.ghParams().AppID(),
+						BadValue: c.cfg.AppID(),
 					},
 				},
 			}, nil
@@ -240,7 +251,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 						Detail:   "verify appID is correct",
-						BadValue: c.ghParams().AppID(),
+						BadValue: c.cfg.AppID(),
 					},
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
@@ -252,8 +263,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}
 	}
 
-	if fmt.Sprintf("%d", app.ID) != c.ghParams().AppID() {
-		logger.Info("app ID mismatch", "expected", c.ghParams().AppID(), "got", app.ID)
+	if fmt.Sprintf("%d", app.ID) != c.cfg.AppID() {
+		logger.Info("app ID mismatch", "expected", c.cfg.AppID(), "got", app.ID)
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
@@ -266,16 +277,16 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					Type:     metav1.CauseTypeFieldValueInvalid,
 					Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
 					Detail:   "appID mismatch",
-					BadValue: c.ghParams().AppID(),
+					BadValue: c.cfg.AppID(),
 				},
 			},
 		}, nil
 	}
 
 	// Validate the app's permissions.
-	permissionErrors := c.validatePermissions(permissionTargetApp, c.ghParams().AppID(), app.Permissions)
+	permissionErrors := c.validatePermissions(permissionTargetApp, c.cfg.AppID(), app.Permissions)
 	if len(permissionErrors) > 0 {
-		logger.Info("GitHub App permission validation failed", "appID", c.ghParams().AppID(), "errorCount", len(permissionErrors))
+		logger.Info("GitHub App permission validation failed", "appID", c.cfg.AppID(), "errorCount", len(permissionErrors))
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: provisioning.APIVERSION,
@@ -287,9 +298,9 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}, nil
 	}
 
-	installation, err := ghClient.GetAppInstallation(ctx, c.ghParams().InstallationID())
+	installation, err := ghClient.GetAppInstallation(ctx, c.cfg.InstallationID())
 	if err != nil {
-		logger.Info("error getting app installation", "installationID", c.ghParams().InstallationID(), "error", err)
+		logger.Info("error getting app installation", "installationID", c.cfg.InstallationID(), "error", err)
 		// Check for specific error types
 		switch {
 		case errors.Is(err, ErrAuthentication):
@@ -305,7 +316,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   ErrAuthentication.Error(),
-						BadValue: c.ghParams().InstallationID(),
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -322,7 +333,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   "installation not found",
-						BadValue: c.ghParams().InstallationID(),
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -339,7 +350,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   ErrServiceUnavailable.Error(),
-						BadValue: c.ghParams().InstallationID(),
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -357,7 +368,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
 						Detail:   "invalid installation ID",
-						BadValue: c.ghParams().InstallationID(),
+						BadValue: c.cfg.InstallationID(),
 					},
 				},
 			}, nil
@@ -367,7 +378,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// Validate that the installation has accepted the required permissions.
 	// Installation permissions may lag behind App permissions when the App owner added new
 	// permissions but the installation owner has not yet accepted them on GitHub.
-	installationPermErrors := c.validatePermissions(permissionTargetInstallation, c.ghParams().InstallationID(), installation.Permissions)
+	installationPermErrors := c.validatePermissions(permissionTargetInstallation, c.cfg.InstallationID(), installation.Permissions)
 	if len(installationPermErrors) > 0 {
 		return &provisioning.TestResults{
 			TypeMeta: metav1.TypeMeta{
@@ -411,7 +422,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
 	// Create an installation access token scoped to this repository
-	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.ghParams().InstallationID(), repoName)
+	installationToken, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), repoName)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrUnprocessableEntity):
@@ -440,7 +451,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	// Create the GitHub client with the JWT token
 	ghClient := c.ghFactory.New(ctx, c.secrets.Token)
 
-	token, err := ghClient.CreateInstallationAccessToken(ctx, c.ghParams().InstallationID(), "")
+	token, err := ghClient.CreateInstallationAccessToken(ctx, c.cfg.InstallationID(), "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
@@ -471,7 +482,7 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
-	return GenerateJWTToken(c.ghParams().AppID(), c.secrets.PrivateKey)
+	return GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 }
 
 // TokenCreationTime returns when the underlying token has been created.
@@ -503,7 +514,7 @@ func (c *Connection) TokenValid(_ context.Context) bool {
 	}
 
 	// For the token to be valid, the issuer must be equal to the object appID
-	return claims.Issuer == c.ghParams().AppID()
+	return claims.Issuer == c.cfg.AppID()
 }
 
 type permissionTarget int
@@ -569,7 +580,7 @@ func (c *Connection) validatePermissions(target permissionTarget, id string, per
 					name,
 					toAppPermissionString(perm.required),
 					toAppPermissionString(perm.current),
-					c.ghParams().InstallationURL(),
+					c.obj.Spec.URL,
 				)
 				fieldPath = field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String()
 			}
@@ -602,5 +613,4 @@ func toAppPermissionString(permissions Permission) string {
 var (
 	_ connection.Connection      = (*Connection)(nil)
 	_ connection.TokenConnection = (*Connection)(nil)
-	_ GithubConnection           = (*Connection)(nil)
 )
