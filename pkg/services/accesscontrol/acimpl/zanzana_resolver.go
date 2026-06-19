@@ -30,7 +30,7 @@ var zLogger = log.New("accesscontrol.zanzana_resolver")
 type ZanzanaPermissionResolver struct {
 	client        zanzana.Client
 	userSvc       user.Service
-	scopeResolver *mode5ScopeResolver
+	scopeResolver *uidToIDResolver
 	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
 	// team memberships are sent as Zanzana contextual tuples for the current user, so the
 	// merged permissions match what the forward Check path (which uses the groups claim)
@@ -48,7 +48,7 @@ func NewZanzanaPermissionResolver(
 		client:            client,
 		userSvc:           userSvc,
 		useExternalGroups: useExternalGroups,
-		scopeResolver:     newMode5ScopeResolver(configProvider),
+		scopeResolver:     newUIDToIDResolver(configProvider),
 	}
 }
 
@@ -348,14 +348,17 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	// Items are objects of the listed resource type, scoped by that resource.
 	// Team actions need UID→ID translation so scopes match legacy RBAC (teams:id:<n>).
 	for _, item := range resp.Items {
-		itemScope := resourceScope(resource, item)
+		var itemScope string
 		if isTeamRBACAction(action) {
 			resolved, err := r.resolveTeamScope(ctx, namespace, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
 			} else {
 				itemScope = resolved
 			}
+		} else {
+			itemScope = resourceScope(resource, item)
 		}
 		appendIfMatches(ac.Permission{
 			Action: action,
@@ -502,38 +505,29 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 	return MergePermissions(legacy, zPerms)
 }
 
-var (
-	teamGVR = schema.GroupVersionResource{
-		Group:    "iam.grafana.com",
-		Version:  "v0alpha1",
-		Resource: "teams",
-	}
-	userGVR = schema.GroupVersionResource{
-		Group:    "iam.grafana.com",
-		Version:  "v0alpha1",
-		Resource: "users",
-	}
-	serviceAccountGVR = schema.GroupVersionResource{
-		Group:    "iam.grafana.com",
-		Version:  "v0alpha1",
-		Resource: "serviceaccounts",
-	}
-)
+var teamGVR = schema.GroupVersionResource{
+	Group:    "iam.grafana.com",
+	Version:  "v0alpha1",
+	Resource: "teams",
+}
 
-type mode5ScopeResolver struct {
+type uidToIDResolver struct {
+	mu             sync.RWMutex
 	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
 	configProvider apiserver.RestConfigProvider
 }
 
-func newMode5ScopeResolver(configProvider apiserver.RestConfigProvider) *mode5ScopeResolver {
-	return &mode5ScopeResolver{
+func newUIDToIDResolver(configProvider apiserver.RestConfigProvider) *uidToIDResolver {
+	return &uidToIDResolver{
 		clients:        make(map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface),
 		configProvider: configProvider,
 	}
 }
 
-func (r *mode5ScopeResolver) getDynamicClient(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+func (r *uidToIDResolver) getDynamicClient(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	r.mu.RLock()
 	cli, ok := r.clients[gvr]
+	r.mu.RUnlock()
 	if ok {
 		return cli.Namespace(nsInfo.Value), nil
 	}
@@ -552,13 +546,16 @@ func (r *mode5ScopeResolver) getDynamicClient(ctx context.Context, nsInfo types.
 		return nil, err
 	}
 	cli = dyn.Resource(gvr)
+
+	r.mu.Lock()
 	r.clients[gvr] = cli
+	r.mu.Unlock()
 
 	return cli.Namespace(nsInfo.Value), nil
 }
 
-func (r *mode5ScopeResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
-	cli, err := r.getDynamicClient(ctx, nsInfo, teamGVR)
+func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	cli, err := r.getDynamicClient(ctx, nsInfo, gvr)
 	if err != nil {
 		return 0, err
 	}
@@ -576,14 +573,6 @@ func (r *mode5ScopeResolver) getObjectID(ctx context.Context, nsInfo types.Names
 	return meta.GetDeprecatedInternalID(), nil // nolint:staticcheck
 }
 
-func (r *mode5ScopeResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
 	return r.getObjectID(ctx, nsInfo, teamGVR, uid)
-}
-
-func (r *mode5ScopeResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
-	return r.getObjectID(ctx, nsInfo, userGVR, uid)
-}
-
-func (r *mode5ScopeResolver) GetServiceAccountIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
-	return r.getObjectID(ctx, nsInfo, serviceAccountGVR, uid)
 }
