@@ -156,18 +156,6 @@ func orgIDForLinks(namespace string) int64 {
 	return ns.OrgID
 }
 
-// addOrgID pins the orgId query param on a link so it opens in the repository's
-// org. The OrgRedirect middleware switches the viewer's active org on click,
-// which is what makes the dashboard resolve in multi-org setups.
-func addOrgID(u *url.URL, orgID int64) {
-	if orgID < 1 {
-		return
-	}
-	q := u.Query()
-	q.Set("orgId", strconv.FormatInt(orgID, 10))
-	u.RawQuery = q.Encode()
-}
-
 func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, screenshotBaseURL string, orgID int64, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
 		return e.evaluateDeletedFile(ctx, repo, baseURL, orgID, change, parser)
@@ -225,7 +213,11 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
-			addOrgID(grafanaURL, orgID)
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 
@@ -287,7 +279,11 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 		}
 		if info.Parsed.Existing != nil {
 			grafanaURL := urlBuilder.JoinPath("d", obj.GetName(), slugify.Slugify(info.Title))
-			addOrgID(grafanaURL, orgID)
+			if orgID > 0 {
+				query := url.Values{}
+				query.Set("orgId", strconv.FormatInt(orgID, 10))
+				grafanaURL.RawQuery = query.Encode()
+			}
 			info.GrafanaURL = grafanaURL.String()
 		}
 	}
