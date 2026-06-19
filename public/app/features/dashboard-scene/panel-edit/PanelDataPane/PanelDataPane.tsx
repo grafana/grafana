@@ -4,6 +4,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -67,7 +68,8 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const showTryNewEditor = useBooleanFlagValue('queryEditorNext', false);
 
   if (!tabs || !tabs.length) {
@@ -120,7 +122,7 @@ export function shouldShowAlertingTab(pluginId: string) {
   return isGraph || isTimeseries;
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, visualRefreshEnabled: boolean) {
   return {
     dataPane: css({
       display: 'flex',
@@ -130,15 +132,20 @@ function getStyles(theme: GrafanaTheme2) {
       height: '100%',
       width: '100%',
     }),
-    tabBorder: css({
-      background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderLeft: 'none',
-      borderBottom: 'none',
-      borderTopRightRadius: theme.shape.radius.lg,
-      flexGrow: 1,
-      overflow: 'hidden',
-    }),
+    tabBorder: css(
+      {
+        background: theme.colors.background.primary,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderLeft: 'none',
+        borderBottom: 'none',
+        borderTopRightRadius: theme.shape.radius.lg,
+        flexGrow: 1,
+        overflow: 'hidden',
+      },
+      visualRefreshEnabled && {
+        borderBottomLeftRadius: theme.shape.radius.lg,
+      }
+    ),
     tabContent: css({
       padding: theme.spacing(2),
       height: '100%',
