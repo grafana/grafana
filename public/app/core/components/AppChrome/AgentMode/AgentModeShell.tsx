@@ -1,6 +1,3 @@
-// PoC stub UI — copy here is throwaway and replaced by the real assistant plugin
-// surfaces in Phase 2, so it intentionally skips i18n.
-/* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { css } from '@emotion/css';
 import { type RefCallback } from 'react';
 
@@ -26,14 +23,6 @@ interface Props {
   // body just exposes it; the page itself stays mounted in AppChrome's React tree.
   outletRef: RefCallback<HTMLDivElement>;
 }
-
-/**
- * Phase 1 PoC shell for "agent mode": a fullscreen `conv list | chat | canvas`
- * layout that wraps the live Grafana page (rendered into the Platform tab via a
- * portal owned by AppChrome). Chat/canvas content here is a stub — Phase 2 swaps it
- * for the real assistant plugin surfaces. Kept in a dedicated file to minimize the
- * diff in AppChrome.tsx. See internal/docs/agentic-mode-poc.md (assistant repo).
- */
 export function AgentModeShell({ outletRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);

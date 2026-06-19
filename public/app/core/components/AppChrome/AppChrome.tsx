@@ -18,6 +18,7 @@ import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboard
 
 import { AgentModePlatformBar } from './AgentMode/AgentModePlatformBar';
 import { AgentModeShell } from './AgentMode/AgentModeShell';
+import { useAgentMode } from './AgentMode/useAgentMode';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import {
@@ -44,9 +45,6 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
-
-  // PoC: hardcoded on. Phase 2 -> gate behind `assistantAgentMode` feature flag.
-  const isAgentModeEnabled = true;
 
   // The single DOM node the live page (`children`) is portaled into. It is swapped
   // between the normal <main> and the agent-mode Platform tab. Because `children`
@@ -100,18 +98,7 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  // `?agentMode=1` is a one-shot request to enter agent mode (e.g. from the assistant
-  // plugin's "Open in Workspace"). Consume it: enter agent mode and clear the param so
-  // it doesn't re-trigger or leak onto subsequent platform navigation.
-  useEffect(() => {
-    const queryParams = locationSearchToObject(search);
-    if (queryParams.agentMode === '1' || queryParams.agentMode === true) {
-      chrome.setAgentMode(true);
-      locationService.partial({ agentMode: null });
-    }
-  }, [chrome, search]);
-
-  const agentMode = isAgentModeEnabled && Boolean(state.agentMode);
+  const agentMode = useAgentMode(search);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
