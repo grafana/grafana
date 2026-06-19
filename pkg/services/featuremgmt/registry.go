@@ -324,14 +324,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "dashgpt",
-			Description: "Enable AI powered features in dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "aiGeneratedDashboardChanges",
 			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
 			Stage:       FeatureStageExperimental,
