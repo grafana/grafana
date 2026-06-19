@@ -709,7 +709,7 @@ func (s *UserSync) shouldSyncExternalAuthInfo(ctx context.Context) bool {
 }
 
 func mergeExternalAuthInfo(existing []user.ExternalAuthInfo, id *authn.Identity) ([]user.ExternalAuthInfo, bool) {
-	if id.AuthenticatedBy == "" {
+	if id.AuthenticatedBy == "" || id.AuthenticatedBy == login.PasswordAuthModule {
 		return existing, false
 	}
 

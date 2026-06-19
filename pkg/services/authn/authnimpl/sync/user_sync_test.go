@@ -2589,6 +2589,12 @@ func TestMergeExternalAuthInfo(t *testing.T) {
 		assert.Equal(t, existing, got)
 	})
 
+	t.Run("does not record the internal password auth module", func(t *testing.T) {
+		got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: login.PasswordAuthModule, AuthID: "1"})
+		assert.False(t, changed)
+		assert.Nil(t, got)
+	})
+
 	t.Run("appends a new connection", func(t *testing.T) {
 		got, changed := mergeExternalAuthInfo(nil, authProxy)
 		assert.True(t, changed)
