@@ -27,6 +27,7 @@ import { VariableEditableElement } from '../settings/variables/VariableEditableE
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
 
+import { BatchAction } from './BatchAction';
 import { type DashboardEditPane } from './DashboardEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
@@ -186,6 +187,28 @@ export const dashboardEditActions = {
    */
   edit(props: DashboardEditActionEventPayload) {
     props.source.publishEvent(new DashboardEditActionEvent(props), true);
+  },
+
+  /**
+   * Groups every edit action performed inside `fn` into a single undo/redo unit.
+   *
+   * The BatchAction is dispatched like any other action (via `source`, which can be
+   * any object in the scene tree) so it lands on the undo stack; while it's the open
+   * (top, in-progress) entry the edit pane collects the actions performed inside `fn`
+   * into it. A single undo then reverses the whole group (in reverse order) and a
+   * single redo replays it (in order). Nested batches are flattened into the outer one.
+   */
+  batch(source: SceneObject, description: string, fn: () => void) {
+    const batch = new BatchAction(source, description);
+    batch.inProgress = true;
+
+    dashboardEditActions.edit(batch);
+
+    try {
+      fn();
+    } finally {
+      batch.inProgress = false;
+    }
   },
   /**
    * Helper for makeEdit that adds elements
