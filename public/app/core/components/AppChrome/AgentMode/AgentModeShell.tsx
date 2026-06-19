@@ -29,32 +29,13 @@ export function AgentModeShell({ outletRef }: Props) {
   const { component: PluginWorkspace, isLoading } =
     usePluginComponent<AgentWorkspaceProps>(AGENT_WORKSPACE_COMPONENT_ID);
 
+  if (!PluginWorkspace || isLoading) {
+    return null;
+  }
+
   return (
     <div className={styles.root}>
-      {PluginWorkspace ? (
-        <PluginWorkspace registerPlatformHost={outletRef} onExitAgentMode={() => chrome.setAgentMode(false)} />
-      ) : (
-        <div className={styles.panes}>
-          <aside className={styles.chatStub}>
-            <ToolbarButton icon="arrow-left" onClick={() => chrome.setAgentMode(false)}>
-              Back to platform
-            </ToolbarButton>
-            <div>{isLoading ? 'loading assistant…' : 'assistant plugin unavailable'}</div>
-            {/* Fallback stub — also proves locationService drives the portaled outlet. */}
-            <ToolbarButton onClick={() => locationService.push('/dashboards')}>→ dashboards</ToolbarButton>
-            <ToolbarButton onClick={() => locationService.push('/explore')}>→ explore</ToolbarButton>
-          </aside>
-          <section className={styles.canvas}>
-            <div className={styles.tabStrip}>
-              <span>Platform</span>
-              <span className={styles.tabDisabled}>Chart</span>
-              <span className={styles.tabDisabled}>Hypothesis</span>
-              <span className={styles.tabDisabled}>Report</span>
-            </div>
-            <div className={styles.platformTabHost} ref={outletRef} />
-          </section>
-        </div>
-      )}
+      <PluginWorkspace registerPlatformHost={outletRef} onExitAgentMode={() => chrome.setAgentMode(false)} />
     </div>
   );
 }
