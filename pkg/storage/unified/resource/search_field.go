@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"slices"
 	"strings"
 
@@ -224,12 +225,17 @@ type SearchFieldsProvider interface {
 	// when no preferred version has been registered.
 	PreferredVersion(group, resource string) string
 
-	// IndexAffectingHash returns a stable hex hash over every
-	// SearchFieldDefinition registered for (group, resource), across all
-	// versions. Only fields that change what gets indexed are mixed in:
-	// Name, Path, Type, Array, Capabilities (sorted), EmitZeroIfAbsent,
-	// CopyFromStandard. Description is intentionally excluded so
-	// presentation-only edits do not trigger a rebuild.
+	// IndexAffectingHash returns a stable hex hash that mixes both the
+	// shared StandardSearchFieldDefinitions and every per-(group, resource)
+	// SearchFieldDefinition across all registered versions. Only fields
+	// that change what gets indexed contribute: Name, Path, Type, Array,
+	// Capabilities (sorted), EmitZeroIfAbsent, CopyFromStandard.
+	// Description is intentionally excluded so presentation-only edits do
+	// not trigger a rebuild.
+	//
+	// Including the standard set means a change to the shared mapping
+	// shifts every registered kind's hash, which is the intended trigger
+	// for an automatic rebuild via IndexBuildInfo.SearchFieldsHash.
 	//
 	// Returns the empty string when no SearchFieldDefinitions are
 	// registered for the (group, resource). Callers treat "" as "no
@@ -248,6 +254,11 @@ type mapProvider struct {
 // NewMapProvider returns a SearchFieldsProvider backed by the given in-memory
 // maps. Both arguments may be nil. The provider takes ownership of the maps;
 // callers must not mutate them after the call.
+//
+// Panics if any SearchFieldDefinition violates validateSearchFieldDefinitions
+// (e.g. SearchCapabilitySort declared on a numeric or boolean type). Such a
+// declaration is a programmer error in static configuration; the process
+// cannot serve correct results with an invalid mapping.
 func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefinition, preferredVersions map[schema.GroupResource]string) SearchFieldsProvider {
 	if fields == nil {
 		fields = map[schema.GroupVersionResource][]SearchFieldDefinition{}
@@ -255,10 +266,42 @@ func NewMapProvider(fields map[schema.GroupVersionResource][]SearchFieldDefiniti
 	if preferredVersions == nil {
 		preferredVersions = map[schema.GroupResource]string{}
 	}
+	for gvr, sfds := range fields {
+		if err := validateSearchFieldDefinitions(sfds); err != nil {
+			panic("invalid SearchFieldDefinitions for " + gvr.String() + ": " + err.Error())
+		}
+	}
 	return &mapProvider{
 		fields:           fields,
 		preferredVersion: preferredVersions,
 	}
+}
+
+// sortableTypes lists SearchFieldTypes that can carry SearchCapabilitySort
+// under today's bleve mapper. The mapper emits a keyword/text mapping for
+// every field regardless of Type, so sort works only for fields whose
+// extracted value is already string-shaped. The allowlist is intentionally
+// minimal: extend it when a concrete consumer needs sort on a new type.
+var sortableTypes = []SearchFieldType{
+	SearchFieldTypeString,
+}
+
+// validateSearchFieldDefinitions returns a non-nil error when any declaration
+// uses a capability that the current bleve mapper cannot honour. The only
+// rule enforced today is that SearchCapabilitySort requires a string-mapped
+// Type; numeric and boolean fields would otherwise be sorted lexically
+// because the mapper does not emit numeric mappings yet.
+func validateSearchFieldDefinitions(sfds []SearchFieldDefinition) error {
+	var violations []string
+	for _, sfd := range sfds {
+		if slices.Contains(sfd.Capabilities, SearchCapabilitySort) && !slices.Contains(sortableTypes, sfd.Type) {
+			violations = append(violations, "field "+sfd.Name+": sort capability is not supported for type "+string(sfd.Type))
+		}
+	}
+	if len(violations) == 0 {
+		return nil
+	}
+	return errors.New(strings.Join(violations, "; "))
 }
 
 func (p *mapProvider) Fields(gvr schema.GroupVersionResource) []SearchFieldDefinition {
@@ -292,6 +335,39 @@ type hashableVersion struct {
 	Fields  []hashableField `json:"f"`
 }
 
+// hashablePayload is the canonical hash input. Standard search fields
+// (shared by every kind) are mixed in alongside per-(group, resource)
+// versioned fields so that changes to the standard set shift every kind's
+// hash and trigger a rebuild via the SearchFieldsHash check.
+type hashablePayload struct {
+	Standard []hashableField   `json:"s"`
+	Versions []hashableVersion `json:"v"`
+}
+
+// canonicalHashableFields normalises a SearchFieldDefinition slice into
+// hashableField form: capabilities sorted, fields sorted by name, only the
+// index-affecting subset retained.
+func canonicalHashableFields(sfds []SearchFieldDefinition) []hashableField {
+	fields := make([]hashableField, 0, len(sfds))
+	for _, sfd := range sfds {
+		caps := slices.Clone(sfd.Capabilities)
+		slices.Sort(caps)
+		fields = append(fields, hashableField{
+			Name:             sfd.Name,
+			Path:             sfd.Path,
+			Type:             sfd.Type,
+			Array:            sfd.Array,
+			Capabilities:     caps,
+			EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
+			CopyFromStandard: sfd.CopyFromStandard,
+		})
+	}
+	slices.SortFunc(fields, func(a, b hashableField) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return fields
+}
+
 func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 	var versions []string
 	for gvr := range p.fields {
@@ -304,28 +380,17 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 	}
 	slices.Sort(versions)
 
-	payload := make([]hashableVersion, 0, len(versions))
+	versionPayloads := make([]hashableVersion, 0, len(versions))
 	for _, v := range versions {
 		gvr := schema.GroupVersionResource{Group: group, Version: v, Resource: resource}
-		sfds := p.fields[gvr]
-		fields := make([]hashableField, 0, len(sfds))
-		for _, sfd := range sfds {
-			caps := slices.Clone(sfd.Capabilities)
-			slices.Sort(caps)
-			fields = append(fields, hashableField{
-				Name:             sfd.Name,
-				Path:             sfd.Path,
-				Type:             sfd.Type,
-				Array:            sfd.Array,
-				Capabilities:     caps,
-				EmitZeroIfAbsent: sfd.EmitZeroIfAbsent,
-				CopyFromStandard: sfd.CopyFromStandard,
-			})
-		}
-		slices.SortFunc(fields, func(a, b hashableField) int {
-			return strings.Compare(a.Name, b.Name)
+		versionPayloads = append(versionPayloads, hashableVersion{
+			Version: v,
+			Fields:  canonicalHashableFields(p.fields[gvr]),
 		})
-		payload = append(payload, hashableVersion{Version: v, Fields: fields})
+	}
+	payload := hashablePayload{
+		Standard: canonicalHashableFields(StandardSearchFieldDefinitions()),
+		Versions: versionPayloads,
 	}
 
 	// json.Marshal can only return a non-nil error for inputs it cannot
