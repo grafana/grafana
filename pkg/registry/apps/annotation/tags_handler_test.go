@@ -261,6 +261,7 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusForbidden, writer.code)
+		assert.Contains(t, writer.body.String(), "requires the annotations:read permission with the organization scope")
 		assert.NotContains(t, writer.body.String(), "secret-canary", "tag metadata must not be leaked on denial")
 	})
 

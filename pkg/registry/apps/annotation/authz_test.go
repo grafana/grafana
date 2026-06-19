@@ -366,6 +366,7 @@ func TestAuthorizeReadOrganizationAnnotations(t *testing.T) {
 		err := authorizeReadOrganizationAnnotations(ctx, ac, "default")
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, errReadOrgAnnotationsForbidden), "expected Forbidden, got %v", err)
+		assert.ErrorContains(t, err, "requires the annotations:read permission with the organization scope")
 	})
 
 	t.Run("unauthorized when no identity is present", func(t *testing.T) {

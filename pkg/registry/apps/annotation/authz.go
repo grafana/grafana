@@ -162,7 +162,7 @@ func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient auth
 		return errReadOrgAnnotationsAuthz.Errorf("annotation authz check failed: %w", err)
 	}
 	if !resp.Allowed {
-		return errReadOrgAnnotationsForbidden.Errorf("user is not allowed to read organization annotations")
+		return errReadOrgAnnotationsForbidden.Errorf("requires the annotations:read permission with the organization scope")
 	}
 	return nil
 }
