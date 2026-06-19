@@ -71,6 +71,12 @@ type FolderAPIBuilder struct {
 	// nothing ever removes, leaving the folder stuck terminating.
 	cascadeDeleteEnabled bool
 
+	// forceDeleteEnabled gates honoring gracePeriodSeconds=0 to bypass the empty-folder check on
+	// delete. It is true when kubernetesFolderForceDelete is on, or implied by cascadeDeleteEnabled
+	// (a non-empty folder can only be cascaded by first bypassing the empty check). Captured at boot
+	// alongside cascadeDeleteEnabled.
+	forceDeleteEnabled bool
+
 	// Legacy services -- these will not exist in the MT environment
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
@@ -203,6 +209,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 	}
 	b.registerPermissionHooks(unified)
 	b.cascadeDeleteEnabled = kubernetesFolderCascadeDeleteEnabled(context.Background())
+	// Cascade implies force: a non-empty folder can only be cascaded by bypassing the empty check.
+	b.forceDeleteEnabled = b.cascadeDeleteEnabled || kubernetesFolderForceDeleteEnabled(context.Background())
 	// Always wrap in finalizerStorage, even when cascade is disabled: folders created while it was
 	// enabled carry the finalizer durably, and the wrapper is what strips it so they can still be
 	// deleted. The wrapper gates cascade behavior on cascadeDeleteEnabled internally.
@@ -518,7 +526,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, b.cascadeDeleteEnabled)
+		return validateOnDelete(ctx, f, b.searcher, deleteOptions, b.forceDeleteEnabled, b.cascadeDeleteEnabled)
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {

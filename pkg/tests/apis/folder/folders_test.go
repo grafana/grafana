@@ -2771,3 +2771,73 @@ func TestIntegrationFolderDeleteStripsFinalizerWhenCascadeDisabled(t *testing.T)
 		assert.True(c, apierrors.IsNotFound(err), "folder should be deleted, not stuck terminating; got %v", err)
 	}, 10*time.Second, 200*time.Millisecond)
 }
+
+// TestIntegrationFolderForceDeleteWithoutCascade verifies the kubernetesFolderForceDelete feature in
+// isolation (cascade off): force-delete (gracePeriodSeconds=0) bypasses the empty-folder check and
+// deletes the folder *synchronously* -- no finalizer, no poller -- leaving contained resources
+// orphaned. This is the behavior provisioning cleanup relies on.
+func TestIntegrationFolderForceDeleteWithoutCascade(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	const cascadeDeleteFinalizer = "folder.grafana.app/cascade-delete"
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagKubernetesFolderForceDelete, // force only -- NOT cascade
+		},
+	})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	ctx := context.Background()
+
+	createFolder := func(t *testing.T, name, parentUID string) *unstructured.Unstructured {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{"spec": map[string]any{"title": name}}}
+		obj.SetName(name)
+		if parentUID != "" {
+			obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: parentUID})
+		}
+		created, err := client.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		require.NoError(t, err)
+		// Force delete must not stamp the cascade finalizer (that is cascade-delete's job).
+		require.NotContains(t, created.GetFinalizers(), cascadeDeleteFinalizer)
+		return created
+	}
+
+	const (
+		parentUID = "force-parent"
+		childUID  = "force-child"
+	)
+	createFolder(t, parentUID, "")
+	createFolder(t, childUID, parentUID)
+	t.Cleanup(func() {
+		zero := int64(0)
+		_ = client.Resource.Delete(ctx, childUID, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+		_ = client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{GracePeriodSeconds: &zero})
+	})
+
+	// A normal (non-force) delete of the non-empty parent is still rejected by the empty-folder check.
+	err := client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{})
+	require.Error(t, err, "non-force delete of a non-empty folder should be rejected")
+
+	// Force delete bypasses the empty check and removes the folder synchronously.
+	zero := int64(0)
+	require.NoError(t, client.Resource.Delete(ctx, parentUID, metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+	// Synchronous: the parent is gone immediately, with no finalizer/poller involved.
+	_, err = client.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "force-deleted folder should be gone immediately, got: %v", err)
+
+	// Force-only does not cascade: the child folder is orphaned, not deleted.
+	_, err = client.Resource.Get(ctx, childUID, metav1.GetOptions{})
+	require.NoError(t, err, "force delete without cascade must not delete child folders")
+}

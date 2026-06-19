@@ -1381,8 +1381,10 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
 			// bypassing the eventually-consistent "folder is empty" admission check.
 			// Normal (non-force) deletes still enforce the check, so test behavior
-			// outside cleanup is unchanged.
-			featuremgmt.FlagKubernetesFolderCascadeDelete,
+			// outside cleanup is unchanged. Force delete (not cascade delete) keeps
+			// deletion synchronous -- no finalizer/poller -- which is all cleanup needs,
+			// since it deletes folder contents separately.
+			featuremgmt.FlagKubernetesFolderForceDelete,
 		},
 		// Provisioning requires resources to be fully migrated to unified storage.
 		// Mode5 ensures reads/writes go to unified storage, and EnableMigration
@@ -1586,7 +1588,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 // catching up), so they get waitTimeoutCleanup.
 //
 // Folders are force-deleted (gracePeriodSeconds=0, enabled by
-// FlagKubernetesFolderCascadeDelete). The default folder delete is rejected
+// FlagKubernetesFolderForceDelete). The default folder delete is rejected
 // until the search index reflects that the folder is empty, and that index lag
 // is unbounded under SQLite write contention — repeatedly bumping the timeout
 // (see git history) only masks it. Cleanup deletes every folder anyway, so the

@@ -391,7 +391,16 @@ var (
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
-			Description:  "Enable folder.grafana.app cascade deletion: opt-in non-empty delete via gracePeriodSeconds=0. Until cascade reconciliation exists, deleting a non-empty folder removes only the folder and leaves child dashboards, nested folders, and other contained resources orphaned",
+			Description:  "Enable folder.grafana.app cascade deletion: deleting a non-empty folder (opt-in via gracePeriodSeconds=0) marks the subtree terminating via a finalizer and a poller drives it to completion, deleting nested folders and their contained dashboards, alert rules, and library elements. Implies kubernetesFolderForceDelete",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
+			Name:         "kubernetesFolderForceDelete",
+			Description:  "Enable folder.grafana.app force delete: honor gracePeriodSeconds=0 to delete a folder bypassing the eventually-consistent empty-folder check. Without cascade delete this removes only the folder and leaves contained resources orphaned, so it is intended for callers that delete contents separately",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,

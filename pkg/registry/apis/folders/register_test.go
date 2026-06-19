@@ -182,11 +182,11 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	zeroGrace := int64(0)
 
 	tests := []struct {
-		name                 string
-		statsResponse        []*resourcepb.ResourceStatsResponse_Stats
-		deleteOptions        *metav1.DeleteOptions
-		cascadeDeleteEnabled bool
-		wantErr              bool
+		name               string
+		statsResponse      []*resourcepb.ResourceStatsResponse_Stats
+		deleteOptions      *metav1.DeleteOptions
+		forceDeleteEnabled bool
+		wantErr            bool
 	}{
 		{
 			name: "should allow deletion when folder is empty",
@@ -266,21 +266,21 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name: "should reject force delete when cascade gate disabled",
+			name: "should reject force delete when force gate disabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
-			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
-			cascadeDeleteEnabled: false,
-			wantErr:              true,
+			deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			forceDeleteEnabled: false,
+			wantErr:            true,
 		},
 		{
-			name: "should allow force delete when cascade gate enabled",
+			name: "should allow force delete when force gate enabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
-			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
-			cascadeDeleteEnabled: true,
+			deleteOptions:      &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+			forceDeleteEnabled: true,
 		},
 	}
 
@@ -298,7 +298,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
-			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
+			if !tt.forceDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
 				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
 					&resourcepb.ResourceStatsResponse{Stats: tt.statsResponse},
 					nil,
@@ -306,9 +306,9 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			}
 
 			b := &FolderAPIBuilder{
-				storage:              us,
-				searcher:             sm,
-				cascadeDeleteEnabled: tt.cascadeDeleteEnabled,
+				storage:            us,
+				searcher:           sm,
+				forceDeleteEnabled: tt.forceDeleteEnabled,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(

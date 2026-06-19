@@ -511,23 +511,24 @@ func validateOnDelete(ctx context.Context,
 	f *folders.Folder,
 	searcher resourcepb.ResourceIndexClient,
 	deleteOptions *metav1.DeleteOptions,
+	forceDeleteEnabled bool,
 	cascadeDeleteEnabled bool,
 ) error {
-	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 when kubernetesFolderCascadeDelete
-	// is enabled (same pattern as dashboard delete validation). This only bypasses the empty-folder
-	// check. Child folders are cascade-deleted (the API server marks the subtree terminating and a
-	// poller drives it to completion), but contained dashboards, alert rules, and library elements
-	// are not yet cascaded and will be orphaned.
-	if cascadeDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
-		// Cascade child deletes run under the service identity (issued by the API server's async
-		// subtree marking and by the poller). Log the user-initiated delete at warn but the
-		// recursive child deletes at debug, so a single delete of a large subtree doesn't emit a
-		// warn per folder.
-		msg := "folder force-delete bypassing empty check; child folders will be cascade-deleted, but dashboards, alert rules, and library elements under this folder are not yet cascaded and will be orphaned"
-		if identity.IsServiceIdentity(ctx) {
-			logging.FromContext(ctx).Debug(msg, "folder", f.Name, "namespace", f.Namespace)
-		} else {
-			logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+	// Non-empty folder delete is opt-in via gracePeriodSeconds=0 (same pattern as dashboard delete
+	// validation), gated on force delete being enabled. This only bypasses the empty-folder check.
+	// With cascade delete also enabled, the API server marks the subtree terminating and a poller
+	// deletes the nested folders and their contents; with force delete alone there is no cascade, so
+	// child folders and contained dashboards/alert rules/library elements are left orphaned.
+	if forceDeleteEnabled && forceDeleteFromDeleteOptions(deleteOptions) {
+		if !cascadeDeleteEnabled {
+			// Force-only delete orphans the folder's contents. Warn for a user-initiated delete;
+			// service-identity deletes (e.g. a cleanup job) are expected, so keep those at debug.
+			msg := "folder force-delete bypassing empty-folder check without cascade; child folders and contained dashboards, alert rules, and library elements will be orphaned"
+			if identity.IsServiceIdentity(ctx) {
+				logging.FromContext(ctx).Debug(msg, "folder", f.Name, "namespace", f.Namespace)
+			} else {
+				logging.FromContext(ctx).Warn(msg, "folder", f.Name, "namespace", f.Namespace)
+			}
 		}
 		return nil
 	}
