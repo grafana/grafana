@@ -2812,7 +2812,9 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval"
+        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
+        "ungroup-warning-title": "This will remove the alert rule from its group"
       },
       "evaluation-behaviour": {
         "description": {
@@ -6028,9 +6030,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
@@ -6214,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo"
+      "undo": "Undo",
+      "view-panel": {
+        "disabled": "Disabled",
+        "fanout-by-series": "By series",
+        "fanout-category": "Fan-out by series or label",
+        "fanout-labels": "Labels",
+        "fanout-no-labels": "Data has no labels",
+        "pane-header": "View panel",
+        "quick-toggles": "Quick toggles",
+        "title": "View panel controls"
+      }
     },
     "source-link": {
       "title": "Source ({{provider}})",
@@ -6473,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
     },
     "viz-panel": {
@@ -8695,7 +8705,9 @@
       "query-history-button": "Query history",
       "query-history-button-aria-label": "Query history",
       "query-inspector-button": "Query inspector",
-      "query-inspector-button-aria-label": "Query inspector"
+      "query-inspector-button-aria-label": "Query inspector",
+      "recent-queries-button": "Recent queries",
+      "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
     "span-bar": {
@@ -11214,6 +11226,8 @@
         }
       },
       "fields-section": "Fields",
+      "filter-for-log-line": "Filter for this log line",
+      "filter-out-log-line": "Filter out this log line",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
@@ -11959,9 +11973,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Manage mappings of Identity Provider groups to Grafana Roles"
     },
     "help": {
       "title": "Help"
@@ -13032,9 +13043,6 @@
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
-      "error-quota-exceeded-message-onprem": "This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
-      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
@@ -13048,7 +13056,10 @@
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
       "update-configuration-action": "View configuration docs",
-      "upgrade-action": "Upgrade account"
+      "upgrade-action": "Upgrade account",
+      "warning-quota-may-exceed-message": "This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.",
+      "warning-quota-may-exceed-message-onprem": "This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.",
+      "warning-quota-may-exceed-title": "Resource limit may be exceeded"
     },
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
@@ -14272,6 +14283,56 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "recent-queries": {
+    "description_one": "Recent queries are queries that you've run in Explore within the past {{count}} day",
+    "description_other": "Recent queries are queries that you've run in Explore within the past {{count}} days",
+    "error-state": {
+      "title": "Something went wrong!"
+    },
+    "filters": {
+      "all-queries": "All queries",
+      "clear": "Clear",
+      "datasource-label": "Data source name",
+      "datasource-placeholder": "Select data source name",
+      "header": "Filters",
+      "panel-label": "Filters",
+      "remember-filters-label": "Remember filters",
+      "remember-filters-subtext": "Your settings restore on next visit",
+      "search-label": "Search",
+      "search-placeholder": "Search by...",
+      "sort-label": "Sort",
+      "sort-placeholder": "Sort Newest",
+      "starred": "Starred queries",
+      "starred-label": "Starred queries"
+    },
+    "list": {
+      "empty": "No recent queries found",
+      "loading": "Loading..."
+    },
+    "modal": {
+      "aria-label": "Recent queries",
+      "tabs": {
+        "recent": "Recent queries",
+        "saved": "Saved queries",
+        "saved-badge": "Cloud",
+        "saved-tooltip": "Saved queries are available in Cloud and Enterprise."
+      }
+    },
+    "row": {
+      "save": "Save query",
+      "select-query": "Select query",
+      "star": "Star",
+      "star-tooltip": "Query starred!",
+      "unstar": "Unstar"
+    },
+    "sort": {
+      "newest": "Newest first"
+    },
+    "sort-option": {
+      "newest": "Sort Newest",
+      "oldest": "Sort Oldest"
+    }
   },
   "recently-deleted": {
     "buttons": {

@@ -13,8 +13,8 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'destructive'];
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
+export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
@@ -58,9 +58,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       'aria-label': ariaLabel,
-      variant = 'primary',
       size = 'md',
       fill = 'solid',
+      variant = fill === 'text' ? 'accent' : 'primary',
       icon,
       fullWidth,
       children,
@@ -435,6 +435,9 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
     case 'success':
       return getButtonVariantStyles(theme, theme.colors.success, fill);
+
+    case 'accent':
+      return getButtonVariantStyles(theme, theme.colors.accent, fill);
 
     case 'primary':
     default:

@@ -2812,7 +2812,9 @@
           "alerting": "Ative para pausar a avaliação desta regra de alerta.",
           "recording": "Ative para pausar a avaliação desta regra de registro."
         },
-        "select-folder-before": "Selecione uma pasta antes de definir o grupo e o intervalo de avaliação"
+        "select-folder-before": "Selecione uma pasta antes de definir o grupo e o intervalo de avaliação",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4272,6 +4274,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Erro ao excluir recursos",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4297,7 @@
       "error-no-target-folder-path": "O caminho da pasta de destino é inválido ou está vazio. Selecione outra.",
       "move-warning": "Isso moverá as pastas selecionadas e suas subpastas. As pastas de destino disponíveis dependem dos recursos selecionados.",
       "move-warning-tooltip": "Você só pode mover recursos provisionados dentro de sua pasta provisionada e recursos locais para pastas locais.",
+      "success-title": "",
       "target-folder": "Pasta de destino",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6026,9 +6030,6 @@
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Links do painel"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Voltar para Consultas"
     },
@@ -6212,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Abrir painel original"
       },
-      "undo": "Desfazer"
+      "undo": "Desfazer",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Fonte ({{provider}})",
@@ -6471,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": "Painel não encontrado"
     },
     "viz-panel": {
@@ -8693,7 +8705,9 @@
       "query-history-button": "Histórico de consultas",
       "query-history-button-aria-label": "Histórico de consultas",
       "query-inspector-button": "Inspetor da consulta",
-      "query-inspector-button-aria-label": "Inspetor da consulta"
+      "query-inspector-button-aria-label": "Inspetor da consulta",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Mostrar todos os períodos",
     "span-bar": {
@@ -13028,9 +13042,6 @@
       "description-clear-repository-connection": "Este nome será usado para a conexão com o repositório e para a pasta exibida na interface do usuário",
       "empty": "Vazio",
       "error-field-required": "Este campo é obrigatório.",
-      "error-quota-exceeded-message": "Esta pasta do repositório contém {{fileCount}} recursos, o que ultrapassa o limite da sua conta de {{limit}}. Para sincronizar este repositório, faça upgrade da sua conta ou reduza a quantidade de recursos que estão sendo sincronizados.",
-      "error-quota-exceeded-message-onprem": "Esta pasta do repositório contém {{fileCount}} recursos, o que ultrapassa o limite da sua instância de {{limit}}. Para sincronizar este repositório, atualize sua configuração da Grafana ou reduza a quantidade de recursos que estão sendo sincronizados.",
-      "error-quota-exceeded-title": "Cota de recursos excedida",
       "error-repository-status-unhealthy-message": "Ocorreu um problema ao se conectar ao repositório. Verifique as configurações do repositório e tente novamente.",
       "error-repository-status-unhealthy-title": "Status do repositório instável",
       "external-storage-label": "Armazenamento externo",
@@ -13041,6 +13052,9 @@
       "unmanaged-resources-label": "Recursos não gerenciados",
       "update-configuration-action": "Ver documentos de configuração",
       "upgrade-action": "Fazer upgrade da conta",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} painel de controle",
       "dashboards-count_other": "{{count}} painel de controle",
       "files-count_one": "{{count}} arquivos",
@@ -13055,6 +13069,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Pule a configuração e tenha acesso ao Git Sync totalmente gerenciado e hospedado no Grafana Cloud com o <2>plano gratuito vitalício do Grafana Cloud</2>.",
@@ -14267,6 +14284,56 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plug-in de origem de dados não exporta nenhum componente de editor de consulta"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

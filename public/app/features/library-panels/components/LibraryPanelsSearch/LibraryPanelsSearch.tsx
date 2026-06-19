@@ -189,6 +189,7 @@ const SearchControls = memo(
                 },
               ];
             }}
+            width={28}
           />
         )}
         {(showFolderFilter || showPanelFilter) && (

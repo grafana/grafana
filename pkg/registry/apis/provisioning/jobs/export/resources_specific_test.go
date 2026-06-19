@@ -43,6 +43,13 @@ func (m *mockGetByName) Get(_ context.Context, name string, _ metav1.GetOptions,
 	}, name)
 }
 
+// emptyFolderClient returns a folder client with no folders. It is used by the
+// tests whose resources live at the root, where ExportSpecificResources never
+// needs to resolve a folder ancestry.
+func emptyFolderClient() *mockGetByName {
+	return &mockGetByName{items: map[string]*unstructured.Unstructured{}}
+}
+
 func managedDashboardObject(name, managerID string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]any{
@@ -65,11 +72,42 @@ func dashboardObject(name string) *unstructured.Unstructured {
 	return &obj
 }
 
+// dashboardInFolder returns a dashboard whose parent folder annotation points at
+// folderUID, exercising the folder-ancestry export path.
+func dashboardInFolder(name, folderUID string) *unstructured.Unstructured {
+	obj := dashboardObject(name)
+	meta := obj.Object["metadata"].(map[string]any)
+	meta["annotations"] = map[string]any{"grafana.app/folder": folderUID}
+	return obj
+}
+
+// folderObject returns a folder with the given parent (pass "" for a root
+// folder). The spec title doubles as the path segment when the tree derives the
+// folder path from its ancestors.
+func folderObject(name, parentUID string) *unstructured.Unstructured {
+	metadata := map[string]any{"name": name}
+	if parentUID != "" {
+		metadata["annotations"] = map[string]any{"grafana.app/folder": parentUID}
+	}
+	return &unstructured.Unstructured{
+		Object: map[string]any{
+			"apiVersion": resources.FolderResource.GroupVersion().String(),
+			"kind":       "Folder",
+			"metadata":   metadata,
+			"spec":       map[string]any{"title": name},
+		},
+	}
+}
+
 func dashboardGVK() schema.GroupVersionKind {
 	return schema.GroupVersionKind{
 		Group: resources.DashboardResource.Group,
 		Kind:  "Dashboard",
 	}
+}
+
+func folderGVK() schema.GroupVersionKind {
+	return schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}
 }
 
 func TestExportSpecificResources_Success(t *testing.T) {
@@ -110,7 +148,7 @@ func TestExportSpecificResources_Success(t *testing.T) {
 		},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -143,7 +181,7 @@ func TestExportSpecificResources_ManagedDashboardError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "managed-dash", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -173,7 +211,7 @@ func TestExportSpecificResources_NotFoundRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "missing", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
@@ -201,7 +239,7 @@ func TestExportSpecificResources_GetErrorRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "boom", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -230,37 +268,149 @@ func TestExportSpecificResources_NewUIDsSetsRandomName(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "original-uid", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, true)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, true)
 	require.NoError(t, err)
 	require.NotEmpty(t, writtenName)
 	require.NotEqual(t, "original-uid", writtenName, "generateNewUIDs=true should have rewritten the object name")
 }
 
-func TestExportSpecificResources_FolderKindIsSkipped(t *testing.T) {
-	// Folders are exported as a tree by ExportFolders; a folder named in
-	// Resources must be skipped here (recorded as ignored) so we don't write a
-	// conflicting standalone folder file.
-	folderGVK := schema.GroupVersionKind{Group: resources.FolderResource.Group, Kind: resources.FolderKind.Kind}
-
+// TestExportSpecificResources_FolderKindIsExported verifies that an explicitly
+// named folder is written via the folder tree (with its full ancestry) rather
+// than being skipped: "don't export folders unless they are passed" implies a
+// passed folder is exported.
+func TestExportSpecificResources_FolderKindIsExported(t *testing.T) {
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("ForKind", mock.Anything, folderGVK).
-		Return(&mockGetByName{items: map[string]*unstructured.Unstructured{}}, resources.FolderResource, nil)
+	resourceClients.On("ForKind", mock.Anything, folderGVK()).
+		Return(emptyFolderClient(), resources.FolderResource, nil)
+
+	// child sits under parent; both ancestors are recreated from the folder API.
+	folderClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"child":  folderObject("child", "parent"),
+		"parent": folderObject("parent", ""),
+	}}
 
 	repoResources := resources.NewMockRepositoryResources(t)
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		return tree.Count() == 2
+	}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+		require.NoError(t, fn(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
+		require.NoError(t, fn(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
+		return true
+	})).Return(nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
 	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, "export folders for selected resources").Return()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Name() == "folder-ref" && r.Action() == repository.FileActionIgnored && r.Error() == nil
+		return r.Name() == "parent" && r.Action() == repository.FileActionCreated
 	})).Return()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Name() == "child" && r.Action() == repository.FileActionCreated
+	})).Return()
+	progress.On("TooManyErrors").Return(nil)
 
 	options := provisioningV0.ExportJobOptions{
-		Resources: []provisioningV0.ResourceRef{{Name: "folder-ref", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
+		Branch:    "feature/branch",
+		Resources: []provisioningV0.ResourceRef{{Name: "child", Kind: resources.FolderKind.Kind, Group: resources.FolderResource.Group}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+}
+
+// TestExportSpecificResources_GeneratesFolderForDashboard verifies the core
+// fix: a dashboard whose folder was NOT named still has that folder (and its
+// ancestry) generated from the folder API so the dashboard lands at its nested
+// path, instead of dragging in the whole instance tree or failing to resolve.
+func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
+	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"dash-1": dashboardInFolder("dash-1", "child"),
+	}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+
+	folderClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"child":  folderObject("child", "parent"),
+		"parent": folderObject("parent", ""),
+	}}
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	// Both ancestor folders are assembled into the tree before the dashboard is
+	// written.
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		return tree.Count() == 2
+	}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+		require.NoError(t, fn(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
+		require.NoError(t, fn(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
+		return true
+	})).Return(nil)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "dash-1"
+	}), mock.Anything).Return("parent/child/dash-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, "start selective resource export").Return()
+	progress.On("SetMessage", mock.Anything, "export folders for selected resources").Return()
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Branch:    "feature/branch",
+		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
+}
+
+// TestExportSpecificResources_ManagedFolderAncestryIsSkipped verifies that a
+// requested dashboard's parent folder is NOT written into this repository when
+// it is already owned by another manager: writing it would let the target repo
+// try to manage a folder it does not own. The dashboard is still written; the
+// folder tree assembled for the export excludes the managed folder.
+func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
+	dashClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"dash-1": dashboardInFolder("dash-1", "managed-folder"),
+	}}
+
+	resourceClients := resources.NewMockResourceClients(t)
+	resourceClients.On("ForKind", mock.Anything, dashboardGVK()).
+		Return(dashClient, resources.DashboardResource, nil)
+
+	// The parent folder is owned by another repository.
+	managedFolder := folderObject("managed-folder", "")
+	managedFolder.Object["metadata"].(map[string]any)["annotations"] = map[string]any{
+		"grafana.app/managedBy": "repo",
+		"grafana.app/managerId": "other-repo",
+	}
+	folderClient := &mockGetByName{items: map[string]*unstructured.Unstructured{
+		"managed-folder": managedFolder,
+	}}
+
+	repoResources := resources.NewMockRepositoryResources(t)
+	// The managed folder must not appear in the exported tree.
+	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
+		return tree.Count() == 0
+	}), mock.Anything).Return(nil)
+	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		return obj.GetName() == "dash-1"
+	}), mock.Anything).Return("dash-1.json", nil)
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("Record", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+
+	options := provisioningV0.ExportJobOptions{
+		Branch:    "feature/branch",
+		Resources: []provisioningV0.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: resources.DashboardResource.Group}},
+	}
+
+	err := ExportSpecificResources(context.Background(), options, folderClient, resourceClients, repoResources, progress, false)
+	require.NoError(t, err)
 }
 
 func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
@@ -299,7 +449,7 @@ func TestExportSpecificResources_NonDashboardKindIsExported(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "playlist-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 }
 
@@ -326,7 +476,7 @@ func TestExportSpecificResources_UnresolvableKindRecordsError(t *testing.T) {
 		Resources: []provisioningV0.ResourceRef{{Name: "mystery-1", Kind: "Mystery", Group: "unknown.grafana.app"}},
 	}
 
-	err := ExportSpecificResources(context.Background(), options, resourceClients, repoResources, progress, false)
+	err := ExportSpecificResources(context.Background(), options, emptyFolderClient(), resourceClients, repoResources, progress, false)
 	require.NoError(t, err)
 	repoResources.AssertNotCalled(t, "WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 }
