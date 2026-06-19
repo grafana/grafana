@@ -347,7 +347,7 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 	})
 }
 
-func TestAuthorizeReadOrgAnnotations(t *testing.T) {
+func TestAuthorizeReadOrganizationAnnotations(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(t.Context(), 1)
 
 	t.Run("allows when org annotation read is permitted", func(t *testing.T) {
@@ -357,19 +357,19 @@ func TestAuthorizeReadOrgAnnotations(t *testing.T) {
 				item.Name == "organization" &&
 				item.Verb == utils.VerbList
 		}}
-		require.NoError(t, authorizeReadOrgAnnotations(ctx, ac, "default"))
+		require.NoError(t, authorizeReadOrganizationAnnotations(ctx, ac, "default"))
 	})
 
 	t.Run("forbids when org annotation read is denied", func(t *testing.T) {
 		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
-		err := authorizeReadOrgAnnotations(ctx, ac, "default")
+		err := authorizeReadOrganizationAnnotations(ctx, ac, "default")
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
 
 	t.Run("unauthorized when no identity is present", func(t *testing.T) {
 		ac := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
-		err := authorizeReadOrgAnnotations(t.Context(), ac, "default")
+		err := authorizeReadOrganizationAnnotations(t.Context(), ac, "default")
 		require.Error(t, err)
 		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
 	})

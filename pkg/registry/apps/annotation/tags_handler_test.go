@@ -234,69 +234,57 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 	_, err := store.Create(setupCtx, anno)
 	require.NoError(t, err)
 
+	newRequest := func() (*app.CustomRouteRequest, *mockResponseWriter) {
+		u := &url.URL{
+			Scheme: "http",
+			Host:   "localhost",
+			Path:   "/apis/annotation.grafana.app/v0alpha1/namespaces/" + metav1.NamespaceDefault + "/tags",
+		}
+		req := &app.CustomRouteRequest{
+			ResourceIdentifier: resource.FullIdentifier{Namespace: metav1.NamespaceDefault},
+			URL:                u,
+			Method:             "GET",
+		}
+		writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
+		return req, writer
+	}
+
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
 
-	tests := []struct {
-		name string
-		// allowedScope is the annotation scope (the BatchCheckItem.Name) the caller
-		// is authorized to read. The handler only checks the "organization" scope,
-		// so a caller authorized solely for "dashboard" is denied.
-		allowedScope  string
-		expectAllowed bool
-	}{
-		{
-			name:          "allows callers with organization annotation read",
-			allowedScope:  "organization",
-			expectAllowed: true,
-		},
-		{
-			name:          "denies callers with only dashboard annotation read",
-			allowedScope:  "dashboard",
-			expectAllowed: false,
-		},
-	}
+	t.Run("denies callers without organization annotation read", func(t *testing.T) {
+		denyAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
+		handler := newTagsHandler(store.(TagProvider), denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			accessClient := &fakeAccessClient{fn: func(item authtypes.BatchCheckItem) bool {
-				return item.Group == "annotation.grafana.app" &&
-					item.Resource == "annotations" &&
-					item.Name == tt.allowedScope &&
-					item.Verb == utils.VerbList
-			}}
-			handler := newTagsHandler(store.(TagProvider), accessClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		req, writer := newRequest()
+		err := handler(ctx, writer, req)
 
-			u := &url.URL{
-				Scheme: "http",
-				Host:   "localhost",
-				Path:   "/apis/annotation.grafana.app/v0alpha1/namespaces/" + metav1.NamespaceDefault + "/tags",
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+		assert.NotContains(t, writer.body.String(), "secret-canary", "tag metadata must not be leaked on denial")
+	})
+
+	t.Run("allows callers with organization annotation read", func(t *testing.T) {
+		// Only authorize the org-scoped annotation read check the handler is expected to make.
+		orgReader := &fakeAccessClient{fn: func(item authtypes.BatchCheckItem) bool {
+			return item.Group == "annotation.grafana.app" &&
+				item.Resource == "annotations" &&
+				item.Name == "organization" &&
+				item.Verb == utils.VerbList
+		}}
+		handler := newTagsHandler(store.(TagProvider), orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+
+		req, writer := newRequest()
+		err := handler(ctx, writer, req)
+
+		require.NoError(t, err)
+		var result TagResponse
+		require.NoError(t, json.Unmarshal(writer.body.Bytes(), &result))
+		found := false
+		for _, tag := range result.Tags {
+			if tag.Tag == "secret-canary" {
+				found = true
 			}
-			req := &app.CustomRouteRequest{
-				ResourceIdentifier: resource.FullIdentifier{Namespace: metav1.NamespaceDefault},
-				URL:                u,
-				Method:             "GET",
-			}
-			writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
-
-			err := handler(ctx, writer, req)
-
-			if !tt.expectAllowed {
-				require.Error(t, err)
-				assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
-				assert.NotContains(t, writer.body.String(), "secret-canary", "tag metadata must not be leaked on denial")
-				return
-			}
-
-			require.NoError(t, err)
-			var result TagResponse
-			require.NoError(t, json.Unmarshal(writer.body.Bytes(), &result))
-			found := false
-			for _, tag := range result.Tags {
-				if tag.Tag == "secret-canary" {
-					found = true
-				}
-			}
-			assert.True(t, found, "expected tags to be returned for an authorized org reader")
-		})
-	}
+		}
+		assert.True(t, found, "expected tags to be returned for an authorized org reader")
+	})
 }

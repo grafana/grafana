@@ -42,7 +42,7 @@ func newTagsHandler(
 
 		// Tags are an org-wide aggregate, so gate the request on org-level
 		// annotation read before exposing any tag metadata.
-		if err = authorizeReadOrgAnnotations(ctx, accessClient, namespace); err != nil {
+		if err = authorizeReadOrganizationAnnotations(ctx, accessClient, namespace); err != nil {
 			return err
 		}
 
