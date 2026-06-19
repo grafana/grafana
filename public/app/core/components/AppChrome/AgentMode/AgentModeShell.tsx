@@ -37,9 +37,8 @@ interface Props {
 export function AgentModeShell({ outletRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
-  const { component: PluginWorkspace, isLoading } = usePluginComponent<AgentWorkspaceProps>(
-    AGENT_WORKSPACE_COMPONENT_ID
-  );
+  const { component: PluginWorkspace, isLoading } =
+    usePluginComponent<AgentWorkspaceProps>(AGENT_WORKSPACE_COMPONENT_ID);
 
   return (
     <div className={styles.root}>
