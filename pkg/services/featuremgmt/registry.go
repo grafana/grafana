@@ -395,8 +395,11 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true},
+			// The API server admission, legacy delete path, and poller all capture this decision once
+			// at boot, so a dynamic flip would leave them inconsistent until restart.
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:         "kubernetesFolderForceDelete",
@@ -404,8 +407,10 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true},
+			// Captured once at boot (storageForVersion / ProvideService), like cascade delete.
+			RequiresRestart: true,
+			Expression:      "false",
+			Generate:        Generate{LegacyGo: true},
 		},
 		{
 			Name:            "grafana.kubernetesAnnotationsClient",
