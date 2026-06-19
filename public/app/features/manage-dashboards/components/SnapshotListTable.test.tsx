@@ -2,8 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { getSnapshots, SnapshotListTable } from './SnapshotListTable';
+
+jest.mock('app/core/services/context_srv');
+const mockContextSrv = jest.mocked(contextSrv);
 
 const k8sUrl = '/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots';
 
@@ -48,12 +52,13 @@ const k8sSecondPage = {
 };
 
 const get = jest.fn();
+const del = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: (...args: unknown[]) => get(...args),
-    delete: jest.fn(),
+    delete: (...args: unknown[]) => del(...args),
   }),
 }));
 
@@ -121,6 +126,9 @@ describe('SnapshotListTable', () => {
     config.appUrl = 'http://snapshots.grafana.com/';
     config.featureToggles.kubernetesSnapshots = false;
     get.mockReset();
+    del.mockReset().mockResolvedValue(undefined);
+    mockContextSrv.hasPermission.mockReturnValue(true);
+    mockContextSrv.hasPermissionInMetadata.mockReturnValue(true);
   });
 
   test('does not render Load More on the legacy path', async () => {
@@ -153,6 +161,38 @@ describe('SnapshotListTable', () => {
     // continue token is gone so button is no longer rendered
     expect(screen.queryByTestId('load-more-snapshots')).not.toBeInTheDocument();
     expect(get).toHaveBeenNthCalledWith(2, k8sUrl, { continue: 'tok-page-2' });
+  });
+
+  test('keeps Load More reachable when deleting the only loaded row leaves a continue token', async () => {
+    config.featureToggles.kubernetesSnapshots = true;
+    const singleItemFirstPage = {
+      items: [
+        {
+          metadata: { name: 'only-snap', namespace: 'default', resourceVersion: '1', creationTimestamp: '' },
+          spec: { title: 'Only Snap', external: false },
+        },
+      ],
+      metadata: { continue: 'tok-page-2', resourceVersion: '1' },
+    };
+    get.mockResolvedValueOnce(singleItemFirstPage).mockResolvedValueOnce(k8sSecondPage);
+
+    render(<SnapshotListTable />);
+
+    await waitFor(() => expect(screen.getByText('Only Snap')).toBeInTheDocument());
+
+    // Delete the only visible row
+    await userEvent.click(screen.getByRole('button', { name: '' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(screen.queryByText('Only Snap')).not.toBeInTheDocument());
+
+    // Empty state must not take over while a continue token is outstanding
+    expect(screen.queryByText("You haven't created any snapshots yet")).not.toBeInTheDocument();
+    const loadMore = screen.getByTestId('load-more-snapshots');
+    expect(loadMore).toBeInTheDocument();
+
+    await userEvent.click(loadMore);
+    await waitFor(() => expect(screen.getByText('K8s Snap 3')).toBeInTheDocument());
   });
 
   test('renders the empty state only after the first fetch resolves', async () => {

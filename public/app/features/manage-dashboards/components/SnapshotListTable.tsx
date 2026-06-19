@@ -67,7 +67,7 @@ export const SnapshotListTable = () => {
     [snapshots]
   );
 
-  if (hasLoadedOnce && snapshots.length === 0) {
+  if (hasLoadedOnce && snapshots.length === 0 && !continueToken) {
     return (
       <EmptyState
         variant="call-to-action"
