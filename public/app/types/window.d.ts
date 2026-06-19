@@ -14,6 +14,13 @@ export declare global {
      **/
     __grafana_boot_data_promise: Promise<void>;
 
+    /**
+     * When set, the boot data API returns a reduced payload because the server has already
+     * embedded the full frontend settings and nav tree into the page. The boot script then
+     * skips merging settings/nav tree from the API response.
+     */
+    __grafanaReduceBootdataAPI?: boolean;
+
     public_cdn_path: string;
     nonce: string | undefined;
     System: typeof System;
