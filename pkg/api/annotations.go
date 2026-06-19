@@ -18,23 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 const defaultAnnotationsLimit = 100
-
-// proxyErrResponse forwards 4xx errors from the annotation API server to the caller
-// except for 401/403 which return 500 as they mean our service token is misconfigured, not a user error
-func proxyErrResponse(message string, err error) response.Response {
-	var statusErr *k8serrors.StatusError
-	if errors.As(err, &statusErr) {
-		code := int(statusErr.Status().Code)
-		if code >= 400 && code < 500 && code != http.StatusUnauthorized && code != http.StatusForbidden {
-			return response.Error(code, statusErr.Status().Message, err)
-		}
-	}
-	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
-}
 
 // swagger:route GET /annotations annotations getAnnotations
 //
@@ -80,7 +66,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 
 	items, err := hs.annotationsRepo.Find(c.Req.Context(), query)
 	if err != nil {
-		return proxyErrResponse("Failed to get annotations", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get annotations", err)
 	}
 
 	for _, item := range items {
@@ -170,7 +156,7 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 		if errors.Is(err, annotations.ErrTimerangeMissing) {
 			return response.Error(http.StatusBadRequest, "Failed to save annotation", err)
 		}
-		return proxyErrResponse("Failed to save annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save annotation", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -244,7 +230,7 @@ func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) respons
 	}
 
 	if err := hs.annotationsRepo.Save(c.Req.Context(), &item); err != nil {
-		return proxyErrResponse("Failed to save Graphite annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save Graphite annotation", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -297,7 +283,7 @@ func (hs *HTTPServer) UpdateAnnotation(c *contextmodel.ReqContext) response.Resp
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &item); err != nil {
-		return proxyErrResponse("Failed to update annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update annotation", err)
 	}
 
 	return response.Success("Annotation updated")
@@ -366,7 +352,7 @@ func (hs *HTTPServer) PatchAnnotation(c *contextmodel.ReqContext) response.Respo
 	}
 
 	if err := hs.annotationsRepo.Update(c.Req.Context(), &existing); err != nil {
-		return proxyErrResponse("Failed to patch annotation", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to patch annotation", err)
 	}
 
 	return response.Success("Annotation patched")
@@ -501,7 +487,7 @@ func (hs *HTTPServer) DeleteAnnotationByID(c *contextmodel.ReqContext) response.
 		ID:    annotationID,
 	})
 	if err != nil {
-		return proxyErrResponse("Failed to delete annotation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to delete annotation", err)
 	}
 
 	return response.Success("Annotation deleted")
@@ -516,7 +502,7 @@ func findAnnotationByID(ctx context.Context, repo annotations.Repository, annota
 	items, err := repo.Find(ctx, query)
 
 	if err != nil {
-		return nil, proxyErrResponse("Failed to find annotation", err)
+		return nil, response.Error(http.StatusInternalServerError, "Failed to find annotation", err)
 	}
 
 	if len(items) == 0 {

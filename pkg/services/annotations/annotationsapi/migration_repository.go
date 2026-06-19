@@ -145,7 +145,7 @@ func (r *migrationRepository) Save(ctx context.Context, item *annotations.Item) 
 	return nil
 }
 
-// SaveMany is not proxied; the migration covers single writes only.
+// SaveMany is not proxied. It is only used for alerting annotations, which stay in legacy.
 func (r *migrationRepository) SaveMany(ctx context.Context, items []annotations.Item) error {
 	return r.legacy.SaveMany(ctx, items)
 }
@@ -180,6 +180,7 @@ func (r *migrationRepository) Delete(ctx context.Context, params *annotations.De
 	return r.legacy.Delete(ctx, params)
 }
 
+// TODO: FindTags reads from legacy only. Follow up to proxy tag searches to the new store.
 func (r *migrationRepository) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	return r.legacy.FindTags(ctx, query)
 }
