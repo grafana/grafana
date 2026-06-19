@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import { Resizable } from 're-resizable';
 import { Fragment, type PropsWithChildren, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useObservable } from 'react-use';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -77,10 +76,7 @@ export function AppChrome({ children }: Props) {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
 
-  // Subscribe to location so the URL-driven effects below (kiosk / agentMode) re-run on
-  // SPA navigation, not just on mount — AppChrome otherwise doesn't re-render on a pure
-  // location change.
-  const { pathname, search } = useObservable(locationService.getLocationObservable(), locationService.getLocation());
+  const { pathname, search } = locationService.getLocation();
   const url = pathname + search;
   const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
@@ -99,7 +95,7 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const { agentModeFeatureFlagEnabled: agentModeEnabled, active: agentMode } = useAgentMode(search);
+  const { agentModeFeatureFlagEnabled: agentModeEnabled, active: agentMode } = useAgentMode();
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}

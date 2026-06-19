@@ -1,5 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
+import { useFlagAssistantAgentMode } from '@grafana/runtime/internal';
+
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
 // Mock the t function
@@ -12,7 +14,20 @@ jest.mock('@grafana/i18n', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  useFlagAssistantAgentMode: jest.fn(),
+}));
+
+jest.mock('../AgentMode/AssistantToolbarButtons', () => ({
+  AssistantToolbarButtons: () => <div data-testid="assistant-toolbar-buttons" />,
+}));
+
+const useFlagAssistantAgentModeMock = jest.mocked(useFlagAssistantAgentMode);
+
 describe('ExtensionToolbarItemButton', () => {
+  beforeEach(() => {
+    useFlagAssistantAgentModeMock.mockReturnValue(false);
+  });
   it('renders open button with default tooltip when no title is provided', () => {
     render(<ExtensionToolbarItemButton isOpen={false} />);
 
@@ -48,5 +63,21 @@ describe('ExtensionToolbarItemButton', () => {
     fireEvent.click(button);
 
     expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the assistant toolbar buttons when agent mode is enabled for the assistant plugin', () => {
+    useFlagAssistantAgentModeMock.mockReturnValue(true);
+    render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
+
+    expect(screen.getByTestId('assistant-toolbar-buttons')).toBeInTheDocument();
+    expect(screen.queryByTestId('extension-toolbar-button-open')).not.toBeInTheDocument();
+  });
+
+  it('renders the default button for the assistant plugin when agent mode is disabled', () => {
+    useFlagAssistantAgentModeMock.mockReturnValue(false);
+    render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
+
+    expect(screen.getByTestId('extension-toolbar-button-open')).toBeInTheDocument();
+    expect(screen.queryByTestId('assistant-toolbar-buttons')).not.toBeInTheDocument();
   });
 });

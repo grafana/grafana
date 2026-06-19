@@ -27,7 +27,7 @@ export function AgentModePlatformBar() {
         <ToolbarButton
           narrow
           icon="bars"
-          tooltip={t('navigation.megamenu.open', 'Open menu')}
+          tooltip={t('navigation.megamenu.open', 'Main menu')}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((open) => !open)}
         />

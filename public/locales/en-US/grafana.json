@@ -12146,10 +12146,16 @@
     }
   },
   "navigation": {
+    "agent-mode": {
+      "enter": "Enter Agent mode"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
+      "assistant-close": "Close Grafana Assistant",
+      "assistant-label": "Chat",
+      "assistant-open": "Open Grafana Assistant",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
