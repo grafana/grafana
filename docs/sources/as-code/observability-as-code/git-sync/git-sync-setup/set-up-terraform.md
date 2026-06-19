@@ -70,9 +70,9 @@ Use this Terraform configuration to configure the [Grafana provider](https://reg
 
 Replace the following field values:
 
-- `https://<your-stack>.grafana.net/` with the URL of your Grafana stack
-- `var.grafana_service_account_token` with the service account token that you're using to authenticate, or "username:password"
-- `var.grafana_stack_id` with the Grafana stack ID, if you are using a Grafana Cloud stack
+- `<Stack-URL>` with the URL of your Grafana stack (for example, `https://my-stack.grafana.net/`)
+- `<Service-account-token>` with the service account token that you created (or `<USERNAME>:<PASSWORD>` for basic auth)
+- `<Stack-ID>` with the Grafana stack ID, if you are using a Grafana Cloud stack
 
 {{< admonition type="caution" >}}
 
