@@ -31,9 +31,7 @@ describe('PanelStatus', () => {
     ];
 
     it('uses the topmost severity for the trigger icon', () => {
-      render(
-        <PanelStatus items={[{ severity: 'error', text: 'failed' }, ...items]} />
-      );
+      render(<PanelStatus items={[{ severity: 'error', text: 'failed' }, ...items]} />);
 
       // The error item is the most severe, so the trigger uses the error status testid.
       expect(screen.getByTestId(selectors.components.Panels.Panel.status('error'))).toBeInTheDocument();
