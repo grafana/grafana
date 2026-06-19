@@ -1,7 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -54,12 +54,9 @@ export function getVizPanelKeyForPanelId(panelId: number) {
 
 /**
  * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
- *
- * TODO: use `grafana.newPanelQueryErrorsUI` feature toggle
- *   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
-  return true;
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
