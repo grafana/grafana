@@ -2,6 +2,7 @@ package github
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -21,7 +22,7 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 	}
 
 	// Set URL from GitHub installation
-	conn.Spec.URL = conn.InstallationURL()
+	conn.Spec.URL = fmt.Sprintf("https://github.com/settings/installations/%s", conn.Spec.GitHub.InstallationID)
 
 	return nil
 }
