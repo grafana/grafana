@@ -103,6 +103,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
+  UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
 
 /**
@@ -598,5 +600,16 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+ *
+ * **Details:**
+ * - flag key: `useKubernetesShortURLsAPI`
+ * - default value: `true`
+ */
+export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useKubernetesShortURLsAPI", true, options).value;
 };
 

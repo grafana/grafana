@@ -3,6 +3,7 @@ import memoizeOne from 'memoize-one';
 import { type AbsoluteTimeRange, type LogRowModel, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, config, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { shortURLAPIv1beta1 } from 'app/api/clients/shorturl/v1beta1';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
@@ -44,7 +45,7 @@ const createShortLinkLegacy = async (path: string): Promise<string> => {
 // this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (config.featureToggles.useKubernetesShortURLsAPI) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, true)) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
         shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
