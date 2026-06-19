@@ -709,7 +709,8 @@ func (s *UserSync) shouldSyncExternalAuthInfo(ctx context.Context) bool {
 }
 
 func mergeExternalAuthInfo(existing []user.ExternalAuthInfo, id *authn.Identity) ([]user.ExternalAuthInfo, bool) {
-	if id.AuthenticatedBy == "" || id.AuthenticatedBy == login.PasswordAuthModule {
+	switch id.AuthenticatedBy {
+	case "", login.PasswordAuthModule, login.APIKeyAuthModule, login.ExtendedJWTModule, login.RenderModule:
 		return existing, false
 	}
 

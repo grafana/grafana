@@ -2589,10 +2589,17 @@ func TestMergeExternalAuthInfo(t *testing.T) {
 		assert.Equal(t, existing, got)
 	})
 
-	t.Run("does not record the internal password auth module", func(t *testing.T) {
-		got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: login.PasswordAuthModule, AuthID: "1"})
-		assert.False(t, changed)
-		assert.Nil(t, got)
+	t.Run("does not record internal auth modules", func(t *testing.T) {
+		for _, module := range []string{
+			login.PasswordAuthModule,
+			login.APIKeyAuthModule,
+			login.ExtendedJWTModule,
+			login.RenderModule,
+		} {
+			got, changed := mergeExternalAuthInfo(nil, &authn.Identity{AuthenticatedBy: module, AuthID: "1"})
+			assert.False(t, changed, "module %q must not be recorded", module)
+			assert.Nil(t, got, "module %q must not be recorded", module)
+		}
 	})
 
 	t.Run("appends a new connection", func(t *testing.T) {
@@ -2760,4 +2767,46 @@ func TestUserSync_SyncUserHook_PopulatesExternalAuthInfo(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
+	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesUsersRedirect, true),
+	})
+
+	createCalled, updateCalled := false, false
+	fakeUserSvc := &usertest.FakeUserService{
+		CreateFn: func(_ context.Context, _ *user.CreateUserCommand) (*user.User, error) {
+			createCalled = true
+			return &user.User{}, nil
+		},
+		UpdateFn: func(_ context.Context, _ *user.UpdateUserCommand) error {
+			updateCalled = true
+			return nil
+		},
+	}
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		iamv0alpha1.UserResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
+	}
+
+	s := ProvideUserSync(
+		fakeUserSvc,
+		&authinfoimpl.OSSUserProtectionImpl{},
+		&authinfotest.FakeService{},
+		&quotatest.FakeQuotaService{},
+		tracing.InitializeTracerForTest(),
+		featuremgmt.WithFeatures(),
+		cfg,
+		nil,
+	)
+
+	// Mirrors the anonymous client identity: SyncUser is not set.
+	anon := &authn.Identity{Type: claims.TypeAnonymous, ClientParams: authn.ClientParams{SyncPermissions: true}}
+	err := s.SyncUserHook(context.Background(), anon, nil)
+
+	require.NoError(t, err)
+	assert.False(t, createCalled, "anonymous identity must not create a user")
+	assert.False(t, updateCalled, "anonymous identity must not update a user")
 }
