@@ -10,9 +10,7 @@ function frameWithNotices(notices: QueryResultMetaNotice[]): DataFrame {
 }
 
 function setup(data: DataFrame[] = [], errors: DataQueryError[] = []) {
-  return render(
-    <ErrorsAndNoticesInspector datasource={{} as PrometheusDatasource} data={data} errors={errors} />
-  );
+  return render(<ErrorsAndNoticesInspector datasource={{} as PrometheusDatasource} data={data} errors={errors} />);
 }
 
 describe('ErrorsAndNoticesInspector', () => {
@@ -70,9 +68,7 @@ describe('ErrorsAndNoticesInspector', () => {
 
   it('renders notice text as markdown (links and bold)', () => {
     setup([
-      frameWithNotices([
-        { severity: 'info', text: 'See [the docs](https://example.com/docs) and **note this**' },
-      ]),
+      frameWithNotices([{ severity: 'info', text: 'See [the docs](https://example.com/docs) and **note this**' }]),
     ]);
 
     const link = screen.getByRole('link', { name: 'the docs' });
@@ -81,9 +77,7 @@ describe('ErrorsAndNoticesInspector', () => {
   });
 
   it('renders a "Learn more" link from notice.link', () => {
-    setup([
-      frameWithNotices([{ severity: 'info', text: 'has a link', link: 'https://example.com/more' }]),
-    ]);
+    setup([frameWithNotices([{ severity: 'info', text: 'has a link', link: 'https://example.com/more' }])]);
 
     expect(screen.getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', 'https://example.com/more');
   });
