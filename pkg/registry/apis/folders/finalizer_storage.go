@@ -80,24 +80,39 @@ func (s *finalizerStorage) Delete(
 	if err := checkDeletePreconditions(obj, options); err != nil {
 		return nil, false, err
 	}
-	innerOptions := optionsWithoutPreconditions(options)
+
+	// When the caller supplied a precondition, anchor the whole operation on the resource version we
+	// just validated: the metadata mutation enforces it (failing on a concurrent change rather than
+	// retrying over it), and the final store delete re-checks the resource version the mutation
+	// produced. That keeps the precondition atomic end to end -- a concurrent update or
+	// delete/recreate between the check and the final delete conflicts instead of slipping through.
+	expectedRV := ""
+	if options != nil && options.Preconditions != nil {
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return nil, false, apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+		}
+		expectedRV = accessor.GetResourceVersion()
+	}
 
 	// Cascade disabled: the finalizer (stamped while the feature was on) is now vestigial and would
 	// otherwise block deletion forever, since nothing drives it to completion. Strip it, then delete
 	// normally. Stripping before the delete is crash-safe: a crash here leaves an ordinary,
 	// non-finalized folder rather than one stuck Terminating.
 	if !s.cascadeEnabled {
-		if err := removeTerminationMetadata(ctx, s.Store, name); err != nil && !apierrors.IsNotFound(err) {
+		newRV, err := removeTerminationMetadata(ctx, s.Store, name, expectedRV)
+		if err != nil && !apierrors.IsNotFound(err) {
 			return nil, false, err
 		}
-		return s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, innerOptions)
+		return s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, finalDeleteOptions(options, newRV))
 	}
 
 	// Stamp the terminating label and finalizer BEFORE the deletion timestamp, so the folder is
 	// always discoverable by the cascade poller (which searches on the label). If the process dies
 	// after this but before the deletion timestamp is set, the poller still finds the labeled folder,
 	// sees it has no deletion timestamp, and resumes the delete -- nothing is silently lost.
-	if err := ensureTerminationMetadata(ctx, s.Store, name); err != nil {
+	newRV, err := ensureTerminationMetadata(ctx, s.Store, name, expectedRV)
+	if err != nil {
 		return nil, false, err
 	}
 
@@ -105,7 +120,7 @@ func (s *finalizerStorage) Delete(
 	// completes), then mark its subtree asynchronously off the request path -- deleting a large tree
 	// must not block (or time out) the request. The cascade poller is the backstop: it completes any
 	// marking this best-effort pass does not finish and removes finalizers once children are gone.
-	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, innerOptions)
+	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, finalDeleteOptions(options, newRV))
 	if err != nil {
 		return out, deleted, err
 	}
@@ -138,15 +153,18 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 	return nil
 }
 
-// optionsWithoutPreconditions returns a copy of options with Preconditions cleared, leaving the
-// original untouched. We pass this to the embedded store after enforcing the precondition ourselves,
-// so the store does not re-check it against the resource version our metadata stamp just advanced.
-func optionsWithoutPreconditions(options *metav1.DeleteOptions) *metav1.DeleteOptions {
+// finalDeleteOptions rebases the caller's precondition onto newRV -- the resource version produced by
+// the metadata mutation -- so the embedded store's delete is a compare-and-swap against the object we
+// just stamped, rather than the caller's now-stale resource version. Any UID precondition is kept.
+// When the caller supplied no precondition, options is returned unchanged.
+func finalDeleteOptions(options *metav1.DeleteOptions, newRV string) *metav1.DeleteOptions {
 	if options == nil || options.Preconditions == nil {
 		return options
 	}
 	cp := *options
-	cp.Preconditions = nil
+	pc := *options.Preconditions
+	pc.ResourceVersion = &newRV
+	cp.Preconditions = &pc
 	return &cp
 }
 
@@ -197,7 +215,7 @@ func markDescendants(ctx context.Context, store folderStore, searcher resourcepb
 		if err := markDescendants(ctx, store, searcher, namespace, child, depth+1); err != nil {
 			return err
 		}
-		if err := ensureTerminationMetadata(ctx, store, child); err != nil {
+		if _, err := ensureTerminationMetadata(ctx, store, child, ""); err != nil {
 			return err
 		}
 		if _, _, err := store.Delete(ctx, child, rest.ValidateAllObjectFunc, &metav1.DeleteOptions{GracePeriodSeconds: &zero}); err != nil && !apierrors.IsNotFound(err) {
@@ -224,104 +242,117 @@ func directChildFolders(ctx context.Context, searcher resourcepb.ResourceIndexCl
 	}
 }
 
-// ensureTerminationMetadata stamps the cascade finalizer and terminating label before delete
-// proceeds. The finalizer blocks physical removal until children are gone; the label is what
-// the cascade watcher selects on, so it must be present before the delete sets the deletion
-// timestamp and the folder enters the watcher's filtered set.
+// mutateTerminationMetadata applies the cascade metadata change `mutate` under optimistic
+// concurrency, returning the object's resource version afterwards (unchanged if `mutate` reported
+// nothing to do).
 //
-// It backfills a missing label even when the folder already has a deletion timestamp: the normal
-// flow stamps the label before the timestamp, but if a folder ends up terminating without the label
-// (e.g. manual edit or older data) the poller would never find it. applyTerminationMetadata no-ops
-// when nothing is missing, so the already-fully-stamped case stays a cheap read with no write.
-func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name string) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+// When expectedRV is empty it retries over conflicts -- used by best-effort marking, where racing a
+// concurrent update and re-applying is fine. When expectedRV is set (a caller's delete precondition),
+// it instead requires that resource version and does NOT retry: a concurrent change makes the stamp
+// fail with a conflict that propagates to the caller, rather than the stamp silently retrying over the
+// newer object and letting a stale conditional delete proceed.
+func mutateTerminationMetadata(ctx context.Context, store folderGetUpdater, name, expectedRV string, mutate func(metav1.Object) bool) (string, error) {
+	apply := func() (string, error) {
 		obj, err := store.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
-			return err
+			return "", err
+		}
+		accessor, err := meta.Accessor(obj)
+		if err != nil {
+			return "", apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+		}
+		if expectedRV != "" && accessor.GetResourceVersion() != expectedRV {
+			return "", apierrors.NewConflict(folders.FolderResourceInfo.GroupVersionResource().GroupResource(), name,
+				fmt.Errorf("the object has been modified; the delete precondition (resourceVersion %q) no longer holds", expectedRV))
 		}
 
 		updated := obj.DeepCopyObject()
 		updatedAccessor, err := meta.Accessor(updated)
 		if err != nil {
-			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+			return "", apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
 		}
-		if !applyTerminationMetadata(updatedAccessor) {
-			return nil
+		if !mutate(updatedAccessor) {
+			return accessor.GetResourceVersion(), nil
 		}
 
-		_, _, err = store.Update(
-			ctx,
-			name,
-			rest.DefaultUpdatedObjectInfo(updated),
-			rest.ValidateAllObjectFunc,
-			rest.ValidateAllObjectUpdateFunc,
-			false,
-			&metav1.UpdateOptions{},
-		)
-		return err
+		// updated carries the (expected) resource version, so the store's update is a compare-and-swap:
+		// a concurrent change between this Get and Update conflicts rather than being overwritten.
+		out, _, err := store.Update(ctx, name, rest.DefaultUpdatedObjectInfo(updated),
+			rest.ValidateAllObjectFunc, rest.ValidateAllObjectUpdateFunc, false, &metav1.UpdateOptions{})
+		if err != nil {
+			return "", err
+		}
+		outAccessor, err := meta.Accessor(out)
+		if err != nil {
+			return "", apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
+		}
+		return outAccessor.GetResourceVersion(), nil
+	}
+
+	if expectedRV != "" {
+		return apply() // precondition mode: fail on conflict, do not retry over a concurrent change
+	}
+	var rv string
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		var e error
+		rv, e = apply()
+		return e
 	})
+	return rv, err
+}
+
+// ensureTerminationMetadata stamps the cascade finalizer and terminating label before delete
+// proceeds. The finalizer blocks physical removal until children are gone; the label is what
+// the cascade watcher selects on, so it must be present before the delete sets the deletion
+// timestamp and the folder enters the watcher's filtered set. It returns the object's resource
+// version after stamping (see mutateTerminationMetadata for the expectedRV semantics).
+//
+// It backfills a missing label even when the folder already has a deletion timestamp: the normal
+// flow stamps the label before the timestamp, but if a folder ends up terminating without the label
+// (e.g. manual edit or older data) the poller would never find it. applyTerminationMetadata no-ops
+// when nothing is missing, so the already-fully-stamped case stays a cheap read with no write.
+func ensureTerminationMetadata(ctx context.Context, store folderGetUpdater, name, expectedRV string) (string, error) {
+	return mutateTerminationMetadata(ctx, store, name, expectedRV, applyTerminationMetadata)
 }
 
 // removeTerminationMetadata strips the cascade finalizer and terminating label from a folder if
 // present. It is used when the feature is disabled, so a folder that still carries the (now
 // vestigial) metadata can be deleted instead of hanging in Terminating, and so no stray terminating
 // label is left to mislead the poller if the feature is re-enabled. It is a no-op if neither is set.
-func removeTerminationMetadata(ctx context.Context, store folderGetUpdater, name string) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obj, err := store.Get(ctx, name, &metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
+func removeTerminationMetadata(ctx context.Context, store folderGetUpdater, name, expectedRV string) (string, error) {
+	return mutateTerminationMetadata(ctx, store, name, expectedRV, removeCascadeMetadataFields)
+}
 
-		accessor, err := meta.Accessor(obj)
-		if err != nil {
-			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
-		}
+// removeCascadeMetadataFields strips the cascade finalizer and terminating label from the object,
+// reporting whether it changed anything.
+func removeCascadeMetadataFields(accessor metav1.Object) bool {
+	finalizers := accessor.GetFinalizers()
+	labels := accessor.GetLabels()
+	hasFinalizer := hasCascadeFinalizer(finalizers)
+	hasLabel := labels[TerminatingLabel] == TerminatingLabelValue
+	if !hasFinalizer && !hasLabel {
+		return false
+	}
 
-		finalizers := accessor.GetFinalizers()
-		labels := accessor.GetLabels()
-		hasFinalizer := hasCascadeFinalizer(finalizers)
-		hasLabel := labels[TerminatingLabel] == TerminatingLabelValue
-		if !hasFinalizer && !hasLabel {
-			return nil
-		}
-
-		updated := obj.DeepCopyObject()
-		updatedAccessor, err := meta.Accessor(updated)
-		if err != nil {
-			return apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
-		}
-
-		if hasFinalizer {
-			remaining := make([]string, 0, len(finalizers))
-			for _, f := range finalizers {
-				if f != CascadeDeleteFinalizer {
-					remaining = append(remaining, f)
-				}
+	if hasFinalizer {
+		remaining := make([]string, 0, len(finalizers))
+		for _, f := range finalizers {
+			if f != CascadeDeleteFinalizer {
+				remaining = append(remaining, f)
 			}
-			updatedAccessor.SetFinalizers(remaining)
 		}
-		if hasLabel {
-			newLabels := make(map[string]string, len(labels))
-			for k, v := range labels {
-				if k != TerminatingLabel {
-					newLabels[k] = v
-				}
+		accessor.SetFinalizers(remaining)
+	}
+	if hasLabel {
+		newLabels := make(map[string]string, len(labels))
+		for k, v := range labels {
+			if k != TerminatingLabel {
+				newLabels[k] = v
 			}
-			updatedAccessor.SetLabels(newLabels)
 		}
-
-		_, _, err = store.Update(
-			ctx,
-			name,
-			rest.DefaultUpdatedObjectInfo(updated),
-			rest.ValidateAllObjectFunc,
-			rest.ValidateAllObjectUpdateFunc,
-			false,
-			&metav1.UpdateOptions{},
-		)
-		return err
-	})
+		accessor.SetLabels(newLabels)
+	}
+	return true
 }
 
 // applyTerminationMetadata adds the cascade finalizer and terminating label to the object if

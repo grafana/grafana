@@ -121,7 +121,8 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 	t.Run("stamps finalizer and label when missing", func(t *testing.T) {
 		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f"}}}
 
-		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, store.updateCalls)
 		updated := store.obj.(*foldersv1.Folder)
@@ -135,7 +136,8 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 			Finalizers: []string{CascadeDeleteFinalizer},
 		}}}
 
-		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, store.updateCalls)
 		updated := store.obj.(*foldersv1.Folder)
@@ -153,7 +155,8 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 			DeletionTimestamp: &now,
 		}}}
 
-		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, store.updateCalls)
 		require.Equal(t, TerminatingLabelValue, store.obj.(*foldersv1.Folder).Labels[TerminatingLabel])
@@ -166,7 +169,8 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 			Labels:     map[string]string{TerminatingLabel: TerminatingLabelValue},
 		}}}
 
-		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Zero(t, store.updateCalls)
 	})
@@ -180,14 +184,35 @@ func TestEnsureTerminationMetadata(t *testing.T) {
 			DeletionTimestamp: &now,
 		}}}
 
-		require.NoError(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Zero(t, store.updateCalls)
 	})
 
 	t.Run("propagates a get error", func(t *testing.T) {
 		store := &fakeFolderStore{getErr: errors.New("boom")}
-		require.Error(t, ensureTerminationMetadata(context.Background(), store, "f"))
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "")
+		require.Error(t, err)
+	})
+
+	t.Run("with a resource-version precondition, fails on mismatch without retrying", func(t *testing.T) {
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", ResourceVersion: "10"}}}
+
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "5")
+
+		require.True(t, apierrors.IsConflict(err))
+		require.Zero(t, store.updateCalls, "must not stamp (or retry) when the precondition no longer holds")
+	})
+
+	t.Run("with a matching resource-version precondition, stamps", func(t *testing.T) {
+		store := &fakeFolderStore{obj: &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", ResourceVersion: "7"}}}
+
+		_, err := ensureTerminationMetadata(context.Background(), store, "f", "7")
+
+		require.NoError(t, err)
+		require.Equal(t, 1, store.updateCalls)
+		require.Equal(t, TerminatingLabelValue, store.obj.(*foldersv1.Folder).Labels[TerminatingLabel])
 	})
 }
 
@@ -224,17 +249,19 @@ func TestCheckDeletePreconditions(t *testing.T) {
 	})
 }
 
-func TestOptionsWithoutPreconditions(t *testing.T) {
-	require.Nil(t, optionsWithoutPreconditions(nil))
+func TestFinalDeleteOptions(t *testing.T) {
+	require.Nil(t, finalDeleteOptions(nil, "9"))
 
 	noPre := &metav1.DeleteOptions{}
-	require.Same(t, noPre, optionsWithoutPreconditions(noPre), "no preconditions: options returned unchanged")
+	require.Same(t, noPre, finalDeleteOptions(noPre, "9"), "no preconditions: options returned unchanged")
 
-	rv := "5"
-	orig := &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &rv}}
-	got := optionsWithoutPreconditions(orig)
-	require.Nil(t, got.Preconditions, "returned copy must have preconditions cleared")
-	require.NotNil(t, orig.Preconditions, "original options must be left untouched")
+	oldRV := "5"
+	uid := types.UID("u")
+	orig := &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{ResourceVersion: &oldRV, UID: &uid}}
+	got := finalDeleteOptions(orig, "6")
+	require.Equal(t, "6", *got.Preconditions.ResourceVersion, "resource version rebased to the post-stamp RV")
+	require.Equal(t, uid, *got.Preconditions.UID, "UID precondition preserved")
+	require.Equal(t, "5", *orig.Preconditions.ResourceVersion, "original options left untouched")
 }
 
 func TestRemoveTerminationMetadata(t *testing.T) {
@@ -245,7 +272,8 @@ func TestRemoveTerminationMetadata(t *testing.T) {
 			Labels:     map[string]string{TerminatingLabel: TerminatingLabelValue, "keep": "yes"},
 		}}}
 
-		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+		_, err := removeTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, store.updateCalls)
 		updated := store.obj.(*foldersv1.Folder)
@@ -260,7 +288,8 @@ func TestRemoveTerminationMetadata(t *testing.T) {
 			Labels: map[string]string{TerminatingLabel: TerminatingLabelValue},
 		}}}
 
-		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+		_, err := removeTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, store.updateCalls)
 		require.NotContains(t, store.obj.(*foldersv1.Folder).Labels, TerminatingLabel)
@@ -272,14 +301,16 @@ func TestRemoveTerminationMetadata(t *testing.T) {
 			Finalizers: []string{"other.io/keep"},
 		}}}
 
-		require.NoError(t, removeTerminationMetadata(context.Background(), store, "f"))
+		_, err := removeTerminationMetadata(context.Background(), store, "f", "")
+		require.NoError(t, err)
 
 		require.Zero(t, store.updateCalls)
 	})
 
 	t.Run("propagates a get error", func(t *testing.T) {
 		store := &fakeFolderStore{getErr: errors.New("boom")}
-		require.Error(t, removeTerminationMetadata(context.Background(), store, "f"))
+		_, err := removeTerminationMetadata(context.Background(), store, "f", "")
+		require.Error(t, err)
 	})
 }
 
