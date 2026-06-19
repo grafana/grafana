@@ -196,6 +196,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       }
       currentLayout.removePanel(vizPanel);
 
+      // TODO: share id-preserving logic with movePanelsHelper.ts.
       targetLayout.addPanel(panelClone);
 
       panelClone.setState({ key: getVizPanelKeyForPanelId(panelId) });

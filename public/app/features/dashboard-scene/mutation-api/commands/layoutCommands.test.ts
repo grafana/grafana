@@ -817,9 +817,10 @@ describe('Layout mutation commands', () => {
 
       const panels = (scene.state.body as unknown as RowsLayoutManager).state.rows[0].state.layout.getVizPanels();
       expect(panels).toHaveLength(3);
-      // Panel ids are preserved (no bump) ...
-      expect(panels.map((p) => p.state.key).sort()).toEqual(['panel-1', 'panel-2', 'panel-3']);
-      // ... and each grid item key stays unique (no React duplicate-key collision).
+
+      const keyToTitle = Object.fromEntries(panels.map((p) => [p.state.key, p.state.title]));
+      expect(keyToTitle).toEqual({ 'panel-1': 'P1', 'panel-2': 'P2', 'panel-3': 'P3' });
+
       const gridItemKeys = panels.map((p) => p.parent?.state.key);
       expect(new Set(gridItemKeys).size).toBe(3);
     });
