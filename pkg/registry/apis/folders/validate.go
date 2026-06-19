@@ -75,6 +75,33 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
+// validateTerminatingLabelUnchanged rejects a user attempt to set, change, or remove the terminating
+// label. That label is what the cascade poller selects on, and a folder carrying it has its contained
+// dashboards/library elements/alert rules deleted and the cascade driven to completion. The label is
+// managed exclusively by the cascade machinery, which stamps it via a direct store update that
+// bypasses admission -- so any change to it arriving *through* admission from a non-service identity
+// is a user trying to trigger a cascade by relabeling a live folder (no DELETE involved), which would
+// delete its contents. The service identity is allowed (the poller's drain strips the label).
+func validateTerminatingLabelUnchanged(ctx context.Context, f *folders.Folder, old *folders.Folder) error {
+	if identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+	newVal := f.GetLabels()[TerminatingLabel]
+	oldVal := ""
+	if old != nil {
+		oldVal = old.GetLabels()[TerminatingLabel]
+	}
+	if newVal == oldVal {
+		return nil
+	}
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+	return apierrors.NewForbidden(gr, f.Name,
+		fmt.Errorf("the %q label is managed by folder cascade deletion and cannot be set or modified", TerminatingLabel))
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name
 

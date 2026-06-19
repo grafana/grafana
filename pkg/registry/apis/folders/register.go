@@ -523,6 +523,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
+		if err := validateTerminatingLabelUnchanged(ctx, f, nil); err != nil {
+			return err
+		}
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
@@ -533,6 +536,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
+		}
+		if err := validateTerminatingLabelUnchanged(ctx, f, old); err != nil {
 			return err
 		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.accessClient, b.maxNestedFolderDepth)

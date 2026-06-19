@@ -1102,6 +1102,43 @@ func TestValidateDelete(t *testing.T) {
 	}
 }
 
+func TestValidateTerminatingLabelUnchanged(t *testing.T) {
+	userCtx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+	withLabel := map[string]string{TerminatingLabel: TerminatingLabelValue}
+	folder := func(labels map[string]string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", Labels: labels}}
+	}
+
+	t.Run("user cannot set the label on create", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(withLabel), nil)
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user create without the label is allowed", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(userCtx, folder(nil), nil))
+	})
+
+	t.Run("user cannot add the label on update", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(withLabel), folder(nil))
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user cannot remove the label on update", func(t *testing.T) {
+		err := validateTerminatingLabelUnchanged(userCtx, folder(nil), folder(withLabel))
+		require.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("user update leaving the label unchanged is allowed", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(userCtx, folder(withLabel), folder(withLabel)))
+	})
+
+	t.Run("service identity may set or strip the label", func(t *testing.T) {
+		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(withLabel), folder(nil)))
+		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(nil), folder(withLabel)))
+	})
+}
+
 func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
 	repoAnnotations := map[string]string{utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo)}
 	ownerRef := metav1.OwnerReference{APIVersion: "v1", Kind: "ConfigMap", Name: "owner-a", UID: "owner-a-uid"}
