@@ -5,15 +5,27 @@ import { type PanelData } from '@grafana/data';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { type ThresholdDefinition } from '../rule-editor/util';
 
+import { EvalLoadingBar, NoEvalData } from './EvalStatus';
+
 interface RuleViewerVisualizationProps {
   data?: PanelData;
   thresholds?: ThresholdDefinition;
+  isLoading?: boolean;
 }
 
-export function RuleViewerVisualization({ data, thresholds }: RuleViewerVisualizationProps): JSX.Element | null {
-  if (!data) {
-    return null;
-  }
-
-  return <VizWrapper data={data} thresholds={thresholds?.config} thresholdsType={thresholds?.mode} />;
+export function RuleViewerVisualization({
+  data,
+  thresholds,
+  isLoading = false,
+}: RuleViewerVisualizationProps): JSX.Element | null {
+  return (
+    <>
+      {isLoading && <EvalLoadingBar />}
+      {data ? (
+        <VizWrapper data={data} thresholds={thresholds?.config} thresholdsType={thresholds?.mode} />
+      ) : (
+        !isLoading && <NoEvalData />
+      )}
+    </>
+  );
 }

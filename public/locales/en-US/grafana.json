@@ -2632,6 +2632,9 @@
       "max-data-points": "MD = {{maxDataPoints}}",
       "min-interval": "Min. Interval = {{minInterval}}"
     },
+    "query-viewer": {
+      "no-eval-data": "No data — query results could not be loaded"
+    },
     "queryAndExpressionsStep": {
       "custom": "Custom",
       "disableAdvancedOptions": {

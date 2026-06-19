@@ -9,7 +9,7 @@ import { Spacer } from '../../components/Spacer';
 import { WithReturnButton } from '../../components/WithReturnButton';
 import { Details } from '../../components/rule-viewer/Details';
 import { Title } from '../../components/rule-viewer/RuleViewer';
-import { QueryResults } from '../../components/rule-viewer/tabs/Query';
+import { QueryAndConditionsView } from '../../components/rule-viewer/tabs/Query';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import { stringifyErrorLike } from '../../utils/misc';
 import { rulesNav } from '../../utils/navigation';
@@ -120,7 +120,7 @@ export function RuleDetailsDrawer({ ruleUID, onClose }: RuleDetailsDrawerProps) 
       }
     >
       <TabContent>
-        {activeTab === DrawerTab.Query && <QueryResults rule={rule} />}
+        {activeTab === DrawerTab.Query && <QueryAndConditionsView rule={rule} />}
         {activeTab === DrawerTab.Details && <Details rule={rule} />}
       </TabContent>
     </Drawer>
