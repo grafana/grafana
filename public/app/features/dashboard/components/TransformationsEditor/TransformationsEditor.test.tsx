@@ -74,6 +74,21 @@ describe('TransformationsEditor', () => {
 
         expect(screen.getByTestId(debuggerSelector)).toBeInTheDocument();
       });
+
+      it('should show copy to clipboard buttons for input and output data', async () => {
+        setup([
+          {
+            id: 'reduce',
+            options: {},
+          },
+        ]);
+
+        const debugButton = screen.getByTestId(selectors.components.QueryEditorRow.actionButton('Debug'));
+        await userEvent.click(debugButton);
+
+        expect(screen.getByTitle('Copy input data to clipboard')).toBeInTheDocument();
+        expect(screen.getByTitle('Copy output data to clipboard')).toBeInTheDocument();
+      });
     });
   });
 });
