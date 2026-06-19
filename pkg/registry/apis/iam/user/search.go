@@ -42,20 +42,22 @@ import (
 // The RBAC authz server translates Group/Resource/Verb through the mapper
 // to resolve the underlying RBAC action.
 type accessControlCheck struct {
-	action     string // legacy RBAC action name returned to callers
-	group      string
-	resource   string
-	verb       string
-	name       string // user UID of the resource being checked
-	groupScope bool   // evaluate once at group_resource level (empty name)
+	action   string // legacy RBAC action name returned to callers
+	group    string
+	resource string
+	verb     string
+	name     string // user UID of the resource being checked
 }
 
+// Only verbs whose relation is defined on the authz model's "user" type may be
+// checked here. A check for a relation the type lacks fails the whole batch
+// (e.g. "relation 'user#create' not found"), blanking out all access control
+// metadata. The "user" type defines only get/update/delete, so VerbCreate
+// (org.users:add) and VerbGetPermissions (users.permissions:read) are omitted.
 var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate, groupScope: true},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions, groupScope: true},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
@@ -388,14 +390,8 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 	namespace := requester.GetNamespace()
 
 	items := func(yield func(accessControlCheck) bool) {
-		for _, c := range userAccessControlChecks {
-			if c.groupScope {
-				if !yield(c) {
-					return
-				}
-				continue
-			}
-			for _, hit := range hits {
+		for _, hit := range hits {
+			for _, c := range userAccessControlChecks {
 				c.name = hit.Name
 				if !yield(c) {
 					return
@@ -420,15 +416,6 @@ func (s *SearchHandler) stampAccessControl(ctx context.Context, requester identi
 	for c, err := range authz.FilterAuthorized(ctx, s.accessClient, items, extractFn, authz.WithTracer(s.tracer)) {
 		if err != nil {
 			return fmt.Errorf("access control check failed: %w", err)
-		}
-		if c.groupScope {
-			for _, hit := range hits {
-				if acMap[hit.Name] == nil {
-					acMap[hit.Name] = make(map[string]bool, len(userAccessControlChecks))
-				}
-				acMap[hit.Name][c.action] = true
-			}
-			continue
 		}
 		if acMap[c.name] == nil {
 			acMap[c.name] = make(map[string]bool, len(userAccessControlChecks))

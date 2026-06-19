@@ -228,13 +228,34 @@ func TestSearchSort(t *testing.T) {
 	}
 }
 
+// The authz model's "user" type defines only get/update/delete relations
+// (schema_core.fga). A check whose verb maps to any other relation fails the
+// whole batch check at the authz server, blanking out all metadata, so guard
+// against re-adding one for the "users" resource.
+func TestUserAccessControlChecksUseSupportedVerbs(t *testing.T) {
+	supportedUserVerbs := map[string]bool{
+		utils.VerbGet:    true,
+		utils.VerbList:   true,
+		utils.VerbWatch:  true,
+		utils.VerbUpdate: true,
+		utils.VerbPatch:  true,
+		utils.VerbDelete: true,
+	}
+	for _, c := range userAccessControlChecks {
+		if c.resource != "users" {
+			continue
+		}
+		assert.True(t, supportedUserVerbs[c.verb],
+			"check %q uses verb %q whose relation is not defined on the authz \"user\" type", c.action, c.verb)
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 			allowed := map[string]bool{
-				"org.users:read":         true,
-				"users.permissions:read": true,
-				"users.roles:read":       true,
+				"org.users:read":   true,
+				"users.roles:read": true,
 			}
 			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 			for _, check := range req.Checks {
@@ -336,9 +357,7 @@ func TestAccessControl(t *testing.T) {
 				for _, hit := range hits {
 					require.NotNil(t, hit.AccessControl)
 					assert.True(t, hit.AccessControl["org.users:read"])
-					assert.True(t, hit.AccessControl["users.permissions:read"])
 					assert.True(t, hit.AccessControl["users.roles:read"])
-					assert.False(t, hit.AccessControl["org.users:add"])
 					assert.False(t, hit.AccessControl["org.users:remove"])
 					assert.False(t, hit.AccessControl["org.users:write"])
 				}
@@ -401,56 +420,6 @@ func TestAccessControl(t *testing.T) {
 			tc.checkHits(t, resp.Hits)
 		})
 	}
-}
-
-func TestAccessControlGroupResourceChecksUseEmptyName(t *testing.T) {
-	var batchRequests []authlib.BatchCheckRequest
-	client := &mockAccessClient{
-		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
-			batchRequests = append(batchRequests, req)
-			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
-			for _, check := range req.Checks {
-				results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: true}
-			}
-			return authlib.BatchCheckResponse{Results: results}, nil
-		},
-	}
-
-	searchHandler := NewSearchHandler(
-		tracing.NewNoopTracerService(),
-		mockClientWithHits(),
-		featuremgmt.WithFeatures(),
-		&setting.Cfg{},
-		client,
-	)
-
-	rr := httptest.NewRecorder()
-	req := httptest.NewRequest("GET", "/searchUsers?accesscontrol=true", nil)
-	req.Header.Add("content-type", "application/json")
-	req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
-
-	searchHandler.DoSearch(rr, req)
-	require.Equal(t, 200, rr.Code)
-	require.Len(t, batchRequests, 1)
-
-	groupResourceChecks := 0
-	perUserNames := map[string]bool{}
-	for _, check := range batchRequests[0].Checks {
-		if check.Group != iamv0.GROUP || check.Resource != "users" {
-			continue
-		}
-		switch check.Verb {
-		case utils.VerbCreate, utils.VerbGetPermissions:
-			require.Empty(t, check.Name)
-			groupResourceChecks++
-		case utils.VerbList, utils.VerbUpdate, utils.VerbDelete:
-			require.NotEmpty(t, check.Name)
-			perUserNames[check.Name] = true
-		}
-	}
-
-	require.Equal(t, 2, groupResourceChecks)
-	require.Equal(t, map[string]bool{"user-1": true, "user-2": true}, perUserNames)
 }
 
 type mockAccessClient struct {
