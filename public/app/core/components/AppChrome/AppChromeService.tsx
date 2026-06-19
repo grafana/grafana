@@ -31,6 +31,7 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+const AGENT_MODE_LOCAL_STORAGE_KEY = 'grafana.navigation.agentMode';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
@@ -51,7 +52,7 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
-    agentMode: false,
+    agentMode: store.getBool(AGENT_MODE_LOCAL_STORAGE_KEY, false),
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -172,6 +173,7 @@ export class AppChromeService {
   };
 
   public setAgentMode = (agentMode: boolean) => {
+    store.set(AGENT_MODE_LOCAL_STORAGE_KEY, agentMode);
     this.update({ agentMode });
     reportInteraction('grafana_agent_mode', {
       action: agentMode ? 'enter' : 'exit',
