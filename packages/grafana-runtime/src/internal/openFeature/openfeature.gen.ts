@@ -45,6 +45,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables a new UI for query errors and notices */
+  GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
@@ -279,6 +281,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables a new UI for query errors and notices
+ *
+ * **Details:**
+ * - flag key: `grafana.newPanelQueryErrorsUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
 };
 
 /**

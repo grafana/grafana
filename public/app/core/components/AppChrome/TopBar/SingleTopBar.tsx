@@ -5,6 +5,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -51,10 +52,11 @@ export const SingleTopBar = memo(function SingleTopBar({
   breadcrumbActions,
   showToolbarLevel,
 }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
-  const styles = useStyles2(getStyles, menuDockedAndOpen);
+  const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
   const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
@@ -111,15 +113,15 @@ export const SingleTopBar = memo(function SingleTopBar({
   );
 });
 
-const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefreshEnabled: boolean) => ({
   layout: css({
     height: getChromeHeaderLevelHeight(),
     display: 'flex',
     gap: theme.spacing(2),
     alignItems: 'center',
     padding: theme.spacing(0, 1),
-    paddingLeft: menuDockedAndOpen ? theme.spacing(3.5) : theme.spacing(0.75),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    paddingLeft: menuDockedAndOpen ? theme.spacing(visualRefreshEnabled ? 0.5 : 3.5) : theme.spacing(0.75),
+    borderBottom: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
   }),
   breadcrumbsWrapper: css({

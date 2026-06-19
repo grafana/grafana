@@ -9,6 +9,7 @@ import { useObservable } from 'react-use';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -37,6 +38,7 @@ export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
@@ -58,7 +60,7 @@ export function AppChrome({ children }: Props) {
   );
 
   const headerLevels = useChromeHeaderLevels();
-  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight());
+  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
 
@@ -229,7 +231,7 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number) => {
+const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       label: 'page-content',
@@ -247,8 +249,8 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       paddingTop: 0,
     }),
     dockedMegaMenu: css({
-      background: theme.colors.background.primary,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
+      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'none',
       height: '100%',
       position: 'fixed',
@@ -275,7 +277,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed,
       left: 0,
       right: 0,
-      background: theme.colors.background.primary,
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({

@@ -271,14 +271,17 @@ func TestMapProvider_IndexAffectingHash(t *testing.T) {
 
 // TestMapProvider_IndexAffectingHash_GoldenHash pins the hash output for a
 // fixed reference input. The hash is computed from json.Marshal of a
-// canonical struct payload; Go's encoding/json output for plain string,
-// bool, and []string fields is stable in practice but not explicitly
-// pinned by the language spec. If a Go release ever shifts the canonical
-// form (struct field encoding order, HTML-escape default, string escape
-// rules, etc.), this test fails immediately in CI rather than silently
-// reindexing every kind that registers a SearchFieldsProvider. When that
-// happens, update the literal and document the Go version that caused
-// the shift.
+// canonical struct payload that includes both StandardSearchFieldDefinitions
+// and the per-(group, resource) declarations; Go's encoding/json output
+// for plain string, bool, and []string fields is stable in practice but
+// not explicitly pinned by the language spec.
+//
+// If a Go release ever shifts the canonical form (struct field encoding
+// order, HTML-escape default, string escape rules, etc.), or if the
+// standard set changes intentionally, this test fails immediately in CI
+// rather than silently reindexing every kind that registers a
+// SearchFieldsProvider. When that happens, update the literal and
+// document the cause (Go upgrade vs deliberate standard-set change).
 func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 	const (
 		group    = "example.test"
@@ -291,7 +294,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		v0: {
 			{Name: "email", Path: "spec.email", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 			{Name: "disabled", Path: "spec.disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilityRetrieve}, EmitZeroIfAbsent: true},
-			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve, SearchCapabilitySort}, CopyFromStandard: StandardFieldCreated},
+			{Name: "createdAt", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}, CopyFromStandard: StandardFieldCreated},
 			{Name: "members", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
 		},
 		v1: {
@@ -299,7 +302,77 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 		},
 	}, nil)
 
-	const expected = "d466508d55b135a18f8e2636815a459a3ae5f2011c5ca63749cf4d48dbe5db34"
+	const expected = "4cbe51ac08dd6cbc987b353d503f253a9aa0b478b4c7ef09ee0c5e5f29644a20"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
+}
+
+func TestValidateSearchFieldDefinitions(t *testing.T) {
+	t.Run("string with sort is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "title", Type: SearchFieldTypeString, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("date with sort is rejected (allowlist is minimal)", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "when", Type: SearchFieldTypeDate, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+	})
+	t.Run("unknown with sort is rejected (forces explicit Type)", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "x", Type: SearchFieldTypeUnknown, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+	})
+	t.Run("int64 with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "created")
+		assert.Contains(t, err.Error(), "int64")
+	})
+	t.Run("boolean with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "disabled", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "boolean")
+	})
+	t.Run("double with sort is rejected", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "score", Type: SearchFieldTypeDouble, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "double")
+	})
+	t.Run("numeric without sort is valid", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "created", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}},
+		})
+		require.NoError(t, err)
+	})
+	t.Run("multiple violations reported together", func(t *testing.T) {
+		err := validateSearchFieldDefinitions([]SearchFieldDefinition{
+			{Name: "a", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}},
+			{Name: "b", Type: SearchFieldTypeBoolean, Capabilities: []SearchCapability{SearchCapabilitySort}},
+		})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "a")
+		assert.Contains(t, err.Error(), "b")
+	})
+	t.Run("NewMapProvider panics on invalid declarations", func(t *testing.T) {
+		gvr := schema.GroupVersionResource{Group: "example.test", Version: "v0", Resource: "widgets"}
+		assert.Panics(t, func() {
+			NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {{Name: "bad", Type: SearchFieldTypeInt64, Capabilities: []SearchCapability{SearchCapabilitySort}}},
+			}, nil)
+		})
+	})
+	t.Run("StandardSearchFieldDefinitions passes validation", func(t *testing.T) {
+		err := validateSearchFieldDefinitions(StandardSearchFieldDefinitions())
+		require.NoError(t, err)
+	})
 }

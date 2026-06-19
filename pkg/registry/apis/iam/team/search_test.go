@@ -1,4 +1,4 @@
-package iam
+package team
 
 import (
 	"context"
@@ -60,7 +60,7 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -79,12 +79,12 @@ func TestTeamSearchFallback(t *testing.T) {
 	}
 }
 
-func TestTeamSearchHandler(t *testing.T) {
+func TestSearchHandler(t *testing.T) {
 	t.Run("search using default team search fields", func(t *testing.T) {
 		mockClient := &MockClient{}
 
 		features := featuremgmt.WithFeatures()
-		searchHandler := TeamSearchHandler{
+		searchHandler := SearchHandler{
 			log:      log.New("grafana-apiserver.teams.search"),
 			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
@@ -119,7 +119,7 @@ func TestTeamSearchHandler(t *testing.T) {
 		}
 
 		features := featuremgmt.WithFeatures()
-		searchHandler := TeamSearchHandler{
+		searchHandler := SearchHandler{
 			log:      log.New("grafana-apiserver.teams.search"),
 			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
@@ -203,7 +203,7 @@ func TestTeamSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
+			searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
@@ -232,7 +232,7 @@ func TestTeamSearchHandler(t *testing.T) {
 	t.Run("returns 400 for invalid sort field", func(t *testing.T) {
 		mockClient := &MockClient{}
 
-		searchHandler := &TeamSearchHandler{
+		searchHandler := &SearchHandler{
 			log:      log.New("grafana-apiserver.teams.search"),
 			client:   mockClient,
 			tracer:   tracing.NewNoopTracerService(),
@@ -255,7 +255,7 @@ func TestTeamSearchHandler(t *testing.T) {
 			t.Run(sortParam, func(t *testing.T) {
 				mockClient := &MockClient{}
 
-				searchHandler := &TeamSearchHandler{
+				searchHandler := &SearchHandler{
 					log:      log.New("grafana-apiserver.teams.search"),
 					client:   mockClient,
 					tracer:   tracing.NewNoopTracerService(),
@@ -427,7 +427,7 @@ func TestTeamAccessControl(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			searchHandler := &TeamSearchHandler{
+			searchHandler := &SearchHandler{
 				log:          log.New("grafana-apiserver.teams.search"),
 				client:       mockTeamClientWithHits(),
 				tracer:       tracing.NewNoopTracerService(),
@@ -462,7 +462,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 	}
 
 	t.Run("membercount absent - no member counts on hits", func(t *testing.T) {
-		searchHandler := &TeamSearchHandler{
+		searchHandler := &SearchHandler{
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
@@ -488,7 +488,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 	})
 
 	t.Run("membercount=false - no member counts on hits", func(t *testing.T) {
-		searchHandler := &TeamSearchHandler{
+		searchHandler := &SearchHandler{
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
@@ -514,7 +514,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 	})
 
 	t.Run("membercount=true - member counts populated", func(t *testing.T) {
-		searchHandler := &TeamSearchHandler{
+		searchHandler := &SearchHandler{
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
@@ -547,7 +547,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			},
 		}
 
-		searchHandler := &TeamSearchHandler{
+		searchHandler := &SearchHandler{
 			log:        log.New("grafana-apiserver.teams.search"),
 			client:     mockTeamClientWithHits(),
 			tracer:     tracing.NewNoopTracerService(),
@@ -581,7 +581,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			},
 		}
 
-		handler := &TeamSearchHandler{
+		handler := &SearchHandler{
 			log:        log.New("test"),
 			tracer:     tracing.NewNoopTracerService(),
 			teamGetter: mockGetter,
@@ -610,7 +610,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			},
 		}
 
-		handler := &TeamSearchHandler{
+		handler := &SearchHandler{
 			log:        log.New("test"),
 			tracer:     tracing.NewNoopTracerService(),
 			teamGetter: mockGetter,
@@ -634,7 +634,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			},
 		}
 
-		handler := &TeamSearchHandler{
+		handler := &SearchHandler{
 			log:        log.New("test"),
 			tracer:     tracing.NewNoopTracerService(),
 			teamGetter: mockGetter,
