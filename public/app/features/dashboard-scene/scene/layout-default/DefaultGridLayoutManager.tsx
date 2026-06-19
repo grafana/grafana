@@ -23,10 +23,12 @@ import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
+import {
+  ObjectsReorderedOnCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  NewObjectAddedToCanvasEvent,
+} from '../../edit-pane/events';
 import { dashboardEditActions } from '../../edit-pane/shared';
-import { ObjectsReorderedOnCanvasEvent } from '../../edit-pane/events';
-import { ObjectRemovedFromCanvasEvent } from '../../edit-pane/events';
-import { NewObjectAddedToCanvasEvent } from '../../edit-pane/events';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';

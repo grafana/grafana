@@ -1,4 +1,4 @@
-import { VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
@@ -10,7 +10,7 @@ import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
 import { type DashboardLayoutManager } from './DashboardLayoutManager';
-import { LayoutParent } from './LayoutParent';
+import { type LayoutParent } from './LayoutParent';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** Dashboard-specific preferences **/
