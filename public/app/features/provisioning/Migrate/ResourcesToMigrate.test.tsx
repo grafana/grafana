@@ -36,8 +36,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
     onToggleDashboard: jest.fn(),
     selectedCount: 0,
     allSelected: false,
-    someSelected: false,
-    onToggleSelectAll: jest.fn(),
+    onSetFoldersSelected: jest.fn(),
     onMigrateSelected: jest.fn(),
     submitDisabled: false,
     canMigrate: true,
@@ -75,12 +74,13 @@ describe('ResourcesToMigrate', () => {
     expect(props.onToggleFolder).toHaveBeenCalledWith('team-a');
   });
 
-  it('toggles select-all through the callback', async () => {
+  it('select-all toggles only the currently visible (filtered) folders', async () => {
     const { props, user } = setup();
 
     await user.click(screen.getByRole('checkbox', { name: /select all/i }));
 
-    expect(props.onToggleSelectAll).toHaveBeenCalled();
+    // Only the single migratable folder shown is selected — not the managed one.
+    expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], true);
   });
 
   it('disables the migrate button when the selection cannot be submitted', () => {
@@ -101,26 +101,18 @@ describe('ResourcesToMigrate', () => {
   });
 
   it('shows "Migrate all (N)" when everything is selected', () => {
-    setup({ selectedCount: 1, allSelected: true, someSelected: true });
+    setup({ selectedCount: 1, allSelected: true });
 
     expect(screen.getByRole('button', { name: /migrate all \(1\)/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
-  it('checks the select-all box (not indeterminate) when everything is selected', () => {
-    setup({ selectedCount: 1, allSelected: true, someSelected: true });
+  it('checks the select-all box (not indeterminate) when every visible folder is selected', () => {
+    setup({ selectedFolderUids: new Set(['team-a']) });
 
     const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
     expect(selectAll).toBeChecked();
     expect(selectAll.indeterminate).toBe(false);
-  });
-
-  it('marks the select-all box indeterminate on a partial selection', () => {
-    setup({ selectedCount: 1, allSelected: false, someSelected: true });
-
-    const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
-    expect(selectAll).not.toBeChecked();
-    expect(selectAll.indeterminate).toBe(true);
   });
 
   it('shows the connect action instead of a dead migrate button when migration is not possible', () => {
@@ -187,6 +179,24 @@ describe('ResourcesToMigrate', () => {
       expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
     });
 
+    it('marks select-all indeterminate when only some visible folders are selected', () => {
+      setup({ folders: twoFolders, selectedFolderUids: new Set(['alpha']) });
+
+      const selectAll = screen.getByRole<HTMLInputElement>('checkbox', { name: /select all/i });
+      expect(selectAll).not.toBeChecked();
+      expect(selectAll.indeterminate).toBe(true);
+    });
+
+    it('scopes select-all to the filtered folders when a search is active', async () => {
+      const { props, user } = setup({ folders: twoFolders });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'Alpha');
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      // Only the visible (matching) folder is toggled, not Beta.
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['alpha'], true);
+    });
+
     it('hints to migrate the folder when its dashboards live only in subfolders', async () => {
       const subfoldersOnly: FolderRow = {
         uid: 'parent',
@@ -200,6 +210,25 @@ describe('ResourcesToMigrate', () => {
       await user.click(screen.getByRole('button', { name: /expand parent/i }));
 
       expect(screen.getByText(/in subfolders/i)).toBeInTheDocument();
+    });
+
+    it('hints how many more resources are nested when a folder has both direct and nested ones', async () => {
+      const mixed: FolderRow = {
+        uid: 'mixed',
+        title: 'Mixed',
+        dashboardCount: 5, // 2 direct + 3 nested
+        directDashboards: [
+          { uid: 'd1', title: 'Direct One', url: '/d/d1' },
+          { uid: 'd2', title: 'Direct Two', url: '/d/d2' },
+        ],
+        allDashboards: [{ uid: 'd1', title: 'Direct One', url: '/d/d1' }],
+      };
+      const { user } = setup({ folders: [mixed] });
+
+      await user.click(screen.getByRole('button', { name: /expand mixed/i }));
+
+      expect(screen.getByText('Direct One')).toBeInTheDocument();
+      expect(screen.getByText(/3 more in subfolders/i)).toBeInTheDocument();
     });
 
     it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {

@@ -7,6 +7,10 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
 
 const PAGE_SIZE = 200;
+// How many page requests of one kind to have in flight at once. Keeps the
+// fan-out bounded (folders and dashboards each batch independently) so a large
+// instance doesn't fire hundreds of concurrent requests on load.
+const PAGE_CONCURRENCY = 5;
 // Safety guardrail so a pathological response (or an enormous instance) can't
 // spin off unbounded requests. Generous on purpose — well past any realistic
 // folder/dashboard count. Exceeding it throws (rather than returning a
@@ -66,8 +70,9 @@ function readImmediateParent(location: unknown): string | undefined {
 
 /**
  * Pages through every item of a kind via the unified searcher. The first page
- * also reports `totalRows`, so the remaining pages are fetched concurrently
- * rather than one sequential round-trip at a time. Bounded by MAX_PAGES.
+ * reports `totalRows`, so the remaining pages are fetched in small concurrent
+ * batches (PAGE_CONCURRENCY) rather than one sequential round-trip at a time or
+ * one big burst. Bounded by MAX_PAGES.
  */
 async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQueryResult[]> {
   const searcher = getGrafanaSearcher();
@@ -81,25 +86,28 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
     });
 
   const first = await searchPage(0);
-  const firstItems: DashboardQueryResult[] = first.view.toArray();
-  const total = typeof first.totalRows === 'number' ? first.totalRows : firstItems.length;
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const items: DashboardQueryResult[] = first.view.toArray();
+  const totalRows = typeof first.totalRows === 'number' ? first.totalRows : items.length;
+  const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
   // Fail loudly rather than silently truncating: a partial list would drop rows
   // from the table and, worse, from the selective-migration payload. The error
   // surfaces the migrate-everything fallback, which doesn't need the full list.
   if (pageCount > MAX_PAGES) {
-    throw new Error(`Too many ${kind}s to enumerate (${total}); aborting to avoid an incomplete migration list.`);
+    throw new Error(`Too many ${kind}s to enumerate (${totalRows}); aborting to avoid an incomplete migration list.`);
   }
 
-  if (pageCount <= 1) {
-    return firstItems;
+  // Fetch the remaining pages in small concurrent batches so a large instance
+  // doesn't open one big burst of requests before the tab is interactive.
+  for (let page = 1; page < pageCount; page += PAGE_CONCURRENCY) {
+    const batch = Array.from({ length: Math.min(PAGE_CONCURRENCY, pageCount - page) }, (_, index) =>
+      searchPage(page + index)
+    );
+    for (const result of await Promise.all(batch)) {
+      items.push(...result.view.toArray());
+    }
   }
-
-  const rest = await Promise.all(
-    Array.from({ length: pageCount - 1 }, (_, index) => searchPage(index + 1).then((result) => result.view.toArray()))
-  );
-  return firstItems.concat(...rest);
+  return items;
 }
 
 // `kind: ['folder']` with no location filter returns every folder on the

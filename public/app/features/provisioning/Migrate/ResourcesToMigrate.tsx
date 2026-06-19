@@ -18,11 +18,10 @@ interface Props {
   onToggleDashboard: (uid: string) => void;
   /** Folders + independently-ticked resources, shown in the migrate button. */
   selectedCount: number;
-  /** True when every migratable folder is selected — migrates everything. */
+  /** True when every migratable folder is selected — drives the "Migrate all" label. */
   allSelected: boolean;
-  /** True when at least one folder/resource is selected (drives the indeterminate select-all). */
-  someSelected: boolean;
-  onToggleSelectAll: () => void;
+  /** Selects or deselects a batch of folders — used by the (filter-scoped) select-all. */
+  onSetFoldersSelected: (uids: string[], selected: boolean) => void;
   onMigrateSelected: () => void;
   /**
    * Whether the current selection can actually be migrated. False when nothing
@@ -57,8 +56,7 @@ export function ResourcesToMigrate({
   onToggleDashboard,
   selectedCount,
   allSelected,
-  someSelected,
-  onToggleSelectAll,
+  onSetFoldersSelected,
   onMigrateSelected,
   submitDisabled,
   canMigrate,
@@ -98,6 +96,14 @@ export function ResourcesToMigrate({
     return covered;
   }, [folders, selectedFolderUids]);
 
+  // Select-all is scoped to the rows currently shown (after search), matching
+  // standard table behaviour — it never reaches past the filter to tick the
+  // whole instance.
+  const filteredFolderUids = filtered.map((folder) => folder.uid);
+  const allFilteredSelected =
+    filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
+  const someFilteredSelected = filteredFolderUids.some((uid) => selectedFolderUids.has(uid));
+
   const toggleExpanded = (uid: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -111,7 +117,7 @@ export function ResourcesToMigrate({
   };
 
   return (
-    <div className={styles.panel} id="resources-to-migrate">
+    <div className={styles.panel}>
       <Stack direction="column" gap={0.5}>
         <Text variant="h5">
           <Trans i18nKey="provisioning.migrate.resources-to-migrate-heading">Resources to migrate</Trans>
@@ -159,22 +165,22 @@ export function ResourcesToMigrate({
         </div>
       </Stack>
 
-      {unmanagedFolders.length > 0 && (
+      {filtered.length > 0 && (
         <div className={styles.selectAllRow}>
           <Checkbox
             // Checkbox only ever sets the native `indeterminate` property to
             // true and never clears it, so once this box has been partially
             // selected it would stay visually indeterminate even after every
             // row is selected. Drive the property ourselves so it resets to a
-            // plain checked state when allSelected becomes true.
+            // plain checked state when all visible rows are selected.
             ref={(el) => {
               if (el) {
-                el.indeterminate = someSelected && !allSelected;
+                el.indeterminate = someFilteredSelected && !allFilteredSelected;
               }
             }}
-            value={allSelected}
-            indeterminate={someSelected && !allSelected}
-            onChange={onToggleSelectAll}
+            value={allFilteredSelected}
+            indeterminate={someFilteredSelected && !allFilteredSelected}
+            onChange={() => onSetFoldersSelected(filteredFolderUids, !allFilteredSelected)}
             label={t('provisioning.migrate.resources-select-all', 'Select all')}
           />
         </div>

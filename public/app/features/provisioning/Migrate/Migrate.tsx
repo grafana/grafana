@@ -82,11 +82,11 @@ export function Migrate() {
   // with the `write` workflow — matching the guard in the drawer. Without one,
   // the table footer surfaces a connect action instead of a dead button.
   const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
-  // Select-all and the "migrate everything" affordance operate on the full set
-  // of migratable folders, not just the search-filtered view.
+  // `allSelected` reflects whether every migratable folder is picked (drives the
+  // "Migrate all" → migrate-everything path). The select-all checkbox itself is
+  // scoped to the search-filtered rows inside the table.
   const migratableUids = folders.filter(isMigratableFolder).map((f) => f.uid);
   const allSelected = migratableUids.length > 0 && migratableUids.every((uid) => selectedFolderUids.has(uid));
-  const someSelected = selection.items > 0;
   // "Migrate all" (everything) is valid whenever there are migratable folders;
   // a partial selection needs at least one resolved dashboard ref — picking
   // only empty folders resolves to nothing migratable, so don't allow it to
@@ -103,15 +103,12 @@ export function Migrate() {
     setSelectedFolderUids(new Set());
     setSelectedDashboardUids(new Set());
   };
-  const toggleSelectAll = () => {
-    if (allSelected) {
-      clearSelection();
-    } else {
-      // Selecting every folder covers every resource, so any individually
-      // ticked resource is redundant — reset to the clean "all folders" state.
-      setSelectedFolderUids(new Set(migratableUids));
-      setSelectedDashboardUids(new Set());
-    }
+  const setFoldersSelected = (uids: string[], selected: boolean) => {
+    setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      uids.forEach((uid) => (selected ? next.add(uid) : next.delete(uid)));
+      return next;
+    });
   };
 
   return (
@@ -155,8 +152,7 @@ export function Migrate() {
           onToggleDashboard={(uid) => setSelectedDashboardUids((prev) => toggle(prev, uid))}
           selectedCount={selection.items}
           allSelected={allSelected}
-          someSelected={someSelected}
-          onToggleSelectAll={toggleSelectAll}
+          onSetFoldersSelected={setFoldersSelected}
           // Selecting everything runs the legacy "migrate all unmanaged" job;
           // a partial selection scopes the job to the picked resources.
           onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}

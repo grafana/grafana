@@ -75,22 +75,35 @@ export function FolderEntry({
               </Trans>
             </Text>
           ) : (
-            folder.directDashboards.map((dash) => {
-              const coveredByFolder = folderCoveredDashboardUids.has(dash.uid);
-              const checked = coveredByFolder || selectedDashboardUids.has(dash.uid);
-              return (
-                <div key={`dash-${dash.uid}`} className={styles.childRow}>
-                  <Checkbox
-                    value={checked}
-                    disabled={coveredByFolder}
-                    onChange={() => onToggleDashboard(dash.uid)}
-                    aria-label={dash.title}
-                  />
-                  <Icon name="apps" size="sm" />
-                  <Text variant="bodySmall">{dash.title}</Text>
-                </div>
-              );
-            })
+            <>
+              {folder.directDashboards.map((dash) => {
+                const coveredByFolder = folderCoveredDashboardUids.has(dash.uid);
+                const checked = coveredByFolder || selectedDashboardUids.has(dash.uid);
+                return (
+                  <div key={`dash-${dash.uid}`} className={styles.childRow}>
+                    <Checkbox
+                      value={checked}
+                      disabled={coveredByFolder}
+                      onChange={() => onToggleDashboard(dash.uid)}
+                      aria-label={dash.title}
+                    />
+                    <Icon name="apps" size="sm" />
+                    <Text variant="bodySmall">{dash.title}</Text>
+                  </div>
+                );
+              })}
+              {/* The expand view only lists direct resources; recursive ones in
+                  subfolders aren't shown, so hint at how many more come along. */}
+              {folder.dashboardCount > folder.directDashboards.length && (
+                <Text variant="bodySmall" color="secondary">
+                  {t('provisioning.migrate.resources-folder-nested-hint', '', {
+                    count: folder.dashboardCount - folder.directDashboards.length,
+                    defaultValue_one: '+{{count}} more in subfolders — selecting this folder includes it.',
+                    defaultValue_other: '+{{count}} more in subfolders — selecting this folder includes them.',
+                  })}
+                </Text>
+              )}
+            </>
           )}
         </div>
       )}
