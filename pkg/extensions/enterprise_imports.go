@@ -735,6 +735,7 @@ import (
 	_ "k8s.io/apiserver/pkg/storage/etcd3/metrics"
 	_ "k8s.io/apiserver/pkg/storage/storagebackend"
 	_ "k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	_ "k8s.io/apiserver/pkg/util/dryrun"
 	_ "k8s.io/apiserver/pkg/util/feature"
 	_ "k8s.io/apiserver/pkg/util/flowcontrol"
 	_ "k8s.io/apiserver/pkg/util/flowcontrol/metrics"
