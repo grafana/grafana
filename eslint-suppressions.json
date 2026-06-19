@@ -592,11 +592,6 @@
       "count": 4
     }
   },
-  "packages/grafana-ui/src/components/Select/ValueContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Select/types.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
