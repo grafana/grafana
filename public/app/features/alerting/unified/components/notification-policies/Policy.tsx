@@ -1178,7 +1178,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       flex: 1,
       position: 'relative',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       border: `solid 1px ${theme.colors.border.weak}`,
       ...(hasFocus && {
         borderColor: theme.colors.primary.border,

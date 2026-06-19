@@ -2848,7 +2848,9 @@
           "alerting": "Zapnutím pozastavíte hodnocení tohoto pravidla výstrahy.",
           "recording": "Zapnutím pozastavíte hodnocení tohoto pravidla záznamu."
         },
-        "select-folder-before": "Před nastavením hodnotící skupiny a intervalu vyberte složku"
+        "select-folder-before": "Před nastavením hodnotící skupiny a intervalu vyberte složku",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -6096,9 +6098,6 @@
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Propojení panelů"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Zpět na dotazy"
     },
@@ -8808,7 +8807,9 @@
       "query-history-button": "Historie dotazů",
       "query-history-button-aria-label": "Historie dotazů",
       "query-inspector-button": "Inspektor dotazů",
-      "query-inspector-button-aria-label": "Inspektor dotazů"
+      "query-inspector-button-aria-label": "Inspektor dotazů",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Zobrazit všechny rozsahy",
     "span-bar": {
@@ -13189,9 +13190,6 @@
       "description-clear-repository-connection": "Tento název bude použit pro připojení k úložišti a pro složku zobrazovanou v uživatelském rozhraní",
       "empty": "Prázdný",
       "error-field-required": "Toto pole je povinné.",
-      "error-quota-exceeded-message": "Tato složka úložiště obsahuje {{fileCount}} zdrojů, což překračuje limit vašeho účtu, který je {{limit}}. Chcete-li toto úložiště synchronizovat, upgradujte svůj účet nebo snižte počet zdrojů, které chcete synchronizovat.",
-      "error-quota-exceeded-message-onprem": "Tato složka úložiště obsahuje {{fileCount}} zdrojů, což překračuje limit vaší instance, který je {{limit}}. Chcete-li toto úložiště synchronizovat, aktualizujte konfiguraci Grafany nebo snižte počet zdrojů, které chcete synchronizovat.",
-      "error-quota-exceeded-title": "Byl překročen limit zdrojů",
       "error-repository-status-unhealthy-message": "Při připojování k úložišti došlo k problému. Zkontrolujte nastavení úložiště a zkuste to znovu.",
       "error-repository-status-unhealthy-title": "Stav úložiště je nezdravý",
       "external-storage-label": "Externí úložiště",
@@ -13202,6 +13200,9 @@
       "unmanaged-resources-label": "Nespravované zdroje",
       "update-configuration-action": "Zobrazit dokumenty ke konfiguraci",
       "upgrade-action": "Upgradovat účet",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} nástěnka",
       "dashboards-count_few": "{{count}} nástěnky",
       "dashboards-count_many": "{{count}} nástěnek",
@@ -14473,6 +14474,58 @@
       "show-response": "Zobrazit odpověď"
     },
     "query-editor-not-exported": "Doplněk zdroje dat neexportuje žádnou komponentu editoru dotazů"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_few": "",
+    "description_many": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

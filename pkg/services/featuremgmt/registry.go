@@ -324,14 +324,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "dashgpt",
-			Description: "Enable AI powered features in dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "aiGeneratedDashboardChanges",
 			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
 			Stage:       FeatureStageExperimental,
@@ -417,6 +409,15 @@ var (
 		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{React: true},
+		},
+		{
+			Name:            "grafana.newPanelQueryErrorsUI",
+			Description:     "Enables a new UI for query errors and notices",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -2027,14 +2028,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "sharingDashboardImage",
-			Description: "Enables image sharing functionality for dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
-		},
-		{
 			Name:        "preferLibraryPanelTitle",
 			Description: "Prefer library panel title over viz panel title.",
 			Stage:       FeatureStagePrivatePreview,
@@ -2150,7 +2143,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "interactiveLearning",
