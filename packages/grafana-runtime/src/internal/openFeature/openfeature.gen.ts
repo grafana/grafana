@@ -17,6 +17,8 @@ export const FlagKeys = {
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
+  /** Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar */
+  AssistantAgentMode: "assistant.agentMode",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
   /** Enables support for section level variables (rows and tabs) */
@@ -123,6 +125,17 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
  */
 export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("analyticsFramework", false, options).value;
+};
+
+/**
+ * Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar
+ *
+ * **Details:**
+ * - flag key: `assistant.agentMode`
+ * - default value: `false`
+ */
+export const useFlagAssistantAgentMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.agentMode", false, options).value;
 };
 
 /**

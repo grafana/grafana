@@ -78,8 +78,7 @@ export function AppChrome({ children }: Props) {
   // Subscribe to location so the URL-driven effects below (kiosk / agentMode) re-run on
   // SPA navigation, not just on mount — AppChrome otherwise doesn't re-render on a pure
   // location change.
-  const location = useObservable(locationService.getLocationObservable(), locationService.getLocation());
-  const { pathname, search } = location;
+  const { pathname, search } = useObservable(locationService.getLocationObservable(), locationService.getLocation());
   const url = pathname + search;
   const shouldShowReturnToPrevious = state.returnToPrevious && url !== state.returnToPrevious.href;
 
@@ -98,7 +97,7 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const agentMode = useAgentMode(search);
+  const { agentModeFeatureFlagEnabled: agentModeEnabled, active: agentMode } = useAgentMode(search);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -110,7 +109,8 @@ export function AppChrome({ children }: Props) {
         'main-view--chrome-hidden': state.chromeless || agentMode,
       })}
     >
-      {outletHost &&
+      {agentModeEnabled &&
+        outletHost &&
         createPortal(
           [
             // In agent mode, a slim bar (hamburger + breadcrumbs) sits above the live
@@ -175,8 +175,10 @@ export function AppChrome({ children }: Props) {
               })}
               id="pageContent"
               tabIndex={-1}
-              ref={setOutletHost}
-            />
+              ref={agentModeEnabled ? setOutletHost : undefined}
+            >
+              {agentModeEnabled ? null : children}
+            </main>
             {!state.chromeless && isExtensionSidebarOpen && (
               <Resizable
                 className={styles.sidebarContainer}
