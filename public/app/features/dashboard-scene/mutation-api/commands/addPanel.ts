@@ -9,6 +9,7 @@
 import { type z } from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -57,7 +58,7 @@ export const addPanelCommand: MutationCommand<AddPanelPayload> = {
       const resolved = resolveLayoutPath(scene.state.body, parentPath ?? '/');
       const targetLayout = resolved.layoutManager;
 
-      targetLayout.addPanel(vizPanel);
+      dashboardEditActions.addPanel(targetLayout, vizPanel);
 
       const isAutoGrid = targetLayout instanceof AutoGridLayoutManager;
 

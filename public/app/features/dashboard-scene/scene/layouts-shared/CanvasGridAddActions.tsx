@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDefaultVizPanel } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
@@ -44,7 +45,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={() => {
-          layoutManager.addPanel(getDefaultVizPanel());
+          dashboardEditActions.addPanel(layoutManager, getDefaultVizPanel());
           DashboardInteractions.trackAddPanelClick();
         }}
       >

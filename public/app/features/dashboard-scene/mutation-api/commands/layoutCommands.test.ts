@@ -28,6 +28,12 @@ jest.mock('../../edit-pane/shared', () => {
       removeElement(props: { perform: () => void }) {
         props.perform();
       },
+      addPanel(layout: { addPanel: (panel: unknown) => void }, panel: unknown) {
+        layout.addPanel(panel);
+      },
+      removePanel(layout: { removePanel?: (panel: unknown) => void }, panel: unknown) {
+        layout.removePanel?.(panel);
+      },
     },
   };
 });

@@ -66,8 +66,8 @@ export class RowsLayoutManager
 
   public readonly descriptor = RowsLayoutManager.descriptor;
 
-  public addPanel(vizPanel: VizPanel) {
-    this.state.rows[0]?.getLayout().addPanel(vizPanel);
+  public addPanel(vizPanel: VizPanel, index?: number) {
+    this.state.rows[0]?.getLayout().addPanel(vizPanel, index);
   }
 
   public setIsDropTarget(isDropTarget: boolean): void {

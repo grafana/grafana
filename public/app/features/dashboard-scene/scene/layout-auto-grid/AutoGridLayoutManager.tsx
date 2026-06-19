@@ -120,25 +120,24 @@ export class AutoGridLayoutManager
     return [AutoGridLayoutManager.descriptor.id];
   }
 
-  public addPanel(vizPanel: VizPanel) {
-    const panelId = dashboardSceneGraph.getNextPanelId(this);
+  public addPanel(vizPanel: VizPanel, index?: number) {
+    let gridItem: AutoGridItem;
 
-    vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
-    vizPanel.clearParent();
+    // Re-adding a previously removed panel (undo/redo): reuse the existing grid
+    // item so the panel id and item identity are preserved.
+    if (vizPanel.parent instanceof AutoGridItem && vizPanel.parent.parent === this.state.layout) {
+      gridItem = vizPanel.parent;
+    } else {
+      const panelId = dashboardSceneGraph.getNextPanelId(this);
+      vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
+      vizPanel.clearParent();
+      gridItem = new AutoGridItem({ body: vizPanel });
+    }
 
-    const newGridItem = new AutoGridItem({ body: vizPanel });
-
-    dashboardEditActions.addElement({
-      addedObject: vizPanel,
-      source: this,
-      perform: () => {
-        this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
-      },
-      undo: () => {
-        this.state.layout.setState({
-          children: this.state.layout.state.children.filter((child) => child !== newGridItem),
-        });
-      },
+    const children = this.state.layout.state.children.filter((child) => child !== gridItem);
+    const insertAt = index ?? children.length;
+    this.state.layout.setState({
+      children: [...children.slice(0, insertAt), gridItem, ...children.slice(insertAt)],
     });
   }
 
@@ -177,32 +176,20 @@ export class AutoGridLayoutManager
     clearClipboard();
   }
 
-  public removePanel(panel: VizPanel) {
+  public removePanel(panel: VizPanel): number | undefined {
     const gridItem = panel.parent;
     if (!(gridItem instanceof AutoGridItem)) {
-      return;
+      return undefined;
     }
 
-    const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
+    const children = this.state.layout.state.children;
+    const index = children.indexOf(gridItem);
 
-    dashboardEditActions.removeElement({
-      removedObject: panel,
-      source: this,
-      perform: () => {
-        this.state.layout.setState({
-          children: this.state.layout.state.children.filter((child) => child !== gridItem),
-        });
-      },
-      undo: () => {
-        this.state.layout.setState({
-          children: [
-            ...this.state.layout.state.children.slice(0, gridItemIndex),
-            gridItem,
-            ...this.state.layout.state.children.slice(gridItemIndex),
-          ],
-        });
-      },
-    });
+    // Note: the grid item keeps its parent reference so addPanel can re-attach
+    // the same instance (and panel id) on undo.
+    this.state.layout.setState({ children: children.filter((child) => child !== gridItem) });
+
+    return index;
   }
 
   // panelIdGenerator is a shared counter to ensure unique panel IDs across siblings.

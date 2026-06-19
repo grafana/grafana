@@ -161,11 +161,11 @@ export class TabsLayoutManager
     });
   }
 
-  public addPanel(vizPanel: VizPanel) {
+  public addPanel(vizPanel: VizPanel, index?: number) {
     const tab = this.getCurrentTab() ?? this.state.tabs[0];
 
     if (tab) {
-      tab.getLayout().addPanel(vizPanel);
+      tab.getLayout().addPanel(vizPanel, index);
     }
   }
 
