@@ -173,7 +173,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}
 	}
 
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.ghParams().CustomServerURL())
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.ghParams().CustomServerURL())
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +455,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.obj.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.ghParams().CustomServerURL())
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), c.obj.CustomServerURL())
+	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), c.ghParams().CustomServerURL())
 	if err != nil {
 		return nil, err
 	}

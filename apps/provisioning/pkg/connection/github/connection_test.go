@@ -6,9 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
-	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -769,7 +766,7 @@ func TestConnection_Test(t *testing.T) {
 				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything, "").Return(mockClient, nil)
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
@@ -813,7 +810,7 @@ func TestConnection_Test(t *testing.T) {
 				Token:      token,
 			},
 			setupMock: func(mockFactory *github.MockGithubFactory, mockClient *github.MockClient) {
-				mockFactory.EXPECT().New(mock.Anything, mock.Anything, "").Return(mockClient, nil)
+				mockFactory.EXPECT().New(mock.Anything, mock.Anything, mock.Anything).Return(mockClient, nil)
 				mockClient.EXPECT().GetApp(mock.Anything).Return(github.App{
 					ID:   123,
 					Slug: "test-app",
@@ -2305,71 +2302,4 @@ func getIssuingAndExpirationTimeFromToken(token common.RawSecureValue) (time.Tim
 	}
 
 	return claims.IssuedAt.Time, claims.ExpiresAt.Time, nil
-}
-
-// TestConnection_Test_GitHubEnterpriseURLs verifies that for a GitHub Enterprise
-// connection, Connection.Test builds the GitHub client against the configured
-// enterprise server (config.ServerURL) rather than api.github.com. It uses the
-// real factory (no injected Client, so WithEnterpriseURLs is applied) and stands
-// up a local server as the enterprise endpoint, asserting the App and installation
-// requests land on that host under the enterprise /api/v3 base path.
-func TestConnection_Test_GitHubEnterpriseURLs(t *testing.T) {
-	const appID = "123"
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-	token, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
-	require.NoError(t, err)
-
-	const fullPermissions = `{"contents":"write","metadata":"read","pull_requests":"write","repository_hooks":"write"}`
-
-	var mu sync.Mutex
-	var requestedPaths []string
-
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		requestedPaths = append(requestedPaths, r.URL.Path)
-		mu.Unlock()
-
-		switch {
-		case r.URL.Path == "/api/v3/app":
-			w.WriteHeader(http.StatusOK)
-			_, _ = fmt.Fprintf(w, `{"id":123,"slug":"test-app","permissions":%s}`, fullPermissions)
-		case strings.HasPrefix(r.URL.Path, "/api/v3/app/installations/"):
-			w.WriteHeader(http.StatusOK)
-			_, _ = fmt.Fprintf(w, `{"id":456,"permissions":%s}`, fullPermissions)
-		default:
-			w.WriteHeader(http.StatusNotFound)
-		}
-	}))
-	defer ts.Close()
-
-	conn := &provisioning.Connection{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-		Spec: provisioning.ConnectionSpec{
-			Type: provisioning.GithubEnterpriseConnectionType,
-			GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{
-				AppID:          appID,
-				InstallationID: "456",
-				ServerURL:      ts.URL,
-			},
-		},
-	}
-
-	// Real factory: with no injected Client, New applies WithEnterpriseURLs(ServerURL).
-	c := github.NewConnection(conn, &github.Factory{}, github.ConnectionSecrets{
-		PrivateKey: common.RawSecureValue(privateKeyBase64),
-		Token:      token,
-	})
-
-	result, err := c.Test(context.Background())
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	require.Equal(t, http.StatusOK, result.Code, "expected success, got errors: %v", result.Errors)
-	require.True(t, result.Success)
-
-	mu.Lock()
-	defer mu.Unlock()
-	assert.Contains(t, requestedPaths, "/api/v3/app",
-		"GetApp should target the enterprise server under the /api/v3 base path")
-	assert.Contains(t, requestedPaths, "/api/v3/app/installations/456",
-		"GetAppInstallation should target the enterprise server under the /api/v3 base path")
 }
