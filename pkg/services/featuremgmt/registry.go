@@ -748,15 +748,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "panelFilterVariable",
-			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "pdfTables",
 			Description: "Enables generating table data as PDF in reporting",
 			Stage:       FeatureStagePublicPreview,

@@ -3736,7 +3736,8 @@
       "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-11-03T12:15:54Z"
+        "creationTimestamp": "2023-11-03T12:15:54Z",
+        "deletionTimestamp": "2026-06-19T07:57:25Z"
       },
       "spec": {
         "description": "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
