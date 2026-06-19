@@ -4789,7 +4789,8 @@
       "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "deletionTimestamp": "2026-06-18T17:19:31Z"
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",

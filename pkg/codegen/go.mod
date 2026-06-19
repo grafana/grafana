@@ -6,7 +6,7 @@ require (
 	cuelang.org/go v0.11.1
 	github.com/dave/dst v0.27.4
 	github.com/grafana/codejen v0.0.4
-	github.com/grafana/cog v0.1.13
+	github.com/grafana/cog v0.1.15
 	github.com/grafana/cuetsy v0.1.11
 	github.com/matryer/is v1.4.1
 	golang.org/x/tools v0.45.0

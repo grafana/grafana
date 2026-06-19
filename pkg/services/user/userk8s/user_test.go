@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"path"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -118,6 +119,52 @@ func TestUserK8sService_Create(t *testing.T) {
 				IsAdmin:       true,
 				EmailVerified: true,
 				IsProvisioned: true,
+			},
+		},
+		{
+			name:           "maps external auth info into the user spec",
+			requesterOrgID: 1,
+			cmd: &user.CreateUserCommand{
+				Login: "jdoe",
+				Email: "jdoe@example.com",
+				ExternalAuthInfo: []user.ExternalAuthInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				var sent v0alpha1.User
+				_ = json.NewDecoder(r.Body).Decode(&sent)
+				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
+					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.ExternalAuthInfo[1].ExternalUID)
+					}
+				}
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       sent.Spec,
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectUser: &user.User{
+				UID:   "some-uid",
+				OrgID: 1,
+				Login: "jdoe",
+				Email: "jdoe@example.com",
+				ExternalAuthInfo: []user.ExternalAuthInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
 			},
 		},
 		{
@@ -296,6 +343,7 @@ func TestUserK8sService_Create(t *testing.T) {
 			assert.Equal(t, tt.expectUser.EmailVerified, result.EmailVerified)
 			assert.Equal(t, tt.expectUser.IsProvisioned, result.IsProvisioned)
 			assert.Equal(t, tt.expectUser.Created.UTC(), result.Created.UTC())
+			assert.Equal(t, tt.expectUser.ExternalAuthInfo, result.ExternalAuthInfo)
 		})
 	}
 }
@@ -1319,6 +1367,63 @@ func TestUserK8sService_Update(t *testing.T) {
 			},
 		},
 		{
+			name:           "updates external auth info",
+			requesterOrgID: 1,
+			cmd: &user.UpdateUserCommand{
+				UserID: 7,
+				ExternalAuthInfo: []user.ExternalAuthInfo{
+					{Module: "authproxy", AuthID: "jdoe"},
+					{Module: "oauth_github", AuthID: "42", ExternalUID: "ext-123"},
+				},
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				if r.Method == http.MethodGet {
+					resp := v0alpha1.User{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "some-uid",
+							Namespace: "org-1",
+							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						},
+						Spec: v0alpha1.UserSpec{Login: "user7"},
+					}
+					list := map[string]any{
+						"apiVersion": "v1",
+						"kind":       "List",
+						"items":      []any{resp},
+					}
+					w.Header().Set("Content-Type", "application/json")
+					_ = json.NewEncoder(w).Encode(list)
+					return
+				}
+				var sent v0alpha1.User
+				_ = json.NewDecoder(r.Body).Decode(&sent)
+				if assert.Len(t, sent.Spec.ExternalAuthInfo, 2) {
+					assert.Equal(t, "authproxy", sent.Spec.ExternalAuthInfo[0].Module)
+					assert.Equal(t, "jdoe", sent.Spec.ExternalAuthInfo[0].AuthID)
+					assert.Nil(t, sent.Spec.ExternalAuthInfo[0].ExternalUID, "empty externalUID should be omitted")
+					assert.Equal(t, "oauth_github", sent.Spec.ExternalAuthInfo[1].Module)
+					if assert.NotNil(t, sent.Spec.ExternalAuthInfo[1].ExternalUID) {
+						assert.Equal(t, "ext-123", *sent.Spec.ExternalAuthInfo[1].ExternalUID)
+					}
+				}
+
+				resp := v0alpha1.User{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+					},
+					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
+					Spec:       sent.Spec,
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+		},
+		{
 			name:           "updates the org role",
 			requesterOrgID: 1,
 			cmd: &user.UpdateUserCommand{
@@ -1791,6 +1896,61 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestUserK8sService_UpdateLastSeenAt_UsesStatusSubresource(t *testing.T) {
+	var putPath string
+	var putBody map[string]any
+
+	serverFn := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.Method {
+		case http.MethodGet:
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "UserList",
+				"items": []any{
+					map[string]any{
+						"apiVersion": v0alpha1.GroupVersion.Identifier(),
+						"kind":       "User",
+						"metadata": map[string]any{
+							"name":            "some-uid",
+							"namespace":       "org-1",
+							"resourceVersion": "123",
+							"labels":          map[string]any{"grafana.app/deprecatedInternalID": "42"},
+						},
+						"spec":   map[string]any{"login": "jdoe"},
+						"status": map[string]any{"lastSeenAt": 0},
+					},
+				},
+			})
+		case http.MethodPut:
+			putPath = r.URL.Path
+			_ = json.NewDecoder(r.Body).Decode(&putBody)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"apiVersion": v0alpha1.GroupVersion.Identifier(),
+				"kind":       "User",
+				"metadata":   map[string]any{"name": "some-uid", "namespace": "org-1"},
+				"spec":       map[string]any{"login": "jdoe"},
+				"status":     map[string]any{"lastSeenAt": time.Now().Unix()},
+			})
+		}
+	}
+
+	svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+		cfg:            &setting.Cfg{UserLastSeenUpdateInterval: 5 * time.Minute},
+		serverResponse: serverFn,
+	})
+
+	err := svc.UpdateLastSeenAt(ctx, &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1})
+	require.NoError(t, err)
+
+	require.True(t, strings.HasSuffix(putPath, "/users/some-uid/status"),
+		"expected update to target the status subresource, got %q", putPath)
+
+	status, ok := putBody["status"].(map[string]any)
+	require.True(t, ok, "expected status in PUT body, got %v", putBody)
+	require.NotZero(t, status["lastSeenAt"], "expected lastSeenAt to be set in the status update")
 }
 
 func TestUserK8sService_GetSignedInUser(t *testing.T) {

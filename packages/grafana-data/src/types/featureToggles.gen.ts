@@ -1115,11 +1115,6 @@ export interface FeatureToggles {
   */
   alertingDisableDMAinUI?: boolean;
   /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */

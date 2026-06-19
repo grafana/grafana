@@ -73,8 +73,12 @@ func (t *TemplateGroup) Validate() error {
 	return def.Validate()
 }
 
-func NewTemplateGroup(name, content string, kind TemplateKind, provenance models.Provenance) TemplateGroup {
-	uid := TemplateUID(kind, name)
+// NewTemplateGroup creates a new TemplateGroup with the specified UID, name, content, kind, and provenance.
+// If the UID is empty, it generates a deterministic UID based on the template kind and name.
+func NewTemplateGroup(uid ResourceUID, name, content string, kind TemplateKind, provenance models.Provenance) TemplateGroup {
+	if uid == "" {
+		uid = TemplateUID(kind, name)
+	}
 	return TemplateGroup{
 		ResourceMetadata: ResourceMetadata{
 			UID:        uid,
@@ -96,7 +100,7 @@ func TemplateFilesToTemplates(templateFiles map[string]string, kind TemplateKind
 
 	templates := make(map[ResourceUID]TemplateGroup, len(templateFiles))
 	for name, content := range templateFiles {
-		tmpl := NewTemplateGroup(name, content, kind, models.ProvenanceNone)
+		tmpl := NewTemplateGroup("", name, content, kind, models.ProvenanceNone)
 		templates[tmpl.UID] = tmpl
 	}
 	return templates

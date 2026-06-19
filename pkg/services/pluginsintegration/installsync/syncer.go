@@ -176,9 +176,9 @@ func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, i
 	}
 
 	for _, org := range orgs {
-		ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, s.namespaceMapper(org.ID))
-		err := s.syncNamespace(ctx, s.namespaceMapper(org.ID), source, installedPlugins)
-		if err != nil {
+		namespace := s.namespaceMapper(org.ID)
+		nsCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+		if err := s.syncNamespace(nsCtx, namespace, source, installedPlugins); err != nil {
 			return err
 		}
 	}
@@ -197,8 +197,9 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 		return err
 	}
 
+	primaryPlugins := filterPrimaryPlugins(installedPlugins)
 	installedMap := make(map[string]struct{})
-	for _, p := range installedPlugins {
+	for _, p := range primaryPlugins {
 		installedMap[p.ID] = struct{}{}
 	}
 
@@ -213,19 +214,11 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	// register plugins that are installed
-	for _, p := range installedPlugins {
-		var parentID string
-		version := p.Info.Version
-		if p.Parent != nil {
-			parentID = p.Parent.ID
-			version = p.Parent.Version
-		}
-
+	for _, p := range primaryPlugins {
 		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
-			ID:       p.ID,
-			Version:  version,
-			Source:   source,
-			ParentID: parentID,
+			ID:      p.ID,
+			Version: p.Info.Version,
+			Source:  source,
 		})
 		if err != nil {
 			return err
@@ -233,4 +226,15 @@ func (s *syncer) syncNamespace(ctx context.Context, namespace string, source ins
 	}
 
 	return nil
+}
+
+func filterPrimaryPlugins(plugins []pluginstore.Plugin) []pluginstore.Plugin {
+	primaryPlugins := make([]pluginstore.Plugin, 0, len(plugins))
+	for _, p := range plugins {
+		if p.Parent != nil || p.IncludedInAppID != "" {
+			continue
+		}
+		primaryPlugins = append(primaryPlugins, p)
+	}
+	return primaryPlugins
 }

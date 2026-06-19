@@ -531,6 +531,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/prometheus-config.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-editor.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-variable-editor.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/recent-queries.spec.ts @grafana/datapro
+/e2e-playwright/various-suite/recent-queries-disabled.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/query-editor.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/return-to-previous.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
