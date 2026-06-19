@@ -9,9 +9,6 @@ import { locationService, usePluginComponent } from '@grafana/runtime';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { TopSearchBarCommandPaletteTrigger } from '../TopBar/TopSearchBarCommandPaletteTrigger';
-import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
-
 // The assistant plugin exposes the real workspace (chat + canvas + Platform tab) and
 // hands its Platform-tab DOM node back to us via `registerPlatformHost` so we can
 // portal the live page into it. Until the plugin loads, we fall back to a local stub.
@@ -19,6 +16,9 @@ const AGENT_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/agent-mode-workspace
 
 interface AgentWorkspaceProps {
   registerPlatformHost?: RefCallback<HTMLDivElement>;
+  // The plugin renders its own "Back to platform" button (in the workspace header) and
+  // calls this to exit agent mode — so we don't render a separate agent-mode top bar.
+  onExitAgentMode?: () => void;
 }
 
 interface Props {
@@ -43,17 +43,14 @@ export function AgentModeShell({ outletRef }: Props) {
 
   return (
     <div className={styles.root}>
-      <header className={styles.topBar}>
-        <ToolbarButton icon="arrow-left" onClick={() => chrome.setAgentMode(false)}>
-          Back to platform
-        </ToolbarButton>
-        <TopSearchBarCommandPaletteTrigger />
-      </header>
       {PluginWorkspace ? (
-        <PluginWorkspace registerPlatformHost={outletRef} />
+        <PluginWorkspace registerPlatformHost={outletRef} onExitAgentMode={() => chrome.setAgentMode(false)} />
       ) : (
         <div className={styles.panes}>
           <aside className={styles.chatStub}>
+            <ToolbarButton icon="arrow-left" onClick={() => chrome.setAgentMode(false)}>
+              Back to platform
+            </ToolbarButton>
             <div>{isLoading ? 'loading assistant…' : 'assistant plugin unavailable'}</div>
             {/* Fallback stub — also proves locationService drives the portaled outlet. */}
             <ToolbarButton onClick={() => locationService.push('/dashboards')}>→ dashboards</ToolbarButton>
@@ -80,16 +77,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     height: '100vh',
     background: theme.colors.background.canvas,
-  }),
-  topBar: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing(2),
-    padding: theme.spacing(0, 1),
-    height: getChromeHeaderLevelHeight(),
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.primary,
   }),
   panes: css({
     display: 'flex',
