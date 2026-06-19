@@ -3345,9 +3345,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/plugins/panel/debug/EventBusLogger.tsx": {
