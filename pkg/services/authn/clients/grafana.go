@@ -49,6 +49,10 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 			SyncOrgRoles:    true,
 			SyncPermissions: true,
 			AllowSignUp:     c.cfg.AuthProxy.AutoSignUp,
+			// The Role header can only assert a single org role (the default org), so
+			// org sync must not treat it as the authoritative membership set and remove
+			// the user from every other org they belong to.
+			SyncOrgRolesAdditive: true,
 		},
 	}
 
