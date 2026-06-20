@@ -1373,6 +1373,10 @@ func TestConnection_Test(t *testing.T) {
 				tt.setupMock(mockFactory, mockClient)
 			}
 
+			// Mutate populates Spec.URL (the installation URL) as it would in production
+			// admission, which Test reads for installation-permission error details.
+			require.NoError(t, github.Mutate(context.Background(), tt.connection))
+
 			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
 			result, err := conn.Test(context.Background())
 
@@ -1819,7 +1823,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "connection is not a GitHub connection",
+			expectedError: "connection is not a GitHub-based connection",
 		},
 		{
 			name: "repository without GitHub config returns error",
@@ -1841,11 +1845,11 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 			repo: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
 				Spec: provisioning.RepositorySpec{
-					Type:   provisioning.GitHubRepositoryType,
-					GitHub: nil,
+					Type:   provisioning.GitLabRepositoryType,
+					GitLab: &provisioning.GitLabRepositoryConfig{},
 				},
 			},
-			expectedError: "repository is not a GitHub repo",
+			expectedError: "repository is not a GitHub-based repo",
 		},
 		{
 			name: "invalid repository URL returns error",
@@ -2243,6 +2247,46 @@ func TestConnection_ListRepositories(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, repos, 0)
 	})
+}
+
+// TestNewConnectionWithCustomConfig verifies that a connection built with an injected
+// ConnectionConfig resolves its GitHub App parameters from that config. spec.github carries
+// a different appID, so observing the injected value proves the custom config takes precedence.
+func TestNewConnectionWithCustomConfig(t *testing.T) {
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+
+	cfg := github.NewMockConnectionConfig(t)
+	cfg.EXPECT().AppID().Return("custom-app-id")
+
+	obj := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
+		Spec: provisioning.ConnectionSpec{
+			Type:   provisioning.GithubConnectionType,
+			GitHub: &provisioning.GitHubConnectionConfig{AppID: "spec-app-id"},
+		},
+	}
+
+	conn := github.NewConnectionWithCustomConfig(obj, github.NewMockGithubFactory(t), github.ConnectionSecrets{
+		PrivateKey: common.RawSecureValue(privateKeyBase64),
+	}, cfg)
+
+	token, err := conn.GenerateConnectionToken(context.Background())
+	require.NoError(t, err)
+
+	// The JWT issuer is the appID; it must come from the injected config, not spec.github.
+	privateKeyPEM, err := base64.StdEncoding.DecodeString(privateKeyBase64)
+	require.NoError(t, err)
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyPEM)
+	require.NoError(t, err)
+
+	parsedToken, err := jwt.Parse(string(token), func(_ *jwt.Token) (any, error) {
+		return &key.PublicKey, nil
+	}, jwt.WithValidMethods([]string{jwt.SigningMethodRS256.Alg()}))
+	require.NoError(t, err)
+
+	claims, ok := parsedToken.Claims.(jwt.MapClaims)
+	require.True(t, ok)
+	assert.Equal(t, "custom-app-id", claims["iss"], "issuer should come from the injected config, not spec.github")
 }
 
 func getIssuingAndExpirationTimeFromToken(token common.RawSecureValue) (time.Time, time.Time, error) {
