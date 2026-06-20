@@ -9,7 +9,7 @@ import {
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
-import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
+import { config, type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
@@ -98,7 +98,10 @@ export class GrafanaJavascriptAgentBackend
 
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
-    if (faro && getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false)) {
+    const replayEnabled =
+      getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false) ||
+      config.featureToggles.faroSessionReplay;
+    if (faro && replayEnabled) {
       this.initReplayAfterDomRendered(faro);
     }
   }
