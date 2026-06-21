@@ -1,13 +1,10 @@
 import { lastValueFrom } from 'rxjs';
 
 import { dateTime, FieldType, toDataFrame, type DataFrame, type PanelData, type TimeRange } from '@grafana/data';
-import { getCompareSeriesRefId, timeShiftAlignmentProcessor } from '@grafana/scenes';
+import { getCompareSeriesRefId } from '@grafana/scenes';
 import { LoadingState } from '@grafana/schema';
 
-// The processor now lives in @grafana/scenes (core's private fork was deleted); these tests stay
-// as contract tests guarding the dependency against a regression to the old mutate-in-place behavior.
-
-import { getCompareTimeRange } from './utils';
+import { getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
 
 function makeTimeRange(fromIso: string, toIso: string): TimeRange {
   const from = dateTime(fromIso);
@@ -193,6 +190,54 @@ describe('panel-timerange/utils', () => {
       const result = await lastValueFrom(timeShiftAlignmentProcessor(makePanelData(primaryRange), secondary));
 
       expect(result.series[0].refId).toBe('-compare');
+    });
+
+    it('should emit a notice frame when the compare query returns no data and the primary query has data', async () => {
+      const primary = makePanelData(primaryRange, [
+        toDataFrame({
+          refId: 'A',
+          fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+        }),
+      ]);
+      const secondary = {
+        ...makePanelData(secondaryRange),
+        request: {
+          targets: [{ refId: 'A' }],
+        },
+      } as PanelData;
+
+      const result = await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+
+      expect(result.series[0]).toMatchObject({
+        refId: 'A-compare',
+        length: 0,
+        fields: [],
+        meta: {
+          notices: [{ severity: 'info', text: 'No data returned for time comparison' }],
+          timeCompare: {
+            diffMs: expectedDiffMs,
+            isTimeShiftQuery: true,
+          },
+        },
+      });
+    });
+
+    it('should emit a notice frame when the compare query returns empty frames', async () => {
+      // Prometheus and other data sources return a frame without fields rather than no frames at all.
+      const primary = makePanelData(primaryRange, [
+        toDataFrame({
+          refId: 'A',
+          fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+        }),
+      ]);
+      const secondary = makePanelData(secondaryRange, [toDataFrame({ refId: 'A', fields: [] })]);
+
+      const result = await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+
+      expect(result.series[0]).toMatchObject({
+        refId: 'A-compare',
+        meta: { notices: [{ severity: 'info', text: 'No data returned for time comparison' }] },
+      });
     });
   });
 });
