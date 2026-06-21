@@ -4,7 +4,14 @@
 
 import { of } from 'rxjs';
 
-import { dateTime, type DateTime, rangeUtil, type TimeRange } from '@grafana/data';
+import {
+  dateTime,
+  type DataFrame,
+  type DateTime,
+  type QueryResultMetaNotice,
+  rangeUtil,
+  type TimeRange,
+} from '@grafana/data';
 import { type ExtraQueryDataProcessor } from '@grafana/scenes';
 
 import type { PanelTimeRangeState } from './PanelTimeRange';
@@ -12,6 +19,14 @@ import type { PanelTimeRangeState } from './PanelTimeRange';
 // rendered appropriately.
 export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, secondary) => {
   const diff = secondary.timeRange.from.diff(primary.timeRange.from);
+  if (!secondary.series.length && primary.series.some((series) => series.length > 0)) {
+    secondary.series = getTimeCompareNoDataFrames(
+      diff,
+      secondary.request?.targets.map((target) => target.refId)
+    );
+    return of(secondary);
+  }
+
   secondary.series.forEach((series) => {
     series.refId = getCompareSeriesRefId(series.refId || '');
     series.meta = {
@@ -27,6 +42,29 @@ export const timeShiftAlignmentProcessor: ExtraQueryDataProcessor = (primary, se
 };
 
 export const getCompareSeriesRefId = (refId: string) => `${refId}-compare`;
+
+const timeCompareNoDataNotice: QueryResultMetaNotice = {
+  severity: 'info',
+  text: 'No data returned for time comparison',
+};
+
+function getTimeCompareNoDataFrames(diffMs: number, refIds: Array<string | undefined> = []): DataFrame[] {
+  const frameRefIds = refIds.length ? refIds : [undefined];
+
+  return frameRefIds.map((refId) => ({
+    refId,
+    fields: [],
+    length: 0,
+    meta: {
+      notices: [timeCompareNoDataNotice],
+      // @ts-ignore Remove when https://github.com/grafana/grafana/pull/71129 is released
+      timeCompare: {
+        diffMs,
+        isTimeShiftQuery: true,
+      },
+    },
+  }));
+}
 
 /**
  * Whether a panel should use a hover header, used when there's

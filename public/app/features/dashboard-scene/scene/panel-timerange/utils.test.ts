@@ -131,5 +131,36 @@ describe('panel-timerange/utils', () => {
 
       expect(result.series[0].refId).toBe('-compare');
     });
+
+    it('should emit a notice frame when the compare query returns no data and the primary query has data', async () => {
+      const primary = makePanelData(primaryRange, [
+        toDataFrame({
+          refId: 'A',
+          fields: [{ name: 'value', type: FieldType.number, values: [1] }],
+        }),
+      ]);
+      const secondary = {
+        ...makePanelData(secondaryRange),
+        request: {
+          targets: [{ refId: 'A' }],
+        },
+      } as PanelData;
+
+      const result = await lastValueFrom(timeShiftAlignmentProcessor(primary, secondary));
+
+      expect(result.series).toHaveLength(1);
+      expect(result.series[0]).toMatchObject({
+        refId: 'A',
+        length: 0,
+        fields: [],
+        meta: {
+          notices: [{ severity: 'info', text: 'No data returned for time comparison' }],
+          timeCompare: {
+            diffMs: expectedDiffMs,
+            isTimeShiftQuery: true,
+          },
+        },
+      });
+    });
   });
 });
