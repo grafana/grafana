@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test, type Locator } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
@@ -9,6 +9,10 @@ export class Panel extends PageObject {
     // panel <section> container, not the title text or header bar.
     // see PanelChrome.tsx and packages/grafana-e2e-selectors/src/selectors/components.ts
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.title(title));
+  }
+
+  getContainersByTitle(title: string, options?: { root?: Locator }) {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.title(title), options);
   }
 
   getHeaderByTitle(title: string | RegExp) {
