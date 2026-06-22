@@ -13,6 +13,11 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
+# A cold build (yarn install + serial plugin builds + main webpack compile) can take
+# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
+# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+ci_settings(readiness_timeout='15m')
+
 # --- Frontend processes
 local_resource(
   'yarn install',

@@ -38,6 +38,7 @@ area/expressions
 area/field/overrides
 area/frontend/library-panels
 area/frontend/login
+area/grafana-assistant
 area/image-rendering
 area/internationalization
 area/legend

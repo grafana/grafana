@@ -4,7 +4,7 @@ import * as React from 'react';
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
@@ -15,7 +15,6 @@ import {
   FeatureBadge,
   Combobox,
   type ComboboxOption,
-  TextLink,
   type WeekStart,
   isWeekStart,
 } from '@grafana/ui';
@@ -27,7 +26,7 @@ import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { getLanguageOptions, getStyles, getTranslatedThemeName, type Props, type State } from './utils';
 
-export class SharedPreferences extends PureComponent<Props, State> {
+class SharedPreferences extends PureComponent<Props, State> {
   service: PreferencesService;
   themeOptions: ComboboxOption[];
   languageOptions: ComboboxOption[];
@@ -158,20 +157,6 @@ export class SharedPreferences extends PureComponent<Props, State> {
             loading={isLoading}
             disabled={isLoading}
             label={t('shared-preferences.fields.theme-label', 'Interface theme')}
-            description={
-              config.featureToggles.grafanaconThemes && config.feedbackLinksEnabled ? (
-                <Trans i18nKey="shared-preferences.fields.theme-description">
-                  Enjoying the experimental themes? Tell us what you'd like to see{' '}
-                  <TextLink
-                    variant="bodySmall"
-                    external
-                    href="https://docs.google.com/forms/d/e/1FAIpQLSeRKAY8nUMEVIKSYJ99uOO-dimF6Y69_If1Q1jTLOZRWqK1cw/viewform?usp=dialog"
-                  >
-                    here.
-                  </TextLink>
-                </Trans>
-              ) : undefined
-            }
           >
             <Combobox
               options={this.themeOptions}

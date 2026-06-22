@@ -5,7 +5,7 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import {
   PERMISSIONS_TIME_INTERVALS_MODIFY,
   PERMISSIONS_TIME_INTERVALS_READ,
-} from 'app/features/alerting/unified/components/mute-timings/permissions';
+} from 'app/features/alerting/unified/hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { useFolder } from 'app/features/alerting/unified/hooks/useFolder';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -162,7 +162,7 @@ export type Abilities<T extends Action> = Record<T, Ability>;
 /**
  * This one will check for folder abilities
  */
-export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
+const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
   return {
     [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
     [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
@@ -262,14 +262,6 @@ export function useAlertRuleAbility(rule: CombinedRule, action: AlertRuleAction)
   }, [abilities, action]);
 }
 
-export function useAlertRuleAbilities(rule: CombinedRule, actions: AlertRuleAction[]): Ability[] {
-  const abilities = useAllAlertRuleAbilities(rule);
-
-  return useMemo(() => {
-    return actions.map((action) => abilities[action]);
-  }, [abilities, actions]);
-}
-
 export function useRulerRuleAbility(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2,
@@ -306,7 +298,7 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   return useAllRulerRuleAbilities(rule.rulerRule, groupIdentifierV2);
 }
 
-export function useAllRulerRuleAbilities(
+function useAllRulerRuleAbilities(
   rule: RulerRuleDTO | undefined,
   groupIdentifier: RuleGroupIdentifierV2
 ): Abilities<AlertRuleAction> {
@@ -385,7 +377,7 @@ export function useAllRulerRuleAbilities(
  * Hook for checking abilities on Grafana Prometheus rules (GrafanaPromRuleDTO)
  * This is the next version of useAllRulerRuleAbilities designed to work with GrafanaPromRuleDTO
  */
-export function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
+function useAllGrafanaPromRuleAbilities(rule: GrafanaPromRuleDTO | undefined): Abilities<AlertRuleAction> {
   // For GrafanaPromRuleDTO, we use useIsGrafanaPromRuleEditable instead
   const { isEditable, isRemovable, loading } = useIsGrafanaPromRuleEditable(rule); // duplicate
   const [_, exportAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);

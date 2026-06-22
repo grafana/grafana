@@ -21,6 +21,7 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { CustomScrollbar } from '../../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../../PanelChrome';
 import { TableCell } from '../Cells/TableCell';
+import { getCellColors } from '../cellUtils';
 import {
   type CellColors,
   type GetActionsFunction,
@@ -28,12 +29,7 @@ import {
   type TableFilterActionCallback,
   type TableInspectCellCallback,
 } from '../types';
-import {
-  calculateAroundPointThreshold,
-  getCellColors,
-  isPointTimeValAroundTableTimeVal,
-  guessTextBoundingBox,
-} from '../utils';
+import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal, guessTextBoundingBox } from '../utils';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { type TableStyles } from './styles';

@@ -644,19 +644,6 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
   return annotations;
 }
 
-export function getAnnotationQueryKind(annotationQuery: AnnotationQuery): string {
-  if (annotationQuery.datasource?.type) {
-    return annotationQuery.datasource.type;
-  } else {
-    const ds = getDefaultDataSourceRef();
-    if (ds) {
-      return ds.type!; // in the datasource list from bootData "id" is the type
-    }
-    // if we can't find the default datasource, return grafana as default
-    return 'grafana';
-  }
-}
-
 export function getDefaultDataSourceRef(): DataSourceRef {
   // we need to return the default datasource configured in the BootConfig
   const defaultDatasource = config.defaultDatasource;

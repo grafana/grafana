@@ -19,9 +19,9 @@ const mapDispatchToProps = {
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
-export type Props = ConnectedProps<typeof connector>;
+type Props = ConnectedProps<typeof connector>;
 
-export const ErrorContainerUnconnected = ({ error, warning, resetError, resetWarning }: Props): JSX.Element => {
+const ErrorContainerUnconnected = ({ error, warning, resetError, resetWarning }: Props): JSX.Element => {
   return (
     <div>
       {error && (

@@ -41,6 +41,7 @@ func defaultPermissions() []accesscontrol.SetResourcePermissionCommand {
 func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 	return resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
 		Resource:       receiverPermissionsResource,
+		APIGroup:       accesscontrol.AlertingNotificationsApiGroup,
 		ReaderRoleName: receiverPermissionsReaderRoleName,
 		WriterRoleName: receiverPermissionsWriterRoleName,
 		RoleGroup:      models.AlertRolesGroup,
@@ -54,6 +55,7 @@ func ProvideReceiverPermissionsService(
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
+		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return models.ScopeReceiversProvider.GetResourceIDFromUID(resourceID), nil

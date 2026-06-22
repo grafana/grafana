@@ -29,9 +29,9 @@ func ProvideFactory() *Factory {
 	}
 }
 
-func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client {
+func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.RawSecureValue) Client {
 	if r.Client != nil {
-		return NewClient(github.NewClient(r.Client))
+		return NewClient(github.NewClient(r.Client), owner, repo)
 	}
 
 	if !ghToken.IsZero() {
@@ -39,8 +39,8 @@ func (r *Factory) New(ctx context.Context, ghToken common.RawSecureValue) Client
 			&oauth2.Token{AccessToken: string(ghToken)},
 		)
 		tokenClient := oauth2.NewClient(ctx, tokenSrc)
-		return NewClient(github.NewClient(tokenClient))
+		return NewClient(github.NewClient(tokenClient), owner, repo)
 	}
 
-	return NewClient(github.NewClient(&http.Client{}))
+	return NewClient(github.NewClient(&http.Client{}), owner, repo)
 }

@@ -24,6 +24,7 @@ import {
   SceneFlexItem,
   SceneFlexLayout,
   type SceneObject,
+  SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
@@ -193,6 +194,36 @@ describe('DashboardDatasource', () => {
     expect(emissions).toHaveLength(1);
     expect(emissions[0].state).toBe(LoadingState.Done);
     expect(emissions[0].data[0].fields[0].values).toEqual([42]);
+  });
+
+  it('Should still emit Done on the Mixed path when the source range differs from the chain (PanelTimeRange override, #22618)', async () => {
+    // Regression for #22618: a Mixed chain panel where the source (or the chain)
+    // carries a `PanelTimeRange` override observes an upstream range that
+    // legitimately differs from the chain request range. The terminal Done is
+    // fresh — it matches the source panel's own current range — so it must be
+    // emitted. Before the fix it was compared against the chain request range,
+    // never matched, was dropped, and the panel hung in permanent loading.
+    const chainRange = makeRange('2026-05-04T00:00:00Z', '2026-05-08T00:00:00Z');
+    const sourceRange = makeRange('2026-05-04T01:00:00Z', '2026-05-08T01:00:00Z'); // shifted +1h
+
+    const { observable, upstreamStream } = setupWithControllableUpstream(
+      { refId: 'A', panelId: 1 },
+      `${MIXED_REQUEST_PREFIX}1`,
+      chainRange,
+      sourceRange
+    );
+
+    const emissions: DataQueryResponse[] = [];
+    observable.subscribe({ next: (data) => emissions.push(data) });
+
+    // Upstream runs for the source's own (shifted) range: Loading then Done.
+    upstreamStream.next(makeResult(LoadingState.Loading, arrayToDataFrame([1]), sourceRange));
+    upstreamStream.next(makeResult(LoadingState.Done, arrayToDataFrame([2, 3]), sourceRange));
+
+    await waitForDebounce();
+    expect(emissions).toHaveLength(1);
+    expect(emissions[0].state).toBe(LoadingState.Done);
+    expect(emissions[0].data[0].fields[0].values).toEqual([2, 3]);
   });
 
   it('Should not mutate field state in dataframe', async () => {
@@ -1010,7 +1041,15 @@ function waitForDebounce() {
   return new Promise((r) => setTimeout(r, 600));
 }
 
-function setupWithControllableUpstream(query: DashboardQuery, requestId: string, range: ReturnType<typeof makeRange>) {
+function setupWithControllableUpstream(
+  query: DashboardQuery,
+  requestId: string,
+  range: ReturnType<typeof makeRange>,
+  // The source panel's own current range. Defaults to the chain request range
+  // (no override). Pass a different value to model a source/chain with a
+  // `PanelTimeRange` override, where the source's range differs from the chain.
+  sourceRange: ReturnType<typeof makeRange> = range
+) {
   // Match production: upstream SceneQueryRunner exposes a ReplaySubject(1) so
   // subscribers attaching after the upstream has already emitted Done get the
   // stale Done replayed synchronously on subscribe.
@@ -1030,6 +1069,13 @@ function setupWithControllableUpstream(query: DashboardQuery, requestId: string,
       new SceneFlexItem({
         body: new VizPanel({
           key: getVizPanelKeyForPanelId(1),
+          // The source panel's effective range — `DashboardDatasource` reads
+          // this via `sceneGraph.getTimeRange` to decide whether an upstream
+          // terminal emission is fresh or a stale replay.
+          $timeRange: new SceneTimeRange({
+            from: sourceRange.from.toISOString(),
+            to: sourceRange.to.toISOString(),
+          }),
           $data: sourceData,
         }),
       }),

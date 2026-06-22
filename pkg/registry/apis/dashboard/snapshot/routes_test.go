@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -157,6 +158,59 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID:   "valid-uid",
+		OrgID: orgID,
+	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
+
+	// The storage Create is the seam the real SnapshotLegacyStore -> service -> store
+	// chain collapses to; returning the sentinel simulates a duplicate-key collision.
+	mockStorage := grafanarest.NewMockStorage(t)
+	mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists.Errorf("snapshot with the same key already exists"))
+
+	routes := GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]common.OpenAPIDefinition{},
+		func() rest.Storage { return mockStorage },
+		dashboardService,
+	)
+
+	require.NotEmpty(t, routes.Namespace)
+	handler := routes.Namespace[0].Handler
+
+	bodyBytes, err := json.Marshal(map[string]any{
+		"dashboard": map[string]any{"uid": "valid-uid", "title": "test"},
+		"name":      "test snapshot",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+	req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+	recorder := httptest.NewRecorder()
+	handler(recorder, req)
+
+	assert.Equal(t, http.StatusConflict, recorder.Code)
+	var resp map[string]any
+	err = json.Unmarshal(recorder.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "dashboardsnapshots.keyAlreadyExists", resp["messageId"])
 }
 
 func TestCreateSnapshotPublicMode(t *testing.T) {

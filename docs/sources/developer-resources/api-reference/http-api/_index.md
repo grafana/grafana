@@ -21,25 +21,19 @@ title: HTTP API
 weight: 100
 ---
 
-# Grafana HTTP API reference
+# Grafana HTTP API reference guide
 
-Every Grafana instance exposes an HTTP API, which is the same API used by the Grafana frontend to manage resources like saving dashboards, creating users, updating data sources, deleting alerts, and more. You can use the HTTP API to programmatically access or manage resources from your Grafana instance.
+Every Grafana instance exposes an HTTP API, used by the Grafana frontend to manage resources like saving dashboards, creating users, updating data sources, deleting alerts, and more. You can use the HTTP API to programmatically access or manage resources from your Grafana instance.
 
 If you need to manage or access other resources from your [Grafana Cloud Stack](https://grafana.com/docs/grafana-cloud/account-management/cloud-stacks/), refer to the [Grafana Cloud API](https://grafana.com/docs/grafana-cloud/developer-resources/api-reference/cloud-api/) instead.
 
 ## New generation HTTP APIs
 
-Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning. To learn more refer to the [new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
 
-These are the available new generation APIs:
+To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
 
-- [Dashboards API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/)
-- [Folder API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder/)
-- [Playlist API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist/)
-- [Resource history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/)
-- [Secrets Management API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/)
-
-## Grafana API specification
+## The Grafana API specification
 
 HTTP API specs are available in Swagger:
 
@@ -48,26 +42,6 @@ HTTP API specs are available in Swagger:
 
 You can browser and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
 
-## Authenticate HTTP API requests
+## Authentication
 
-### Grafana OSS
-
-{{< docs/shared lookup="developers/authentication.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-### Grafana Cloud
-
-{{< docs/shared source="grafana-cloud" lookup="/developer-resources/authentication.md" version="" >}}
-
-## X-Grafana-Org-Id Header
-
-**X-Grafana-Org-Id** is an optional property that specifies the organization to which the action is applied. If not set, the created key belongs to the current context org. Use this header in all requests except those regarding admin.
-
-**Example Request**:
-
-```http
-GET /api/org/ HTTP/1.1
-Accept: application/json
-Content-Type: application/json
-X-Grafana-Org-Id: 2
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-```
+In OSS, you can authenticate your requests to the HTTP APIs using basic auth or a service account token. In Grafana Cloud, only the service account token option is available. For more details refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).

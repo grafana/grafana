@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(1),
     '> img': {
       width: '100%',
-      borderRadius: `${theme.shape.radius.default} ${theme.shape.radius.default} 0 0`,
+      borderRadius: `${theme.shape.radius.lg} ${theme.shape.radius.lg} 0 0`,
     },
   }),
   socialImageWide: css({
@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: 0,
     '> img': {
       width: '250px',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
     },
   }),
   title: css({
@@ -133,7 +133,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   date: css({
     marginBottom: theme.spacing(0.5),
     fontWeight: 500,
-    borderRadius: `0 0 0 ${theme.shape.radius.default}`,
     color: theme.colors.text.secondary,
   }),
 });

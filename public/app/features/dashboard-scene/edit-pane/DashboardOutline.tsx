@@ -56,7 +56,7 @@ export class DashboardOutline extends SceneObjectBase<DashboardOutlineState> {
   }
 }
 
-export function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
+function DashboardOutlineRenderer({ model }: SceneComponentProps<DashboardOutline>) {
   const dashboard = getDashboardSceneFor(model);
   const { isEditing } = dashboard.useState();
 

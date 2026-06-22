@@ -14,12 +14,11 @@ type Props = {
   ) => boolean;
 };
 
-export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
-export const CONNECTION_ANCHOR_ALT = 'connection anchor';
-export const CONNECTION_ANCHOR_HIGHLIGHT_OFFSET = 8;
+const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
+const CONNECTION_ANCHOR_ALT = 'connection anchor';
 // Unit is percentage from the middle of the element
 // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
-export const ANCHORS = [
+const ANCHORS = [
   { x: -1, y: 1 },
   { x: -0.5, y: 1 },
   { x: 0, y: 1 },
@@ -37,8 +36,8 @@ export const ANCHORS = [
   { x: -1, y: 0 },
   { x: -1, y: 0.5 },
 ];
-export const ANCHOR_PADDING = 3;
-export const HALF_SIZE = 2.5;
+const ANCHOR_PADDING = 3;
+const HALF_SIZE = 2.5;
 
 const zIndex = {
   ROOT: 1000,

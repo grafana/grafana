@@ -36,33 +36,29 @@ export async function isProvisionedFolderCheck(
   }
 }
 
-const initialCounts: Record<string, number> = {
-  folder: 0,
-  dashboard: 0,
-  libraryPanel: 0,
-  alertRule: 0,
-};
-
 /**
- * Parses descendant counts into legacy-friendly format
+ * Normalizes a descendant counts response into a `{ resource: count }` map.
  *
- * Takes the first count information as the source of truth, e.g. if
- * the array has a
- *
- * `"group": "dashboard.grafana.app"`
- *
- * entry first, and a
- *
- * `"group": "sql-fallback"`
- *
- * entry later, the `dashboard.grafana.app` count will be used
+ * The API may return two entries for the same resource — one from the resource's own group
+ * (e.g. `dashboard.grafana.app`) and one from the `sql-fallback` group. The non-fallback
+ * entry wins; the fallback is only kept when no other entry exists for that resource.
  */
-export const getParsedCounts = (counts: ResourceStats[]) => {
-  return counts.reduce((acc, { resource, count }) => {
-    // If there's no value already, then use that count, so a fallback count is not used
-    if (!acc[resource]) {
-      acc[resource] = count;
+export const getParsedCounts = (counts: ResourceStats[]): Record<string, number> => {
+  const result: Record<string, number> = {};
+  const isFromFallback: Record<string, boolean> = {};
+
+  for (const { resource, count, group } of counts) {
+    const fromFallback = group === 'sql-fallback';
+    if (
+      // first time we see this resource count
+      !(resource in result) ||
+      // or we have count already, but that count is sql-fallback and now we have non fallback value
+      (isFromFallback[resource] && !fromFallback)
+    ) {
+      result[resource] = count;
+      isFromFallback[resource] = fromFallback;
     }
-    return acc;
-  }, initialCounts);
+  }
+
+  return result;
 };

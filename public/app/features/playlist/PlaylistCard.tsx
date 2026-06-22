@@ -21,24 +21,7 @@ interface Props {
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
   return (
     <Card noMargin>
-      <Card.Heading>
-        {playlist.spec?.title}
-        <ModalsController key="button-share">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
-              icon="share-alt"
-              iconSize="lg"
-              onClick={() => {
-                showModal(ShareModal, {
-                  playlistUid: playlist.metadata?.name ?? '',
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      </Card.Heading>
+      <Card.Heading>{playlist.spec?.title}</Card.Heading>
       <Card.Actions>
         <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
           <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
@@ -59,6 +42,23 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           </>
         )}
       </Card.Actions>
+      <Card.SecondaryActions>
+        <ModalsController key="button-share">
+          {({ showModal, hideModal }) => (
+            <DashNavButton
+              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
+              icon="share-alt"
+              iconSize="lg"
+              onClick={() => {
+                showModal(ShareModal, {
+                  playlistUid: playlist.metadata?.name ?? '',
+                  onDismiss: hideModal,
+                });
+              }}
+            />
+          )}
+        </ModalsController>
+      </Card.SecondaryActions>
     </Card>
   );
 };

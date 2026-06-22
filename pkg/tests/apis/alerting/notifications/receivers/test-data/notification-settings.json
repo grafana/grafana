@@ -25,7 +25,7 @@
             "type": "email",
             "name": "email receiver",
             "settings": {
-              "addresses": "<example@email.com>"
+              "addresses": "<example@example.com>"
             }
           }
         ]
@@ -37,7 +37,7 @@
             "type": "email",
             "name": "user-defined",
             "settings": {
-              "addresses": "example@email.com"
+              "addresses": "example@example.com"
             }
           }
         ]

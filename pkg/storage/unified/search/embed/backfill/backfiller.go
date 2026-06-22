@@ -44,6 +44,9 @@ type Options struct {
 	// Metrics is optional; when nil the backfiller runs without
 	// observability instrumentation (handy for unit tests).
 	Metrics *resource.VectorMetrics
+	// Interval is how often Run re-scans for incomplete jobs (jobs are
+	// created lazily by the reconciler's write path). Defaults to 1m.
+	Interval time.Duration
 }
 
 type VectorBackfiller struct {
@@ -58,7 +61,10 @@ type VectorBackfiller struct {
 	dashboardStats builders.DashboardStats
 	log            log.Logger
 	metrics        *resource.VectorMetrics
+	interval       time.Duration
 }
+
+const defaultBackfillInterval = time.Minute
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.Storage == nil {
@@ -92,6 +98,11 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		sorted = append(sorted, builders[k])
 	}
 
+	interval := opts.Interval
+	if interval <= 0 {
+		interval = defaultBackfillInterval
+	}
+
 	return &VectorBackfiller{
 		storage:        opts.Storage,
 		vectorBackend:  opts.VectorBackend,
@@ -101,11 +112,13 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		dashboardStats: opts.DashboardStats,
 		log:            log.New("backfill"),
 		metrics:        opts.Metrics,
+		interval:       interval,
 	}, nil
 }
 
-// Run first acquires a Postgres advisory lock so that only one process runs the
-// backfiller at a time.
+// Run acquires a Postgres advisory lock so only one process backfills, then
+// drains incomplete jobs immediately and on every interval tick. The periodic
+// re-scan picks up new jobs from the reconciler.
 func (b *VectorBackfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
 	if err != nil {
@@ -118,7 +131,16 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 	defer release()
 
 	b.runBackfill(ctx)
-	return ctx.Err()
+	t := time.NewTicker(b.interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-t.C:
+			b.runBackfill(ctx)
+		}
+	}
 }
 
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
@@ -310,7 +332,10 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}()
 
 	rv := iter.ResourceVersion()
-	if rv > job.StoppingRV {
+	// Compare in snowflake space so the bound holds whether the item RV and
+	// the stored stopping_rv came from the kv (snowflake) or legacy sql
+	// (microsecond) backend — e.g. after a SQL<->KV backend swap.
+	if resource.ToSnowflakeRV(rv) > resource.ToSnowflakeRV(job.StoppingRV) {
 		statusLabel = "skipped_rv_past_stopping"
 		return nil
 	}
@@ -322,6 +347,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 	if exists {
 		statusLabel = "skipped_already_embedded"
+		return nil
+	}
+
+	if embed.HasPendingDeleteLabel(iter.Value()) {
+		statusLabel = "skipped_pending_delete"
 		return nil
 	}
 

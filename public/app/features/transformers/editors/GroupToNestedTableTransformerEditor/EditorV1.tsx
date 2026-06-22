@@ -19,7 +19,7 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onConfigChange }: FieldProps) => {
+const GroupByFieldConfiguration = ({ fieldName, config: fieldConfig, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const id = useId();

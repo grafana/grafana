@@ -13,7 +13,7 @@ export type ApiMachineryErrorResponse = FetchError<ApiMachineryError>;
 // these are known error IDs, used by both Kubernetes API and the front-end (using error `cause`).
 export type KnownErrorCodes = typeof ERROR_NEWER_CONFIGURATION;
 // Kubernetes API Machinery errors are a superset of supported errors codes.
-export type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MATCHER_CONFLICT;
+type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MATCHER_CONFLICT;
 
 /**
  * This function gives us the opportunity to translate or transform error codes that are returned from the Kubernetes APIs

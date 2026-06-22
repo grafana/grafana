@@ -380,6 +380,7 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
     tagList: css({
       justifyContent: 'flex-start',
       flexWrap: 'nowrap',
+      overflowX: 'auto',
     }),
   };
 };

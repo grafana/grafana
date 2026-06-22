@@ -83,6 +83,8 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	require.NoError(t, err)
 
 	// Keyword/exact-match fields must skip freq/norm (no BM25 scoring needed).
+	// description is in this bucket because the field is not scored today; the
+	// SkipFreqNorm:true on its text mapping is an index-size optimization.
 	mustSkipFreqNorm := map[string]bool{
 		resource.SEARCH_FIELD_NAME:             true,
 		resource.SEARCH_FIELD_TITLE_PHRASE:     true,

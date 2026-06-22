@@ -8,7 +8,7 @@ import dashboardLibrary6 from 'img/dashboard-library/dashboard_library_6.jpg';
 /**
  * Collection of placeholder images for provisioned/plugin dashboards
  */
-export const DASHBOARD_PLACEHOLDER_IMAGES = [
+const DASHBOARD_PLACEHOLDER_IMAGES = [
   dashboardLibrary1,
   dashboardLibrary2,
   dashboardLibrary3,

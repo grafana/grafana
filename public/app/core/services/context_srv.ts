@@ -39,7 +39,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   timezone: string;
   weekStart: string;
   language: string;
-  helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
   analytics: AnalyticsSettings;
@@ -59,7 +58,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.orgCount = 0;
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
-    this.helpFlags1 = 0;
     this.theme = 'dark';
     this.hasEditPermissionInFolders = false;
     this.email = '';

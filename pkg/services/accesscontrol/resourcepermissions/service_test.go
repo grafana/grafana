@@ -597,6 +597,124 @@ func TestService_K8sActionFormat(t *testing.T) {
 	}
 }
 
+// enableRedirectFlags installs a global OpenFeature provider where both K8s
+// resource-permission redirect flags resolve to true, restoring the noop provider
+// on cleanup. Mirrors how the flags are read in production (via OpenFeature).
+func enableRedirectFlags(t *testing.T) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, true),
+		featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis, true),
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
+
+func TestRequiresAPIGroup(t *testing.T) {
+	tests := []struct {
+		name            string
+		resource        string
+		k8sActionFormat bool
+		redirectFlags   bool
+		want            bool
+	}{
+		{name: "nothing enabled", resource: "dashboards", want: false},
+		{name: "k8sActionFormat always requires it", resource: "dashboards", k8sActionFormat: true, want: true},
+		{name: "k8sActionFormat requires it even for exempt resource", resource: "teams", k8sActionFormat: true, want: true},
+		{name: "redirect requires it for a regular resource", resource: "dashboards", redirectFlags: true, want: true},
+		{name: "redirect requires it for receivers", resource: "receivers", redirectFlags: true, want: true},
+		{name: "redirect exempts teams", resource: "teams", redirectFlags: true, want: false},
+		{name: "redirect exempts datasources", resource: "datasources", redirectFlags: true, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.redirectFlags {
+				enableRedirectFlags(t)
+			}
+			got := requiresAPIGroup(context.Background(), tt.resource, tt.k8sActionFormat)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
+	tests := []struct {
+		name          string
+		resource      string
+		apiGroup      string
+		redirectFlags bool
+		expectErr     bool
+	}{
+		{
+			name:          "non-teams resource without APIGroup and redirect enabled fails",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     true,
+		},
+		{
+			name:          "non-teams resource with APIGroup and redirect enabled succeeds",
+			resource:      "dashboards",
+			apiGroup:      "dashboard.grafana.app",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "teams resource without APIGroup is exempt even when redirect enabled",
+			resource:      "teams",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "datasources resource without APIGroup is exempt even when redirect enabled",
+			resource:      "datasources",
+			apiGroup:      "",
+			redirectFlags: true,
+			expectErr:     false,
+		},
+		{
+			name:          "non-teams resource without APIGroup is fine when redirect disabled",
+			resource:      "dashboards",
+			apiGroup:      "",
+			redirectFlags: false,
+			expectErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.redirectFlags {
+				enableRedirectFlags(t)
+			}
+
+			sql := db.InitTestDB(t)
+			cfg := setting.NewCfg()
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+			features := featuremgmt.WithFeatures()
+			ac := acimpl.ProvideAccessControl(features)
+
+			_, err := New(
+				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
+				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, NewActionSetService(),
+			)
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestGetActionSetName(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -708,6 +826,14 @@ func TestIsActionSetEnabledResource_ServiceAccount(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
+	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
+	return service, userSvc, teamSvc
+}
+
+// setupTestEnvironmentWithCfg is like setupTestEnvironment but lets the caller pass feature
+// toggles and returns the *setting.Cfg so tests can tweak it (e.g. the dual-writer mode).
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
+	t.Helper()
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
@@ -728,7 +854,6 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	acService := &actest.FakeService{}
-	features := featuremgmt.WithFeatures()
 	ac := acimpl.ProvideAccessControl(features)
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
@@ -736,5 +861,5 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, te
 	)
 	require.NoError(t, err)
 
-	return service, userSvc, teamSvc
+	return service, userSvc, teamSvc, cfg
 }

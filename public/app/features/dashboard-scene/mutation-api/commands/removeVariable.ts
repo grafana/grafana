@@ -10,7 +10,7 @@ import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 import { replaceVariableSet } from './variableUtils';
 
-export const removeVariablePayloadSchema = payloads.removeVariable;
+const removeVariablePayloadSchema = payloads.removeVariable;
 
 export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 

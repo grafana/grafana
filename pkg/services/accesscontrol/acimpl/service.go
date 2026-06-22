@@ -90,7 +90,7 @@ func ProvideService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
-		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService)
+		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 
 	return service, nil

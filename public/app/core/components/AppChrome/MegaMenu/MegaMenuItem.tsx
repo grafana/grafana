@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 import * as React from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge } from '@grafana/ui';
+import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Indent } from '../../Indent/Indent';
@@ -21,11 +22,24 @@ interface Props {
   level?: number;
   onPin: (item: NavModelItem) => void;
   isPinned: (id?: string) => boolean;
+  /** Section-level only: children are being fetched, show placeholders instead of the empty message */
+  loadingChildren?: boolean;
+  /** Section-level only: fetching children failed, show an error instead of the empty message */
+  childrenLoadError?: boolean;
 }
 
 const MAX_DEPTH = 2;
 
-export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPinned }: Props) {
+export function MegaMenuItem({
+  link,
+  activeItem,
+  level = 0,
+  onClick,
+  onPin,
+  isPinned,
+  loadingChildren,
+  childrenLoadError,
+}: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const menuIsDocked = state.megaMenuDocked;
@@ -36,7 +50,8 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
     `grafana.navigation.expanded[${link.text}]`,
     Boolean(hasActiveChild)
   );
-  const showExpandButton = level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage);
+  const showExpandButton =
+    level < MAX_DEPTH && Boolean(linkHasChildren(link) || link.emptyMessage || loadingChildren || childrenLoadError);
   const item = useRef<HTMLLIElement>(null);
 
   const styles = useStyles2(getStyles);
@@ -147,6 +162,25 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick, onPin, isPi
                   isPinned={isPinned}
                 />
               ))
+          ) : loadingChildren ? (
+            <Box
+              display="flex"
+              direction="column"
+              gap={0.5}
+              padding={1}
+              paddingLeft={6}
+              aria-live="polite"
+              aria-label={t('navigation.megamenu-item.loading-aria-label', 'Loading {{sectionName}}', {
+                sectionName: link.text,
+              })}
+            >
+              <Skeleton width={120} />
+              <Skeleton width={90} />
+            </Box>
+          ) : childrenLoadError ? (
+            <div className={styles.emptyMessage} aria-live="polite">
+              {t('navigation.megamenu-item.children-error', 'Failed to load items')}
+            </div>
           ) : (
             <div className={styles.emptyMessage} aria-live="polite">
               {link.emptyMessage}

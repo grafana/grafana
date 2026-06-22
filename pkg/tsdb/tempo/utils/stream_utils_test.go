@@ -172,6 +172,38 @@ func TestGetHeadersFromIncomingContext_MergesIncomingMetadata_WhenToggleOn(t *te
 	assert.Equal(t, "client-value-a,client-value-b", headers["X-Client"])
 }
 
+func TestGetHeadersFromIncomingContext_DatasourceHeaderWinsOverConflictingTeamHeader(t *testing.T) {
+	jsonData := []byte(`{
+		"httpHeaderName1": "X-Scope-Orgid"
+	}`)
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+			JSONData: jsonData,
+			DecryptedSecureJSONData: map[string]string{
+				"httpHeaderValue1": "1",
+			},
+		},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = config.WithGrafanaConfig(ctx, config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "streamingForwardTeamHeadersTempo",
+	}))
+	ctx = metadata.NewIncomingContext(ctx, metadata.Pairs(
+		"x-scope-orgid", "tenant-from-incoming",
+		"x-custom-forward", "extra",
+	))
+
+	headers, err := GetHeadersFromIncomingContext(ctx, testLogger())
+	require.NoError(t, err)
+
+	// Only the datasource-configured X-Scope-Orgid should be present; the lowercase
+	// incoming variant must be dropped so the gRPC wire only carries one value.
+	assert.Equal(t, "1", headers["X-Scope-Orgid"])
+	_, lowerPresent := headers["x-scope-orgid"]
+	assert.False(t, lowerPresent, "lowercase x-scope-orgid must not coexist with datasource header")
+	assert.Equal(t, "extra", headers["x-custom-forward"])
+}
+
 func TestGetClientOptionsHeaders_ParsesHeaders(t *testing.T) {
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{

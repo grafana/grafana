@@ -127,13 +127,16 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 		if key.Namespace != "" && c.Key.Namespace != key.Namespace {
 			continue
 		}
+		// latestRv mirrors the real backend's behavior: it's the
+		// absolute latest event RV for this resource, independent
+		// of the sinceRv cutoff applied to the iterator.
+		if c.ResourceVersion > latestRv {
+			latestRv = c.ResourceVersion
+		}
 		if c.ResourceVersion <= sinceRv {
 			continue
 		}
 		matches = append(matches, c)
-		if c.ResourceVersion > latestRv {
-			latestRv = c.ResourceVersion
-		}
 	}
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
@@ -156,14 +159,15 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 type fakeVector struct {
 	mu sync.Mutex
 
-	latestRV    int64
-	upserts     [][]vector.Vector
-	deletes     []deleteCall
-	delsubs     []deleteSubsCall
-	storedSubs  map[string]map[string]string // ns|model|res|uid -> sub -> content
-	upsertErr   error
-	upsertErrFn func(vs []vector.Vector) error // dynamic error decision
-	deleteErr   error
+	latestRV     int64
+	upserts      [][]vector.Vector
+	deletes      []deleteCall
+	delsubs      []deleteSubsCall
+	storedSubs   map[string]map[string]string // ns|model|res|uid -> sub -> content
+	storedFolder map[string]string            // ns|model|res|uid -> folder
+	upsertErr    error
+	upsertErrFn  func(vs []vector.Vector) error // dynamic error decision
+	deleteErr    error
 
 	lockUnavailable bool
 	lockAttempts    int
@@ -172,6 +176,18 @@ type fakeVector struct {
 	setLatestRVCalls int
 	setLatestRVErr   error
 	getLatestRVErr   error
+
+	ensuredPartitions  []string
+	ensurePartitionErr error
+
+	backfillJobs      []backfillJobCall
+	createBackfillErr error
+}
+
+type backfillJobCall struct {
+	Model      string
+	Resource   string
+	StoppingRV int64
 }
 
 type deleteCall struct{ Namespace, Model, Resource, UID string }
@@ -181,7 +197,10 @@ type deleteSubsCall struct {
 }
 
 func newFakeVector() *fakeVector {
-	return &fakeVector{storedSubs: map[string]map[string]string{}}
+	return &fakeVector{
+		storedSubs:   map[string]map[string]string{},
+		storedFolder: map[string]string{},
+	}
 }
 
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
@@ -195,38 +214,32 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, vs []vector.Vector) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	// Atomic stale-removal + upsert: stage the delete-stale step, then
-	// the upsert. Failure on either rolls back via the lock-protected
-	// snapshot.
-	type uidKey struct{ ns, model, res, uid string }
-	groups := map[uidKey]map[string]struct{}{}
-	for _, v := range vs {
-		k := uidKey{v.Namespace, v.Model, v.Resource, v.UID}
-		if groups[k] == nil {
-			groups[k] = map[string]struct{}{}
-		}
-		groups[k][v.Subresource] = struct{}{}
+	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.
+	keep := make(map[string]struct{}, len(desired))
+	for _, s := range desired {
+		keep[s] = struct{}{}
 	}
-	for k, keep := range groups {
-		key := subsKey(k.ns, k.model, k.res, k.uid)
-		stored := f.storedSubs[key]
-		var stale []string
-		for sub := range stored {
-			if _, ok := keep[sub]; !ok {
-				stale = append(stale, sub)
-			}
-		}
-		if len(stale) > 0 {
-			f.delsubs = append(f.delsubs, deleteSubsCall{k.ns, k.model, k.res, k.uid, stale})
-			for _, s := range stale {
-				delete(stored, s)
-			}
+	key := subsKey(ns, model, res, uid)
+	stored := f.storedSubs[key]
+	var stale []string
+	for sub := range stored {
+		if _, ok := keep[sub]; !ok {
+			stale = append(stale, sub)
 		}
 	}
-	return f.upsertLocked(vs)
+	if len(stale) > 0 {
+		f.delsubs = append(f.delsubs, deleteSubsCall{ns, model, res, uid, stale})
+		for _, s := range stale {
+			delete(stored, s)
+		}
+	}
+	if len(changed) == 0 {
+		return nil
+	}
+	return f.upsertLocked(changed)
 }
 
 func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
@@ -245,6 +258,7 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 			f.storedSubs[k] = map[string]string{}
 		}
 		f.storedSubs[k][v.Subresource] = v.Content
+		f.storedFolder[k] = v.Folder
 	}
 	return nil
 }
@@ -269,17 +283,18 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 	}
 	return nil
 }
-func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, error) {
+func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	key := subsKey(ns, model, res, uid)
 	out := map[string]string{}
-	for k, v := range f.storedSubs[subsKey(ns, model, res, uid)] {
+	for k, v := range f.storedSubs[key] {
 		out[k] = v
 	}
 	if len(out) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
-	return out, nil
+	return out, f.storedFolder[key], nil
 }
 func (f *fakeVector) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil
@@ -307,6 +322,24 @@ func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
 func (f *fakeVector) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
+func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.ensurePartitionErr != nil {
+		return f.ensurePartitionErr
+	}
+	f.ensuredPartitions = append(f.ensuredPartitions, res)
+	return nil
+}
+func (f *fakeVector) CreateBackfillJob(_ context.Context, model, res string, stoppingRV int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.createBackfillErr != nil {
+		return f.createBackfillErr
+	}
+	f.backfillJobs = append(f.backfillJobs, backfillJobCall{Model: model, Resource: res, StoppingRV: stoppingRV})
+	return nil
+}
 func (f *fakeVector) UpdateBackfillJobCheckpoint(context.Context, int64, string, string) error {
 	return nil
 }
@@ -327,6 +360,32 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		defer f.mu.Unlock()
 		f.lockReleases++
 	}, true, nil
+}
+
+// fakeBackfiller records that Run was invoked and blocks until ctx is
+// cancelled, mirroring the real backfiller's lifetime semantics.
+type fakeBackfiller struct {
+	mu      sync.Mutex
+	runs    int
+	blocked bool
+}
+
+func (f *fakeBackfiller) Run(ctx context.Context) error {
+	f.mu.Lock()
+	f.runs++
+	block := f.blocked
+	f.mu.Unlock()
+	if block {
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	return nil
+}
+
+func (f *fakeBackfiller) runCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.runs
 }
 
 // fakeText is a deterministic embedder used by the reconciler. It

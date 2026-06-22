@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
@@ -35,6 +36,10 @@ jest.mock('app/core/services/context_srv', () => ({
 jest.mock('../hooks/useExplorePageTitle', () => ({
   useExplorePageTitle: jest.fn(),
 }));
+beforeAll(() => {
+  mockBoundingClientRect();
+});
+
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();

@@ -7,7 +7,7 @@ import { type UserDTO } from 'app/types/user';
 
 import { type ProfileUpdateFields } from './types';
 
-export interface Props {
+interface Props {
   user: UserDTO | null;
   isSavingUser: boolean;
   updateProfile: (payload: ProfileUpdateFields) => void;
@@ -15,7 +15,7 @@ export interface Props {
 
 const { disableLoginForm } = config;
 
-export const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
+const UserProfileEditForm = ({ user, isSavingUser, updateProfile }: Props) => {
   const onSubmitProfileUpdate = (data: ProfileUpdateFields) => {
     updateProfile(data);
   };

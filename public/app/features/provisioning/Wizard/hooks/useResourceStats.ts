@@ -49,7 +49,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
           t('provisioning.bootstrap-step.folders-count', '', {
             count: stat.count,
             defaultValue_one: '{{count}} folder',
-            defaultValue_other: '{{count}} folder',
+            defaultValue_other: '{{count}} folders',
           })
         );
         break;
@@ -59,7 +59,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
           t('provisioning.bootstrap-step.dashboards-count', '', {
             count: stat.count,
             defaultValue_one: '{{count}} dashboard',
-            defaultValue_other: '{{count}} dashboard',
+            defaultValue_other: '{{count}} dashboards',
           })
         );
         break;
@@ -77,7 +77,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
               t('provisioning.bootstrap-step.folders-count', '', {
                 count: stat.count,
                 defaultValue_one: '{{count}} folder',
-                defaultValue_other: '{{count}} folder',
+                defaultValue_other: '{{count}} folders',
               })
             );
             break;
@@ -87,7 +87,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
               t('provisioning.bootstrap-step.dashboards-count', '', {
                 count: stat.count,
                 defaultValue_one: '{{count}} dashboard',
-                defaultValue_other: '{{count}} dashboard',
+                defaultValue_other: '{{count}} dashboards',
               })
             );
             break;
@@ -162,9 +162,10 @@ export function useResourceStats(
 
   // Calculate requiresMigration based on sync target and user selection
   // For instance sync: migrate if there are resources (checkbox is disabled and always true)
-  // For folder sync: only migrate if user explicitly opts in via checkbox
+  // For folder and folderless sync: only migrate if user explicitly opts in via checkbox
   const requiresMigration = syncTarget === 'instance' ? resourceCount > 0 : (migrateResources ?? false);
-  const shouldSkipSync = (resourceCount === 0 || syncTarget === 'folder') && fileCount === 0;
+  const shouldSkipSync =
+    (resourceCount === 0 || syncTarget === 'folder' || syncTarget === 'folderless') && fileCount === 0;
 
   // Format display strings
   const resourceCountDisplay =
@@ -173,7 +174,7 @@ export function useResourceStats(
     fileCount > 0
       ? t('provisioning.bootstrap-step.files-count', '', {
           count: fileCount,
-          defaultValue_one: '{{count}} files',
+          defaultValue_one: '{{count}} file',
           defaultValue_other: '{{count}} files',
         })
       : t('provisioning.bootstrap-step.empty', 'Empty');

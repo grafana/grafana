@@ -5,7 +5,7 @@ import { sceneGraph } from '@grafana/scenes';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
+const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
 export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
 

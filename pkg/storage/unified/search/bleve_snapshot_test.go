@@ -1002,7 +1002,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
@@ -1117,7 +1117,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)
@@ -1147,8 +1147,12 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
+	uploadedKey, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
+	// UploadIndexSnapshot derives the persisted UploadTimestamp from a freshly
+	// generated ULID, not from the caller's meta. Use that as the expected value
+	// so the assertion below is exact and not subject to scheduling delays.
+	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
 	// Fresh backend pointing at the same bucket should download instead of building.
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
@@ -1183,7 +1187,8 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	trackedAt, tracked := be.getUploadTracking(key)
 	require.True(t, tracked)
-	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+	assert.True(t, expectedUploadedAt.Equal(trackedAt),
+		"trackedAt %s should equal manifest UploadTimestamp %s", trackedAt, expectedUploadedAt)
 
 	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)

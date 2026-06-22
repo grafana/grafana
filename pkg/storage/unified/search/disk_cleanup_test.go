@@ -130,7 +130,7 @@ func TestRunDiskCleanup_OwnedResource_KeepsCachedActive(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, nil)
 	require.NoError(t, err)
 	activeDir := filepath.Join(resourceDir, "20240301-120000")
-	activeIdx, err := newBleveIndex(activeDir, mapper, time.Now(), buildVersion, nil)
+	activeIdx, err := newBleveIndex(activeDir, mapper, time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = activeIdx.Close() })
 	older := mkdirOld(t, resourceDir, "20240101-000000")
@@ -153,6 +153,50 @@ func TestRunDiskCleanup_OwnedResource_KeepsCachedActive(t *testing.T) {
 
 	require.DirExists(t, activeDir)
 	require.NoDirExists(t, older)
+}
+
+func TestRunDiskCleanup_UnownedResource_KeepsCachedActive(t *testing.T) {
+	// Regression: after a ring reshuffle this pod can lose ownership of a
+	// resource while its file-based index is still cached and in use. The
+	// cleanup sweep must keep the on-disk directory until the eviction loop
+	// closes the index; otherwise the live scorch persister fails on its
+	// next segment write with "persist err: ... no such file or directory".
+	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	b, metrics := setupDiskCleanupBackend(t, time.Minute, owns)
+
+	ns := resource.NamespacedResource{Namespace: "ns1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	resourceDir := b.getResourceDir(ns)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+
+	mapper, err := GetBleveMappings(nil, nil)
+	require.NoError(t, err)
+	activeDir := filepath.Join(resourceDir, "20240301-120000")
+	activeIdx, err := newBleveIndex(activeDir, mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = activeIdx.Close() })
+	older := mkdirOld(t, resourceDir, "20240101-000000")
+	writeFileOld(t, older, "root.bolt")
+
+	b.cacheMx.Lock()
+	b.cache[ns] = &bleveIndex{key: ns, index: activeIdx, indexStorage: indexStorageFile}
+	b.cacheMx.Unlock()
+	t.Cleanup(func() {
+		b.cacheMx.Lock()
+		delete(b.cache, ns)
+		b.cacheMx.Unlock()
+	})
+
+	// Force the active dir to look stale on disk so the only thing that can
+	// save it is the active-cache check (not the mtime gate). This mirrors
+	// production, where a read-heavy unowned index ages out of fresh-mtime
+	// well before the eviction loop closes it.
+	chtimesRecursive(t, activeDir, time.Now().Add(-24*time.Hour))
+
+	b.runDiskCleanup(t.Context())
+
+	require.DirExists(t, activeDir, "cached active index directory must survive even when this pod no longer owns it")
+	require.NoDirExists(t, older, "unowned, uncached, stale sibling is still deleted")
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexDiskCleanupDirsDeleted.WithLabelValues("index", "success")))
 }
 
 func TestRunDiskCleanup_OwnedResource_KeepsNewestSiblingWhenNotCached(t *testing.T) {

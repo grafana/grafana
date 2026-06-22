@@ -88,6 +88,7 @@ describe('FixFolderMetadataDrawer', () => {
       expect(capturedBody).toEqual(
         expect.objectContaining({
           action: 'fixFolderMetadata',
+          message: expect.stringContaining('Fix folder metadata'),
           fixFolderMetadata: expect.objectContaining({
             ref: 'main',
           }),

@@ -112,6 +112,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: TestDataQueryType.FlakyQuery,
+    name: 'Flaky Query',
+    stringInput: '5s',
+  },
+  {
+    description: '',
     id: TestDataQueryType.StreamingClient,
     name: 'Streaming Client',
     stringInput: '',

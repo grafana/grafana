@@ -1,8 +1,11 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
+import { isExpressionReference } from '../../utils/DataSourceWithBackend';
 import { UserStorage } from '../../utils/userStorage';
 import { type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { getExpressionDataSourceInstance } from './expressionDs';
+import { logDataSourceInstanceError } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
 import { getDataSourceInstanceSettings, upsertRuntimeDataSourceInstanceSettings } from './settings';
 import { type ImportDataSourcePluginFn } from './types';
@@ -33,6 +36,16 @@ export async function getDataSourceInstance(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceApi> {
+  if (isExpressionReference(ref)) {
+    const expressionDs = getExpressionDataSourceInstance();
+    if (!expressionDs) {
+      throw new Error(
+        'Expression datasource has not been initialised. Call setExpressionDataSourceInstance during application boot.'
+      );
+    }
+    return expressionDs;
+  }
+
   const settings = await getDataSourceInstanceSettings(ref, scopedVars);
   if (!settings) {
     throw new Error(`Datasource ${describeRef(ref)} was not found`);
@@ -68,7 +81,17 @@ async function loadDataSourceInstance(cacheUid: string, settings: DataSourceInst
     throw new Error('Data source importer has not been set. Call setDataSourcePluginImporter during application boot.');
   }
 
-  const dsPlugin = await importDataSourcePlugin(settings.meta);
+  let dsPlugin;
+  try {
+    dsPlugin = await importDataSourcePlugin(settings.meta);
+  } catch (error) {
+    logDataSourceInstanceError(`Failed to import datasource plugin ${settings.name} (${settings.uid})`, error, {
+      pluginId: settings.meta.id,
+      uid: settings.uid,
+      name: settings.name,
+    });
+    throw error;
+  }
 
   const racedCache = getCachedPlugin(cacheUid);
   if (racedCache) {

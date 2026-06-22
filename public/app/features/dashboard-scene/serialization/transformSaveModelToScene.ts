@@ -66,16 +66,6 @@ import { createVariablesForDashboard, createVariablesForSnapshot } from '../util
 import { getAngularPanelMigrationHandler } from './angularMigration';
 import { GRAFANA_DATASOURCE_REF } from './const';
 
-export interface DashboardLoaderState {
-  dashboard?: DashboardScene;
-  isLoading?: boolean;
-  loadError?: string;
-}
-
-export interface SaveModelToSceneOptions {
-  isEmbedded?: boolean;
-}
-
 type LayoutCreator = (panels: PanelModel[], preload?: boolean) => DashboardLayoutManager;
 
 export interface SceneCreationOptions {

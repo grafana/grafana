@@ -128,7 +128,7 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
 						require.Equal(t, "test?kiosk", opts.Path)
 						require.Equal(t, int64(1), opts.OrgID)
-						require.Equal(t, int64(1), opts.UserID)
+						require.Equal(t, int64(0), opts.UserID)
 						require.Equal(t, 1024, opts.Width)
 						require.Equal(t, -1, opts.Height)
 						require.Equal(t, models.ThemeDark, opts.Theme)
@@ -237,6 +237,72 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/test-ns/repositories/test-repo/render/test-uid",
 		},
 		{
+			name: "should render as the render-service identity in the org that owns the repository namespace",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "org-3",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
+						require.Equal(t, int64(3), opts.OrgID)
+						// UserID 0 selects the synthetic render-service identity
+						// rather than a real user, so OrgRedirect never fires.
+						require.Equal(t, int64(0), opts.UserID)
+						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resourcepb.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/org-3/repositories/test-repo/render/test-uid",
+		},
+		{
+			name: "should render in org 1 as the render-service identity for the default namespace",
+			path: "test",
+			repoInfo: provisioning.ResourceRepositoryInfo{
+				Name:      "test-repo",
+				Namespace: "default",
+			},
+			setupRender: func(ctrl *gomock.Controller) rendering.Service {
+				tmpFile, cleanup := setupTempFile(t)
+				t.Cleanup(cleanup)
+				render := rendering.NewMockService(ctrl)
+				render.EXPECT().Render(gomock.Any(), rendering.RenderPNG, gomock.Any()).
+					DoAndReturn(func(_ context.Context, _ rendering.RenderType, opts rendering.Opts) (*rendering.RenderResult, error) {
+						require.Equal(t, int64(1), opts.OrgID)
+						require.Equal(t, int64(0), opts.UserID)
+						require.Equal(t, identity.RoleAdmin, opts.OrgRole)
+						return &rendering.RenderResult{
+							FilePath: tmpFile,
+						}, nil
+					})
+				return render
+			},
+			setupBlobstore: func(t *testing.T) BlobStoreClient {
+				blobstore := NewMockBlobStoreClient(t)
+				blobstore.On("PutBlob", mock.Anything, mock.Anything).
+					Return(&resourcepb.PutBlobResponse{
+						Uid: "test-uid",
+					}, nil)
+				return blobstore
+			},
+			expectedURL: "apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/render/test-uid",
+		},
+		{
 			name: "should append query parameters correctly",
 			path: "test",
 			queryParams: url.Values{
@@ -275,8 +341,15 @@ func TestScreenshotRenderer_RenderScreenshot(t *testing.T) {
 			render := tc.setupRender(ctrl)
 			blobstore := tc.setupBlobstore(t)
 
+			// Mirror production: the job driver stamps the worker identity for the
+			// repository's org onto the context before the renderer runs.
+			ctx := context.Background()
+			if identityCtx, _, idErr := identity.WithProvisioningIdentity(ctx, tc.repoInfo.Namespace); idErr == nil {
+				ctx = identityCtx
+			}
+
 			renderer := NewScreenshotRenderer(render, blobstore)
-			url, err := renderer.RenderScreenshot(context.Background(), tc.repoInfo, tc.path, tc.queryParams)
+			url, err := renderer.RenderScreenshot(ctx, tc.repoInfo, tc.path, tc.queryParams)
 
 			if tc.expectedError != "" {
 				require.Error(t, err)

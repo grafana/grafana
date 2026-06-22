@@ -254,7 +254,7 @@ func TestMultiOrgAlertmanager_ActivateHistoricalConfiguration(t *testing.T) {
 	require.Equal(t, defaultConfig, cfgs[3].AlertmanagerConfiguration)
 
 	// Now let's save a new config for org 2.
-	newConfig := `{"template_files":null,"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	newConfig := `{"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@example.com\u003e"}}]}]}}`
 	postable, err := Load([]byte(newConfig))
 	require.NoError(t, err)
 
@@ -397,10 +397,8 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 		featuremgmt.WithFeatures(),
 		nil,
 		false,
-		nil, // adminConfigStore - not needed in this test
-		nil, // datasourceService - not needed in this test
-		nil, // httpClientProvider - not needed in this test
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed in this test
+		// Sync deps are nil — this test does not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 	)
 	require.NoError(t, err)
 	return mam
@@ -408,7 +406,6 @@ func setupMam(t *testing.T, cfg *setting.Cfg) *MultiOrgAlertmanager {
 
 var defaultConfig = `
 {
-	"template_files": null,
 	"alertmanager_config": {
 		"route": {
 			"receiver": "grafana-default-email",
@@ -427,7 +424,7 @@ var defaultConfig = `
 						"type": "email",
 						"disableResolveMessage": false,
 						"settings": {
-							"addresses": "\u003cexample@email.com\u003e"
+							"addresses": "\u003cexample@example.com\u003e"
 						}
 					}
 				]
@@ -448,7 +445,7 @@ var brokenConfig = `
 				"name": "slack receiver",
 				"type": "slack",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 					"url": "�r_��q/b�����p@ⱎȏ =��@ӹtd>Rú�H��           �;�@Uf��0�\k2*jh�}Íu�)"2�F6]�}r��R�b�d�J;��S퓧��$��",
 					"recipient": "#graphana-metrics",
 				}

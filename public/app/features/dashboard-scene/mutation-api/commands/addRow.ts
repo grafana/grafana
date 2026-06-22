@@ -18,7 +18,7 @@ import { resolveLayoutPath, validateNesting } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
 
-export const addRowPayloadSchema = payloads.addRow;
+const addRowPayloadSchema = payloads.addRow;
 
 export type AddRowPayload = z.infer<typeof addRowPayloadSchema>;
 

@@ -55,7 +55,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("user not found", func(t *testing.T) {
 		_, err := userStore.GetByEmail(context.Background(),
-			&user.GetUserByEmailQuery{Email: "test@email.com"},
+			&user.GetUserByEmailQuery{Email: "test@example.com"},
 		)
 		require.Error(t, err, user.ErrUserNotFound)
 	})
@@ -63,7 +63,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("insert user", func(t *testing.T) {
 		_, err := userStore.Insert(context.Background(),
 			&user.User{
-				Email:   "test@email.com",
+				Email:   "test@example.com",
 				Name:    "test1",
 				Login:   "test1",
 				Created: time.Now(),
@@ -76,7 +76,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("error on duplicated user", func(t *testing.T) {
 		_, err := userStore.Insert(context.Background(),
 			&user.User{
-				Email:   "test@email.com",
+				Email:   "test@example.com",
 				Name:    "test1",
 				Login:   "test1",
 				Created: time.Now(),
@@ -88,7 +88,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 	t.Run("get user", func(t *testing.T) {
 		_, err := userStore.GetByEmail(context.Background(),
-			&user.GetUserByEmailQuery{Email: "test@email.com"},
+			&user.GetUserByEmailQuery{Email: "test@example.com"},
 		)
 		require.NoError(t, err)
 	})
@@ -98,7 +98,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		id, err := userStore.Insert(ctx,
 			&user.User{
 				UID:     "abcd",
-				Email:   "next-test@email.com",
+				Email:   "next-test@example.com",
 				Name:    "next-test1",
 				Login:   "next-test1",
 				Created: time.Now(),
@@ -122,7 +122,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		result, err := userStore.GetByUID(context.Background(), query.UID)
 		require.Nil(t, err)
 		require.Equal(t, result.UID, "abcd")
-		require.Equal(t, result.Email, "next-test@email.com")
+		require.Equal(t, result.Email, "next-test@example.com")
 	})
 
 	t.Run("Testing DB - creates and loads user", func(t *testing.T) {

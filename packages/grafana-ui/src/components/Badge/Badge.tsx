@@ -99,6 +99,11 @@ const getStyles = (theme: GrafanaTheme2, color: BadgeColor) => {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       alignItems: 'flex-start',
+
+      '&:focus-visible': {
+        outline: `2px solid ${theme.colors.accent.main}`,
+        outlineOffset: '-2px',
+      },
     }),
     iconWrap: css({
       display: 'inline-flex',

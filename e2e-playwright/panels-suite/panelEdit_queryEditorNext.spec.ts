@@ -1,4 +1,4 @@
-import { type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
@@ -29,6 +29,14 @@ function addTransformationButton(page: Page) {
   return page.getByLabel('Add transformation');
 }
 
+// Playwright clicks the center of an element, but hovering a card flies its hover actions
+// out over the right half — on a narrow sidebar they cover that center point and swallow
+// the click. Aim at the card's leading icon (datasource logo or type icon) instead, which
+// the actions never cover. The click bubbles to the card's own handlers.
+function clickSidebarCard(card: Locator, options?: { delay?: number }) {
+  return card.locator('img, svg').first().click(options);
+}
+
 async function switchDatasource(
   dashboardPage: DashboardPage,
   page: Page,
@@ -38,7 +46,7 @@ async function switchDatasource(
   // Datasource picker is only rendered for datasource-backed query cards (not expressions).
   const queryACard = page.locator('[data-query-sidebar-card="A"]').first();
   if ((await queryACard.count()) > 0) {
-    await queryACard.click();
+    await clickSidebarCard(queryACard);
     await expect(queryACard).toHaveAttribute('aria-pressed', 'true');
   }
 
@@ -81,8 +89,8 @@ test.describe('Query Editor Next: Layout & Navigation', { tag: ['@panels', '@que
     await expect(page.getByRole('tab', { name: /Queries/i })).toHaveCount(0);
     await expect(page.getByRole('tab', { name: /Transformations/i })).toHaveCount(0);
 
-    await expect(page.getByText('Queries & Expressions')).toBeVisible();
-    await expect(page.getByText('Transformations')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Queries & Expressions' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Transformations' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Query Options/i })).toBeVisible();
   });
 
@@ -146,11 +154,11 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
     const cardB = page.locator('[data-query-sidebar-card="B"]');
 
-    await cardA.click();
+    await clickSidebarCard(cardA);
     await expect(cardA).toHaveAttribute('aria-pressed', 'true');
     await expect(cardB).toHaveAttribute('aria-pressed', 'false');
 
-    await cardB.click();
+    await clickSidebarCard(cardB);
     await expect(cardB).toHaveAttribute('aria-pressed', 'true');
     await expect(cardA).toHaveAttribute('aria-pressed', 'false');
   });
@@ -164,7 +172,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
     await expect(cardB).toBeVisible();
 
-    await cardB.click();
+    await clickSidebarCard(cardB);
     await cardB.hover();
     const removeQueryButton = cardB.getByRole('button', { name: 'Remove Query' });
     await expect(removeQueryButton).toBeVisible();
@@ -279,9 +287,9 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
     await page.getByTestId(selectors.components.TransformTab.newTransform('Reduce')).click();
 
     // Switch away and back to prove card selection drives editor state.
-    await page.locator('[data-query-sidebar-card="A"]').click();
+    await clickSidebarCard(page.locator('[data-query-sidebar-card="A"]'));
     const reduceCard = page.locator('[data-query-sidebar-card]').filter({ hasText: 'Reduce' }).first();
-    await reduceCard.click();
+    await clickSidebarCard(reduceCard);
     await expect(reduceCard).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor('Reduce'))).toBeVisible();
   });
@@ -381,15 +389,15 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
     const cardC = page.locator('[data-query-sidebar-card="C"]');
 
-    await cardB.click();
+    await clickSidebarCard(cardB);
     await expect(cardB).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
 
-    await cardC.click();
+    await clickSidebarCard(cardC);
     await expect(cardC).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SELECT 2 FROM A')).toBeVisible();
 
-    await cardB.click();
+    await clickSidebarCard(cardB);
     await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
   });
 
@@ -417,7 +425,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
     const cardB = page.locator('[data-query-sidebar-card="B"]');
 
-    await cardA.click();
+    await clickSidebarCard(cardA);
     await expect(cardA).toHaveAttribute('aria-pressed', 'true');
 
     const queryText = 'up{job="grafana"}';
@@ -427,10 +435,10 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     // focused at this point, so this is the exact path that previously lost edits. The
     // `delay` separates mousedown from mouseup so Monaco's `setTimeout(0)`-deferred blur
     // can fire before React unmounts the editor — matching a real human click.
-    await cardB.click({ delay: 50 });
+    await clickSidebarCard(cardB, { delay: 50 });
     await expect(cardB).toHaveAttribute('aria-pressed', 'true');
 
-    await cardA.click();
+    await clickSidebarCard(cardA);
     await expect(cardA).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText(queryText)).toBeVisible();
   });

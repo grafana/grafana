@@ -10,9 +10,32 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
+
+// ToK8sNoDataState converts a legacy NoDataState into its k8s enum equivalent for
+// use in test expectations. The legacy and k8s enums differ (e.g. legacy "OK" vs
+// k8s "Ok"), so a raw cast produces a value the OpenAPI schema validator rejects.
+func ToK8sNoDataState(state ngmodels.NoDataState) v0alpha1.AlertRuleNoDataState {
+	s, err := alertrule.ConvertToK8sNoDataState(state)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+// ToK8sExecErrState converts a legacy ExecutionErrorState into its k8s enum
+// equivalent for use in test expectations. See ToK8sNoDataState for why.
+func ToK8sExecErrState(state ngmodels.ExecutionErrorState) v0alpha1.AlertRuleExecErrState {
+	s, err := alertrule.ConvertToK8sExecErrState(state)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
 
 func NewAlertRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList] {
 	t.Helper()

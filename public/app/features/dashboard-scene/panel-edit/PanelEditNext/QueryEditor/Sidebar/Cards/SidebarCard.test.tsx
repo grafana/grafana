@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataQuery } from '@grafana/schema';
@@ -22,11 +22,14 @@ jest.mock('@grafana/runtime', () => ({
 interface RenderSidebarCardProps {
   id?: string;
   isSelected?: boolean;
+  isMultiSelected?: boolean;
   onSelect?: jest.Mock;
+  onToggleMultiSelect?: jest.Mock;
   addQuery?: jest.Mock;
   setSelectedQuery?: jest.Mock;
   setPendingExpression?: jest.Mock;
   isHidden?: boolean;
+  multiSelectMode?: boolean;
   actionsOverrides?: {
     onDelete?: jest.Mock;
     onToggleHide?: jest.Mock;
@@ -37,11 +40,14 @@ interface RenderSidebarCardProps {
 function renderSidebarCard({
   id = 'A',
   isSelected = false,
+  isMultiSelected = false,
   onSelect = jest.fn(),
+  onToggleMultiSelect = jest.fn(),
   addQuery = jest.fn().mockReturnValue('B'),
   setSelectedQuery = jest.fn(),
   setPendingExpression = jest.fn(),
   isHidden = false,
+  multiSelectMode = false,
   actionsOverrides = {
     onDelete: jest.fn(),
     onToggleHide: jest.fn(),
@@ -58,8 +64,10 @@ function renderSidebarCard({
   const result = renderWithQueryEditorProvider(
     <SidebarCard
       isSelected={isSelected}
+      isMultiSelected={isMultiSelected}
       id={id}
       onSelect={onSelect}
+      onToggleMultiSelect={onToggleMultiSelect}
       onDelete={actionsOverrides.onDelete}
       onToggleHide={actionsOverrides.onToggleHide}
       onDuplicate={actionsOverrides.onDuplicate}
@@ -70,12 +78,12 @@ function renderSidebarCard({
     {
       queries,
       selectedQuery: queries[0],
-      uiStateOverrides: { setSelectedQuery, setPendingExpression },
+      uiStateOverrides: { setSelectedQuery, setPendingExpression, multiSelectMode },
       actionsOverrides: { addQuery },
     }
   );
 
-  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onSelect };
+  return { ...result, addQuery, setSelectedQuery, setPendingExpression, onSelect, onToggleMultiSelect };
 }
 
 describe('SidebarCard', () => {
@@ -83,55 +91,57 @@ describe('SidebarCard', () => {
     jest.clearAllMocks();
   });
 
-  it('should call toggleQuerySelection when clicking a query card (single-select)', async () => {
-    const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
-    const transformation: Transformation = {
-      transformId: 'organize',
-      registryItem: undefined,
-      transformConfig: { id: 'organize', options: {} },
-    };
+  describe('card click → activates the editor', () => {
+    it('clicking a QueryCard calls setSelectedQuery with that query', async () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const transformation: Transformation = {
+        transformId: 'organize',
+        registryItem: undefined,
+        transformConfig: { id: 'organize', options: {} },
+      };
 
-    const toggleQuerySelection = jest.fn();
+      const setSelectedQuery = jest.fn();
+      const toggleQuerySelection = jest.fn();
+      const user = userEvent.setup();
 
-    const user = userEvent.setup();
+      renderWithQueryEditorProvider(<QueryCard query={query} />, {
+        queries: [query],
+        transformations: [transformation],
+        selectedTransformation: transformation,
+        uiStateOverrides: { setSelectedQuery, toggleQuerySelection },
+      });
 
-    renderWithQueryEditorProvider(<QueryCard query={query} />, {
-      queries: [query],
-      transformations: [transformation],
-      selectedTransformation: transformation,
-      uiStateOverrides: { toggleQuerySelection },
+      await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+      // Plain card click activates the editor — it does NOT touch the bulk-selection API.
+      expect(setSelectedQuery).toHaveBeenCalledWith(query);
+      expect(toggleQuerySelection).not.toHaveBeenCalled();
     });
 
-    const queryCard = screen.getByRole('button', { name: /select card A/i });
-    await user.click(queryCard);
+    it('clicking a TransformationCard calls setSelectedTransformation with that transformation', async () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const transformation: Transformation = {
+        transformId: 'organize',
+        registryItem: undefined,
+        transformConfig: { id: 'organize', options: {} },
+      };
 
-    // Called with the query and no modifier (plain click)
-    expect(toggleQuerySelection).toHaveBeenCalledWith(query, { multi: false, range: false });
-  });
+      const setSelectedTransformation = jest.fn();
+      const toggleTransformationSelection = jest.fn();
+      const user = userEvent.setup();
 
-  it('should call toggleTransformationSelection when clicking a transformation card (single-select)', async () => {
-    const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
-    const transformation: Transformation = {
-      transformId: 'organize',
-      registryItem: undefined,
-      transformConfig: { id: 'organize', options: {} },
-    };
+      renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
+        queries: [query],
+        transformations: [transformation],
+        selectedQuery: query,
+        uiStateOverrides: { setSelectedTransformation, toggleTransformationSelection },
+      });
 
-    const toggleTransformationSelection = jest.fn();
+      await user.click(screen.getByRole('button', { name: /select card organize/i }));
 
-    const user = userEvent.setup();
-
-    renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
-      queries: [query],
-      transformations: [transformation],
-      selectedQuery: query,
-      uiStateOverrides: { toggleTransformationSelection },
+      expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
+      expect(toggleTransformationSelection).not.toHaveBeenCalled();
     });
-
-    const transformCard = screen.getByRole('button', { name: /select card organize/i });
-    await user.click(transformCard);
-
-    expect(toggleTransformationSelection).toHaveBeenCalledWith(transformation, { multi: false, range: false });
   });
 
   describe('add button and menu', () => {
@@ -186,31 +196,51 @@ describe('SidebarCard', () => {
     });
   });
 
-  describe('multi-select modifiers', () => {
-    it('calls onSelect with { multi: true } when Ctrl+Click', async () => {
-      const onSelect = jest.fn();
-      const user = userEvent.setup();
-      renderSidebarCard({ id: 'A', onSelect });
+  describe('card body interactions', () => {
+    it('plain click on the card calls onSelect with no arguments', async () => {
+      const { user, onSelect } = renderSidebarCard({ id: 'A' });
+
+      await user.click(screen.getByRole('button', { name: /select card A/i }));
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith();
+    });
+
+    it('Enter on the card calls onSelect with no arguments', async () => {
+      const { user, onSelect } = renderSidebarCard({ id: 'A' });
+
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.click(card);
+      onSelect.mockClear();
+      await user.keyboard('[Enter]');
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith();
+    });
+
+    it('Ctrl+click on the card body does NOT toggle bulk selection', async () => {
+      // Bulk multi-select is driven by the checkbox; the card body only ever activates.
+      const { user, onSelect, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
 
       const card = screen.getByRole('button', { name: /select card A/i });
       await user.keyboard('[ControlLeft>]');
       await user.click(card);
       await user.keyboard('[/ControlLeft]');
 
-      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
+      expect(onSelect).toHaveBeenCalled();
+      expect(onToggleMultiSelect).not.toHaveBeenCalled();
     });
 
-    it('calls onSelect with { range: true } when Shift+Click', async () => {
-      const onSelect = jest.fn();
-      const user = userEvent.setup();
-      renderSidebarCard({ id: 'A', onSelect });
+    it('Shift+click on the card body does NOT range-select via the bulk handler', async () => {
+      const { user, onSelect, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
 
       const card = screen.getByRole('button', { name: /select card A/i });
       await user.keyboard('[ShiftLeft>]');
       await user.click(card);
       await user.keyboard('[/ShiftLeft]');
 
-      expect(onSelect).toHaveBeenCalledWith({ multi: false, range: true });
+      expect(onSelect).toHaveBeenCalled();
+      expect(onToggleMultiSelect).not.toHaveBeenCalled();
     });
 
     it('sets aria-pressed to true when isSelected is true', () => {
@@ -218,92 +248,9 @@ describe('SidebarCard', () => {
       expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('sets aria-pressed to true when isPartOfSelection is true and isSelected is false', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
-
-      renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries }
-      );
-
-      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'true');
-    });
-
-    it('calls onSelect with { multi: false } when Enter is pressed on the card outside selection mode', async () => {
-      const onSelect = jest.fn();
-      const user = userEvent.setup();
-      renderSidebarCard({ id: 'A', onSelect });
-
-      const card = screen.getByRole('button', { name: /select card A/i });
-      await user.click(card); // focus the card via userEvent so state updates are wrapped in act
-      onSelect.mockClear(); // clear the click call, we only want to assert on the Enter call
-
-      await user.keyboard('[Enter]');
-
-      expect(onSelect).toHaveBeenCalledWith({ multi: false });
-    });
-
-    it('passes multi: true to onSelect on plain click when 2+ items are already selected', async () => {
-      // Once the user is in selection mode (2+ selected via Cmd/Shift+click or
-      // multi-select mode), plain clicks act as toggles instead of replacing.
-      const onSelect = jest.fn();
-      const queries: DataQuery[] = [
-        { refId: 'A', datasource: { type: 'test', uid: 'test' } },
-        { refId: 'B', datasource: { type: 'test', uid: 'test' } },
-      ];
-      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
-
-      const { user } = renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries, uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } }
-      );
-
-      await user.click(screen.getByRole('button', { name: /select card A/i }));
-
-      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
-    });
-
-    it('passes multi: true to onSelect on plain click when in multi-select mode', async () => {
-      const onSelect = jest.fn();
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
-
-      const { user } = renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries, uiStateOverrides: { multiSelectMode: true } }
-      );
-
-      await user.click(screen.getByRole('button', { name: /select card A/i }));
-
-      expect(onSelect).toHaveBeenCalledWith({ multi: true, range: false });
-    });
-
-    it('passes multi: true to onSelect on Enter when in multi-select mode', async () => {
-      const onSelect = jest.fn();
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
-
-      const { user } = renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} item={item} onSelect={onSelect}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries, uiStateOverrides: { multiSelectMode: true } }
-      );
-
-      const card = screen.getByRole('button', { name: /select card A/i });
-      await user.click(card);
-      onSelect.mockClear();
-
-      await user.keyboard('[Enter]');
-
-      expect(onSelect).toHaveBeenCalledWith({ multi: true });
+    it('sets aria-pressed to false when isSelected is false', () => {
+      renderSidebarCard({ id: 'A', isSelected: false });
+      expect(screen.getByRole('button', { name: /select card A/i })).toHaveAttribute('aria-pressed', 'false');
     });
 
     it('fires a DOM blur on the focused editor even when mousedown preventDefault blocks focus transfer', async () => {
@@ -337,22 +284,20 @@ describe('SidebarCard', () => {
   });
 
   describe('multi-select checkbox', () => {
-    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-    const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
-
     it('does not render the checkbox when multi-select mode is off', () => {
-      renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries }
-      );
-
-      // aria-hidden wraps the checkbox, so query with { hidden: true }
-      expect(screen.queryByRole('checkbox', { hidden: true })).not.toBeInTheDocument();
+      renderSidebarCard({ id: 'A', multiSelectMode: false });
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
     it('renders the checkbox when multi-select mode is on', () => {
+      renderSidebarCard({ id: 'A', multiSelectMode: true });
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    });
+
+    it('does not render the checkbox when onToggleMultiSelect is not provided', () => {
+      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+      const item: ActionItem = { id: 'A', type: QueryEditorType.Query, isHidden: false };
+
       renderWithQueryEditorProvider(
         <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
           <span>Card content</span>
@@ -360,44 +305,44 @@ describe('SidebarCard', () => {
         { queries, uiStateOverrides: { multiSelectMode: true } }
       );
 
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+      expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 
-    it('renders the checkbox when 2+ items are selected via keyboard shortcuts (no multi-select mode)', () => {
-      const queriesAB: DataQuery[] = [
-        { refId: 'A', datasource: { type: 'test', uid: 'test' } },
-        { refId: 'B', datasource: { type: 'test', uid: 'test' } },
-      ];
-      renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} item={item} onSelect={jest.fn()}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries: queriesAB, uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } }
-      );
+    it('reflects isMultiSelected in the checkbox checked state', () => {
+      const { rerender } = renderSidebarCard({ id: 'A', multiSelectMode: true, isMultiSelected: false });
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
 
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeInTheDocument();
+      // Re-render with isMultiSelected=true via a fresh mount.
+      rerender(<div />);
+      renderSidebarCard({ id: 'A', multiSelectMode: true, isMultiSelected: true });
+      expect(screen.getByRole('checkbox')).toBeChecked();
     });
 
-    it('checks the checkbox when the card is selected', () => {
-      renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected item={item} onSelect={jest.fn()}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries, uiStateOverrides: { multiSelectMode: true } }
-      );
-
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+    it('does not check the checkbox just because isSelected is true', () => {
+      // Active (single-select) state is independent of the bulk checkbox.
+      renderSidebarCard({ id: 'A', multiSelectMode: true, isSelected: true, isMultiSelected: false });
+      expect(screen.getByRole('checkbox')).not.toBeChecked();
     });
 
-    it('checks the checkbox when the card is part of a selection', () => {
-      renderWithQueryEditorProvider(
-        <SidebarCard id="A" isSelected={false} isPartOfSelection={true} item={item} onSelect={jest.fn()}>
-          <span>Card content</span>
-        </SidebarCard>,
-        { queries, uiStateOverrides: { multiSelectMode: true } }
-      );
+    it('clicking the checkbox calls onToggleMultiSelect with { multi: true }', async () => {
+      const { user, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
 
-      expect(screen.getByRole('checkbox', { hidden: true })).toBeChecked();
+      await user.click(screen.getByRole('checkbox'));
+
+      expect(onToggleMultiSelect).toHaveBeenCalledWith({ multi: true });
+    });
+
+    it('Shift+clicking the checkbox calls onToggleMultiSelect with { range: true }', async () => {
+      const { user, onSelect, onToggleMultiSelect } = renderSidebarCard({ id: 'A', multiSelectMode: true });
+
+      const checkbox = screen.getByRole('checkbox');
+      await user.keyboard('[ShiftLeft>]');
+      await user.click(checkbox);
+      await user.keyboard('[/ShiftLeft]');
+
+      expect(onToggleMultiSelect).toHaveBeenCalledWith({ range: true });
+      // The card body's onSelect must not fire when the user is targeting the checkbox.
+      expect(onSelect).not.toHaveBeenCalled();
     });
   });
 
@@ -429,6 +374,26 @@ describe('SidebarCard', () => {
         id: 'A',
         actionsOverrides: { onDelete: undefined, onToggleHide: undefined, onDuplicate: undefined },
       });
+
+      expect(screen.queryByRole('button', { name: /hide query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /duplicate query/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /remove query/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render the per-card hover actions in multi-select mode even when handlers are present', async () => {
+      // Per-card delete/duplicate/hide are intentionally suppressed while multi-select is active:
+      // bulk selection drives destructive actions, so exposing the single-card delete path here
+      // would reintroduce a stale single-delete against an item that may not be the bulk target.
+      const { user } = renderSidebarCard({
+        id: 'A',
+        multiSelectMode: true,
+        actionsOverrides: { onDelete: jest.fn(), onToggleHide: jest.fn(), onDuplicate: jest.fn() },
+      });
+
+      // Hover and focus the card to surface any actions that would normally appear on interaction.
+      const card = screen.getByRole('button', { name: /select card A/i });
+      await user.hover(card);
+      fireEvent.focus(card);
 
       expect(screen.queryByRole('button', { name: /hide query/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /duplicate query/i })).not.toBeInTheDocument();

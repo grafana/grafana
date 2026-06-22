@@ -10,12 +10,12 @@ import { useDataSourceInfo } from '../components/useDataSourceInfo';
 import { useDataSource, useDataSourceRights } from '../state/hooks';
 import { setNameAndVersion } from '../state/reducers';
 
-export interface Props {
+interface Props {
   uid: string;
   pageId: string | null;
 }
 
-export function DataSourceTabPage({ uid, pageId }: Props) {
+function DataSourceTabPage({ uid, pageId }: Props) {
   const { navId, pageNav, dataSourceHeader } = useDataSourceSettingsNav(pageId ?? undefined);
   const { datasourceFailureByUID } = useDatasourceFailureByUID();
 

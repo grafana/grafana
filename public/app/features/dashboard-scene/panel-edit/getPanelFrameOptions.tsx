@@ -82,7 +82,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         render: function renderTitle(descriptor) {
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
-        addon: config.featureToggles.dashgpt && (
+        addon: (
           <GenAIPanelTitleButton
             onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
@@ -99,7 +99,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         render: function renderDescription(descriptor) {
           return <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />;
         },
-        addon: config.featureToggles.dashgpt && (
+        addon: (
           <GenAIPanelDescriptionButton
             onGenerate={(description) => panel.setState({ description })}
             panel={vizPanelToPanel(panel)}

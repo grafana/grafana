@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,12 +82,10 @@ func (c *filesConnector) getRepo(ctx context.Context, method, name string) (repo
 
 // TODO: document the synchronous write and delete on the API Spec
 func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.handleRequest(ctx, name, r, responder, logger)
-	}), 30*time.Second), nil
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
+		c.handleRequest(logging.Context(ctx, logger), name, r, responder, logger)
+	}), nil
 }
 
 // handleRequest processes the HTTP request for files operations.
@@ -105,10 +102,11 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 		responder.Error(apierrors.NewBadRequest("repository does not support read-writing"))
 		return
 	}
-	// Enforce max_file_size right at the repo boundary so oversized payloads
-	// are rejected before parsing/DryRun runs in DualReadWriter.Read or before
-	// the bytes are streamed back from handleGetRawFile.
-	readWriter = repository.NewSizeLimitedReaderWriter(readWriter, c.maxFileSize)
+	if c.maxFileSize > 0 {
+		if m, ok := readWriter.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(c.maxFileSize)
+		}
+	}
 
 	dualReadWriter, authorizer, err := c.createDualReadWriter(ctx, repo, readWriter)
 	if err != nil {
@@ -123,7 +121,7 @@ func (c *filesConnector) handleRequest(ctx context.Context, name string, r *http
 	}
 
 	logger = logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
-	ctx = logging.Context(r.Context(), logger)
+	ctx = logging.Context(ctx, logger)
 
 	// Handle directory listing separately
 	isDir := safepath.IsDir(opts.Path)
@@ -228,13 +226,13 @@ func (c *filesConnector) parseRequestOptions(r *http.Request, name string, repo 
 // handleDirectoryListing handles GET requests for directory listing.
 func (c *filesConnector) handleDirectoryListing(ctx context.Context, name string, opts resources.DualWriteOptions, readWriter repository.ReaderWriter, responder rest.Responder) {
 	if err := c.authorizeListFiles(ctx, name); err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 
 	files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 	if err != nil {
-		responder.Error(err)
+		respondWithError(responder, err)
 		return
 	}
 

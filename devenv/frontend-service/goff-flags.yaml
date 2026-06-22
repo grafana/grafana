@@ -42,8 +42,15 @@ grafana.meticulousAIRecorderHighVolume:
 
 grafana.meticulousAIMode:
   variations:
-    off: "off"
-    on-prod-env: "on-prod-env"
-    on-dev-env: "on-dev-env"
+    off: 'off'
+    on-prod-env: 'on-prod-env'
+    on-dev-env: 'on-dev-env'
   defaultRule:
     variation: off
+
+frontendService.reducedBootDataAPI:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

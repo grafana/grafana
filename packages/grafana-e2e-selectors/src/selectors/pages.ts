@@ -184,6 +184,9 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      viewPanelControls: {
+        '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
+      },
       conditionalRendering: {
         variable: {
           valueInput: {

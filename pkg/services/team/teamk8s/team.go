@@ -635,7 +635,12 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 		if hit.MemberCount != nil {
 			memberCount = *hit.MemberCount
 		}
+		var id int64
+		if hit.InternalId != nil {
+			id = *hit.InternalId
+		}
 		teams = append(teams, &team.TeamDTO{
+			ID:            id,
 			UID:           hit.Name,
 			OrgID:         query.OrgID,
 			Name:          hit.Title,

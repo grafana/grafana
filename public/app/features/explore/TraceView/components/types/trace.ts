@@ -18,11 +18,6 @@ import { type TraceKeyValuePair, type TraceLog } from '@grafana/data';
  * All timestamps are in microseconds
  */
 
-export type TraceLink = {
-  url: string;
-  text: string;
-};
-
 export type TraceProcess = {
   serviceName: string;
   serviceNamespace?: string;

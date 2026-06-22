@@ -136,6 +136,12 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variables_reordered', properties);
   },
 
+  // dashboards_variable_value_changed
+  // when a user changes a variable value from dashboard controls, the controls menu, or a section
+  variableValueChanged: (properties: { type: string }) => {
+    reportDashboardInteraction('variable_value_changed', properties);
+  },
+
   // dashboards_add_annotation_button_clicked
   // when a user clicks on 'Add annotation'
   addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {

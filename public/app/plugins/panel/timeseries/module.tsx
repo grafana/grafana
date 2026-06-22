@@ -48,4 +48,11 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   })
   .setSuggestionsSupplier(timeseriesSuggestionsSupplier)
   .setPresetsSupplier(timeseriesPresetsSupplier)
+  .setViewPanelOptions({
+    fanout: { enabled: true },
+    quickToggles: {
+      optionProperties: ['legend.showLegend'],
+      fieldConfigProperties: ['custom.stacking'],
+    },
+  })
   .setDataSupport({ annotations: true, alertStates: true });

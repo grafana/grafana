@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceRef, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { withSavedByTrailer } from '../../utils/currentUser';
@@ -16,8 +16,8 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
   const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
 
   const createSyncJob = useCallback(
-    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean }) => {
-      const { skipStatusUpdates = false } = options || {};
+    async (requiresMigration: boolean, options?: { skipStatusUpdates?: boolean; resources?: ResourceRef[] }) => {
+      const { skipStatusUpdates = false, resources } = options || {};
 
       if (!repoName) {
         if (!skipStatusUpdates) {
@@ -37,17 +37,20 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
         const jobSpec = requiresMigration
           ? {
               action: 'migrate' as const,
-              migrate: {
-                message: withSavedByTrailer(
-                  t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
-                ),
-              },
+              // The Grafana-saved-by trailer rides through the top-level
+              // JobSpec.Message to the resulting git commit.
+              message: withSavedByTrailer(
+                t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
+              ),
+              // When resources are passed, only those (unmanaged) dashboards are
+              // migrated; an empty migrate object keeps the legacy "migrate
+              // everything unmanaged" behavior the wizard relies on.
+              migrate: resources?.length ? { resources } : {},
             }
           : {
               action: 'pull' as const,
-              // TODO(grafana/git-ui-sync-project#1162): SyncJobOptions has no
-              // `message` field on the backend yet — when it gains one, append
-              // the Grafana-saved-by trailer here too.
+              // A pull replicates the remote branch locally and produces no
+              // git commit, so there's no commit message to tag.
               pull: {
                 incremental: false,
               },

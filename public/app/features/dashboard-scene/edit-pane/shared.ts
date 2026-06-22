@@ -173,18 +173,6 @@ export interface ChangeVariableTypeActionHelperProps {
   source: SceneVariableSet;
 }
 
-export interface ChangeTitleActionHelperProps {
-  oldTitle: string;
-  newTitle: string;
-  source: DashboardScene;
-}
-
-export interface ChangeDescriptionActionHelperProps {
-  oldDescription: string;
-  newDescription: string;
-  source: DashboardScene;
-}
-
 export interface MoveElementActionHelperProps {
   movedObject: SceneObject;
   source: SceneObject;
@@ -368,7 +356,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

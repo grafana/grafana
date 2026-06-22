@@ -34,7 +34,7 @@ import { type DraggableBounds, type DraggingUpdate } from '../../utils/Draggable
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
   // package and the selector won't work
   const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
@@ -117,7 +117,7 @@ type ViewingLayerState = {
 /**
  * Designate the tags for the different dragging managers. Exported for tests.
  */
-export const dragTypes = {
+const dragTypes = {
   /**
    * Tag for dragging the right scrubber, e.g. end of the current view range.
    */
@@ -152,7 +152,7 @@ function getNextViewLayout(start: number, position: number) {
  * `ViewingLayer` is rendered on top of the Canvas rendering of the minimap and
  * handles showing the current view range and handles mouse UX for modifying it.
  */
-export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
+class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
   state: ViewingLayerState;
 
   _root: Element | TNil;

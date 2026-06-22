@@ -76,6 +76,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 		Audiences:        []string{"resourceStore"},
 		Namespace:        clientCfg.TokenNamespace,
 		AllowInsecure:    cfg.Env == setting.Dev,
+		IsDev:            cfg.Env == setting.Dev,
 	})
 }
 
@@ -147,7 +148,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	clientInt := authnlib.NewGrpcClientInterceptor(
 		ProvideInProcExchanger(),
-		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
+		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
 	)
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -169,46 +170,60 @@ type RemoteResourceClientConfig struct {
 	Audiences        []string
 	Namespace        string
 	AllowInsecure    bool
+	IsDev            bool
 	// TokenExchanger overrides the default exchange client when non-nil.
 	TokenExchanger authnlib.TokenExchanger
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	exchangeOpts := []authnlib.ExchangeClientOpts{}
-
-	if cfg.AllowInsecure {
-		exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+	clientInt, err := NewAuthnGrpcClientInterceptor(tracer, cfg)
+	if err != nil {
+		return nil, err
 	}
-
-	var tc authnlib.TokenExchanger
-	if cfg.TokenExchanger != nil {
-		tc = cfg.TokenExchanger
-	} else {
-		var err error
-		tc, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
-			Token:            cfg.Token,
-			TokenExchangeURL: cfg.TokenExchangeURL,
-		}, exchangeOpts...)
-		if err != nil {
-			return nil, err
-		}
-	}
-	clientInt := authnlib.NewGrpcClientInterceptor(
-		tc,
-		authnlib.WithClientInterceptorTracer(tracer),
-		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
-		authnlib.WithClientInterceptorAudience(cfg.Audiences),
-		authnlib.WithClientInterceptorIDTokenExtractor(idTokenExtractor),
-	)
 
 	cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	cci := grpchan.InterceptClientConn(indexConn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 	return newResourceClient(cc, cci), nil
 }
 
+// NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor used to authenticate outbound calls to
+// unified storage services. Will use the in-process token exchanger when the token exchange url is empty and dev mode is enabled.
+func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
+	var tc authnlib.TokenExchanger
+	if cfg.TokenExchanger != nil {
+		tc = cfg.TokenExchanger
+	} else if cfg.TokenExchangeURL == "" {
+		if !cfg.IsDev {
+			return nil, fmt.Errorf("token exchange url is required outside of development mode")
+		}
+		tc = ProvideInProcExchanger()
+	} else {
+		exchangeOpts := []authnlib.ExchangeClientOpts{}
+		if cfg.AllowInsecure {
+			exchangeOpts = append(exchangeOpts, authnlib.WithHTTPClient(&http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}))
+		}
+		client, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Token,
+			TokenExchangeURL: cfg.TokenExchangeURL,
+		}, exchangeOpts...)
+		if err != nil {
+			return nil, err
+		}
+		tc = client
+	}
+
+	return authnlib.NewGrpcClientInterceptor(
+		tc,
+		authnlib.WithClientInterceptorTracer(tracer),
+		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
+		authnlib.WithClientInterceptorAudience(cfg.Audiences),
+		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
+	), nil
+}
+
 var authLogger = log.New("resource-client-auth-interceptor")
 
-func idTokenExtractor(ctx context.Context) (string, error) {
+func IDTokenExtractor(ctx context.Context) (string, error) {
 	if identity.IsServiceIdentity(ctx) {
 		return "", nil
 	}

@@ -2,6 +2,11 @@ import { test, expect, contactPoint, dataSource, ruleUidFromUrl } from './fixtur
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { AlertRuleViewPage } from './pages/AlertRuleViewPage';
 
+// All tests in this file share the same SQLite-backed Grafana instance.
+// Running them serially (one worker) prevents concurrent beforeEach folder
+// writes from saturating the 2-connection pool and returning SQLITE_BUSY.
+test.describe.configure({ mode: 'serial' });
+
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,

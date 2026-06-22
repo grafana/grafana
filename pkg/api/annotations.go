@@ -38,6 +38,7 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		To:           c.QueryInt64("to"),
 		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
+		UserUID:      c.Query("userUID"),
 		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"),
@@ -640,6 +641,10 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserID int64 `json:"userId"`
+	// Limit response to annotations created by a specific user, identified by UID.
+	// in:query
+	// required:false
+	UserUID string `json:"userUID"`
 	// Find annotations for a specified alert rule by its ID.
 	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
 	// in:query

@@ -34,7 +34,11 @@ func MigrateVectorStore(ctx context.Context, engine *xorm.Engine, cfg *setting.C
 
 func initVectorTables(mg *migrator.Migrator) {
 	mg.AddMigration("create pgvector extension",
-		migrator.NewRawSQLMigration("").Postgres(`CREATE EXTENSION IF NOT EXISTS vector;`))
+		migrator.NewRawSQLMigration("").Postgres(`DO $$ BEGIN
+	IF NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+		CREATE EXTENSION vector;
+	END IF;
+END $$;`))
 
 	// (resource, namespace) lead the PK so partition pruning can use it.
 	// halfvec + nested partitioning aren't expressible via xorm, so raw SQL.

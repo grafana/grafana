@@ -25,5 +25,15 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
     );
   }
 
+  if (target === 'folderless') {
+    return (
+      <Stack>
+        <Icon name="apps" size="xxl" />
+        <Icon name="arrow-left" size="xxl" />
+        <RepoIcon type={repoType} />
+      </Stack>
+    );
+  }
+
   return null;
 }

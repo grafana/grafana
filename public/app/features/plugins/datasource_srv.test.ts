@@ -9,8 +9,15 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { RuntimeDataSource, type TemplateSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  ExpressionDatasourceRef,
+  getDataSourceInstanceSettingsList,
+  initDataSourceInstanceSettings,
+  setExpressionDataSourceInstance,
+} from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
 // Datasource variable $datasource with current value 'BBB'
@@ -640,6 +647,27 @@ describe('datasource_srv', () => {
         expect(refetchDatasourcePluginMetas).toHaveBeenCalledWith(settings);
       });
 
+      it('should sync the new async instance-settings cache from the same fetched payload', async () => {
+        // Mirror startup: the expression datasource is injected into the new cache.
+        setExpressionDataSourceInstance(expressionDatasource);
+
+        getBackendSrvGetMock.mockReset();
+        getBackendSrvGetMock.mockReturnValueOnce({
+          datasources: { ...dataSourceInit },
+          defaultDatasource: 'aaa',
+        });
+
+        await dataSourceSrv.reload();
+
+        // The new API reflects the freshly fetched datasources...
+        const list = await getDataSourceInstanceSettingsList({ all: true });
+        expect(list.some((x) => x.name === 'mmm')).toBe(true);
+        // ...the expression built-in still resolves...
+        expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
+        // ...and the sync added no second /api/frontend/settings request.
+        expect(getBackendSrvGetMock).toHaveBeenCalledTimes(1);
+      });
+
       it('should log via logPluginMetaError when refetchDatasourcePluginMetas rejects', async () => {
         getBackendSrvGetMock.mockReturnValueOnce({
           datasources: { ...dataSourceInit },
@@ -708,5 +736,109 @@ describe('datasource_srv', () => {
       const nameOrUid = getNameOrUid(value);
       expect(nameOrUid).toBeUndefined();
     });
+  });
+});
+
+// Pins the new async list API to the exact behaviour of the legacy DatasourceSrv.getList:
+// same capability/pluginId/type filtering, datasource-variable injection, alphabetical
+// sorting and built-in (-- Grafana --/-- Mixed --/-- Dashboard --) ordering. Both impls are
+// seeded with identical data and their outputs compared across a filter matrix. This is the
+// only place both can be imported together (the runtime package can't import core).
+describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettingsList', () => {
+  const DEFAULT_NAME = 'BBB';
+
+  // Datasource variables consumed by the `variables: true` filter.
+  const parityTemplateSrv = {
+    getVariables: () => [
+      { type: 'datasource', name: 'datasource', current: { value: 'BBB' } },
+      { type: 'datasource', name: 'datasourceByUid', current: { value: 'uid-code-DDDD' } },
+      { type: 'datasource', name: 'datasourceDefault', current: { value: 'default' } },
+    ],
+    replace: (v: string) => v,
+  } as unknown as TemplateSrv;
+
+  const paritySources = {
+    mmm: {
+      type: 'test-db',
+      name: 'mmm',
+      uid: 'uid-code-mmm',
+      meta: { metrics: true, annotations: true, id: 'test-db' },
+    },
+    '-- Grafana --': {
+      type: 'datasource',
+      name: '-- Grafana --',
+      meta: { builtIn: true, metrics: true, id: 'grafana' },
+    },
+    '-- Dashboard --': {
+      type: 'datasource',
+      name: '-- Dashboard --',
+      meta: { builtIn: true, metrics: true, id: 'dashboard' },
+    },
+    '-- Mixed --': { type: 'datasource', name: '-- Mixed --', meta: { builtIn: true, metrics: true, id: 'mixed' } },
+    ZZZ: { type: 'test-db', name: 'ZZZ', uid: 'uid-code-ZZZ', meta: { metrics: true, id: 'test-db' } },
+    aaa: { type: 'test-db', name: 'aaa', uid: 'uid-code-aaa', meta: { metrics: true, id: 'test-db' } },
+    BBB: { type: 'test-db', name: 'BBB', uid: 'uid-code-BBB', meta: { metrics: true, id: 'test-db' }, isDefault: true },
+    DDDD: { type: 'test-db', name: 'DDDD', uid: 'uid-code-DDDD', meta: { metrics: true, id: 'test-db' } },
+    Jaeger: { type: 'jaeger-db', name: 'Jaeger', uid: 'uid-code-Jaeger', meta: { tracing: true, id: 'jaeger' } },
+    CannotBeQueried: { type: 'no-query', name: 'no-query', uid: 'no-query', meta: { id: 'no-query' } },
+    Loki: { type: 'loki', name: 'Loki', uid: 'uid-code-loki', meta: { logs: true, category: 'logging', id: 'loki' } },
+    TestData: {
+      type: 'grafana-testdata-datasource',
+      name: 'TestData',
+      uid: 'testdata',
+      meta: { metrics: true, id: 'grafana-testdata-datasource', aliasIDs: ['testdata'] },
+    },
+    Prometheus: {
+      type: 'prometheus',
+      name: 'Prometheus',
+      uid: 'uid-code-prometheus',
+      meta: { metrics: true, id: 'prometheus' },
+    },
+  };
+
+  // Independent clone per cache so in-place uid assignment can't leak between them.
+  const clone = () => JSON.parse(JSON.stringify(paritySources));
+
+  // Stable, comparable projection. Keeps array order so sort / built-in ordering drift is caught.
+  const project = (list: DataSourceInstanceSettings[]) =>
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
+
+  let legacySrv: DatasourceSrv;
+
+  beforeEach(() => {
+    setTemplateSrv(parityTemplateSrv);
+    legacySrv = new DatasourceSrv(parityTemplateSrv);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    legacySrv.init(clone() as any, DEFAULT_NAME);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
+  });
+
+  const cases: Array<{ label: string; filters: GetDataSourceListFilters }> = [
+    { label: 'no filters', filters: {} },
+    { label: 'all: true (includes non-queryable)', filters: { all: true } },
+    { label: 'metrics: true', filters: { metrics: true } },
+    { label: 'tracing: true', filters: { tracing: true } },
+    { label: 'logs: true', filters: { logs: true } },
+    { label: 'annotations: true', filters: { annotations: true } },
+    { label: 'alerting: true (suppresses built-ins)', filters: { alerting: true } },
+    { label: 'mixed: true', filters: { mixed: true } },
+    { label: 'dashboard: true', filters: { dashboard: true } },
+    { label: 'metrics + mixed + dashboard', filters: { metrics: true, mixed: true, dashboard: true } },
+    { label: 'type as string', filters: { type: 'test-db' } },
+    { label: 'type as array', filters: { type: ['prometheus', 'test-db'] } },
+    { label: 'type matched via aliasIDs', filters: { type: 'testdata' } },
+    { label: 'pluginId', filters: { pluginId: 'jaeger' } },
+    { label: 'pluginId matched via aliasIDs', filters: { pluginId: 'testdata' } },
+    { label: 'pluginId suppresses built-ins', filters: { pluginId: 'test-db', mixed: true, dashboard: true } },
+    { label: 'variables: true', filters: { variables: true } },
+    { label: 'variables + metrics', filters: { variables: true, metrics: true } },
+    { label: 'custom filter excludes -- Grafana --', filters: { filter: (x) => x.name !== '-- Grafana --' } },
+  ];
+
+  it.each(cases)('matches getList for $label', async ({ filters }) => {
+    const legacy = project(legacySrv.getList(filters));
+    const asyncList = project(await getDataSourceInstanceSettingsList(filters));
+    expect(asyncList).toEqual(legacy);
   });
 });

@@ -27,7 +27,7 @@ import KeyValuesTable, { type KeyValuesTableLink } from './KeyValuesTable';
 
 import { alignIcon } from '.';
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       textOverflow: 'ellipsis',

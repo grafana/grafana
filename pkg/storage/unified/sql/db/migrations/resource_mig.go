@@ -253,6 +253,30 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("create table "+kv_leases_table.Name, migrator.NewAddTableMigration(kv_leases_table))
 	mg.AddMigration("Change key_path collation of kv_leases in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE kv_leases ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
+	// Tables backing the search/snapshot-manifest and search/snapshot-data
+	// KV sections used by KVRemoteIndexStore. The data section stores
+	// arbitrary binary index chunks, so both tables use a binary blob
+	// column rather than a TEXT one.
+	search_snapshot_manifest_table := migrator.Table{
+		Name: "search_snapshot_manifest",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+search_snapshot_manifest_table.Name, migrator.NewAddTableMigration(search_snapshot_manifest_table))
+	mg.AddMigration("Change key_path collation of search_snapshot_manifest in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE search_snapshot_manifest ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
+	search_snapshot_data_table := migrator.Table{
+		Name: "search_snapshot_data",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_LongBlob, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+search_snapshot_data_table.Name, migrator.NewAddTableMigration(search_snapshot_data_table))
+	mg.AddMigration("Change key_path collation of search_snapshot_data in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE search_snapshot_data ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 

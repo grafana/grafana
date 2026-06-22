@@ -21,7 +21,7 @@ export interface SnapshotSharingOptions {
   snapshotEnabled: boolean;
 }
 
-export interface SnapshotCreateCommand {
+interface SnapshotCreateCommand {
   dashboard: object;
   name: string;
   expires?: number;
