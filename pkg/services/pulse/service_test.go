@@ -53,6 +53,14 @@ func TestIntegrationPulseService_CreateAndReply(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []int64{7}, subs)
 
+	// isSubscribed reflects per-user state: author yes, a stranger no.
+	authorSubscribed, err := s.store.isSubscribed(ctx, 1, res.Thread.UID, 7)
+	require.NoError(t, err)
+	require.True(t, authorSubscribed)
+	strangerSubscribed, err := s.store.isSubscribed(ctx, 1, res.Thread.UID, 999)
+	require.NoError(t, err)
+	require.False(t, strangerSubscribed)
+
 	// Reply
 	reply, err := s.AddPulse(ctx, AddPulseCommand{
 		OrgID:        1,

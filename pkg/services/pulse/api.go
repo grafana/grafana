@@ -521,7 +521,16 @@ func (s *PulseService) getThreadHandler(c *contextmodel.ReqContext) response.Res
 	}
 	one := []Thread{t}
 	s.populateThreadPreviews(c.Req.Context(), c.GetOrgID(), one)
-	return response.JSON(http.StatusOK, one[0])
+	out := one[0]
+	// Populate the per-viewer subscription flag so the UI can render
+	// the subscribe/unsubscribe toggle. Best-effort: a lookup failure
+	// just leaves the flag absent rather than failing the read.
+	if uid := s.actorUserID(c); uid > 0 {
+		if subscribed, err := s.store.isSubscribed(c.Req.Context(), c.GetOrgID(), out.UID, uid); err == nil {
+			out.IsSubscribed = &subscribed
+		}
+	}
+	return response.JSON(http.StatusOK, out)
 }
 
 // swagger:route GET /pulse/threads/{threadUID}/pulses pulse alpha listPulses

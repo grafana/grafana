@@ -954,6 +954,30 @@ func (s *store) listSubscribers(ctx context.Context, orgID int64, threadUID stri
 	return out, nil
 }
 
+// isSubscribed reports whether a specific user has an active (non-muted)
+// subscription to a thread. Used to populate Thread.IsSubscribed on the
+// single-thread read so the UI can render the subscribe/unsubscribe
+// toggle in the right state.
+func (s *store) isSubscribed(ctx context.Context, orgID int64, threadUID string, userID int64) (bool, error) {
+	var sub Subscription
+	var found bool
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		ok, err := sess.Where("org_id = ? AND thread_uid = ? AND user_id = ?", orgID, threadUID, userID).Get(&sub)
+		if err != nil {
+			return err
+		}
+		// A muted subscription still counts as "subscribed" for the
+		// toggle's purposes: the user opted in, mute is a separate axis
+		// we don't surface in v1.
+		found = ok
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return found, nil
+}
+
 // upsertReadState writes the user's last-read marker on a thread.
 func (s *store) upsertReadState(ctx context.Context, rs ReadState) error {
 	return s.sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {

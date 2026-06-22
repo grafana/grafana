@@ -16,6 +16,8 @@ import {
   useListPulsesQuery,
   useMarkReadMutation,
   useReopenThreadMutation,
+  useSubscribeMutation,
+  useUnsubscribeMutation,
 } from '../api/pulseApi';
 import { type Pulse, type PulseBody, type PulseMention, type PulseThread } from '../types';
 import { bodyToMarkdown } from '../utils/body';
@@ -89,6 +91,33 @@ export function PulseThreadView({
   const [closeThread] = useCloseThreadMutation();
   const [reopenThread] = useReopenThreadMutation();
   const [markRead] = useMarkReadMutation();
+  const [subscribe] = useSubscribeMutation();
+  const [unsubscribe] = useUnsubscribeMutation();
+
+  // Subscription is optimistic: flip the local flag immediately so the
+  // toggle feels instant, then reconcile from the server (the mutation
+  // invalidates the Thread tag, which refetches GetThread and re-syncs
+  // thread.isSubscribed via the effect below). On error we roll back.
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(thread.isSubscribed ?? false);
+  useEffect(() => {
+    if (thread.isSubscribed !== undefined) {
+      setIsSubscribed(thread.isSubscribed);
+    }
+  }, [thread.isSubscribed]);
+
+  async function handleToggleSubscription() {
+    const next = !isSubscribed;
+    setIsSubscribed(next);
+    try {
+      if (next) {
+        await subscribe(thread.uid).unwrap();
+      } else {
+        await unsubscribe(thread.uid).unwrap();
+      }
+    } catch {
+      setIsSubscribed(!next);
+    }
+  }
 
   // Memoize so the empty-array fallback is stable across renders and the
   // mark-read effect's deps don't churn unnecessarily.
@@ -199,6 +228,26 @@ export function PulseThreadView({
           )}
         </Stack>
         <Stack gap={0.5}>
+          {currentUserId !== undefined && (
+            <IconButton
+              name={isSubscribed ? 'bell' : 'bell-slash'}
+              aria-label={
+                isSubscribed
+                  ? t('pulse.thread.unsubscribe', 'Unsubscribe from this thread')
+                  : t('pulse.thread.subscribe', 'Subscribe to this thread')
+              }
+              tooltip={
+                isSubscribed
+                  ? t(
+                      'pulse.thread.unsubscribe-tooltip',
+                      'Subscribed — you get notified of new replies. Click to unsubscribe.'
+                    )
+                  : t('pulse.thread.subscribe-tooltip', 'Not subscribed. Click to get notified of new replies.')
+              }
+              size="md"
+              onClick={handleToggleSubscription}
+            />
+          )}
           {!thread.closed && canManageThread && (
             <IconButton
               name="lock"

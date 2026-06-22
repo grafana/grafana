@@ -159,6 +159,13 @@ type Thread struct {
 	// has ResourceTitle for its single resource link.
 	FolderUID   string `json:"folderUID,omitempty" xorm:"-"`
 	FolderTitle string `json:"folderTitle,omitempty" xorm:"-"`
+	// IsSubscribed is a per-viewer read-side projection: whether the
+	// requesting user is subscribed to this thread. Populated only on
+	// the single-thread read (GET /threads/{uid}) so the UI can render
+	// the subscribe/unsubscribe toggle in the correct state. Pointer so
+	// list endpoints (which don't compute it) marshal it as absent
+	// rather than a misleading "false".
+	IsSubscribed *bool `json:"isSubscribed,omitempty" xorm:"-"`
 }
 
 // Pulse is a single message inside a thread. The first pulse in a thread is

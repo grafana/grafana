@@ -14380,7 +14380,11 @@
       "reply-placeholder": "Reply… (@ for users, # for panels)",
       "reply-placeholder-dashboard": "Reply… (@ for users, # for dashboards)",
       "reply-placeholder-multi": "Reply… (@ for users, # for resources)",
+      "subscribe": "Subscribe to this thread",
+      "subscribe-tooltip": "Not subscribed. Click to get notified of new replies.",
       "tombstone": "This pulse was deleted.",
+      "unsubscribe": "Unsubscribe from this thread",
+      "unsubscribe-tooltip": "Subscribed — you get notified of new replies. Click to unsubscribe.",
       "untitled": "Conversation"
     }
   },

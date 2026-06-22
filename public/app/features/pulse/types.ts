@@ -98,6 +98,10 @@ export interface PulseThread {
   folderUID?: string;
   /** Parent folder title; companion to `folderUID`. */
   folderTitle?: string;
+  /** Whether the requesting user is subscribed to this thread. Only
+   *  populated on the single-thread read (GET /threads/{uid}); absent
+   *  on list endpoints, which don't compute it. */
+  isSubscribed?: boolean;
 }
 
 export interface Pulse {
