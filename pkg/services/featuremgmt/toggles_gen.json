@@ -2505,6 +2505,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.passkeyAuthn",
+        "resourceVersion": "1782154194677",
+        "creationTimestamp": "2026-06-22T18:49:54Z"
+      },
+      "spec": {
+        "description": "Enables passkey (WebAuthn) login",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
@@ -3807,6 +3821,21 @@
         "description": "Search for dashboards using panel title",
         "stage": "preview",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "passkeyAuthn",
+        "resourceVersion": "1782153482269",
+        "creationTimestamp": "2026-06-22T18:38:02Z",
+        "deletionTimestamp": "2026-06-22T18:49:54Z"
+      },
+      "spec": {
+        "description": "Enables passkey (WebAuthn) login",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "requiresRestart": true,
         "expression": "false"
       }
     },
