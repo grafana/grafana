@@ -2568,6 +2568,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator").MustBool(false)
+	cfg.EnableDataplaneAggregator = iniFile.Section("grafana-apiserver").Key("dataplane_aggregator").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
