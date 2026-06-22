@@ -177,6 +177,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	_ "github.com/grafana/grafana/pkg/infra/kvstore"
 	_ "github.com/grafana/grafana/pkg/infra/leaderelection"
+	_ "github.com/grafana/grafana/pkg/infra/leaderelection/kvlease"
 	_ "github.com/grafana/grafana/pkg/infra/localcache"
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/grafana/grafana/pkg/infra/log/slogadapter"
