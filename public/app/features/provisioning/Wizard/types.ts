@@ -57,3 +57,9 @@ export type StepStatusInfo =
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 
 export type InstructionAvailability = Extract<RepoType, 'bitbucket' | 'gitlab' | 'github'>;
+
+/**
+ * Git providers with a hosted web UI that can deep-link to a file or directory in the repository
+ * (see `getRepoFileUrl`). Excludes generic `git` and `local`, which have no browsable web UI.
+ */
+export type EnhancedGitProvider = Extract<RepoType, 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket'>;
