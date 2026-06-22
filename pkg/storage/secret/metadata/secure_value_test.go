@@ -34,63 +34,69 @@ func TestModel(t *testing.T) {
 	t.Run("creating secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := testutils.NewModelGsm(nil)
+		sut := testutils.Setup(t)
+		m := testutils.NewModelGsm(sut.Clock, nil)
 		now := time.Now()
 
 		// Create a secure value
-		sv1, err := m.Create(now, sv.DeepCopy())
+		sv1, err := m.Create(now, 1, sv.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv1.Namespace)
 		require.Equal(t, sv.Name, sv1.Name)
-		require.EqualValues(t, 1, sv1.Status.Version)
+		require.NotZero(t, sv1.Status.Version)
 
 		// Create a new version of a secure value
-		sv2, err := m.Create(now, sv.DeepCopy())
+		sv2, err := m.Create(now, 2, sv.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
-		require.EqualValues(t, 2, sv2.Status.Version)
+		require.NotZero(t, sv2.Status.Version)
+		require.NotEqual(t, sv1.Status.Version, sv2.Status.Version)
 	})
 
 	t.Run("updating secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := testutils.NewModelGsm(nil)
+		sut := testutils.Setup(t)
+		m := testutils.NewModelGsm(sut.Clock, nil)
 
 		now := time.Now()
 
-		sv1, err := m.Create(now, sv.DeepCopy())
+		sv1, err := m.Create(now, 1, sv.DeepCopy())
 		require.NoError(t, err)
+		require.NotZero(t, sv1.Status.Version)
 
 		// Create a new version of a secure value by updating it
-		sv2, _, err := m.Update(now, sv1.DeepCopy())
+		sv2, _, err := m.Update(now, 2, sv1.DeepCopy())
 		require.NoError(t, err)
 		require.Equal(t, sv.Namespace, sv2.Namespace)
 		require.Equal(t, sv.Name, sv2.Name)
-		require.EqualValues(t, 2, sv2.Status.Version)
+		require.NotZero(t, sv2.Status.Version)
+		require.NotEqual(t, sv1.Status.Version, sv2.Status.Version)
 
 		// Try updating a secure value that doesn't exist without specifying a value for it
 		sv3 := sv2.DeepCopy()
 		sv3.Name = "i_dont_exist"
 		sv3.Spec.Value = nil
-		_, _, err = m.Update(now, sv3)
+		_, _, err = m.Update(now, 1, sv3)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 
 		// Updating a value that doesn't exist creates a new version
 		sv4 := sv3.DeepCopy()
 		sv4.Name = "i_dont_exist"
 		sv4.Spec.Value = new(secretv1beta1.NewExposedSecureValue("sv4"))
-		_, _, err = m.Update(now, sv4)
+		_, _, err = m.Update(now, 2, sv4)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 	})
 
 	t.Run("deleting a secure value", func(t *testing.T) {
 		t.Parallel()
 
-		m := testutils.NewModelGsm(nil)
+		sut := testutils.Setup(t)
+		m := testutils.NewModelGsm(sut.Clock, nil)
 		now := time.Now()
 
-		sv1, err := m.Create(now, sv.DeepCopy())
+		sv1, err := m.Create(now, 1, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// Deleting a secure value
@@ -108,7 +114,8 @@ func TestModel(t *testing.T) {
 	t.Run("listing secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := testutils.NewModelGsm(nil)
+		sut := testutils.Setup(t)
+		m := testutils.NewModelGsm(sut.Clock, nil)
 		now := time.Now()
 
 		// No secure values exist yet
@@ -117,7 +124,7 @@ func TestModel(t *testing.T) {
 		require.Equal(t, 0, len(list.Items))
 
 		// Create a secure value
-		sv1, err := m.Create(now, sv.DeepCopy())
+		sv1, err := m.Create(now, 1, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// 1 secure value exists and it should be returned
@@ -132,7 +139,8 @@ func TestModel(t *testing.T) {
 	t.Run("decrypting secure values", func(t *testing.T) {
 		t.Parallel()
 
-		m := testutils.NewModelGsm(nil)
+		sut := testutils.Setup(t)
+		m := testutils.NewModelGsm(sut.Clock, nil)
 		now := time.Now()
 
 		// Decrypting a secure value that does not exist
@@ -144,7 +152,7 @@ func TestModel(t *testing.T) {
 
 		// Create a secure value
 		secret := "v1"
-		sv1, err := m.Create(now, sv.DeepCopy())
+		sv1, err := m.Create(now, 1, sv.DeepCopy())
 		require.NoError(t, err)
 
 		// Decrypt the just created secure value
@@ -158,8 +166,9 @@ func TestModel(t *testing.T) {
 	t.Run("decrypting with reference", func(t *testing.T) {
 		t.Parallel()
 
+		sut := testutils.Setup(t)
 		secretsManager := testutils.NewModelSecretsManager()
-		m := testutils.NewModelGsm(secretsManager)
+		m := testutils.NewModelGsm(sut.Clock, secretsManager)
 		now := time.Now()
 
 		keeper, err := m.CreateKeeper(&secretv1beta1.Keeper{
@@ -179,7 +188,7 @@ func TestModel(t *testing.T) {
 		secretsManager.Create("ref1", secret)
 
 		// Create a secure value that references the secret on the 3rd party secret store
-		sv, err := m.Create(now, &secretv1beta1.SecureValue{
+		sv, err := m.Create(now, 1, &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
@@ -209,14 +218,14 @@ func TestStateMachine(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := testutils.NewModelGsm(sut.ModelSecretsManager)
+		model := testutils.NewModelGsm(sut.Clock, sut.ModelSecretsManager)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"createSecureValueWithSecretValue": func(t *rapid.T) {
 				sv := testutils.AnySecureValueGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), testutils.GetVersion(createdSv), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -228,8 +237,8 @@ func TestStateMachine(t *testing.T) {
 			"createSecureValueWithRef": func(t *rapid.T) {
 				sv := testutils.AnySecureValueWithRefGen.Draw(t, "sv")
 
-				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), testutils.GetVersion(createdSv), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return
@@ -245,8 +254,8 @@ func TestStateMachine(t *testing.T) {
 			},
 			"update": func(t *rapid.T) {
 				sv := testutils.UpdateSecureValueGen.Draw(t, "sv")
-				modelCreatedSv, _, modelErr := model.Update(sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.UpdateSv(t.Context(), sv.DeepCopy())
+				modelCreatedSv, _, modelErr := model.Update(sut.Clock.Now(), testutils.GetVersion(createdSv), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return

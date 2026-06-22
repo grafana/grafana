@@ -13,6 +13,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/rand"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -40,6 +41,58 @@ func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts
 	return name
 }
 
+func Test_SecureValueMetadataStorage_Create_PreservesCreatedMetataFields(t *testing.T) {
+	t.Parallel()
+
+	t.Run("nothing to preserve when version is the first secure value version", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		sv, err := sut.CreateSv(t.Context())
+		require.NoError(t, err)
+		require.NotZero(t, sv.Namespace)
+		require.NotZero(t, sv.Name)
+		require.NotZero(t, sv.Status.Version)
+		require.NotZero(t, sv.Annotations["grafana.app/createdBy"])
+		require.NotZero(t, sv.Annotations["grafana.app/updatedBy"])
+		require.NotZero(t, sv.Annotations["grafana.app/updatedTimestamp"])
+	})
+
+	t.Run("nothing to preserve when all existing versions are inactive", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithActorUID("actor-1"))
+		require.NoError(t, err)
+
+		require.NoError(t, sut.SecureValueMetadataStorage.SetVersionToInactive(t.Context(), xkube.Namespace(sv1.Namespace), sv1.Name, sv1.Status.Version))
+
+		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithActorUID("actor-2"))
+		require.NoError(t, err)
+
+		require.Equal(t, "actor-2", sv2.Annotations["grafana.app/createdBy"])
+		require.Equal(t, "actor-2", sv2.Annotations["grafana.app/updatedBy"])
+	})
+
+	t.Run("preserves created fields when creating a new version of an active secure value", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+
+		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithActorUID("actor-1"))
+		require.NoError(t, err)
+
+		input := sv1.DeepCopy()
+		input.Spec.Value = new(secretv1beta1.NewExposedSecureValue("v"))
+		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input), testutils.CreateSvWithActorUID("actor-2"))
+		require.NoError(t, err)
+
+		require.Equal(t, "actor-1", sv2.Annotations["grafana.app/createdBy"])
+		require.Equal(t, "actor-2", sv2.Annotations["grafana.app/updatedBy"])
+	})
+}
+
 func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	ctx := context.Background()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
@@ -47,7 +100,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 	db := database.ProvideDatabase(testDB, tracer)
 
 	// Initialize the secure value storage
-	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), db, tracer, nil)
+	secureValueStorage, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), rand.ProvideRand(), db, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize the keeper storage
@@ -240,13 +293,13 @@ func TestPropertySecureValueMetadataStorage(t *testing.T) {
 
 	rapid.Check(t, func(t *rapid.T) {
 		sut := testutils.Setup(tt)
-		model := testutils.NewModelGsm(nil)
+		model := testutils.NewModelGsm(sut.Clock, nil)
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
 				sv := testutils.AnySecureValueGen.Draw(t, "sv")
-				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), sv.DeepCopy())
 				createdSv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(sv.DeepCopy()))
+				modelCreatedSv, modelErr := model.Create(sut.Clock.Now(), testutils.GetVersion(createdSv), sv.DeepCopy())
 				if err != nil || modelErr != nil {
 					require.ErrorIs(t, err, modelErr)
 					return

@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/rand"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
@@ -72,8 +73,9 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	require.NoError(t, err)
 
 	clock := NewFakeClock()
+	rand := rand.ProvideRand()
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
+	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, rand, database, tracer, nil)
 	require.NoError(t, err)
 
 	// Initialize access client + access control
@@ -220,7 +222,8 @@ type Sut struct {
 }
 
 type CreateSvConfig struct {
-	Sv *secretv1beta1.SecureValue
+	ActorUID string
+	Sv       *secretv1beta1.SecureValue
 }
 
 func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
@@ -229,8 +232,15 @@ func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
 	}
 }
 
+func CreateSvWithActorUID(actorUID string) func(*CreateSvConfig) {
+	return func(cfg *CreateSvConfig) {
+		cfg.ActorUID = actorUID
+	}
+}
+
 func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1beta1.SecureValue, error) {
 	cfg := CreateSvConfig{
+		ActorUID: "actor-uid",
 		Sv: &secretv1beta1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
@@ -248,7 +258,7 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 		opt(&cfg)
 	}
 
-	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, "actor-uid")
+	createdSv, err := s.SecureValueService.Create(ctx, cfg.Sv, cfg.ActorUID)
 	if err != nil {
 		return nil, err
 	}
@@ -563,4 +573,11 @@ func (m *ModelAWSSecretsManager) delete(versionID string) {
 
 func buildVersionID(namespace xkube.Namespace, name string, version int64) string {
 	return fmt.Sprintf("%s/%s/%d", namespace, name, version)
+}
+
+func GetVersion(sv *secretv1beta1.SecureValue) int64 {
+	if sv == nil {
+		return -1
+	}
+	return sv.Status.Version
 }

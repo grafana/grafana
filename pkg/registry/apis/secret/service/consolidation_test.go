@@ -40,6 +40,12 @@ func (m *mockGlobalEncryptedValueStorage) CountAll(ctx context.Context, untilTim
 func TestConsolidation(t *testing.T) {
 	t.Parallel()
 
+	type entry struct {
+		decrypted          string
+		encrypted          []byte
+		secureValueVersion int64
+	}
+
 	t.Run("consolidation re-encrypts values but preserves decrypted content", func(t *testing.T) {
 		t.Parallel()
 		sut := testutils.Setup(t)
@@ -70,8 +76,7 @@ func TestConsolidation(t *testing.T) {
 			{"test-secret-4", "namespace2", "test-value-4"},
 		}
 
-		originalDecryptedValues := make([]string, 0, len(testCases))
-		originalEncryptedData := make([][]byte, 0, len(testCases))
+		original := make([]entry, 0, len(testCases))
 
 		// Create secure values and store their original decrypted values and encrypted data
 		for _, tc := range testCases {
@@ -95,12 +100,16 @@ func TestConsolidation(t *testing.T) {
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 			decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 			require.NoError(t, err)
-			originalDecryptedValues = append(originalDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, createdSv.Status.Version)
 			require.NoError(t, err)
 			require.NotNil(t, encryptedValue)
-			originalEncryptedData = append(originalEncryptedData, encryptedValue.EncryptedData)
+
+			original = append(original, entry{
+				decrypted:          decryptedValue.DangerouslyExposeAndConsumeValue(),
+				encrypted:          encryptedValue.EncryptedData,
+				secureValueVersion: createdSv.Status.Version,
+			})
 		}
 
 		// Run consolidation
@@ -108,16 +117,18 @@ func TestConsolidation(t *testing.T) {
 		require.NoError(t, err)
 
 		for i, tc := range testCases {
+			entry := original[i]
+
 			// Verify that the decrypted values are still the same
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 			decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 			require.NoError(t, err)
-			require.Equal(t, originalDecryptedValues[i], decryptedValue.DangerouslyExposeAndConsumeValue())
+			require.Equal(t, entry.decrypted, decryptedValue.DangerouslyExposeAndConsumeValue())
 
 			// Verify that the encrypted data has changed (indicating re-encryption)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, entry.secureValueVersion)
 			require.NoError(t, err)
-			require.NotEqual(t, originalEncryptedData[i], encryptedValue.EncryptedData)
+			require.NotEqual(t, entry.encrypted, encryptedValue.EncryptedData)
 		}
 	})
 
@@ -174,8 +185,7 @@ func TestConsolidation(t *testing.T) {
 			{"initial-secret-2", "namespace2", "initial-value-2"},
 		}
 
-		initialDecryptedValues := make([]string, 0, len(initialSecrets))
-		initialEncryptedData := make([][]byte, 0, len(initialSecrets))
+		initial := make([]entry, 0, len(initialSecrets))
 
 		for _, tc := range initialSecrets {
 			sv := &secretv1beta1.SecureValue{
@@ -190,23 +200,26 @@ func TestConsolidation(t *testing.T) {
 				},
 			}
 
-			_, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+			createdSv, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
 			require.NoError(t, err)
 
 			// Store original decrypted values and encrypted data
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 			decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 			require.NoError(t, err)
-			initialDecryptedValues = append(initialDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, createdSv.Status.Version)
 			require.NoError(t, err)
-			initialEncryptedData = append(initialEncryptedData, encryptedValue.EncryptedData)
+
+			initial = append(initial, entry{
+				decrypted:          decryptedValue.DangerouslyExposeAndConsumeValue(),
+				encrypted:          encryptedValue.EncryptedData,
+				secureValueVersion: createdSv.Status.Version,
+			})
 		}
 
 		// Secrets to be created during consolidation (after data keys are disabled)
-		var newSecretDecryptedValues []string
-		var newSecretEncryptedData [][]byte
+		newValues := make([]entry, 0)
 
 		// Create a mock GlobalEncryptedValueStorage that will create new secrets when ListAll is called
 		mockStorage := &mockGlobalEncryptedValueStorage{
@@ -239,18 +252,22 @@ func TestConsolidation(t *testing.T) {
 						},
 					}
 
-					_, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
+					createdSv, err := sut.CreateSv(ctx, testutils.CreateSvWithSv(sv))
 					require.NoError(t, err)
 
 					// Store their decrypted values and original encrypted data
 					authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 					decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 					require.NoError(t, err)
-					newSecretDecryptedValues = append(newSecretDecryptedValues, decryptedValue.DangerouslyExposeAndConsumeValue())
 
-					encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+					encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, createdSv.Status.Version)
 					require.NoError(t, err)
-					newSecretEncryptedData = append(newSecretEncryptedData, encryptedValue.EncryptedData)
+
+					newValues = append(newValues, entry{
+						decrypted:          decryptedValue.DangerouslyExposeAndConsumeValue(),
+						encrypted:          encryptedValue.EncryptedData,
+						secureValueVersion: createdSv.Status.Version,
+					})
 				}
 			},
 		}
@@ -270,16 +287,18 @@ func TestConsolidation(t *testing.T) {
 		require.NoError(t, err)
 
 		for i, tc := range initialSecrets {
+			entry := initial[i]
+
 			// Verify that all initial secrets still decrypt to the same values
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 			decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 			require.NoError(t, err)
-			require.Equal(t, initialDecryptedValues[i], decryptedValue.DangerouslyExposeAndConsumeValue())
+			require.Equal(t, initial[i].decrypted, decryptedValue.DangerouslyExposeAndConsumeValue())
 
 			// Verify that the encrypted data has changed (indicating re-encryption)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, entry.secureValueVersion)
 			require.NoError(t, err)
-			require.NotEqual(t, initialEncryptedData[i], encryptedValue.EncryptedData)
+			require.NotEqual(t, initial[i].encrypted, encryptedValue.EncryptedData)
 		}
 
 		// Verify that the new secrets (created during consolidation) also decrypt correctly
@@ -293,16 +312,18 @@ func TestConsolidation(t *testing.T) {
 		}
 
 		for i, tc := range newSecrets {
+			entry := newValues[i]
+
 			authCtx := createAuthContext(ctx, tc.namespace, types.TypeAccessPolicy)
 			decryptedValue, err := sut.DecryptStorage.Decrypt(authCtx, xkube.Namespace(tc.namespace), tc.name)
 			require.NoError(t, err)
-			require.Equal(t, newSecretDecryptedValues[i], decryptedValue.DangerouslyExposeAndConsumeValue())
+			require.Equal(t, entry.decrypted, decryptedValue.DangerouslyExposeAndConsumeValue())
 
 			// Verify that the encrypted data has changed from what it was when first created
 			// (indicating it was re-encrypted during consolidation)
-			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, 1)
+			encryptedValue, err := sut.EncryptedValueStorage.Get(ctx, xkube.Namespace(tc.namespace), tc.name, entry.secureValueVersion)
 			require.NoError(t, err)
-			require.NotEqual(t, newSecretEncryptedData[i], encryptedValue.EncryptedData)
+			require.NotEqual(t, entry.encrypted, encryptedValue.EncryptedData)
 		}
 	})
 }
