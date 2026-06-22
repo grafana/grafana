@@ -83,7 +83,6 @@
     "@popperjs/core": "2.11.8",
     "@rc-component/cascader": "1.9.0",
     "@rc-component/drawer": "1.3.0",
-    "@rc-component/picker": "1.7.1",
     "@rc-component/slider": "1.0.1",
     "@rc-component/tooltip": "1.4.0",
     "@react-aria/dialog": "3.5.31",
@@ -106,7 +105,6 @@
     "jquery": "3.7.1",
     "lodash": "^4.17.23",
     "micro-memoize": "^4.1.2",
-    "moment": "2.30.1",
     "monaco-editor": "0.34.1",
     "ol": "10.7.0",
     "prismjs": "1.30.0",
@@ -135,6 +133,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.0.0",
+    "@grafana/test-utils": "workspace:^",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@storybook/addon-a11y": "10.3.6",
     "@storybook/addon-docs": "10.3.6",
