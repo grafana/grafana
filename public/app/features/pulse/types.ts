@@ -31,7 +31,7 @@ export type ResourceKind = 'dashboard';
  * navigable link. Future kinds (alert rule, SLO, etc.) widen this
  * union without reshaping existing rows.
  */
-export type MentionKind = 'user' | 'panel' | 'dashboard' | 'time';
+export type MentionKind = 'user' | 'panel' | 'dashboard' | 'time' | 'webhook';
 
 export type AuthorKind = 'user' | 'service_account';
 
@@ -236,6 +236,71 @@ export interface ResourceUnreadCountResponse {
 export interface FolderUnreadCountResponse {
   folderUID: string;
   unreadCount: number;
+}
+
+/**
+ * HookType is the transport a Pulse hook delivers over. v1 ships a
+ * single `webhook` type; the union widens (slack, teams, ...) without
+ * reshaping stored rows. Mirrors `pkg/services/pulse::HookType`.
+ */
+export type HookType = 'webhook';
+
+/**
+ * PulseHook is a named, org-scoped outbound integration that fires when
+ * a pulse mentions it. Secrets are write-only: the API never returns
+ * `secret`, only `hasSecret` so the edit form can show whether one is
+ * configured. Mirrors `pkg/services/pulse::Hook`.
+ */
+export interface PulseHook {
+  uid: string;
+  orgId: number;
+  name: string;
+  type: HookType;
+  url: string;
+  disabled: boolean;
+  createdBy: number;
+  created: string;
+  updated: string;
+  /** True when a signing secret is configured. The secret itself is
+   *  never returned by the API. */
+  hasSecret: boolean;
+}
+
+export interface HooksResponse {
+  hooks: PulseHook[];
+}
+
+/** Create payload. `secret` is optional; omit for no signing secret. */
+export interface CreateHookRequest {
+  name: string;
+  type: HookType;
+  url: string;
+  secret?: string;
+  disabled?: boolean;
+}
+
+/**
+ * Update payload. Omit `secret` to keep the stored secret untouched;
+ * send an empty string to clear it (matches the backend pointer
+ * semantics).
+ */
+export interface UpdateHookRequest {
+  name: string;
+  type: HookType;
+  url: string;
+  secret?: string;
+  disabled?: boolean;
+}
+
+/** One row in the @-mention picker's hook lookup. */
+export interface HookMentionHit {
+  uid: string;
+  name: string;
+  type: HookType;
+}
+
+export interface HookMentionsResponse {
+  hooks: HookMentionHit[];
 }
 
 /** Discriminated union of events the live channel emits. */

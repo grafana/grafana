@@ -10,11 +10,17 @@ import { bodyFromMarkdown, buildTimeMentionTarget, mentionMarkdownToken } from '
 import {
   filterPanels,
   filterResourceSuggestions,
+  type HookSuggestion,
   type PanelSuggestion,
   type ResourceSuggestion,
+  searchHooks,
   searchUsers,
   type UserSuggestion,
 } from '../utils/lookups';
+
+/** Cap webhook rows in the shared @-picker so a long hook list can't
+ *  crowd out user suggestions. Backend clamps the same value. */
+const MAX_HOOK_SUGGESTIONS = 5;
 
 /**
  * ResourceMentionSource configures one entry in the `#` picker. The
@@ -219,6 +225,43 @@ export function PulseComposer({
     };
   }, [picker, currentUserId]);
 
+  // Webhook (named hook) suggestions share the `@` trigger and ride
+  // alongside users in the picker. They're fetched on the same debounce
+  // cadence but tracked separately so a hook lookup failure (or an org
+  // with zero hooks) never blocks user suggestions — the picker simply
+  // shows whatever set resolved. Unlike users, an empty query still
+  // lists hooks: there are few of them and surfacing them on a bare `@`
+  // aids discovery of the automations available on this surface.
+  const [hookSuggestions, setHookSuggestions] = useState<HookSuggestion[]>([]);
+  useEffect(() => {
+    if (!picker || picker.kind !== 'user') {
+      setHookSuggestions([]);
+      return;
+    }
+    const controller = new AbortController();
+    const handle = window.setTimeout(() => {
+      searchHooks(picker.query, { signal: controller.signal, limit: MAX_HOOK_SUGGESTIONS })
+        .then((hooks) => {
+          if (controller.signal.aborted) {
+            return;
+          }
+          setHookSuggestions(hooks);
+        })
+        .catch(() => {
+          if (controller.signal.aborted) {
+            return;
+          }
+          // Hooks are additive; a failed lookup degrades to "no hooks"
+          // rather than surfacing an error in the shared picker.
+          setHookSuggestions([]);
+        });
+    }, 150);
+    return () => {
+      window.clearTimeout(handle);
+      controller.abort();
+    };
+  }, [picker]);
+
   // activeResourceKinds is the deduplicated set of mention kinds the
   // `#` trigger can produce on this composer instance. We derive it
   // up-front so the hint text and the (future) suggestion grouping
@@ -328,14 +371,23 @@ export function PulseComposer({
         sublabel: u.login,
         mention: { kind: 'user' as const, targetId: String(u.id), displayName: u.name || u.login },
       }));
+      // Webhook rows render after users so people stay the primary hit
+      // on the `@` trigger; the sublabel tags them as automations so a
+      // reader can tell a hook apart from a same-named person.
+      const hookRows = hookSuggestions.map((h) => ({
+        label: h.name,
+        sublabel: t('pulse.composer.hook-suggestion-sublabel', 'webhook'),
+        mention: { kind: 'webhook' as const, targetId: h.uid, displayName: h.name },
+      }));
       // Time row sits at the top of the user-picker dropdown so the
       // arrow-key default selection lands on it when the query is `now`
       // / `time`, matching the user's expectation that hitting Enter
       // after typing `@now` inserts the time chip.
-      return timeSuggestion ? [timeSuggestion, ...userRows] : userRows;
+      const rows = [...userRows, ...hookRows];
+      return timeSuggestion ? [timeSuggestion, ...rows] : rows;
     }
     return resourceSuggestions;
-  }, [picker, userSuggestions, resourceSuggestions, timeSuggestion]);
+  }, [picker, userSuggestions, hookSuggestions, resourceSuggestions, timeSuggestion]);
 
   // Only the user picker has async/networked state — the panel picker
   // is filtered locally from props and goes empty silently. So status

@@ -105,6 +105,15 @@ export function MentionChip({ mention, onClick, panelTitlesById, dashboardUID, o
     return <span className={styles.user}>@{label}</span>;
   }
 
+  // Webhook chips are stylized like user mentions (same `@` prefix and
+  // primary palette) per the product ask — a mentioned hook reads as
+  // "this participant", just one that happens to be an automation. The
+  // chip stays inert: clicking a hook has no user-facing navigation,
+  // its only job is to fire the outbound webhook on save.
+  if (mention.kind === 'webhook') {
+    return <span className={styles.user}>@{label}</span>;
+  }
+
   if (mention.kind === 'time') {
     // Time chips need a dashboard target and a well-formed range to
     // be navigable. If either is missing, fall back to a static

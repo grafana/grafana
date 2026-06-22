@@ -4,19 +4,23 @@ import { createBaseQuery } from '@grafana/api-clients/rtkq';
 
 import {
   type AddPulseRequest,
+  type CreateHookRequest,
   type CreateThreadRequest,
   type CreateThreadResult,
   type EditPulseRequest,
   type FolderUnreadCountResponse,
+  type HooksResponse,
   type MarkReadRequest,
   type PageResult,
   type PanelMentionsResponse,
   type ParticipantsResponse,
   type Pulse,
+  type PulseHook,
   type PulseThread,
   type ResourceKind,
   type ResourceUnreadCountResponse,
   type ResourceVersion,
+  type UpdateHookRequest,
 } from '../types';
 
 interface ListThreadsArgs {
@@ -122,6 +126,10 @@ export const pulseApi = createApi({
     // visible thread list to remount.
     'ResourceUnread',
     'FolderUnread',
+    // Named hooks (outbound webhook integrations) managed under
+    // Administration. A single LIST bucket plus per-uid tags so an
+    // edit busts just that hook's detail query.
+    'Hooks',
   ],
   endpoints: (builder) => ({
     listThreads: builder.query<PageResult<PulseThread>, ListThreadsArgs>({
@@ -542,6 +550,56 @@ export const pulseApi = createApi({
         { type: 'FolderUnread', id: 'LIST' },
       ],
     }),
+
+    /**
+     * Named hook (outbound webhook) management. Gated behind
+     * pulse:admin server-side; the Administration UI is the only
+     * caller. Secrets are write-only — the API returns `hasSecret`
+     * but never the secret value.
+     */
+    listHooks: builder.query<HooksResponse, void>({
+      query: () => ({ url: '/hooks' }),
+      providesTags: (result) => {
+        if (!result) {
+          return [{ type: 'Hooks' as const, id: 'LIST' }];
+        }
+        return [
+          { type: 'Hooks' as const, id: 'LIST' },
+          ...result.hooks.map((h) => ({ type: 'Hooks' as const, id: h.uid })),
+        ];
+      },
+    }),
+
+    getHook: builder.query<PulseHook, string>({
+      query: (uid) => ({ url: `/hooks/${encodeURIComponent(uid)}` }),
+      providesTags: (_r, _e, uid) => [{ type: 'Hooks', id: uid }],
+    }),
+
+    createHook: builder.mutation<PulseHook, CreateHookRequest>({
+      query: (body) => ({ url: '/hooks', method: 'POST', body, showSuccessAlert: false }),
+      invalidatesTags: [{ type: 'Hooks', id: 'LIST' }],
+    }),
+
+    updateHook: builder.mutation<PulseHook, { uid: string; req: UpdateHookRequest }>({
+      query: ({ uid, req }) => ({
+        url: `/hooks/${encodeURIComponent(uid)}`,
+        method: 'PUT',
+        body: req,
+        showSuccessAlert: false,
+      }),
+      invalidatesTags: (_r, _e, args) => [
+        { type: 'Hooks', id: 'LIST' },
+        { type: 'Hooks', id: args.uid },
+      ],
+    }),
+
+    deleteHook: builder.mutation<void, string>({
+      query: (uid) => ({ url: `/hooks/${encodeURIComponent(uid)}`, method: 'DELETE', showSuccessAlert: false }),
+      invalidatesTags: (_r, _e, uid) => [
+        { type: 'Hooks', id: 'LIST' },
+        { type: 'Hooks', id: uid },
+      ],
+    }),
   }),
 });
 
@@ -566,4 +624,9 @@ export const {
   useListParticipantsQuery,
   useGetResourceUnreadCountQuery,
   useGetFolderUnreadCountQuery,
+  useListHooksQuery,
+  useGetHookQuery,
+  useCreateHookMutation,
+  useUpdateHookMutation,
+  useDeleteHookMutation,
 } = pulseApi;

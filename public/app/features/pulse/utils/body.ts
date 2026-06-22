@@ -1,4 +1,14 @@
-import { type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
+import { type MentionKind, type PulseBody, type PulseBodyNode, type PulseMention } from '../types';
+
+/**
+ * isAtMention reports whether a mention kind was inserted via the `@`
+ * trigger (and therefore renders with an `@` prefix). User, time, and
+ * webhook chips are `@`-triggered; panel / dashboard are `#`. Centralized
+ * so the token writer and the plain-text extractor can't drift.
+ */
+export function isAtMention(kind: MentionKind): boolean {
+  return kind === 'user' || kind === 'time' || kind === 'webhook';
+}
 
 /**
  * BodyToken is the intermediate representation our composer uses while
@@ -64,10 +74,10 @@ export function bodyToText(body: PulseBody): string {
       return;
     }
     if (n.type === 'mention' && n.mention) {
-      // Resource chips (panel / dashboard) read as `#name`; user and
-      // time chips share `@` because the author typed `@user` or
-      // `@now` / `@time` to insert them.
-      const prefix = n.mention.kind === 'user' || n.mention.kind === 'time' ? '@' : '#';
+      // Resource chips (panel / dashboard) read as `#name`; user, time,
+      // and webhook chips share `@` because the author typed `@user`,
+      // `@now` / `@time`, or `@hook` to insert them.
+      const prefix = isAtMention(n.mention.kind) ? '@' : '#';
       out.push(prefix + (n.mention.displayName ?? n.mention.targetId));
       return;
     }
@@ -118,7 +128,7 @@ export function isSafeUrl(raw: string): string | undefined {
  * typed); resource chips (`panel`, `dashboard`) use `#`.
  */
 export function mentionMarkdownToken(m: PulseMention): string {
-  const prefix = m.kind === 'user' || m.kind === 'time' ? '@' : '#';
+  const prefix = isAtMention(m.kind) ? '@' : '#';
   const label = m.displayName ?? m.targetId;
   return '`' + prefix + label + '`';
 }

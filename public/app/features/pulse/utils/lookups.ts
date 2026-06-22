@@ -1,5 +1,7 @@
 import { getBackendSrv } from '@grafana/runtime';
 
+import { type HookType } from '../types';
+
 export interface UserSuggestion {
   id: number;
   login: string;
@@ -73,6 +75,58 @@ export async function searchUsers(query: string, options: SearchUsersOptions = {
       avatarUrl: u.avatarUrl,
     }));
   return users;
+}
+
+export interface HookSuggestion {
+  uid: string;
+  name: string;
+  type: HookType;
+}
+
+interface PulseHookSearchResponse {
+  hooks: Array<{
+    uid: string;
+    name: string;
+    type: HookType;
+  }>;
+}
+
+interface SearchHooksOptions {
+  signal?: AbortSignal;
+  /** Cap the dropdown so a long hook list can't crowd out user
+   *  suggestions in the shared @-picker. Backend also clamps this. */
+  limit?: number;
+}
+
+/**
+ * searchHooks hits /api/pulse/hooks/mentionable — the picker-scoped
+ * hook lookup gated behind `pulse:write` (anyone who can author a
+ * pulse can mention a hook). It deliberately returns only uid/name/
+ * type: no URL, no secret. Disabled hooks are filtered server-side
+ * since a mention that won't fire is misleading.
+ *
+ * Mirrors searchUsers' AbortSignal race so a stale debounced request
+ * is discarded rather than clobbering a newer one.
+ */
+export async function searchHooks(query: string, options: SearchHooksOptions = {}): Promise<HookSuggestion[]> {
+  const { signal, limit = 5 } = options;
+  const url = new URL('/api/pulse/hooks/mentionable', window.location.origin);
+  url.searchParams.set('limit', String(limit));
+  const trimmed = query.trim();
+  if (trimmed.length > 0) {
+    url.searchParams.set('query', trimmed);
+  }
+
+  const data = await getBackendSrv().get<PulseHookSearchResponse>(url.pathname + url.search, undefined, undefined, {
+    showErrorAlert: false,
+  });
+  if (signal?.aborted) {
+    return [];
+  }
+  if (!data || !Array.isArray(data.hooks)) {
+    return [];
+  }
+  return data.hooks.slice(0, limit).map((h) => ({ uid: h.uid, name: h.name, type: h.type }));
 }
 
 export interface PanelSuggestion {
