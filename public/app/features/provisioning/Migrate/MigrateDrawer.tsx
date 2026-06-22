@@ -124,7 +124,8 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
         ) : (
           <Text color="secondary">
             <Trans i18nKey="provisioning.migrate.drawer-description">
-              All folders and resources will be migrated into the selected repository. This is a one-time operation.
+              All resources not yet managed by Git will be migrated into the selected repository. This is a one-time
+              operation.
             </Trans>
           </Text>
         )}
@@ -134,7 +135,7 @@ export function MigrateDrawer({ repos, onDismiss, onMigrated, selective, resourc
           label={t('provisioning.migrate.repo-label', 'Target repository')}
           description={t(
             'provisioning.migrate.repo-description',
-            'The repository your folders and resources will be migrated into.'
+            'The repository your resources will be migrated into.'
           )}
         >
           <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
