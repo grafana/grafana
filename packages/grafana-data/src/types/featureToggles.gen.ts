@@ -164,11 +164,6 @@ export interface FeatureToggles {
   */
   configurableSchedulerTick?: boolean;
   /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
-  /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
   */
@@ -388,11 +383,6 @@ export interface FeatureToggles {
   * @default true
   */
   feedbackButton?: boolean;
-  /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
   /**
   * Enables generating table data as PDF in reporting
   * @default false
@@ -1120,11 +1110,6 @@ export interface FeatureToggles {
   */
   alertingDisableDMAinUI?: boolean;
   /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
-  /**
   * Prefer library panel title over viz panel title.
   * @default false
   */
@@ -1351,7 +1336,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;

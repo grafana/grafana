@@ -37,7 +37,7 @@ func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 
 func TestManagedRoute_GeneratedSubRoute_UserDefinedHasNoMatcher(t *testing.T) {
 	mr := &ManagedRoute{
-		Name:     UserDefinedRoutingTreeName,
+		Name:     models.DefaultRoutingTreeName,
 		Receiver: "receiver",
 	}
 
@@ -90,7 +90,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 func TestManagedRoutes_Sort(t *testing.T) {
 	routes := ManagedRoutes{
 		{Name: "x"},
-		{Name: UserDefinedRoutingTreeName},
+		{Name: models.DefaultRoutingTreeName},
 		{Name: "z"},
 	}
 
@@ -98,18 +98,18 @@ func TestManagedRoutes_Sort(t *testing.T) {
 
 	require.Equal(t, "x", routes[0].Name)
 	require.Equal(t, "z", routes[1].Name)
-	require.Equal(t, UserDefinedRoutingTreeName, routes[2].Name)
+	require.Equal(t, models.DefaultRoutingTreeName, routes[2].Name)
 }
 
 func TestManagedRoutes_Contains(t *testing.T) {
 	routes := ManagedRoutes{
 		{Name: "x"},
-		{Name: UserDefinedRoutingTreeName},
+		{Name: models.DefaultRoutingTreeName},
 		{Name: "z"},
 	}
 	assert.True(t, routes.Contains("x"))
 	assert.True(t, routes.Contains("z"))
-	assert.True(t, routes.Contains(UserDefinedRoutingTreeName))
+	assert.True(t, routes.Contains(models.DefaultRoutingTreeName))
 	assert.False(t, routes.Contains("missing"))
 }
 
@@ -211,14 +211,46 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 	}
 
 	t.Run("returns user-defined route", func(t *testing.T) {
-		got := rev.GetManagedRoute(UserDefinedRoutingTreeName)
+		got := rev.GetManagedRoute(models.DefaultRoutingTreeName)
 		require.NotNil(t, got)
-		assert.Equal(t, UserDefinedRoutingTreeName, got.Name)
-		assert.Equal(t, NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
+		assert.Equal(t, models.DefaultRoutingTreeName, got.Name)
+		assert.Equal(t, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
 	})
 
 	t.Run("returns nil if not found", func(t *testing.T) {
 		require.Nil(t, rev.GetManagedRoute("missing"))
+	})
+}
+
+func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
+	// The default (root) tree must be addressable by both its canonical name and the legacy alias
+	// so existing clients (e.g. Terraform) that reference "user-defined" keep working.
+	t.Run("both names resolve to the root route and echo the requested name", func(t *testing.T) {
+		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
+			t.Run(name, func(t *testing.T) {
+				rev := testConfig()
+				got := rev.GetManagedRoute(name)
+				require.NotNil(t, got)
+				// Name echoes the requested alias so the API response preserves the client's name.
+				assert.Equal(t, name, got.Name)
+				// The underlying route is the root route regardless of which alias was used.
+				assert.Equal(t, NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
+				// Identity is canonical so RBAC scopes and provenance keys are stable across aliases.
+				assert.Equal(t, models.DefaultRoutingTreeName, got.GetUID())
+				assert.Equal(t, "", got.ResourceID())
+			})
+		}
+	})
+
+	t.Run("both names are reserved and cannot be created as managed routes", func(t *testing.T) {
+		subtree := v1.Route{Receiver: testConfig().Config.AlertmanagerConfig.Receivers[0].Name}
+		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
+			t.Run(name, func(t *testing.T) {
+				_, err := testConfig().CreateManagedRoute(name, subtree)
+				assert.ErrorIs(t, err, models.ErrRouteExists)
+				assert.ErrorContains(t, err, "reserved")
+			})
+		}
 	})
 }
 
@@ -232,7 +264,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 		for name, mr := range rev.Config.ManagedRoutes {
 			expected = append(expected, NewManagedRoute(name, mr))
 		}
-		expected = append(expected, NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+		expected = append(expected, NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 
 		assert.Len(t, routes, len(expected))
 		assert.ElementsMatch(t, routes, expected)
@@ -243,7 +275,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 		routes := rev.GetManagedRoutes(false)
 
 		assert.Len(t, routes, 1)
-		assert.Equal(t, routes[0], NewManagedRoute(UserDefinedRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
+		assert.Equal(t, routes[0], NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 	})
 }
 
@@ -296,9 +328,9 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 	})
 
 	t.Run("rejects reserved name", func(t *testing.T) {
-		_, err := testConfig().CreateManagedRoute(UserDefinedRoutingTreeName, subtree)
+		_, err := testConfig().CreateManagedRoute(models.DefaultRoutingTreeName, subtree)
 		assert.ErrorContains(t, err, "reserved")
-		assert.ErrorContains(t, err, UserDefinedRoutingTreeName)
+		assert.ErrorContains(t, err, models.DefaultRoutingTreeName)
 		assert.ErrorIs(t, err, models.ErrRouteExists)
 	})
 
@@ -340,7 +372,7 @@ func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 
 	t.Run("reserved name updates default", func(t *testing.T) {
 		rev := testConfig()
-		_, err := rev.UpdateNamedRoute(UserDefinedRoutingTreeName, subtree)
+		_, err := rev.UpdateNamedRoute(models.DefaultRoutingTreeName, subtree)
 		assert.NoError(t, err)
 		assert.Equal(t, &subtree, rev.Config.AlertmanagerConfig.Route)
 	})
@@ -390,7 +422,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err := rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, UserDefinedRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)
@@ -421,7 +453,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err = rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, UserDefinedRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)

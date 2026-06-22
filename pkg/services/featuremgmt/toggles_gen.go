@@ -922,6 +922,10 @@ const (
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
 
+	// FlagGrafanaNewPreferencesPage
+	// Whether to use the new SharedPreferences functional component
+	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
+
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
 	FlagDatasourceUseNewCRUDAPIs = "datasource.useNewCRUDAPIs"
@@ -973,4 +977,8 @@ const (
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagSplunkUseLegacyResultsApi
+	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
+	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 )

@@ -2794,7 +2794,9 @@
           "alerting": "이 경고 규칙에 대한 평가를 일시 중지하려면 켜세요.",
           "recording": "이 기록 규칙에 대한 평가를 일시 중지하려면 켜세요."
         },
-        "select-folder-before": "폴더를 선택한 후에 평가 그룹과 간격을 설정하세요."
+        "select-folder-before": "폴더를 선택한 후에 평가 그룹과 간격을 설정하세요.",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -5994,9 +5996,6 @@
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
     },
-    "panel-links": {
-      "aria-label-panel-links": "패널 링크"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "쿼리로 돌아가기"
     },
@@ -8655,7 +8654,9 @@
       "query-history-button": "쿼리 이력",
       "query-history-button-aria-label": "쿼리 이력",
       "query-inspector-button": "쿼리 검사기",
-      "query-inspector-button-aria-label": "쿼리 검사기"
+      "query-inspector-button-aria-label": "쿼리 검사기",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "모든 범위 표시",
     "span-bar": {
@@ -9836,10 +9837,16 @@
         },
         "name-limit": "한도",
         "name-mode": "모드",
+        "name-overflow": "",
         "name-placement": "배치",
         "name-values": "값",
         "name-visibility": "보이기/숨기기",
         "name-width": "너비",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "하단",
           "label-right": "오른쪽"
@@ -11154,6 +11161,8 @@
         }
       },
       "fields-section": "필드",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "로그 라인 숨기기",
       "inline-mode": "인라인 표시",
       "inline-no-scrolls": "",
@@ -11899,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "ID 제공자 그룹의 Grafana 역할에 대한 매핑 관리"
     },
     "help": {
       "title": "도움말"
@@ -12967,9 +12973,6 @@
       "description-clear-repository-connection": "이 이름은 리포지토리 연결과 UI에 표시되는 폴더에 사용됩니다.",
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
-      "error-quota-exceeded-message": "이 리포지토리 폴더에는 {{fileCount}}개의 리소스가 포함되어 있으며, 계정 한도 {{limit}}을(를) 초과합니다. 이 리포지토리를 동기화하려면 계정을 업그레이드하거나 동기화할 리소스 수를 줄이세요.",
-      "error-quota-exceeded-message-onprem": "이 리포지토리 폴더에는 {{fileCount}}개의 리소스가 포함되어 있으며, 인스턴스 한도 {{limit}}을(를) 초과합니다. 이 리포지토리를 동기화하려면 Grafana 설정을 변경하거나 동기화할 리소스 수를 줄이세요.",
-      "error-quota-exceeded-title": "리소스 할당량 초과",
       "error-repository-status-unhealthy-message": "리포지토리에 연결하는 동안 문제가 발생했습니다. 리포지토리 설정을 확인한 후 다시 시도하세요.",
       "error-repository-status-unhealthy-title": "리포지토리 상태가 좋지 않음",
       "external-storage-label": "외부 스토리지",
@@ -12980,6 +12983,9 @@
       "unmanaged-resources-label": "관리되지 않는 리소스",
       "update-configuration-action": "구성 문서 보기",
       "upgrade-action": "계정 업그레이드",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
       "folders-count_other": "폴더 {{count}}개"
@@ -14167,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "이 쿼리에 대한 데이터 소스 로딩 실패",
     "loading-datasource": "데이터 소스 로딩 중",
     "no-query-editor-component": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
@@ -14188,6 +14195,55 @@
       "show-response": "응답 표시"
     },
     "query-editor-not-exported": "데이터 소스 플러그인은 쿼리 편집기 구성 요소를 내보내지 않습니다."
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

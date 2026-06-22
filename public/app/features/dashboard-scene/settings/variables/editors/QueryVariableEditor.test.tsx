@@ -34,12 +34,6 @@ const promDatasource = mockDataSource({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      multiPropsVariables: true,
-    },
-  },
   getDataSourceSrv: () => ({
     get: async () => ({
       ...defaultDatasource,
