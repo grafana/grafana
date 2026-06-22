@@ -72,32 +72,32 @@ Following is a list of PostgreSQL configuration options:
 If your database is publicly accessible but protected by a firewall, you must allowlist the Grafana Cloud outbound IP addresses. Grafana Cloud doesn't provide per-stack static IP addresses—only service-level IP ranges. For the current list of outbound IP addresses, refer to [Allow Grafana Cloud IP addresses in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
 {{< /admonition >}}
 
-| Setting       | Description                                                                                                                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting       | Description                                                                                                                                                                                                                                                            |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Host URL      | The IP address/hostname and optional port of your PostgreSQL instance. The default PostgreSQL port is `5432`. For IPv6 addresses, use the format `[::1]:5432`. To connect through a Unix socket, enter the socket directory path (for example, `/var/run/postgresql`). |
-| Database name | The name of your PostgreSQL database. This database is used as the default for queries in the [query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/). |
+| Database name | The name of your PostgreSQL database. This database is used as the default for queries in the [query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/query-editor/).                                                                   |
 
 **Authentication section:**
 
-| Setting               | Description                                                                                                                                                                                                                                                                                   |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                               |
+| Setting               | Description                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Username              | Enter the username used to connect to your PostgreSQL database.                                                                                                                                                                                                                                                                                                                                             |
 | Password              | Enter the password used to connect to the PostgreSQL database. This field is optional. If left empty, the PostgreSQL client driver resolves the password using the standard [PostgreSQL password file](https://www.postgresql.org/docs/current/static/libpq-pgpass.html) (`.pgpass`). To use a non-default password file location, set the `PGPASSFILE` environment variable in the Grafana server process. |
-| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible. |
-| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                           |
-| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                      |
-| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                           |
+| TLS/SSL Mode          | Determines whether and how a secure TLS/SSL connection is negotiated with the server. Refer to the [TLS/SSL mode reference](#tlsssl-mode-reference) for guidance on each mode. When set to `disable`, the TLS/SSL Method and Auth Details options aren't visible.                                                                                                                                           |
+| TLS/SSL Method        | Determines how TLS/SSL certificates are configured.                                                                                                                                                                                                                                                                                                                                                         |
+| - File system path    | This option allows you to configure certificates by specifying paths to existing certificates on the local file system where Grafana is running. Ensure this file is readable by the user executing the Grafana process.                                                                                                                                                                                    |
+| - Certificate content | This option allows you to configure certificates by specifying their content. The content is stored and encrypted in the Grafana database. When connecting to the database, the certificates are saved as files, on the local filesystem, in the Grafana data path.                                                                                                                                         |
 
 ### TLS/SSL mode reference
 
 Choose the TLS/SSL mode based on your security requirements and where your database is hosted:
 
-| Mode | Encryption | Server identity verified | When to use |
-| ---- | ---------- | ------------------------ | ----------- |
-| `disable` | No | No | Local development or trusted private networks only. Don't use in production. |
-| `require` | Yes | No | **Recommended minimum for cloud-hosted databases** such as Amazon RDS, Azure Database for PostgreSQL, and Google Cloud SQL. Encrypts the connection but doesn't verify the server's certificate. |
-| `verify-ca` | Yes | CA only | Use when you need to confirm the server certificate is signed by a trusted CA but don't need to verify the hostname. |
-| `verify-full` | Yes | CA + hostname | **Most secure option.** Verifies both the CA and that the server hostname matches the certificate. Recommended for production when you control the certificates. |
+| Mode          | Encryption | Server identity verified | When to use                                                                                                                                                                                      |
+| ------------- | ---------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `disable`     | No         | No                       | Local development or trusted private networks only. Don't use in production.                                                                                                                     |
+| `require`     | Yes        | No                       | **Recommended minimum for cloud-hosted databases** such as Amazon RDS, Azure Database for PostgreSQL, and Google Cloud SQL. Encrypts the connection but doesn't verify the server's certificate. |
+| `verify-ca`   | Yes        | CA only                  | Use when you need to confirm the server certificate is signed by a trusted CA but don't need to verify the hostname.                                                                             |
+| `verify-full` | Yes        | CA + hostname            | **Most secure option.** Verifies both the CA and that the server hostname matches the certificate. Recommended for production when you control the certificates.                                 |
 
 {{< admonition type="note" >}}
 Most cloud-hosted PostgreSQL services (Amazon RDS, Azure Database for PostgreSQL, Google Cloud SQL) require at minimum `require` mode. If you leave TLS/SSL Mode set to `disable`, the connection may be rejected by the server. Check your cloud provider's documentation for the recommended `sslmode` setting.
@@ -130,22 +130,22 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 
 **PostgreSQL Options:**
 
-| Setting           | Description                                                                                                                                                                                                                                                                                                                                                                                 |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Version           | The PostgreSQL server version. Determines which functions are available in the query builder. The default is 9.3. When you save the data source, Grafana auto-detects the server version and updates this field if it can connect successfully.                                                                                                                                               |
-| Min time interval | Defines a lower limit for the auto group by time interval. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.                                                                                                                  |
+| Setting           | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Version           | The PostgreSQL server version. Determines which functions are available in the query builder. The default is 9.3. When you save the data source, Grafana auto-detects the server version and updates this field if it can connect successfully.                                                                                                                                                                                                                                                               |
+| Min time interval | Defines a lower limit for the auto group by time interval. Grafana recommends aligning this setting with the data write frequency. For example, set it to `1m` if your data is written every minute. Refer to [Min time interval](#min-time-interval) for format examples.                                                                                                                                                                                                                                    |
 | TimescaleDB       | A time-series database built as a PostgreSQL extension. When enabled, Grafana uses `time_bucket` in the `$__timeGroup` macro and displays TimescaleDB-specific aggregate functions in the query builder. Grafana auto-detects TimescaleDB on save if your server is version 9.6 or later and the extension is installed. For more information, refer to [TimescaleDB documentation](https://docs.timescale.com/timescaledb/latest/tutorials/grafana/grafana-timescalecloud/#connect-timescaledb-and-grafana). |
 
 **Connection limits:**
 
 These settings control how Grafana manages connections to your PostgreSQL server. Tune these values if you share the database with other applications or use connection pooling software such as PgBouncer.
 
-| Setting       | Description                                                                                                                            |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Setting       | Description                                                                                                                                                                                                          |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database. |
-| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default. |
-| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections. |
-| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). Set a lower value if your network or security policy requires periodic reconnection. |
+| Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default.                                                                               |
+| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections.   |
+| Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). Set a lower value if your network or security policy requires periodic reconnection.                             |
 
 **Private data source connect:**
 
@@ -301,24 +301,24 @@ datasources:
 
 The following table lists all `jsonData` and `secureJsonData` fields supported when provisioning the PostgreSQL data source:
 
-| Field | Location | Description |
-| ----- | -------- | ----------- |
-| `database` | `jsonData` | The database name. |
-| `sslmode` | `jsonData` | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`. |
-| `maxOpenConns` | `jsonData` | Maximum open connections. Default: `100`. |
-| `maxIdleConns` | `jsonData` | Maximum idle connections. Default: `100`. |
-| `maxIdleConnsAuto` | `jsonData` | Set max idle to max open automatically. Default: `true`. |
-| `connMaxLifetime` | `jsonData` | Connection max lifetime in seconds. Default: `14400`. |
-| `postgresVersion` | `jsonData` | Server version code: `903` (9.3), `904` (9.4), `905` (9.5), `906` (9.6), `1000` (10+). |
-| `timescaledb` | `jsonData` | Enable TimescaleDB support. Default: `false`. |
-| `tlsConfigurationMethod` | `jsonData` | TLS cert method: `file-path` or `file-content`. |
-| `sslRootCertFile` | `jsonData` | Path to root CA certificate (when using `file-path` method). |
-| `sslCertFile` | `jsonData` | Path to client certificate (when using `file-path` method). |
-| `sslKeyFile` | `jsonData` | Path to client key (when using `file-path` method). |
-| `password` | `secureJsonData` | Database password. |
-| `tlsCACert` | `secureJsonData` | Root CA certificate content (when using `file-content` method). |
-| `tlsClientCert` | `secureJsonData` | Client certificate content (when using `file-content` method). |
-| `tlsClientKey` | `secureJsonData` | Client key content (when using `file-content` method). |
+| Field                    | Location         | Description                                                                            |
+| ------------------------ | ---------------- | -------------------------------------------------------------------------------------- |
+| `database`               | `jsonData`       | The database name.                                                                     |
+| `sslmode`                | `jsonData`       | TLS/SSL mode: `disable`, `require`, `verify-ca`, or `verify-full`.                     |
+| `maxOpenConns`           | `jsonData`       | Maximum open connections. Default: `100`.                                              |
+| `maxIdleConns`           | `jsonData`       | Maximum idle connections. Default: `100`.                                              |
+| `maxIdleConnsAuto`       | `jsonData`       | Set max idle to max open automatically. Default: `true`.                               |
+| `connMaxLifetime`        | `jsonData`       | Connection max lifetime in seconds. Default: `14400`.                                  |
+| `postgresVersion`        | `jsonData`       | Server version code: `903` (9.3), `904` (9.4), `905` (9.5), `906` (9.6), `1000` (10+). |
+| `timescaledb`            | `jsonData`       | Enable TimescaleDB support. Default: `false`.                                          |
+| `tlsConfigurationMethod` | `jsonData`       | TLS cert method: `file-path` or `file-content`.                                        |
+| `sslRootCertFile`        | `jsonData`       | Path to root CA certificate (when using `file-path` method).                           |
+| `sslCertFile`            | `jsonData`       | Path to client certificate (when using `file-path` method).                            |
+| `sslKeyFile`             | `jsonData`       | Path to client key (when using `file-path` method).                                    |
+| `password`               | `secureJsonData` | Database password.                                                                     |
+| `tlsCACert`              | `secureJsonData` | Root CA certificate content (when using `file-content` method).                        |
+| `tlsClientCert`          | `secureJsonData` | Client certificate content (when using `file-content` method).                         |
+| `tlsClientKey`           | `secureJsonData` | Client key content (when using `file-content` method).                                 |
 
 #### Troubleshoot provisioning issues
 
