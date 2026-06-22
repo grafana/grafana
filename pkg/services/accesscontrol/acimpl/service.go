@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -58,6 +59,7 @@ func ProvideService(
 	accessControl accesscontrol.AccessControl, userService user.Service, actionResolver accesscontrol.ActionResolver,
 	features featuremgmt.FeatureToggles, tracer tracing.Tracer, permRegistry permreg.PermissionRegistry,
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
+	restConfigProvider restcfg.RestConfigProvider,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -90,7 +92,7 @@ func ProvideService(
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagZanzanaMergeUserPermissions) && zanzanaClient != nil {
-		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, cfg.IDUseExternalGroupsForGroupsClaim)
+		service.zanzanaResolver = NewZanzanaPermissionResolver(zanzanaClient, userService, restConfigProvider, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
 
 	return service, nil
