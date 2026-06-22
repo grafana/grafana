@@ -17,5 +17,14 @@ export async function getMostUsedDashboards(maxItems: number) {
     sort: MOST_USED_SORT,
     limit: maxItems,
   });
-  return response.view.toArray();
+  return response.view
+    .toArray()
+    .filter(
+      (item) =>
+        item.field &&
+        typeof item.field === 'object' &&
+        'views_last_30_days' in item.field &&
+        typeof item.field.views_last_30_days === 'number' &&
+        item.field.views_last_30_days > 0
+    );
 }
