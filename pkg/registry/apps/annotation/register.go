@@ -2,10 +2,11 @@ package annotation
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"math/rand/v2"
+	"math/big"
 	"os"
 	"sync"
 
@@ -111,7 +112,11 @@ func NewAppInstaller(
 
 	var sfNode *snowflake.Node
 	if cfg.EnableLegacyID {
-		node, err := snowflake.NewNode(rand.Int64N(1024))
+		randN, err := rand.Int(rand.Reader, big.NewInt(1024))
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate random snowflake node ID: %w", err)
+		}
+		node, err := snowflake.NewNode(randN.Int64())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create snowflake node: %w", err)
 		}
