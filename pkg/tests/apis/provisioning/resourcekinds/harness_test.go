@@ -176,7 +176,8 @@ var env = common.NewSharedEnv(harnessOptions(resourceKinds)...)
 // provisioning token (folders stay enabled as they are foundational) and the union of the
 // feature flags the kinds require.
 func harnessOptions(kinds []resourceKind) []common.GrafanaOption {
-	tokens := []string{"folder.grafana.app/Folder:folder"}
+	tokens := make([]string, 0, 1+len(kinds))
+	tokens = append(tokens, "folder.grafana.app/Folder:folder")
 	seenFlag := map[string]bool{}
 	var flags []string
 	for _, rk := range kinds {
