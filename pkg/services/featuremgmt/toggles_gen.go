@@ -965,4 +965,8 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagAuthTokenRotationGracePeriod
+	// Accepts the previous session token as valid for a short grace period after rotation instead of forcing an immediate re-rotation, reducing race-condition logouts
+	FlagAuthTokenRotationGracePeriod = "auth.tokenRotationGracePeriod"
 )
