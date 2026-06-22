@@ -7,7 +7,6 @@ import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useSt
 
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow } from './hooks/useFolderMigrationData';
-import { isMigratableFolder } from './selection';
 import { type SortKey, compareFolders } from './sorting';
 
 interface Props {
@@ -23,11 +22,7 @@ interface Props {
   /** Selects or deselects a batch of folders — used by the (filter-scoped) select-all. */
   onSetFoldersSelected: (uids: string[], selected: boolean) => void;
   onMigrateSelected: () => void;
-  /**
-   * Whether the current selection can actually be migrated. False when nothing
-   * is selected, or when the only picks resolve to no migratable resources
-   * (e.g. empty folders that aren't part of a migrate-everything).
-   */
+  /** Whether the current selection can be migrated. False when nothing is selected. */
   submitDisabled: boolean;
   /**
    * Whether migration is possible — i.e. a repository that can push to its
@@ -40,13 +35,11 @@ interface Props {
 }
 
 /**
- * Foldable, searchable list of unmanaged folders with the resources inside
- * them. Folders and individual resources can be selected; the migrate footer
- * action hands the selection to the migrate drawer. Already-managed folders are
- * filtered out — the panel is scoped to migration targets only.
- *
- * Resources are dashboards today, but the wording stays resource-generic so the
- * panel reads correctly as more resource types become migratable.
+ * Foldable, searchable list of folders that hold dashboards to migrate. A whole
+ * folder or individual dashboards can be selected; the migrate footer action
+ * hands the selection to the migrate drawer. The hook only surfaces folders with
+ * unmanaged dashboards directly inside them, so empty and already-managed
+ * folders never appear here.
  */
 export function ResourcesToMigrate({
   folders,
@@ -67,12 +60,11 @@ export function ResourcesToMigrate({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
 
-  const unmanagedFolders = useMemo(() => folders.filter(isMigratableFolder), [folders]);
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const matched = !q
-      ? unmanagedFolders.slice()
-      : unmanagedFolders.filter((folder) => {
+      ? folders.slice()
+      : folders.filter((folder) => {
           if (folder.title.toLowerCase().includes(q)) {
             return true;
           }
@@ -80,7 +72,7 @@ export function ResourcesToMigrate({
         });
     matched.sort((a, b) => compareFolders(a, b, sortKey));
     return matched;
-  }, [unmanagedFolders, search, sortKey]);
+  }, [folders, search, sortKey]);
 
   // Resources inside a selected folder appear ticked but can't be toggled
   // individually — the user deselects the folder first. Recomputed here (never
@@ -90,7 +82,7 @@ export function ResourcesToMigrate({
     const covered = new Set<string>();
     for (const folder of folders) {
       if (selectedFolderUids.has(folder.uid)) {
-        folder.allDashboards.forEach((d) => covered.add(d.uid));
+        folder.directDashboards.forEach((d) => covered.add(d.uid));
       }
     }
     return covered;
@@ -124,7 +116,8 @@ export function ResourcesToMigrate({
         </Text>
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="provisioning.migrate.resources-to-migrate-subtitle">
-            Pick whole folders or individual resources. Selecting a folder migrates everything inside it.
+            Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources
+            directly inside it — anything in subfolders migrates through its own folder.
           </Trans>
         </Text>
       </Stack>
@@ -190,8 +183,8 @@ export function ResourcesToMigrate({
         <EmptyState
           variant="not-found"
           message={
-            unmanagedFolders.length === 0
-              ? t('provisioning.migrate.resources-to-migrate-all-managed', 'All folders are already managed.')
+            folders.length === 0
+              ? t('provisioning.migrate.resources-to-migrate-all-managed', 'All dashboards are already managed by Git.')
               : t(
                   'provisioning.migrate.resources-to-migrate-empty',
                   'No folders or resources match the current search.'
@@ -222,12 +215,12 @@ export function ResourcesToMigrate({
             // Plural agrees with the total folder count (the noun), not the
             // number of rows shown.
             shown: filtered.length,
-            count: unmanagedFolders.length,
+            count: folders.length,
             defaultValue_one: 'Showing {{shown}} of {{count}} folder',
             defaultValue_other: 'Showing {{shown}} of {{count}} folders',
           })}
         </Text>
-        {unmanagedFolders.length > 0 &&
+        {folders.length > 0 &&
           (canMigrate ? (
             <Button variant="primary" icon="upload" onClick={onMigrateSelected} disabled={submitDisabled}>
               {allSelected

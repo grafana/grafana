@@ -5596,7 +5596,6 @@
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
-          "change-value": "Change variable value",
           "discard": "Discard",
           "modal-title": "Custom options"
         },
@@ -5926,6 +5925,9 @@
     "outline": {
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
+      "search": {
+        "no-results": "No results found for your query"
+      },
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
@@ -6702,7 +6704,6 @@
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
-      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-annotations-list": {
@@ -13341,16 +13342,14 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "all-resources": "All resources",
       "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
-      "drawer-description": "All folders and resources will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
       "drawer-description-selective_other": "{{count}} selected resources (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.",
       "drawer-title": "Migrate to GitOps",
       "empty": "No provisioned resources yet",
       "error-title": "Failed to load provisioning stats",
-      "folders": "Folders",
       "folders-error-body": "The overview above is still accurate. You can still migrate everything now, or refresh the page to load the list and pick individual resources.",
       "folders-error-title": "Could not load the list of resources to migrate",
       "general-folder-title": "General (root resources)",
@@ -13365,16 +13364,13 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "repo-description": "The repository your folders and resources will be migrated into.",
+      "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
       "repo-no-push-title": "This repository can’t be used for migration",
       "repo-placeholder": "Select a repository",
       "resources-collapse": "Collapse {{folder}}",
       "resources-expand": "Expand {{folder}}",
-      "resources-folder-nested-hint_one": "+{{count}} more in subfolders — selecting this folder includes it.",
-      "resources-folder-nested-hint_other": "+{{count}} more in subfolders — selecting this folder includes them.",
-      "resources-folder-only-subfolders": "No resources directly here — they're in subfolders. Selecting this folder migrates everything inside it.",
       "resources-folder-summary_one": "{{count}} resource",
       "resources-folder-summary_other": "{{count}} resources",
       "resources-select-all": "Select all",
@@ -13384,7 +13380,7 @@
       "resources-sort-count-desc": "Most resources",
       "resources-sort-title-asc": "Name (A–Z)",
       "resources-sort-title-desc": "Name (Z–A)",
-      "resources-to-migrate-all-managed": "All folders are already managed.",
+      "resources-to-migrate-all-managed": "All dashboards are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
       "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
       "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
@@ -13394,7 +13390,7 @@
       "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
       "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
       "resources-to-migrate-search": "Search folders and resources",
-      "resources-to-migrate-subtitle": "Pick whole folders or individual resources. Selecting a folder migrates everything inside it."
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -16582,13 +16578,7 @@
       "description-values-variable": "How to sort static options with query results"
     },
     "static-options": {
-      "add-option-button-label": "Add new option",
-      "drag-and-drop": "Drag and drop to reorder",
-      "label-header": "Display text",
-      "label-placeholder": "Defaults to value",
-      "remove-option-button-label": "Remove option",
-      "value-header": "Value",
-      "value-placeholder": "Value"
+      "add-option-button-label": "Add new option"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
