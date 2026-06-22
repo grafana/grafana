@@ -94,8 +94,8 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view.
-// Resource-backed item types come from the per-kind descriptor registry; `File`
-// is the non-resource fallback for plain files that don't map to a known kind.
+// Resource-backed item types come from the per-kind registry; `File` is the
+// non-resource fallback for plain files that don't map to a known kind.
 export type ItemType = ResourceItemType | 'File';
 export type SyncStatus = 'synced' | 'pending';
 

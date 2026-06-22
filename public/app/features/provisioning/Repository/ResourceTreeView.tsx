@@ -25,7 +25,7 @@ import {
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
-import { getDescriptorByItemType } from '../utils/resourceKinds';
+import { getKindInfoByItemType } from '../utils/resourceKinds';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -36,7 +36,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getDescriptorByItemType(item.type)?.getRoute?.(item.resourceName);
+    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }

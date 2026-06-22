@@ -1,16 +1,17 @@
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { getIconForKind } from 'app/features/search/service/utils';
 
 import {
   RESOURCE_KINDS,
   getAvailableResourceKinds,
-  getDescriptorByItemType,
-  getDescriptorByResource,
-  getDescriptorByStatGroup,
+  getKindInfoByItemType,
+  getKindInfoByResource,
+  getKindInfoByStatGroup,
   isResourceKindAvailable,
 } from './resourceKinds';
 
 describe('resourceKinds registry', () => {
-  it('exposes a descriptor per kind with consistent identifiers', () => {
+  it('exposes an info record per kind with consistent identifiers', () => {
     expect(RESOURCE_KINDS.dashboard).toMatchObject({
       group: 'dashboard.grafana.app',
       kind: 'Dashboard',
@@ -24,43 +25,48 @@ describe('resourceKinds registry', () => {
       itemType: 'Folder',
     });
   });
+
+  it('sources icons from the search package', () => {
+    expect(RESOURCE_KINDS.dashboard.icon).toBe(getIconForKind('dashboard'));
+    expect(RESOURCE_KINDS.folder.icon).toBe(getIconForKind('folder'));
+  });
 });
 
-describe('getDescriptorByResource', () => {
+describe('getKindInfoByResource', () => {
   it('resolves by plural resource name', () => {
-    expect(getDescriptorByResource('dashboards')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getDescriptorByResource('folders')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByResource('dashboards')).toBe(RESOURCE_KINDS.dashboard);
+    expect(getKindInfoByResource('folders')).toBe(RESOURCE_KINDS.folder);
   });
 
   it('returns undefined for unknown or missing resources', () => {
-    expect(getDescriptorByResource('unknown-type')).toBeUndefined();
-    expect(getDescriptorByResource(undefined)).toBeUndefined();
+    expect(getKindInfoByResource('unknown-type')).toBeUndefined();
+    expect(getKindInfoByResource(undefined)).toBeUndefined();
   });
 });
 
-describe('getDescriptorByItemType', () => {
+describe('getKindInfoByItemType', () => {
   it('resolves by item type', () => {
-    expect(getDescriptorByItemType('Dashboard')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getDescriptorByItemType('Folder')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByItemType('Dashboard')).toBe(RESOURCE_KINDS.dashboard);
+    expect(getKindInfoByItemType('Folder')).toBe(RESOURCE_KINDS.folder);
   });
 
   it('returns undefined for the non-resource File type', () => {
-    expect(getDescriptorByItemType('File')).toBeUndefined();
+    expect(getKindInfoByItemType('File')).toBeUndefined();
   });
 });
 
-describe('getDescriptorByStatGroup', () => {
+describe('getKindInfoByStatGroup', () => {
   it('matches the full API group', () => {
-    expect(getDescriptorByStatGroup('dashboard.grafana.app')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getDescriptorByStatGroup('folder.grafana.app')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(RESOURCE_KINDS.dashboard);
+    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(RESOURCE_KINDS.folder);
   });
 
   it('matches the legacy short plural form', () => {
-    expect(getDescriptorByStatGroup('folders')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByStatGroup('folders')).toBe(RESOURCE_KINDS.folder);
   });
 
   it('returns undefined for unknown groups', () => {
-    expect(getDescriptorByStatGroup('alert.grafana.app')).toBeUndefined();
+    expect(getKindInfoByStatGroup('alert.grafana.app')).toBeUndefined();
   });
 });
 

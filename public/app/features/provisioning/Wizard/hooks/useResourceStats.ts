@@ -13,7 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { getDescriptorByStatGroup } from '../../utils/resourceKinds';
+import { getKindInfoByStatGroup } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
@@ -28,7 +28,7 @@ function getManagedCount(managed?: ManagerStats[]) {
     if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts for known kinds
       manager.stats.forEach((stat) => {
-        if (getDescriptorByStatGroup(stat.group)) {
+        if (getKindInfoByStatGroup(stat.group)) {
           totalCount += stat.count;
         }
       });
@@ -43,12 +43,12 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
   let resourceCount = 0;
 
   const addStat = (stat: ResourceCount) => {
-    const descriptor = getDescriptorByStatGroup(stat.group);
-    if (!descriptor) {
+    const kindInfo = getKindInfoByStatGroup(stat.group);
+    if (!kindInfo) {
       return;
     }
     resourceCount += stat.count;
-    counts.push(descriptor.countLabel(stat.count));
+    counts.push(kindInfo.countLabel(stat.count));
   };
 
   stats?.forEach(addStat);
