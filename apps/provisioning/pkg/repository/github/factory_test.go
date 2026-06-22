@@ -23,6 +23,11 @@ func TestWithCustomServerURL(t *testing.T) {
 			expected:  "",
 		},
 		{
+			name:      "empty url is ignored",
+			serverURL: "",
+			expected:  "",
+		},
+		{
 			name:      "GitHub Enterprise Server url is kept",
 			serverURL: "https://ghes.example.com/example/test",
 			expected:  "https://ghes.example.com",

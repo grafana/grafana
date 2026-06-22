@@ -48,7 +48,7 @@ func WithCustomServerURL(serverURL string) ClientOption {
 			return
 		}
 
-		if u.Host == "github.com" {
+		if u.Host == "" || u.Host == "github.com" {
 			return
 		}
 
