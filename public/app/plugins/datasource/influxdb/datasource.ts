@@ -391,11 +391,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   async metricFindQuery(query: InfluxVariableQuery, options?: any): Promise<MetricFindValue[]> {
-    if (
-      this.version === InfluxVersion.Flux ||
-      this.version === InfluxVersion.SQL ||
-      this.access === 'proxy'
-    ) {
+    if (this.version === InfluxVersion.Flux || this.version === InfluxVersion.SQL || this.access === 'proxy') {
       const target: InfluxQuery & SQLQuery = {
         refId: 'metricFindQuery',
         query: query.query,
@@ -716,4 +712,3 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
   }
 }
-
