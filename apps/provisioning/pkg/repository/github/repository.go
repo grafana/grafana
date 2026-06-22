@@ -53,20 +53,7 @@ func NewRepository(
 	factory *Factory,
 	token common.RawSecureValue,
 ) (GithubRepository, error) {
-	return newRepository(ctx, config, gitRepo, factory, token)
-}
-
-// NewRepositoryWithCustomURL builds a repository client targeting a GitHub
-// Enterprise Server instance at the given customServerURL.
-func NewRepositoryWithCustomURL(
-	ctx context.Context,
-	config *provisioning.Repository,
-	gitRepo git.GitRepository,
-	factory *Factory,
-	token common.RawSecureValue,
-	customServerURL string,
-) (GithubRepository, error) {
-	return newRepository(ctx, config, gitRepo, factory, token, WithCustomServerURL(customServerURL))
+	return newRepository(ctx, config, gitRepo, factory, token, WithCustomServerURL(gitRepo.URL()))
 }
 
 func newRepository(

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/google/go-github/v82/github"
 	"golang.org/x/oauth2"
@@ -39,10 +40,19 @@ type ClientOptions struct {
 type ClientOption func(*ClientOptions)
 
 // WithCustomServerURL targets a GitHub Enterprise Server instance at the given
-// base URL. An empty url is ignored, keeping the default github.com client.
-func WithCustomServerURL(url string) ClientOption {
+// base URL. An empty url or the default `https://github.com` is ignored, keeping the default github.com client.
+func WithCustomServerURL(serverURL string) ClientOption {
 	return func(o *ClientOptions) {
-		o.customServerURL = url
+		u, err := url.Parse(serverURL)
+		if err != nil {
+			return
+		}
+
+		if u.Host == "github.com" {
+			return
+		}
+
+		o.customServerURL = fmt.Sprintf("%s://%s", u.Scheme, u.Host)
 	}
 }
 
