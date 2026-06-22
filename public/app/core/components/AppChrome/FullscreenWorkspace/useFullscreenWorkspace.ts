@@ -8,7 +8,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 export interface FullscreenWorkspaceState {
   fullscreenWorkspaceFeatureFlagEnabled: boolean;
   /** Whether fullscreen workspace is currently active (flag enabled AND the chrome state is on). */
-  active: boolean;
+  fullscreenWorkspaceActive: boolean;
 }
 
 export function useFullscreenWorkspace(): FullscreenWorkspaceState {
@@ -36,6 +36,6 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
 
   return {
     fullscreenWorkspaceFeatureFlagEnabled,
-    active: fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace),
+    fullscreenWorkspaceActive: fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace),
   };
 }
