@@ -235,6 +235,24 @@ describe('VersionsEditView', () => {
 
       expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
     });
+
+    it('does not crash when the display mapping response has a null display field', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [createTestResource(1, '2024-01-01T00:00:00Z', 'user:uid-unknown')],
+      });
+
+      // The IAM display endpoint marshals an unresolved (nil) slice as `null`,
+      // so display can be null even when the response object is present.
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: { keys: ['user:uid-unknown'], display: null, invalidKeys: ['user:uid-unknown'] },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
+    });
   });
 
   describe('Template dashboards', () => {
