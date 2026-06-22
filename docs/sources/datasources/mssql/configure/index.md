@@ -70,9 +70,13 @@ Grafana takes you to the **Settings** tab, where you will set up your Microsoft 
 
 Following are configuration options for the Microsoft SQL Server data source.
 
+<!-- vale Grafana.Spelling = NO -->
+
 {{< admonition type="warning" >}}
 Kerberos is not supported in Grafana Cloud.
 {{< /admonition >}}
+
+<!-- vale Grafana.Spelling = YES -->
 
 | **Setting** | **Description**                                                                                                                            |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -129,15 +133,19 @@ Grafana builds using BoringCrypto (FIPS-compliant builds) enforce FIPS 140-3 cip
 
 **Authentication:**
 
+<!-- vale Grafana.Spelling = NO -->
+
 | Authentication Type                                   | Description                                                                                                                     | Credentials / Fields                                                                                                                                                                      |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SQL Server Authentication**                         | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                  | - **Username**: SQL Server username<br>- **Password**: SQL Server password                                                                                                                |
-| **Windows Authentication**<br>(Integrated Security)   | Uses the logged-in Windows user's credentials via single sign-on. Available only when SQL Server allows Windows Authentication. | No input required; uses the logged-in Windows user's credentials                                                                                                                          |
-| **Windows AD**<br>(Username/Password)                 | Authenticates a domain user with their Active Directory username and password.                                                  | - **Username**: `user@example.com`<br>- **Password**: Active Directory password                                                                                                           |
-| **Windows AD**<br>(Keytab)                            | Authenticates a domain user using a keytab file.                                                                                | - **Username**: `user@example.com`<br>- **Keytab file path**: Path to your keytab file                                                                                                    |
-| **Windows AD**<br>(Credential Cache)                  | Uses a Kerberos credential cache already loaded in memory (e.g., from a prior `kinit` command). No file needed.                 | - **Credential cache path**: Path to in-memory credential (e.g., `/tmp/krb5cc_1000`)                                                                                                      |
-| **Windows AD**<br>(Credential Cache File)             | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | - **Username**: `user@example.com`<br>- **Credential cache file path**: e.g., `/home/grot/cache.json`                                                                                     |
+| **SQL Server Authentication**                         | Default method to connect to MSSQL. Use a SQL Server or Windows login in `DOMAIN\User` format.                                  | **Username**: SQL Server username. **Password**: SQL Server password.                                                                                                                     |
+| **Windows Authentication** (Integrated Security)      | Uses the logged-in Windows user's credentials via single sign-on. Available only when SQL Server allows Windows Authentication. | No input required; uses the logged-in Windows user's credentials.                                                                                                                         |
+| **Windows AD** (Username/Password)                    | Authenticates a domain user with their Active Directory username and password.                                                  | **Username**: `user@example.com`. **Password**: Active Directory password.                                                                                                                |
+| **Windows AD** (Keytab)                               | Authenticates a domain user using a keytab file.                                                                                | **Username**: `user@example.com`. **Keytab file path**: Path to your keytab file.                                                                                                         |
+| **Windows AD** (Credential Cache)                     | Uses a Kerberos credential cache already loaded in memory (for example, from a prior `kinit` command). No file needed.          | **Credential cache path**: Path to in-memory credential (for example, `/tmp/krb5cc_1000`).                                                                                                |
+| **Windows AD** (Credential Cache File)                | Authenticates a domain user using a credential cache file (`.ccache`).                                                          | **Username**: `user@example.com`. **Credential cache file path**: for example, `/home/grot/cache.json`.                                                                                   |
 | **Azure Entra ID (formerly Azure AD) Authentication** | Authenticates the data source using Azure authentication methods.                                                               | Details on the supported authentication methods and how to configure them can be found in the [Azure authentication section](./index.md#azure-entra-id-formerly-azure-ad-authentication). |
+
+<!-- vale Grafana.Spelling = YES -->
 
 {{< admonition type="note" >}}
 As of Grafana v13.0, passwords and usernames that contain semicolons (`;`) or closing braces (`}`) are handled correctly. If you previously encountered connection failures due to special characters in credentials, upgrade to Grafana v13.0 or later.
@@ -164,20 +172,20 @@ If **Max open** is set too low, concurrent dashboard panels and alert rule evalu
 
 **Connection details:**
 
-| **Setting**            | **Description**                                                                                                                                                                                                                                                   |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Min time interval**  | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to your data's write frequency—for example, `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
-| **Connection timeout** | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                                                                                                  |
+| **Setting**            | **Description**                                                                                                                                                                                                                                                |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Min time interval**  | Specifies the lower bound for the auto-generated `GROUP BY` time interval. Grafana recommends matching this value to the data write frequency—for example, `1m` if data is written every minute. Refer to [Min time interval](#min-time-interval) for details. |
+| **Connection timeout** | Specifies the maximum number of seconds to wait when attempting to connect to the database before timing out. A value of `0` (the default) disables the timeout.                                                                                               |
 
 **Windows AD Advanced settings:**
+
+<!-- vale Grafana.Spelling = NO -->
 
 | Setting                   | Description                                                                                                                                                                                                             | Default              |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | **UDP Preference Limit**  | Defines the maximum packet size (in bytes) that Kerberos libraries attempt to send over UDP before retrying with TCP. A value of `1` forces all communication to use TCP.                                               | `1` (always use TCP) |
 | **DNS Lookup KDC**        | Controls whether DNS `SRV` records are used to locate [Key Distribution Centers (KDCs)](https://web.mit.edu/kerberos/krb5-latest/doc/admin/realm_config.html#key-distribution-centers) and other servers for the realm. | `true`               |
 | **krb5 config file path** | Specifies the path to the Kerberos configuration file used by the [MIT krb5 package](https://web.mit.edu/kerberos/krb5-1.12/doc/admin/conf_files/krb5_conf.html).                                                       | `/etc/krb5.conf`     |
-
-<!-- vale Grafana.Spelling = NO -->
 
 {{< admonition type="note" >}}
 Windows AD (Kerberos) authentication is only available for self-managed Grafana installations. It is not supported in Grafana Cloud. For Grafana Cloud deployments connecting to SQL Server, use SQL Server Authentication or Azure Entra ID.

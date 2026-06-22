@@ -43,7 +43,7 @@ These errors occur when Grafana cannot establish or maintain a connection to the
 
 ### Unable to connect to the server
 
-**Error message:** "Unable to open tcp connection" or "dial tcp: connection refused"
+**Error message:** `Unable to open tcp connection` or `dial tcp: connection refused`
 
 **Cause:** Grafana cannot establish a network connection to the SQL Server.
 
@@ -128,7 +128,7 @@ These errors occur when using Grafana Cloud with Private data source connect to 
 
 ### "No such host" when connecting through PDC
 
-**Error message:** "dial tcp: lookup sqlserver.internal.example.com: no such host"
+**Error message:** `dial tcp: lookup sqlserver.internal.example.com: no such host`
 
 **Cause:** The PDC agent cannot resolve the SQL Server hostname from its network. This commonly occurs when:
 
@@ -220,7 +220,7 @@ These errors occur when there are issues with authentication credentials or perm
 
 ### Access denied to database
 
-**Error message:** "Cannot open database 'dbname' requested by the login"
+**Error message:** `Cannot open database 'dbname' requested by the login`
 
 **Cause:** The authenticated user doesn't have permission to access the specified database.
 
