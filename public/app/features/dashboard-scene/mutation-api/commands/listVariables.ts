@@ -14,9 +14,9 @@ import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 import { getEffectiveVariableParentPath, resolveVariableScope } from './variableScope';
 
-export const listVariablesPayloadSchema = payloads.listVariables;
+const listVariablesPayloadSchema = payloads.listVariables;
 
-export type ListVariablesPayload = z.infer<typeof listVariablesPayloadSchema>;
+type ListVariablesPayload = z.infer<typeof listVariablesPayloadSchema>;
 
 export const listVariablesCommand: MutationCommand<ListVariablesPayload> = {
   name: 'LIST_VARIABLES',

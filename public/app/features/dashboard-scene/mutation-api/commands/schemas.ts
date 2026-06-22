@@ -686,7 +686,7 @@ const removeVariablePayloadSchema = z.object({
     ),
 });
 
-export const listVariablesPayloadSchema = z.object({
+const listVariablesPayloadSchema = z.object({
   parentPath: layoutPathSchema
     .optional()
     .default('/')
