@@ -30,10 +30,3 @@ delete/move jobs — against a new kind. No Go changes are required.
   names). Often empty; playlists need `playlistsRBAC`.
 
 The file name (without `.json`) is the kind's label, used in subtest names and repository names.
-
-## Preconditions
-
-For the battery to pass, the kind must actually round-trip: its API must be served by the test
-server, the provisioning identity must be authorized for it, and its write path must not reject
-repository-managed folders. Kinds that ship `:disabled` are enabled automatically here via their
-generated `[provisioning] resources` token.
