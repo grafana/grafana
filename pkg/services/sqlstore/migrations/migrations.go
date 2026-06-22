@@ -53,6 +53,7 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	addUserAuthMigrations(mg)
 	addServerlockMigrations(mg)
 	addUserAuthTokenMigrations(mg)
+	addPasskeyCredentialMigrations(mg)
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
