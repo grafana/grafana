@@ -65,14 +65,14 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Enables the logs tableNG panel to replace existing tableRT */
+  LogsTablePanelNG: "logsTablePanelNG",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
   ManagedPluginsV2: "managedPluginsV2",
   /** New Log Context component */
   NewLogContext: "newLogContext",
-  /** Enables the new logs panel */
-  NewLogsPanel: "newLogsPanel",
   /** Enables the new Saved queries (query library) modal experience */
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
@@ -400,6 +400,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Enables the logs tableNG panel to replace existing tableRT
+ *
+ * **Details:**
+ * - flag key: `logsTablePanelNG`
+ * - default value: `false`
+ */
+export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("logsTablePanelNG", false, options).value;
+};
+
+/**
  * Use stream shards to split queries into smaller subqueries
  *
  * **Details:**
@@ -430,17 +441,6 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("newLogContext", true, options).value;
-};
-
-/**
- * Enables the new logs panel
- *
- * **Details:**
- * - flag key: `newLogsPanel`
- * - default value: `true`
- */
-export const useFlagNewLogsPanel = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogsPanel", true, options).value;
 };
 
 /**

@@ -885,11 +885,6 @@ export interface FeatureToggles {
   */
   fetchRulesInCompactMode?: boolean;
   /**
-  * Enables the new logs panel
-  * @default true
-  */
-  newLogsPanel?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
