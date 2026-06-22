@@ -3,8 +3,8 @@ import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { useAssistant } from '@grafana/assistant';
 import { setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
-import { getDashboardMemorySearchHandler } from '@grafana/test-utils/handlers';
+import { setGetObservablePluginLinks, useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
+import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
@@ -25,6 +25,11 @@ jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
   OpenAssistantButton: jest.fn().mockImplementation(({ title }) => <button>{title}</button>),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagDashboardVectorSearch: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -50,8 +55,14 @@ const triggerEmptyState = async () => {
 };
 
 describe('CommandPalette', () => {
+  beforeEach(() => {
+    // Deep search is gated on the dashboardVectorSearch feature toggle; default
+    // it on so most tests exercise the deep column, overridden where needed
+    (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
+    (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+  });
+
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
-    // Mock assistant being available
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     setup();
     await triggerEmptyState();
@@ -63,7 +74,7 @@ describe('CommandPalette', () => {
   });
 
   it('should render empty state without AI Assistant button when assistant is not available', async () => {
-    // Mock assistant being unavailable
+    // The assistant button is independent of deep search — it stays gated on assistant availability
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
     setup();
     await triggerEmptyState();
@@ -79,18 +90,11 @@ describe('CommandPalette', () => {
       server.events.removeAllListeners();
     });
 
-    it('shows grouped deep search results when the assistant is available', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
+    it('shows grouped deep search results when the feature toggle is enabled', async () => {
       server.use(
-        getDashboardMemorySearchHandler([
-          {
-            dashboardUid: 'dash-1',
-            dashboardTitle: 'API latency',
-            content: 'p99 latency by region',
-            score: 0.1,
-            folderTitle: 'Observability',
-          },
-          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p50 latency', score: 0.2 },
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency by region', score: 0.1 },
+          { name: 'dash-1', title: 'API latency', snippet: 'p50 latency', score: 0.2 },
         ])
       );
 
@@ -102,17 +106,13 @@ describe('CommandPalette', () => {
       // Deep search debounces for 500ms, so allow extra time for results
       expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
       expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
-      expect(screen.getByText('Observability')).toBeInTheDocument();
       expect(screen.getByText('2 matches')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
     });
 
     it('hides the empty state when only deep search has results', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
       server.use(
-        getDashboardMemorySearchHandler([
-          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p99 latency', score: 0.1 },
-        ])
+        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
       );
 
       setup();
@@ -125,11 +125,10 @@ describe('CommandPalette', () => {
     });
 
     it('supports keyboard navigation into and out of the deep search column', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
       server.use(
-        getDashboardMemorySearchHandler([
-          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p99 latency', score: 0.1 },
-          { dashboardUid: 'dash-2', dashboardTitle: 'Checkout', content: 'checkout errors', score: 0.2 },
+        getVectorSearchHandler([
+          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
+          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.2 },
         ])
       );
 
@@ -156,11 +155,8 @@ describe('CommandPalette', () => {
     });
 
     it('moves focus between the keyword and deep search panes', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
       server.use(
-        getDashboardMemorySearchHandler([
-          { dashboardUid: 'dash-1', dashboardTitle: 'Dark dashboards', content: 'dark mode panels', score: 0.1 },
-        ])
+        getVectorSearchHandler([{ name: 'dash-1', title: 'Dark dashboards', snippet: 'dark mode panels', score: 0.1 }])
       );
 
       setup();
@@ -195,11 +191,8 @@ describe('CommandPalette', () => {
     });
 
     it('escape in the results returns focus to the input without closing the palette', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
       server.use(
-        getDashboardMemorySearchHandler([
-          { dashboardUid: 'dash-1', dashboardTitle: 'API latency', content: 'p99 latency', score: 0.1 },
-        ])
+        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
       );
 
       setup();
@@ -217,11 +210,11 @@ describe('CommandPalette', () => {
       expect(screen.getByPlaceholderText('Search or jump to...')).toBeInTheDocument();
     });
 
-    it('does not render the deep search column when the assistant is unavailable', async () => {
-      (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
+    it('does not render the deep search column when the feature toggle is disabled', async () => {
+      (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false);
       let deepSearchCalled = false;
       server.events.on('request:start', ({ request }) => {
-        if (request.url.includes('memory/dashboards')) {
+        if (request.url.includes('/search/vector')) {
           deepSearchCalled = true;
         }
       });

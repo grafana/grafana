@@ -10,6 +10,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagDashboardVectorSearch } from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
@@ -61,9 +62,8 @@ function CommandPaletteContents() {
   // time.
   const { searchResults, isFetchingSearchResults } = useSearchResults({ searchQuery, show: !currentRootActionId });
 
-  const { isAvailable: isAssistantAvailable } = useAssistant();
   // TODO: dev-only mock override, remove before merging
-  const deepSearchEnabled = isAssistantAvailable || isDeepSearchMockEnabled();
+  const deepSearchEnabled = useFlagDashboardVectorSearch() || isDeepSearchMockEnabled();
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
     show: !currentRootActionId,

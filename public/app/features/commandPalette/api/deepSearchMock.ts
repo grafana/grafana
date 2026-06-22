@@ -1,11 +1,11 @@
 // Temporary dev-only mock for the deep search endpoint, so the palette UI can
-// be iterated without a local assistant plugin + search service stack.
+// be iterated without a configured vector backend.
 // Enable in a dev build via: localStorage.setItem('grafana.dev.deepSearchMock', 'true')
 // TODO: remove this file (and its two call sites) before merging.
 import { store } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { type DashboardMemorySearchResult } from './deepSearch';
+import { type DeepSearchPanelResult } from './deepSearch';
 
 const MOCK_FLAG_KEY = 'grafana.dev.deepSearchMock';
 
@@ -13,7 +13,7 @@ export function isDeepSearchMockEnabled(): boolean {
   return config.buildInfo.env === 'development' && store.getBool(MOCK_FLAG_KEY, false);
 }
 
-export async function mockSearchDashboardMemory(query: string, limit = 40): Promise<DashboardMemorySearchResult[]> {
+export async function mockSearchDashboardVector(query: string, limit = 40): Promise<DeepSearchPanelResult[]> {
   // Simulate realistic vector search latency to exercise the loading bar
   await new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 400));
 
@@ -27,15 +27,14 @@ export async function mockSearchDashboardMemory(query: string, limit = 40): Prom
       ? []
       : MOCK_CORPUS.filter((hit) =>
           terms.some(
-            (term) =>
-              hit.content.toLowerCase().includes(term) || hit.dashboardTitle.toLowerCase().includes(term)
+            (term) => hit.content.toLowerCase().includes(term) || hit.dashboardTitle.toLowerCase().includes(term)
           )
         );
 
   return [...matches].sort((a, b) => a.score - b.score).slice(0, limit);
 }
 
-const MOCK_CORPUS: DashboardMemorySearchResult[] = [
+const MOCK_CORPUS: DeepSearchPanelResult[] = [
   // API latency — 3 panels
   {
     dashboardUid: 'mock-api-latency',
@@ -43,7 +42,8 @@ const MOCK_CORPUS: DashboardMemorySearchResult[] = [
     folderTitle: 'Observability',
     folderUid: 'mock-folder-obs',
     panelId: 2,
-    content: 'p99 latency by region — histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, region))',
+    content:
+      'p99 latency by region — histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, region))',
     language: 'promql',
     score: 0.12,
   },

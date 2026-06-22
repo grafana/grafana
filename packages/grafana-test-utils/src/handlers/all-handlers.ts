@@ -3,7 +3,6 @@ import { type HttpHandler } from 'msw';
 import accessControlHandlers from './api/access-control/handlers';
 import dashboardsHandlers from './api/dashboards/handlers';
 import folderHandlers from './api/folders/handlers';
-import assistantAppHandlers from './api/plugins/grafana-assistant-app/handlers';
 import pluginsHandlers from './api/plugins/handlers';
 import searchHandlers from './api/search/handlers';
 import teamsHandlers from './api/teams/handlers';
@@ -25,7 +24,6 @@ const allHandlers: HttpHandler[] = [
   ...dashboardsHandlers,
   ...folderHandlers,
   ...pluginsHandlers,
-  ...assistantAppHandlers,
   ...searchHandlers,
   ...teamsHandlers,
   ...userHandlers,

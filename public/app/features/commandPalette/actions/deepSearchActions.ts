@@ -1,7 +1,9 @@
 import debounce from 'debounce-promise';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { type DashboardMemorySearchResult, searchDashboardMemory } from '../api/deepSearch';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+
+import { type DeepSearchPanelResult, searchDashboardVector } from '../api/deepSearch';
 
 // Results are panel-level, so fetch well past the per-dashboard display count
 // to give grouping enough hits to rank dashboards by match count
@@ -26,12 +28,12 @@ export interface DeepSearchDashboardResult {
 }
 
 /**
- * Groups panel-level memory search results into one entry per dashboard,
- * ranked by number of matched panels (desc), then by best score (asc).
- * Results arrive ordered by ascending distance, so the first hits per
- * dashboard are its best ones — snippet order relies on that.
+ * Groups panel-level search results into one entry per dashboard, ranked by
+ * number of matched panels (desc), then by best score (asc). Results arrive
+ * ordered by ascending distance, so the first hits per dashboard are its best
+ * ones — snippet order relies on that.
  */
-export function groupDashboardMemoryResults(results: DashboardMemorySearchResult[]): DeepSearchDashboardResult[] {
+export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
   const byDashboard = new Map<string, DeepSearchDashboardResult>();
 
   for (const result of results) {
@@ -65,13 +67,40 @@ export function groupDashboardMemoryResults(results: DashboardMemorySearchResult
   );
 }
 
+/**
+ * Resolves folder titles for results that only carry a folder UID (the core
+ * endpoint returns the UID, not the title). Uses the searcher's folder lookup,
+ * which loads every folder once and caches it, so this adds no per-query request
+ * after the first call. Results that already have a title (e.g. the mock) are
+ * left untouched, which also keeps the lookup from firing for them.
+ */
+async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<DeepSearchPanelResult[]> {
+  const needsLookup = results.some((result) => !result.folderTitle && result.folderUid);
+  if (!needsLookup) {
+    return results;
+  }
+
+  let locationInfo: Record<string, { name: string }> = {};
+  try {
+    locationInfo = await getGrafanaSearcher().getLocationInfo();
+  } catch (error) {
+    // Folder titles are a nice-to-have subtitle; if the lookup fails just omit them
+    return results;
+  }
+
+  return results.map((result) =>
+    result.folderTitle || !result.folderUid ? result : { ...result, folderTitle: locationInfo[result.folderUid]?.name }
+  );
+}
+
 export async function getDeepSearchResults(query: string): Promise<DeepSearchDashboardResult[]> {
   if (query.trim().length === 0) {
     return [];
   }
 
-  const results = await searchDashboardMemory(query, { limit: DEEP_SEARCH_FETCH_LIMIT });
-  return groupDashboardMemoryResults(results);
+  const results = await searchDashboardVector(query, { limit: DEEP_SEARCH_FETCH_LIMIT });
+  const withFolderTitles = await resolveFolderTitles(results);
+  return groupDeepSearchResults(withFolderTitles);
 }
 
 interface UseDeepSearchResultsOptions {
@@ -113,10 +142,10 @@ export function useDeepSearchResults({ searchQuery, show, enabled }: UseDeepSear
       try {
         results = await debouncedDeepSearch(searchQuery);
       } catch (error) {
-        // The endpoint lives in the assistant plugin — callers are expected to
-        // gate on its availability via the enabled flag, so degrade to an
-        // empty column but log for anyone calling this without the gate
-        console.error('Deep search failed. It needs assistant app plugin to be installed.', error);
+        // The vector backend may be unconfigured (501) or the feature toggle
+        // off (404) — callers gate on the toggle via the enabled flag, so
+        // degrade to an empty column but log for anyone calling without the gate
+        console.error('Deep search failed. The vector search backend may be unavailable.', error);
       }
 
       // Skip state updates when the effect has been cleaned up, and only keep
