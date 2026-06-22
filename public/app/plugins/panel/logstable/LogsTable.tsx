@@ -241,8 +241,8 @@ export const LogsTable = ({
 
   const tableOptions = useMemo(
     () => ({
-      sortOrder: LogsSortOrder.Descending,
-      sortBy: [{ displayName: timeFieldName, desc: true }],
+      sortOrder: options.sortOrder ?? LogsSortOrder.Descending,
+      sortBy: [{ displayName: timeFieldName, desc: options.sortOrder ? options.sortOrder === LogsSortOrder.Descending : true }],
       fieldSelectorWidth: options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth(),
       logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
       ...options,
