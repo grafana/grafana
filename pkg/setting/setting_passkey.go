@@ -45,18 +45,21 @@ func validatePasskeySettings(s PasskeySettings) error {
 	if len(s.RPOrigins) == 0 {
 		return errors.New("rp_origins must be set")
 	}
+	// Host names are case-insensitive, so compare in lower case to avoid disabling a valid config
+	// that just differs in letter case (e.g. rp_id "Example.com" with origin "https://example.com").
+	rpID := strings.ToLower(s.RPID)
 	for _, origin := range s.RPOrigins {
 		u, err := url.Parse(origin)
 		if err != nil {
 			return fmt.Errorf("invalid rp_origin %q: %w", origin, err)
 		}
-		host := u.Hostname()
+		host := strings.ToLower(u.Hostname())
 		if host == "" {
 			return fmt.Errorf("rp_origin %q has no host", origin)
 		}
 		// rp_id must equal the origin host or be a parent domain on a label boundary, so a
 		// look-alike host such as "notexample.com" is not accepted for rp_id "example.com".
-		if host != s.RPID && !strings.HasSuffix(host, "."+s.RPID) {
+		if host != rpID && !strings.HasSuffix(host, "."+rpID) {
 			return fmt.Errorf("rp_id %q is not a registrable domain suffix of origin %q", s.RPID, origin)
 		}
 	}

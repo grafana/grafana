@@ -25,6 +25,16 @@ func TestValidatePasskeySettings(t *testing.T) {
 			origins: []string{"http://localhost:3000"},
 		},
 		{
+			name:    "case-insensitive: mixed-case rp_id",
+			rpID:    "Example.com",
+			origins: []string{"https://example.com"},
+		},
+		{
+			name:    "case-insensitive: mixed-case origin host",
+			rpID:    "example.com",
+			origins: []string{"https://Grafana.EXAMPLE.com"},
+		},
+		{
 			name:    "multiple valid origins",
 			rpID:    "example.com",
 			origins: []string{"https://example.com", "https://grafana.example.com"},
