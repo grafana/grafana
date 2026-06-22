@@ -361,13 +361,21 @@ func TestSyncExternalAMs_SeedsSingletonWhenUnconfigured(t *testing.T) {
 
 	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
 
-	// The singleton now exists, with an empty spec/status (an empty doc is
-	// semantically identical to an absent one).
+	// The singleton now exists, carrying Synced=Unknown/NotConfigured (sync is on
+	// but nothing is configured for this org) and no spec.
 	obj, err := adminCfg.lookup("org-1")
 	require.NoError(t, err, "singleton should have been seeded by the sync tick")
 	assert.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, obj.GetName())
 	assert.Nil(t, obj.Spec.ExternalAlertmanagerSync, "seeded doc carries no spec config")
-	assert.Empty(t, obj.Status.Conditions, "seeded doc carries no status conditions")
+	var synced *alertingnotifv0alpha1.ConfigCondition
+	for i := range obj.Status.Conditions {
+		if obj.Status.Conditions[i].Type == conditionTypeExternalAlertmanagerSynced {
+			synced = &obj.Status.Conditions[i]
+		}
+	}
+	require.NotNil(t, synced, "expected an ExternalAlertmanagerSynced condition on the seeded doc")
+	assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+	assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
 
 	// No sync happened (nothing to sync) — the seed is the only side effect.
 	assertNoExtraConfigSaved(t, cs, 1)
