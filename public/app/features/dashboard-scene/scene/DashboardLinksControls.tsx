@@ -53,12 +53,8 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: theme.spacing(1),
-      marginRight: theme.spacing(1),
       marginBottom: theme.spacing(1),
       flexWrap: 'wrap',
-      // Match variable/annotation alignment in the controls row
-      alignSelf: 'flex-start',
-      verticalAlign: 'middle',
     }),
   };
 }

@@ -39,9 +39,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       display: 'inline-flex',
       alignItems: 'center',
-      verticalAlign: 'middle',
       marginBottom: theme.spacing(1),
-      marginRight: theme.spacing(1),
       gap: theme.spacing(1),
     }),
   };

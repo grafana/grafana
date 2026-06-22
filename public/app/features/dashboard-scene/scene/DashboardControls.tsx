@@ -240,11 +240,14 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
-            {!hideVariableControls && <VariableControls dashboard={dashboard} />}
-            <div className={styles.rightControls}>
-              <div className={styles.fixedControls}>
+            <div className={cx(styles.innerControls, styles.fixedControls)}>
+              <div>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
+            </div>
+
+            <div className={styles.innerControls}>
+              {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             </div>
           </div>
           <RenderHiddenVariables dashboard={dashboard} />
@@ -266,43 +269,46 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       data-testid={selectors.pages.Dashboard.Controls}
       className={cx(styles.controls, editPanel && styles.controlsPanelEdit)}
     >
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+      <div className={cx(styles.innerControls, styles.fixedControls)}>
         {!hideTimeControls && (
-          <div className={styles.fixedControls}>
+          <div>
             <timePicker.Component model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
         {config.featureToggles.dashboardNewLayouts && (
-          <div className={styles.fixedControls}>
+          <div>
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
         {(config.featureToggles.dashboardFiltersOverview || config.featureToggles.dashboardUnifiedDrilldownControls) &&
           !config.featureToggles.dashboardNewLayouts && (
-            <div className={styles.fixedControls}>
+            <div>
               <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
             </div>
           )}
       </div>
-      {config.featureToggles.scopeFilters && !editPanel && (
-        <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
-      )}
-      {!hideVariableControls && (
-        <>
-          <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
-          <DashboardDataLayerControls dashboard={dashboard} />
-        </>
-      )}
-      {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-      <DefaultControlsLoadingSkeleton
-        dashboard={dashboard}
-        hideVariableControls={hideVariableControls}
-        hideLinksControls={hideLinksControls}
-      />
-      {editPanel && <PanelEditControls panelEditor={editPanel} />}
-      {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+
+      <div className={styles.innerControls}>
+        {config.featureToggles.scopeFilters && !editPanel && (
+          <ContextualNavigationPaneToggle className={styles.contextualNavToggle} hideWhenOpen={true} />
+        )}
+        {!hideVariableControls && (
+          <>
+            <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
+            <DashboardDataLayerControls dashboard={dashboard} />
+          </>
+        )}
+        {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
+        {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        <DefaultControlsLoadingSkeleton
+          dashboard={dashboard}
+          hideVariableControls={hideVariableControls}
+          hideLinksControls={hideLinksControls}
+        />
+        {editPanel && <PanelEditControls panelEditor={editPanel} />}
+        {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+      </div>
     </div>
   );
 }
@@ -421,9 +427,7 @@ const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   skeletonContainer: css({
     display: 'inline-flex',
     lineHeight: 1,
-    verticalAlign: 'middle',
     marginBottom: theme.spacing(1),
-    marginRight: theme.spacing(1),
   }),
 });
 
@@ -433,14 +437,16 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
     controls: css({
       gap: theme.spacing(1),
       padding: theme.spacing(2, 2, 1, 2),
-      flexDirection: 'row',
+      flexDirection: 'row-reverse',
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
       marginLeft: 'auto',
-      display: 'inline-block',
+      display: 'flex',
+      justifyContent: 'space-between',
+
       [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column-reverse',
+        flexDirection: 'column',
         alignItems: 'stretch',
       },
 
@@ -449,7 +455,6 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       },
     }),
     controlsPanelEdit: css({
-      flexWrap: 'wrap-reverse',
       ...(isQueryEditorNext && {
         padding: 0,
         marginBottom: theme.spacing(-1),
@@ -461,31 +466,27 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       position: 'unset',
     }),
     // Original rightControls style
-    rightControls: css({
+    innerControls: css({
       display: 'flex',
       gap: theme.spacing(1),
-      float: 'right',
       alignItems: 'flex-start',
       flexWrap: 'wrap',
       maxWidth: '100%',
-      minWidth: 0,
+      minWidth: 'min-content',
     }),
     fixedControls: css({
-      display: 'flex',
       justifyContent: 'flex-end',
-      gap: theme.spacing(1),
-      marginBottom: theme.spacing(1),
-      order: 2,
-      marginLeft: 'auto',
-      flexShrink: 0,
-      alignSelf: 'flex-start',
+
+      '& > div': {
+        display: 'flex',
+        gap: theme.spacing(1),
+        marginBottom: theme.spacing(1),
+        order: 2,
+        flexShrink: 0,
+      },
     }),
     dashboardControlsButton: css({
       order: 2,
-      marginLeft: 'auto',
-    }),
-    rightControlsWrap: css({
-      flexWrap: 'wrap',
       marginLeft: 'auto',
     }),
     contextualNavToggle: css({

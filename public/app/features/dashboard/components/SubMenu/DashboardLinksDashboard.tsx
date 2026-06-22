@@ -180,7 +180,6 @@ function getStyles(theme: GrafanaTheme2) {
     linkContainer: css({
       display: 'inline-flex',
       alignItems: 'center',
-      verticalAlign: 'middle',
     }),
   };
 }
