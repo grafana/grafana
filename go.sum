@@ -2154,8 +2154,8 @@ github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.1
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/core/xidutils v0.150.0/go.mod h1:MQOHiv39A973LwC49WEe7TaqMgFp2i/OEj1vUqKxoJ8=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0 h1:QyAlAfLh26KhfhHoS0p77qGtQ9o1lTTfqR84ir+q++Y=
 github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.150.0/go.mod h1:oH8MAPQVje+h6zawzcX9O5heDyXm3hhvTUl0SqTE6cs=
-github.com/openai/openai-go/v3 v3.16.0 h1:VdqS+GFZgAvEOBcWNyvLVwPlYEIboW5xwiUCcLrVf8c=
-github.com/openai/openai-go/v3 v3.16.0/go.mod h1:cdufnVK14cWcT9qA1rRtrXx4FTRsgbDPW7Ia7SS5cZo=
+github.com/openai/openai-go/v3 v3.39.0 h1:WgLGgMOOdQDkZyo8YIhzUNXRXlEc+OJfU4EKP5Qp6AA=
+github.com/openai/openai-go/v3 v3.39.0/go.mod h1:cdufnVK14cWcT9qA1rRtrXx4FTRsgbDPW7Ia7SS5cZo=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
