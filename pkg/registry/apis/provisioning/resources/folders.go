@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	grafanautil "github.com/grafana/grafana/pkg/util"
 )
 
 const MaxNumberOfFolders = 10000
@@ -561,7 +562,14 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
-func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
+//
+// When generateNewFolderIDs is true, each folder's metadata (_folder.json) is
+// written with a freshly generated UID instead of the original folder identifier.
+// The in-memory tree keeps the original IDs so resources still resolve to their
+// folder path, and parent nesting is unaffected (it derives from directory
+// structure); only the manifest's metadata.name carries the new UID. This has no
+// effect when folder metadata is not written, since no UID is materialized then.
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, generateNewFolderIDs bool, fn func(folder Folder, created bool, err error) error) error {
 	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
 		p := folder.Path
 		if path != "" {
@@ -581,8 +589,12 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		}
 
 		if fm.folderMetadataEnabled {
+			manifestID := folder.ID
+			if generateNewFolderIDs {
+				manifestID = grafanautil.GenerateShortUID()
+			}
 			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
-			manifest := NewFolderManifest(folder.ID, folder.Title, fm.folderGVK)
+			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
 			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
 				return fn(folder, true, err)
 			}
