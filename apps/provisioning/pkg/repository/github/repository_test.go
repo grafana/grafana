@@ -91,7 +91,6 @@ func TestNewGitHub(t *testing.T) {
 				gitRepo,
 				factory,
 				common.RawSecureValue(tt.token),
-				"",
 			)
 
 			// Check results

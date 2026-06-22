@@ -45,7 +45,20 @@ type GithubRepository interface {
 	Client() Client
 }
 
+// NewRepository builds a github.com repository client.
 func NewRepository(
+	ctx context.Context,
+	config *provisioning.Repository,
+	gitRepo git.GitRepository,
+	factory *Factory,
+	token common.RawSecureValue,
+) (GithubRepository, error) {
+	return newRepository(ctx, config, gitRepo, factory, token)
+}
+
+// NewRepositoryWithCustomURL builds a repository client targeting a GitHub
+// Enterprise Server instance at the given customServerURL.
+func NewRepositoryWithCustomURL(
 	ctx context.Context,
 	config *provisioning.Repository,
 	gitRepo git.GitRepository,
@@ -53,12 +66,23 @@ func NewRepository(
 	token common.RawSecureValue,
 	customServerURL string,
 ) (GithubRepository, error) {
+	return newRepository(ctx, config, gitRepo, factory, token, WithCustomServerURL(customServerURL))
+}
+
+func newRepository(
+	ctx context.Context,
+	config *provisioning.Repository,
+	gitRepo git.GitRepository,
+	factory *Factory,
+	token common.RawSecureValue,
+	opts ...ClientOption,
+) (GithubRepository, error) {
 	owner, repo, err := ParseOwnerRepoGithub(gitRepo.URL())
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
 	}
 
-	ghClient, err := factory.New(ctx, owner, repo, token, WithCustomServerURL(customServerURL))
+	ghClient, err := factory.New(ctx, owner, repo, token, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("create github client: %w", err)
 	}
