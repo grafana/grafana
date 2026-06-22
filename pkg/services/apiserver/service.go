@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -204,16 +205,7 @@ func ProvideService(
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
-		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
-		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
-		// Snapshots are shared via URL with the key, so they are always publicly accessible.
-		// Authorization is enforced by the snapshot authorizer.
-		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
-		k8sRoute.Get(snapshotPath, handler)
-		k8sRoute.Get(snapshotPath+"/dashboard", handler)
-
-		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
-		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
+		registerAPIServerRoutes(k8sRoute, handler)
 	}
 
 	s.rr.Group("/apis", proxyHandler)
@@ -227,6 +219,29 @@ func ProvideService(
 	close(eventualRestConfigProvider.ready)
 
 	return s, nil
+}
+
+// registerAPIServerRoutes registers the explicit route patterns that proxy to the
+// k8s-style API server. Each per-group pattern gives that resource its own `handler`
+// label in grafana_http_request_duration_seconds; without an explicit pattern a group
+// falls through to the catch-all and is merged into the generic `/apis/*` bucket,
+// making per-resource latency/traffic impossible to observe.
+func registerAPIServerRoutes(k8sRoute routing.RouteRegister, handler web.Handler) {
+	k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+	k8sRoute.Any("/dashboard.grafana.app/*", middleware.ReqSignedIn, handler)
+	k8sRoute.Any("/folder.grafana.app/*", middleware.ReqSignedIn, handler)
+
+	// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+	// Snapshots are shared via URL with the key, so they are always publicly accessible.
+	// Authorization is enforced by the snapshot authorizer. These patterns are more
+	// specific than the dashboard.grafana.app wildcard above, so the router matches them
+	// first and they remain unauthenticated.
+	snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+	k8sRoute.Get(snapshotPath, handler)
+	k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+	k8sRoute.Any("/", middleware.ReqSignedIn, handler)
+	k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 }
 
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
