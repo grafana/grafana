@@ -3,7 +3,7 @@ import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { type ItemType } from '../types';
@@ -30,6 +30,14 @@ export interface ResourceKindInfo {
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
   getRoute?: (name: string) => string;
+  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
+  listRoute: string;
+  /**
+   * Whether resources of this kind are contained in folders, and so can be scoped
+   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
+   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   */
+  folderScoped: boolean;
   /** Localized "N <kind>" count label (handles singular/plural). */
   countLabel: (count: number) => string;
 }
@@ -51,6 +59,8 @@ export const resourceKindInfos = {
     itemType: 'Folder',
     icon: getIconForKind('folder'),
     getRoute: (name: string) => `/dashboards/f/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
     countLabel: (count: number) =>
       t('provisioning.bootstrap-step.folders-count', '', {
         count,
@@ -65,6 +75,8 @@ export const resourceKindInfos = {
     itemType: 'Dashboard',
     icon: getIconForKind('dashboard'),
     getRoute: (name: string) => `/d/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
     countLabel: (count: number) =>
       t('provisioning.bootstrap-step.dashboards-count', '', {
         count,
@@ -81,6 +93,9 @@ export const resourceKindInfos = {
     // playlist nav icon directly.
     icon: 'presentation-play',
     getRoute: (name: string) => `/playlists/play/${name}`,
+    // Playlists aren't folder-contained — they only have their own collection page.
+    listRoute: '/playlists',
+    folderScoped: false,
     countLabel: (count: number) =>
       t('provisioning.bootstrap-step.playlists-count', '', {
         count,
@@ -91,6 +106,19 @@ export const resourceKindInfos = {
 } satisfies Record<string, ResourceKindInfo>;
 
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+/**
+ * Builds the in-app route to view a repository's resources of the given kind.
+ * Folder-scoped kinds resolve to the repository's own folder for folder-target
+ * repos (and to their collection page otherwise); other kinds always resolve to
+ * their collection page.
+ */
+export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
+  if (info.folderScoped && repo.spec?.sync.target === 'folder') {
+    return `/dashboards/f/${repo.metadata?.name}`;
+  }
+  return info.listRoute;
+}
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
