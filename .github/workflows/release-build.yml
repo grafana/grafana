@@ -53,6 +53,7 @@ jobs:
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
+      public-commit: ${{ steps.output.outputs.public_commit }}
     permissions:
       contents: read
     steps:
@@ -71,9 +72,21 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           BUILD_ID: ${{ github.run_id }}
       - id: output
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
+          # Commit to stamp into the binary: for a +security mirror build, the base release
+          # branch's HEAD; otherwise the checkout HEAD.
+          if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *+security-* ]]; then
+            base="${REF_NAME%+security-*}"
+            public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${base}" --jq '.object.sha')
+          else
+            public_commit=$(git rev-parse HEAD)
+          fi
+          echo "public_commit=${public_commit}" | tee -a "$GITHUB_OUTPUT"
   # Triggers the same workflow in `grafana-enterprise` on the same ref
   downstream:
     runs-on: github-hosted-ubuntu-x64-small
@@ -96,12 +109,13 @@ jobs:
           BUILD_ID: ${{ github.run_id }}
           BUCKET: grafana-prerelease
           GRAFANA_COMMIT: ${{ needs.setup.outputs.grafana-commit }}
+          PUBLIC_COMMIT: ${{ needs.setup.outputs.public-commit }}
           SOURCE_EVENT: ${{ inputs.source-event || github.event_name }}
           REPO: ${{ github.repository }}
         with:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
-            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -113,6 +127,7 @@ jobs:
                   "build-id": String(BUILD_ID),
                   "bucket": BUCKET,
                   "grafana-commit": GRAFANA_COMMIT,
+                  "grafana-public-commit": PUBLIC_COMMIT,
                   "source-event": SOURCE_EVENT,
                   "upstream": REPO,
                 }
@@ -177,6 +192,7 @@ jobs:
           grafana-path: .
           github-token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ needs.setup.outputs.version }}
+          commit: ${{ needs.setup.outputs.public-commit }}
           output: artifacts-${{ matrix.name }}.txt
           verify: ${{ matrix.verify }}
           build-id: ${{ github.run_id }}

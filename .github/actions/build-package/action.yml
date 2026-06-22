@@ -11,74 +11,62 @@ inputs:
         * `enterprise:linux/arm64:rpm, enterprise:linux/amd64:docker`
         * `pro:docker:llinux/amd64`
     required: true
-    type: string
   grafana-path:
     description: Path to a clone of the 'grafana' repo
     default: grafana
-    type: string
   grafana-enterprise-path:
     description: Path to a clone of the 'grafana-enterprise' repo
     default: grafana-enterprise
-    type: string
   github-token:
-    type: string
     required: true
   version:
-    type: string
     description: The version to embed in the grafana binary, example `v1.2.3`. If not provided, then the value in Grafana's package.json will be used
     required: true
+  commit:
+    description: Commit SHA to embed in the binary (-X main.commit). Defaults to the checkout HEAD when empty.
+    required: false
+    default: ''
   build-id:
-    type: string
     description: an identifier number which can be traced back to the workflow run.
     default: ${{github.run_id}}
     required: false
   patches-repo:
-    type: string
     description: Repository to load for patches repo. If empty, patches won't be applied. Must be an HTTPS git URL.
     required: false
     default: ""
   patches-ref:
-    type: string
     description: git ref in the patches repo to check out.
     required: false
     default: main
   patches-path:
-    type: string
     description: Path in the repository where `.patch` files can be found.
     required: false
     default: main
   checksum:
-    type: boolean
     description: If true, then checksums will be produced for each file (with a '.sha256' extension)
     required: false
     default: false
   verify:
-    type: boolean
     description: If true, then the e2e smoke tests will run to verify the produced artifacts (--verify)
     required: false
     default: false
   output:
-    type: string
     description: Filename to redirect stdout to. Contains list of packages that were produced
     default: packages.txt
     required: false
   docker-tag-format:
-    type: string
     default: "{{ .version }}-{{ .arch }}"
     description: Go template of Docker image tag
     required: false
   docker-tag-format-ubuntu:
-    type: string
     default: "{{ .version }}-ubuntu-{{ .arch }}"
     description: Go template of Docker image tag
     required: false
   docker-org:
-    type: string
     description: Docker org of produced images
     default: grafana
     required: false
   docker-registry:
-    type: string
     description: Docker registry of produced images
     default: docker.io
     required: false
@@ -113,6 +101,8 @@ runs:
       uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
       env:
         VERSION: ${{ inputs.version }}
+        # Read by pkg/build/cmd to override -X main.commit; empty falls back to git HEAD.
+        COMMIT_SHA: ${{ inputs.commit }}
         ARTIFACTS: ${{ inputs.artifacts }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
         PATCHES_REPO: ${{ inputs.patches-repo }}
