@@ -14,7 +14,7 @@ import { Alert, Divider, SecureSocksProxySettings, Stack, TextLink, useStyles2 }
 
 import { type ParcaDataSourceOptions } from './types';
 
-const DEPRECATION_DATE = '2st of January 2027';
+const DEPRECATION_DATE = '2nd of January 2027';
 
 interface Props extends DataSourcePluginOptionsEditorProps<ParcaDataSourceOptions> {}
 
