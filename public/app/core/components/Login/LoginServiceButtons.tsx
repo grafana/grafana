@@ -3,8 +3,10 @@ import { pickBy } from 'lodash';
 
 import { type GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, type IconName, LinkButton, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
+
+import { recordLastUsedLoginMethod, useLastUsedLoginMethod } from './useLastUsedLoginMethod';
 
 export interface LoginService {
   bgColor: string;
@@ -18,7 +20,7 @@ export interface LoginServices {
   [key: string]: LoginService;
 }
 
-const loginServices: () => LoginServices = () => {
+export const loginServices: () => LoginServices = () => {
   const oauthEnabled = !!config.oauth;
 
   return {
@@ -87,6 +89,27 @@ const getServiceStyles = (theme: GrafanaTheme2) => {
       top: '50%',
       transform: 'translateY(-50%)',
     }),
+    lastUsedHighlight: css({
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        inset: '-4px',
+        border: `1px solid ${theme.colors.success.border}`,
+        borderTopLeftRadius: `calc(${theme.shape.radius.default} + 3px)`,
+        borderTopRightRadius: `calc(${theme.shape.radius.default} + 3px)`,
+        borderBottomRightRadius: `calc(${theme.shape.radius.default} + 3px)`,
+        pointerEvents: 'none',
+      },
+    }),
+    lastUsedLabel: css({
+      backgroundColor: theme.colors.success.border,
+      color: theme.colors.success.contrastText,
+      padding: theme.spacing(0.25, 1),
+      marginLeft: '-3px',
+      borderBottomLeftRadius: theme.shape.radius.sm,
+      borderBottomRightRadius: theme.shape.radius.sm,
+      lineHeight: 1.2,
+    }),
     divider: {
       base: css({
         color: theme.colors.text.primary,
@@ -139,27 +162,43 @@ function getButtonStyleFor(service: LoginService, styles: ReturnType<typeof getS
 
 export const LoginServiceButtons = () => {
   const enabledServices = pickBy(loginServices(), (service) => service.enabled);
-  const hasServices = Object.keys(enabledServices).length > 0;
+  const enabledServiceCount = Object.keys(enabledServices).length;
+  const hasServices = enabledServiceCount > 0;
+  const multipleMethodsEnabled = enabledServiceCount + (config.disableLoginForm ? 0 : 1) > 1;
   const theme = useTheme2();
   const styles = useStyles2(getServiceStyles);
+  const lastUsed = useLastUsedLoginMethod();
 
   if (hasServices) {
     return (
-      <Stack direction={'column'} width={'100%'}>
+      <Stack direction={'column'} width={'100%'} gap={2}>
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
           const serviceName = service.name;
+          const isLastUsed = multipleMethodsEnabled && lastUsed === key;
+          const captionId = `login-last-used-${key}`;
+
           return (
-            <LinkButton
-              key={key}
-              className={getButtonStyleFor(service, styles, theme)}
-              href={`login/${service.hrefName ? service.hrefName : key}`}
-              target="_self"
-              fullWidth
-            >
-              <Icon className={styles.buttonIcon} name={service.icon} />
-              <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
-            </LinkButton>
+            <Stack key={key} direction="column" gap={0.5} width="100%">
+              <LinkButton
+                className={cx(getButtonStyleFor(service, styles, theme), isLastUsed && styles.lastUsedHighlight)}
+                href={`login/${service.hrefName ? service.hrefName : key}`}
+                target="_self"
+                fullWidth
+                onClick={() => recordLastUsedLoginMethod(key)}
+                aria-describedby={isLastUsed ? captionId : undefined}
+              >
+                <Icon className={styles.buttonIcon} name={service.icon} />
+                <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
+              </LinkButton>
+              {isLastUsed && (
+                <Text id={captionId} variant="bodySmall" element="span" weight="medium">
+                  <span className={styles.lastUsedLabel}>
+                    <Trans i18nKey="login.last-used-method">Last used</Trans>
+                  </span>
+                </Text>
+              )}
+            </Stack>
           );
         })}
       </Stack>

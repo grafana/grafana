@@ -5,6 +5,7 @@ import { render } from 'test/test-utils';
 import * as runtimeMock from '@grafana/runtime';
 
 import LoginPage from './LoginPage';
+import { LAST_USED_LOGIN_METHOD_KEY } from './useLastUsedLoginMethod';
 
 const postMock = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -139,6 +140,83 @@ describe('Login Page', () => {
     const alert = await screen.findByRole('alert', { name: 'Login failed' });
     expect(alert).toBeInTheDocument();
     expect(alert).toHaveTextContent('Invalid username or password');
+  });
+
+  describe('last used login method hint', () => {
+    afterEach(() => {
+      window.localStorage.removeItem(LAST_USED_LOGIN_METHOD_KEY);
+      runtimeMock.config.oauth = {};
+    });
+
+    it('shows "Last used" on the social login that was used last when multiple methods are available', () => {
+      runtimeMock.config.oauth = {
+        okta: { name: 'Okta Test', icon: 'signin' },
+        github: { name: 'GitHub', icon: 'github' },
+      };
+      window.localStorage.setItem(LAST_USED_LOGIN_METHOD_KEY, 'okta');
+
+      render(<LoginPage />);
+
+      const oktaButton = screen.getByRole('link', { name: /Sign in with Okta Test/ });
+      const githubButton = screen.getByRole('link', { name: /Sign in with GitHub/ });
+
+      expect(oktaButton).toHaveAccessibleDescription('Last used');
+      expect(githubButton).not.toHaveAccessibleDescription('Last used');
+    });
+
+    it('shows "Last used" near the password submit button when password was last used and SSO is enabled', () => {
+      runtimeMock.config.oauth = {
+        github: { name: 'GitHub', icon: 'github' },
+      };
+      window.localStorage.setItem(LAST_USED_LOGIN_METHOD_KEY, 'password');
+
+      render(<LoginPage />);
+
+      expect(screen.getByRole('button', { name: 'Log in' })).toHaveAccessibleDescription('Last used');
+      expect(screen.getByRole('link', { name: /Sign in with GitHub/ })).not.toHaveAccessibleDescription('Last used');
+    });
+
+    it('does not show "Last used" when only one login method is enabled', () => {
+      runtimeMock.config.oauth = {};
+      window.localStorage.setItem(LAST_USED_LOGIN_METHOD_KEY, 'password');
+
+      render(<LoginPage />);
+
+      expect(screen.queryByText('Last used')).not.toBeInTheDocument();
+    });
+
+    it('records the social login key in localStorage when its button is clicked', async () => {
+      runtimeMock.config.oauth = {
+        okta: { name: 'Okta Test', icon: 'signin' },
+        github: { name: 'GitHub', icon: 'github' },
+      };
+
+      render(<LoginPage />);
+
+      // jsdom won't actually follow the link; prevent the navigation warning while still firing click.
+      const githubLink = screen.getByRole('link', { name: /Sign in with GitHub/ });
+      githubLink.addEventListener('click', (e) => e.preventDefault());
+      await userEvent.click(githubLink);
+
+      expect(window.localStorage.getItem(LAST_USED_LOGIN_METHOD_KEY)).toBe('github');
+    });
+
+    it('records "password" in localStorage when the login form is submitted', async () => {
+      runtimeMock.config.oauth = {
+        github: { name: 'GitHub', icon: 'github' },
+      };
+      postMock.mockResolvedValueOnce({ message: 'Logged in' });
+      Object.defineProperty(window, 'location', { value: { assign: jest.fn() }, writable: true });
+
+      render(<LoginPage />);
+
+      await userEvent.type(screen.getByLabelText('Email or username'), 'admin');
+      await userEvent.type(screen.getByLabelText('Password'), 'test');
+      await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+      await waitFor(() => expect(postMock).toHaveBeenCalled());
+      expect(window.localStorage.getItem(LAST_USED_LOGIN_METHOD_KEY)).toBe('password');
+    });
   });
 
   it('shows a different error with failed login attempts', async () => {

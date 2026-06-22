@@ -11083,6 +11083,7 @@
       "username-placeholder": "email or username",
       "username-required": "Email or username is required"
     },
+    "last-used-method": "Last used",
     "layout": {
       "update-password": "Update your password"
     },
