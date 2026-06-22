@@ -82,6 +82,8 @@ refs:
 
 # Transform data
 
+> **Note:** The screenshots and steps on this page reflect the classic, generally available panel query editor. For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+
 Transformations are a powerful way to manipulate data returned by a query before the system applies a visualization. Using transformations, you can:
 
 - Rename fields
@@ -95,7 +97,7 @@ For users that rely on multiple views of the same dataset, transformations offer
 
 You can also use the output of one transformation as the input to another transformation, which results in a performance gain.
 
-> Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
+> **Note:** Sometimes the system cannot graph transformed data. When that happens, click the `Table view` toggle above the visualization to switch to a table view of the data. This can help you understand the final result of your transformations.
 
 ## Transformation types
 
@@ -1146,6 +1148,16 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
 This transformation combines values from Query A and Query B into a unified table, enhancing the presentation of data for better insights.
+
+{{< admonition type="note" >}}
+The **Merge series/tables** transformation only combines rows when all of their shared fields contain the same values. It doesn't join series by a subset of labels. If you have multiple Prometheus instant queries that share a label set (for example, `instance` and `job`) and you want one row per shared-label tuple with each query's value in its own column, **Merge series/tables** on its own produces duplicate rows, one block per query.
+
+To join queries by shared labels, chain three transformations:
+
+1. **Labels to fields** (Mode: **Columns**) to turn each query's labels into columns.
+1. **Merge series/tables** to combine the queries into a single frame.
+1. **Group by**, with **Last (not null)** as the calculation on each value field and the shared label columns set to **Group by**.
+{{< /admonition >}}
 
 ### Organize fields by name
 
