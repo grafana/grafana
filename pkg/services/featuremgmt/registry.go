@@ -2953,7 +2953,7 @@ var (
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
+			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},

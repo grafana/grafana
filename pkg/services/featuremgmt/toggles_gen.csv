@@ -343,7 +343,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
-2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
