@@ -67,6 +67,7 @@ export class DashboardMutationClient implements MutationClient {
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
+        this.scene.editSessionTracker?.recordAssistantEdit();
       }
 
       return result;

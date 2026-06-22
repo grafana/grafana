@@ -69,6 +69,7 @@ export async function trackDashboardSceneCreatedOrSaved(
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
+    assistant_edit_count: dashboard.editSessionTracker.getAssistantEditCount(),
     ...(dynamicDashboardsTrackingInformation
       ? {
           uid: dashboard.state.uid || '',
@@ -90,6 +91,9 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+
+  // The save closed the assistant edit session.
+  dashboard.editSessionTracker.reset();
 }
 
 export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {

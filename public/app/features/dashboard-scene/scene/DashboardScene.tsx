@@ -100,6 +100,7 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
+import { DashboardEditSessionTracker } from './DashboardEditSessionTracker';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -181,6 +182,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   /**
+   * Tracks edit sessions the assistant participated in, to measure how often they get saved.
+   * Owns all of its own state; the scene only signals lifecycle (discard) and exposes it for the
+   * Mutation API client (writes) and save tracking (reads).
+   */
+  public readonly editSessionTracker: DashboardEditSessionTracker;
+
+  /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
@@ -212,6 +220,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
+    this.editSessionTracker = new DashboardEditSessionTracker(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -405,6 +414,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
+    // Edits are being discarded, so close any assistant session without crediting a save.
+    this.editSessionTracker.reset();
+
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
@@ -455,6 +467,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
+
+    // Any assistant edits made so far are being reverted, so close the session without crediting a save.
+    this.editSessionTracker.reset();
 
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();

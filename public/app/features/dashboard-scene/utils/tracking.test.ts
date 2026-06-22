@@ -69,6 +69,7 @@ describe('dashboard tracking', () => {
         variable_type_query_count: 1,
         variable_type_datasource_count: 1,
         variable_type_adhoc_count: 1,
+        assistant_edit_count: 0,
       });
     });
 
@@ -103,6 +104,7 @@ describe('dashboard tracking', () => {
         variable_type_adhoc_count: 1,
         transformation_counts: { organize: 2, reduce: 1 },
         expression_counts: { sql: 3, math: 1 },
+        assistant_edit_count: 0,
       });
     });
   });
