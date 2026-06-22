@@ -296,6 +296,9 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		return nil, 0
 	}
 	if uid == "" {
+		// Flag on but sync isn't configured here (no ini override, no spec UID):
+		// seed the singleton so it reliably exists without a manual create.
+		s.ensureConfigSeeded(ctx, orgID)
 		return nil, 0
 	}
 
@@ -410,6 +413,38 @@ func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64
 	s.writeStatus(ctx, orgID, func(prev *alertingnotifv0alpha1.ConfigStatus) alertingnotifv0alpha1.ConfigStatus {
 		return computeCommittedStatus(prev, uid, origin, now)
 	})
+}
+
+// ensureConfigSeeded creates the org's Config singleton with an empty doc if it
+// does not yet exist, so the resource reliably exists without a manual create.
+// Called on the flag-on-but-unconfigured path. Best-effort: failures are logged
+// and never block the sync loop — an empty doc is semantically identical to an
+// absent one, so a missed seed is harmless and the next tick retries.
+func (s *ExternalAMSyncer) ensureConfigSeeded(ctx context.Context, orgID int64) {
+	c, err := s.resolveCfgClient()
+	if err != nil {
+		s.logger.Warn("Failed to resolve Config client for seeding", "org_id", orgID, "error", err)
+		return
+	}
+	nsCtx, ns := s.orgServiceContext(ctx, orgID)
+	if ns == "" {
+		return
+	}
+	id := resource.Identifier{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName}
+
+	if _, getErr := c.Get(nsCtx, id); getErr == nil {
+		return // already exists
+	} else if !k8serrors.IsNotFound(getErr) {
+		s.logger.Warn("Failed to check Config singleton for seeding", "org_id", orgID, "error", getErr)
+		return
+	}
+
+	r := &alertingnotifv0alpha1.Config{
+		ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv0alpha1.ConfigSingletonName},
+	}
+	if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil && !k8serrors.IsAlreadyExists(createErr) {
+		s.logger.Warn("Failed to seed Config singleton", "org_id", orgID, "error", createErr)
+	}
 }
 
 // writeStatus upserts the org's Config.status using compute(prev), creating the
