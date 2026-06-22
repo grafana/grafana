@@ -30,7 +30,28 @@ func ProvideFactory() *Factory {
 	}
 }
 
-func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.RawSecureValue, customServerURL string) (Client, error) {
+// ClientOptions holds the optional configuration for a GitHub client.
+type ClientOptions struct {
+	customServerURL string
+}
+
+// ClientOption customizes how a GitHub client is created.
+type ClientOption func(*ClientOptions)
+
+// WithCustomServerURL targets a GitHub Enterprise Server instance at the given
+// base URL. An empty url is ignored, keeping the default github.com client.
+func WithCustomServerURL(url string) ClientOption {
+	return func(o *ClientOptions) {
+		o.customServerURL = url
+	}
+}
+
+func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error) {
+	var options ClientOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	if r.Client != nil {
 		return NewClient(github.NewClient(r.Client), owner, repo), nil
 	}
@@ -44,10 +65,10 @@ func (r *Factory) New(ctx context.Context, owner, repo string, ghToken common.Ra
 	}
 
 	ghClient := github.NewClient(httpClient)
-	if customServerURL != "" {
-		enterprise, err := ghClient.WithEnterpriseURLs(customServerURL, customServerURL)
+	if options.customServerURL != "" {
+		enterprise, err := ghClient.WithEnterpriseURLs(options.customServerURL, options.customServerURL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to configure Github Enterprise URLs for %s: %w", customServerURL, err)
+			return nil, fmt.Errorf("failed to configure GitHub Enterprise URLs for %q: %w", options.customServerURL, err)
 		}
 		ghClient = enterprise
 	}

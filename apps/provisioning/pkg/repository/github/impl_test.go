@@ -341,7 +341,7 @@ func TestGithubClient_GetCommits(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -519,7 +519,7 @@ func TestGithubClient_ListWebhooks(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -724,7 +724,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -901,7 +901,7 @@ func TestGithubClient_GetWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1044,7 +1044,7 @@ func TestGithubClient_DeleteWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1238,7 +1238,7 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1422,7 +1422,7 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -1542,7 +1542,7 @@ func TestCreatePullRequestComment(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
@@ -2640,7 +2640,7 @@ func TestGithubClient_GetRepository(t *testing.T) {
 			// Create a mock client
 			factory := ProvideFactory()
 			factory.Client = tt.mockHandler
-			client, err := factory.New(context.Background(), tt.owner, tt.repository, "", "")
+			client, err := factory.New(context.Background(), tt.owner, tt.repository, "")
 			assert.NoError(t, err)
 
 			// Call the method being tested
