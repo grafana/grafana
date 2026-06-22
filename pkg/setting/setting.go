@@ -330,6 +330,9 @@ type Cfg struct {
 	// Auth proxy settings
 	AuthProxy AuthProxySettings
 
+	// Passkey auth settings
+	Passkey PasskeySettings
+
 	// OAuth
 	OAuthAutoLogin                       bool
 	OAuthLoginErrorMessage               string
@@ -1709,6 +1712,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readAuthJWTSettings()
 	cfg.readAuthExtJWTSettings()
 	cfg.readAuthProxySettings()
+	cfg.readPasskeySettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
