@@ -55,13 +55,12 @@ type ZanzanaClientSettings struct {
 type ZanzanaReconcilerMode string
 
 const (
-	ZanzanaReconcilerModeLegacy   ZanzanaReconcilerMode = "legacy"
 	ZanzanaReconcilerModeMT       ZanzanaReconcilerMode = "mt"
 	ZanzanaReconcilerModeDisabled ZanzanaReconcilerMode = "disabled"
 )
 
 type ZanzanaReconcilerSettings struct {
-	// Mode selects which reconciler to run: "legacy", "mt", or "disabled".
+	// Mode selects which reconciler to run: "mt" (default) or "disabled".
 	Mode ZanzanaReconcilerMode
 
 	// --- MT reconciler settings (only used when Mode == "mt") ---
@@ -405,7 +404,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	// Reconciler settings
 	reconcilerSec := cfg.SectionWithEnvOverrides("zanzana.reconciler")
 	zr := ZanzanaReconcilerSettings{}
-	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
+	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString(string(ZanzanaReconcilerModeMT)))
 	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
 	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
 	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
