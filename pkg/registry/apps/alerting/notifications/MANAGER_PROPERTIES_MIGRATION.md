@@ -13,11 +13,16 @@ legacy storage without losing the managing system's identity.
 
 Resources in scope (all under `pkg/registry/apps/alerting/notifications/`):
 
-- [ ] `receiver` (contact points) — `ReceiverService`
+- [x] `receiver` (contact points) — `ReceiverService`  ← **done** (per-integration: manager
+  resolved/persisted per integration, mirroring provenance via `GetReceiverManager`)
 - [x] `templategroup` (templates) — `TemplateService`  ← **done**
 - [x] `timeinterval` (mute timings) — `MuteTimingService`  ← **reference (done)**
 - [x] `routingtree` (notification policies) — `routes.Service`  ← **done**
-- [ ] `inhibitionrule` — alertmanager-config backed
+- [~] `inhibitionrule` — **deferred to a follow-up.** Unlike the others it stores
+  provenance inline in the alertmanager config (no provenance store), so the
+  ManagerProperties table can't back it without either a stored-config schema
+  change or splitting provenance/manager across two stores (divergence risk).
+  Left with current provenance-only behavior.
 
 > **Done so far:** the shared `GetManagerPropertiesByType` store primitive (+ interface/mock/fake)
 > and the `timeinterval` resource end-to-end (service write/read, conversions, legacy storage,
