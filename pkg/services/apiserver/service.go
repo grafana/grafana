@@ -221,21 +221,15 @@ func ProvideService(
 	return s, nil
 }
 
-// registerAPIServerRoutes registers the explicit route patterns that proxy to the
-// k8s-style API server. Each per-group pattern gives that resource its own `handler`
-// label in grafana_http_request_duration_seconds; without an explicit pattern a group
-// falls through to the catch-all and is merged into the generic `/apis/*` bucket,
-// making per-resource latency/traffic impossible to observe.
+// registerAPIServerRoutes registers the explicit proxy route patterns. Each per-group
+// pattern gives that resource its own `handler` label instead of the generic /apis/* bucket.
 func registerAPIServerRoutes(k8sRoute routing.RouteRegister, handler web.Handler) {
 	k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
 	k8sRoute.Any("/dashboard.grafana.app/*", middleware.ReqSignedIn, handler)
 	k8sRoute.Any("/folder.grafana.app/*", middleware.ReqSignedIn, handler)
 
-	// Allow unauthenticated GET access to snapshots and the dashboard subresource.
-	// Snapshots are shared via URL with the key, so they are always publicly accessible.
-	// Authorization is enforced by the snapshot authorizer. These patterns are more
-	// specific than the dashboard.grafana.app wildcard above, so the router matches them
-	// first and they remain unauthenticated.
+	// Unauthenticated GET access to snapshots (shared via URL key; authz enforced by the
+	// snapshot authorizer). More specific than the dashboard wildcard, so matched first.
 	snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
 	k8sRoute.Get(snapshotPath, handler)
 	k8sRoute.Get(snapshotPath+"/dashboard", handler)

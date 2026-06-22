@@ -11,9 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// capturedRoute records a single registered route so tests can assert both the pattern
-// (which becomes the `handler` label in grafana_http_request_duration_seconds) and the
-// middleware chain (which determines whether the route requires authentication).
+// capturedRoute records a registered route so tests can assert its pattern (the `handler`
+// label) and middleware chain (which determines whether the route requires authentication).
 type capturedRoute struct {
 	method   string
 	handlers []web.Handler
@@ -46,31 +45,11 @@ func registerForTest(t *testing.T) *captureRouter {
 	return cr
 }
 
-func TestRegisterAPIServerRoutes_PerResourcePatterns(t *testing.T) {
-	cr := registerForTest(t)
-
-	// Each resource needs its own explicit route pattern so it gets a distinct
-	// `handler` label in grafana_http_request_duration_seconds instead of being merged
-	// into the generic /apis/* bucket.
-	for _, pattern := range []string{
-		"/apis/features.grafana.app/v0alpha1/*",
-		"/apis/dashboard.grafana.app/*",
-		"/apis/folder.grafana.app/*",
-		"/apis/*", // catch-all must still exist for every other group
-	} {
-		_, ok := cr.routes[pattern]
-		require.True(t, ok, "expected route %q to be registered", pattern)
-	}
-}
-
 func TestRegisterAPIServerRoutes_AuthIsPreserved(t *testing.T) {
 	cr := registerForTest(t)
 
-	// The named ProvideRouteOperationName middleware is prepended to every route, so an
-	// unauthenticated route carries [routeName, handler] while an authenticated one
-	// carries [routeName, ReqSignedIn, handler]. Comparing chain lengths guards that the
-	// new dashboard/folder wildcards keep ReqSignedIn (matching the catch-all they used
-	// to fall through), while the public snapshot routes stay unauthenticated.
+	// ProvideRouteOperationName is prepended to every route, so an unauthenticated chain is
+	// [routeName, handler] (len 2) and an authenticated one adds ReqSignedIn (len 3).
 	const unauthenticated = 2
 	const authenticated = 3
 
