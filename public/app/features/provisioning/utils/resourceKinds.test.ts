@@ -77,6 +77,15 @@ describe('getRoute', () => {
   });
 });
 
+describe('countLabel', () => {
+  it('produces singular and plural labels per kind', () => {
+    expect(RESOURCE_KINDS.dashboard.countLabel(1)).toBe('1 dashboard');
+    expect(RESOURCE_KINDS.dashboard.countLabel(3)).toBe('3 dashboards');
+    expect(RESOURCE_KINDS.folder.countLabel(1)).toBe('1 folder');
+    expect(RESOURCE_KINDS.folder.countLabel(3)).toBe('3 folders');
+  });
+});
+
 describe('getAvailableResourceKinds', () => {
   it('falls back to all known kinds when availableResources is unset', () => {
     expect(getAvailableResourceKinds(undefined)).toEqual([RESOURCE_KINDS.folder, RESOURCE_KINDS.dashboard]);
