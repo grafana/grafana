@@ -2188,7 +2188,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2206,7 +2206,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2225,7 +2225,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2244,7 +2244,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2263,7 +2263,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2283,7 +2283,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, createErr)
@@ -2304,7 +2304,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.Error(t, err)
 		require.ErrorIs(t, err, createErr)
@@ -2324,7 +2324,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "grafana", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, Path: "grafana", OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2350,7 +2350,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, false, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 2)
@@ -2382,7 +2382,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 			WithFolderMetadataEnabled(true))
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, true, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, GenerateNewFolderIDs: true, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
@@ -2404,7 +2404,7 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		fm := NewFolderManager(repo, &fakeDynamicResourceClient{}, NewEmptyFolderTree(), FolderKind)
 
 		var calls []fnCall
-		err := fm.EnsureFolderTreeExists(ctx, ref, "", inputTree, true, recordingFn(&calls))
+		err := fm.EnsureFolderTreeExists(ctx, inputTree, EnsureFolderTreeExistsOptions{Ref: ref, GenerateNewFolderIDs: true, OnFolder: recordingFn(&calls)})
 
 		require.NoError(t, err)
 		require.Len(t, calls, 1)
