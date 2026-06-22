@@ -4919,6 +4919,21 @@
     },
     {
       "metadata": {
+        "name": "table.protoRowParser",
+        "resourceVersion": "1782137642683",
+        "creationTimestamp": "2026-06-22T14:14:02Z"
+      },
+      "spec": {
+        "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-12-13T09:33:14Z"

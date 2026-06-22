@@ -17,7 +17,7 @@ import {
   useColWidths,
 } from './hooks';
 import { type TableRow } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+import { applyFilter, createTypographyContext, compileFrameToRecordsV2 as compileFrameToRecords } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);
 

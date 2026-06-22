@@ -29,7 +29,7 @@ import {
   buildInspectValue,
   buildNestedColumnWidthsMap,
   calculateFooterHeight,
-  compileFrameToRecords,
+  compileFrameToRecordsV2 as compileFrameToRecords,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,

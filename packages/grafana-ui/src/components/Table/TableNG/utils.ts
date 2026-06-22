@@ -776,6 +776,47 @@ export function applyFilter(
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
+/**
+ * @deprecated @internal
+ */
+export function compileFrameToRecordsV1(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const hasNestedFrames = (nestedFramesFieldName ?? '').length > 0;
+  const fnBody = `
+    const values = frame.fields.map(f => f.values);
+    const hasNestedFrames = ${hasNestedFrames};
+    const frameLength = frame.length ?? values[0]?.length ?? 0;
+    const rows = Array(frameLength);
+
+    let rowCount = 0;
+    for (let i = 0; i < frameLength; i++) {
+      rows[rowCount] = {
+        __depth: 0,
+        __index: i,
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
+      };
+      if (nestedRowIndex != null) {
+        rows[rowCount].__parentIndex = nestedRowIndex;
+      }
+      rowCount++;
+
+      if (hasNestedFrames) {
+        const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
+        if (childFrame) {
+          delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
+          rows[rowCount] = { __depth: 1, __index: i };
+          rowCount++;
+        }
+      }
+    }
+    return rows;
+  `;
+
+  // Creates a function that converts a DataFrame into an array of TableRows
+  // Uses new Function() for performance as it's faster than creating rows using loops
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+}
+
 // Row metadata keys that must never be shadowed by a same-named data column when
 // building rows via prototype getters (a column named e.g. "__index" would otherwise
 // override the metadata that every cell lookup depends on).
@@ -797,7 +838,7 @@ const RESERVED_ROW_KEYS = new Set(['__depth', '__index', '__parentIndex']);
  * rather than as own properties, so they do not appear in `Object.keys(row)` /
  * `JSON.stringify(row)`; no consumer relies on enumerating row own-keys.
  */
-export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+export function compileFrameToRecordsV2(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
   const displayNames = frame.fields.map(getDisplayName);
   const nestedName = (nestedFramesFieldName ?? '').length > 0 ? nestedFramesFieldName : undefined;
   const nestedColIdx = nestedName ? displayNames.indexOf(nestedName) : -1;

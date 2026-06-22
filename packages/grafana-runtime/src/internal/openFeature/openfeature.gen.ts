@@ -99,6 +99,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
+  TableProtoRowParser: "table.protoRowParser",
 } as const;
 
 /**
@@ -572,5 +574,16 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ *
+ * **Details:**
+ * - flag key: `table.protoRowParser`
+ * - default value: `false`
+ */
+export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.protoRowParser", false, options).value;
 };
 

@@ -52,7 +52,8 @@ declare module "@openfeature/core" {
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
-    | "grafana.visualDesignRefresh";
+    | "grafana.visualDesignRefresh"
+    | "table.protoRowParser";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;
