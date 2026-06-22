@@ -260,7 +260,7 @@ func (s *ModuleServer) Run() error {
 			if err != nil {
 				return nil, err
 			}
-			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore)
+			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil)
 			if err != nil {
 				return nil, err
 			}

@@ -46,9 +46,8 @@ const (
 	kvDeleteBatchSize = kv.MaxBatchOps
 
 	// defaultKVChunkSize bounds the size of a single value written to the
-	// underlying KV. 10 MiB sits well under the per-value limit on every
-	// supported KV backend.
-	defaultKVChunkSize int64 = 10 * 1024 * 1024
+	// underlying KV.
+	defaultKVChunkSize int64 = 5 * 1024 * 1024
 
 	// minKVChunkSize / maxKVChunkSize bound user-supplied ChunkSize
 	// values. The bounds are sanity guards: anything in this range works
