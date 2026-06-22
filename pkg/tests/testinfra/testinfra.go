@@ -951,7 +951,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	if opts.ScopesApiEnabled {
 		section, err := getOrCreateSection("scopes")
 		require.NoError(t, err)
-		_, err = section.NewBooleanKey("api_enabled")
+		_, err = section.NewKey("api_enabled", "true")
 		require.NoError(t, err)
 	}
 
