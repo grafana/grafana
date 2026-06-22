@@ -1,10 +1,7 @@
 import { type DataFrame } from '@grafana/data';
-import { getDistinctLabels } from 'app/features/transformers/utils';
-
-import { getSuggestedOTelDisplayFormat } from '../otel/formats';
 
 import { type FieldWithStats } from './FieldSelector';
-import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from './logFields';
+import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 
 export function getSuggestedFieldsFromTable(_: DataFrame, displayedFields: string[], defaultFields: string[] = []) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
@@ -28,16 +25,4 @@ export function getSuggestedFieldsFromTable(_: DataFrame, displayedFields: strin
   }
 
   return suggestedFields;
-}
-
-/***
- * Given a list of logs, return a list of suggested fields to display for the user.
- */
-export function getSuggestedFieldsForTable(dataFrame: DataFrame): string[] {
-  const labels = getDistinctLabels([dataFrame]);
-  const fields = getSuggestedOTelDisplayFormat();
-
-  return fields.filter(
-    (field) => field === LOG_LINE_BODY_FIELD_NAME || field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME || labels.has(field)
-  );
 }

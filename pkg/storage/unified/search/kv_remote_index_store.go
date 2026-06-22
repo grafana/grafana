@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -26,11 +27,11 @@ const (
 	// KVRemoteIndexStore stores snapshot manifests. Separate from the
 	// data section so listing complete snapshots only requires scanning
 	// manifest keys (one per snapshot) rather than every data file key.
-	IndexSnapshotManifestSection = "index-snapshot-manifest"
+	IndexSnapshotManifestSection = kv.SearchSnapshotManifestSection
 
 	// IndexSnapshotDataSection is the KV section under which
 	// KVRemoteIndexStore stores per-file snapshot data.
-	IndexSnapshotDataSection = "index-snapshot-data"
+	IndexSnapshotDataSection = kv.SearchSnapshotDataSection
 
 	// defaultKVLockTTL matches BucketRemoteIndexStore's default lock TTL.
 	defaultKVLockTTL = 3 * time.Minute
@@ -45,9 +46,8 @@ const (
 	kvDeleteBatchSize = kv.MaxBatchOps
 
 	// defaultKVChunkSize bounds the size of a single value written to the
-	// underlying KV. 10 MiB sits well under the per-value limit on every
-	// supported KV backend.
-	defaultKVChunkSize int64 = 10 * 1024 * 1024
+	// underlying KV.
+	defaultKVChunkSize int64 = 5 * 1024 * 1024
 
 	// minKVChunkSize / maxKVChunkSize bound user-supplied ChunkSize
 	// values. The bounds are sanity guards: anything in this range works
@@ -56,6 +56,12 @@ const (
 	// per-value cap with margin.
 	minKVChunkSize int64 = 1024 * 1024
 	maxKVChunkSize int64 = 1024 * 1024 * 1024
+
+	// maxKVChunkConcurrency caps the per-file parallelism for chunk I/O.
+	// The cap is a sanity bound: values much higher than this hit
+	// diminishing returns and risk overloading the KV backend or
+	// exhausting connection pools.
+	maxKVChunkConcurrency = 32
 
 	// kvChunkSuffixFormat zero-pads the chunk index so listing returns
 	// chunks in numeric order. Six digits supports up to a million chunks
@@ -85,6 +91,12 @@ type KVRemoteIndexStoreConfig struct {
 	// length, so writers can change ChunkSize between deployments without
 	// breaking existing snapshots. Zero falls back to defaultKVChunkSize.
 	ChunkSize int64
+
+	// ChunkConcurrency bounds the number of chunks uploaded or downloaded
+	// in parallel per snapshot file. Zero means 1 (fully serial). On the
+	// read side, chunk 0 is always read serially first (it reveals the
+	// writer's chunk size); only chunks 1..N-1 are parallelized.
+	ChunkConcurrency int
 }
 
 // KVRemoteIndexStore implements RemoteIndexStore on top of a kv.KV.
@@ -127,12 +139,13 @@ type KVRemoteIndexStoreConfig struct {
 // not surface incomplete uploads; the cleanup pass uses
 // ListIndexKeysIncludingIncomplete to get that wider view.
 type KVRemoteIndexStore struct {
-	store           kv.KV
-	leaseMgr        *lease.Manager
-	buildLockOpts   LockOptions
-	cleanupLockOpts LockOptions
-	chunkSize       int64
-	log             log.Logger
+	store            kv.KV
+	leaseMgr         *lease.Manager
+	buildLockOpts    LockOptions
+	cleanupLockOpts  LockOptions
+	chunkSize        int64
+	chunkConcurrency int
+	log              log.Logger
 }
 
 // NewKVRemoteIndexStore creates a KVRemoteIndexStore from cfg. Returns an
@@ -148,13 +161,18 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 	if chunkSize < minKVChunkSize || chunkSize > maxKVChunkSize {
 		return nil, fmt.Errorf("chunk size %d out of range [%d, %d]", chunkSize, minKVChunkSize, maxKVChunkSize)
 	}
+	chunkConcurrency := cmp.Or(cfg.ChunkConcurrency, 1)
+	if chunkConcurrency < 1 || chunkConcurrency > maxKVChunkConcurrency {
+		return nil, fmt.Errorf("chunk concurrency %d out of range [1, %d]", chunkConcurrency, maxKVChunkConcurrency)
+	}
 	return &KVRemoteIndexStore{
-		store:           cfg.KV,
-		leaseMgr:        cfg.LeaseManager,
-		buildLockOpts:   cfg.BuildLock,
-		cleanupLockOpts: cfg.CleanupLock,
-		chunkSize:       chunkSize,
-		log:             log.New("kv-remote-index-store"),
+		store:            cfg.KV,
+		leaseMgr:         cfg.LeaseManager,
+		buildLockOpts:    cfg.BuildLock,
+		cleanupLockOpts:  cfg.CleanupLock,
+		chunkSize:        chunkSize,
+		chunkConcurrency: chunkConcurrency,
+		log:              log.New("kv-remote-index-store"),
 	}, nil
 }
 
@@ -258,18 +276,20 @@ func (s *KVRemoteIndexStore) WriteSnapshotFile(ctx context.Context, nsResource r
 	}
 	numChunks := (size + s.chunkSize - 1) / s.chunkSize
 
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(s.chunkConcurrency)
 	for chunkIdx := range numChunks {
 		offset := chunkIdx * s.chunkSize
 		length := s.chunkSize
 		if remaining := size - offset; remaining < length {
 			length = remaining
 		}
-		section := io.NewSectionReader(src, offset, length)
-		if err := s.writeChunk(ctx, nsResource, indexKey, relPath, chunkIdx, section); err != nil {
-			return err
-		}
+		g.Go(func() error {
+			section := io.NewSectionReader(src, offset, length)
+			return s.writeChunk(gctx, nsResource, indexKey, relPath, chunkIdx, section)
+		})
 	}
-	return nil
+	return g.Wait()
 }
 
 // writeChunk uploads a single chunk to its KV key. The reader is fully
@@ -326,26 +346,40 @@ func (s *KVRemoteIndexStore) ReadSnapshotFile(ctx context.Context, nsResource re
 	// Chunk 0 covered some but not all of the file, so its size IS the
 	// writer's chunk size; fetch the rest accordingly.
 	chunkSize := n0
-	written := n0
-	for chunkIdx := int64(1); written < expectedSize; chunkIdx++ {
-		// Cap each subsequent chunk at chunkSize+1 to detect over-read
-		// without buffering the whole chunk first.
-		n, err := s.readChunk(ctx, nsResource, indexKey, relPath, chunkIdx, dst, chunkSize+1)
-		if err != nil {
-			if errors.Is(err, kv.ErrNotFound) {
-				return fmt.Errorf("chunk %d of %s missing: %w", chunkIdx, relPath, err)
+	numChunks := (expectedSize + chunkSize - 1) / chunkSize
+
+	// Parallel reads write to their assigned slot in dst via
+	// io.OffsetWriter, so chunks can land in any order.
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(s.chunkConcurrency)
+	for chunkIdx := int64(1); chunkIdx < numChunks; chunkIdx++ {
+		offset := chunkIdx * chunkSize
+		chunkMax := chunkSize
+		if chunkIdx == numChunks-1 {
+			// Tail chunk may be short; cap at the remaining bytes.
+			chunkMax = expectedSize - offset
+		}
+		g.Go(func() error {
+			// Cap each chunk at chunkMax+1 to detect over-read without
+			// buffering the whole chunk first.
+			out := io.NewOffsetWriter(dst, offset)
+			n, err := s.readChunk(gctx, nsResource, indexKey, relPath, chunkIdx, out, chunkMax+1)
+			if err != nil {
+				if errors.Is(err, kv.ErrNotFound) {
+					return fmt.Errorf("chunk %d of %s missing: %w", chunkIdx, relPath, err)
+				}
+				return err
 			}
-			return err
-		}
-		if n == 0 {
-			return fmt.Errorf("chunk %d of %s is empty", chunkIdx, relPath)
-		}
-		written += n
-		if written > expectedSize {
-			return fmt.Errorf("remote object %s exceeds expected size %d: %w", relPath, expectedSize, resource.ErrWriteLimitExceeded)
-		}
+			if n == 0 {
+				return fmt.Errorf("chunk %d of %s is empty", chunkIdx, relPath)
+			}
+			if n > chunkMax {
+				return fmt.Errorf("remote object %s chunk %d exceeds expected size: %w", relPath, chunkIdx, resource.ErrWriteLimitExceeded)
+			}
+			return nil
+		})
 	}
-	return nil
+	return g.Wait()
 }
 
 // readChunk fetches one chunk into dst, capped at maxBytes to detect

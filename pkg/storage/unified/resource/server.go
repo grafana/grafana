@@ -275,6 +275,13 @@ type SearchOptions struct {
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	SelectableFieldsForKinds map[string][]string
 
+	// Map "group/resource" -> hash of the SearchFieldDefinition slices
+	// registered for that (group, resource), across every version. The
+	// search server compares this against the value stored in each index's
+	// IndexBuildInfo and triggers a rebuild on mismatch. Keys must be
+	// lower-case. Entries with empty hash strings are ignored.
+	SearchFieldsHashesForKinds map[string]string
+
 	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
 	// IndexSnapshotEnabled gates the entire snapshot feature.
 	IndexSnapshotEnabled bool
@@ -380,15 +387,10 @@ type ResourceServerOptions struct {
 	// the RPC then returns Unimplemented.
 	Embedder *embedder.Embedder
 
-	// VectorBackfiller, when non-nil, is launched in a background
-	// goroutine after Init. The server tracks it in its WaitGroup so
-	// Stop blocks until it returns. nil = backfill feature off.
-	VectorBackfiller Runnable
-
-	// VectorReconciler, when non-nil, is launched alongside the
-	// backfiller; the server attaches its own broadcaster to it before
-	// starting Run so the reconciler's watch path lights up. nil =
-	// reconciler feature off.
+	// VectorReconciler, when non-nil, is launched after Init; the server
+	// attaches its own broadcaster to it before starting Run so the
+	// reconciler's watch path lights up. The reconciler owns the
+	// backfiller and runs it. nil = reconciler feature off.
 	VectorReconciler BroadcasterConsumer
 }
 
@@ -539,7 +541,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
-		vectorBackfiller:               opts.VectorBackfiller,
 		vectorWriteReconciler:          opts.VectorReconciler,
 	}
 
@@ -549,6 +550,11 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// Access to search is required when checking quotas.
+	if opts.OverridesService != nil && s.search == nil && opts.SearchClient == nil {
+		return nil, fmt.Errorf("overrides service requires search for quota checking")
 	}
 
 	return s, nil
@@ -641,9 +647,8 @@ type server struct {
 
 	bookmarkFrequency time.Duration
 
-	// Async vector indexers (backfiller + reconciler).
-	// Started in Init, joined in Stop via indexersWG.
-	vectorBackfiller      Runnable
+	// Vector reconciler (which owns the backfiller). Started in Init,
+	// joined in Stop via indexersWG.
 	vectorWriteReconciler BroadcasterConsumer
 	indexersWG            sync.WaitGroup
 }
@@ -680,18 +685,11 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-// startVectorIndexers launches the configured backfiller and
-// reconciler. Both are optional (nil = feature off). The reconciler
-// gets the server's broadcaster via UseBroadcaster before Run; the
-// backfiller doesn't need the watch path.
+// startVectorIndexers launches the vector reconciler (which owns and runs
+// the backfiller). Optional: nil = feature off. The reconciler gets the
+// server's broadcaster via UseBroadcaster before Run so its watch path
+// lights up.
 func (s *server) startVectorIndexers() {
-	if s.vectorBackfiller != nil {
-		s.indexersWG.Go(func() {
-			if err := s.vectorBackfiller.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector backfiller stopped", "err", err)
-			}
-		})
-	}
 	if s.vectorWriteReconciler != nil {
 		if s.broadcaster != nil {
 			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
@@ -1700,8 +1698,20 @@ func (s *server) initWatcher() error {
 }
 
 //nolint:gocyclo
-func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) error {
+func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStore_WatchServer) (retErr error) {
 	ctx := srv.Context()
+
+	// When our context is canceled (e.g. client disconnects), downstream calls
+	// like srv.Send may surface that cancellation back to us. Treat it as a
+	// clean shutdown to match the explicit `case <-ctx.Done(): return nil`
+	// branch in the watch loop. Context errors from other contexts are still
+	// propagated.
+	defer func() {
+		if retErr != nil && ctx.Err() != nil &&
+			(errors.Is(retErr, context.Canceled) || errors.Is(retErr, context.DeadlineExceeded)) {
+			retErr = nil
+		}
+	}()
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -1949,15 +1959,21 @@ func (s *server) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequ
 		return nil, err
 	}
 
-	if s.search == nil {
-		// If the backend implements "GetStats", we can use it
-		srv, ok := s.backend.(StatsGetter)
-		if ok {
-			return srv.GetStats(ctx, req)
-		}
-		return nil, fmt.Errorf("search index not configured")
+	if s.search != nil {
+		return s.search.GetStats(ctx, req)
 	}
-	return s.search.GetStats(ctx, req)
+
+	if s.searchClient != nil {
+		return s.searchClient.GetStats(ctx, req)
+	}
+
+	// TODO: remove this fallback once the SQL backend is phased out; it's not implemented
+	// in the KV backend.
+	if srv, ok := s.backend.(StatsGetter); ok {
+		return srv.GetStats(ctx, req)
+	}
+
+	return nil, fmt.Errorf("search index not configured")
 }
 
 // requireUserNamespace is a cross-tenant safety net for delegated-only
@@ -2089,21 +2105,24 @@ func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRe
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	}
-	usage, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
+	}
+	if statsRsp.Error != nil {
+		return &resourcepb.QuotaUsageResponse{Error: statsRsp.Error}, nil
 	}
 	limit, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		return &resourcepb.QuotaUsageResponse{Error: AsErrorResult(err)}, nil
 	}
 
-	// handle case where no resources exist yet - very unlikely but possible
 	rsp := &resourcepb.QuotaUsageResponse{Limit: int64(limit.Limit)}
-	if len(usage) <= 0 {
-		rsp.Usage = 0
-	} else {
-		rsp.Usage = usage[0].Count
+	if len(statsRsp.Stats) > 0 {
+		rsp.Usage = statsRsp.Stats[0].Count
 	}
 
 	return rsp, nil
@@ -2263,11 +2282,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 		return nil
 	}
 
-	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
+	statsRsp, err := s.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		Namespace: nsr.Namespace,
+		Kinds:     []string{nsr.GroupResource()},
+	})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
 		return nil
 	}
+	if statsRsp.Error != nil {
+		s.log.FromContext(ctx).Error("call to GetStats returned error", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", statsRsp.Error.Message)
+		return nil
+	}
+	stats := statsRsp.Stats
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
 	} else {

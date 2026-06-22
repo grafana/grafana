@@ -18,6 +18,9 @@
     "primary": {
       "main": "#FF6F61"
     },
+    "accent": {
+      "main": "#FF6F61"
+    },
     "secondary": {
       "main": "#6a2f2f",
       "text": "#BBBBBB",
@@ -25,6 +28,7 @@
     },
     "background": {
       "canvas": "#3C1E1E",
+      "page": "#472222",
       "primary": "#522626",
       "secondary": "#6A2F2F",
       "elevated": "#6A2F2F"

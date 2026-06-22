@@ -7,6 +7,7 @@ import {
   type DataTransformerConfig,
   getDataSourceRef,
   getNextRefId,
+  type ScopedVars,
 } from '@grafana/data';
 import { config, getDataSourceSrv, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import {
@@ -29,7 +30,7 @@ import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
-import { filterDataTransformerConfigs } from './QueryEditor/utils';
+import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
@@ -104,6 +105,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   public constructor(state: PanelDataPaneNextState) {
     super(state);
     this.addActivationHandler(() => this.onActivate());
+  }
+
+  /** Scene scope for resolving section-scoped (row/tab) datasource variables. See {@link getPanelScopedVars}. */
+  private getPanelContext(): ScopedVars {
+    return getPanelScopedVars(this.state.panelRef.resolve());
   }
 
   private onActivate() {
@@ -192,8 +198,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         return;
       }
 
-      const datasource = await getDataSourceSrv().get(datasourceToLoad);
-      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+      const panelContext = this.getPanelContext();
+      const datasource = await getDataSourceSrv().get(datasourceToLoad, panelContext);
+      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad, panelContext);
 
       // Treat a missing dsSettings as a load failure so the catch block can attempt the
       // default fallback — same recovery path as a rejected get() call.
@@ -389,7 +396,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
+    const panelContext = this.getPanelContext();
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef, panelContext);
     if (!newDataSource) {
       this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
       return;
@@ -397,7 +405,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     let defaultQuery: Partial<DataQuery> | undefined;
     try {
-      const ds = await getDataSourceSrv().get(dsRef);
+      const ds = await getDataSourceSrv().get(dsRef, panelContext);
       defaultQuery = ds.getDefaultQuery?.(CoreApp.PanelEditor);
     } catch {
       this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
@@ -410,7 +418,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     const remapQuery = (query: DataQuery, fallbackDsRef?: DataSourceRef): DataQuery => {
       if (refIdSet.has(query.refId)) {
         const previousDataSource = query.datasource
-          ? getDataSourceSrv().getInstanceSettings(query.datasource)
+          ? getDataSourceSrv().getInstanceSettings(query.datasource, panelContext)
           : undefined;
         const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
         if (shouldUseDefaultQuery && defaultQuery) {
@@ -581,7 +589,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
+    const panelContext = this.getPanelContext();
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef, panelContext);
     if (!newDataSource) {
       // Surface the failure in the editor rather than throwing — the caller (sidebar DS picker)
       // does not wrap changeDataSource in a try/catch, so a thrown error would be silently swallowed.
@@ -597,7 +606,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const targetQuery = queries[targetIndex];
     const previousDataSource = targetQuery.datasource
-      ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
+      ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource, panelContext)
       : undefined;
 
     const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
@@ -605,7 +614,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     let updatedQuery: DataQuery;
     if (shouldUseDefaultQuery) {
       try {
-        const ds = await getDataSourceSrv().get(dsRef);
+        const ds = await getDataSourceSrv().get(dsRef, panelContext);
         updatedQuery = { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...targetQuery, datasource: dsRef };
       } catch {
         this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });

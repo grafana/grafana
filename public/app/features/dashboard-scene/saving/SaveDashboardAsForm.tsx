@@ -217,42 +217,30 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   );
 }
 
-export interface TitleLabelProps {
+interface TitleLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function TitleFieldLabel(props: TitleLabelProps) {
+function TitleFieldLabel(props: TitleLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.title-field-label.title">Title</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }
 
-export interface DescriptionLabelProps {
+interface DescriptionLabelProps {
   onChange: UseFormSetValue<SaveDashboardAsFormDTO>;
 }
 
-export function DescriptionLabel(props: DescriptionLabelProps) {
+function DescriptionLabel(props: DescriptionLabelProps) {
   return (
     <Stack justifyContent="space-between">
       <Label htmlFor="description">
         <Trans i18nKey="dashboard-scene.description-label.description">Description</Trans>
       </Label>
-      {/* {config.featureToggles.dashgpt && isNew && (
-                <GenAIDashDescriptionButton
-                  onGenerate={(description) => field.onChange(description)}
-                  dashboard={dashboard}
-                />
-              )} */}
     </Stack>
   );
 }

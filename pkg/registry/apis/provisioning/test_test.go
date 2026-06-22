@@ -36,11 +36,12 @@ func TestTestConnector_RequiresNewTokenWhenURLChanges(t *testing.T) {
 	)
 
 	responder := &testResponder{}
-	handler, err := connector.Connect(request.WithNamespace(context.Background(), "default"), "test", nil, responder)
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "test", nil, responder)
 	require.NoError(t, err)
 
 	body := `{"spec":{"title":"Test Repo","type":"github","github":{"url":"https://github.com/grafana/new","branch":"main"}}}`
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)))
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)).WithContext(ctx))
 
 	require.Error(t, responder.err)
 	status := responder.err.(apierrors.APIStatus).Status()
@@ -70,11 +71,12 @@ func TestTestConnector_AllowsURLChangeWithNewToken(t *testing.T) {
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
 	)
-	handler, err := connector.Connect(request.WithNamespace(context.Background(), "default"), "test", nil, responder)
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "test", nil, responder)
 	require.NoError(t, err)
 
 	body := `{"spec":{"title":"Test Repo","type":"github","github":{"url":"https://github.com/grafana/new","branch":"main"}},"secure":{"token":{"create":"new-token"}}}`
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)))
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)).WithContext(ctx))
 
 	require.NoError(t, responder.err)
 	assert.Equal(t, http.StatusOK, responder.statusCode)
@@ -103,11 +105,12 @@ func TestTestConnector_AllowsUnchangedURLWithoutNewToken(t *testing.T) {
 		&testConnectorDeps{repo: oldRepo, repoFactory: repoFactory},
 		repository.NewTester(),
 	)
-	handler, err := connector.Connect(request.WithNamespace(context.Background(), "default"), "test", nil, responder)
+	ctx := request.WithNamespace(context.Background(), "default")
+	handler, err := connector.Connect(ctx, "test", nil, responder)
 	require.NoError(t, err)
 
 	body := `{"spec":{"title":"Updated Title","type":"github","github":{"url":"https://github.com/grafana/repo","branch":"main"}}}`
-	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)))
+	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/test", strings.NewReader(body)).WithContext(ctx))
 
 	require.NoError(t, responder.err)
 	assert.Equal(t, http.StatusOK, responder.statusCode)
