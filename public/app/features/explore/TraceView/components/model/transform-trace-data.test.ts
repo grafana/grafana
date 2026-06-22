@@ -335,6 +335,26 @@ describe('transformTraceData() pruned span detection', () => {
     expect(agg.spanCount).toBeUndefined();
   });
 
+  // summary_span_id is emitted as a string by the processor, but the tag value type is `any`.
+  // String(value) on a non-string (e.g. null) would store a misleading "null"/"false" id, so a
+  // non-string or empty value must be dropped, not coerced.
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['boolean false', false],
+    ['number', 0],
+    ['empty string', ''],
+  ])('drops a %s summary_span_id instead of coercing it to a string', (_label, bad) => {
+    const fixture = structuredClone(summaryWithPreservedOutliers);
+    const tags = fixture.spans.find((s) => s.spanID === 'outl00000000d401')!.tags!;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tags.find((t) => t.key === 'aggregation.summary_span_id')!.value = bad as any;
+
+    const agg = spanById(transformTraceData(fixture)!, 'outl00000000d401').aggregation!;
+    expect(agg.isPreservedOutlier).toBe(true);
+    expect(agg.summarySpanId).toBeUndefined();
+  });
+
   // Regression lock for the shared-fixture contract: transformTraceData mutates its input,
   // so callers must clone. This proves repeated transforms are stable AND the singleton is
   // never touched - if a future edit drops a structuredClone, the snapshot assertion fails.

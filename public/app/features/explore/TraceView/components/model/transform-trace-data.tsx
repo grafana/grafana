@@ -85,9 +85,12 @@ function extractSpanAggregation(tags: TraceKeyValuePair[]): SpanAggregation | un
     }
   }
 
+  // summary_span_id is a string (PutStr) but the tag value type is `any`;
+  // Restrict to only accept a non-empty string; String() coercion would
+  // store a misleading "null"/"undefined"/"false"/"0" etc.
   const summarySpanId = byKey.get('aggregation.summary_span_id');
-  if (summarySpanId !== undefined) {
-    aggregation.summarySpanId = String(summarySpanId);
+  if (typeof summarySpanId === 'string' && summarySpanId !== '') {
+    aggregation.summarySpanId = summarySpanId;
   }
 
   return aggregation;
