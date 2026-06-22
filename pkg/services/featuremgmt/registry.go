@@ -2263,10 +2263,10 @@ var (
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
