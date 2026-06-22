@@ -245,9 +245,17 @@ function FiringAlertsCardInner() {
               variant="secondary"
               size="sm"
               fill="text"
-              href={`/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`}
+              href={
+                alerts?.length
+                  ? `/alerting/groups?${ALERTMANAGER_NAME_QUERY_KEY}=${GRAFANA_RULES_SOURCE_NAME}`
+                  : `/alerting/list?search=source:${GRAFANA_RULES_SOURCE_NAME}`
+              }
             >
-              <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
+              {alerts?.length ? (
+                <Trans i18nKey="home.firing-alerts-card.view-all">View all firing alerts</Trans>
+              ) : (
+                <Trans i18nKey="home.firing-alerts-card.view-rules">View all alert rules</Trans>
+              )}
             </LinkButton>
           </Stack>
         )}

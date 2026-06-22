@@ -628,7 +628,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp", // date?
+				Description: "created timestamp (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_UPDATED,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "updated timestamp (unix millis)",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED_BY,

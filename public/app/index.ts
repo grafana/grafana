@@ -21,7 +21,7 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 async function bootstrapWindowData() {
-  if (window.__grafanaReduceBootdataAPI) {
+  if (window.__grafanaNewPreferencesPage) {
     await initPreferences();
   }
 

@@ -163,7 +163,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -199,7 +199,7 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	mk := func(uid, sub, content string) Vector {
 		return Vector{
 			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
-			Subresource: sub, ResourceVersion: 10, Content: content,
+			Subresource: sub, ResourceVersion: 10, Content: content, Folder: "folder-a",
 			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		}
 	}
@@ -216,21 +216,23 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 
 	// Replace dash-a with just panel/1 (rewritten) and panel/4 (new).
 	// panel/2 and panel/3 must be deleted in the same transaction.
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	// desired = the full surviving set; changed = the rows to write.
+	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash-a", []Vector{
 		mk("dash-a", "panel/1", "a-1 updated"),
 		mk("dash-a", "panel/4", "a-4 new"),
-	})
+	}, []string{"panel/1", "panel/4"})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
+	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "a-1 updated",
 		"panel/4": "a-4 new",
 	}, stored, "stale subresources removed; new set is the exact replacement")
+	assert.Equal(t, "folder-a", folder, "stored folder is returned alongside content")
 
 	// dash-b must be untouched.
-	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	storedB, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "b-1",
@@ -241,10 +243,9 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
 }
 
-// TestIntegrationVectorUpsertReplaceSubresources_MultiUID verifies
-// that a single call covering multiple UIDs replaces each UID's set
-// independently in one transaction.
-func TestIntegrationVectorUpsertReplaceSubresources_MultiUID(t *testing.T) {
+// changed ⊊ desired: only `changed` rows are rewritten, panels in
+// `desired` but not `changed` are kept, and nothing is deleted.
+func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
 	mk := func(uid, sub, content string) Vector {
@@ -256,27 +257,57 @@ func TestIntegrationVectorUpsertReplaceSubresources_MultiUID(t *testing.T) {
 	}
 
 	require.NoError(t, backend.Upsert(ctx, []Vector{
-		mk("dash-a", "panel/1", "a-1"),
-		mk("dash-a", "panel/2", "a-2"),
-		mk("dash-b", "panel/1", "b-1"),
-		mk("dash-b", "panel/2", "b-2"),
+		mk("dash", "panel/1", "p1"),
+		mk("dash", "panel/2", "p2"),
+		mk("dash", "panel/3", "p3"),
 	}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, []Vector{
-		mk("dash-a", "panel/1", "a-1 v2"),
-		mk("dash-b", "panel/3", "b-3"),
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
+		[]Vector{
+			mk("dash", "panel/2", "p2 v2"), // changed
+			mk("dash", "panel/9", "p9"),    // new
+		},
+		[]string{"panel/1", "panel/2", "panel/3", "panel/9"},
+	))
+
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"panel/1": "p1",    // untouched (kept via desired, not in changed)
+		"panel/2": "p2 v2", // rewritten
+		"panel/3": "p3",    // untouched
+		"panel/9": "p9",    // new
+	}, stored)
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+}
+
+// Empty `changed`: a panel is dropped from `desired` and deleted, with nothing to upsert.
+func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub, content string) Vector {
+		return Vector{
+			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
+			Subresource: sub, ResourceVersion: 1, Content: content,
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		}
+	}
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("dash", "panel/1", "p1"),
+		mk("dash", "panel/2", "p2"),
 	}))
 
-	storedA, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
-	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"panel/1": "a-1 v2"}, storedA)
+	// No changed vectors; desired drops panel/2.
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
+		nil, []string{"panel/1"}))
 
-	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"panel/3": "b-3"}, storedB)
+	assert.Equal(t, map[string]string{"panel/1": "p1"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_EmptyInput is the
@@ -290,9 +321,9 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 		Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 	}}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil))
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
 
@@ -323,14 +354,14 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	// Second vector has empty Title — Validate() rejects it.
 	bad := mk("dash", "panel/2", "v2-bad")
 	bad.Title = ""
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", []Vector{
 		mk("dash", "panel/1", "v2"),
 		bad,
-	})
+	}, []string{"panel/1", "panel/2"})
 	require.Error(t, err)
 
 	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
 		"failed batch leaves no half-applied state")
