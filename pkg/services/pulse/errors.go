@@ -26,4 +26,12 @@ var (
 	ErrThreadAlreadyClosed         = errors.New("thread is already closed")
 	ErrThreadNotClosed             = errors.New("thread is not closed")
 	ErrPulseUnsupported            = errors.New("pulse feature is not fully wired in this build")
+
+	// Pulse hook (named webhook) errors.
+	ErrHookNotFound      = errors.New("pulse hook not found")
+	ErrHookNameRequired  = errors.New("pulse hook name is required")
+	ErrHookNameTooLong   = errors.New("pulse hook name exceeds the length limit")
+	ErrHookNameDuplicate = errors.New("a pulse hook with this name already exists")
+	ErrHookInvalidType   = errors.New("invalid pulse hook type")
+	ErrHookInvalidURL    = errors.New("pulse hook url must be a valid http(s) URL")
 )

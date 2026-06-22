@@ -17,11 +17,13 @@ func newTestService(t *testing.T) *PulseService {
 	t.Helper()
 	sql := db.InitTestDB(t)
 	return &PulseService{
-		cfg:      PulseConfig{MaxBodyBytes: MaxBodyBytes},
-		store:    newStore(sql),
-		live:     NoopPublisher(),
-		notifier: &LogOnlyNotifier{Log: log.New("pulse.test")},
-		log:      log.New("pulse.test"),
+		cfg:        PulseConfig{MaxBodyBytes: MaxBodyBytes},
+		store:      newStore(sql),
+		hookStore:  newHookStore(sql),
+		dispatcher: newWebhookDispatcher(nil, log.New("pulse.test")),
+		live:       NoopPublisher(),
+		notifier:   &LogOnlyNotifier{Log: log.New("pulse.test")},
+		log:        log.New("pulse.test"),
 	}
 }
 

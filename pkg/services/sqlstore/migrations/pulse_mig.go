@@ -176,4 +176,34 @@ func addPulseMigrations(mg *Migrator) {
 			"DELETE FROM pulse_mention WHERE kind = 'folder'",
 		),
 	)
+
+	// v4: named Pulse hooks (outbound integrations). A hook is an
+	// org-scoped, named webhook that fires when a pulse mentions it.
+	// Name is unique per org (case sensitivity follows the column
+	// collation) so it can serve as a stable @-mention handle. The
+	// schema carries a `type` column from the start so future
+	// transports (Slack, Teams, ...) need no migration.
+	pulseHookV1 := Table{
+		Name: "pulse_hook",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "type", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "'webhook'"},
+			{Name: "url", Type: DB_Text, Nullable: false},
+			{Name: "secret", Type: DB_Text, Nullable: true},
+			{Name: "disabled", Type: DB_Bool, Nullable: false, Default: "0"},
+			{Name: "created_by", Type: DB_BigInt, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id", "uid"}, Type: UniqueIndex},
+			{Cols: []string{"org_id", "name"}, Type: UniqueIndex},
+		},
+	}
+	mg.AddMigration("create pulse_hook table v1", NewAddTableMigration(pulseHookV1))
+	mg.AddMigration("add unique index pulse_hook.org_id_uid", NewAddIndexMigration(pulseHookV1, pulseHookV1.Indices[0]))
+	mg.AddMigration("add unique index pulse_hook.org_id_name", NewAddIndexMigration(pulseHookV1, pulseHookV1.Indices[1]))
 }

@@ -46,11 +46,19 @@ const (
 	MentionKindPanel     MentionKind = "panel"
 	MentionKindDashboard MentionKind = "dashboard"
 	MentionKindTime      MentionKind = "time"
+	// MentionKindWebhook references a named Pulse hook (an outbound
+	// integration configured under Administration). The TargetID is
+	// the hook's UID. Unlike user/panel/dashboard mentions, a webhook
+	// mention is an *action* trigger: when a pulse carrying one is
+	// saved, the matching hook fires (see hooks_dispatcher.go). It is
+	// denormalized into pulse_mention like other entity mentions so a
+	// future "where is this hook used" query is a single index hit.
+	MentionKindWebhook MentionKind = "webhook"
 )
 
 func (k MentionKind) Valid() bool {
 	switch k {
-	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime:
+	case MentionKindUser, MentionKindPanel, MentionKindDashboard, MentionKindTime, MentionKindWebhook:
 		return true
 	}
 	return false

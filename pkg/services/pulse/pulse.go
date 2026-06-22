@@ -45,6 +45,13 @@ type Service interface {
 	ListParticipants(ctx context.Context, q ListParticipantsQuery) ([]ParticipantSummary, error)
 	Subscribe(ctx context.Context, cmd SubscribeCommand) error
 	Unsubscribe(ctx context.Context, cmd SubscribeCommand) error
+	// Named hook (outbound webhook) management.
+	CreateHook(ctx context.Context, cmd CreateHookCommand) (Hook, error)
+	UpdateHook(ctx context.Context, cmd UpdateHookCommand) (Hook, error)
+	DeleteHook(ctx context.Context, cmd DeleteHookCommand) error
+	GetHook(ctx context.Context, orgID int64, uid string) (Hook, error)
+	ListHooks(ctx context.Context, q ListHooksQuery) ([]Hook, error)
+	ListMentionableHooks(ctx context.Context, q MentionableHooksQuery) ([]HookMentionHit, error)
 	MarkRead(ctx context.Context, cmd MarkReadCommand) error
 	GetResourceVersion(ctx context.Context, orgID int64, kind ResourceKind, uid string) (ResourceVersion, error)
 	CountUnreadForResource(ctx context.Context, orgID, userID int64, kind ResourceKind, uid string) (int64, error)
@@ -55,6 +62,8 @@ type Service interface {
 type PulseService struct {
 	cfg           PulseConfig
 	store         *store
+	hookStore     *hookStore
+	dispatcher    *webhookDispatcher
 	live          Publisher
 	notifier      Notifier
 	accessControl accesscontrol.AccessControl
@@ -95,6 +104,8 @@ func ProvideService(
 	s := &PulseService{
 		cfg:           PulseConfig{MaxBodyBytes: MaxBodyBytes},
 		store:         newStore(sqlStore),
+		hookStore:     newHookStore(sqlStore),
+		dispatcher:    newWebhookDispatcher(cfg, logger),
 		live:          NewLivePublisher(channelPub),
 		notifier:      buildNotifier(cfg, features, notificationSvc, userSvc, logger),
 		accessControl: ac,
@@ -108,6 +119,7 @@ func ProvideService(
 	}
 
 	s.registerAPIEndpoints()
+	s.registerHookAPIEndpoints()
 	return s, nil
 }
 
@@ -215,7 +227,7 @@ func (s *PulseService) CreateThread(ctx context.Context, cmd CreateThreadCommand
 		AuthorUserID: cmd.AuthorUserID,
 		At:           now,
 	})
-	s.fanout(ctx, thread, pulse, mentions)
+	s.fanout(ctx, EventThreadCreated, thread, pulse, mentions)
 
 	return CreateThreadResult{Thread: thread, Pulse: pulse}, nil
 }
@@ -272,7 +284,7 @@ func (s *PulseService) AddPulse(ctx context.Context, cmd AddPulseCommand) (Pulse
 		AuthorUserID: cmd.AuthorUserID,
 		At:           now,
 	})
-	s.fanout(ctx, thread, pulse, mentions)
+	s.fanout(ctx, EventPulseAdded, thread, pulse, mentions)
 	return pulse, nil
 }
 
@@ -781,8 +793,10 @@ func (s *PulseService) publishEvent(e Event) {
 
 // fanout collects subscriber + mention recipient ids and dispatches them to
 // the notifier. Author is excluded so people don't get pinged for their own
-// pulses.
-func (s *PulseService) fanout(ctx context.Context, thread Thread, pulse Pulse, mentions []Mention) {
+// pulses. Webhook mentions are dispatched separately (fire-and-forget) after
+// the human notification fanout, keyed off the supplied event action.
+func (s *PulseService) fanout(ctx context.Context, action EventAction, thread Thread, pulse Pulse, mentions []Mention) {
+	s.dispatchWebhooks(ctx, action, thread, pulse, mentions)
 	subs, err := s.store.listSubscribers(ctx, thread.OrgID, thread.UID)
 	if err != nil {
 		s.log.Warn("failed to list subscribers", "err", err, "threadUID", thread.UID)
