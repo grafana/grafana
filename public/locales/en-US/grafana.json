@@ -10587,7 +10587,8 @@
       "severity-minor": "Minor",
       "severity-unknown": "Unknown severity",
       "title": "Firing alerts",
-      "view-all": "View all firing alerts"
+      "view-all": "View all firing alerts",
+      "view-rules": "View all alert rules"
     },
     "home-page": {
       "edition": {
