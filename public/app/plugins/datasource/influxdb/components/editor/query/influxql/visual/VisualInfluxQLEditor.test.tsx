@@ -40,7 +40,7 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
   const datasource: InfluxDatasource = getMockInfluxDS(getMockDSInstanceSettings());
-  datasource.metricFindQuery = () => Promise.resolve([]);
+  datasource.runMetadataQuery = () => Promise.resolve([]);
   const { container } = render(
     <VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );
