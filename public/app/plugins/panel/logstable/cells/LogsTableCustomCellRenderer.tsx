@@ -27,8 +27,6 @@ export function LogsTableCustomCellRenderer(props: {
         : 0;
   const styles = useStyles2(getStyles, cellPadding);
 
-  console.log(value);
-
   return (
     <>
       <LogsTableRowActionButtons

@@ -255,13 +255,7 @@ export const LogsTable = ({
 
   const logRows = useMemo(() => {
     const logs = rawTableFrame
-      ? dataFrameToLogsModel(
-          [rawTableFrame],
-          panelData.request?.intervalMs,
-          undefined,
-          panelData.request?.targets,
-          false
-        ).rows.map(
+      ? dataFrameToLogsModel([rawTableFrame], undefined, undefined, panelData.request?.targets, false).rows.map(
           (logRow) =>
             new LogListModel(logRow, {
               escape: false,
@@ -271,7 +265,7 @@ export const LogsTable = ({
         )
       : null;
     return logs ?? [];
-  }, [panelData.request?.intervalMs, panelData.request?.targets, rawTableFrame, timeZone]);
+  }, [panelData.request?.targets, rawTableFrame, timeZone]);
 
   const noSeries = data.series.length === 0;
   const noValues = data.series[frameIndex]?.fields?.[0]?.values?.length === 0;
