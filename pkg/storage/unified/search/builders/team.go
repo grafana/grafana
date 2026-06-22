@@ -90,12 +90,11 @@ func GetTeamSearchBuilder() (resource.DocumentBuilderInfo, error) {
 		},
 	)
 
+	gr := v0alpha1.TeamResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: schema.GroupResource{
-			Group:    v0alpha1.TeamResourceInfo.GroupResource().Group,
-			Resource: v0alpha1.TeamResourceInfo.GroupResource().Resource,
-		},
-		Fields:  fields,
-		Builder: resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		GroupResource:    gr,
+		Fields:           fields,
+		Builder:          resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash: provider.IndexAffectingHash(gr.Group, gr.Resource),
 	}, nil
 }

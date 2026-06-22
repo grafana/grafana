@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { upperFirst } from 'lodash';
 import { type RefObject, useMemo, useRef } from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Icon, Text, useStyles2, useTheme2 } from '@grafana/ui';
@@ -17,6 +17,7 @@ import {
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
 } from '../QueryEditorContext';
+import { usePanelScopedVars } from '../hooks/usePanelScopedVars';
 import { type AlertRule, type Transformation } from '../types';
 import { getEditorBorderColor } from '../utils';
 
@@ -26,14 +27,22 @@ import { HeaderActions } from './HeaderActions';
 interface DatasourceSectionProps {
   selectedQuery: DataQuery;
   onChange: (ds: DataSourceInstanceSettings) => void;
+  currentDatasource?: DataSourceInstanceSettings;
+  scopedVars?: ScopedVars;
 }
 
-function DatasourceSection({ selectedQuery, onChange }: DatasourceSectionProps) {
+function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedVars }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
 
   return (
     <div className={styles.dataSourcePickerWrapper}>
-      <DataSourcePicker dashboard={true} variables={true} current={selectedQuery.datasource} onChange={onChange} />
+      <DataSourcePicker
+        dashboard={true}
+        variables={true}
+        current={currentDatasource ?? selectedQuery.datasource}
+        onChange={onChange}
+        scopedVars={scopedVars}
+      />
     </div>
   );
 }
@@ -87,6 +96,8 @@ interface ContentHeaderProps {
   onChangeDataSource: (ds: DataSourceInstanceSettings, refId: string) => void;
   onUpdateQuery: (updatedQuery: DataQuery, originalRefId: string) => void;
   isMultiSelection?: boolean;
+  currentDatasource?: DataSourceInstanceSettings;
+  scopedVars?: ScopedVars;
   /**
    * Optional callback to render additional elements in the header's left section.
    *
@@ -118,7 +129,7 @@ interface ContentHeaderProps {
  * All data and callbacks are passed via props, making it reusable across
  * different architectural patterns.
  */
-function ContentHeader({
+export function ContentHeader({
   selectedAlert,
   selectedQuery,
   selectedTransformation,
@@ -134,6 +145,8 @@ function ContentHeader({
   renderHeaderExtras,
   containerRef: externalContainerRef,
   typeConfig: typeConfigProp,
+  currentDatasource,
+  scopedVars,
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
@@ -196,6 +209,8 @@ function ContentHeader({
             <DatasourceSection
               selectedQuery={selectedQuery}
               onChange={(ds) => onChangeDataSource(ds, selectedQuery.refId)}
+              currentDatasource={currentDatasource}
+              scopedVars={scopedVars}
             />
             <NavToolbarSeparator />
           </>
@@ -265,10 +280,12 @@ export function ContentHeaderSceneWrapper({
     setPendingExpression,
     pendingTransformation,
     setPendingTransformation,
+    selectedQueryDsData,
   } = useQueryEditorUIContext();
   const { queries } = useQueryRunnerContext();
   const { changeDataSource, updateSelectedQuery } = useActionsContext();
   const typeConfig = useQueryEditorTypeConfig();
+  const scopedVars = usePanelScopedVars();
 
   return (
     <ContentHeader
@@ -286,6 +303,8 @@ export function ContentHeaderSceneWrapper({
       isMultiSelection={multiSelectMode && (selectedQueryRefIds.length > 0 || selectedTransformationIds.length > 0)}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
+      currentDatasource={selectedQueryDsData?.dsSettings}
+      scopedVars={scopedVars}
     />
   );
 }

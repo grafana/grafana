@@ -2812,7 +2812,9 @@
           "alerting": "Aktivera om du vill pausa utvärderingen för den här varningsregeln.",
           "recording": "Aktivera om du vill pausa utvärderingen för den här inspelningsregeln."
         },
-        "select-folder-before": "Välj en mapp innan du anger utvärderingsgrupp och intervall"
+        "select-folder-before": "Välj en mapp innan du anger utvärderingsgrupp och intervall",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4272,6 +4274,7 @@
       "default-commit-message": "",
       "delete-warning": "",
       "error-deleting-resources": "Fel vid borttagning av resurser",
+      "success-title": "",
       "folder-empty_one": "",
       "folder-empty_other": "",
       "folder-not-empty_one": "",
@@ -4294,6 +4297,7 @@
       "error-no-target-folder-path": "Sökvägen till målmappen är ogiltig eller tom. Välj på nytt.",
       "move-warning": "Det kommer att flytta valda mappar och alla underordnade mappar. Tillgängliga målmappar beror på de valda resurserna.",
       "move-warning-tooltip": "Du kan bara flytta tilldelade resurser inom deras tilldelade mapp och lokala resurser till lokala mappar.",
+      "success-title": "",
       "target-folder": "Målkatalog",
       "folder-not-empty_one": "",
       "folder-not-empty_other": ""
@@ -6026,9 +6030,6 @@
       "placeholder-search-options": "Sökalternativ",
       "visualization-button-tooltip": "Sökalternativ"
     },
-    "panel-links": {
-      "aria-label-panel-links": "Panellänkar"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Gå tillbaka till frågor"
     },
@@ -6212,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
-      "undo": "Ångra"
+      "undo": "Ångra",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Källa ({{provider}})",
@@ -6471,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8693,7 +8705,9 @@
       "query-history-button": "Frågehistorik",
       "query-history-button-aria-label": "Frågehistorik",
       "query-inspector-button": "Frågeinspektör",
-      "query-inspector-button-aria-label": "Frågeinspektör"
+      "query-inspector-button-aria-label": "Frågeinspektör",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Visa hela tidsspannet",
     "span-bar": {
@@ -9884,10 +9898,16 @@
         },
         "name-limit": "Gräns",
         "name-mode": "Läge",
+        "name-overflow": "",
         "name-placement": "Placering",
         "name-values": "Värden",
         "name-visibility": "Synlighet",
         "name-width": "Bredd",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Underst",
           "label-right": "Höger"
@@ -11212,6 +11232,8 @@
         }
       },
       "fields-section": "Fält",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Dölj loggrad",
       "inline-mode": "Visa inline",
       "inline-no-scrolls": "",
@@ -11957,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Hantera mappningar av identitetsleverantörsgrupper till Grafana-roller"
     },
     "help": {
       "title": "Hjälp"
@@ -13028,9 +13047,6 @@
       "description-clear-repository-connection": "Detta namn kommer att användas för lagringsplatsanslutningen och för mappen som visas i användargränssnittet",
       "empty": "Tom",
       "error-field-required": "Detta fält är obligatoriskt.",
-      "error-quota-exceeded-message": "Den här lagringsmappen innehåller {{fileCount}} resurser, vilket överskrider kontogränsen på {{limit}}. För att synkronisera det här lagret måste du uppgradera ditt konto eller minska antalet resurser som ska synkroniseras.",
-      "error-quota-exceeded-message-onprem": "Den här lagringsmappen innehåller {{fileCount}} resurser, vilket överskrider instansgränsen på {{limit}}. För att synkronisera det här lagret måste du uppdatera din Grafana-konfiguration eller minska antalet resurser som ska synkroniseras.",
-      "error-quota-exceeded-title": "Resurskvoten har överskridits",
       "error-repository-status-unhealthy-message": "Det uppstod ett problem med att ansluta till lagringsplatsen. Kontrollera lagringsplatsinställningarna och försök igen.",
       "error-repository-status-unhealthy-title": "Lagringsplatsens status är ohälsosam",
       "external-storage-label": "Extern lagring",
@@ -13041,6 +13057,9 @@
       "unmanaged-resources-label": "Ohanterade resurser",
       "update-configuration-action": "Visa konfigurationsdokument",
       "upgrade-action": "Uppgradera konto",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} kontrollpanel",
       "dashboards-count_other": "{{count}} kontrollpanel",
       "files-count_one": "{{count}} filer",
@@ -13055,6 +13074,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Hoppa över konfigurationen och få Git Sync fullt hanterat och värdbaserat på Grafana Cloud med <2>Grafana Cloud-prenumerationen gratis för alltid</2>.",
@@ -14246,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Det gick inte att ladda datakälla för denna fråga",
     "loading-datasource": "Laddar datakälla",
     "no-query-editor-component": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
@@ -14267,6 +14290,56 @@
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

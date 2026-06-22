@@ -241,6 +241,7 @@ export function DashboardTabs() {
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: 0,
+    background: theme.colors.background.primary,
     borderRadius: theme.shape.radius.default,
   }),
   linkTabsSpacer: css({

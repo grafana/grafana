@@ -175,7 +175,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
 		backendService := storageBackend.(services.Service)
@@ -321,7 +321,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	buildDir := filepath.Join(publicDir, "build")
 	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
-	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(`{
+	mockAssets := `{
 		"entrypoints": {
 		  "app": {
 			"assets": {
@@ -349,7 +349,11 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		  "integrity": "sha256-k1g7TksMHFQhhQGE"
 		}
 	  }
-	  `), 0o750)
+	  `
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(mockAssets), 0o750)
+	require.NoError(t, err)
+	// Also write the React 19 manifest so tests work regardless of the react19 feature flag state
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest-react19.json"), []byte(mockAssets), 0o750)
 	require.NoError(t, err)
 
 	emailsDir := filepath.Join(publicDir, "emails")
@@ -460,8 +464,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = rbacSect.NewKey("single_organization", "true")
 		require.NoError(t, err)
 	}
-	if opts.BasicRoleAggregatorEnabled {
-		_, err = rbacSect.NewKey("basic_role_aggregator_enabled", "true")
+	if opts.GlobalRoleSeedingEnabled {
+		_, err = rbacSect.NewKey("global_role_seeding_enabled", "true")
 		require.NoError(t, err)
 	}
 
@@ -786,6 +790,14 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
+	if opts.MigrationChunkMaxBytes > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunked_writes", "true")
+		require.NoError(t, err)
+		_, err = section.NewKey("migration_chunk_max_bytes", fmt.Sprintf("%d", opts.MigrationChunkMaxBytes))
+		require.NoError(t, err)
+	}
 	if opts.EnableSQLKVBackend {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -1026,11 +1038,12 @@ type GrafanaOpts struct {
 	EnableRecordingRules                                 bool
 	EnableSCIM                                           bool
 	RBACSingleOrganization                               bool
-	BasicRoleAggregatorEnabled                           bool
+	GlobalRoleSeedingEnabled                             bool
 	APIServerRuntimeConfig                               string
 	DisableControllers                                   bool
 	DisableDBCleanup                                     bool
 	MigrationParquetBuffer                               bool
+	MigrationChunkMaxBytes                               int64
 	EnableSQLKVBackend                                   bool
 	SecretsManagerEnableDBMigrations                     bool
 	OpenFeatureAPIEnabled                                bool

@@ -79,12 +79,6 @@ type GitHubRepositoryConfig struct {
 	// By default, this is false (i.e. we will not create previews).
 	GenerateDashboardPreviews bool `json:"generateDashboardPreviews,omitempty"`
 
-	// WebhookDisabled disables webhook integration for this repository. When true,
-	// Grafana will not register or receive webhook events from GitHub and will poll
-	// the repository on an interval instead. Use this when Grafana is not reachable
-	// from the public internet.
-	WebhookDisabled bool `json:"webhookDisabled,omitempty"`
-
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.
 	// The path is relative to the root of the repository, regardless of the leading slash.
@@ -200,6 +194,11 @@ const (
 // IsGit returns true if the repository type is git or github
 func (r RepositoryType) IsGit() bool {
 	return r == GitRepositoryType || r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType || r == BitbucketRepositoryType || r == GitLabRepositoryType
+}
+
+// GitHub || GitHubEnterprise
+func (r RepositoryType) IsGitHub() bool {
+	return r == GitHubRepositoryType || r == GitHubEnterpriseRepositoryType
 }
 
 // Branch returns the branch for git-based repositories
@@ -522,6 +521,12 @@ type WebhookConfig struct {
 	// and resource name are appended automatically. Trailing slashes are stripped.
 	// Must be a valid HTTP or HTTPS URL.
 	BaseURL string `json:"baseUrl,omitempty"`
+
+	// Disabled turns off webhook integration for this repository. When true,
+	// Grafana will not register or receive webhook events from the Git provider
+	// and will poll the repository on an interval instead. Use this when Grafana
+	// is not reachable from the public internet.
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 func (WebhookConfig) OpenAPIModelName() string {

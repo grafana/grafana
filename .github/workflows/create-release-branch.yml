@@ -28,6 +28,8 @@ jobs:
       release_branch: ${{ steps.versions.outputs.release_branch }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       # Derive everything from main's current version. main sits at the next minor's
       # pre-release (e.g. 13.1.0-pre); dropping the -pre suffix gives the version being
       # cut (13.1.0), and bumping the minor gives main's new pre-release (13.2.0-pre).
@@ -68,6 +70,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.get-writer-app-token.outputs.token }}
+          persist-credentials: false
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
@@ -124,6 +127,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           token: ${{ steps.get-writer-app-token.outputs.token }}
+          persist-credentials: false
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
