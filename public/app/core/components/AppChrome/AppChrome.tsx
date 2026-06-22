@@ -16,9 +16,6 @@ import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
-import { AgentModePlatformBar } from './AgentMode/AgentModePlatformBar';
-import { AgentModeShell } from './AgentMode/AgentModeShell';
-import { useAgentMode } from './AgentMode/useAgentMode';
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import {
@@ -27,6 +24,9 @@ import {
   MIN_EXTENSION_SIDEBAR_WIDTH,
 } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
+import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
+import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
+import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
@@ -48,7 +48,7 @@ export function AppChrome({ children }: Props) {
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
 
   // The single DOM node the live page (`children`) is portaled into. It is swapped
-  // between the normal <main> and the agent-mode Platform tab. Because `children`
+  // between the normal <main> and the fullscreen-workspace Platform tab. Because `children`
   // keeps a stable position in the React tree, only its DOM target moves on toggle
   // -> no remount, no reload, live state preserved.
   const [outletHost, setOutletHost] = useState<HTMLElement | null>(null);
@@ -95,7 +95,8 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const { agentModeFeatureFlagEnabled: agentModeEnabled, active: agentMode } = useAgentMode();
+  const { fullscreenWorkspaceFeatureFlagEnabled: fullscreenWorkspaceEnabled, active: fullscreenWorkspace } =
+    useFullscreenWorkspace();
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -104,22 +105,22 @@ export function AppChrome({ children }: Props) {
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless || agentMode,
+        'main-view--chrome-hidden': state.chromeless || fullscreenWorkspace,
       })}
     >
-      {agentModeEnabled &&
+      {fullscreenWorkspaceEnabled &&
         outletHost &&
         createPortal(
           [
-            // In agent mode, a slim bar (hamburger + breadcrumbs) sits above the live
+            // In fullscreen workspace, a slim bar (hamburger + breadcrumbs) sits above the live
             // page inside the Platform tab
-            agentMode ? <AgentModePlatformBar key="agent-platform-bar" /> : null,
+            fullscreenWorkspace ? <FullscreenWorkspacePlatformBar key="agent-platform-bar" /> : null,
             <Fragment key="outlet">{children}</Fragment>,
           ],
           outletHost
         )}
 
-      {!state.chromeless && !agentMode && (
+      {!state.chromeless && !fullscreenWorkspace && (
         <>
           <LinkButton
             className={styles.skipLink}
@@ -148,8 +149,8 @@ export function AppChrome({ children }: Props) {
           </header>
         </>
       )}
-      {agentMode ? (
-        <AgentModeShell outletRef={setOutletHost} />
+      {fullscreenWorkspace ? (
+        <FullscreenWorkspaceShell outletRef={setOutletHost} />
       ) : (
         <div className={contentClass}>
           <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
@@ -173,9 +174,9 @@ export function AppChrome({ children }: Props) {
               })}
               id="pageContent"
               tabIndex={-1}
-              ref={agentModeEnabled ? setOutletHost : undefined}
+              ref={fullscreenWorkspaceEnabled ? setOutletHost : undefined}
             >
-              {agentModeEnabled ? null : children}
+              {fullscreenWorkspaceEnabled ? null : children}
             </main>
             {!state.chromeless && isExtensionSidebarOpen && (
               <Resizable
@@ -193,9 +194,9 @@ export function AppChrome({ children }: Props) {
           </div>
         </div>
       )}
-      {!state.chromeless && !agentMode && !state.megaMenuDocked && <AppChromeMenu />}
-      {(!state.chromeless || agentMode) && <CommandPalette />}
-      {!state.chromeless && !agentMode && isSplashScreenEnabled && <SplashScreenModal />}
+      {!state.chromeless && !fullscreenWorkspace && !state.megaMenuDocked && <AppChromeMenu />}
+      {(!state.chromeless || fullscreenWorkspace) && <CommandPalette />}
+      {!state.chromeless && !fullscreenWorkspace && isSplashScreenEnabled && <SplashScreenModal />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

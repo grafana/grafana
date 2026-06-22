@@ -12,7 +12,7 @@ import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { MegaMenu, MENU_WIDTH } from '../MegaMenu/MegaMenu';
 
-export function AgentModePlatformBar() {
+export function FullscreenWorkspacePlatformBar() {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const styles = useStyles2(getStyles);

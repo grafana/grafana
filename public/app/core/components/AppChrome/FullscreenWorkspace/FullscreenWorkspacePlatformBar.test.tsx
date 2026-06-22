@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { AgentModePlatformBar } from './AgentModePlatformBar';
+import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspacePlatformBar';
 
 jest.mock('@grafana/i18n', () => ({
   t: (_: string, fallback: string) => fallback,
@@ -35,7 +35,7 @@ jest.mock('../MegaMenu/MegaMenu', () => ({
 
 const useGrafanaMock = jest.mocked(useGrafana);
 
-describe('AgentModePlatformBar', () => {
+describe('FullscreenWorkspacePlatformBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useGrafanaMock.mockReturnValue({
@@ -44,7 +44,7 @@ describe('AgentModePlatformBar', () => {
   });
 
   it('renders the menu toggle and breadcrumbs, with the drawer closed initially', () => {
-    render(<AgentModePlatformBar />);
+    render(<FullscreenWorkspacePlatformBar />);
 
     const toggle = screen.getByRole('button', { name: 'Main menu' });
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
@@ -53,7 +53,7 @@ describe('AgentModePlatformBar', () => {
   });
 
   it('opens the mega menu drawer when the toggle is clicked', () => {
-    render(<AgentModePlatformBar />);
+    render(<FullscreenWorkspacePlatformBar />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Main menu' }));
 
@@ -62,7 +62,7 @@ describe('AgentModePlatformBar', () => {
   });
 
   it('closes the drawer when the mega menu requests close', () => {
-    render(<AgentModePlatformBar />);
+    render(<FullscreenWorkspacePlatformBar />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Main menu' }));
     // The stubbed MegaMenu calls onClose when clicked.

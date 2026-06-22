@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * The Grafana Assistant's top-bar buttons: a labelled purple "Chat" pill (the sidebar
- * toggle) and an "Enter Agent mode" pill. `ExtensionToolbarItemButton` delegates here for
+ * toggle) and an "Enter Workspace" pill. `ExtensionToolbarItemButton` delegates here for
  * the `grafana-assistant-app` plugin, keeping the assistant-specific UI + styles out of the
  * generic extension-toolbar button. The forwarded ref lands on the Chat pill for the
  * extension sidebar's `Dropdown` integration.
@@ -48,14 +48,16 @@ export const AssistantToolbarButtons = forwardRef<HTMLButtonElement, Props>(func
       </button>
       <button
         type="button"
-        className={styles.agentModeButton}
-        onClick={() => chrome.setAgentMode(true)}
-        aria-label={t('navigation.agent-mode.enter', 'Enter Agent mode')}
+        className={styles.fullscreenWorkspaceButton}
+        onClick={() => chrome.setFullscreenWorkspace(true)}
+        aria-label={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
       >
-        <span className={styles.agentModeIcon}>
+        <span className={styles.fullscreenWorkspaceIcon}>
           <Icon name="ai-sparkle" size="md" />
         </span>
-        <span className={styles.agentModeText}>{t('navigation.agent-mode.enter', 'Enter Agent mode')}</span>
+        <span className={styles.fullscreenWorkspaceText}>
+          {t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
+        </span>
       </button>
     </>
   );
@@ -86,7 +88,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: 'rgba(155, 140, 255, 0.12)',
     boxShadow: '0 0 0 1px rgba(155, 140, 255, 0.35)',
   }),
-  agentModeButton: css({
+  fullscreenWorkspaceButton: css({
     display: 'inline-flex',
     alignItems: 'center',
     gap: theme.spacing(0.75),
@@ -104,11 +106,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.action.hover,
     },
   }),
-  agentModeIcon: css({
+  fullscreenWorkspaceIcon: css({
     display: 'inline-flex',
     color: '#ff8a2b',
   }),
-  agentModeText: css({
+  fullscreenWorkspaceText: css({
     background: 'linear-gradient(90deg, #ff8a2b, #f2546b, #e07be0, #9b8cff)',
     WebkitBackgroundClip: 'text',
     backgroundClip: 'text',

@@ -4,11 +4,11 @@ import { type RefCallback } from 'react';
 import { usePluginComponent } from '@grafana/runtime';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { AgentModeShell } from './AgentModeShell';
+import { FullscreenWorkspaceShell } from './FullscreenWorkspaceShell';
 
 interface PluginWorkspaceProps {
   registerPlatformHost?: RefCallback<HTMLDivElement>;
-  onExitAgentMode?: () => void;
+  onExitFullscreenWorkspace?: () => void;
 }
 
 jest.mock('@grafana/runtime', () => ({
@@ -22,12 +22,12 @@ jest.mock('app/core/context/GrafanaContext', () => ({
 
 const usePluginComponentMock = jest.mocked(usePluginComponent);
 const useGrafanaMock = jest.mocked(useGrafana);
-const setAgentMode = jest.fn();
+const setFullscreenWorkspace = jest.fn();
 
-describe('AgentModeShell', () => {
+describe('FullscreenWorkspaceShell', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useGrafanaMock.mockReturnValue({ chrome: { setAgentMode } } as unknown as ReturnType<typeof useGrafana>);
+    useGrafanaMock.mockReturnValue({ chrome: { setFullscreenWorkspace } } as unknown as ReturnType<typeof useGrafana>);
   });
 
   it('renders nothing while the plugin component is loading', () => {
@@ -36,7 +36,7 @@ describe('AgentModeShell', () => {
       isLoading: true,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<AgentModeShell outletRef={jest.fn()} />);
+    const { container } = render(<FullscreenWorkspaceShell outletRef={jest.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
   });
@@ -47,18 +47,18 @@ describe('AgentModeShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    const { container } = render(<AgentModeShell outletRef={jest.fn()} />);
+    const { container } = render(<FullscreenWorkspaceShell outletRef={jest.fn()} />);
 
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders the plugin workspace and wires the platform host and exit callback', () => {
     const outletRef = jest.fn();
-    const PluginWorkspace = jest.fn(({ registerPlatformHost, onExitAgentMode }: PluginWorkspaceProps) => {
+    const PluginWorkspace = jest.fn(({ registerPlatformHost, onExitFullscreenWorkspace }: PluginWorkspaceProps) => {
       // Surface the props so the test can assert they were passed through.
       registerPlatformHost?.(null);
       return (
-        <button type="button" data-testid="plugin-workspace" onClick={onExitAgentMode}>
+        <button type="button" data-testid="plugin-workspace" onClick={onExitFullscreenWorkspace}>
           workspace
         </button>
       );
@@ -68,12 +68,12 @@ describe('AgentModeShell', () => {
       isLoading: false,
     } as unknown as ReturnType<typeof usePluginComponent>);
 
-    render(<AgentModeShell outletRef={outletRef} />);
+    render(<FullscreenWorkspaceShell outletRef={outletRef} />);
 
     expect(screen.getByTestId('plugin-workspace')).toBeInTheDocument();
     expect(outletRef).toHaveBeenCalledWith(null);
 
     screen.getByTestId('plugin-workspace').click();
-    expect(setAgentMode).toHaveBeenCalledWith(false);
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith(false);
   });
 });

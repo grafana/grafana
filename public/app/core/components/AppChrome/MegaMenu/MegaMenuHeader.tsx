@@ -34,8 +34,8 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         <OrganizationSwitcher />
       </Stack>
       <div className={styles.flexGrow} />
-      {/* Docking is intentionally not allowed in agent mode */}
-      {!state.agentMode && (
+      {/* Docking is intentionally not allowed in fullscreen workspace */}
+      {!state.fullscreenWorkspace && (
         <IconButton
           id={DOCK_MENU_BUTTON_ID}
           className={styles.dockMenuButton}

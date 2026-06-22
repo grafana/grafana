@@ -14,15 +14,15 @@ jest.mock('app/core/context/GrafanaContext', () => ({
 }));
 
 const useGrafanaMock = jest.mocked(useGrafana);
-const setAgentMode = jest.fn();
+const setFullscreenWorkspace = jest.fn();
 
 describe('AssistantToolbarButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    useGrafanaMock.mockReturnValue({ chrome: { setAgentMode } } as unknown as ReturnType<typeof useGrafana>);
+    useGrafanaMock.mockReturnValue({ chrome: { setFullscreenWorkspace } } as unknown as ReturnType<typeof useGrafana>);
   });
 
-  it('renders the Chat pill in its open state and an Enter Agent mode button', () => {
+  it('renders the Chat pill in its open state and an Enter Workspace button', () => {
     render(<AssistantToolbarButtons isOpen={false} />);
 
     const pill = screen.getByTestId('extension-toolbar-button-open');
@@ -30,7 +30,7 @@ describe('AssistantToolbarButtons', () => {
     expect(pill).toHaveAttribute('aria-label', 'Open Grafana Assistant');
     expect(pill).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('Chat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Enter Agent mode' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enter Workspace' })).toBeInTheDocument();
   });
 
   it('renders the Chat pill in its close state when open', () => {
@@ -50,12 +50,12 @@ describe('AssistantToolbarButtons', () => {
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('enters agent mode when the Enter Agent mode button is clicked', () => {
+  it('enters fullscreen workspace when the Enter Workspace button is clicked', () => {
     render(<AssistantToolbarButtons isOpen={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Enter Agent mode' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enter Workspace' }));
 
-    expect(setAgentMode).toHaveBeenCalledWith(true);
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith(true);
   });
 
   it('forwards the ref to the Chat pill button', () => {
