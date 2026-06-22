@@ -4265,6 +4265,8 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
+      "commit-title-resource-count_one": "{{count}} resource",
+      "commit-title-resource-count_other": "{{count}} resources",
       "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {

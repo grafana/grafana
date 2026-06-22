@@ -1,12 +1,15 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { render } from 'test/test-utils';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
+import * as currentUser from '../../utils/currentUser';
 
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -58,8 +61,21 @@ jest.mock('../Shared/ProvisioningAwareFolderPicker', () => ({
   )),
 }));
 
+// Mirror the real shared field: when the comment is locked render the resolved message read-only,
+// otherwise drive a react-hook-form-registered textarea (so pre-fill / freeze-on-edit behave).
 jest.mock('../Shared/ResourceEditFormSharedFields', () => ({
-  ResourceEditFormSharedFields: () => <div data-testid="resource-edit-form" />,
+  ResourceEditFormSharedFields: ({ lockComment, commitMessage }: { lockComment?: boolean; commitMessage?: string }) => {
+    const { register } = useFormContext<{ comment?: string }>();
+    return (
+      <div data-testid="resource-edit-form">
+        {lockComment ? (
+          <textarea aria-label="comment" value={commitMessage ?? ''} readOnly />
+        ) : (
+          <textarea aria-label="comment" {...register('comment')} />
+        )}
+      </div>
+    );
+  },
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -520,5 +536,95 @@ describe('BulkMoveProvisionedResource', () => {
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
     expect(await screen.findByText('Resources moved successfully')).toBeInTheDocument();
+  });
+
+  describe('commit message template (provisioning.gitConventions)', () => {
+    // selectedItems in setup() has one folder + one dashboard => "2 resources".
+    const templateRepository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['branch', 'write'],
+      commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}' },
+    };
+
+    beforeEach(() => {
+      setTestFlags({ 'provisioning.gitConventions': true });
+    });
+
+    afterEach(async () => {
+      // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('pre-fills the comment from the rendered template and POSTs it', async () => {
+      const { user, mockCreateBulkJob } = setup(templateRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        templateRepository,
+        expect.objectContaining({ action: 'move', message: 'chore: move 2 resources' })
+      );
+    });
+
+    it('renders the comment read-only when the template is enforced', async () => {
+      const enforcedRepository: RepositoryView = {
+        ...templateRepository,
+        commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}', enforceTemplate: true },
+      };
+      setup(enforcedRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+      expect(textarea).toHaveAttribute('readonly');
+    });
+
+    it('keeps a manual edit across re-renders and POSTs the edited message', async () => {
+      const { user, mockCreateBulkJob, selectedItems, onDismiss, rerender } = setup(templateRepository);
+
+      const textarea = await screen.findByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: move 2 resources'));
+
+      await user.type(textarea, ' edited');
+      expect(textarea).toHaveValue('chore: move 2 resources edited');
+
+      // A re-render must not clobber the user's edit with the template.
+      rerender(
+        <BulkMoveProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={onDismiss} />
+      );
+      expect(textarea).toHaveValue('chore: move 2 resources edited');
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        templateRepository,
+        expect.objectContaining({ message: 'chore: move 2 resources edited' })
+      );
+    });
+
+    it('appends the saved-by trailer exactly once', async () => {
+      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
+      const trailerRepository: RepositoryView = {
+        ...templateRepository,
+        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
+      };
+      const { user, mockCreateBulkJob } = setup(trailerRepository);
+
+      await user.click(screen.getByTestId('folder-picker'));
+      await user.click(screen.getByRole('button', { name: /Move/i }));
+
+      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
+      expect(jobSpec.message).toContain('chore: move');
+      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
+    });
   });
 });

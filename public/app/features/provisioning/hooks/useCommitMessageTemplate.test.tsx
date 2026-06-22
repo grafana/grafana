@@ -31,10 +31,12 @@ function Host({
   repository,
   vars,
   defaultComment = '',
+  fallbackMessage,
 }: {
   repository?: RepositoryView;
   vars: CommitTemplateVars;
   defaultComment?: string;
+  fallbackMessage?: string;
 }) {
   const methods = useForm<{ comment?: string }>({ defaultValues: { comment: defaultComment } });
   const { dirtyFields } = useFormState({ control: methods.control });
@@ -44,6 +46,7 @@ function Host({
     comment: methods.watch('comment') ?? '',
     isCommentDirty: Boolean(dirtyFields.comment),
     setComment: (v) => methods.setValue('comment', v, { shouldDirty: false }),
+    fallbackMessage,
   });
   // Mirror the shared field: an enforced repo renders the resolved message read-only; otherwise the
   // registered field is driven by the pre-fill effect. `message` is always surfaced for assertions.
@@ -169,5 +172,63 @@ describe('useCommitMessageTemplate', () => {
     expect(textarea).toHaveAttribute('readonly');
     expect(textarea).not.toHaveValue('should be ignored');
     expect(screen.getByTestId('resolved-message')).toHaveTextContent(expected);
+  });
+
+  describe('bulk fallback message', () => {
+    const bulkVars: CommitTemplateVars = {
+      action: 'delete',
+      resourceID: '',
+      title: '3 resources',
+    };
+
+    it('resolves to the supplied fallback when no template is configured', async () => {
+      render(<Host repository={makeRepo()} vars={bulkVars} fallbackMessage="Delete resources" />);
+
+      await waitFor(() => expect(screen.getByTestId('resolved-message')).toHaveTextContent('Delete resources'));
+      // The single-resource built-in default ("Delete dashboard: ...") must not leak in.
+      expect(screen.getByTestId('resolved-message')).not.toHaveTextContent('Delete dashboard');
+    });
+
+    it('renders the template and ignores the fallback when a template is configured', async () => {
+      render(
+        <Host
+          repository={makeRepo({ singleResourceMessageTemplate: 'chore: {{action}} {{title}}' })}
+          vars={bulkVars}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('chore: delete 3 resources'));
+      expect(screen.getByTestId('resolved-message')).toHaveTextContent('chore: delete 3 resources');
+    });
+
+    it('locks to the fallback message when enforcement is on without a template', async () => {
+      render(
+        <Host repository={makeRepo({ enforceTemplate: true })} vars={bulkVars} fallbackMessage="Delete resources" />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('Delete resources'));
+      expect(textarea).toHaveAttribute('readonly');
+    });
+
+    it('appends the saved-by trailer exactly once even when the template already includes one', async () => {
+      const repository = makeRepo({
+        singleResourceMessageTemplate: 'chore: {{action}}\n\nGrafana-saved-by: {{userName}}',
+      });
+      render(
+        <Host
+          repository={repository}
+          vars={{ ...bulkVars, userName: 'Ada', userLogin: 'ada' }}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      await waitFor(() => {
+        const text = screen.getByTestId('resolved-message').textContent ?? '';
+        expect(text.match(/Grafana-saved-by:/g)).toHaveLength(1);
+      });
+    });
   });
 });

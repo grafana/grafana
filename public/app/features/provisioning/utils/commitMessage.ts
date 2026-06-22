@@ -5,15 +5,31 @@ type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
 type CommitResourceKind = 'dashboard' | 'folder';
 type CommitResourceID = string;
 
-export interface CommitTemplateVars {
-  action: CommitAction;
-  resourceKind: CommitResourceKind;
+interface BaseCommitTemplateVars {
   resourceID: CommitResourceID;
   title: string;
   userName?: string;
   userLogin?: string;
   userEmail?: string;
 }
+
+/** Single-resource operations always identify the resource by kind. */
+export interface SingleResourceTemplateVars extends BaseCommitTemplateVars {
+  action: CommitAction;
+  resourceKind: CommitResourceKind;
+}
+
+/**
+ * Bulk operations (delete/move) span multiple resources, so `resourceKind` is omitted (`never`).
+ * Restricting `action` to the bulk-capable values also keeps single-resource callers honest: a
+ * create/update/rename object that drops `resourceKind` won't accidentally match this variant.
+ */
+export interface BulkResourceTemplateVars extends BaseCommitTemplateVars {
+  action: Extract<CommitAction, 'delete' | 'move'>;
+  resourceKind?: never;
+}
+
+export type CommitTemplateVars = SingleResourceTemplateVars | BulkResourceTemplateVars;
 
 // Single source of truth for the keys the template understands. The regex,
 // the IDENTITY_KEYS set, and the TemplateKey type are all derived from these
@@ -73,13 +89,27 @@ function defaultMessage({ action, resourceKind, title }: CommitTemplateVars): st
     'folder:rename': t('provisioning.commit-message.folder-rename-default', 'Rename folder: {{title}}', { title }),
     'folder:move': t('provisioning.commit-message.folder-move-default', 'Move folder: {{title}}', { title }),
   };
+  // Bulk callers always supply a `fallbackMessage`, so they never reach `defaultMessage` without a
+  // kind. Single-resource callers always pass a concrete kind.
+  if (!resourceKind) {
+    return title;
+  }
   return defaults[`${resourceKind}:${action}`];
 }
 
-export function renderCommitMessage(template: string | undefined | null, vars: CommitTemplateVars): string {
+/**
+ * Renders the commit-message template against `vars`. When no template is configured the message
+ * falls back to `fallbackMessage` if supplied (bulk callers pass their own multi-resource default),
+ * otherwise to the single-resource built-in default.
+ */
+export function renderCommitMessage(
+  template: string | undefined | null,
+  vars: CommitTemplateVars,
+  fallbackMessage?: string
+): string {
   const trimmed = template?.trim();
   if (!trimmed) {
-    return defaultMessage(vars);
+    return fallbackMessage ?? defaultMessage(vars);
   }
   return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => {
     const raw = vars[key] ?? '';
@@ -128,10 +158,10 @@ export function appendSavedByTrailer(message: string, vars: SavedByVars): string
   return `${trimmed}\n\n${trailer}`;
 }
 
-interface SingleResourceCommitMessageArgs extends CommitTemplateVars {
+type SingleResourceCommitMessageArgs = CommitTemplateVars & {
   comment: string | undefined;
   repository: RepositoryView | undefined;
-}
+};
 
 /**
  * Resolves the commit message for a single-resource UI operation. Whitespace-
@@ -147,5 +177,29 @@ export function getSingleResourceCommitMessage({
 }: SingleResourceCommitMessageArgs): string {
   const trimmed = comment?.trim();
   const base = trimmed ? trimmed : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars);
+  return appendSavedByTrailer(base, vars);
+}
+
+type BulkResourceCommitMessageArgs = SingleResourceCommitMessageArgs & {
+  /** Multi-resource default used when no repo template is configured. */
+  fallbackMessage: string;
+};
+
+/**
+ * Resolves the commit message for a multi-resource (bulk) UI operation. Identical to
+ * {@link getSingleResourceCommitMessage} except the no-template fallback is the caller-supplied bulk
+ * default (e.g. "Delete resources") instead of the single-resource built-in. The
+ * `Grafana-saved-by:` trailer is still appended exactly once in every path.
+ */
+export function getBulkResourceCommitMessage({
+  comment,
+  repository,
+  fallbackMessage,
+  ...vars
+}: BulkResourceCommitMessageArgs): string {
+  const trimmed = comment?.trim();
+  const base = trimmed
+    ? trimmed
+    : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars, fallbackMessage);
   return appendSavedByTrailer(base, vars);
 }
