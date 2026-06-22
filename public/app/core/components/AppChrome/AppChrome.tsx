@@ -95,8 +95,7 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const { fullscreenWorkspaceFeatureFlagEnabled, fullscreenWorkspaceActive } =
-    useFullscreenWorkspace();
+  const { fullscreenWorkspaceFeatureFlagEnabled, fullscreenWorkspaceActive } = useFullscreenWorkspace();
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
