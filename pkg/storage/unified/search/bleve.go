@@ -38,7 +38,6 @@ import (
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -750,7 +749,7 @@ func (b *bleveBackend) BuildIndex(
 	searchFieldsHash := b.searchFieldsHashes[sfKey]
 	searchFieldsProvider := b.searchFieldsProvider[sfKey]
 
-	mapper, err := GetBleveMappings(fields, searchFieldsProvider, key.Group, key.Resource, selectableFields)
+	mapper, err := GetBleveMappings(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 	if err != nil {
 		return nil, err
 	}
@@ -2121,11 +2120,13 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		facets[f.Field] = bleve.NewFacetRequest(f.Field, int(f.Limit))
 	}
 
-	// Convert resource-specific fields to bleve fields.
-	// TODO: use b.fields.Field(f) instead of builders.DashboardFields() to avoid dashboard-specific code in search server.
+	// Convert resource-specific fields to bleve fields. Any field declared
+	// on this index's per-kind SearchableDocumentFields lives under the
+	// fields.* sub-document and must be prefixed before the bleve query.
+	// Skip inputs that already carry the prefix.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if slices.Contains(builders.DashboardFields(), f) {
+		if b.fields != nil && !strings.HasPrefix(f, resource.SEARCH_FIELD_PREFIX) && b.fields.Field(f) != nil {
 			f = resource.SEARCH_FIELD_PREFIX + f
 		}
 		fields = append(fields, f)
@@ -2342,7 +2343,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// Add the sort fields
-	sorting := getSortFields(req)
+	sorting := getSortFields(req, b.fields)
 	searchrequest.SortBy(sorting)
 
 	// When no sort fields are provided, sort by score if there is a query, otherwise sort by title
@@ -2549,7 +2550,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
+func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
 	sorting := make([]string, 0, len(req.SortBy))
 	for _, sort := range req.SortBy {
 		input := sort.Field
@@ -2557,8 +2558,11 @@ func getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 			input = field
 		}
 
-		// TODO: pass fields parameter and use fields.Field(input) instead of builders.DashboardFields() to avoid dashboard-specific code.
-		if slices.Contains(builders.DashboardFields(), input) {
+		// Per-kind sort fields live under the fields.* sub-document, prefix
+		// them by consulting this index's SearchableDocumentFields. Skip
+		// inputs that already carry the prefix (Field() would strip it and
+		// match again, leading to a double prefix).
+		if fields != nil && !strings.HasPrefix(input, resource.SEARCH_FIELD_PREFIX) && fields.Field(input) != nil {
 			input = resource.SEARCH_FIELD_PREFIX + input
 		}
 

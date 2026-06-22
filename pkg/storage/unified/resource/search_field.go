@@ -142,63 +142,58 @@ func (f SearchFieldDefinition) HasCapability(c SearchCapability) bool {
 	return slices.Contains(f.Capabilities, c)
 }
 
-// SearchFieldsFromTableColumns translates the legacy
-// *resourcepb.ResourceTableColumnDefinition column list into the new internal
-// SearchFieldDefinition representation. Bleve mapping code uses the new type
-// while the rest of the codebase continues to declare fields with the protobuf
-// type.
+// SearchFieldDefinitionsToTableColumns builds legacy
+// *resourcepb.ResourceTableColumnDefinition entries from a list of
+// SearchFieldDefinitions. Used by the unified bleve search response and
+// the IAM legacy SQL backends, both of which still populate column
+// metadata in their wire-API responses. Both consumers go away when the
+// new search endpoint replaces them.
 //
-// Translation rules preserve current behavior:
-//   - Filterable + STRING  -> [filter, retrieve]
-//   - everything else      -> [retrieve]
-//
-// Nil entries are dropped. Protobuf types that have no corresponding
-// SearchFieldType (OBJECT, BINARY, UNKNOWN_TYPE) yield SearchFieldTypeUnknown.
-func SearchFieldsFromTableColumns(cols []*resourcepb.ResourceTableColumnDefinition) []SearchFieldDefinition {
-	out := make([]SearchFieldDefinition, 0, len(cols))
-	for _, c := range cols {
-		if c == nil {
-			continue
+// Lossy by design: SFD is search-only, so Properties.UniqueValues and
+// Properties.NotNull are not carried over; SearchFieldTypeInt64 maps to
+// INT64 (was sometimes INT32 in hand-written column-defs). Filterable is
+// set when the SFD has SearchCapabilityFilter; FreeText when it has
+// SearchCapabilityText. Name, Description, IsArray pass through.
+func SearchFieldDefinitionsToTableColumns(sfds []SearchFieldDefinition) []*resourcepb.ResourceTableColumnDefinition {
+	out := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(sfds))
+	for _, def := range sfds {
+		col := &resourcepb.ResourceTableColumnDefinition{
+			Name:        def.Name,
+			Type:        protoTypeFromSearchFieldType(def.Type),
+			IsArray:     def.Array,
+			Description: def.Description,
 		}
-		sf := SearchFieldDefinition{
-			Name:        c.Name,
-			Type:        searchFieldTypeFromProto(c.Type),
-			Array:       c.IsArray,
-			Description: c.Description,
+		filterable := def.HasCapability(SearchCapabilityFilter)
+		freeText := def.HasCapability(SearchCapabilityText)
+		if filterable || freeText {
+			col.Properties = &resourcepb.ResourceTableColumnDefinition_Properties{
+				Filterable: filterable,
+				FreeText:   freeText,
+			}
 		}
-		if c.Properties != nil && c.Properties.Filterable && c.Type == resourcepb.ResourceTableColumnDefinition_STRING {
-			sf.Capabilities = []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve}
-		} else {
-			sf.Capabilities = []SearchCapability{SearchCapabilityRetrieve}
-		}
-		out = append(out, sf)
+		out = append(out, col)
 	}
 	return out
 }
 
-// searchFieldTypeFromProto maps the protobuf column type to the new
-// SearchFieldType. INT32 collapses into Int64 and FLOAT into Double:
-// bleve stores both as float64 and the SFD type set does not preserve the
-// distinction. DATE_TIME collapses to date because the new design omits a
-// separate dateTime type. OBJECT, BINARY, and UNKNOWN_TYPE return
-// SearchFieldTypeUnknown because they are not part of the new type set.
-func searchFieldTypeFromProto(t resourcepb.ResourceTableColumnDefinition_ColumnType) SearchFieldType {
+// protoTypeFromSearchFieldType maps a SearchFieldType back to its proto
+// counterpart. SearchFieldType does not preserve INT32 / FLOAT / DATE_TIME
+// distinctions, so this returns the wider variant (INT64, DOUBLE, DATE)
+// in every case.
+func protoTypeFromSearchFieldType(t SearchFieldType) resourcepb.ResourceTableColumnDefinition_ColumnType {
 	switch t {
-	case resourcepb.ResourceTableColumnDefinition_STRING:
-		return SearchFieldTypeString
-	case resourcepb.ResourceTableColumnDefinition_BOOLEAN:
-		return SearchFieldTypeBoolean
-	case resourcepb.ResourceTableColumnDefinition_INT32,
-		resourcepb.ResourceTableColumnDefinition_INT64:
-		return SearchFieldTypeInt64
-	case resourcepb.ResourceTableColumnDefinition_FLOAT,
-		resourcepb.ResourceTableColumnDefinition_DOUBLE:
-		return SearchFieldTypeDouble
-	case resourcepb.ResourceTableColumnDefinition_DATE,
-		resourcepb.ResourceTableColumnDefinition_DATE_TIME:
-		return SearchFieldTypeDate
+	case SearchFieldTypeString:
+		return resourcepb.ResourceTableColumnDefinition_STRING
+	case SearchFieldTypeInt64:
+		return resourcepb.ResourceTableColumnDefinition_INT64
+	case SearchFieldTypeDouble:
+		return resourcepb.ResourceTableColumnDefinition_DOUBLE
+	case SearchFieldTypeBoolean:
+		return resourcepb.ResourceTableColumnDefinition_BOOLEAN
+	case SearchFieldTypeDate:
+		return resourcepb.ResourceTableColumnDefinition_DATE
 	default:
-		return SearchFieldTypeUnknown
+		return resourcepb.ResourceTableColumnDefinition_UNKNOWN_TYPE
 	}
 }
 

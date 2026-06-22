@@ -676,10 +676,18 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting
+	// Add sorting. Dashboard-specific fields live under the fields.*
+	// sub-document inside bleve; clients pass the bare name (e.g.
+	// ?sort=panel_types) and the search backend needs the prefixed form
+	// (fields.panel_types) to find them.
 	if queryParams.Has("sort") {
+		isDashboardField := func(name string) bool {
+			return slices.ContainsFunc(builders.DashboardSearchFields, func(def resource.SearchFieldDefinition) bool {
+				return def.Name == name
+			})
+		}
 		for _, sort := range queryParams["sort"] {
-			if slices.Contains(builders.DashboardFields(), sort) {
+			if isDashboardField(sort) {
 				sort = resource.SEARCH_FIELD_PREFIX + sort
 			}
 			s := &resourcepb.ResourceSearchRequest_Sort{Field: sort}
