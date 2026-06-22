@@ -5991,8 +5991,7 @@
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
       "search": {
-        "no-results": "No results found for your query",
-        "placeholder": "Search outline"
+        "no-results": "No results found for your query"
       },
       "tree-item": {
         "empty": "(empty)",

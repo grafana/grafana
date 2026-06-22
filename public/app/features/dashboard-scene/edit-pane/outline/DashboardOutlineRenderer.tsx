@@ -38,7 +38,6 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
           value={searchQuery}
           onChange={(query) => model.setSearchQuery(query)}
           escapeRegex={false}
-          placeholder={t('dashboard.outline.search.placeholder', 'Search outline')}
           className={styles.input}
         />
       </div>
