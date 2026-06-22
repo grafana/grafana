@@ -5,7 +5,7 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Checkbox, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
@@ -45,6 +45,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       appID: '',
       installationID: '',
       privateKey: '',
+      webhookDisabled: false,
     },
   });
 
@@ -77,12 +78,13 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey } = credentialForm.getValues();
+    const { title, description, appID, installationID, privateKey, webhookDisabled } = credentialForm.getValues();
     const spec: ConnectionSpec = {
       type: 'github',
       title,
       ...(description && { description }),
       github: { appID, installationID },
+      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
     };
 
     const defaultErrorMessage = t(
@@ -221,6 +223,16 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />
+          <Field noMargin>
+            <Checkbox
+              {...credentialForm.register('webhookDisabled')}
+              label={t('provisioning.connection-form.label-webhook-disabled', 'Disable webhook integration')}
+              description={t(
+                'provisioning.connection-form.description-webhook-disabled',
+                'When enabled, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.'
+              )}
+            />
+          </Field>
         </FormProvider>
       )}
     </Stack>

@@ -7,10 +7,16 @@ import { type RepositoryFormData } from '../types';
 
 import { WebhookSection } from './WebhookSection';
 
-function Wrapper() {
+function Wrapper({ connectionWebhookDisabled }: { connectionWebhookDisabled?: boolean }) {
   const { register, control } = useForm<RepositoryFormData>();
   return (
-    <WebhookSection register={register} control={control} name="webhook.baseUrl" disabledName="webhook.disabled" />
+    <WebhookSection
+      register={register}
+      control={control}
+      name="webhook.baseUrl"
+      disabledName="webhook.disabled"
+      connectionWebhookDisabled={connectionWebhookDisabled}
+    />
   );
 }
 
@@ -69,6 +75,35 @@ describe('WebhookSection', () => {
     await user.click(screen.getByText('Webhook options'));
 
     expect(screen.getByRole('link', { name: 'Learn more' })).toBeInTheDocument();
+  });
+
+  describe('connectionWebhookDisabled', () => {
+    it('disables the checkbox when connectionWebhookDisabled is true', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={true} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).toBeDisabled();
+    });
+
+    it('disables the URL input when connectionWebhookDisabled is true', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={true} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('textbox')).toBeDisabled();
+    });
+
+    it('enables the checkbox and shows the normal description when connectionWebhookDisabled is false', async () => {
+      const { user } = render(<Wrapper connectionWebhookDisabled={false} />);
+
+      await user.click(screen.getByText('Webhook options'));
+
+      expect(screen.getByRole('checkbox', { name: /disable webhook integration/i })).not.toBeDisabled();
+      expect(
+        screen.getByText(/when checked, grafana will not register or receive webhook events/i)
+      ).toBeInTheDocument();
+    });
   });
 
   it('hides the learn more link on public instances', async () => {

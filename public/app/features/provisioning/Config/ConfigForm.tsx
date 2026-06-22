@@ -107,6 +107,8 @@ export function ConfigForm({ data }: ConfigFormProps) {
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('webhook.disabled', true);
+    } else {
+      setValue('webhook.disabled', false);
     }
   }, [connectionWebhookDisabled, setValue]);
 

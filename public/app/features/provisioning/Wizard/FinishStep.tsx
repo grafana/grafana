@@ -27,10 +27,11 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly, wizardConnectionName] = watch([
+  const [type, readOnly, wizardConnectionName, githubAuthType] = watch([
     'repository.type',
     'repository.readOnly',
     'githubApp.connectionName',
+    'githubAuthType',
   ]);
 
   const isGithub = type === 'github';
@@ -38,22 +39,24 @@ export const FinishStep = memo(function FinishStep() {
 
   const [connections] = useConnectionList(isGithub ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
-    if (!wizardConnectionName || !connections) {
+    if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
       return false;
     }
     const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);
     return Boolean(conn?.spec?.webhook?.disabled);
-  }, [wizardConnectionName, connections]);
+  }, [githubAuthType, wizardConnectionName, connections]);
 
   // Set sync enabled by default
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
 
-  // Auto-set webhook disabled when the selected connection requires it
+  // Auto-set webhook disabled when the selected connection requires it, clear when it no longer does
   useEffect(() => {
     if (connectionWebhookDisabled) {
       setValue('repository.webhook.disabled', true);
+    } else {
+      setValue('repository.webhook.disabled', false);
     }
   }, [connectionWebhookDisabled, setValue]);
 
