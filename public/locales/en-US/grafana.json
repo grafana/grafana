@@ -12146,9 +12146,6 @@
     }
   },
   "navigation": {
-    "agent-mode": {
-      "enter": "Enter Agent mode"
-    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
@@ -12161,6 +12158,9 @@
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
       }
+    },
+    "fullscreen-workspace": {
+      "enter": "Enter Workspace"
     },
     "help": {
       "aria-label": "Help",

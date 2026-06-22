@@ -6,11 +6,11 @@ import { usePluginComponent } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-const AGENT_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/agent-mode-workspace/v1';
+const FULLSCREEN_WORKSPACE_COMPONENT_ID = 'grafana-assistant-app/fullscreen-workspace/v1';
 
-interface AgentWorkspaceProps {
+interface FullscreenWorkspaceComponentProps {
   registerPlatformHost?: RefCallback<HTMLDivElement>;
-  onExitAgentMode?: () => void;
+  onExitFullscreenWorkspace?: () => void;
 }
 
 interface Props {
@@ -18,11 +18,12 @@ interface Props {
   // body just exposes it; the page itself stays mounted in AppChrome's React tree.
   outletRef: RefCallback<HTMLDivElement>;
 }
-export function AgentModeShell({ outletRef }: Props) {
+export function FullscreenWorkspaceShell({ outletRef }: Props) {
   const { chrome } = useGrafana();
   const styles = useStyles2(getStyles);
-  const { component: PluginWorkspace, isLoading } =
-    usePluginComponent<AgentWorkspaceProps>(AGENT_WORKSPACE_COMPONENT_ID);
+  const { component: PluginWorkspace, isLoading } = usePluginComponent<FullscreenWorkspaceComponentProps>(
+    FULLSCREEN_WORKSPACE_COMPONENT_ID
+  );
 
   if (!PluginWorkspace || isLoading) {
     return null;
@@ -30,7 +31,10 @@ export function AgentModeShell({ outletRef }: Props) {
 
   return (
     <div className={styles.root}>
-      <PluginWorkspace registerPlatformHost={outletRef} onExitAgentMode={() => chrome.setAgentMode(false)} />
+      <PluginWorkspace
+        registerPlatformHost={outletRef}
+        onExitFullscreenWorkspace={() => chrome.setFullscreenWorkspace(false)}
+      />
     </div>
   );
 }

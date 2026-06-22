@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { useFlagAssistantAgentMode } from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
 
@@ -15,18 +15,18 @@ jest.mock('@grafana/i18n', () => ({
 }));
 
 jest.mock('@grafana/runtime/internal', () => ({
-  useFlagAssistantAgentMode: jest.fn(),
+  useFlagAssistantFullscreenWorkspace: jest.fn(),
 }));
 
-jest.mock('../AgentMode/AssistantToolbarButtons', () => ({
+jest.mock('../FullscreenWorkspace/AssistantToolbarButtons', () => ({
   AssistantToolbarButtons: () => <div data-testid="assistant-toolbar-buttons" />,
 }));
 
-const useFlagAssistantAgentModeMock = jest.mocked(useFlagAssistantAgentMode);
+const useFlagAssistantFullscreenWorkspaceMock = jest.mocked(useFlagAssistantFullscreenWorkspace);
 
 describe('ExtensionToolbarItemButton', () => {
   beforeEach(() => {
-    useFlagAssistantAgentModeMock.mockReturnValue(false);
+    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(false);
   });
   it('renders open button with default tooltip when no title is provided', () => {
     render(<ExtensionToolbarItemButton isOpen={false} />);
@@ -65,16 +65,16 @@ describe('ExtensionToolbarItemButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('renders the assistant toolbar buttons when agent mode is enabled for the assistant plugin', () => {
-    useFlagAssistantAgentModeMock.mockReturnValue(true);
+  it('renders the assistant toolbar buttons when fullscreen workspace is enabled for the assistant plugin', () => {
+    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(true);
     render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
 
     expect(screen.getByTestId('assistant-toolbar-buttons')).toBeInTheDocument();
     expect(screen.queryByTestId('extension-toolbar-button-open')).not.toBeInTheDocument();
   });
 
-  it('renders the default button for the assistant plugin when agent mode is disabled', () => {
-    useFlagAssistantAgentModeMock.mockReturnValue(false);
+  it('renders the default button for the assistant plugin when fullscreen workspace is disabled', () => {
+    useFlagAssistantFullscreenWorkspaceMock.mockReturnValue(false);
     render(<ExtensionToolbarItemButton isOpen={false} pluginId="grafana-assistant-app" />);
 
     expect(screen.getByTestId('extension-toolbar-button-open')).toBeInTheDocument();

@@ -3163,8 +3163,8 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
-			Name:        "assistant.agentMode",
-			Description: "Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar",
+			Name:        "assistant.fullscreenWorkspace",
+			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",

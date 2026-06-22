@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { t } from '@grafana/i18n';
-import { useFlagAssistantAgentMode } from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { type IconName, ToolbarButton } from '@grafana/ui';
 
-import { AssistantToolbarButtons } from '../AgentMode/AssistantToolbarButtons';
+import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 
 interface ToolbarItemButtonProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ function ExtensionToolbarItemButtonComponent(
   { isOpen, title, onClick, pluginId }: ToolbarItemButtonProps,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
-  const agentModeEnabled = useFlagAssistantAgentMode();
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const icon = getPluginIcon(pluginId);
   const tooltip = (() => {
     if (isOpen) {
@@ -43,7 +43,7 @@ function ExtensionToolbarItemButtonComponent(
     return t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
   })();
 
-  if (agentModeEnabled && pluginId === 'grafana-assistant-app') {
+  if (fullscreenWorkspaceEnabled && pluginId === 'grafana-assistant-app') {
     return <AssistantToolbarButtons ref={ref} isOpen={isOpen} onClick={onClick} />;
   }
 

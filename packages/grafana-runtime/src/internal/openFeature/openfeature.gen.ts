@@ -17,10 +17,10 @@ export const FlagKeys = {
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
-  /** Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar */
-  AssistantAgentMode: "assistant.agentMode",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
+  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -130,17 +130,6 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
- * Enables the global Agent mode (Grafana Assistant workspace shell) in the top bar
- *
- * **Details:**
- * - flag key: `assistant.agentMode`
- * - default value: `false`
- */
-export const useFlagAssistantAgentMode = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("assistant.agentMode", false, options).value;
-};
-
-/**
  * Enables the template dashboard assistant
  *
  * **Details:**
@@ -149,6 +138,17 @@ export const useFlagAssistantAgentMode = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
+};
+
+/**
+ * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ *
+ * **Details:**
+ * - flag key: `assistant.fullscreenWorkspace`
+ * - default value: `false`
+ */
+export const useFlagAssistantFullscreenWorkspace = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.fullscreenWorkspace", false, options).value;
 };
 
 /**

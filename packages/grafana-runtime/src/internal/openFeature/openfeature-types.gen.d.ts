@@ -55,7 +55,7 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
-    | "assistant.agentMode";
+    | "assistant.fullscreenWorkspace";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

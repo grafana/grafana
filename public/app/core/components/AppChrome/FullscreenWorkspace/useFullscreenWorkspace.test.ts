@@ -1,10 +1,10 @@
 import { renderHook } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { useFlagAssistantAgentMode } from '@grafana/runtime/internal';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { useAgentMode } from './useAgentMode';
+import { useFullscreenWorkspace } from './useFullscreenWorkspace';
 
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
@@ -19,34 +19,34 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('@grafana/runtime/internal', () => ({
-  useFlagAssistantAgentMode: jest.fn(),
+  useFlagAssistantFullscreenWorkspace: jest.fn(),
 }));
 
 jest.mock('app/core/context/GrafanaContext', () => ({
   useGrafana: jest.fn(),
 }));
 
-const useFlagMock = jest.mocked(useFlagAssistantAgentMode);
+const useFlagMock = jest.mocked(useFlagAssistantFullscreenWorkspace);
 const useGrafanaMock = jest.mocked(useGrafana);
 const getLocationMock = jest.mocked(locationService.getLocation);
 const getLocationObservableMock = jest.mocked(locationService.getLocationObservable);
 const partialMock = jest.mocked(locationService.partial);
 
-const setAgentMode = jest.fn();
+const setFullscreenWorkspace = jest.fn();
 
 /** Build a full `Location` from just a search string (the only field the hook reads). */
 function loc(search: string) {
   return { pathname: '/', search, hash: '', state: null, key: 'test' };
 }
 
-function mockChrome(agentMode = false) {
+function mockChrome(fullscreenWorkspace = false) {
   useGrafanaMock.mockReturnValue({
-    // The hook only uses chrome.useState() and chrome.setAgentMode().
-    chrome: { useState: () => ({ agentMode }), setAgentMode },
+    // The hook only uses chrome.useState() and chrome.setFullscreenWorkspace().
+    chrome: { useState: () => ({ fullscreenWorkspace }), setFullscreenWorkspace },
   } as unknown as ReturnType<typeof useGrafana>);
 }
 
-describe('useAgentMode', () => {
+describe('useFullscreenWorkspace', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getLocationMock.mockReturnValue(loc(''));
@@ -59,46 +59,46 @@ describe('useAgentMode', () => {
     useFlagMock.mockReturnValue(false);
     mockChrome(true);
 
-    const { result } = renderHook(() => useAgentMode());
+    const { result } = renderHook(() => useFullscreenWorkspace());
 
-    expect(result.current.agentModeFeatureFlagEnabled).toBe(false);
+    expect(result.current.fullscreenWorkspaceFeatureFlagEnabled).toBe(false);
     // Even with chrome state on, active is gated by the flag.
     expect(result.current.active).toBe(false);
     // No location subscription is created while the flag is off.
     expect(getLocationObservableMock).not.toHaveBeenCalled();
-    expect(setAgentMode).not.toHaveBeenCalled();
+    expect(setFullscreenWorkspace).not.toHaveBeenCalled();
   });
 
-  it('is active when the flag is on and chrome state has agent mode enabled', () => {
+  it('is active when the flag is on and chrome state has fullscreen workspace enabled', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(true);
 
-    const { result } = renderHook(() => useAgentMode());
+    const { result } = renderHook(() => useFullscreenWorkspace());
 
-    expect(result.current.agentModeFeatureFlagEnabled).toBe(true);
+    expect(result.current.fullscreenWorkspaceFeatureFlagEnabled).toBe(true);
     expect(result.current.active).toBe(true);
     expect(getLocationObservableMock).toHaveBeenCalled();
   });
 
-  it('enters agent mode and clears the query param when the flag is on and ?agentMode=1 is present', () => {
+  it('enters fullscreen workspace and clears the query param when the flag is on and ?fullscreenWorkspace=1 is present', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(false);
-    getLocationMock.mockReturnValue(loc('?agentMode=1'));
+    getLocationMock.mockReturnValue(loc('?fullscreenWorkspace=1'));
 
-    renderHook(() => useAgentMode());
+    renderHook(() => useFullscreenWorkspace());
 
-    expect(setAgentMode).toHaveBeenCalledWith(true);
-    expect(partialMock).toHaveBeenCalledWith({ agentMode: null });
+    expect(setFullscreenWorkspace).toHaveBeenCalledWith(true);
+    expect(partialMock).toHaveBeenCalledWith({ fullscreenWorkspace: null });
   });
 
-  it('does not enter agent mode when the query param is absent', () => {
+  it('does not enter fullscreen workspace when the query param is absent', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(false);
     getLocationMock.mockReturnValue(loc(''));
 
-    renderHook(() => useAgentMode());
+    renderHook(() => useFullscreenWorkspace());
 
-    expect(setAgentMode).not.toHaveBeenCalled();
+    expect(setFullscreenWorkspace).not.toHaveBeenCalled();
   });
 
   it('unsubscribes from the location observable on unmount', () => {
@@ -109,7 +109,7 @@ describe('useAgentMode', () => {
       subscribe: jest.fn(() => ({ unsubscribe })),
     } as unknown as ReturnType<typeof locationService.getLocationObservable>);
 
-    const { unmount } = renderHook(() => useAgentMode());
+    const { unmount } = renderHook(() => useFullscreenWorkspace());
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
