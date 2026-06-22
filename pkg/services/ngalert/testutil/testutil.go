@@ -83,6 +83,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *das
 			nil,
 			features,
 		),
+		nil, // cleanupElector: leader election disabled in tests
 	)
 	require.NoError(tb, err)
 	dashboardService.RegisterDashboardPermissions(dashboardPermissions)

@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -97,6 +98,9 @@ type DashboardServiceImpl struct {
 	publicDashboardService publicdashboards.ServiceWrapper
 	serverLockService      *serverlock.ServerLockService
 	kvstore                kvstore.KVStore
+	// cleanupElector gates the k8s dashboard cleanup loop when leader election is
+	// enabled. Nil is treated as disabled (serverlock-based coordination is used).
+	cleanupElector leaderelection.Elector
 
 	dashboardPermissionsReady chan struct{}
 }
@@ -385,11 +389,41 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 
 // This gets auto-invoked when grafana starts, part of the BackgroundService interface
 func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
+	// Leader-election mode: a single instance holds a renewable lease and runs the
+	// cleanup loop, avoiding the per-interval serverlock contention that the default
+	// path incurs across every instance in the fleet.
+	if dr.cfg.K8sDashboardCleanup.LeaderElection.Enabled && dr.cleanupElector != nil {
+		return dr.cleanupElector.Run(ctx, dr.runK8sDashboardCleanupLoop)
+	}
+
+	// Default mode: each instance polls a shared serverlock every interval and only
+	// the winner runs the cleanup. Preserved for backwards compatibility.
 	cleanupBackgroundJobStopped := dr.startK8sDeletedDashboardsCleanupJob(ctx)
 	<-ctx.Done()
 	// Wait for cleanup job to finish
 	<-cleanupBackgroundJobStopped
 	return ctx.Err()
+}
+
+// runK8sDashboardCleanupLoop runs the cleanup on an interval while this instance
+// holds leadership. Unlike startK8sDeletedDashboardsCleanupJob it takes no
+// serverlock — leadership is already guaranteed by the elector — so there is no
+// per-interval lock contention. ctx is cancelled when leadership is lost or on
+// shutdown.
+func (dr *DashboardServiceImpl) runK8sDashboardCleanupLoop(ctx context.Context) {
+	ticker := time.NewTicker(dr.cfg.K8sDashboardCleanup.Interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			if err := dr.cleanupK8sDashboardResources(ctx, dr.cfg.K8sDashboardCleanup.BatchSize, dr.cfg.K8sDashboardCleanup.Timeout); err != nil {
+				dr.log.Error("Failed to cleanup k8s dashboard resources", "error", err)
+			}
+		}
+	}
 }
 
 var _ dashboards.PermissionsRegistrationService = (*DashboardServiceImpl)(nil)
@@ -412,6 +446,7 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
+	cleanupElector *CleanupElector,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -429,6 +464,10 @@ func ProvideDashboardServiceImpl(
 		publicDashboardService:    publicDashboardService,
 		serverLockService:         serverLockService,
 		kvstore:                   kvstore,
+	}
+
+	if cleanupElector != nil {
+		dashSvc.cleanupElector = cleanupElector
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
