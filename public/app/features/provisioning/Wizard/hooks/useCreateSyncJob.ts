@@ -42,10 +42,18 @@ export function useCreateSyncJob({ repoName, setStepStatusInfo }: UseCreateSyncJ
               message: withSavedByTrailer(
                 t('provisioning.sync-job.migrate-default-message', 'Migrate Grafana resources into repository')
               ),
-              // When resources are passed, only those (unmanaged) dashboards are
-              // migrated; an empty migrate object keeps the legacy "migrate
-              // everything unmanaged" behavior the wizard relies on.
-              migrate: resources?.length ? { resources } : {},
+              migrate: {
+                // Always generate fresh folder UIDs on export so the migrated
+                // folders are created anew on the subsequent pull rather than
+                // taking over the existing folders (which would leave their
+                // alerts and library panels orphaned under a now-managed
+                // folder). Has no effect unless folder metadata is written.
+                generateNewFolderIDs: true,
+                // When resources are passed, only those (unmanaged) dashboards
+                // are migrated; otherwise the migrate object keeps the legacy
+                // "migrate everything unmanaged" behavior the wizard relies on.
+                ...(resources?.length ? { resources } : {}),
+              },
             }
           : {
               action: 'pull' as const,
