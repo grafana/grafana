@@ -55,7 +55,7 @@ We welcome your technical contributions! You can contribute in several ways:
 1. Ensure you include and run the appropriate tests as part of your pull request.
 1. Commit and push your changes. If you encounter merge conflicts, you may rebase your branch onto the main branch.
 
-## Submitting a pull request
+## Submit a pull request
 
 Effective June 22, 2026, all Grafana Labs repositories will [require signed commits](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-signed-commits). To learn how to enable commit verification, see [about commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification) and see this page to learn about [checking your commit signature verification status](https://docs.github.com/en/authentication/troubleshooting-commit-signature-verification/checking-your-commit-and-tag-signature-verification-status).
 
