@@ -2,10 +2,12 @@ import { t } from '@grafana/i18n';
 import { useCreateRepositoryJobsMutation, type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
+import { type ResourceGroup, type ResourceKindName } from '../../utils/resourceKinds';
+
 export interface ResourceRef {
   name: string;
-  group: 'dashboard.grafana.app' | 'folder.grafana.app';
-  kind: 'Dashboard' | 'Folder';
+  group: ResourceGroup;
+  kind: ResourceKindName;
 }
 
 export interface DeleteJobSpec {
