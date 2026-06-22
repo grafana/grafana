@@ -27,6 +27,8 @@ export function LogsTableCustomCellRenderer(props: {
         : 0;
   const styles = useStyles2(getStyles, cellPadding);
 
+  console.log(value);
+
   return (
     <>
       <LogsTableRowActionButtons
@@ -36,7 +38,7 @@ export function LogsTableCustomCellRenderer(props: {
       />
 
       <span className={styles.firstColumnCell}>
-        <AutoCell field={field} value={field.display?.(value).text ?? String(value)} rowIdx={rowIndex} />
+        <AutoCell field={field} value={value} rowIdx={rowIndex} />
       </span>
     </>
   );
@@ -44,7 +46,7 @@ export function LogsTableCustomCellRenderer(props: {
 
 interface AutoCellProps {
   field: Field;
-  value: string;
+  value: unknown;
   rowIdx: number;
 }
 
