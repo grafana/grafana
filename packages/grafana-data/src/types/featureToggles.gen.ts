@@ -1252,7 +1252,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**
