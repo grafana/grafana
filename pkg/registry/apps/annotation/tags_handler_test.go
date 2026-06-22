@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -255,13 +256,11 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 		handler := newTagsHandler(store.(TagProvider), denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
-		// The handler writes the denial status to the response itself and returns nil,
-		// because a returned error would be rendered as a generic 500.
 		err := handler(ctx, writer, req)
 
-		require.NoError(t, err)
-		assert.Equal(t, http.StatusForbidden, writer.code)
-		assert.Contains(t, writer.body.String(), "requires the annotations:read permission with the organization scope")
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
+		assert.ErrorContains(t, err, "requires the annotations:read permission with the organization scope")
 		assert.NotContains(t, writer.body.String(), "secret-canary", "tag metadata must not be leaked on denial")
 	})
 
