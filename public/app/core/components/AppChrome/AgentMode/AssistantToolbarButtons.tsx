@@ -71,7 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     border: `1px solid ${theme.colors.border.weak}`,
     background: 'rgba(155, 140, 255, 0.05)',
-    margin: theme.spacing(0, 2),
+    margin: theme.spacing(0, 1, 0, 2),
     color: '#9b8cff',
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
