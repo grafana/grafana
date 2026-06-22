@@ -1343,3 +1343,33 @@ func TestQueryData_forwardOAuthIdentity(t *testing.T) {
 		}
 	})
 }
+
+func TestQueryData_invalidQueryJSONIsDownstreamError(t *testing.T) {
+	im := datasource.NewInstanceManager(func(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return &datasourceInfo{
+			authenticationType: jwtAuthentication,
+			defaultProject:     "p1",
+		}, nil
+	})
+	service := &Service{im: im, logger: backend.NewLoggerWith("logger", "test")}
+
+	_, err := service.QueryData(context.Background(), &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
+			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
+		},
+		Queries: []backend.DataQuery{
+			{
+				RefID:     "A",
+				QueryType: string(dataquery.QueryTypeTIMESERIESLIST),
+				JSON: json.RawMessage(`{
+					"timeSeriesList": {
+						"filters": "resource.type=\"gce_instance\""
+					}
+				}`),
+			},
+		},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "could not unmarshal CloudMonitoringQuery json")
+	assert.True(t, backend.IsDownstreamError(err))
+}
