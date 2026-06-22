@@ -12,8 +12,6 @@ replace github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/feature
 
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
-replace github.com/grafana/grafana/pkg/semconv => ../../pkg/semconv
-
 require (
 	github.com/emicklei/go-restful/v3 v3.13.0
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
@@ -133,7 +131,6 @@ require (
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.292.1 // indirect
 	github.com/grafana/grafana/pkg/infra/features v0.0.0 // indirect
-	github.com/grafana/grafana/pkg/semconv v0.0.0 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
 	github.com/grafana/sqlds/v5 v5.1.1 // indirect
