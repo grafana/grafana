@@ -566,6 +566,27 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/pulse',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "PulsePage" */ 'app/features/pulse/PulsePage')),
     },
+    config.featureToggles.dashboardPulse && {
+      path: '/admin/pulse',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.PulseAdmin]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PulseHooksListPage" */ 'app/features/pulse/admin/PulseHooksListPage')
+      ),
+    },
+    config.featureToggles.dashboardPulse && {
+      path: '/admin/pulse/new',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.PulseAdmin]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PulseHookEditPage" */ 'app/features/pulse/admin/PulseHookEditPage')
+      ),
+    },
+    config.featureToggles.dashboardPulse && {
+      path: '/admin/pulse/edit/:uid',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.PulseAdmin]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "PulseHookEditPage" */ 'app/features/pulse/admin/PulseHookEditPage')
+      ),
+    },
     {
       // Redirect the /femt dev page to the root
       path: '/femt',

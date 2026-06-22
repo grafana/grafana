@@ -99,6 +99,20 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	// Pulse hooks (named outbound webhook integrations) are managed
+	// alongside the other "plugins and data" config surfaces. Gated by
+	// the dashboardPulse experimental toggle and pulse:admin so the
+	// menu item only appears for users who can actually manage hooks.
+	if s.features.IsEnabled(ctx, featuremgmt.FlagDashboardPulse) && hasAccess(ac.EvalPermission("pulse:admin")) {
+		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{
+			Text:     "Pulse",
+			Icon:     "comment-alt-share",
+			SubTitle: "Manage Pulse hooks — named webhooks triggered by Pulse mentions",
+			Id:       "pulse-hooks",
+			Url:      s.cfg.AppSubURL + "/admin/pulse",
+		})
+	}
+
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if (s.cfg.Env == setting.Dev) || s.features.IsEnabled(ctx, featuremgmt.FlagEnableExtensionsAdminPage) && hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
 		pluginsNodeLinks = append(pluginsNodeLinks, &navtree.NavLink{

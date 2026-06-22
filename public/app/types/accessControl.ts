@@ -24,6 +24,8 @@ export enum AccessControlAction {
   UsersQuotasList = 'users.quotas:read',
   UsersQuotasUpdate = 'users.quotas:write',
 
+  PulseAdmin = 'pulse:admin',
+
   ServiceAccountsRead = 'serviceaccounts:read',
   ServiceAccountsCreate = 'serviceaccounts:create',
   ServiceAccountsWrite = 'serviceaccounts:write',
