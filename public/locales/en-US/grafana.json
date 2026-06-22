@@ -10605,9 +10605,10 @@
       "placeholder": "Welcome to {{edition}}."
     },
     "most-used-dashboards-tab": {
-      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
-      "error-title": "Could not load most viewed dashboards",
-      "loading": "Loading most viewed dashboards..."
+      "empty": "Most used dashboards will appear here.",
+      "empty-description": "Once your organization has dashboards and usage data has been collected, dashboards with the most views over the last 30 days will be displayed here.",
+      "error-title": "Could not load most used dashboards",
+      "loading": "Loading most used dashboards..."
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
