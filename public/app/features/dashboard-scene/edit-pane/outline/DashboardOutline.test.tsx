@@ -288,7 +288,7 @@ describe('DashboardOutline', () => {
         screen.queryByTestId(selectors.components.PanelEditor.Outline.item('Tab level 3 - B'))
       ).not.toBeInTheDocument();
 
-      await user.type(screen.getByPlaceholderText('Search outline'), 'Tab level 3 - B');
+      await user.type(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput), 'Tab level 3 - B');
 
       // Wait for debounced search to complete
       await waitFor(() => {
@@ -323,7 +323,10 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      await user.type(screen.getByPlaceholderText('Search outline'), 'important system metrics');
+      await user.type(
+        screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput),
+        'important system metrics'
+      );
 
       await waitFor(() => {
         expect(
@@ -349,7 +352,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByPlaceholderText('Search outline');
+      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
 
       await user.type(searchInput, 'does-not-exist');
       await waitFor(() => {
@@ -384,7 +387,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByPlaceholderText('Search outline');
+      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
       await user.type(searchInput, 'Row level 1');
       expect(searchInput).toHaveValue('Row level 1');
 
@@ -398,7 +401,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByPlaceholderText('Search outline')).toHaveValue('Row level 1');
+      expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue('Row level 1');
     });
 
     it('preserves search query after entering and exiting edit mode', async () => {
@@ -418,7 +421,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      const searchInput = screen.getByPlaceholderText('Search outline');
+      const searchInput = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput);
       await user.type(searchInput, 'Row level 1');
       expect(searchInput).toHaveValue('Row level 1');
 
@@ -439,7 +442,7 @@ describe('DashboardOutline', () => {
         </ElementSelectionContext.Provider>
       );
 
-      expect(screen.getByPlaceholderText('Search outline')).toHaveValue('Row level 1');
+      expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue('Row level 1');
     });
   });
 });

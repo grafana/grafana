@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Box, FilterInput, ScrollContainer, Sidebar, Text, useStyles2 } from '@grafana/ui';
@@ -35,6 +36,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
       <Sidebar.PaneHeader title={t('dashboard.outline.pane-header', 'Content outline')} />
       <div className={styles.container}>
         <FilterInput
+          data-testid={selectors.pages.Dashboard.Sidebar.outline.searchInput}
           value={searchQuery}
           onChange={(query) => model.setSearchQuery(query)}
           escapeRegex={false}
