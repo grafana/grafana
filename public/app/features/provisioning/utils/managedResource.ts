@@ -77,3 +77,17 @@ export function isManagedResourceReadOnly(resource: ManagedResource): boolean {
     resource.metadata?.annotations?.[AnnoKeyManagerAllowsEdits] !== 'true'
   );
 }
+
+/**
+ * Some surfaces (search results, folder DTOs) carry the manager kind as a flattened `managedBy`
+ * field on the item itself rather than in `metadata.annotations`. This is the counterpart to
+ * {@link isManagedByRepository} for that shape — use it for list items that expose `managedBy`.
+ */
+export interface ManagedResourceItem {
+  managedBy?: ManagerKind;
+}
+
+/** True when a list item (folder DTO / search hit) is managed through the repository (git) flow. */
+export function isItemManagedByRepository(item?: ManagedResourceItem): boolean {
+  return item?.managedBy === ManagerKind.Repo;
+}

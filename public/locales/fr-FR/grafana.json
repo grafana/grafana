@@ -29,7 +29,7 @@
       "add-label": "Ajouter une autorisation",
       "loading": "Chargement des autorisations…",
       "no-permissions": "Il n'y a aucune autorisation",
-      "permissions-change-warning": "Cette action modifiera les autorisations pour ce dossier et tous ses descendants. Au total, elle affectera :",
+      "permissions-change-warning": "",
       "role": "Rôle",
       "serviceaccount": "Compte de service",
       "team": "Équipe",
@@ -2812,7 +2812,9 @@
           "alerting": "Activez pour mettre en pause l'évaluation de cette règle d'alerte.",
           "recording": "Activez pour mettre en pause l'évaluation de cette règle d'enregistrement."
         },
-        "select-folder-before": "Sélectionnez un dossier avant de définir le groupe d'évaluation et l'intervalle"
+        "select-folder-before": "Sélectionnez un dossier avant de définir le groupe d'évaluation et l'intervalle",
+        "ungroup-warning": "",
+        "ungroup-warning-title": ""
       },
       "evaluation-behaviour": {
         "description": {
@@ -4224,13 +4226,9 @@
       "cancel-button": "Annuler",
       "confirmation-text": "Supprimer",
       "delete-button": "Supprimer",
-      "delete-modal-invalid-text": "Un ou plusieurs dossiers contiennent des panneaux Bibliothèque ou des règles d'alerte. Vous devez d'abord les supprimer.",
-      "delete-modal-invalid-title": "Impossible de supprimer le dossier",
       "delete-modal-restore-dashboards-common": "Les tableaux de bord supprimés seront conservés dans l’historique pendant une durée maximale de 12 mois. Les utilisateurs disposant de l’autorisation de suppression peuvent restaurer les tableaux de bord qu’ils ont supprimés. Les administrateurs peuvent, quant à eux, restaurer les tableaux de bord supprimés par tout utilisateur. L’historique est limité à 1 000 tableaux de bord ; les plus anciens pourront être supprimés plus tôt si cette limite est atteinte.",
       "delete-modal-restore-dashboards-prefix-folder": "Cette action supprimera immédiatement les dossiers sélectionnés.",
       "delete-modal-restore-dashboards-suffix-folder": "Les dossiers ne peuvent pas être restaurés.",
-      "delete-modal-text": "Cette action supprimera le contenu suivant :",
-      "delete-modal-text-one-folder": "Cette action supprimera le dossier « <1>{{ folderName }}</1> » et le contenu suivant :",
       "delete-modal-title": "Supprimer",
       "delete-provisioned-folder": "Supprimer le dossier provisionné",
       "deleting": "Suppression…",
@@ -4238,8 +4236,6 @@
       "move-button": "Déplacer",
       "move-modal-alert": "Le déplacement de cet élément peut modifier ses permissions.",
       "move-modal-field-label": "Nom du dossier",
-      "move-modal-text": "Cette action déplacera le contenu suivant :",
-      "move-modal-text-one-folder": "Cette action déplacera le dossier « <1>{{ folderName }}</1> » et le contenu suivant :",
       "move-modal-title": "Déplacer",
       "move-provisioned-folder": "Déplacer un dossier provisionné",
       "moving": "Déplacement...",
@@ -4249,11 +4245,18 @@
       "new-folder-owner-selector-checkbox": "Attribuer un propriétaire au dossier",
       "rename-provisioned-folder": "Renommer le dossier provisionné",
       "selected-mix-resources-modal-text": "Vous avez sélectionné à la fois des ressources provisionnées et non provisionnées. Ces deux types ne peuvent être traités simultanément. Veuillez sélectionner uniquement des ressources provisionnées ou uniquement des ressources non provisionnées, puis réessayer.",
-      "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés"
+      "selected-mix-resources-modal-title": "Types de ressources incompatibles sélectionnés",
+      "delete-modal-folder-empty_one": "",
+      "delete-modal-folder-empty_other": "",
+      "delete-modal-folder-not-empty_one": "",
+      "delete-modal-folder-not-empty_other": "",
+      "move-modal-folder-not-empty_one": "",
+      "move-modal-folder-not-empty_other": ""
     },
     "actions": {
       "button-to-recently-deleted": "Récemment supprimé"
     },
+    "affected-folder-contents-error": "",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Dossier non trouvé",
       "title-ruler-namespace-error": "Impossible de charger les règles"
@@ -4268,13 +4271,20 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera les dossiers sélectionnés ainsi que leur contenu. Au total, cela affectera :",
-      "error-deleting-resources": "Erreur lors de la suppression des ressources"
+      "default-commit-message": "",
+      "delete-warning": "",
+      "error-deleting-resources": "Erreur lors de la suppression des ressources",
+      "success-title": "",
+      "folder-empty_one": "",
+      "folder-empty_other": "",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "bulk-move-resources-form": {
       "button-cancel": "Annuler",
       "button-move": "Déplacer",
       "button-moving": "Déplacement en cours…",
+      "default-commit-message": "",
       "error": {
         "read-only-message": "Si vous avez un accès direct à la cible, veuillez la modifier directement dans le référentiel associé.",
         "read-only-saving-message": "Ce référentiel est en lecture seule et provisionné via Git. {{readOnlyMessage}}",
@@ -4285,22 +4295,12 @@
       "error-already-in-target-folder": "",
       "error-moving-resources": "Erreur lors du déplacement des ressources",
       "error-no-target-folder-path": "Le chemin du dossier cible est invalide ou vide ; veuillez sélectionner à nouveau.",
-      "move-total": "Au total, cela affectera :",
       "move-warning": "Cette action déplacera les dossiers sélectionnés et leurs descendants. Les dossiers cibles disponibles dépendent des ressources sélectionnées.",
       "move-warning-tooltip": "Vous pouvez déplacer uniquement les ressources provisionnées à l’intérieur de leur dossier provisionné, et les ressources locales vers des dossiers locaux.",
-      "target-folder": "Dossier de destination"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} règle d'alerte",
-      "alertRule_other": "{{count}} règles d'alerte",
-      "dashboard_one": "{{count}} tableau de bord",
-      "dashboard_other": "{{count}} tableaux de bord",
-      "folder_one": "{{count}} dossier",
-      "folder_other": "{{count}} dossiers",
-      "libraryPanel_one": "{{count}} panneau Bibliothèque",
-      "libraryPanel_other": "{{count}} panneaux Bibliothèque",
-      "total_one": "{{count}} objet",
-      "total_other": "{{count}} objets"
+      "success-title": "",
+      "target-folder": "Dossier de destination",
+      "folder-not-empty_one": "",
+      "folder-not-empty_other": ""
     },
     "create-new": {
       "dashboard-group": ""
@@ -4329,12 +4329,11 @@
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
       "button-deleting": "Suppression en cours…",
-      "delete-warning": "Cette opération supprimera ce dossier ainsi que tous ses éléments enfants. Au total, cela concernera :",
+      "delete-warning": "",
+      "folder-empty": "",
+      "folder-not-empty": "",
       "missing-info": "Champs obligatoires manquants",
       "success-message": "Dossier supprimé avec succès"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Impossible de récupérer les informations descendantes"
     },
     "empty-state": {
       "button-title": "Créer un tableau de bord",
@@ -5239,10 +5238,6 @@
       },
       "pane-header": "Ajouter"
     },
-    "add-library-panel-widget": {
-      "aria-label-close-add-panel-widget": "Fermer le widget « Ajouter un panneau »",
-      "tooltip-close-widget": "Fermer le widget"
-    },
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
@@ -6035,12 +6030,6 @@
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Données brutes"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "Liens de panneau"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Revenir aux requêtes"
     },
@@ -6078,18 +6067,6 @@
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
       "confirmText-restore-version": "Oui, restaurer à la version {{version}}",
       "title-restore-version": "Restaurer la version"
-    },
-    "row-options-button": {
-      "aria-label-row-options": "Options de ligne"
-    },
-    "row-options-form": {
-      "cancel": "Annuler",
-      "label-repeat-for": "Répéter pour",
-      "label-title": "Titre",
-      "update": "Mettre à jour"
-    },
-    "row-options-modal": {
-      "title-row-options": "Options de ligne"
     },
     "rows-layout": {
       "cancel": "Annuler",
@@ -6236,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Ouvrir le tableau de bord d’origine"
       },
-      "undo": "Annuler"
+      "undo": "Annuler",
+      "view-panel": {
+        "disabled": "",
+        "fanout-by-series": "",
+        "fanout-category": "",
+        "fanout-labels": "",
+        "fanout-no-labels": "",
+        "pane-header": "",
+        "quick-toggles": "",
+        "title": ""
+      }
     },
     "source-link": {
       "title": "Source ({{provider}})",
@@ -6451,16 +6438,6 @@
       "discard": "Abandonner",
       "title-unsaved-changes": "Modifications non enregistrées"
     },
-    "untheme-dashboard-row": {
-      "dashboard-datasource": "Les panneaux de cette ligne utilisent la source de données {{SHARED_DASHBOARD_QUERY}}. Ces panneaux feront référence au panneau de la ligne d'origine, pas à ceux des lignes répétées."
-    },
-    "unthemed-dashboard-row": {
-      "aria-label-delete-row": "Supprimer la ligne",
-      "learn-more": "En savoir plus",
-      "title": {
-        "delete-row": "Supprimer la ligne"
-      }
-    },
     "validation": {
       "invalid-dashboard-id": "Impossible de trouver un ID Grafana.com valide",
       "invalid-json": "JSON non valide",
@@ -6505,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "",
       "not-found": ""
     },
     "viz-panel": {
@@ -8727,7 +8705,9 @@
       "query-history-button": "Historique des requêtes",
       "query-history-button-aria-label": "Historique des requêtes",
       "query-inspector-button": "Inspecteur de requête",
-      "query-inspector-button-aria-label": "Inspecteur de requête"
+      "query-inspector-button-aria-label": "Inspecteur de requête",
+      "recent-queries-button": "",
+      "recent-queries-button-aria-label": ""
     },
     "show-all-spans": "Afficher toutes les traces",
     "span-bar": {
@@ -8947,6 +8927,11 @@
     },
     "sql-expr": {
       "button-run-query": "Exécuter la requête"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": ""
+      }
     },
     "sql-schema": {
       "error-title": "Erreur",
@@ -9913,10 +9898,16 @@
         },
         "name-limit": "Limiter",
         "name-mode": "Mode",
+        "name-overflow": "",
         "name-placement": "Placement",
         "name-values": "Valeurs",
         "name-visibility": "Visibilité",
         "name-width": "Largeur",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Bas",
           "label-right": "Aligné à droite"
@@ -10687,10 +10678,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "",
+      "most-used-active": "",
       "recent": "",
       "recent-active": "",
+      "retry": "",
       "starred": "",
       "starred-active": ""
+    },
+    "firing-alerts-card": {
+      "empty": "",
+      "empty-teams": "",
+      "error-title": "",
+      "retry": "",
+      "severity-critical": "",
+      "severity-high": "",
+      "severity-low": "",
+      "severity-minor": "",
+      "severity-unknown": "",
+      "title": "",
+      "view-all": "",
+      "critical-count_one": "",
+      "critical-count_other": "",
+      "high-count_one": "",
+      "high-count_other": ""
     },
     "home-page": {
       "edition": {
@@ -10705,6 +10716,11 @@
       },
       "placeholder": ""
     },
+    "most-used-dashboards-tab": {
+      "empty": "",
+      "error-title": "",
+      "loading": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10712,15 +10728,13 @@
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     },
     "starred-dashboards-tab": {
       "empty": "",
       "empty-description": "",
       "error-title": "",
-      "loading": "",
-      "retry": ""
+      "loading": ""
     }
   },
   "import-overview": {
@@ -11218,6 +11232,8 @@
         }
       },
       "fields-section": "Champs",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Masquer cette ligne de log",
       "inline-mode": "Afficher en ligne",
       "inline-no-scrolls": "",
@@ -11964,9 +11980,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Gérer les mappages des groupes de fournisseurs d'identité aux rôles Grafana"
-    },
     "help": {
       "title": "Aide"
     },
@@ -12175,8 +12188,10 @@
       "undock": "Ancrer le menu"
     },
     "megamenu-item": {
+      "children-error": "",
       "collapse-aria-label": "Réduire la section : {{sectionName}}",
-      "expand-aria-label": "Élargir la section : {{sectionName}}"
+      "expand-aria-label": "Élargir la section : {{sectionName}}",
+      "loading-aria-label": ""
     },
     "org-switcher": {
       "aria-label": "Changer l’organisation"
@@ -13032,9 +13047,6 @@
       "description-clear-repository-connection": "Ce nom sera utilisé pour la connexion au référentiel et pour le dossier affiché dans l’interface utilisateur",
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
-      "error-quota-exceeded-message": "Ce dossier de référentiel contient {{fileCount}} ressources, ce qui dépasse la limite de votre compte, qui est de {{limit}}. Pour synchroniser ce référentiel, mettez votre compte à niveau ou réduisez le nombre de ressources à synchroniser.",
-      "error-quota-exceeded-message-onprem": "Ce dossier de référentiel contient {{fileCount}} ressources, ce qui dépasse la limite de votre instance, qui est de {{limit}}. Pour synchroniser ce référentiel, mettez à jour votre configuration Grafana ou réduisez le nombre de ressources à synchroniser.",
-      "error-quota-exceeded-title": "Quota de ressources dépassé",
       "error-repository-status-unhealthy-message": "Un problème est survenu lors de la connexion au référentiel. Veuillez vérifier les paramètres du référentiel et réessayer.",
       "error-repository-status-unhealthy-title": "État du référentiel : non sain",
       "external-storage-label": "Stockage externe",
@@ -13045,6 +13057,9 @@
       "unmanaged-resources-label": "Ressources non gérées",
       "update-configuration-action": "Afficher les documents de configuration",
       "upgrade-action": "Mettre le compte à niveau",
+      "warning-quota-may-exceed-message": "",
+      "warning-quota-may-exceed-message-onprem": "",
+      "warning-quota-may-exceed-title": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
       "files-count_one": "{{count}} fichiers",
@@ -13059,6 +13074,9 @@
       "label-enforce-template": "",
       "label-name-template": "",
       "placeholder-name-template": ""
+    },
+    "bulk-action": {
+      "success-title-branch": ""
     },
     "cloud-info-box": {
       "body": "Évitez la configuration et bénéficiez de Git Sync entièrement géré et hébergé sur Grafana Cloud avec l’<2>abonnement Grafana Cloud gratuit à vie</2>.",
@@ -13082,7 +13100,14 @@
     "commit-options": {
       "description-enforce-template": "",
       "label-commit-options": "",
-      "label-enforce-template": ""
+      "label-enforce-template": "",
+      "signer-required": "",
+      "signing-key-required": "",
+      "smime-certificate-configured": "",
+      "smime-certificate-required": ""
+    },
+    "commit-signing-info": {
+      "description": ""
     },
     "config-form": {
       "alert-repository-settings-saved": "Paramètres du référentiel enregistrés",
@@ -13113,13 +13138,6 @@
       "placeholder-commit-message-template": "",
       "placeholder-interval-seconds": "60",
       "placeholder-my-config": "Ma configuration"
-    },
-    "config-form-github-collapse": {
-      "description-webhook-url": "Remplace l’URL détectée automatiquement pour l’enregistrement des webhooks.",
-      "description-webhook-url-learn-more": "En savoir plus",
-      "label-git-hub-features": "Fonctionnalités GitHub",
-      "label-webhook-url": "URL du webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
     },
     "connect-page": {
       "subTitle": {
@@ -13269,28 +13287,22 @@
     },
     "finish-step": {
       "description-enable-previews": "Ajoute un aperçu des images des modifications apportées au tableau de bord dans les demandes de fusion. Les images de vos tableaux de bord Grafana seront partagées dans votre référentiel Git et visibles par toute personne ayant accès au référentiel.",
-      "description-generate-dashboard-previews": "Créer des liens de prévisualisation pour les demandes de tirage",
       "description-image-rendering": "Nécessite un rendu d’image. <2>Configurer le rendu d’image</2>",
-      "description-preview-requirements": "(nécessite le <2>rendu d’images</2> et l’activation de l’accès public)",
       "description-read-only": "Les ressources ne peuvent pas être modifiées via Grafana.",
       "description-sync-interval": "Fréquence de synchronisation des changements depuis le dépôt",
-      "description-webhook-url": "Remplace l’URL détectée automatiquement pour l’enregistrement des webhooks.",
       "error-sync-interval-required": "L’intervalle de synchronisation est requis",
       "label-enable-previews": "Activer les aperçus du tableau de bord dans les demandes de fusion",
-      "label-generate-dashboard-previews": "Générer des aperçus de tableaux de bord",
       "label-read-only": "Lecture seule",
-      "label-sync-interval": "Intervalle de synchronisation (secondes)",
-      "label-webhook-url": "URL du webhook",
-      "placeholder-webhook-url": "https://grafana.example.com"
+      "label-sync-interval": "Intervalle de synchronisation (secondes)"
     },
     "fix-folder-metadata": {
       "button": "Corriger les ID de dossier"
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Annuler",
+      "default-commit-message": "",
       "error-message": "Échec du démarrage de la tâche de correction des métadonnées du dossier. Veuillez réessayer.",
       "error-title": "Erreur lors de la correction des métadonnées du dossier",
-      "loading": "Chargement du référentiel en cours…",
       "read-only-message": "Les métadonnées du dossier ne peuvent pas être corrigées automatiquement.",
       "submit": "Corriger les ID de dossier",
       "submitting": "Correction en cours…",
@@ -13453,9 +13465,26 @@
       "truncated": "Message tronqué"
     },
     "migrate": {
+      "all-managed": "",
+      "all-resources": "",
+      "dashboards": "",
+      "drawer-cancel": "",
+      "drawer-description": "",
+      "drawer-title": "",
+      "empty": "",
+      "error-title": "",
+      "folders": "",
       "header-subtitle": "",
       "header-title": "",
-      "intro": ""
+      "loading": "",
+      "migrate-button": "",
+      "migrate-button-disabled-tooltip": "",
+      "n-of-m-managed": "",
+      "repo-description": "",
+      "repo-label": "",
+      "repo-placeholder": "",
+      "selective-coming-soon": "",
+      "start-button": ""
     },
     "missing-folder-metadata-banner": {
       "error-message": "Impossible de vérifier si ce dossier contient un fichier de métadonnées. Veuillez réessayer plus tard.",
@@ -13695,11 +13724,24 @@
     "shared": {
       "branch-description": "La branche à utiliser pour le provisionnement",
       "branch-label": "Branche",
+      "commit-signer-email-description": "",
+      "commit-signer-email-label": "",
+      "commit-signer-email-placeholder": "",
+      "commit-signer-name-description": "",
+      "commit-signer-name-label": "",
+      "commit-signer-name-placeholder": "",
       "path-description": "Facultatif. Chemin d’accès au sous-répertoire contenant les ressources que vous souhaitez synchroniser.",
       "path-label": "Chemin",
       "progress-bar": {
         "aria-label": "Barre de progression"
       },
+      "signing-key-description": "",
+      "signing-key-label": "",
+      "signing-method-description": "",
+      "signing-method-label": "",
+      "signing-method-none": "",
+      "smime-certificate-description": "",
+      "smime-certificate-label": "",
       "token-user-label": "Nom d’utilisateur",
       "url-label": "URL du référentiel",
       "url-pattern": "Doit être une URL de référentiel valide (https://nom-hôte/propriétaire/référentiel)"
@@ -13767,6 +13809,13 @@
     "watch-stream": {
       "error-description": "Les mises à jour en temps réel n’ont pas pu être lancées. Actualisez la page pour voir les données les plus récentes.",
       "error-title": "Mises à jour en temps réel indisponibles"
+    },
+    "webhook-section": {
+      "description-webhook-url": "",
+      "description-webhook-url-learn-more": "",
+      "label-webhook": "",
+      "label-webhook-url": "",
+      "placeholder-webhook-url": ""
     },
     "wizard": {
       "alert-intro": "Veuillez prendre connaissance des limitations suivantes. Pour plus de détails, consultez la <2>documentation Git Sync</2>.",
@@ -14073,15 +14122,16 @@
     },
     "bulk-actions": {
       "change-datasource": "",
-      "clear-selection": "",
       "datasource": "",
       "delete": "",
       "delete-confirm-body": "",
       "delete-tooltip": "",
-      "disable-all": "",
+      "disable": "",
       "disable-all-tooltip": "",
-      "enable-all": "",
+      "empty-hint": "",
+      "enable": "",
       "enable-all-tooltip": "",
+      "exit-multi-select": "",
       "hide": "",
       "hide-all-tooltip": "",
       "show": "",
@@ -14218,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Échec du chargement de la source de données pour cette requête",
     "loading-datasource": "Chargement de la source de données en cours",
     "no-query-editor-component": "Le plugin de source de données n’exporte aucun composant de l’éditeur de requêtes"
@@ -14239,6 +14290,56 @@
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+  },
+  "recent-queries": {
+    "error-state": {
+      "title": ""
+    },
+    "filters": {
+      "all-queries": "",
+      "clear": "",
+      "datasource-label": "",
+      "datasource-placeholder": "",
+      "header": "",
+      "panel-label": "",
+      "remember-filters-label": "",
+      "remember-filters-subtext": "",
+      "search-label": "",
+      "search-placeholder": "",
+      "sort-label": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "starred-label": ""
+    },
+    "list": {
+      "empty": "",
+      "loading": ""
+    },
+    "modal": {
+      "aria-label": "",
+      "tabs": {
+        "recent": "",
+        "saved": "",
+        "saved-badge": "",
+        "saved-tooltip": ""
+      }
+    },
+    "row": {
+      "save": "",
+      "select-query": "",
+      "star": "",
+      "star-tooltip": "",
+      "unstar": ""
+    },
+    "sort": {
+      "newest": ""
+    },
+    "sort-option": {
+      "newest": "",
+      "oldest": ""
+    },
+    "description_one": "",
+    "description_other": ""
   },
   "recently-deleted": {
     "buttons": {

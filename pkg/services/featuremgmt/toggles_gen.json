@@ -1129,7 +1129,8 @@
       "metadata": {
         "name": "cachingOptimizeSerializationMemoryUsage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-10-12T16:56:49Z"
+        "creationTimestamp": "2023-10-12T16:56:49Z",
+        "deletionTimestamp": "2026-06-17T10:14:08Z"
       },
       "spec": {
         "description": "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
@@ -1384,13 +1385,28 @@
       "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-06-16T13:48:37Z"
       },
       "spec": {
         "description": "Enables the created by me search filter on the browse dashboards page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboard.vectorSearch",
+        "resourceVersion": "1781031364322",
+        "creationTimestamp": "2026-06-09T18:56:04Z",
+        "deletionTimestamp": "2026-06-09T20:44:47Z"
+      },
+      "spec": {
+        "description": "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
         "expression": "false"
       }
     },
@@ -1584,9 +1600,24 @@
     },
     {
       "metadata": {
+        "name": "dashboardVectorSearch",
+        "resourceVersion": "1781031335424",
+        "creationTimestamp": "2026-06-09T18:55:35Z",
+        "deletionTimestamp": "2026-06-09T18:56:04Z"
+      },
+      "spec": {
+        "description": "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashgpt",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-08-30T20:22:05Z"
+        "creationTimestamp": "2023-08-30T20:22:05Z",
+        "deletionTimestamp": "2026-06-18T13:02:15Z"
       },
       "spec": {
         "description": "Enable AI powered features in dashboards",
@@ -2413,15 +2444,31 @@
     },
     {
       "metadata": {
+        "name": "grafana.newPanelQueryErrorsUI",
+        "resourceVersion": "1781775898347",
+        "creationTimestamp": "2026-06-18T09:44:58Z"
+      },
+      "spec": {
+        "description": "Enables a new UI for query errors and notices",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPreferencesPage",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781704114797",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-17 13:48:34.797786 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Whether to use the new SharedPreferences functional component",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "frontend": true,
         "expression": "false"
       }
     },
@@ -2485,6 +2532,36 @@
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.viewPanelPane",
+        "resourceVersion": "1778761195995",
+        "creationTimestamp": "2026-05-14T12:19:55Z"
+      },
+      "spec": {
+        "description": "Enables the sidebar pane with new toggles and options in panel view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.visualDesignRefresh",
+        "resourceVersion": "1781257253520",
+        "creationTimestamp": "2026-06-12T09:40:53Z"
+      },
+      "spec": {
+        "description": "Enables the new visual design refresh for the Grafana UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3517,15 +3594,18 @@
     {
       "metadata": {
         "name": "newLogContext",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-31T22:56:50Z"
+        "resourceVersion": "1781279681608",
+        "creationTimestamp": "2025-07-31T22:56:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
+        }
       },
       "spec": {
         "description": "New Log Context component",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3658,7 +3738,8 @@
       "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-11-03T12:15:54Z"
+        "creationTimestamp": "2023-11-03T12:15:54Z",
+        "deletionTimestamp": "2026-06-19T07:57:25Z"
       },
       "spec": {
         "description": "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
@@ -4005,7 +4086,8 @@
       "metadata": {
         "name": "preventPanelChromeOverflow",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-17T14:40:08Z"
+        "creationTimestamp": "2025-10-17T14:40:08Z",
+        "deletionTimestamp": "2026-06-16T13:33:46Z"
       },
       "spec": {
         "description": "Restrict PanelChrome contents with overflow: hidden;",
@@ -4205,12 +4287,15 @@
     {
       "metadata": {
         "name": "queryEditorNext",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781715640825",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-17 17:00:40.825547 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables next generation query editor experience",
-        "stage": "privatePreview",
+        "stage": "preview",
         "codeowner": "@grafana/datapro",
         "frontend": true,
         "expression": "false"
@@ -4405,14 +4490,17 @@
     {
       "metadata": {
         "name": "react19",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1781168092989",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-11 08:54:52.989837 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Whether to use the new React 19 runtime",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-frontend-platform",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4721,7 +4809,8 @@
       "metadata": {
         "name": "sharingDashboardImage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-07-15T21:07:39Z"
+        "creationTimestamp": "2025-07-15T21:07:39Z",
+        "deletionTimestamp": "2026-06-18T17:19:31Z"
       },
       "spec": {
         "description": "Enables image sharing functionality for dashboards",
@@ -4756,6 +4845,20 @@
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "splunk.useLegacyResultsApi",
+        "resourceVersion": "1781865637365",
+        "creationTimestamp": "2026-06-19T10:40:37Z"
+      },
+      "spec": {
+        "description": "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -4914,15 +5017,18 @@
     {
       "metadata": {
         "name": "teamFolders",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1781613484775",
         "creationTimestamp": "2025-07-31T22:56:50Z",
-        "deletionTimestamp": "2025-08-01T11:30:17Z"
+        "deletionTimestamp": "2025-08-01T11:30:17Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-16 12:38:04.775347 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables team folders functionality",
         "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

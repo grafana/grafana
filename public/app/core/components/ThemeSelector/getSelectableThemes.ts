@@ -1,4 +1,5 @@
 import { getBuiltInThemes } from '@grafana/data';
+import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
 
 export function getSelectableThemes() {
   const allowedExtraThemes = [
@@ -12,6 +13,10 @@ export function getSelectableThemes() {
     'tron',
     'gloom',
   ];
+
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaVisualDesignRefresh, false)) {
+    allowedExtraThemes.push('visual_refresh_dark', 'visual_refresh_light');
+  }
 
   return getBuiltInThemes(allowedExtraThemes);
 }

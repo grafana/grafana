@@ -10,19 +10,16 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Drawer, FilterInput, IconButton, useStyles2, Text, Stack } from '@grafana/ui';
 import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
+import { useNavModel } from 'app/features/browse-dashboards/hooks/useNavModel';
 import { useDispatch } from 'app/types/store';
 
 import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
-import { ManagerKind } from '../apiserver/types';
 import { TemplateDashboardModal } from '../dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal';
-import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { ProvisionedFolderPreviewBanner } from '../provisioning/components/Folders/ProvisionedFolderPreviewBanner';
 import { RenameProvisionedFolderForm } from '../provisioning/components/Folders/RenameProvisionedFolderForm';
-import { ReadOnlyBadge } from '../provisioning/components/ReadOnlyBadge';
 import { OrphanedResourceBanner } from '../provisioning/components/Shared/OrphanedResourceBanner';
-import { SourceLink } from '../provisioning/components/SourceLink';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../provisioning/hooks/useGetResourceRepositoryView';
-import { getSourcePath, isManagedResourceReadOnly } from '../provisioning/utils/managedResource';
+import { isItemManagedByRepository } from '../provisioning/utils/managedResource';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
@@ -52,7 +49,6 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     status: repoViewStatus,
     orphanedRepoName,
     repository,
-    folder: repoFolderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const isExperimentRecentlyViewedDashboards = useBooleanFlagValue('experimentRecentlyViewedDashboards', false);
@@ -104,22 +100,9 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   }, [isRecentlyViewedEnabled, isExperimentRecentlyViewedDashboards]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
+  const navModel = useNavModel(folderDTO, 'dashboards');
+
   const [saveFolder] = useUpdateFolder();
-  const navModel = useMemo(() => {
-    if (!folderDTO) {
-      return undefined;
-    }
-    const model = buildNavModel(folderDTO);
-
-    // Set the "Dashboards" tab to active
-    const dashboardsTabID = getDashboardsTabID(folderDTO.uid);
-    const dashboardsTab = model.children?.find((child) => child.id === dashboardsTabID);
-    if (dashboardsTab) {
-      dashboardsTab.active = true;
-    }
-    return model;
-  }, [folderDTO]);
-
   const hasSelection = useHasSelection();
 
   // Fetch the root (aka general) folder if we're not in a specific folder
@@ -127,10 +110,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const folder = folderDTO ?? rootFolderDTO;
 
   const { canEditFolders, canDeleteFolders, canDeleteDashboards, canEditDashboards } = getFolderPermissions(folder);
-  const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
+  const isProvisionedFolder = isItemManagedByRepository(folder);
   const isRepoRootFolder = isProvisionedFolder && folderUID === repository?.name;
-  // Read-only when managed by a non-repository system that doesn't allow edits (terraform, kubectl, ...)
-  const isManagedReadOnly = repoFolderResource ? isManagedResourceReadOnly(repoFolderResource) : false;
   const [showRenameDrawer, setShowRenameDrawer] = useState(false);
   const showEditTitle = canEditFolders && !!folderUID;
   const permissions = {
@@ -171,12 +152,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             onClick={() => setShowRenameDrawer(true)}
           />
         )}
-        {isManagedReadOnly && <ReadOnlyBadge />}
         <FolderRepo folder={folder} />
-        <SourceLink
-          repositoryName={repository?.name}
-          sourcePath={repoFolderResource ? getSourcePath(repoFolderResource) : undefined}
-        />
       </Stack>
     );
   };
@@ -185,7 +161,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
-      onEditTitle={showEditTitle && !isProvisionedFolder && !isManagedReadOnly ? onEditTitle : undefined}
+      onEditTitle={showEditTitle && !isProvisionedFolder ? onEditTitle : undefined}
       renderTitle={renderTitle}
       actions={<FolderDetailsActions folderDTO={folderDTO} />}
     >

@@ -10,6 +10,7 @@ import {
   getManagerIdentity,
   getManagerKind,
   getSourcePath,
+  isItemManagedByRepository,
   isManaged,
   isManagedByRepository,
   isManagedResourceReadOnly,
@@ -108,6 +109,24 @@ describe('managedResource helpers', () => {
 
     it('returns false when not managed', () => {
       expect(isManagedResourceReadOnly(resource())).toBe(false);
+    });
+  });
+
+  describe('isItemManagedByRepository', () => {
+    it('returns true only for repository-managed items', () => {
+      expect(isItemManagedByRepository({ managedBy: ManagerKind.Repo })).toBe(true);
+    });
+
+    it.each([ManagerKind.Terraform, ManagerKind.Kubectl, ManagerKind.Plugin])(
+      'returns false for non-repository managers (%s)',
+      (managedBy) => {
+        expect(isItemManagedByRepository({ managedBy })).toBe(false);
+      }
+    );
+
+    it('returns false when not managed or undefined', () => {
+      expect(isItemManagedByRepository({})).toBe(false);
+      expect(isItemManagedByRepository(undefined)).toBe(false);
     });
   });
 });

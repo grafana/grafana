@@ -4241,6 +4241,9 @@
           "url": {
             "description": "The connection URL",
             "type": "string"
+          },
+          "webhook": {
+            "description": "Webhook configuration for this connection"
           }
         }
       },
@@ -4282,6 +4285,15 @@
             "type": "integer",
             "format": "int64",
             "default": 0
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionWebhookConfig": {
+        "type": "object",
+        "properties": {
+          "disabled": {
+            "description": "Disabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
+            "type": "boolean"
           }
         }
       },
@@ -4494,10 +4506,6 @@
             "description": "GitHub App installation ID",
             "type": "string",
             "default": ""
-          },
-          "webhookDisabled": {
-            "description": "WebhookDisabled disables webhook integration for this connection. When true, the GitHub App does not require webhooks:write permission and Grafana will not register or receive webhook events. Use this when Grafana is not reachable from the public internet.",
-            "type": "boolean"
           }
         }
       },
@@ -6113,6 +6121,10 @@
           "baseUrl": {
             "description": "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
             "type": "string"
+          },
+          "disabled": {
+            "description": "Disabled turns off webhook integration for this repository. When true, Grafana will not register or receive webhook events from the Git provider and will poll the repository on an interval instead. Use this when Grafana is not reachable from the public internet.",
+            "type": "boolean"
           }
         }
       },

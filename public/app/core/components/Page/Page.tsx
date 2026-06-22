@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -27,10 +28,13 @@ export const Page: PageType = ({
   info,
   layout = PageLayoutType.Standard,
   onSetScrollRef,
+  // TODO deprecate and remove this prop once visual refresh is delivered
+  // there is only 1 page background - consumers can customise the background by setting layout to custom and providing their own background
   background,
   ...otherProps
 }) => {
-  const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = useStyles2(getStyles, visualRefreshEnabled);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -50,7 +54,7 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
-  const resolvedBg = background ?? getDefaultBackgroundForLayout(layout);
+  const resolvedBg = background ?? getDefaultBackgroundForLayout(layout, visualRefreshEnabled);
 
   return (
     <div
@@ -102,19 +106,26 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
-    wrapper: css({
-      label: 'page-wrapper',
-      display: 'flex',
-      flex: '1 1 0',
-      flexDirection: 'column',
-      position: 'relative',
-      container: 'page / inline-size',
-    }),
+    wrapper: css(
+      {
+        label: 'page-wrapper',
+        display: 'flex',
+        flex: '1 1 0',
+        flexDirection: 'column',
+        position: 'relative',
+        container: 'page / inline-size',
+      },
+      visualRefreshEnabled && {
+        borderRadius: theme.shape.radius.lg,
+        margin: theme.spacing(0, 0.5, 0.5, 0.5),
+        border: `1px solid ${theme.colors.border.weak}`,
+      }
+    ),
     wrapperPrimary: css({
       label: 'page-wrapper-primary',
-      background: theme.colors.background.primary,
+      background: theme.colors.background.page,
     }),
     wrapperGradient: css({
       label: 'page-wrapper-gradient',
@@ -154,7 +165,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-function getDefaultBackgroundForLayout(layout: PageLayoutType) {
+function getDefaultBackgroundForLayout(layout: PageLayoutType, visualRefreshEnabled: boolean) {
   if (layout === PageLayoutType.Standard) {
     return 'primary';
   }
@@ -163,7 +174,7 @@ function getDefaultBackgroundForLayout(layout: PageLayoutType) {
     return 'gradient';
   }
 
-  return 'canvas';
+  return visualRefreshEnabled ? 'primary' : 'canvas';
 }
 
 function getGradientBackgroundForTheme(theme: GrafanaTheme2) {

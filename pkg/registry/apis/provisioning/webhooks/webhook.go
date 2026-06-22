@@ -24,10 +24,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type WebhookRepository interface {
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
-}
-
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
@@ -149,8 +145,13 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
-		hooks, ok := repo.(WebhookRepository)
+		hooks, ok := repo.(repository.WebhookRepository)
 		if !ok {
+			cfg := repo.Config()
+			if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.Disabled {
+				responder.Error(errors.NewBadRequest("webhook integration is disabled for this repository"))
+				return
+			}
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return
 		}

@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
+import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
@@ -91,16 +90,16 @@ export function useSelectionProvisioningStatus(
 
       const item = findItemInState(uid);
       if (isFolder) {
-        return item?.managedBy === ManagerKind.Repo;
+        return isItemManagedByRepository(item);
       }
 
       // Check parent folder first for dashboards
       const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
-      if (parent?.managedBy === ManagerKind.Repo) {
+      if (isItemManagedByRepository(parent)) {
         return true;
       }
 
-      return item?.managedBy === ManagerKind.Repo;
+      return isItemManagedByRepository(item);
     },
     [isSearching, getFolderMeta, getDashboardMeta, findItemInState]
   );

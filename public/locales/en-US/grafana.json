@@ -29,7 +29,7 @@
       "add-label": "Add a permission",
       "loading": "Loading permissions...",
       "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants.",
       "role": "Role",
       "serviceaccount": "Service Account",
       "team": "Team",
@@ -2812,7 +2812,9 @@
           "alerting": "Turn on to pause evaluation for this alert rule.",
           "recording": "Turn on to pause evaluation for this recording rule."
         },
-        "select-folder-before": "Select a folder before setting evaluation group and interval"
+        "select-folder-before": "Select a folder before setting evaluation group and interval",
+        "ungroup-warning": "This action is irreversible. After you save, you will not be able to add it back to a group.",
+        "ungroup-warning-title": "This will remove the alert rule from its group"
       },
       "evaluation-behaviour": {
         "description": {
@@ -4224,13 +4226,13 @@
       "cancel-button": "Cancel",
       "confirmation-text": "Delete",
       "delete-button": "Delete",
-      "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
-      "delete-modal-invalid-title": "Cannot delete folder",
+      "delete-modal-folder-empty_one": "Selected folder is empty",
+      "delete-modal-folder-empty_other": "Selected folders are empty",
+      "delete-modal-folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "delete-modal-folder-not-empty_other": "Selected folders contain other resources that will be deleted",
       "delete-modal-restore-dashboards-common": "Deleted dashboards will be kept in the history for up to 12 months. Users with delete permissions can restore the dashboards they deleted, and admins can restore dashboards deleted by any user. The history is limited to 1000 dashboards — older ones may be removed sooner if the limit is reached.",
       "delete-modal-restore-dashboards-prefix-folder": "This action will delete the selected folders immediately.",
       "delete-modal-restore-dashboards-suffix-folder": "Folders cannot be restored.",
-      "delete-modal-text": "This action will delete the following content:",
-      "delete-modal-text-one-folder": "This action will delete the folder \"<1>{{ folderName }}</1>\" and the following content:",
       "delete-modal-title": "Delete",
       "delete-provisioned-folder": "Delete provisioned folder",
       "deleting": "Deleting...",
@@ -4238,8 +4240,8 @@
       "move-button": "Move",
       "move-modal-alert": "Moving this item may change its permissions.",
       "move-modal-field-label": "Folder name",
-      "move-modal-text": "This action will move the following content:",
-      "move-modal-text-one-folder": "This action will move the folder \"<1>{{ folderName }}</1>\" and the following content:",
+      "move-modal-folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "move-modal-folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-modal-title": "Move",
       "move-provisioned-folder": "Move provisioned folder",
       "moving": "Moving...",
@@ -4254,6 +4256,7 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "affected-folder-contents-error": "We couldn't get information about folder contents.",
     "browse-folder-alerting-page": {
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
@@ -4268,13 +4271,20 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete selected folders and their descendants. In total, this will affect:",
-      "error-deleting-resources": "Error deleting resources"
+      "default-commit-message": "Delete resources",
+      "delete-warning": "This will delete selected folders and their descendants.",
+      "error-deleting-resources": "Error deleting resources",
+      "folder-empty_one": "Selected folder is empty",
+      "folder-empty_other": "Selected folders are empty",
+      "folder-not-empty_one": "Selected folder contains other resources that will be deleted",
+      "folder-not-empty_other": "Selected folders contain other resources that will be deleted",
+      "success-title": "Resources deleted successfully"
     },
     "bulk-move-resources-form": {
       "button-cancel": "Cancel",
       "button-move": "Move",
       "button-moving": "Moving...",
+      "default-commit-message": "Move resources",
       "error": {
         "read-only-message": "If you have direct access to the target, please make modifications directly in the target repository.",
         "read-only-saving-message": "Repository is read-only and provisioned in git. {{readOnlyMessage}}",
@@ -4285,22 +4295,12 @@
       "error-already-in-target-folder": "Selected resources are already in the target folder.",
       "error-moving-resources": "Error moving resources",
       "error-no-target-folder-path": "Target folder path is invalid or empty, please select again.",
-      "move-total": "In total, this will affect:",
+      "folder-not-empty_one": "Selected folder contains other resources that will be moved with it",
+      "folder-not-empty_other": "Selected folders contain other resources that will be moved with them",
       "move-warning": "This will move selected folders and their descendants. Available target folders depend on the selected resources.",
       "move-warning-tooltip": "You can only move provisioned resources within their provisioned folder, and local resources to local folders.",
+      "success-title": "Resources moved successfully",
       "target-folder": "Target Folder"
-    },
-    "counts": {
-      "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rules",
-      "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboards",
-      "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folders",
-      "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panels",
-      "total_one": "{{count}} item",
-      "total_other": "{{count}} items"
     },
     "create-new": {
       "dashboard-group": "Dashboard"
@@ -4329,12 +4329,11 @@
       "button-cancel": "Cancel",
       "button-delete": "Delete",
       "button-deleting": "Deleting...",
-      "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "delete-warning": "This will delete this folder and all its descendants.",
+      "folder-empty": "Selected folder is empty",
+      "folder-not-empty": "Selected folder contains other resources that will be deleted",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
-    },
-    "descendant-count": {
-      "title-unable-to-retrieve-descendant-information": "Unable to retrieve descendant information"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -6031,12 +6030,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor-table-view": {
-      "title-raw-data": "Raw data"
-    },
-    "panel-links": {
-      "aria-label-panel-links": "Panel links"
-    },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
@@ -6220,7 +6213,17 @@
       "snapshot": {
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo"
+      "undo": "Undo",
+      "view-panel": {
+        "disabled": "Disabled",
+        "fanout-by-series": "By series",
+        "fanout-category": "Fan-out by series or label",
+        "fanout-labels": "Labels",
+        "fanout-no-labels": "Data has no labels",
+        "pane-header": "View panel",
+        "quick-toggles": "Quick toggles",
+        "title": "View panel controls"
+      }
     },
     "source-link": {
       "title": "Source ({{provider}})",
@@ -6479,6 +6482,7 @@
       "title-json": "JSON"
     },
     "view-panel": {
+      "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
     },
     "viz-panel": {
@@ -8701,7 +8705,9 @@
       "query-history-button": "Query history",
       "query-history-button-aria-label": "Query history",
       "query-inspector-button": "Query inspector",
-      "query-inspector-button-aria-label": "Query inspector"
+      "query-inspector-button-aria-label": "Query inspector",
+      "recent-queries-button": "Recent queries",
+      "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
     "span-bar": {
@@ -8921,6 +8927,11 @@
     },
     "sql-expr": {
       "button-run-query": "Run query"
+    },
+    "sql-expression": {
+      "editor": {
+        "aria-label": "SQL expression editor"
+      }
     },
     "sql-schema": {
       "error-title": "Error",
@@ -9887,10 +9898,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Mode",
+        "name-overflow": "Overflow",
         "name-placement": "Placement",
         "name-values": "Values",
         "name-visibility": "Visibility",
         "name-width": "Width",
+        "overflow-options": {
+          "label-ellipsis": "Ellipsis",
+          "label-wrap": "Wrap"
+        },
+        "placeholder-width": "Auto, px, or % (e.g. 220 or 35%)",
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
@@ -10661,10 +10678,30 @@
   },
   "home": {
     "dashboard-tabs": {
+      "most-used": "Most used",
+      "most-used-active": "Most used dashboards",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
+      "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
+    },
+    "firing-alerts-card": {
+      "critical-count_one": "{{count}} critical",
+      "critical-count_other": "{{count}} critical",
+      "empty": "You have no firing alerts.",
+      "empty-teams": "No firing alerts for your teams.",
+      "error-title": "Could not load firing alerts",
+      "high-count_one": "{{count}} high",
+      "high-count_other": "{{count}} high",
+      "retry": "Retry",
+      "severity-critical": "Critical",
+      "severity-high": "High",
+      "severity-low": "Low",
+      "severity-minor": "Minor",
+      "severity-unknown": "Unknown severity",
+      "title": "Firing alerts",
+      "view-all": "View all firing alerts"
     },
     "home-page": {
       "edition": {
@@ -10679,6 +10716,11 @@
       },
       "placeholder": "Welcome to {{edition}}."
     },
+    "most-used-dashboards-tab": {
+      "empty": "Most viewed dashboards in your organization will appear here once usage data is collected.",
+      "error-title": "Could not load most viewed dashboards",
+      "loading": "Loading most viewed dashboards..."
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10686,15 +10728,13 @@
       "empty": "Dashboards you've recently viewed will appear here.",
       "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "retry": "Retry"
+      "loading": "Loading recently viewed dashboards..."
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
-      "loading": "Loading starred dashboards...",
-      "retry": "Retry"
+      "loading": "Loading starred dashboards..."
     }
   },
   "import-overview": {
@@ -11192,6 +11232,8 @@
         }
       },
       "fields-section": "Fields",
+      "filter-for-log-line": "Filter for this log line",
+      "filter-out-log-line": "Filter out this log line",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
@@ -11938,9 +11980,6 @@
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
     },
-    "groupsync": {
-      "subtitle": "Manage mappings of Identity Provider groups to Grafana Roles"
-    },
     "help": {
       "title": "Help"
     },
@@ -12149,8 +12188,10 @@
       "undock": "Undock menu"
     },
     "megamenu-item": {
+      "children-error": "Failed to load items",
       "collapse-aria-label": "Collapse section: {{sectionName}}",
-      "expand-aria-label": "Expand section: {{sectionName}}"
+      "expand-aria-label": "Expand section: {{sectionName}}",
+      "loading-aria-label": "Loading {{sectionName}}"
     },
     "org-switcher": {
       "aria-label": "Change organization"
@@ -13004,27 +13045,27 @@
     },
     "bootstrap-step": {
       "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboards",
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
-      "error-quota-exceeded-message": "This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
-      "error-quota-exceeded-message-onprem": "This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
-      "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
-      "files-count_one": "{{count}} files",
+      "files-count_one": "{{count}} file",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folder",
+      "folders-count_other": "{{count}} folders",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
       "update-configuration-action": "View configuration docs",
-      "upgrade-action": "Upgrade account"
+      "upgrade-action": "Upgrade account",
+      "warning-quota-may-exceed-message": "This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.",
+      "warning-quota-may-exceed-message-onprem": "This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.",
+      "warning-quota-may-exceed-title": "Resource limit may be exceeded"
     },
     "branch-options": {
       "description-enforce-template": "Make the branch name read-only in save dialogs so users cannot override the generated name.",
@@ -13033,6 +13074,9 @@
       "label-enforce-template": "Enforce branch name template",
       "label-name-template": "Branch name template",
       "placeholder-name-template": "grafana/{{actionVar}}-{{titleVar}}-{{randomVar}}"
+    },
+    "bulk-action": {
+      "success-title-branch": "Requested changes were pushed to a branch"
     },
     "cloud-info-box": {
       "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
@@ -13070,7 +13114,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -13256,9 +13300,9 @@
     },
     "fix-folder-metadata-drawer": {
       "cancel": "Cancel",
+      "default-commit-message": "Fix folder metadata",
       "error-message": "Failed to start folder metadata fix job. Please try again.",
       "error-title": "Error fixing folder metadata",
-      "loading": "Loading repository...",
       "read-only-message": "Folder metadata cannot be fixed automatically.",
       "submit": "Fix folder IDs",
       "submitting": "Fixing...",
@@ -13421,9 +13465,26 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "header-subtitle": "Manage your dashboards and folders like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
+      "all-managed": "All of your dashboards and folders are already managed in Git.",
+      "all-resources": "All resources",
+      "dashboards": "Dashboards",
+      "drawer-cancel": "Cancel",
+      "drawer-description": "All dashboards and folders will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-title": "Migrate to GitOps",
+      "empty": "No provisioned resources yet",
+      "error-title": "Failed to load provisioning stats",
+      "folders": "Folders",
+      "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
-      "intro": "The guided migration workflow is on its way. In the meantime, read the <2>provisioning documentation</2> to learn how Git Sync keeps Grafana and your repository in step."
+      "loading": "Loading stats...",
+      "migrate-button": "Migrate everything",
+      "migrate-button-disabled-tooltip": "Select a target repository first",
+      "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "repo-description": "The repository your dashboards and folders will be migrated into.",
+      "repo-label": "Target repository",
+      "repo-placeholder": "Select a repository",
+      "selective-coming-soon": "Migrating only selected dashboards and folders is coming soon.",
+      "start-button": "Start migration"
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -14064,7 +14125,6 @@
     },
     "bulk-actions": {
       "change-datasource": "Change data source for selected queries",
-      "clear-selection": "Clear selection",
       "datasource": "Data source",
       "delete": "Delete",
       "delete-confirm-body": "This action cannot be undone.",
@@ -14073,14 +14133,16 @@
       "delete-tooltip": "Delete selected",
       "delete-transformations-confirm-title_one": "Delete {{count}} transformation?",
       "delete-transformations-confirm-title_other": "Delete {{count}} transformations?",
-      "disable-all": "Disable all",
-      "disable-all-tooltip": "Disable all selected",
-      "enable-all": "Enable all",
-      "enable-all-tooltip": "Enable all selected",
+      "disable": "Disable",
+      "disable-all-tooltip": "Disable selected",
+      "empty-hint": "Select items to apply actions",
+      "enable": "Enable",
+      "enable-all-tooltip": "Enable selected",
+      "exit-multi-select": "Exit multi-select",
       "hide": "Hide",
-      "hide-all-tooltip": "Hide all selected",
+      "hide-all-tooltip": "Hide selected",
       "show": "Show",
-      "show-all-tooltip": "Show all selected",
+      "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
     },
     "delete-modal": {
@@ -14209,6 +14271,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "Select a datasource for this query to continue.",
     "datasource-load-error-title": "Failed to load datasource for this query",
     "loading-datasource": "Loading datasource",
     "no-query-editor-component": "Data source plugin does not export any query editor component"
@@ -14230,6 +14293,56 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "recent-queries": {
+    "description_one": "Recent queries are queries that you've run in Explore within the past {{count}} day",
+    "description_other": "Recent queries are queries that you've run in Explore within the past {{count}} days",
+    "error-state": {
+      "title": "Something went wrong!"
+    },
+    "filters": {
+      "all-queries": "All queries",
+      "clear": "Clear",
+      "datasource-label": "Data source name",
+      "datasource-placeholder": "Select data source name",
+      "header": "Filters",
+      "panel-label": "Filters",
+      "remember-filters-label": "Remember filters",
+      "remember-filters-subtext": "Your settings restore on next visit",
+      "search-label": "Search",
+      "search-placeholder": "Search by...",
+      "sort-label": "Sort",
+      "sort-placeholder": "Sort Newest",
+      "starred": "Starred queries",
+      "starred-label": "Starred queries"
+    },
+    "list": {
+      "empty": "No recent queries found",
+      "loading": "Loading..."
+    },
+    "modal": {
+      "aria-label": "Recent queries",
+      "tabs": {
+        "recent": "Recent queries",
+        "saved": "Saved queries",
+        "saved-badge": "Cloud",
+        "saved-tooltip": "Saved queries are available in Cloud and Enterprise."
+      }
+    },
+    "row": {
+      "save": "Save query",
+      "select-query": "Select query",
+      "star": "Star",
+      "star-tooltip": "Query starred!",
+      "unstar": "Unstar"
+    },
+    "sort": {
+      "newest": "Newest first"
+    },
+    "sort-option": {
+      "newest": "Sort Newest",
+      "oldest": "Sort Oldest"
+    }
   },
   "recently-deleted": {
     "buttons": {

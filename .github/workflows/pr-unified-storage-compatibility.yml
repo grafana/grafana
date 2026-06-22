@@ -1,0 +1,95 @@
+name: "Unified Storage Compatibility"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-separation:
+    # This check is only meaningful in grafana/grafana; the workflow file is mirrored to
+    # grafana-security-mirror, where it shouldn't run.
+    if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Detect changes
+        id: changed-files
+        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        with:
+          files_yaml: |
+            # pkg/server/** is intentionally not in api_layer: it hosts the
+            # standalone storage/search server targets, and wire_gen.go churns
+            # on most storage provider changes, which would fail server-only PRs.
+            api_layer:
+              - 'pkg/registry/apis/**'
+              - 'pkg/services/apiserver/**'
+              - 'pkg/services/dashboards/**'
+              - 'pkg/services/folder/**'
+              - 'pkg/services/search/**'
+              - 'pkg/services/stats/**'
+              - 'pkg/services/team/search/**'
+              # consumes pkg/storage/unified/resource/{kv,lease}
+              - 'pkg/infra/leaderelection/kvlease/**'
+              - 'pkg/storage/legacysql/**'
+              # client-side unified storage code, runs inside the Grafana process
+              # (keep in sync with the negations in unified_storage below)
+              - 'pkg/storage/unified/apistore/**'
+              - 'pkg/storage/unified/federated/**'
+              - 'pkg/storage/unified/*.go'
+            unified_storage:
+              - 'pkg/storage/unified/**'
+              # client-side code deployed with Grafana, not with the storage/search
+              # server (keep in sync with the client-side block in api_layer above)
+              - '!pkg/storage/unified/apistore/**'
+              - '!pkg/storage/unified/federated/**'
+              - '!pkg/storage/unified/*.go'
+
+      - name: Check for exception label
+        if: steps.changed-files.outputs.api_layer_any_changed == 'true' && steps.changed-files.outputs.unified_storage_any_changed == 'true'
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "no-check-unified-storage-compatibility"; then
+            echo "✅ Mixed changes allowed - exception label 'no-check-unified-storage-compatibility' is present"
+            exit 0
+          else
+            echo "❌ This PR contains changes that may not be deployed together."
+            echo ""
+            echo "Why this check failed:"
+            echo "• Unified storage and search can run as separate services, deployed independently from the Grafana API layer at different cadences"
+            echo "• A PR changing both sides may break compatibility between versions during rollout"
+            echo ""
+            echo "How to fix:"
+            echo "• Split this PR into two separate PRs (recommended):"
+            echo "  - One PR for unified storage/search changes (pkg/storage/unified/)"
+            echo "  - One PR for API layer changes (pkg/registry/apis/, pkg/services/)"
+            echo "• Ensure each change is backwards compatible on its own:"
+            echo "  - New API layer must work with the old storage/search server"
+            echo "  - New storage/search server must work with the old API layer"
+            echo ""
+            echo "Exception process (if changes MUST be coupled):"
+            echo "• Add the 'no-check-unified-storage-compatibility' label to this PR"
+            echo "• Explain in the PR description why these changes cannot be separated"
+            echo ""
+            echo "For more details, see pkg/storage/unified/AGENTS.md"
+            echo ""
+            echo "API layer changed files:"
+            echo "${{ steps.changed-files.outputs.api_layer_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
+            echo ""
+            echo "Unified storage changed files:"
+            echo "${{ steps.changed-files.outputs.unified_storage_all_changed_files }}" | tr ' ' '\n' | sed 's/^/- /'
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

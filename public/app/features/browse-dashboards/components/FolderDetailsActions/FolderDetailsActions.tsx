@@ -10,7 +10,6 @@ import { type CombinedFolder, useGetFolderQueryFacade } from 'app/api/clients/fo
 import { OwnerReference } from 'app/core/components/OwnerReferences/OwnerReference';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
-import { isManagedResourceReadOnly } from 'app/features/provisioning/utils/managedResource';
 import { useGetTeamByUidQuery } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -21,14 +20,7 @@ import { FolderActionsButton } from '../FolderActionsButton';
 export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder }) => {
   // Fetch the root (aka general) folder if we're not in a specific folder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
-  const {
-    isReadOnlyRepo,
-    repoType,
-    folder: repoFolderResource,
-  } = useGetResourceRepositoryView({
-    folderName: folderDTO?.uid,
-  });
-  const isReadOnly = repoFolderResource ? isManagedResourceReadOnly(repoFolderResource) : false;
+  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
 
   const handleButtonClickToRecentlyDeleted = () => {
@@ -51,14 +43,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       >
         <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
       </LinkButton>
-      {folderDTO && (
-        <FolderActionsButton
-          folder={folderDTO}
-          repoType={repoType}
-          isReadOnlyRepo={isReadOnlyRepo}
-          isReadOnly={isReadOnly}
-        />
-      )}
+      {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
       {(canCreateDashboards || canCreateFolders) && (
         <CreateNewButton
           parentFolder={folderDTO}

@@ -13,13 +13,13 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
-import { ManagerKind } from '../../apiserver/types';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -29,12 +29,10 @@ interface Props {
   folder: FolderDTO;
   /* If the folder is managed by a provisioned repo and is read-only */
   isReadOnlyRepo?: boolean;
-  /* If the folder is managed by any other system (terraform, kubectl, plugin, ...) and is read-only */
-  isReadOnly?: boolean;
   repoType?: RepoType;
 }
 
-export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, isReadOnly }: Props) {
+export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
@@ -52,12 +50,12 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, isReadOn
     canSetPermissions,
   } = getFolderPermissions(folder);
 
-  const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
+  const isProvisionedFolder = isItemManagedByRepository(folder);
   const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
-  // Can only move folders when the folder is not provisioned and not otherwise read-only
-  const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo && !isReadOnly;
-  // Can only delete folders when the folder has the right permission, is not a provisioned root folder and not read-only
-  const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo && !isReadOnly;
+  // Can only move folders when the folder is not provisioned
+  const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
+  // Can only delete folders when the folder has the right permission and is not provisioned root folder
+  const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
   const canShowPermissions = canViewPermissions && (!isProvisionedFolder || provisioningFolderMetadataEnabled);
 

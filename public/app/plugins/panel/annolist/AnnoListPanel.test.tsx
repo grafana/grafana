@@ -86,6 +86,7 @@ const defaultOptions: Options = {
 const defaultResult = {
   text: 'Result text',
   userId: 1,
+  userUID: 'u-1',
   login: 'Result login',
   email: 'Result email',
   avatarUrl: 'Result avatarUrl',
@@ -307,6 +308,35 @@ describe('AnnoListPanel', () => {
       });
     });
 
+    describe('and the user clicks directly on the annotation title text', () => {
+      it('then it should navigate, even when the click lands on the heading text', async () => {
+        const { pushSpy } = await setupTestContext();
+
+        // Click the heading element itself (not the row padding) to guard against the
+        // heading swallowing clicks and blocking row navigation.
+        await userEvent.click(await screen.findByText(/result text/i));
+        await waitFor(() => expect(searchMock).toHaveBeenCalledTimes(1));
+
+        expect(pushSpy).toHaveBeenCalledWith('/d/asdkjhajksd/some-dash?from=1609458600000&to=1609459800000');
+      });
+    });
+
+    describe('and the user clicks a link rendered inside the annotation title', () => {
+      silenceConsoleOutput();
+
+      it('then the link handles its own navigation and the row does not open the annotation', async () => {
+        const { pushSpy, partialSpy } = await setupTestContext({
+          results: [{ ...defaultResult, text: '<a href="/path">embedded link</a>' }],
+        });
+
+        await userEvent.click(await screen.findByRole('link', { name: /embedded link/i }));
+
+        expect(searchMock).not.toHaveBeenCalled();
+        expect(pushSpy).not.toHaveBeenCalled();
+        expect(partialSpy).not.toHaveBeenCalled();
+      });
+    });
+
     describe('and the user clicks on a tag', () => {
       it('then it should navigate to the dashboard connected to the annotation', async () => {
         const { getMock } = await setupTestContext();
@@ -333,7 +363,7 @@ describe('AnnoListPanel', () => {
     });
 
     describe('and the user clicks on the user avatar', () => {
-      it('then it should filter annotations by login and the filter should show', async () => {
+      it('then it should filter annotations by the creator uid and the filter should show', async () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
@@ -348,7 +378,7 @@ describe('AnnoListPanel', () => {
             limit: 10,
             tags: ['tag A', 'tag B'],
             type: 'annotation',
-            userId: 1,
+            userUID: 'u-1',
           },
           expect.stringMatching(/^anno-list-panel-\d\.\d+/) // string is appended with Math.random()
         );
