@@ -13,6 +13,7 @@ type StorageMetrics struct {
 	PollerLatency          prometheus.Histogram
 	ListWithFieldSelectors *prometheus.CounterVec
 	RequestDuration        *prometheus.HistogramVec
+	DegradedOperations     *prometheus.CounterVec
 	Broadcaster            *BroadcasterMetrics
 }
 
@@ -49,6 +50,12 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"method", "group", "resource", "status_code"}),
+		DegradedOperations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Namespace: "storage_server",
+			Name:      "degraded_operations_total",
+			Help: "Operations that proceeded despite a failed external dependency " +
+				"(e.g. a guard/check that was skipped because a downstream call failed).",
+		}, []string{"operation", "reason", "group", "resource"}),
 		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }
