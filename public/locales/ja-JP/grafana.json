@@ -9837,10 +9837,16 @@
         },
         "name-limit": "制限",
         "name-mode": "モード",
+        "name-overflow": "",
         "name-placement": "配置",
         "name-values": "値",
         "name-visibility": "表示レベル",
         "name-width": "幅",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "下",
           "label-right": "右"
@@ -11155,6 +11161,8 @@
         }
       },
       "fields-section": "フィールド",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "ログ行を非表示",
       "inline-mode": "インラインで表示",
       "inline-no-scrolls": "",
@@ -11900,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "IDプロバイダグループとGrafanaの役割のマッピングを管理する"
     },
     "help": {
       "title": "ヘルプ"
@@ -14168,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "このクエリのデータソースの読み込みに失敗しました",
     "loading-datasource": "データソースを読み込み中",
     "no-query-editor-component": "データソースプラグインは、クエリエディターコンポーネントをエクスポートしません"
