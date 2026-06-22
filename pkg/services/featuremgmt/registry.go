@@ -3163,6 +3163,14 @@ var (
 			Generate:    Generate{Go: true},
 		},
 		{
+			Name:        "assistant.fullscreenWorkspace",
+			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "splunk.useLegacyResultsApi",
 			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
 			Stage:        FeatureStageExperimental,

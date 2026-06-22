@@ -37,6 +37,11 @@ jest.mock('react-use', () => ({
   useAsync: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagAssistantFullscreenWorkspace: jest.fn().mockReturnValue(false),
+}));
+
 const mockComponent = {
   title: 'Test Component',
   description: 'Test Description',

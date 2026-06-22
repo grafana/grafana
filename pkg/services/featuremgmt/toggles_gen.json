@@ -978,6 +978,20 @@
     },
     {
       "metadata": {
+        "name": "assistant.fullscreenWorkspace",
+        "resourceVersion": "1782120503827",
+        "creationTimestamp": "2026-06-22T09:28:23Z"
+      },
+      "spec": {
+        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auditLoggingAppPlatform",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-12-29T15:28:29Z"
