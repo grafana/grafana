@@ -19,6 +19,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { useCreateHookMutation, useGetHookQuery, useUpdateHookMutation } from '../api/pulseApi';
 import { type HookType } from '../types';
+import { pulseErrorMessage } from '../utils/errors';
 
 // v1 ships a single transport. Kept as an array so adding Slack / Teams
 // later is a one-line change and the Select already renders a dropdown.
@@ -103,8 +104,7 @@ export default function PulseHookEditPage() {
       }
       locationService.push('/admin/pulse');
     } catch (err) {
-      const message = (err as { data?: { message?: string } })?.data?.message;
-      setSubmitError(message || t('pulse.hooks.save-error', 'Could not save hook. Please try again.'));
+      setSubmitError(pulseErrorMessage(err) || t('pulse.hooks.save-error', 'Could not save hook. Please try again.'));
     }
   }
 
@@ -130,83 +130,89 @@ export default function PulseHookEditPage() {
         {(!isEdit || (!isLoadingExisting && !loadError)) && (
           <form onSubmit={onSubmit}>
             <FieldSet label={t('pulse.hooks.fieldset', 'Hook settings')}>
-              <Field
-                label={t('pulse.hooks.field-name', 'Name')}
-                description={t('pulse.hooks.field-name-desc', 'Unique name. Mentioned with @ in a Pulse thread.')}
-                invalid={nameInvalid}
-                error={t('pulse.hooks.field-name-error', 'Name is required')}
-                required
-              >
-                <Input
-                  id="pulse-hook-name"
-                  value={form.name}
-                  placeholder={t('pulse.hooks.field-name-placeholder', 'Grafana-P.S.')}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.currentTarget.value }))}
-                  maxLength={190}
-                />
-              </Field>
+              <Stack direction="column" gap={2}>
+                <Field
+                  noMargin
+                  label={t('pulse.hooks.field-name', 'Name')}
+                  description={t('pulse.hooks.field-name-desc', 'Unique name. Mentioned with @ in a Pulse thread.')}
+                  invalid={nameInvalid}
+                  error={t('pulse.hooks.field-name-error', 'Name is required')}
+                  required
+                >
+                  <Input
+                    id="pulse-hook-name"
+                    value={form.name}
+                    placeholder={t('pulse.hooks.field-name-placeholder', 'Grafana-P.S.')}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.currentTarget.value }))}
+                    maxLength={190}
+                  />
+                </Field>
 
-              <Field label={t('pulse.hooks.field-type', 'Type')}>
-                <Select
-                  inputId="pulse-hook-type"
-                  options={HOOK_TYPE_OPTIONS}
-                  value={form.type}
-                  onChange={(v) => setForm((f) => ({ ...f, type: (v.value as HookType) ?? 'webhook' }))}
-                />
-              </Field>
+                <Field noMargin label={t('pulse.hooks.field-type', 'Type')}>
+                  <Select
+                    inputId="pulse-hook-type"
+                    options={HOOK_TYPE_OPTIONS}
+                    value={form.type}
+                    onChange={(v) => setForm((f) => ({ ...f, type: v.value ?? 'webhook' }))}
+                  />
+                </Field>
 
-              <Field
-                label={t('pulse.hooks.field-url', 'URL')}
-                description={t('pulse.hooks.field-url-desc', 'The http(s) endpoint that receives the JSON payload.')}
-                invalid={urlInvalid}
-                error={t('pulse.hooks.field-url-error', 'Enter a valid http(s) URL')}
-                required
-              >
-                <Input
-                  id="pulse-hook-url"
-                  value={form.url}
-                  placeholder="https://example.com/pulse-hook"
-                  onChange={(e) => setForm((f) => ({ ...f, url: e.currentTarget.value }))}
-                />
-              </Field>
+                <Field
+                  noMargin
+                  label={t('pulse.hooks.field-url', 'URL')}
+                  description={t('pulse.hooks.field-url-desc', 'The http(s) endpoint that receives the JSON payload.')}
+                  invalid={urlInvalid}
+                  error={t('pulse.hooks.field-url-error', 'Enter a valid http(s) URL')}
+                  required
+                >
+                  <Input
+                    id="pulse-hook-url"
+                    value={form.url}
+                    placeholder={t('pulse.hooks.field-url-placeholder', 'https://example.com/pulse-hook')}
+                    onChange={(e) => setForm((f) => ({ ...f, url: e.currentTarget.value }))}
+                  />
+                </Field>
 
-              <Field
-                label={t('pulse.hooks.field-secret', 'Signing secret')}
-                description={
-                  isEdit && existing?.hasSecret
-                    ? t('pulse.hooks.field-secret-desc-existing', 'A secret is configured. Leave blank to keep it.')
-                    : t(
-                        'pulse.hooks.field-secret-desc',
-                        'Optional. Used to HMAC-sign the payload so the receiver can verify it.'
-                      )
-                }
-              >
-                <Input
-                  id="pulse-hook-secret"
-                  type="password"
-                  value={form.secret}
-                  placeholder={
+                <Field
+                  noMargin
+                  label={t('pulse.hooks.field-secret', 'Signing secret')}
+                  description={
                     isEdit && existing?.hasSecret
-                      ? t('pulse.hooks.field-secret-placeholder-existing', '••••••••')
-                      : ''
+                      ? t('pulse.hooks.field-secret-desc-existing', 'A secret is configured. Leave blank to keep it.')
+                      : t(
+                          'pulse.hooks.field-secret-desc',
+                          'Optional. Used to HMAC-sign the payload so the receiver can verify it.'
+                        )
                   }
-                  onChange={(e) => setForm((f) => ({ ...f, secret: e.currentTarget.value }))}
-                />
-              </Field>
+                >
+                  <Input
+                    id="pulse-hook-secret"
+                    type="password"
+                    value={form.secret}
+                    placeholder={
+                      isEdit && existing?.hasSecret
+                        ? t('pulse.hooks.field-secret-placeholder-existing', '••••••••')
+                        : ''
+                    }
+                    onChange={(e) => setForm((f) => ({ ...f, secret: e.currentTarget.value }))}
+                  />
+                </Field>
 
-              <Field
-                label={t('pulse.hooks.field-disabled', 'Disabled')}
-                description={t(
-                  'pulse.hooks.field-disabled-desc',
-                  "When disabled, the hook won't fire and is hidden from the @-mention picker."
-                )}
-              >
-                <Switch
-                  id="pulse-hook-disabled"
-                  value={form.disabled}
-                  onChange={(e) => setForm((f) => ({ ...f, disabled: e.currentTarget.checked }))}
-                />
-              </Field>
+                <Field
+                  noMargin
+                  label={t('pulse.hooks.field-disabled', 'Disabled')}
+                  description={t(
+                    'pulse.hooks.field-disabled-desc',
+                    "When disabled, the hook won't fire and is hidden from the @-mention picker."
+                  )}
+                >
+                  <Switch
+                    id="pulse-hook-disabled"
+                    value={form.disabled}
+                    onChange={(e) => setForm((f) => ({ ...f, disabled: e.currentTarget.checked }))}
+                  />
+                </Field>
+              </Stack>
             </FieldSet>
 
             {submitError && (

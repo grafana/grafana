@@ -18,6 +18,7 @@ import { Page } from 'app/core/components/Page/Page';
 
 import { useDeleteHookMutation, useListHooksQuery } from '../api/pulseApi';
 import { type PulseHook } from '../types';
+import { pulseErrorMessage } from '../utils/errors';
 
 /**
  * PulseHooksListPage is the Administration surface for named Pulse
@@ -43,9 +44,7 @@ export default function PulseHooksListPage() {
             <LinkButton fill="text" href={`/admin/pulse/edit/${encodeURIComponent(original.uid)}`}>
               {original.name}
             </LinkButton>
-            {original.disabled && (
-              <Badge text={t('pulse.hooks.disabled-badge', 'Disabled')} color="orange" />
-            )}
+            {original.disabled && <Badge text={t('pulse.hooks.disabled-badge', 'Disabled')} color="orange" />}
           </Stack>
         ),
       },
@@ -119,7 +118,7 @@ export default function PulseHooksListPage() {
 
         {isError && (
           <Alert title={t('pulse.hooks.load-error', 'Could not load Pulse hooks')} severity="error">
-            {String((error as { data?: { message?: string } })?.data?.message ?? '')}
+            {pulseErrorMessage(error) ?? ''}
           </Alert>
         )}
 
@@ -134,8 +133,8 @@ export default function PulseHooksListPage() {
             }
           >
             <Trans i18nKey="pulse.hooks.empty-body">
-              A hook posts a standardized JSON payload to a URL you control whenever a Pulse mentions it — perfect for an
-              automation that replies on the thread.
+              A hook posts a standardized JSON payload to a URL you control whenever a Pulse mentions it — perfect for
+              an automation that replies on the thread.
             </Trans>
           </EmptyState>
         )}

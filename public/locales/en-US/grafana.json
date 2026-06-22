@@ -14297,6 +14297,7 @@
       "field-url": "URL",
       "field-url-desc": "The http(s) endpoint that receives the JSON payload.",
       "field-url-error": "Enter a valid http(s) URL",
+      "field-url-placeholder": "https://example.com/pulse-hook",
       "fieldset": "Hook settings",
       "load-error": "Could not load Pulse hooks",
       "loading": "Loading hooks…",
