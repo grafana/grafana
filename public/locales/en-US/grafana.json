@@ -10815,6 +10815,9 @@
       "show-all-series": "Show all {{length}}",
       "show-only-series": "Showing only {{MAX_NUMBER_OF_TIME_SERIES}} series",
       "title": "Graph"
+    },
+    "meta-info": {
+      "equivalent-samples-read": "Equivalent samples read"
     }
   },
   "heatmap": {

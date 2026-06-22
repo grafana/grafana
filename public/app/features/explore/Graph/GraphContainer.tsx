@@ -20,6 +20,7 @@ import { storeGraphStyle } from '../state/utils';
 
 import { ExploreGraph } from './ExploreGraph';
 import { ExploreGraphLabel } from './ExploreGraphLabel';
+import { GraphMetaInfo } from './GraphMetaInfo';
 import { loadGraphStyle } from './utils';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -69,50 +70,55 @@ export const GraphContainer = ({
   }, [data, showAllSeries]);
 
   return (
-    <PanelChrome
-      title={t('graph.container.title', 'Graph')}
-      titleItems={[
-        !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
-          <LimitedDataDisclaimer
-            key="disclaimer"
-            toggleShowAllSeries={toggleShowAllSeries}
-            info={
-              <Trans i18nKey={'graph.container.show-only-series'}>
-                Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
-              </Trans>
-            }
-            buttonLabel={<Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>}
-            tooltip={t(
-              'graph.container.content',
-              'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
-            )}
+    <>
+      <GraphMetaInfo data={data} />
+      <PanelChrome
+        title={t('graph.container.title', 'Graph')}
+        titleItems={[
+          !showAllSeries && MAX_NUMBER_OF_TIME_SERIES < data.length && (
+            <LimitedDataDisclaimer
+              key="disclaimer"
+              toggleShowAllSeries={toggleShowAllSeries}
+              info={
+                <Trans i18nKey={'graph.container.show-only-series'}>
+                  Showing only {{ MAX_NUMBER_OF_TIME_SERIES }} series
+                </Trans>
+              }
+              buttonLabel={
+                <Trans i18nKey={'graph.container.show-all-series'}>Show all {{ length: data.length }}</Trans>
+              }
+              tooltip={t(
+                'graph.container.content',
+                'Rendering too many series in a single panel may impact performance and make data harder to read. Consider refining your queries.'
+              )}
+            />
+          ),
+        ].filter(Boolean)}
+        width={width}
+        height={height}
+        loadingState={loadingState}
+        statusMessage={statusMessage}
+        actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
+      >
+        {(innerWidth, innerHeight) => (
+          <ExploreGraph
+            graphStyle={graphStyle}
+            data={slicedData}
+            height={innerHeight}
+            width={innerWidth}
+            timeRange={timeRange}
+            onChangeTime={onChangeTime}
+            timeZone={timeZone}
+            annotations={annotations}
+            splitOpenFn={splitOpenFn}
+            loadingState={loadingState}
+            thresholdsConfig={thresholdsConfig}
+            thresholdsStyle={thresholdsStyle}
+            eventBus={eventBus}
+            queriesChangedIndexAtRun={queriesChangedIndexAtRun}
           />
-        ),
-      ].filter(Boolean)}
-      width={width}
-      height={height}
-      loadingState={loadingState}
-      statusMessage={statusMessage}
-      actions={<ExploreGraphLabel graphStyle={graphStyle} onChangeGraphStyle={onGraphStyleChange} />}
-    >
-      {(innerWidth, innerHeight) => (
-        <ExploreGraph
-          graphStyle={graphStyle}
-          data={slicedData}
-          height={innerHeight}
-          width={innerWidth}
-          timeRange={timeRange}
-          onChangeTime={onChangeTime}
-          timeZone={timeZone}
-          annotations={annotations}
-          splitOpenFn={splitOpenFn}
-          loadingState={loadingState}
-          thresholdsConfig={thresholdsConfig}
-          thresholdsStyle={thresholdsStyle}
-          eventBus={eventBus}
-          queriesChangedIndexAtRun={queriesChangedIndexAtRun}
-        />
-      )}
-    </PanelChrome>
+        )}
+      </PanelChrome>
+    </>
   );
 };
