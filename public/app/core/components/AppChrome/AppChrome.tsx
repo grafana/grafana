@@ -95,7 +95,7 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
-  const { fullscreenWorkspaceFeatureFlagEnabled: fullscreenWorkspaceEnabled, active: fullscreenWorkspace } =
+  const { fullscreenWorkspaceFeatureFlagEnabled, fullscreenWorkspaceActive } =
     useFullscreenWorkspace();
 
   // Chromeless routes are without topNav, mega menu, search & command palette
@@ -105,22 +105,22 @@ export function AppChrome({ children }: Props) {
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
       className={classNames('main-view', {
-        'main-view--chrome-hidden': state.chromeless || fullscreenWorkspace,
+        'main-view--chrome-hidden': state.chromeless || fullscreenWorkspaceActive,
       })}
     >
-      {fullscreenWorkspaceEnabled &&
+      {fullscreenWorkspaceFeatureFlagEnabled &&
         outletHost &&
         createPortal(
           [
             // In fullscreen workspace, a slim bar (hamburger + breadcrumbs) sits above the live
             // page inside the Platform tab
-            fullscreenWorkspace ? <FullscreenWorkspacePlatformBar key="agent-platform-bar" /> : null,
+            fullscreenWorkspaceActive ? <FullscreenWorkspacePlatformBar key="agent-platform-bar" /> : null,
             <Fragment key="outlet">{children}</Fragment>,
           ],
           outletHost
         )}
 
-      {!state.chromeless && !fullscreenWorkspace && (
+      {!state.chromeless && !fullscreenWorkspaceActive && (
         <>
           <LinkButton
             className={styles.skipLink}
@@ -149,7 +149,7 @@ export function AppChrome({ children }: Props) {
           </header>
         </>
       )}
-      {fullscreenWorkspace ? (
+      {fullscreenWorkspaceActive ? (
         <FullscreenWorkspaceShell outletRef={setOutletHost} />
       ) : (
         <div className={contentClass}>
@@ -174,9 +174,9 @@ export function AppChrome({ children }: Props) {
               })}
               id="pageContent"
               tabIndex={-1}
-              ref={fullscreenWorkspaceEnabled ? setOutletHost : undefined}
+              ref={fullscreenWorkspaceFeatureFlagEnabled ? setOutletHost : undefined}
             >
-              {fullscreenWorkspaceEnabled ? null : children}
+              {fullscreenWorkspaceFeatureFlagEnabled ? null : children}
             </main>
             {!state.chromeless && isExtensionSidebarOpen && (
               <Resizable
@@ -194,9 +194,9 @@ export function AppChrome({ children }: Props) {
           </div>
         </div>
       )}
-      {!state.chromeless && !fullscreenWorkspace && !state.megaMenuDocked && <AppChromeMenu />}
-      {(!state.chromeless || fullscreenWorkspace) && <CommandPalette />}
-      {!state.chromeless && !fullscreenWorkspace && isSplashScreenEnabled && <SplashScreenModal />}
+      {!state.chromeless && !fullscreenWorkspaceActive && !state.megaMenuDocked && <AppChromeMenu />}
+      {(!state.chromeless || fullscreenWorkspaceActive) && <CommandPalette />}
+      {!state.chromeless && !fullscreenWorkspaceActive && isSplashScreenEnabled && <SplashScreenModal />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}

@@ -63,7 +63,7 @@ describe('useFullscreenWorkspace', () => {
 
     expect(result.current.fullscreenWorkspaceFeatureFlagEnabled).toBe(false);
     // Even with chrome state on, active is gated by the flag.
-    expect(result.current.active).toBe(false);
+    expect(result.current.fullscreenWorkspaceActive).toBe(false);
     // No location subscription is created while the flag is off.
     expect(getLocationObservableMock).not.toHaveBeenCalled();
     expect(setFullscreenWorkspace).not.toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('useFullscreenWorkspace', () => {
     const { result } = renderHook(() => useFullscreenWorkspace());
 
     expect(result.current.fullscreenWorkspaceFeatureFlagEnabled).toBe(true);
-    expect(result.current.active).toBe(true);
+    expect(result.current.fullscreenWorkspaceActive).toBe(true);
     expect(getLocationObservableMock).toHaveBeenCalled();
   });
 
