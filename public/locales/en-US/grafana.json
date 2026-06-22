@@ -5925,6 +5925,9 @@
     "outline": {
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
+      "search": {
+        "no-results": "No results found for your query"
+      },
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
