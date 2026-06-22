@@ -363,7 +363,7 @@ func TestIntegrationProvisioning_ExportJob_GenerateNewFolderIDs(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.CreateLocalRepo(t, common.TestRepo{
 			Name:                   repo,
-			SyncTarget:             "instance",
+			SyncTarget:             "folder",
 			Workflows:              []string{"write"},
 			SkipSync:               true,
 			SkipResourceAssertions: true,

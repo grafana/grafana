@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -18,28 +17,45 @@ import (
 )
 
 // TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs verifies the
-// end-to-end migrate flow with the GenerateNewFolderIDs option: the exported
-// _folder.json carries a freshly generated UID, the subsequent sync creates a
-// new managed folder under that UID, and the original unmanaged folder (which is
-// never referenced by the repository) is removed by the namespace cleanup.
+// end-to-end migrate flow with the GenerateNewFolderIDs option against a
+// folder-target repository and a nested folder hierarchy:
+//   - the exported _folder.json at each nested path carries a freshly generated
+//     UID (distinct from the originals and from each other),
+//   - the subsequent sync creates new managed folders under those UIDs, and
+//   - the nested parent/child relationship is preserved via the new UIDs.
+//
+// A folder-target migration does not run namespace cleanup, so the original
+// unmanaged folders are expected to remain untouched alongside the new ones.
 func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
+	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
+		t.Helper()
+		data, err := os.ReadFile(path) //nolint:gosec
+		require.NoError(t, err, "_folder.json should exist at %s", path)
+		var manifest foldersV1.Folder
+		require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json at %s should be valid JSON", path)
+		return manifest
+	}
+
 	helper := sharedHelper(t)
 	ctx := t.Context()
 
 	const (
 		repo        = "migrate-newids-repo"
-		folderUID   = "migrate-newids-folder-uid"
-		folderTitle = "migrate-newids-folder"
+		parentUID   = "migrate-newids-parent-uid"
+		parentTitle = "migrate-newids-parent"
+		childUID    = "migrate-newids-child-uid"
+		childTitle  = "migrate-newids-child"
 	)
 
 	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo,
-		SyncTarget:             "instance",
+		SyncTarget:             "folder",
 		Workflows:              []string{"write"},
 		SkipResourceAssertions: true,
 	})
 
-	createUnmanagedFolder(t, helper, folderUID, folderTitle)
+	createUnmanagedFolder(t, helper, parentUID, parentTitle)
+	createUnmanagedFolderWithParent(t, helper, childUID, childTitle, parentUID)
 
 	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionMigrate,
@@ -49,30 +65,39 @@ func TestIntegrationProvisioning_MigrateJob_GenerateNewFolderIDs(t *testing.T) {
 		},
 	})
 
-	// The exported _folder.json must carry a fresh UID, not the original.
-	data, err := os.ReadFile(filepath.Join(helper.ProvisioningPath, folderTitle, "_folder.json")) //nolint:gosec
-	require.NoError(t, err, "_folder.json should be written during migrate")
-	var manifest foldersV1.Folder
-	require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json should be valid JSON")
-	newUID := manifest.Name
-	require.NotEmpty(t, newUID, "_folder.json must carry a UID")
-	require.NotEqual(t, folderUID, newUID, "migrate should generate a new folder UID")
-	require.Equal(t, folderTitle, manifest.Spec.Title, "folder title should be preserved")
+	// The exported _folder.json files (at their nested paths) must carry fresh
+	// UIDs, not the originals. Directory nesting derives from titles.
+	parentManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, "_folder.json"))
+	childManifest := readFolderManifest(t, filepath.Join(helper.ProvisioningPath, parentTitle, childTitle, "_folder.json"))
 
-	// After the sync phase the new UID exists as a managed folder, and the
-	// original unmanaged folder is cleaned up since it is never referenced by
-	// the repository.
+	newParentUID := parentManifest.Name
+	newChildUID := childManifest.Name
+	require.NotEmpty(t, newParentUID, "parent _folder.json must carry a UID")
+	require.NotEmpty(t, newChildUID, "child _folder.json must carry a UID")
+	require.NotEqual(t, parentUID, newParentUID, "migrate should generate a new parent folder UID")
+	require.NotEqual(t, childUID, newChildUID, "migrate should generate a new child folder UID")
+	require.NotEqual(t, newParentUID, newChildUID, "each folder should get a distinct new UID")
+	require.Equal(t, parentTitle, parentManifest.Spec.Title, "parent title should be preserved")
+	require.Equal(t, childTitle, childManifest.Spec.Title, "child title should be preserved")
+
+	// After the sync phase the new UIDs exist as managed folders, and the nested
+	// parent/child relationship is preserved through the new UIDs.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		newFolder, err := helper.Folders.Resource.Get(ctx, newUID, metav1.GetOptions{})
-		if !assert.NoError(collect, err, "new folder %q should exist after migrate", newUID) {
+		newParent, err := helper.Folders.Resource.Get(ctx, newParentUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "new parent folder %q should exist after migrate", newParentUID) {
 			return
 		}
-		assert.Equal(collect, repo, newFolder.GetAnnotations()[utils.AnnoKeyManagerIdentity],
-			"new folder should be managed by the repository")
+		assert.Equal(collect, repo, newParent.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"new parent folder should be managed by the repository")
 
-		_, err = helper.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
-		assert.True(collect, apierrors.IsNotFound(err),
-			"original unmanaged folder %q should be removed by namespace cleanup, got err=%v", folderUID, err)
+		newChild, err := helper.Folders.Resource.Get(ctx, newChildUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "new child folder %q should exist after migrate", newChildUID) {
+			return
+		}
+		assert.Equal(collect, repo, newChild.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"new child folder should be managed by the repository")
+		assert.Equal(collect, newParentUID, newChild.GetAnnotations()[utils.AnnoKeyFolder],
+			"new child folder should be nested under the new parent folder")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
-		"migrate should create the new managed folder and clean up the original")
+		"migrate should create the nested managed folders under their new UIDs")
 }
