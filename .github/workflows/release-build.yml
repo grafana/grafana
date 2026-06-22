@@ -49,7 +49,11 @@ jobs:
   setup:
     name: setup
     runs-on: github-hosted-ubuntu-x64-small
-    if: (github.repository == 'grafana/grafana') || (github.repository == 'grafana/grafana-security-mirror' && contains(github.ref_name, '+security'))
+    # grafana/grafana builds only main; release-candidate builds run in the mirror on
+    # the #patched branch.
+    if: >-
+      (github.repository == 'grafana/grafana' && github.ref_name == 'main') ||
+      (github.repository == 'grafana/grafana-security-mirror' && endsWith(github.ref_name, '#patched'))
     outputs:
       version: ${{ steps.output.outputs.version }}
       grafana-commit: ${{ steps.output.outputs.grafana_commit }}
@@ -62,7 +66,12 @@ jobs:
           persist-credentials: false
       - name: Set up version (Release Branches)
         if: startsWith(github.ref_name, 'release-')
-        run: echo "${REF_NAME#release-}" > VERSION
+        # Drop the leading release- and any trailing #patched mirror-branch suffix, e.g.
+        # release-12.2.10#patched -> 12.2.10.
+        run: |
+          version="${REF_NAME#release-}"
+          version="${version%\#patched}"
+          echo "$version" > VERSION
         env:
           REF_NAME: ${{ github.ref_name }}
       - name: Set up version (Non-release branches)
@@ -77,12 +86,15 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
         run: |
           echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          # grafana_commit is the source pin (#patched HEAD in the mirror) — it drives every
+          # clone/checkout. Do NOT repoint it.
           echo "grafana_commit=$(git rev-parse HEAD)" | tee -a "$GITHUB_OUTPUT"
-          # Commit to stamp into the binary: for a +security mirror build, the base release
-          # branch's HEAD; otherwise the checkout HEAD.
-          if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *+security-* ]]; then
-            base="${REF_NAME%+security-*}"
-            public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${base}" --jq '.object.sha')
+          # public_commit is the commit stamped into the binary (-X main.commit). For a mirror
+          # #patched build it's the sibling branch HEAD; everywhere else it's the checkout HEAD.
+          # Only ever passed to COMMIT_SHA; never used as a checkout/clone ref.
+          if [ "$GITHUB_REPOSITORY" = "grafana/grafana-security-mirror" ] && [[ "$REF_NAME" == *'#patched' ]]; then
+            sibling="${REF_NAME%\#patched}"
+            public_commit=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${sibling}" --jq '.object.sha')
           else
             public_commit=$(git rev-parse HEAD)
           fi
@@ -116,12 +128,15 @@ jobs:
           github-token: ${{ steps.get-github-app-token.outputs.token }}
           script: |
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
+            // grafana-enterprise has no #patched branches, so dispatch it on the plain
+            // release branch (e.g. release-12.2.10#patched -> release-12.2.10).
+            const enterpriseRef = REF.replace(/#patched$/, '');
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
                 workflow_id: 'release-build.yml',
-                ref:  REF,
+                ref:  enterpriseRef,
                 inputs: {
                   "version": VERSION,
                   "build-id": String(BUILD_ID),
