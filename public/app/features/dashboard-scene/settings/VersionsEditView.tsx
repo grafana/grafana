@@ -208,7 +208,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
       return model.versions;
     }
     const displayMap = new Map<string, string>();
-    for (const item of displayData.display) {
+    for (const item of displayData.display || []) {
       displayMap.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
       if (item.internalId) {
         displayMap.set(String(item.internalId), item.displayName);
