@@ -99,14 +99,6 @@ var (
 			Expression:  "true", // turned on by default
 		},
 		{
-			Name:        "influxdbBackendMigration",
-			Description: "Query InfluxDB InfluxQL without the proxy",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:            "live.runAPIServer",
 			Description:     "Registers a live apiserver",
 			Stage:           FeatureStageExperimental,
