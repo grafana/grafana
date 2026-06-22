@@ -6,7 +6,9 @@ const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
 const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtension> => {
-  const { sql, StandardSQL, MySQL } = await import(/* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql');
+  const { sql, StandardSQL, MySQL } = await import(
+    /* webpackChunkName: "codemirror-lang-sql" */ '@codemirror/lang-sql'
+  );
   const dialects = {
     standardSql: StandardSQL,
     mySql: MySQL,
