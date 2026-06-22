@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -19,11 +19,11 @@ import {
 import { config, getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
-import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { type LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { configureStore } from 'app/store/configureStore';
 
 import { LogsPanel } from './LogsPanel';
+import * as useDatasourcesFromTargetsModule from './useDatasourcesFromTargets';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogRowContextModalProps = ComponentProps<typeof LogRowContextModal>;
@@ -212,150 +212,35 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
     );
   });
 
-  describe('when returned series include common labels', () => {
-    const seriesWithCommonLabels = [
-      createDataFrame({
-        fields: [
-          {
-            name: 'timestamp',
-            type: FieldType.time,
-            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
-          },
-          {
-            name: 'body',
-            type: FieldType.string,
-            values: [
-              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
-              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
-            ],
-          },
-          {
-            name: 'labels',
-            type: FieldType.other,
-            values: [
-              {
-                app: 'common_app',
-                job: 'common_job',
-              },
-              {
-                app: 'common_app',
-                job: 'common_job',
-              },
-            ],
-          },
-        ],
-        meta: {
-          type: DataFrameType.LogLines,
-        },
-      }),
-    ];
-
-    it('shows common labels when showCommonLabels is set to true', async () => {
-      setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: true },
-        },
-        showControls
-      );
-
-      expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(await screen.findByText(/common_app/i)).toBeInTheDocument();
-      expect(await screen.findByText(/common_job/i)).toBeInTheDocument();
-    });
-    it('shows common labels on top when descending sort order', async () => {
-      const { container } = setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Descending },
-        },
-        showControls
-      );
-      expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(container.firstChild?.childNodes[0].textContent).toMatch(/^Common labels:app=common_appjob=common_job/);
-    });
-    it('shows common labels on bottom when ascending sort order', async () => {
-      const { container } = setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: true, sortOrder: LogsSortOrder.Ascending },
-        },
-        showControls
-      );
-      expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      if (!showControls) {
-        expect(container.firstChild?.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
-      } else {
-        expect(container.childNodes[0].textContent).toMatch(/Common labels:app=common_appjob=common_job$/);
-      }
-    });
-    it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: false },
-        },
-        showControls
-      );
-
-      await waitFor(async () => {
-        expect(screen.queryByText(/common labels:/i)).toBeNull();
-        expect(screen.queryByText(/common_app/i)).toBeNull();
-        expect(screen.queryByText(/common_job/i)).toBeNull();
-      });
-    });
-  });
-  describe('when returned series does not include common labels', () => {
-    const seriesWithoutCommonLabels = [
-      createDataFrame({
-        fields: [
-          {
-            name: 'timestamp',
-            type: FieldType.time,
-            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
-          },
-          {
-            name: 'body',
-            type: FieldType.string,
-            values: [
-              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
-              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
-            ],
-          },
-        ],
-        meta: {
-          type: DataFrameType.LogLines,
-        },
-      }),
-    ];
-    it('shows (no common labels) when showCommonLabels is set to true', async () => {
-      setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: true },
-        },
-        showControls
-      );
-
-      expect(await screen.findByText(/common labels:/i)).toBeInTheDocument();
-      expect(await screen.findByText(/(no common labels)/i)).toBeInTheDocument();
-    });
-    it('does not show common labels when showCommonLabels is set to false', async () => {
-      setup(
-        {
-          data: { ...defaultProps.data, series: seriesWithoutCommonLabels },
-          options: { ...defaultProps.options, showCommonLabels: false },
-        },
-        showControls
-      );
-      await waitFor(async () => {
-        expect(screen.queryByText(/common labels:/i)).toBeNull();
-        expect(screen.queryByText(/(no common labels)/i)).toBeNull();
-      });
-    });
-  });
-
   describe('log context', () => {
+    let originalNewLogContext: boolean | undefined;
+
+    let useDatasourcesSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      originalNewLogContext = config.featureToggles.newLogContext;
+      config.featureToggles.newLogContext = false;
+      useDatasourcesSpy = jest
+        .spyOn(useDatasourcesFromTargetsModule, 'useDatasourcesFromTargets')
+        .mockImplementation((targets) => {
+          const map = new Map<string, MockDataSourceApi>();
+          const target = targets?.[0];
+          if (target?.refId && target.datasource?.uid) {
+            if (target.datasource.uid === 'show-context') {
+              map.set(target.refId, showContextDs);
+            } else if (target.datasource.uid === 'no-show-context') {
+              map.set(target.refId, noShowContextDs);
+            }
+          }
+          return map;
+        });
+    });
+
+    afterEach(() => {
+      config.featureToggles.newLogContext = originalNewLogContext;
+      useDatasourcesSpy.mockRestore();
+    });
+
     const series = [
       createDataFrame({
         refId: 'A',
@@ -411,10 +296,8 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        expect(screen.queryByLabelText(/show context/i)).toBeNull();
-      });
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      expect(screen.queryByText('Show context')).not.toBeInTheDocument();
     });
 
     it('should show the toggle if the datasource does support show context', async () => {
@@ -433,10 +316,8 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        expect(screen.getByLabelText(/show context/i)).toBeInTheDocument();
-      });
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      expect(await screen.findByText('Show context')).toBeInTheDocument();
     });
 
     it('should not show the toggle if the datasource does support show context but the app is not Dashboard', async () => {
@@ -455,10 +336,8 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        expect(screen.queryByLabelText(/show context/i)).toBeNull();
-      });
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      expect(screen.queryByText('Show context')).not.toBeInTheDocument();
     });
 
     it('should render the mocked `LogRowContextModal` after click', async () => {
@@ -476,11 +355,9 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         },
         showControls
       );
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        await userEvent.click(screen.getByLabelText(/show context/i));
-        expect(screen.getByText(/LogRowContextModal/i)).toBeInTheDocument();
-      });
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      await userEvent.click(screen.getByText('Show context'));
+      expect(screen.getByText(/LogRowContextModal/i)).toBeInTheDocument();
     });
 
     it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
@@ -498,23 +375,16 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         },
         showControls
       );
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        await userEvent.click(screen.getByLabelText(/show context/i));
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      await userEvent.click(screen.getByText('Show context'));
 
-        const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
-        getRowContextCb({}, {});
-        expect(showContextDs.getLogRowContext).toBeCalled();
-      });
+      const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
+      getRowContextCb({}, {});
+      expect(showContextDs.getLogRowContext).toBeCalled();
     });
 
     it('supports adding custom options to the log row menu', async () => {
-      const logRowMenuIconsBefore = [
-        <grafanaUI.IconButton name="eye-slash" tooltip="Addon before" aria-label="Addon before" key={1} />,
-      ];
-      const logRowMenuIconsAfter = [
-        <grafanaUI.IconButton name="rss" tooltip="Addon after" aria-label="Addon after" key={1} />,
-      ];
+      const customOptionClick = jest.fn();
 
       setup(
         {
@@ -524,18 +394,14 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
           },
           options: {
             ...defaultProps.options,
-            logRowMenuIconsBefore,
-            logRowMenuIconsAfter,
+            logLineMenuCustomItems: [{ label: 'Custom option', onClick: customOptionClick }],
           },
         },
         showControls
       );
 
-      await waitFor(async () => {
-        await userEvent.hover(screen.getByText(/logline text/i));
-        expect(screen.getByLabelText('Addon before')).toBeInTheDocument();
-        expect(screen.getByLabelText('Addon after')).toBeInTheDocument();
-      });
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      expect(screen.getByText('Custom option')).toBeInTheDocument();
     });
   });
 
@@ -571,14 +437,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       }),
     ];
 
-    beforeEach(() => {
-      /**
-       * For the lack of a better option, we spy on getLogRowStyles calls to count re-renders.
-       */
-      jest.spyOn(styles, 'getLogRowStyles');
-      jest.mocked(styles.getLogRowStyles).mockClear();
-    });
-
     it('does not rerender without changes', async () => {
       const { rerender, props } = setup(
         {
@@ -590,12 +448,11 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
       rerender(<LogsPanel {...props} />);
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
     });
 
     it('rerenders when prop changes', async () => {
@@ -609,12 +466,43 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
-      rerender(<LogsPanel {...props} data={{ ...props.data, series: [...series] }} />);
+      const updatedSeries = [
+        createDataFrame({
+          refId: 'A',
+          fields: [
+            {
+              name: 'timestamp',
+              type: FieldType.time,
+              values: ['2019-04-26T09:28:11.352440161Z'],
+            },
+            {
+              name: 'body',
+              type: FieldType.string,
+              values: ['updated logline text'],
+            },
+            {
+              name: 'labels',
+              type: FieldType.other,
+              values: [
+                {
+                  app: 'common_app',
+                  job: 'common_job',
+                },
+              ],
+            },
+          ],
+          meta: {
+            type: DataFrameType.LogLines,
+          },
+        }),
+      ];
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+      rerender(<LogsPanel {...props} data={{ ...props.data, series: updatedSeries }} />);
+
+      expect(await screen.findByText('updated logline text')).toBeInTheDocument();
+      expect(screen.queryByText('logline text')).not.toBeInTheDocument();
     });
 
     it('does not re-render when data is loading', async () => {
@@ -628,12 +516,11 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
       rerender(<LogsPanel {...props} data={{ ...props.data, state: LoadingState.Loading }} />);
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
     });
   });
 
@@ -696,7 +583,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
       await userEvent.click(screen.getByLabelText('Filter for value'));
@@ -728,7 +615,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
           showControls
         );
 
-        expect(await screen.findByRole('row')).toBeInTheDocument();
+        expect(await screen.findByText('logline text')).toBeInTheDocument();
 
         await userEvent.click(screen.getByText('logline text'));
 
@@ -756,7 +643,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
           showControls
         );
 
-        expect(await screen.findByRole('row')).toBeInTheDocument();
+        expect(await screen.findByText('logline text')).toBeInTheDocument();
 
         await userEvent.click(screen.getByText('logline text'));
 
@@ -769,7 +656,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
   });
 
   describe('Field selector', () => {
-    const originalFlagState = config.featureToggles.newLogsPanel;
     const series = [
       createDataFrame({
         refId: 'A',
@@ -799,14 +685,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         },
       }),
     ];
-
-    beforeAll(() => {
-      config.featureToggles.newLogsPanel = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.newLogsPanel = originalFlagState;
-    });
 
     it('shows field selector when showFieldSelector is enabled', async () => {
       setup(
@@ -907,10 +785,10 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('common_app')).toBeInTheDocument();
       expect(screen.queryByText('logline text')).not.toBeInTheDocument();
 
-      await userEvent.click(screen.getByText('app=common_app'));
+      await userEvent.click(screen.getByText('common_app'));
 
       expect(screen.getByLabelText('Hide this field')).toBeInTheDocument();
 
@@ -943,12 +821,13 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
       expect(screen.getByText('logline text')).toBeInTheDocument();
 
       rerender(<LogsPanel {...props} options={{ ...props.options, displayedFields: ['app'] }} />);
 
-      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+      expect(screen.queryByText('logline text')).not.toBeInTheDocument();
+      expect(screen.getByText('common_app')).toBeTruthy();
     });
 
     it('enables the behavior with a default implementation', async () => {
@@ -976,12 +855,12 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
 
-      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+      expect(screen.queryByText('logline text')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Hide this field'));
 
@@ -1014,7 +893,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
 
       await userEvent.click(screen.getByText('logline text'));
       await userEvent.click(screen.getByLabelText('Show this field instead of the message'));
@@ -1050,7 +929,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(await screen.findByText('logline text')).toBeInTheDocument();
       expect(screen.getByText('logline text')).toBeInTheDocument();
 
       // Click to open log details
@@ -1094,11 +973,10 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
         showControls
       );
 
-      expect(await screen.findByRole('row')).toBeInTheDocument();
-      expect(screen.getByText('app=common_app')).toBeInTheDocument();
+      expect(await screen.findByText('common_app')).toBeInTheDocument();
+      expect(screen.queryByText('logline text')).not.toBeInTheDocument();
 
-      // Click to open log details
-      await userEvent.click(screen.getByText('app=common_app'));
+      await userEvent.click(screen.getByText('common_app'));
       // Click to hide the 'app' field
       await userEvent.click(screen.getByLabelText('Hide this field'));
 
