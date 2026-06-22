@@ -43,8 +43,7 @@ function mockChrome(agentMode = false) {
   useGrafanaMock.mockReturnValue({
     // The hook only uses chrome.useState() and chrome.setAgentMode().
     chrome: { useState: () => ({ agentMode }), setAgentMode },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any);
+  } as unknown as ReturnType<typeof useGrafana>);
 }
 
 describe('useAgentMode', () => {
@@ -53,8 +52,7 @@ describe('useAgentMode', () => {
     getLocationMock.mockReturnValue(loc(''));
     getLocationObservableMock.mockReturnValue({
       subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as ReturnType<typeof locationService.getLocationObservable>);
   });
 
   it('reports the flag as disabled and stays inactive when the feature flag is off', () => {
@@ -109,8 +107,7 @@ describe('useAgentMode', () => {
     const unsubscribe = jest.fn();
     getLocationObservableMock.mockReturnValue({
       subscribe: jest.fn(() => ({ unsubscribe })),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as ReturnType<typeof locationService.getLocationObservable>);
 
     const { unmount } = renderHook(() => useAgentMode());
     unmount();

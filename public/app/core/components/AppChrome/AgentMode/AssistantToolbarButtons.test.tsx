@@ -19,8 +19,7 @@ const setAgentMode = jest.fn();
 describe('AssistantToolbarButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    useGrafanaMock.mockReturnValue({ chrome: { setAgentMode } } as any);
+    useGrafanaMock.mockReturnValue({ chrome: { setAgentMode } } as unknown as ReturnType<typeof useGrafana>);
   });
 
   it('renders the Chat pill in its open state and an Enter Agent mode button', () => {
