@@ -437,11 +437,14 @@ const injectedRtkApi = api
             continueToken: queryArg.continueToken,
             dashboardUID: queryArg.dashboardUid,
             datasourceUIDs: queryArg.datasourceUiDs,
+            facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             folders: queryArg.folders,
             groups: queryArg.groups,
             labels: queryArg.labels,
             limit: queryArg.limit,
             metric: queryArg.metric,
+            names: queryArg.names,
             notificationType: queryArg.notificationType,
             panelID: queryArg.panelId,
             paused: queryArg.paused,
@@ -461,10 +464,13 @@ const injectedRtkApi = api
             continueToken: queryArg.continueToken,
             dashboardUID: queryArg.dashboardUid,
             datasourceUIDs: queryArg.datasourceUiDs,
+            facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             folders: queryArg.folders,
             groups: queryArg.groups,
             labels: queryArg.labels,
             limit: queryArg.limit,
+            names: queryArg.names,
             notificationType: queryArg.notificationType,
             panelID: queryArg.panelId,
             paused: queryArg.paused,
@@ -481,11 +487,14 @@ const injectedRtkApi = api
           params: {
             continueToken: queryArg.continueToken,
             datasourceUIDs: queryArg.datasourceUiDs,
+            facet: queryArg.facet,
+            facetLimit: queryArg.facetLimit,
             folders: queryArg.folders,
             groups: queryArg.groups,
             labels: queryArg.labels,
             limit: queryArg.limit,
             metric: queryArg.metric,
+            names: queryArg.names,
             paused: queryArg.paused,
             q: queryArg.q,
             sort: queryArg.sort,
@@ -1057,11 +1066,18 @@ export type GetSearchRulesApiArg = {
   continueToken?: string;
   dashboardUid?: string;
   datasourceUiDs?: string;
+  /** Fields to count distinct terms for (e.g. "folder"). Returned under
+    "facets" keyed by field name. Facet terms are ordered by count, not
+    alphabetically. */
+  facet?: string;
+  /** Max terms returned per facet (default 50, max 1000). */
+  facetLimit?: string;
   folders?: string;
   groups?: string;
   labels?: string;
   limit?: string;
   metric?: string;
+  names?: string;
   notificationType?: string;
   panelId?: string;
   paused?: string;
@@ -1077,10 +1093,17 @@ export type GetSearchAlertRulesApiArg = {
   continueToken?: string;
   dashboardUid?: string;
   datasourceUiDs?: string;
+  /** Fields to count distinct terms for (e.g. "folder"). Returned under
+    "facets" keyed by field name. Facet terms are ordered by count, not
+    alphabetically. */
+  facet?: string;
+  /** Max terms returned per facet (default 50, max 1000). */
+  facetLimit?: string;
   folders?: string;
   groups?: string;
   labels?: string;
   limit?: string;
+  names?: string;
   notificationType?: string;
   panelId?: string;
   paused?: string;
@@ -1093,11 +1116,18 @@ export type GetSearchRecordingRulesApiResponse = /** status 200 OK */ GetSearchR
 export type GetSearchRecordingRulesApiArg = {
   continueToken?: string;
   datasourceUiDs?: string;
+  /** Fields to count distinct terms for (e.g. "folder"). Returned under
+    "facets" keyed by field name. Facet terms are ordered by count, not
+    alphabetically. */
+  facet?: string;
+  /** Max terms returned per facet (default 50, max 1000). */
+  facetLimit?: string;
   folders?: string;
   groups?: string;
   labels?: string;
   limit?: string;
   metric?: string;
+  names?: string;
   paused?: string;
   q?: string;
   sort?: string;
@@ -1230,8 +1260,13 @@ export type AlertRuleExpression = {
   model: {
     [key: string]: any;
   };
+  /** The type of query if this is a query expression */
   queryType?: string;
   relativeTimeRange?: AlertRuleRelativeTimeRange;
+  /** Used to mark the expression to be used as the final source for the rule evaluation
+    Only one expression in a rule can be marked as the source
+    For AlertRules, this is the expression that will be evaluated against the alerting condition
+    For RecordingRules, this is the expression that will be recorded */
   source?: boolean;
 };
 export type AlertRuleExpressionMap = {
@@ -1389,8 +1424,13 @@ export type RecordingRuleExpression = {
   model: {
     [key: string]: any;
   };
+  /** The type of query if this is a query expression */
   queryType?: string;
   relativeTimeRange?: RecordingRuleRelativeTimeRange;
+  /** Used to mark the expression to be used as the final source for the rule evaluation
+    Only one expression in a rule can be marked as the source
+    For AlertRules, this is the expression that will be evaluated against the alerting condition
+    For RecordingRules, this is the expression that will be recorded */
   source?: boolean;
 };
 export type RecordingRuleExpressionMap = {
@@ -1508,14 +1548,37 @@ export type RuleSequenceList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type GetSearchRulesTermFacet = {
+  count: number;
+  term: string;
+};
+export type GetSearchRulesFacetResult = {
+  field: string;
+  missing: number;
+  terms?: GetSearchRulesTermFacet[];
+  total: number;
+};
 export type GetSearchRulesRuleHit = any;
 export type GetSearchRulesResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
+  facets?: {
+    [key: string]: GetSearchRulesFacetResult;
+  };
   items: GetSearchRulesRuleHit[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind: string;
   metadata: ListMeta;
+};
+export type GetSearchAlertRulesTermFacet = {
+  count: number;
+  term: string;
+};
+export type GetSearchAlertRulesFacetResult = {
+  field: string;
+  missing: number;
+  terms?: GetSearchAlertRulesTermFacet[];
+  total: number;
 };
 export type GetSearchAlertRulesRuleSearchType = 'alertrule' | 'recordingrule';
 export type GetSearchAlertRulesAlertRuleHit = {
@@ -1544,10 +1607,23 @@ export type GetSearchAlertRulesAlertRuleHit = {
 export type GetSearchAlertRulesResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
+  facets?: {
+    [key: string]: GetSearchAlertRulesFacetResult;
+  };
   items: GetSearchAlertRulesAlertRuleHit[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind: string;
   metadata: ListMeta;
+};
+export type GetSearchRecordingRulesTermFacet = {
+  count: number;
+  term: string;
+};
+export type GetSearchRecordingRulesFacetResult = {
+  field: string;
+  missing: number;
+  terms?: GetSearchRecordingRulesTermFacet[];
+  total: number;
 };
 export type GetSearchRecordingRulesRuleSearchType = 'alertrule' | 'recordingrule';
 export type GetSearchRecordingRulesRecordingRuleHit = {
@@ -1568,6 +1644,9 @@ export type GetSearchRecordingRulesRecordingRuleHit = {
 export type GetSearchRecordingRulesResponse = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion: string;
+  facets?: {
+    [key: string]: GetSearchRecordingRulesFacetResult;
+  };
   items: GetSearchRecordingRulesRecordingRuleHit[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind: string;

@@ -20,6 +20,12 @@ import (
 	datasourceUIDs?: [...string]
 	labels?: [...string]
 	sort?: v0alpha1.#RuleSearchSortField
+	// Fields to count distinct terms for (e.g. "folder"). Returned under
+	// "facets" keyed by field name. Facet terms are ordered by count, not
+	// alphabetically.
+	facet?: [...string]
+	// Max terms returned per facet (default 50, max 1000).
+	facetLimit?: int64
 }
 
 #alertRuleSearchQuery: {
@@ -56,6 +62,7 @@ searchRoutes: {
 				}
 				response: {
 					items: [...v0alpha1.#AlertRuleHit]
+					facets?: [string]: v0alpha1.#FacetResult
 				}
 				responseMetadata: {
 					typeMeta: true
@@ -72,6 +79,7 @@ searchRoutes: {
 				}
 				response: {
 					items: [...v0alpha1.#RecordingRuleHit]
+					facets?: [string]: v0alpha1.#FacetResult
 				}
 				responseMetadata: {
 					typeMeta: true
@@ -88,6 +96,7 @@ searchRoutes: {
 				}
 				response: {
 					items: [...v0alpha1.#RuleHit]
+					facets?: [string]: v0alpha1.#FacetResult
 				}
 				responseMetadata: {
 					typeMeta: true

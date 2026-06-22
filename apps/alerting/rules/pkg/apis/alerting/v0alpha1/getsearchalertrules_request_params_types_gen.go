@@ -28,10 +28,16 @@ type GetSearchAlertRulesRequestParams struct {
 	Paused           *bool                                          `json:"paused,omitempty"`
 	DatasourceUIDs   []string                                       `json:"datasourceUIDs,omitempty"`
 	Labels           []string                                       `json:"labels,omitempty"`
-	Limit            *int64                                         `json:"limit,omitempty"`
-	RoutingTree      *string                                        `json:"routingTree,omitempty"`
 	Sort             *GetSearchAlertRulesRequestRuleSearchSortField `json:"sort,omitempty"`
-	ContinueToken    *string                                        `json:"continueToken,omitempty"`
+	// Fields to count distinct terms for (e.g. "folder"). Returned under
+	// "facets" keyed by field name. Facet terms are ordered by count, not
+	// alphabetically.
+	Facet       []string `json:"facet,omitempty"`
+	Limit       *int64   `json:"limit,omitempty"`
+	RoutingTree *string  `json:"routingTree,omitempty"`
+	// Max terms returned per facet (default 50, max 1000).
+	FacetLimit    *int64  `json:"facetLimit,omitempty"`
+	ContinueToken *string `json:"continueToken,omitempty"`
 }
 
 // NewGetSearchAlertRulesRequestParams creates a new GetSearchAlertRulesRequestParams object.

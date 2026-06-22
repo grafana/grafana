@@ -178,6 +178,40 @@ var appManifestData = app.ManifestData{
 
 									{
 										ParameterProps: spec3.ParameterProps{
+											Name:        "facet",
+											In:          "query",
+											Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"array"},
+													Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "facetLimit",
+											In:          "query",
+											Description: "Max terms returned per facet (default 50, max 1000).",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Max terms returned per facet (default 50, max 1000).",
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
 											Name: "folders",
 											In:   "query",
 											Schema: &spec.Schema{
@@ -400,6 +434,19 @@ var appManifestData = app.ManifestData{
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																			},
 																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesFacetResult"),
+																						},
+																					},
+																				},
+																			},
+																		},
 																		"items": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
@@ -511,6 +558,40 @@ var appManifestData = app.ManifestData{
 																Type: []string{"string"},
 															}},
 													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "facet",
+											In:          "query",
+											Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"array"},
+													Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "facetLimit",
+											In:          "query",
+											Description: "Max terms returned per facet (default 50, max 1000).",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Max terms returned per facet (default 50, max 1000).",
 												},
 											},
 										},
@@ -704,6 +785,19 @@ var appManifestData = app.ManifestData{
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
 																			},
 																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesFacetResult"),
+																						},
+																					},
+																				},
+																			},
+																		},
 																		"items": {
 																			SchemaProps: spec.SchemaProps{
 																				Type: []string{"array"},
@@ -803,6 +897,40 @@ var appManifestData = app.ManifestData{
 																Type: []string{"string"},
 															}},
 													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "facet",
+											In:          "query",
+											Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"array"},
+													Description: "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Type: []string{"string"},
+															}},
+													},
+												},
+											},
+										},
+									},
+
+									{
+										ParameterProps: spec3.ParameterProps{
+											Name:        "facetLimit",
+											In:          "query",
+											Description: "Max terms returned per facet (default 50, max 1000).",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type:        []string{"integer"},
+													Description: "Max terms returned per facet (default 50, max 1000).",
 												},
 											},
 										},
@@ -970,6 +1098,19 @@ var appManifestData = app.ManifestData{
 																			SchemaProps: spec.SchemaProps{
 																				Type:        []string{"string"},
 																				Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+																			},
+																		},
+																		"facets": {
+																			SchemaProps: spec.SchemaProps{
+																				Type: []string{"object"},
+																				AdditionalProperties: &spec.SchemaOrBool{
+																					Schema: &spec.Schema{
+																						SchemaProps: spec.SchemaProps{
+
+																							Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesFacetResult"),
+																						},
+																					},
+																				},
 																			},
 																		},
 																		"items": {
@@ -1160,12 +1301,114 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"getSearchAlertRulesFacetResult": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"missing": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"terms": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getSearchAlertRulesTermFacet"),
+												}},
+										},
+									},
+								},
+								"total": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"total",
+								"missing",
+							},
+						},
+					},
 					"getSearchAlertRulesRuleSearchType": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
 							Enum: []interface{}{
 								"alertrule",
 								"recordingrule",
+							},
+						},
+					},
+					"getSearchAlertRulesTermFacet": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "TermFacet is a single faceted term and the number of matching rules.",
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"term": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"term",
+								"count",
+							},
+						},
+					},
+					"getSearchRecordingRulesFacetResult": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"missing": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"terms": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getSearchRecordingRulesTermFacet"),
+												}},
+										},
+									},
+								},
+								"total": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"total",
+								"missing",
 							},
 						},
 					},
@@ -1257,6 +1500,28 @@ var appManifestData = app.ManifestData{
 							Enum: []interface{}{
 								"alertrule",
 								"recordingrule",
+							},
+						},
+					},
+					"getSearchRecordingRulesTermFacet": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "TermFacet is a single faceted term and the number of matching rules.",
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"term": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"term",
+								"count",
 							},
 						},
 					},
@@ -1379,6 +1644,46 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
+					"getSearchRulesFacetResult": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+							Properties: map[string]spec.Schema{
+								"field": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+								"missing": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"terms": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+
+													Ref: spec.MustCreateRef("#/components/schemas/getSearchRulesTermFacet"),
+												}},
+										},
+									},
+								},
+								"total": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+							},
+							Required: []string{
+								"field",
+								"total",
+								"missing",
+							},
+						},
+					},
 					"getSearchRulesRecordingRuleHit": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -1473,6 +1778,28 @@ var appManifestData = app.ManifestData{
 							Enum: []interface{}{
 								"alertrule",
 								"recordingrule",
+							},
+						},
+					},
+					"getSearchRulesTermFacet": {
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{"object"},
+							Description: "TermFacet is a single faceted term and the number of matching rules.",
+							Properties: map[string]spec.Schema{
+								"count": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"integer"},
+									},
+								},
+								"term": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"term",
+								"count",
 							},
 						},
 					},

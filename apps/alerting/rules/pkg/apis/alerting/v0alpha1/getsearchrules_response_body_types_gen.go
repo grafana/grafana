@@ -88,9 +88,47 @@ func (GetSearchRulesRecordingRuleHit) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesRecordingRuleHit"
 }
 
+// FacetResult is the distinct-term breakdown for one faceted field, e.g. the
+// per-folder rule counts returned for facet=folder.
+// +k8s:openapi-gen=true
+type GetSearchRulesFacetResult struct {
+	Field   string                    `json:"field"`
+	Total   int64                     `json:"total"`
+	Missing int64                     `json:"missing"`
+	Terms   []GetSearchRulesTermFacet `json:"terms,omitempty"`
+}
+
+// NewGetSearchRulesFacetResult creates a new GetSearchRulesFacetResult object.
+func NewGetSearchRulesFacetResult() *GetSearchRulesFacetResult {
+	return &GetSearchRulesFacetResult{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesFacetResult.
+func (GetSearchRulesFacetResult) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesFacetResult"
+}
+
+// TermFacet is a single faceted term and the number of matching rules.
+// +k8s:openapi-gen=true
+type GetSearchRulesTermFacet struct {
+	Term  string `json:"term"`
+	Count int64  `json:"count"`
+}
+
+// NewGetSearchRulesTermFacet creates a new GetSearchRulesTermFacet object.
+func NewGetSearchRulesTermFacet() *GetSearchRulesTermFacet {
+	return &GetSearchRulesTermFacet{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for GetSearchRulesTermFacet.
+func (GetSearchRulesTermFacet) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesTermFacet"
+}
+
 // +k8s:openapi-gen=true
 type GetSearchRulesBody struct {
-	Items []GetSearchRulesRuleHit `json:"items"`
+	Items  []GetSearchRulesRuleHit              `json:"items"`
+	Facets map[string]GetSearchRulesFacetResult `json:"facets,omitempty"`
 }
 
 // NewGetSearchRulesBody creates a new GetSearchRulesBody object.

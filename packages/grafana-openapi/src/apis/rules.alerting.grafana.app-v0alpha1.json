@@ -2712,6 +2712,507 @@
           }
         }
       ]
+    },
+    "/search": {
+      "get": {
+        "operationId": "getSearchRules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRulesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "continueToken",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "dashboardUID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "datasourceUIDs",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "folders",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "groups",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labels",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "metric",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "names",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "notificationType",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "panelID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "paused",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "receiver",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "routingTree",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "targetDatasourceUID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/search/alertrules": {
+      "get": {
+        "operationId": "getSearchAlertRules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchAlertRulesResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchAlertRulesResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchAlertRulesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "continueToken",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "dashboardUID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "datasourceUIDs",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "folders",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "groups",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labels",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "names",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "notificationType",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "panelID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "paused",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "receiver",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "routingTree",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/search/recordingrules": {
+      "get": {
+        "operationId": "getSearchRecordingRules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRecordingRulesResponse"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRecordingRulesResponse"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSearchRecordingRulesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "continueToken",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "datasourceUIDs",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "folders",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "groups",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "labels",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "metric",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "names",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "paused",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "q",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "targetDatasourceUID",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -2785,7 +3286,6 @@
         "additionalProperties": false
       },
       "AlertRuleExpressionMap": {
-        "description": "TODO: validate that only one can specify source=true\n& struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per",
         "type": "object",
         "additionalProperties": {
           "$ref": "#/components/schemas/AlertRuleExpression"
@@ -2859,7 +3359,6 @@
         "enum": ["NoData", "Ok", "Alerting", "KeepLast"]
       },
       "AlertRuleNotificationSettings": {
-        "description": "TODO(@moustafab): this should be imported from the notifications package",
         "oneOf": [
           {
             "$ref": "#/components/schemas/AlertRuleSimplifiedRouting"
@@ -3053,8 +3552,336 @@
         "type": "string"
       },
       "AlertRuleTimeIntervalRef": {
-        "description": "TODO(@moustafab): validate regex for time interval ref",
         "type": "string"
+      },
+      "GetSearchAlertRulesAlertRuleHit": {
+        "type": "object",
+        "required": ["type", "name", "title", "folder"],
+        "properties": {
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "dashboardUID": {
+            "type": "string"
+          },
+          "datasourceUIDs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "folder": {
+            "type": "string"
+          },
+          "for": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "keepFiringFor": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "notificationType": {
+            "type": "string"
+          },
+          "panelID": {
+            "type": "integer"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "routingTree": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/GetSearchAlertRulesRuleSearchType"
+          }
+        }
+      },
+      "GetSearchAlertRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": ["field", "total", "missing"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchAlertRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "GetSearchAlertRulesResponse": {
+        "type": "object",
+        "required": ["items", "apiVersion", "kind", "metadata"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GetSearchAlertRulesFacetResult"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchAlertRulesAlertRuleHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        }
+      },
+      "GetSearchAlertRulesRuleSearchType": {
+        "type": "string",
+        "enum": ["alertrule", "recordingrule"]
+      },
+      "GetSearchAlertRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": ["term", "count"],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
+      },
+      "GetSearchRecordingRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": ["field", "total", "missing"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchRecordingRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "GetSearchRecordingRulesRecordingRuleHit": {
+        "type": "object",
+        "required": ["type", "name", "title", "folder"],
+        "properties": {
+          "datasourceUIDs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "folder": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "interval": {
+            "type": "string"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metric": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "paused": {
+            "type": "boolean"
+          },
+          "targetDatasourceUID": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/GetSearchRecordingRulesRuleSearchType"
+          }
+        }
+      },
+      "GetSearchRecordingRulesResponse": {
+        "type": "object",
+        "required": ["items", "apiVersion", "kind", "metadata"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GetSearchRecordingRulesFacetResult"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchRecordingRulesRecordingRuleHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        }
+      },
+      "GetSearchRecordingRulesRuleSearchType": {
+        "type": "string",
+        "enum": ["alertrule", "recordingrule"]
+      },
+      "GetSearchRecordingRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": ["term", "count"],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
+      },
+      "GetSearchRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": ["field", "total", "missing"],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "GetSearchRulesResponse": {
+        "type": "object",
+        "required": ["items", "apiVersion", "kind", "metadata"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/GetSearchRulesFacetResult"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetSearchRulesRuleHit"
+            }
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ListMeta"
+              }
+            ]
+          }
+        }
+      },
+      "GetSearchRulesRuleHit": {
+        "description": "RuleHit is the cross-kind union returned by /search."
+      },
+      "GetSearchRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": ["term", "count"],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
       },
       "RecordingRule": {
         "type": "object",
@@ -3121,7 +3948,6 @@
         "additionalProperties": false
       },
       "RecordingRuleExpressionMap": {
-        "description": "TODO: validate that only one can specify source=true\n& struct.MinFields(1) This doesn't work in Cue <v0.12.0 as per",
         "type": "object",
         "additionalProperties": {
           "$ref": "#/components/schemas/RecordingRuleExpression"
@@ -3178,7 +4004,6 @@
         ]
       },
       "RecordingRuleMetricName": {
-        "description": "TODO(@moustafab): validate the metric name regex",
         "type": "string",
         "pattern": "^[a-zA-Z_:][a-zA-Z0-9_:]*$"
       },
