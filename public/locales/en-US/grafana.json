@@ -5596,7 +5596,6 @@
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
-          "change-value": "Change variable value",
           "discard": "Discard",
           "modal-title": "Custom options"
         },
@@ -6702,7 +6701,6 @@
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
-      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-annotations-list": {
@@ -16582,13 +16580,7 @@
       "description-values-variable": "How to sort static options with query results"
     },
     "static-options": {
-      "add-option-button-label": "Add new option",
-      "drag-and-drop": "Drag and drop to reorder",
-      "label-header": "Display text",
-      "label-placeholder": "Defaults to value",
-      "remove-option-button-label": "Remove option",
-      "value-header": "Value",
-      "value-placeholder": "Value"
+      "add-option-button-label": "Add new option"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
