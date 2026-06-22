@@ -233,6 +233,22 @@ describe('VersionsEditView', () => {
 
       expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
     });
+
+    it('should not crash when display is null', async () => {
+      mockListDashboardHistory.mockResolvedValue({
+        metadata: { continue: '' },
+        items: [createTestResource(1, '2024-01-01T00:00:00Z', 'user:uid-unknown')],
+      });
+
+      mockUseGetDisplayMappingQuery.mockReturnValue({
+        data: { keys: ['user:uid-unknown'], display: null, invalidKeys: ['user:uid-unknown'] },
+      });
+
+      const { versionsView } = await buildTestScene();
+      render(<versionsView.Component model={versionsView} />);
+
+      expect(await screen.findByText('user:uid-unknown')).toBeInTheDocument();
+    });
   });
 });
 
