@@ -84,7 +84,12 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 
 	// Webhook integration is explicitly disabled for this repository, so polling will be
 	// used instead. Skip registration even if a webhook URL would otherwise be available.
+	// If there is a webhook already registered from a previous enabled state, wrap with
+	// GithubWebhookRepository anyway so OnUpdate can delete the stale hook from GitHub.
 	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
+		if r.Status.Webhook != nil && r.Status.Webhook.ID != 0 {
+			return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy, e.factory.replayCache), nil
+		}
 		logger.Debug("Skipping webhook setup: webhook is disabled")
 		return ghRepo, nil
 	}
