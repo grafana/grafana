@@ -9898,10 +9898,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Mode",
+        "name-overflow": "Overflow",
         "name-placement": "Placement",
         "name-values": "Values",
         "name-visibility": "Visibility",
         "name-width": "Width",
+        "overflow-options": {
+          "label-ellipsis": "Ellipsis",
+          "label-wrap": "Wrap"
+        },
+        "placeholder-width": "Auto, px, or % (e.g. 220 or 35%)",
         "placement-options": {
           "label-bottom": "Bottom",
           "label-right": "Right"
@@ -11226,6 +11232,8 @@
         }
       },
       "fields-section": "Fields",
+      "filter-for-log-line": "Filter for this log line",
+      "filter-out-log-line": "Filter out this log line",
       "hide-log-line": "Hide log line",
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
@@ -11971,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Manage mappings of Identity Provider groups to Grafana Roles"
     },
     "help": {
       "title": "Help"
@@ -13040,17 +13045,17 @@
     },
     "bootstrap-step": {
       "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboard",
+      "dashboards-count_other": "{{count}} dashboards",
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
       "external-storage-label": "External storage",
-      "files-count_one": "{{count}} files",
+      "files-count_one": "{{count}} file",
       "files-count_other": "{{count}} files",
       "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folder",
+      "folders-count_other": "{{count}} folders",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
       "retry-action": "Retry",
@@ -13109,7 +13114,7 @@
       "alert-repository-settings-updated": "Repository settings updated",
       "button-save": "Save",
       "button-saving": "Saving...",
-      "description-commit-message-template": "Default commit message when saving a provisioned resource. Available placeholders: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}}, {{titleVar}}, {{userNameVar}}, {{userLoginVar}}, {{userEmailVar}}. Leave empty to use the built-in defaults.",
+      "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
       "description-connection": "Select the GitHub App connection to use",
       "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
@@ -14263,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "Select a datasource for this query to continue.",
     "datasource-load-error-title": "Failed to load datasource for this query",
     "loading-datasource": "Loading datasource",
     "no-query-editor-component": "Data source plugin does not export any query editor component"

@@ -33,7 +33,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
-| `dashgpt`                                    | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `kubernetesShortURLs`                        | Enables k8s short URL API and uses it under the hood when handling legacy /api                                                                                | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
@@ -69,7 +68,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
-| `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
 | `newLogContext`                              | New Log Context component                                                                                                                                     | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
@@ -116,6 +114,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
+| `queryEditorNext`                 | Enables next generation query editor experience                                                        |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 

@@ -243,7 +243,7 @@ receivers:
 		require.NoError(t, err)
 		require.Equal(t, identifier, result.AddedRoute)
 		require.Contains(t, result.AddedReceivers, "promoted-receiver")
-		require.Contains(t, result.AddedTemplates, "promoted.tmpl")
+		require.Len(t, result.AddedTemplates, 1, "one template UID should be reported as added")
 
 		gettableConfig, err := mam.GetAlertmanagerConfiguration(ctx, orgID, false)
 		require.NoError(t, err)

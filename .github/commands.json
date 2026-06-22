@@ -941,6 +941,14 @@
   },
   {
     "type": "label",
+    "name": "area/grafana-assistant",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/1145"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
