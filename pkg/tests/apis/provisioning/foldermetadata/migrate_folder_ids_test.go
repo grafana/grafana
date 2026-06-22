@@ -1,4 +1,4 @@
-package foldernewids
+package foldermetadata
 
 import (
 	"encoding/json"
