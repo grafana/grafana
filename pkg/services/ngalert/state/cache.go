@@ -156,7 +156,9 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
-	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
+	// Include the expanded rule labels so annotation templates can access them via $labels.
+	annotationTemplateData := template.NewData(mergeLabels(mergeLabels(extraLabels, resultLabels), labels), result)
+	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, annotationTemplateData, externalURL, result.EvaluatedAt)
 
 	// If the result contains an error, we want to add the ref_id and datasource_uid labels
 	// to the new state if the alert rule should be in the ErrorErrState.
