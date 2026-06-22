@@ -6,7 +6,6 @@ on:
     paths:
       - "packages/grafana-prometheus/**"
       - "public/app/plugins/datasource/cloudwatch/**"
-      - "public/app/plugins/datasource/cloud-monitoring/**"
       - "public/app/plugins/datasource/graphite/**"
       - "public/app/plugins/datasource/influxdb/**"
       - "public/app/plugins/datasource/mssql/**"
@@ -15,7 +14,6 @@ on:
       - "public/app/plugins/datasource/grafana-pyroscope-datasource/**"
       - "public/app/plugins/datasource/tempo/**"
       - "pkg/tsdb/cloudwatch/**"
-      - "pkg/tsdb/cloud-monitoring/**"
       - "pkg/tsdb/graphite/**"
       - "pkg/tsdb/influxdb/**"
       - "pkg/tsdb/mssql/**"

@@ -83,15 +83,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/GoogleCloudMonitoring"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/cloudwatch/**/*",
       "pkg/tsdb/cloudwatch/**/*"
     ],
@@ -414,17 +405,6 @@
     "matches": [
       "public/app/plugins/datasource/influxdb/**/*",
       "pkg/tsdb/influx/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloud-monitoring/**/*",
-      "pkg/tsdb/cloud-monitoring/**/*"
     ],
     "action": "addToProject",
     "addToProject": {

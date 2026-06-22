@@ -368,7 +368,6 @@
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
-/pkg/tsdb/cloud-monitoring/ @grafana/data-sources-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/data-sources-plugins
@@ -1148,7 +1147,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/opentsdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-postgresql-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
-/public/app/plugins/datasource/cloud-monitoring/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/tempo/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/parca/ @grafana/data-sources-plugins
