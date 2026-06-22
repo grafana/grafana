@@ -292,7 +292,7 @@ func TestExportSpecificResources_FolderKindIsExported(t *testing.T) {
 	repoResources := resources.NewMockRepositoryResources(t)
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
 		return tree.Count() == 2
-	}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+	}), mock.Anything, mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
 		require.NoError(t, fn(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
 		require.NoError(t, fn(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
 		return true
@@ -342,7 +342,7 @@ func TestExportSpecificResources_GeneratesFolderForDashboard(t *testing.T) {
 	// written.
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
 		return tree.Count() == 2
-	}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+	}), mock.Anything, mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
 		require.NoError(t, fn(resources.Folder{ID: "parent", Path: "parent"}, true, nil))
 		require.NoError(t, fn(resources.Folder{ID: "child", Path: "parent/child"}, true, nil))
 		return true
@@ -394,7 +394,7 @@ func TestExportSpecificResources_ManagedFolderAncestryIsSkipped(t *testing.T) {
 	// The managed folder must not appear in the exported tree.
 	repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "", mock.MatchedBy(func(tree resources.FolderTree) bool {
 		return tree.Count() == 0
-	}), mock.Anything).Return(nil)
+	}), mock.Anything, mock.Anything).Return(nil)
 	repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 		return obj.GetName() == "dash-1"
 	}), mock.Anything).Return("dash-1.json", nil)

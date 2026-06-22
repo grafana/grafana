@@ -146,17 +146,17 @@ func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) RunAndReturn(run f
 	return _c
 }
 
-// EnsureFolderTreeExists provides a mock function with given fields: ctx, ref, path, tree, fn
-func (_m *MockRepositoryResources) EnsureFolderTreeExists(ctx context.Context, ref string, path string, tree FolderTree, fn func(Folder, bool, error) error) error {
-	ret := _m.Called(ctx, ref, path, tree, fn)
+// EnsureFolderTreeExists provides a mock function with given fields: ctx, ref, path, tree, generateNewFolderIDs, fn
+func (_m *MockRepositoryResources) EnsureFolderTreeExists(ctx context.Context, ref string, path string, tree FolderTree, generateNewFolderIDs bool, fn func(Folder, bool, error) error) error {
+	ret := _m.Called(ctx, ref, path, tree, generateNewFolderIDs, fn)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnsureFolderTreeExists")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, FolderTree, func(Folder, bool, error) error) error); ok {
-		r0 = rf(ctx, ref, path, tree, fn)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, FolderTree, bool, func(Folder, bool, error) error) error); ok {
+		r0 = rf(ctx, ref, path, tree, generateNewFolderIDs, fn)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -174,14 +174,15 @@ type MockRepositoryResources_EnsureFolderTreeExists_Call struct {
 //   - ref string
 //   - path string
 //   - tree FolderTree
+//   - generateNewFolderIDs bool
 //   - fn func(Folder , bool , error) error
-func (_e *MockRepositoryResources_Expecter) EnsureFolderTreeExists(ctx interface{}, ref interface{}, path interface{}, tree interface{}, fn interface{}) *MockRepositoryResources_EnsureFolderTreeExists_Call {
-	return &MockRepositoryResources_EnsureFolderTreeExists_Call{Call: _e.mock.On("EnsureFolderTreeExists", ctx, ref, path, tree, fn)}
+func (_e *MockRepositoryResources_Expecter) EnsureFolderTreeExists(ctx interface{}, ref interface{}, path interface{}, tree interface{}, generateNewFolderIDs interface{}, fn interface{}) *MockRepositoryResources_EnsureFolderTreeExists_Call {
+	return &MockRepositoryResources_EnsureFolderTreeExists_Call{Call: _e.mock.On("EnsureFolderTreeExists", ctx, ref, path, tree, generateNewFolderIDs, fn)}
 }
 
-func (_c *MockRepositoryResources_EnsureFolderTreeExists_Call) Run(run func(ctx context.Context, ref string, path string, tree FolderTree, fn func(Folder, bool, error) error)) *MockRepositoryResources_EnsureFolderTreeExists_Call {
+func (_c *MockRepositoryResources_EnsureFolderTreeExists_Call) Run(run func(ctx context.Context, ref string, path string, tree FolderTree, generateNewFolderIDs bool, fn func(Folder, bool, error) error)) *MockRepositoryResources_EnsureFolderTreeExists_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(FolderTree), args[4].(func(Folder, bool, error) error))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(FolderTree), args[4].(bool), args[5].(func(Folder, bool, error) error))
 	})
 	return _c
 }
@@ -191,7 +192,7 @@ func (_c *MockRepositoryResources_EnsureFolderTreeExists_Call) Return(_a0 error)
 	return _c
 }
 
-func (_c *MockRepositoryResources_EnsureFolderTreeExists_Call) RunAndReturn(run func(context.Context, string, string, FolderTree, func(Folder, bool, error) error) error) *MockRepositoryResources_EnsureFolderTreeExists_Call {
+func (_c *MockRepositoryResources_EnsureFolderTreeExists_Call) RunAndReturn(run func(context.Context, string, string, FolderTree, bool, func(Folder, bool, error) error) error) *MockRepositoryResources_EnsureFolderTreeExists_Call {
 	_c.Call.Return(run)
 	return _c
 }

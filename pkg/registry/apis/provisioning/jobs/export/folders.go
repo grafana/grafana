@@ -56,7 +56,7 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 // selective export, which only assembles the folders that the requested
 // resources actually need.
 func writeFolderTree(ctx context.Context, options provisioning.ExportJobOptions, repositoryResources resources.RepositoryResources, tree resources.FolderTree, progress jobs.JobProgressRecorder) error {
-	return repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
+	return repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, options.GenerateNewFolderIDs, func(folder resources.Folder, created bool, err error) error {
 		resultBuilder := jobs.NewFolderResult(folder.Path).WithName(folder.ID).WithAction(repository.FileActionCreated)
 
 		if err != nil {
