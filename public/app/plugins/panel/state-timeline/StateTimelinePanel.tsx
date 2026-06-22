@@ -11,7 +11,7 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_OUT_OPERATOR, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
 import {
   prepareTimelineFields,
@@ -22,7 +22,7 @@ import {
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
-import { getTimezones } from '../timeseries/utils';
+import { getGroupedFilters, getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
 import { usePagination } from './hooks';
@@ -47,11 +47,21 @@ export const StateTimelinePanel = ({
 
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
-  const { sync, eventsScope, canAddAnnotations, eventBus, canExecuteActions } = usePanelContext();
+  const {
+    sync,
+    eventsScope,
+    canAddAnnotations,
+    eventBus,
+    canExecuteActions,
+    getFiltersBasedOnGrouping,
+    onAddAdHocFilters,
+  } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
+  // TODO: gate grouped-label filtering behind the new feature toggle once it's added.
+  const filteringEnabled = true;
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
   const { frames, warn } = useMemo(
@@ -130,6 +140,11 @@ export const StateTimelinePanel = ({
                       dismiss();
                     };
 
+                    const groupingFilters =
+                      seriesIdx != null && filteringEnabled && getFiltersBasedOnGrouping
+                        ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
+                        : [];
+
                     return (
                       <StateTimelineTooltip
                         series={alignedFrame}
@@ -144,6 +159,20 @@ export const StateTimelinePanel = ({
                         maxHeight={options.tooltip.maxHeight}
                         replaceVariables={replaceVariables}
                         dataLinks={dataLinks}
+                        filterByGroupedLabels={
+                          filteringEnabled && groupingFilters.length && onAddAdHocFilters
+                            ? {
+                                onFilterForGroupedLabels: () => {
+                                  onAddAdHocFilters(groupingFilters);
+                                },
+                                onFilterOutGroupedLabels: () => {
+                                  onAddAdHocFilters(
+                                    groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
+                                  );
+                                },
+                              }
+                            : undefined
+                        }
                         canExecuteActions={userCanExecuteActions}
                       />
                     );
