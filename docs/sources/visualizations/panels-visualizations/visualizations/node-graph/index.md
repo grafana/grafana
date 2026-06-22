@@ -73,10 +73,10 @@ Similar to the nodes dataset, the edges dataset needs one unique ID field for ea
 
 #### Example
 
-| id    | source | target | mainstat | seconddarystat | thickness | highlighted | color  |
-| ----- | ------ | ------ | -------- | -------------- | --------- | ----------- | ------ |
-| edge1 | node1  | node2  | TheMain  | TheSub         | 3         | true        | cyan   |
-| edge2 | node3  | node2  | Main2    | Sub2           | 1         | false       | orange |
+| id    | source | target | mainstat | secondarystat | thickness | highlighted | color  |
+| ----- | ------ | ------ | -------- | ------------- | --------- | ----------- | ------ |
+| edge1 | node1  | node2  | TheMain  | TheSub        | 3         | true        | cyan   |
+| edge2 | node3  | node2  | Main2    | Sub2          | 1         | false       | orange |
 
 If a node lacks edge connections, it’s displayed on its own outside of the network.
 
@@ -94,7 +94,7 @@ Both nodes and edges can have associated metadata or statistics. The data source
 #### Nodes
 
 {{< admonition type="note" >}}
-Node graphs can show only 1,500 nodes. If this limit is crossed a warning will be visible in upper right corner, and some nodes will be hidden. You can expand hidden parts of the graph by clicking on the "Hidden nodes" markers in the graph.
+Node graphs show up to 200 nodes by default. If this limit is crossed, a warning banner appears at the top of the panel, and some nodes are hidden. You can expand hidden parts of the graph by clicking the "Hidden nodes" markers in the graph.
 {{< /admonition >}}
 
 Usually, nodes show two statistical values inside the node and two identifiers just below the node, usually name and type. Nodes can also show another set of values as a color circle around the node, with sections of different color represents different values that should add up to 1.
@@ -265,3 +265,9 @@ Optional fields:
 | icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana [built in icons](https://developers.grafana.com/ui/latest/index.html?path=/story/iconography-icon--icons-overview) are allowed.                                                                                                                                                      |
 | nodeRadius    | number        | Radius value in pixels. Used to manage node size.                                                                                                                                                                                                                                                                                                                        |
 | highlighted   | boolean       | Sets whether the node should be highlighted. Useful for example to represent a specific path in the graph by highlighting several nodes and edges. Default: `false`                                                                                                                                                                                                      |
+
+{{< admonition type="caution" >}}
+Starting with 10.5, `highlighted` is deprecated.
+It will be removed in a future release.
+Use `color` to indicate a highlighted node state instead.
+{{< /admonition >}}

@@ -116,20 +116,31 @@ Use these options to refine the visualization.
 | Merge equal consecutive values  | Controls whether Grafana merges identical values if they are next to each other. |
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
-| Row height | Controls how much space between rows there are. 1 = no space = 0.5 = 50% space. |
+| Row height | Controls row spacing. `1` means no gap between rows and maximum bar height. Lower values increase spacing, for example `0.5` sets the bar height to 50%. |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
-| Line width | Controls line width of state regions. |
-| Fill opacity | Controls value alignment inside state regions. |
-| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
-| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
 
 <!-- prettier-ignore-end -->
 
 #### Page size (enable pagination)
 
-The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. This is useful when you have many series. With paginated results, the visualization displays a subset of all series on each page:
+The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once. The default page size is `20`, so pagination is enabled by default. Clear the field to disable pagination. With paginated results, the visualization displays a subset of all series on each page:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screen-recording-grafana-11-2-state-timeline-pagination-dark.mp4" >}}
+
+### State timeline field options
+
+The following options are field options under the **State timeline** category in field defaults or overrides.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Line width | Controls line width of state regions. |
+| Fill opacity | Controls the fill opacity of state regions. |
+| [Connect null values](#connect-null-values) | Choose how null values, which are gaps in the data, appear on the graph. |
+| [Disconnect null values](#disconnect-values) | Choose whether to set a threshold above which values in the data should be disconnected. |
+
+<!-- prettier-ignore-end -->
 
 {{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 

@@ -122,8 +122,8 @@ Use the following options to refine the value in your visualization.
 | ------ | ----------- |
 | Show | Set how much information to show. Choose from:<ul><li>**Calculate** - Reduces each value to a single value per series.</li><li>**All values** - Displays every value from a single series.</li></ul> |
 | Calculation | If you chose **Calculate** as your **Show** option, select a calculation to reduce each series. For information about available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | If you chose **All values** as your **Show** option, enter a value to limit the number of values displayed. |
-| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li><li>**Time** - All fields with time values.</li></ul> |
+| Limit | If you chose **All values** as your **Show** option, enter the maximum number of values to display. The default is 25. The maximum is 5,000. |
+| Fields | Select which field or fields to display in the visualization. Each field name is available on the list, or you can select one of the following options:<ul><li>**Numeric fields** - All fields with numerical values.</li><li>**All fields** - All fields that are not removed by transformations.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
@@ -176,6 +176,8 @@ Use these settings to define how the legend appears in your visualization. For m
 | Mode | Use these settings to define how the legend appears in your visualization. Choose from:<ul><li>**List** - Displays the legend as a list. This is a default display mode of the legend.</li><li>**Table** - Displays the legend as a table.</li></ul> |
 | Placement | Select where to display the legend. Choose **Bottom** or **Right**. |
 | Width | Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**. |
+| Limit | Limit how many series items are shown by default. The rest become expandable using a **Show all** link. |
+| Overflow | When **Mode** is **Table**, choose **Ellipsis** or **Wrap** for long series names. |
 | Legend values | Select values to display in the legend. You can select more than one:<ul><li>**Percent** - The percentage of the whole.</li><li>**Value** - The raw numerical value.</li></ul> |
 
 <!-- prettier-ignore-end -->

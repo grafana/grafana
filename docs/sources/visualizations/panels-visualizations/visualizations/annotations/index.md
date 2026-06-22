@@ -43,7 +43,7 @@ The following options control the source query for the list of annotations:
 | ---------- | --------------------------------------------------------------------------------------------------------- |
 | [Query filter](#query-filter) | Specify which annotations are included in the list.  |
 | [Time range](#time-range) | Specify whether the list should be limited to the current time range. |
-| Tags | Filter the annotations by tags. You can add multiple tags to refine the list. Optionally, leave the tag list empty and filter in view mode by selecting tags that are listed as part of the results on the panel itself. |
+| Tags | Filter the annotations by tags. You can add multiple tags to refine the list. Tag values support dashboard variable interpolation, for example `$my_var` or `${my_var}`. Optionally, leave the tag list empty and filter in view mode by selecting tags that are listed as part of the results on the panel itself. |
 | Limit | Limit the number of results returned. The default is `10`. |
 
 <!-- prettier-ignore-end -->
@@ -75,6 +75,7 @@ These options control additional metadata included in the annotations list displ
 | Show user | Show or hide which user created the annotation.  |
 | Show time | Show or hide the time the annotation creation time. |
 | Show tags | Show or hide the tags associated with an annotation. Note that you can use the tags to filter the annotations list. |
+| Filter by user in panel | Click a user's avatar in the list to filter results to annotations created by that user. A **Filter:** bar appears with a control to clear the user filter. |
 
 <!-- prettier-ignore-end -->
 
@@ -86,7 +87,7 @@ Use the following options to control the behavior of annotation links in the lis
 
 | Option     | Description                                                                                               |
 | ---------- | --------------------------------------------------------------------------------------------------------- |
-| Link target | Set how to view the annotated data. The default is **Panel**. Choose from:<ul><li>**Panel** - The link takes you directly to a full-screen view of the panel with the corresponding annotation.</li><li>**Dashboard** - Focuses the annotation in the context of a complete dashboard.</li></ul> |
+| Link target | Set how to view the annotated data. The default is **Panel**. Choose from:<ul><li>**Panel** - On the current dashboard, opens a full-screen view of the panel when the annotation has a panel ID. On a different dashboard, navigates to that dashboard with the configured time range.</li><li>**Dashboard** - Navigates to the annotation's dashboard, or updates the current dashboard time range, using the configured time window.</li></ul> |
 | Time before | Set the time range before the annotation. Use duration string values like `1h` for one hour and `10m` for 10 minutes. The default is `10m`. |
 | Time after | Set the time range after the annotation. The default is `10m`. |
 

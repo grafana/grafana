@@ -104,7 +104,7 @@ If you want to see a configuration in action, check out the video:
 The table visualization supports any data that has a column-row structure.
 
 {{< admonition type="note" >}}
-If you’re using a cell type such as sparkline or JSON, the data requirements may differ in a way that’s specific to that type. For more info refer to [Cell type](#cell-type).
+If you're using a cell type such as sparkline or JSON, the data requirements may differ in a way that's specific to that type. For more information, refer to [Cell type](#cell-type).
 {{< /admonition >}}
 
 ### Example
@@ -118,7 +118,7 @@ value4 , value5 , value6
 value7 , value8 , value9
 ```
 
-If a cell is missing or the table column-row structure is not complete, as in the following example, the table visualization won’t display any of the data:
+If a cell is missing, the table visualization still displays the row and shows a blank or `null` value for the missing cell:
 
 ```csv
 Column1, Column2, Column3
@@ -141,8 +141,8 @@ To turn on column filtering, follow these steps:
 1. In Grafana, navigate to the dashboard with the table with the columns that you want to filter.
 1. Hover over any part of the panel to which you want to add the link to display the actions menu on the top right corner.
 1. Click the menu and select **Edit**.
-1. In the panel editor pane, expand the **Table** options section.
-1. Toggle on the [**Column filter** switch](#table-options).
+1. In field options or a field override, expand the **Table** section.
+1. Toggle on the [**Column filter** switch](#table-field-options).
 
 A filter icon (funnel) appears next to each column title.
 
@@ -203,34 +203,8 @@ and clicking the column name.
 ## Dataset selector
 
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
-This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
-
-## Nested tables
-
-{{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
-A table can display sub-tables inside expandable rows. You can add these nested tables using the [Group to nested tables transformation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/#group-to-nested-tables), which groups rows by one or more fields, and can summarize nested row data by applying calculations.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-collapsed-v13.1.png" max-width="650px" alt="Table with all rows collapsed" >}}
-
-Click the expand icon on a row to toggle the visibility of its nested table:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-expanded-v13.1.png" max-width="650px" alt="Table with two rows expanded showing nested sub-tables" >}}
-
-To sort nested and top-level rows in nested tables, click a column title to change the sort order from default to descending to ascending.
-Each time you click, the sort order changes to the next option in the cycle.
-You can sort multiple columns by holding the `Cmd` or `Ctrl` key and clicking the column name.
-
-{{< figure src="/static/img/docs/tables/sort-descending.png" max-width="350px" alt="Sort descending" class="docs-image--no-shadow" >}}
-
-To control the display of fields inside a nested table&mdash;for example, to apply thresholds, units, or a different cell type&mdash;use [field overrides](#field-overrides) with the **Target fields** option set to **Nested**.
-For more information, refer to [Apply overrides to nested table fields](#apply-overrides-to-nested-table-fields).
 
 ## Configuration options
 
@@ -248,6 +222,15 @@ For more information, refer to [Apply overrides to nested table fields](#apply-o
 | Cell height          | Set the height of the cell. Choose from **Small**, **Medium**, or **Large**. |
 | Max row height       | Define the maximum height for a row in the table. This can be useful when **Wrap text** is enabled for one or more columns. |
 | Enable pagination    | Toggle the switch to control how many table rows are visible at once. When switched on, the page size automatically adjusts to the height of the table. This option doesn't affect queries. |
+<!-- prettier-ignore-end -->
+
+### Table field options
+
+The following options are field options under the **Table** category in field defaults or overrides.
+
+<!-- prettier-ignore-start -->
+| Option               | Description                                               |
+| -------------------- | --------------------------------------------------------- |
 | Minimum column width | Define the lower limit of the column width, in pixels. By default, the minimum width of the table column is 150 pixels. For small-screen devices, such as mobile phones or tablets, reduce the value to `50` to allow table-based panels to render correctly in dashboards. |
 | Column width         | Define a column width, in pixels, rather than allowing the width to be set automatically. By default, Grafana calculates the column width based on the table size and the minimum column width. |
 | Column alignment     | Set how Grafana should align cell contents. Choose from: **Auto** (default), **Left**, **Center**, or **Right**.  |
@@ -286,7 +269,7 @@ Calculations applied to cell types like **Markdown + HTML** might have unexpecte
 ### Cell options
 
 Cell options allow you to control how data is displayed in a table.
-The options are differ based on the cell type that you select and are outlined within the descriptions of each cell type.
+The options differ based on the cell type that you select and are outlined within the descriptions of each cell type.
 The following table provides short descriptions for each cell type and links to a longer description and the cell type options.
 
 #### Cell type
@@ -435,7 +418,7 @@ For more detailed information about all of the sparkline styling options (except
 #### JSON View
 
 This cell type shows values formatted as code.
-If a value is an object, the JSON object will appear on hover.
+If a value is an object, the JSON object is rendered inline in the cell. Toggle on **Cell value inspect** to open the full value in the **Inspect value** drawer.
 
 {{< figure src="/static/img/docs/tables/json-view.png" max-width="350px" alt="JSON view" class="docs-image--no-shadow" >}}
 
@@ -498,18 +481,22 @@ It has the following options:
 
 #### Actions
 
-The cell displays a button that triggers a basic, unauthenticated API call when clicked.
-Configure the API call with the following options:
+The cell displays buttons for actions configured in field **Data links and actions**.
+Configure each action with the following options:
 
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
-| Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
+| Title              | A human-readable label for the action that's displayed in the UI. |
+| Confirmation message | A descriptive prompt to confirm or cancel the action. |
+| Connection         | Choose the connection used for the action. |
+| Method             | Choose from **GET** or **POST**. |
+| URL                | Enter the request URL or variable. |
+| Variables          | Enter as many **Key** and **Name** pairs as you need. |
+| Query parameters   | Enter as many **Key** and **Value** pairs as you need. |
+| Headers            | Enter as many **Key** and **Value** pairs as you need. Use the header editor to set **Content-Type**. |
+| Body               | Enter the body of the request. This option is hidden for **GET** actions. |
+| Button style       | Choose the button style. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
@@ -611,20 +598,3 @@ The following image shows the "Info" field with the styling from the "Style" fie
 ### Field overrides
 
 {{< docs/shared lookup="visualizations/overrides-options.md" source="grafana" version="<GRAFANA_VERSION>" >}}
-
-#### Apply overrides to nested table fields
-
-{{< admonition type="note" >}}
-The new transformation editor for nested tables and the nested table overrides feature are currently in public preview. Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-
-To use these features, enable the `groupToNestedTableV2` and `nestedFramesFieldOverrides` feature toggles in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
-By default, field overrides apply only to columns in the parent table.
-To target columns inside a nested table, set the **Target fields** option on the override to **Nested**:
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-override-nested-scope-v13.x.png" max-width="350px" alt="Field override configuration with the Target fields selector showing Series and Nested options" >}}
-
-All standard override properties&mdash;including thresholds, value mappings, units, data links, and cell type&mdash;apply the same way to nested fields.
-
-{{< figure src="/media/docs/grafana/panels-visualizations/screenshot-nested-table-w-overrides-v13.1.png" max-width="650px" alt="Nested table with a threshold override applied to a column inside an expanded sub-table" >}}

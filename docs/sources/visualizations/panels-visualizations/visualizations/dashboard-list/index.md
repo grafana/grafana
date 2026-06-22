@@ -69,8 +69,8 @@ Use the following options to refine your dashboard list visualization.
 | Include current time range | Propagate the time range of the current dashboard to the dashboard list links. When you click a link, the linked dashboard opens with the indicated time range already set. |
 | Include current template variable values | Include template variables that are being used as query parameters in the dashboard list link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables). |
 | Starred | Display starred dashboards in alphabetical order. |
-| Recently viewed | Display recently viewed dashboards in alphabetical order. |
-| Search | Display dashboards returned by search. You must enter at least one value in the search fields, **Query** or **Tags**. Variable interpolation is supported for both fields. For example, `$my_var` or `${my_var}`. |
+| Recently viewed | Display recently viewed dashboards in viewing order, with the most recently viewed dashboard first. |
+| Search | Display dashboards returned by search. **Query** and **Tags** are optional; when both are empty, search returns dashboards subject to the **Folder** filter, if set. Variable interpolation is supported for both fields. For example, `$my_var` or `${my_var}`. |
 | Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred**</li><li>**Recently viewed**</li><li>**Search**</li> |
 | Show folder names | Display the name of the folder where the dashboard is located. |
 | Max items | Set the maximum number of items to list per section. If you enter "10" and enable **Starred** and **Recently viewed** dashboards, the panel displays up to 20 total dashboards, 10 in each section. |

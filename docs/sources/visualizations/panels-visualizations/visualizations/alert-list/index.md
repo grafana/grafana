@@ -43,7 +43,7 @@ Alert lists allow you to display a list of important alerts that you want to tra
 
 ![An alert list visualization](/media/docs/grafana/panels-visualizations/screenshot-alert-list-v11.3.png)
 
-On each dashboard load, this visualization queries the alert list, always providing the most up-to-date results.
+This visualization queries the alert list when the dashboard loads and when the dashboard time range changes, keeping results up to date.
 
 {{< docs/play title="Alert List" url="https://play.grafana.org/d/bdodlcyou483ke/" >}}
 
@@ -84,7 +84,7 @@ Select how to order the alerts displayed. Choose from:
 
 - **Alphabetical (asc)** - Alphabetical order.
 - **Alphabetical (desc)** - Reverse alphabetical order.
-- **Importance** - By importance according to the following values, with 1 being the highest:
+- **Importance** - Sorts alert rules by state priority, where 1 is the highest. Rules whose state is not listed receive the lowest priority:
   - alerting: 1
   - firing: 1
   - no_data: 2
@@ -92,6 +92,7 @@ Select how to order the alerts displayed. Choose from:
   - ok: 4
   - paused: 5
   - inactive: 5
+  - recovering, error, and unknown states: not ranked
 - **Time (asc)** - Oldest active alert instances first.
 - **Time (desc)** - Newest active alert instances first.
 
@@ -111,7 +112,7 @@ These options allow you to limit alerts shown to only those that match the query
 
 ### Alert state filter options
 
-Choose which alert states to display in this visualization.
+Choose which alert states to display in this visualization. By default, **Alerting / Firing**, **Pending**, **Recovering**, and **Error** are enabled. **No Data** and **Normal** are disabled.
 
 <!-- prettier-ignore-start -->
 

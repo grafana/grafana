@@ -226,38 +226,20 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-There are eight map layer types to choose from in a geomap.
+There are multiple map layer types to choose from in a geomap.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
 - [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
 - [Night / Day](#night--day-layer) renders a night / day region.
-- [Route](#route-layer) render data points as a route.
+- [Route](#route-layer) renders data points as a route.
 - [Photos](#photos-layer) renders a photo at each data point.
 - [Network](#network-layer) visualizes a network graph from the data.
 - [OpenStreetMap](#openstreetmap-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
-
-There are also two experimental (or alpha) layer types.
-
-- **Icon at last point (alpha)** renders an icon at the last data point.
-- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-
-To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the experimental layers using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 #### Data
 
@@ -315,7 +297,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Scales the heatmap weight distribution for each row. You can use a fixed value or a field-based value with minimum and maximum bounds. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -362,8 +344,7 @@ The Night / Day layer displays night and day regions based on the current time r
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | Configures the data set for the layer. For more information, refer to [Data](#data). |
-| Show | Toggles the time source from panel time range. |
+| Show | Choose which endpoint of the panel time range to use: **From** or **To**. |
 | Night region color | Picks the color for the night region. |
 | Display sun | Toggles the sun icon. |
 | Opacity | Set the opacity from `0` (transparent) to `1` (opaque). |
@@ -536,12 +517,12 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
-- **Access Token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
+- **Public access token** - An API token for Mapbox maps. This option only works for `mapbox://` URLs. Refer to [Mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
 
 ### Basemap layer options
 
@@ -556,7 +537,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -571,7 +552,8 @@ Use the JSON configuration option `default_baselayer_config` to define the defau
 - **carto** loads the CartoDB tile server. You can choose from `auto`, `dark`, and `light` theme for the base map and can be set as shown below. The `showLabels` tag determines whether or not Grafana shows the Country details on top of the map. Here is an example:
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "carto",
   "config": {
     "theme": "auto",
@@ -586,7 +568,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="World imagery" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "world-imagery"
@@ -598,7 +581,8 @@ geomap_default_baselayer = `{
 {{< tab-content name="Custom" >}}
 
 ```ini
-geomap_default_baselayer = `{
+[geomap]
+default_baselayer_config = `{
   "type": "esri-xyz",
   "config": {
     "server": "custom",
@@ -614,6 +598,7 @@ geomap_default_baselayer = `{
 - **osm-standard** loads the OpenStreetMap tile server. There are no additional configurations needed and the `config` fields can be left blank. Here is an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "osm-standard",
   "config": {}
@@ -623,6 +608,7 @@ default_baselayer_config = `{
 - **xyz** loads a custom tile server defined by the user. Set a valid tile server `url`, with {z}/{x}/{y} for this option in order to properly load a default base map. Here is an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
@@ -635,6 +621,7 @@ default_baselayer_config = `{
 - **maplibre** loads a custom tile server defined by the user. Set a valid style `url` for this option to properly load a default base map. Here's an example:
 
 ```ini
+[geomap]
 default_baselayer_config = `{
   "type": "maplibre",
   "config": {
@@ -730,8 +717,7 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 #### Tooltip
 
-Tooltips are supported for the **Markers**, **Heatmap**, **Photos** layers.
-For these layer types, choose from the following tooltip options:
+The map controls **Tooltip** option sets global hover behavior for layers. Per-layer **Display tooltip** switches are available on data layers such as markers, heatmap, route, photos, network, GeoJSON, and night/day. Choose from the following tooltip options:
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.

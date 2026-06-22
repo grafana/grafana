@@ -59,7 +59,7 @@ Once you’ve created a [dashboard](ref:dashboards), the following video shows y
 
 ## Supported data formats
 
-Heatmaps support time series data.
+Heatmaps support time series data and pre-bucketed heatmap data frames. Use pre-bucketed data when **Calculate from data** is **No**.
 
 ### Example
 
@@ -103,13 +103,10 @@ The following options control how data in the heatmap is calculated and grouped.
 | X Bucket | This setting determines how the x-axis is split into buckets. You can specify a time interval in the **Size** input. For example, a time range of `1h` makes the cells 1-hour wide on the x-axis. You can also set an interval based on **Count**.  |
 | Y Bucket | This setting determines how the y-axis is split into buckets. Choose from **Size** or **Count**. |
 | Y Bucket scale | When **Calculate from data** is **Yes**. Select one of the following y-axis value scales:<ul><li>**Linear** - Linear scale.</li><li>**Logarithmic** - Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symlog scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
-| Y Bucket scale | When **Calculate from data** is **No**. Set the y-axis scale for pre-bucketed data in the wide, one-field-per-bucket data structure (not available when the response uses the heatmap-cells data frame type). Choose from:<ul><li>**Auto** - Uses the default scale behavior.</li><li>**Linear** - Linear scale.</li><li>**Log** - Logarithmic scale. Choose a **Log base** of **2** or **10**.</li><li>**Symlog** - Symmetrical logarithmic scale. Choose a **Log base** of **2** or **10** and enter a value for the **Linear threshold**.</li></ul> |
 
 <!-- prettier-ignore-end -->
 
-{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
-
-### Y-Axis options
+### Y-axis options
 
 The following options define the display of the y-axis.
 
@@ -151,7 +148,7 @@ Use the following options to define the heatmap colors.
 
 #### Steps
 
-Set a value between `1` and `128`.
+Set a value between `2` and `128`.
 
 #### Reverse
 
@@ -174,6 +171,7 @@ Use these settings to control the display of heatmap cells.
 | ------ | ----------- |
 | Unit | Unit configuration. |
 | Decimals | This setting determines decimal configuration. |
+| Value name | Sets the cell value label when **Calculate from data** is **No**. The default placeholder is **Value**. |
 | Cell gap | Set how much space there is between cells. |
 | Hide cells with values <= | Enter a value. |
 | Hide cells with values >= | Enter a value. |
@@ -184,13 +182,13 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                              |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                             |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis. |
-| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                          |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                |
-| Max height                            | Set the maximum height of the tooltip box. The default is 600 pixels.                                                                                                    |
+| Option                                | Description                                                                                                                                                                                  |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                                 |
+| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.                     |
+| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                                              |
+| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                                    |
+| Max height                            | Set the maximum height of the tooltip box. This option is displayed when **Tooltip mode** is **All** or when exemplar annotations are present. Leave this field blank for no explicit limit. |
 
 #### Tooltip mode
 
@@ -218,7 +216,7 @@ Choose whether you want to display the heatmap legend on the visualization by to
 
 ### Exemplars
 
-Set the color used to show exemplar data.
+Set the color used to show exemplar data. This option appears only when annotation data includes exemplars.
 
 ### Data links and actions
 

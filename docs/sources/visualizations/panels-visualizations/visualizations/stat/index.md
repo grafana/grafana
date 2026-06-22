@@ -121,7 +121,7 @@ Use the following options to refine how your visualization displays its values:
 | ------ | ----------- |
 | Show | Display a single value per column or series, or show values for each row. Choose from: <ul><li>**Calculate** - Display a calculated value based on all rows.</li><li>**All values** - Show a separate stat for every row. If you select this option, then you can also limit the number of rows to display.</li> |
 | Calculation | This option is displayed when you select **Calculate** as your **Show** option. Select a reducer function that Grafana will use to reduce many fields to a single value. For a list of available calculations, refer to [Calculation types](ref:calculation-types). |
-| Limit | This option is displayed when you select **All values** as your **Show** option. Set the maximum number of rows to display. Default is 5,000. |
+| Limit | This option is displayed when you select **All values** as your **Show** option. Set the maximum number of rows to display. The default is 25. The maximum is 5,000. |
 | Fields | Select the fields displayed in the visualization. |
 
 <!-- prettier-ignore-end -->
@@ -164,10 +164,10 @@ This option is only applicable when **Text mode** is set to **Value and name**. 
 
 ### Text size
 
-Adjust the sizes of the gauge text.
+Adjust the sizes of the stat text.
 
-- **Title** - Enter a numeric value for the gauge title size.
-- **Value** - Enter a numeric value for the gauge value size.
+- **Title** - Enter a numeric value for the stat title size.
+- **Value** - Enter a numeric value for the stat value size.
 
 ### Standard options
 
