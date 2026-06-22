@@ -69,7 +69,7 @@ Following is a list of PostgreSQL configuration options:
 {{< admonition type="note" >}}
 **Grafana Cloud users:** Grafana Cloud can't reach databases on `localhost`, `127.0.0.1`, or private IP ranges (`10.x`, `172.16.x`, `192.168.x`) directly. If your PostgreSQL instance isn't publicly accessible, you must set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to establish a secure tunnel between Grafana Cloud and your private network. If you experience intermittent connection drops with the Docker-based PDC agent, try switching to the binary-based agent instead.
 
-If your database is publicly accessible but protected by a firewall, you must allowlist Grafana Cloud's outbound IP addresses. Grafana Cloud doesn't provide per-stack static IPs — only service-level IP ranges. For the current list of outbound IPs, refer to [Allow Grafana Cloud IPs in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
+If your database is publicly accessible but protected by a firewall, you must allowlist the Grafana Cloud outbound IP addresses. Grafana Cloud doesn't provide per-stack static IP addresses—only service-level IP ranges. For the current list of outbound IP addresses, refer to [Allow Grafana Cloud IP addresses in a firewall](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/allow-grafana-cloud-ips/).
 {{< /admonition >}}
 
 | Setting       | Description                                                                                                                                                                                          |
@@ -138,13 +138,13 @@ If you select the TLS/SSL Mode options **verify-ca** or **verify-full** with the
 
 **Connection limits:**
 
-These settings control how Grafana manages connections to your PostgreSQL server. Tune these values if you share the database with other applications or use a connection pooler like PgBouncer.
+These settings control how Grafana manages connections to your PostgreSQL server. Tune these values if you share the database with other applications or use connection pooling software such as PgBouncer.
 
 | Setting       | Description                                                                                                                            |
 | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | Max open      | The maximum number of open connections to the database. The default is `100`. Reduce this if your PostgreSQL server has a low `max_connections` limit or if multiple Grafana instances connect to the same database. |
 | Auto max idle | Toggle to set the maximum number of idle connections to the number of maximum open connections. This setting is toggled on by default. |
-| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection poolers, consider lowering this to avoid holding unnecessary connections. |
+| Max idle      | The maximum number of connections in the idle connection pool. The default is `100`. When using PgBouncer or similar connection pooling software, consider lowering this to avoid holding unnecessary connections. |
 | Max lifetime  | The maximum amount of time in seconds a connection may be reused. The default is `14400` (4 hours). Set a lower value if your network or security policy requires periodic reconnection. |
 
 **Private data source connect:**
@@ -280,7 +280,7 @@ Replace `<PASSWORD>` with your database password. When using a Unix socket, set 
 
 ### Provisioning with environment variables
 
-You can use the `$__env{}` syntax to reference environment variables in provisioning files. This avoids storing credentials in plaintext YAML:
+You can use the `$__env{}` syntax to reference environment variables in provisioning files. This avoids storing credentials in plain text YAML:
 
 ```yaml
 apiVersion: 1

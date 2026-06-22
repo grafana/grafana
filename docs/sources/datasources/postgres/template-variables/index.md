@@ -188,7 +188,7 @@ GROUP BY time
 ORDER BY time
 ```
 
-If only a single value is selected, the `IN` clause still works correctly — `IN('web01')` is equivalent to `= 'web01'`.
+If only a single value is selected, the `IN` clause still works correctly—`IN('web01')` is equivalent to `= 'web01'`.
 
 ### Multi-value variable with numeric columns
 

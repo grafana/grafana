@@ -51,7 +51,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 
 1. Set up [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to create a secure tunnel between Grafana Cloud and your private network.
 1. Install the PDC agent on a machine that has network access to your PostgreSQL instance.
-1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead — this has resolved stability issues in some environments.
+1. If you experience intermittent connection drops with the Docker-based PDC agent, try the binary-based agent instead—this has resolved stability issues in some environments.
 1. Update the **Host URL** in the data source settings to use the hostname as seen from the PDC agent's network (not `localhost`).
 
 ### Request timed out
@@ -204,7 +204,7 @@ The following errors occur when there are issues with the database configuration
 **Solution:**
 
 1. Verify the database name in the data source configuration.
-1. Check that the database exists: `\l` in psql or `SELECT datname FROM pg_database;`
+1. Check that the database exists: `\l` in `psql` or `SELECT datname FROM pg_database;`
 1. Ensure the database name is case-sensitive and matches exactly.
 1. Verify the user has permission to connect to the database.
 
@@ -256,7 +256,7 @@ This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #
 1. Check your query syntax for typos or invalid keywords.
 1. Verify column and table names are correctly quoted if they contain special characters or are reserved words.
 1. Use double quotes for identifiers: `"column_name"`.
-1. Test the query directly in a PostgreSQL client (psql, pgAdmin).
+1. Test the query directly in a PostgreSQL client such as `psql`.
 
 ### Column does not exist
 
@@ -269,7 +269,7 @@ This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #
 1. Verify the column name is spelled correctly.
 1. Check that column names are case-sensitive in PostgreSQL when quoted.
 1. Use the correct quoting for column names: `"Column_Name"` for case-sensitive names.
-1. Verify the column exists in the table: `\d table_name` in psql.
+1. Verify the column exists in the table: `\d table_name` in `psql`.
 
 ### No time column found
 
@@ -292,7 +292,7 @@ This was fixed in Grafana 13.1 with a quote-aware comment-stripping parser (PR #
 
 **Solution:**
 
-1. Verify the macro syntax is correct, for example `$__timeFilter(time_column)`.
+1. Verify the macro syntax is correct, for example `$\_\_timeFilter(time_column)`.
 1. Ensure the column name passed to the macro exists in your table.
 1. Check that the macro isn't inside a SQL comment (`--` or `/* */`). Grafana strips comments before expanding macros, so macros inside comments are silently ignored.
 1. Use the **Preview** toggle in Builder mode to see the expanded query.
@@ -313,7 +313,7 @@ The following issues relate to slow query execution or resource constraints.
 
 1. Reduce the time range of your query.
 1. Add indexes to columns used in WHERE clauses and joins.
-1. Use the `$__timeFilter` macro to limit data to the dashboard time range.
+1. Use the `$\_\_timeFilter` macro to limit data to the dashboard time range.
 1. Increase the statement timeout in PostgreSQL if you have admin access.
 1. Optimize your query to reduce complexity.
 
@@ -338,7 +338,7 @@ The following issues relate to slow query execution or resource constraints.
 
 1. Reduce the time range of your query.
 1. Add appropriate indexes to your tables.
-1. Use the `$__timeFilter` macro to limit the data scanned.
+1. Use the `$\_\_timeFilter` macro to limit the data scanned.
 1. Increase the **Min time interval** setting to reduce the number of data points.
 1. Use `EXPLAIN ANALYZE` in PostgreSQL to identify query bottlenecks.
 1. Consider using materialized views for complex aggregations.
@@ -390,7 +390,7 @@ The following issues don't produce specific error messages but are commonly enco
 1. Check that table and column names are correct.
 1. Test the query directly in PostgreSQL.
 1. Ensure filters are not excluding all data.
-1. Verify the `$__timeFilter` macro is using the correct time column.
+1. Verify the `$\_\_timeFilter` macro is using the correct time column.
 
 ### TimescaleDB functions not available
 

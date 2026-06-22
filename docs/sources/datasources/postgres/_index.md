@@ -57,7 +57,7 @@ The PostgreSQL plugin uses the [PGX driver](https://github.com/jackc/pgx) for da
 - **Date/time types:** `timestamp`, `timestamptz`, `date`, `time`, `timetz`, `interval`
 - **Boolean:** `bool`
 - **JSON types:** `json`, `jsonb`
-- **Enum types:** Custom enum types are returned as string values.
+- **Enumerated types:** Custom `enum` types are returned as string values.
 - **Other types:** Types not explicitly mapped (such as arrays, composites, or custom domains) are returned as string values.
 
 ## Get started
@@ -86,8 +86,8 @@ To see the PostgreSQL data source in action, explore the demo dashboard on Grafa
 
 The following databases use the PostgreSQL wire protocol and may work with this data source:
 
-- [TimescaleDB](https://www.timescale.com/) — Enable the **TimescaleDB** toggle in the data source settings for `time_bucket` support.
+- [TimescaleDB](https://www.timescale.com/)—Enable the **TimescaleDB** toggle in the data source settings for `time_bucket` support.
 - [CockroachDB](https://www.cockroachlabs.com/)
-- [Amazon Redshift](https://aws.amazon.com/redshift/) — Grafana also offers a dedicated [Amazon Redshift data source](https://grafana.com/grafana/plugins/grafana-redshift-datasource/) with additional features.
+- [Amazon Redshift](https://aws.amazon.com/redshift/)—Grafana also offers a dedicated [Amazon Redshift data source](https://grafana.com/grafana/plugins/grafana-redshift-datasource/) with additional features.
 - [CrateDB](https://cratedb.com/)
 - [YugabyteDB](https://www.yugabyte.com/)

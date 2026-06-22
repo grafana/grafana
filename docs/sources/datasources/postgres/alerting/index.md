@@ -52,7 +52,7 @@ To create an alert rule that uses PostgreSQL:
 1. Click **New alert rule**.
 1. In the query section, select your **PostgreSQL** data source.
 1. Set the query **Format** to **Time series**.
-1. Write a SQL query that returns a `time` column and numeric value(s).
+1. Write a SQL query that returns a `time` column and one or more numeric values.
 1. Configure the condition, evaluation group, and notification settings.
 1. Save the rule.
 
@@ -118,8 +118,8 @@ You can use [template annotations and labels](https://grafana.com/docs/grafana/<
 
 Follow these best practices when using PostgreSQL for alerting:
 
-- **Keep queries fast:** Alert rules evaluate on a schedule (for example, every minute). Avoid expensive joins, subqueries, or scanning large unindexed tables. Add indexes on time columns and any columns used in `WHERE` clauses.
+- **Keep queries fast:** Alert rules evaluate on a schedule (for example, every minute). Avoid expensive joins, subqueries, or scanning large tables without indexes. Add indexes on time columns and any columns used in `WHERE` clauses.
 - **Use `$__timeFilter`:** Always include a `$__timeFilter` or `$__unixEpochFilter` macro to limit data to the evaluation window. Without it, the query scans the entire table on every evaluation.
 - **Handle `NULL` values:** If your data contains `NULL` values, Grafana treats them as "no data." Configure the alert rule's **No data** behavior to match your expectations (for example, **Alerting**, **No data**, or **OK**).
 - **Test in Explore first:** Verify your query returns the expected time series in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) before using it in an alert rule. Check the **Format** is set to **Time series** and results are sorted by time.
-- **Set realistic evaluation intervals:** Choose an evaluation interval that gives your query enough time to complete. If your query takes 10 seconds, don't evaluate every 10 seconds — allow for headroom.
+- **Set realistic evaluation intervals:** Choose an evaluation interval that gives your query enough time to complete. If your query takes 10 seconds, don't evaluate every 10 seconds—allow for headroom.

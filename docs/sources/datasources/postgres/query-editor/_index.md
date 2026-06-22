@@ -17,7 +17,7 @@ review_date: 2026-05-04
 
 # PostgreSQL query editor
 
-The PostgreSQL query editor lets you build and run queries against your data source. For general query editor and data transformation concepts, see [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
+The PostgreSQL query editor lets you build and run queries against your data source. For general query editor and data transformation concepts, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/).
 
 You can open the PostgreSQL query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from a dashboard panel—click the ellipsis in the upper right of the panel and select **Edit**.
 
@@ -116,7 +116,7 @@ Keep the following behavior in mind when using macros:
 
 - **Comment stripping:** Grafana strips SQL comments (`--` line comments and `/* */` block comments) before expanding macros. Macros placed inside comments aren't expanded.
 - **TimescaleDB mode:** When the **TimescaleDB** toggle is enabled in the data source configuration, `$__timeGroup` and `$__timeGroupAlias` use PostgreSQL's `time_bucket()` function instead of `floor(extract(epoch ...))`.
-- **Trailing comma pattern:** A `$__timeGroup(...)` call followed immediately by a comma (`,`) is automatically treated as `$__timeGroupAlias(...)`, adding the `AS "time"` alias. This is a legacy convenience — use `$__timeGroupAlias` explicitly for clarity.
+- **Trailing comma pattern:** A `$__timeGroup(...)` call followed immediately by a comma (`,`) is automatically treated as `$__timeGroupAlias(...)`, adding the `AS "time"` alias. This is a legacy convenience—use `$__timeGroupAlias` explicitly for clarity.
 - **Inspect expanded SQL:** To view the final SQL after macro expansion, open the [Query inspector](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/#query-inspector) in a panel and check the query that was sent to the database.
 
 ## Table queries
