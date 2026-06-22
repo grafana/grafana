@@ -22,9 +22,16 @@ func (_m *MockGithubFactory) EXPECT() *MockGithubFactory_Expecter {
 	return &MockGithubFactory_Expecter{mock: &_m.Mock}
 }
 
-// New provides a mock function with given fields: ctx, ghToken, customServerURL
-func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecureValue, customServerURL string) (Client, error) {
-	ret := _m.Called(ctx, ghToken, customServerURL)
+// New provides a mock function with given fields: ctx, ghToken, opts
+func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecureValue, opts ...ClientOption) (Client, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, ghToken)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
 		panic("no return value specified for New")
@@ -32,19 +39,19 @@ func (_m *MockGithubFactory) New(ctx context.Context, ghToken v0alpha1.RawSecure
 
 	var r0 Client
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, string) (Client, error)); ok {
-		return rf(ctx, ghToken, customServerURL)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) (Client, error)); ok {
+		return rf(ctx, ghToken, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, string) Client); ok {
-		r0 = rf(ctx, ghToken, customServerURL)
+	if rf, ok := ret.Get(0).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) Client); ok {
+		r0 = rf(ctx, ghToken, opts...)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(Client)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.RawSecureValue, string) error); ok {
-		r1 = rf(ctx, ghToken, customServerURL)
+	if rf, ok := ret.Get(1).(func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) error); ok {
+		r1 = rf(ctx, ghToken, opts...)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,14 +67,21 @@ type MockGithubFactory_New_Call struct {
 // New is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ghToken v0alpha1.RawSecureValue
-//   - customServerURL string
-func (_e *MockGithubFactory_Expecter) New(ctx interface{}, ghToken interface{}, customServerURL interface{}) *MockGithubFactory_New_Call {
-	return &MockGithubFactory_New_Call{Call: _e.mock.On("New", ctx, ghToken, customServerURL)}
+//   - opts ...ClientOption
+func (_e *MockGithubFactory_Expecter) New(ctx interface{}, ghToken interface{}, opts ...interface{}) *MockGithubFactory_New_Call {
+	return &MockGithubFactory_New_Call{Call: _e.mock.On("New",
+		append([]interface{}{ctx, ghToken}, opts...)...)}
 }
 
-func (_c *MockGithubFactory_New_Call) Run(run func(ctx context.Context, ghToken v0alpha1.RawSecureValue, customServerURL string)) *MockGithubFactory_New_Call {
+func (_c *MockGithubFactory_New_Call) Run(run func(ctx context.Context, ghToken v0alpha1.RawSecureValue, opts ...ClientOption)) *MockGithubFactory_New_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v0alpha1.RawSecureValue), args[2].(string))
+		variadicArgs := make([]ClientOption, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(ClientOption)
+			}
+		}
+		run(args[0].(context.Context), args[1].(v0alpha1.RawSecureValue), variadicArgs...)
 	})
 	return _c
 }
@@ -77,7 +91,7 @@ func (_c *MockGithubFactory_New_Call) Return(_a0 Client, _a1 error) *MockGithubF
 	return _c
 }
 
-func (_c *MockGithubFactory_New_Call) RunAndReturn(run func(context.Context, v0alpha1.RawSecureValue, string) (Client, error)) *MockGithubFactory_New_Call {
+func (_c *MockGithubFactory_New_Call) RunAndReturn(run func(context.Context, v0alpha1.RawSecureValue, ...ClientOption) (Client, error)) *MockGithubFactory_New_Call {
 	_c.Call.Return(run)
 	return _c
 }

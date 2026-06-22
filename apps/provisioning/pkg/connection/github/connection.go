@@ -19,7 +19,7 @@ import (
 
 //go:generate mockery --name GithubFactory --structname MockGithubFactory --inpackage --filename factory_mock.go --with-expecter
 type GithubFactory interface {
-	New(ctx context.Context, ghToken common.RawSecureValue, customServerURL string) (Client, error)
+	New(ctx context.Context, ghToken common.RawSecureValue, opts ...ClientOption) (Client, error)
 }
 
 type ConnectionSecrets struct {
@@ -173,7 +173,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		}
 	}
 
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.cfg.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +422,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.cfg.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +455,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 	}
 
 	// Create the GitHub client with the JWT token
-	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, c.cfg.CustomServerURL())
+	ghClient, err := c.ghFactory.New(ctx, c.secrets.Token, WithCustomServerURL(c.cfg.CustomServerURL()))
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func (c *Connection) ListRepositories(ctx context.Context) ([]provisioning.Exter
 		return nil, fmt.Errorf("failed to create installation access token: %w", err)
 	}
 
-	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), c.cfg.CustomServerURL())
+	installationGhClient, err := c.ghFactory.New(ctx, common.RawSecureValue(token.Token), WithCustomServerURL(c.cfg.CustomServerURL()))
 	if err != nil {
 		return nil, err
 	}
