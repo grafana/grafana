@@ -40,8 +40,7 @@ describe('AgentModePlatformBar', () => {
     jest.clearAllMocks();
     useGrafanaMock.mockReturnValue({
       chrome: { useState: () => ({ sectionNav: { node: {} }, pageNav: undefined }) },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any);
+    } as unknown as ReturnType<typeof useGrafana>);
   });
 
   it('renders the menu toggle and breadcrumbs, with the drawer closed initially', () => {
