@@ -17,18 +17,24 @@ func (GetSearchRecordingRulesRequestRuleSearchSortField) OpenAPIModelName() stri
 }
 
 type GetSearchRecordingRulesRequestParams struct {
-	Metric              *string                                            `json:"metric,omitempty"`
-	Q                   *string                                            `json:"q,omitempty"`
-	Names               []string                                           `json:"names,omitempty"`
-	Folders             []string                                           `json:"folders,omitempty"`
-	Groups              []string                                           `json:"groups,omitempty"`
-	Paused              *bool                                              `json:"paused,omitempty"`
-	DatasourceUIDs      []string                                           `json:"datasourceUIDs,omitempty"`
-	Labels              []string                                           `json:"labels,omitempty"`
-	Limit               *int64                                             `json:"limit,omitempty"`
-	TargetDatasourceUID *string                                            `json:"targetDatasourceUID,omitempty"`
-	Sort                *GetSearchRecordingRulesRequestRuleSearchSortField `json:"sort,omitempty"`
-	ContinueToken       *string                                            `json:"continueToken,omitempty"`
+	Metric         *string                                            `json:"metric,omitempty"`
+	Q              *string                                            `json:"q,omitempty"`
+	Names          []string                                           `json:"names,omitempty"`
+	Folders        []string                                           `json:"folders,omitempty"`
+	Groups         []string                                           `json:"groups,omitempty"`
+	Paused         *bool                                              `json:"paused,omitempty"`
+	DatasourceUIDs []string                                           `json:"datasourceUIDs,omitempty"`
+	Labels         []string                                           `json:"labels,omitempty"`
+	Sort           *GetSearchRecordingRulesRequestRuleSearchSortField `json:"sort,omitempty"`
+	// Fields to count distinct terms for (e.g. "folder"). Returned under
+	// "facets" keyed by field name. Facet terms are ordered by count, not
+	// alphabetically.
+	Facet               []string `json:"facet,omitempty"`
+	Limit               *int64   `json:"limit,omitempty"`
+	TargetDatasourceUID *string  `json:"targetDatasourceUID,omitempty"`
+	// Max terms returned per facet (default 50, max 1000).
+	FacetLimit    *int64  `json:"facetLimit,omitempty"`
+	ContinueToken *string `json:"continueToken,omitempty"`
 }
 
 // NewGetSearchRecordingRulesRequestParams creates a new GetSearchRecordingRulesRequestParams object.

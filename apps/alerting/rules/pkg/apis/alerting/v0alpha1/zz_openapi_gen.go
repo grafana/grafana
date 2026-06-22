@@ -22,15 +22,21 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		AlertRulestatusOperatorState{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
 		GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesAlertRuleHit(ref),
 		GetSearchAlertRulesBody{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref),
+		GetSearchAlertRulesFacetResult{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesFacetResult(ref),
 		GetSearchAlertRulesResponse{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref),
+		GetSearchAlertRulesTermFacet{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesTermFacet(ref),
 		GetSearchRecordingRulesBody{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref),
+		GetSearchRecordingRulesFacetResult{}.OpenAPIModelName():           schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesFacetResult(ref),
 		GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName():      schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesRecordingRuleHit(ref),
 		GetSearchRecordingRulesResponse{}.OpenAPIModelName():              schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref),
+		GetSearchRecordingRulesTermFacet{}.OpenAPIModelName():             schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesTermFacet(ref),
 		GetSearchRulesAlertRuleHit{}.OpenAPIModelName():                   schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleHit(ref),
 		GetSearchRulesAlertRuleHitOrRecordingRuleHit{}.OpenAPIModelName(): schema_pkg_apis_alerting_v0alpha1_GetSearchRulesAlertRuleHitOrRecordingRuleHit(ref),
 		GetSearchRulesBody{}.OpenAPIModelName():                           schema_pkg_apis_alerting_v0alpha1_GetSearchRulesBody(ref),
+		GetSearchRulesFacetResult{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_GetSearchRulesFacetResult(ref),
 		GetSearchRulesRecordingRuleHit{}.OpenAPIModelName():               schema_pkg_apis_alerting_v0alpha1_GetSearchRulesRecordingRuleHit(ref),
 		GetSearchRulesResponse{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_GetSearchRulesResponse(ref),
+		GetSearchRulesTermFacet{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_GetSearchRulesTermFacet(ref),
 		RecordingRule{}.OpenAPIModelName():                                schema_pkg_apis_alerting_v0alpha1_RecordingRule(ref),
 		RecordingRuleExpression{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_RecordingRuleExpression(ref),
 		RecordingRuleIntervalTrigger{}.OpenAPIModelName():                 schema_pkg_apis_alerting_v0alpha1_RecordingRuleIntervalTrigger(ref),
@@ -783,12 +789,76 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesBody(ref common.Refere
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchAlertRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName()},
+			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName(), GetSearchAlertRulesFacetResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesFacetResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the per-folder rule counts returned for facet=folder.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"missing": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"terms": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchAlertRulesTermFacet{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"field", "total", "missing"},
+			},
+		},
+		Dependencies: []string{
+			GetSearchAlertRulesTermFacet{}.OpenAPIModelName()},
 	}
 }
 
@@ -831,12 +901,54 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesResponse(ref common.Re
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchAlertRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			GetSearchAlertRulesAlertRuleHit{}.OpenAPIModelName(), GetSearchAlertRulesFacetResult{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchAlertRulesTermFacet(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TermFacet is a single faceted term and the number of matching rules.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"term": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"term", "count"},
+			},
+		},
 	}
 }
 
@@ -859,12 +971,76 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesBody(ref common.Re
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRecordingRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName()},
+			GetSearchRecordingRulesFacetResult{}.OpenAPIModelName(), GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesFacetResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the per-folder rule counts returned for facet=folder.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"missing": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"terms": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRecordingRulesTermFacet{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"field", "total", "missing"},
+			},
+		},
+		Dependencies: []string{
+			GetSearchRecordingRulesTermFacet{}.OpenAPIModelName()},
 	}
 }
 
@@ -1007,12 +1183,54 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesResponse(ref commo
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRecordingRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			GetSearchRecordingRulesFacetResult{}.OpenAPIModelName(), GetSearchRecordingRulesRecordingRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRecordingRulesTermFacet(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TermFacet is a single faceted term and the number of matching rules.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"term": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"term", "count"},
+			},
+		},
 	}
 }
 
@@ -1203,12 +1421,76 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesBody(ref common.ReferenceCa
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchRulesAlertRuleHitOrRecordingRuleHit{}.OpenAPIModelName()},
+			GetSearchRulesAlertRuleHitOrRecordingRuleHit{}.OpenAPIModelName(), GetSearchRulesFacetResult{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesFacetResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "FacetResult is the distinct-term breakdown for one faceted field, e.g. the per-folder rule counts returned for facet=folder.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"field": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"missing": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"terms": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRulesTermFacet{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"field", "total", "missing"},
+			},
+		},
+		Dependencies: []string{
+			GetSearchRulesTermFacet{}.OpenAPIModelName()},
 	}
 }
 
@@ -1350,12 +1632,54 @@ func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesResponse(ref common.Referen
 							},
 						},
 					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref(GetSearchRulesFacetResult{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"metadata", "items"},
 			},
 		},
 		Dependencies: []string{
-			GetSearchRulesAlertRuleHitOrRecordingRuleHit{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+			GetSearchRulesAlertRuleHitOrRecordingRuleHit{}.OpenAPIModelName(), GetSearchRulesFacetResult{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_GetSearchRulesTermFacet(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TermFacet is a single faceted term and the number of matching rules.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"term": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"term", "count"},
+			},
+		},
 	}
 }
 

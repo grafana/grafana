@@ -2915,6 +2915,24 @@
           }
         },
         {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
           "name": "folders",
           "in": "query",
           "schema": {
@@ -3098,6 +3116,24 @@
           }
         },
         {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
           "name": "folders",
           "in": "query",
           "schema": {
@@ -3243,6 +3279,24 @@
         {
           "name": "datasourceUIDs",
           "in": "query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facet",
+          "in": "query",
+          "description": "Fields to count distinct terms for (e.g. \"folder\"). Returned under\n\"facets\" keyed by field name. Facet terms are ordered by count, not\nalphabetically.",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "facetLimit",
+          "in": "query",
+          "description": "Max terms returned per facet (default 50, max 1000).",
           "schema": {
             "type": "string",
             "uniqueItems": true
@@ -3801,6 +3855,32 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": [
+          "field",
+          "total",
+          "missing"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesResponse": {
         "type": "object",
         "required": [
@@ -3813,6 +3893,12 @@
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesFacetResult"
+            }
           },
           "items": {
             "type": "array",
@@ -3840,6 +3926,48 @@
           "alertrule",
           "recordingrule"
         ]
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchAlertRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": [
+          "term",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": [
+          "field",
+          "total",
+          "missing"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesRecordingRuleHit": {
         "type": "object",
@@ -3904,6 +4032,12 @@
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
           },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesFacetResult"
+            }
+          },
           "items": {
             "type": "array",
             "items": {
@@ -3931,6 +4065,48 @@
           "recordingrule"
         ]
       },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRecordingRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": [
+          "term",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesFacetResult": {
+        "description": "FacetResult is the distinct-term breakdown for one faceted field, e.g. the\nper-folder rule counts returned for facet=folder.",
+        "type": "object",
+        "required": [
+          "field",
+          "total",
+          "missing"
+        ],
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "missing": {
+            "type": "integer"
+          },
+          "terms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesTermFacet"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesResponse": {
         "type": "object",
         "required": [
@@ -3943,6 +4119,12 @@
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "facets": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesFacetResult"
+            }
           },
           "items": {
             "type": "array",
@@ -3966,6 +4148,22 @@
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesRuleHit": {
         "description": "RuleHit is the cross-kind union returned by /search."
+      },
+      "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.GetSearchRulesTermFacet": {
+        "description": "TermFacet is a single faceted term and the number of matching rules.",
+        "type": "object",
+        "required": [
+          "term",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "integer"
+          },
+          "term": {
+            "type": "string"
+          }
+        }
       },
       "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.RecordingRule": {
         "type": "object",

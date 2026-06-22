@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"strconv"
 	"time"
 
@@ -68,6 +69,9 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	sortRules(filtered, f.sortField, f.sortDesc)
 
 	total := len(filtered)
+	// Facets are computed over the full filtered set, before pagination, so the
+	// per-folder counts are independent of limit/offset.
+	facets := buildFacets(req, filtered)
 	page := applyOffset(filtered, req.Offset, req.Limit)
 
 	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
@@ -77,7 +81,59 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 			Cells: ruleCells(r),
 		})
 	}
-	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total)}, nil
+	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total), Facet: facets}, nil
+}
+
+// buildFacets computes the requested term facets in memory, mirroring the
+// unified backend's facet output. Only folder is supported (the one facetable
+// field the handler accepts); other requested fields are ignored.
+func buildFacets(req *resourcepb.ResourceSearchRequest, rules []*ngmodels.AlertRule) map[string]*resourcepb.ResourceSearchResponse_Facet {
+	if len(req.Facet) == 0 {
+		return nil
+	}
+	out := make(map[string]*resourcepb.ResourceSearchResponse_Facet, len(req.Facet))
+	for name, f := range req.Facet {
+		if f.GetField() == fieldFolder {
+			out[name] = folderFacet(rules, f.GetLimit())
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// folderFacet counts rules per folder (NamespaceUID), ordered by count
+// descending with a stable alphabetical tiebreak, truncated to limit.
+func folderFacet(rules []*ngmodels.AlertRule, limit int64) *resourcepb.ResourceSearchResponse_Facet {
+	counts := map[string]int64{}
+	var missing int64
+	for _, r := range rules {
+		if r.NamespaceUID == "" {
+			missing++
+			continue
+		}
+		counts[r.NamespaceUID]++
+	}
+	terms := make([]*resourcepb.ResourceSearchResponse_TermFacet, 0, len(counts))
+	for uid, c := range counts {
+		terms = append(terms, &resourcepb.ResourceSearchResponse_TermFacet{Term: uid, Count: c})
+	}
+	sort.Slice(terms, func(i, j int) bool {
+		if terms[i].Count != terms[j].Count {
+			return terms[i].Count > terms[j].Count
+		}
+		return terms[i].Term < terms[j].Term
+	})
+	if limit > 0 && int64(len(terms)) > limit {
+		terms = terms[:limit]
+	}
+	return &resourcepb.ResourceSearchResponse_Facet{
+		Field:   fieldFolder,
+		Total:   int64(len(counts)),
+		Missing: missing,
+		Terms:   terms,
+	}
 }
 
 func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {

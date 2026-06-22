@@ -37,3 +37,18 @@ _ruleHitBase: {
 
 // RuleHit is the cross-kind union returned by /search.
 #RuleHit: #AlertRuleHit | #RecordingRuleHit
+
+// TermFacet is a single faceted term and the number of matching rules.
+#TermFacet: {
+	term:  string
+	count: int64
+}
+
+// FacetResult is the distinct-term breakdown for one faceted field, e.g. the
+// per-folder rule counts returned for facet=folder.
+#FacetResult: {
+	field:   string
+	total:   int64
+	missing: int64
+	terms?: [...#TermFacet]
+}

@@ -9,6 +9,7 @@ import { makeFolderAlertsLink } from '../../utils/misc';
 import { GrafanaRuleListItem } from '../GrafanaRuleListItem';
 import { type K8sRuleFilter } from '../hooks/useK8sFolderRules';
 import { useK8sFolderSearchRules } from '../hooks/useK8sFolderSearchRules';
+import { type FolderRuleTreeNode } from '../hooks/useK8sFoldersWithRules';
 
 import { getRuleDesignStyles } from './styles';
 
@@ -18,6 +19,10 @@ interface K8sSearchFolderCardProps {
   groupFilter?: string;
   ruleFilter?: K8sRuleFilter;
   defaultOpen?: boolean;
+  /** Nested rule-bearing folders, rendered (and revealed) when this folder is expanded. */
+  childFolders?: FolderRuleTreeNode[];
+  /** Rules directly in this folder, from the facet. Shown in the count badge without a per-folder fetch. */
+  ruleCount?: number;
 }
 
 /**
@@ -30,12 +35,18 @@ export function K8sSearchFolderCard({
   groupFilter,
   ruleFilter,
   defaultOpen = false,
+  childFolders,
+  ruleCount,
 }: K8sSearchFolderCardProps) {
   const styles = useStyles2(getRuleDesignStyles);
   const [open, setOpen] = useState(defaultOpen);
 
-  const { rules, hasMore, isLoading, isInitialLoading, loadMore, error, countLabel, loadedCount } =
-    useK8sFolderSearchRules(folderUid, folderTitle, groupFilter, ruleFilter);
+  const { rules, hasMore, isLoading, isInitialLoading, loadMore, error, loadedCount } = useK8sFolderSearchRules(
+    folderUid,
+    folderTitle,
+    groupFilter,
+    ruleFilter
+  );
 
   return (
     <div className={styles.folder}>
@@ -54,11 +65,13 @@ export function K8sSearchFolderCard({
           </Stack>
           <Spacer />
           <span className={styles.frules}>
-            {t('alerting.k8s-folder.rule-count', '', {
-              count: countLabel,
-              defaultValue_one: '{{count}} rule',
-              defaultValue_other: '{{count}} rules',
-            })}
+            <Trans
+              i18nKey="alerting.k8s-folder.rule-count"
+              count={ruleCount ?? loadedCount}
+              tOptions={{ defaultValue_one: '{{count}} rule', defaultValue_other: '{{count}} rules' }}
+            >
+              {'{{count}}'} rules
+            </Trans>
           </span>
           <FolderActionsButton folderUID={folderUid} />
         </Stack>
@@ -66,6 +79,17 @@ export function K8sSearchFolderCard({
 
       {open && (
         <div className={styles.rulesContainer}>
+          {childFolders?.map((child) => (
+            <K8sSearchFolderCard
+              key={child.uid}
+              folderUid={child.uid}
+              folderTitle={child.title}
+              groupFilter={groupFilter}
+              ruleFilter={ruleFilter}
+              childFolders={child.children}
+              ruleCount={child.directRuleCount}
+            />
+          ))}
           {Boolean(error) && (
             <Text color="error">
               <Trans i18nKey="alerting.k8s-folder.error">Failed to load rules for this folder</Trans>
