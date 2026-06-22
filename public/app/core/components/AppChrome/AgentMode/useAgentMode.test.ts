@@ -34,6 +34,11 @@ const partialMock = jest.mocked(locationService.partial);
 
 const setAgentMode = jest.fn();
 
+/** Build a full `Location` from just a search string (the only field the hook reads). */
+function loc(search: string) {
+  return { pathname: '/', search, hash: '', state: null, key: 'test' };
+}
+
 function mockChrome(agentMode = false) {
   useGrafanaMock.mockReturnValue({
     // The hook only uses chrome.useState() and chrome.setAgentMode().
@@ -45,7 +50,7 @@ function mockChrome(agentMode = false) {
 describe('useAgentMode', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    getLocationMock.mockReturnValue({ search: '' });
+    getLocationMock.mockReturnValue(loc(''));
     getLocationObservableMock.mockReturnValue({
       subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -80,7 +85,7 @@ describe('useAgentMode', () => {
   it('enters agent mode and clears the query param when the flag is on and ?agentMode=1 is present', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(false);
-    getLocationMock.mockReturnValue({ search: '?agentMode=1' });
+    getLocationMock.mockReturnValue(loc('?agentMode=1'));
 
     renderHook(() => useAgentMode());
 
@@ -91,7 +96,7 @@ describe('useAgentMode', () => {
   it('does not enter agent mode when the query param is absent', () => {
     useFlagMock.mockReturnValue(true);
     mockChrome(false);
-    getLocationMock.mockReturnValue({ search: '' });
+    getLocationMock.mockReturnValue(loc(''));
 
     renderHook(() => useAgentMode());
 
