@@ -743,6 +743,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 							},
 						},
 					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. Use this to produce a portable export that creates new folders on a subsequent sync rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},
@@ -1933,6 +1940,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 									},
 								},
 							},
+						},
+					},
+					"generateNewFolderIDs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 				},

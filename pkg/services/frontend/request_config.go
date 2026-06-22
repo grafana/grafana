@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,7 +38,7 @@ type FSRequestConfig struct {
 
 // NewFSRequestConfig creates a new FSRequestConfig from the global configuration.
 // This is used to create the base configuration at service startup.
-func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
+func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, pluginsCDN *pluginscdn.Service, fullFrontendSettingsEnabled bool) (FSRequestConfig, error) {
 	frontendSettings := FSFrontendSettings{
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
 		AnonymousEnabled:                     cfg.Anonymous.Enabled,
@@ -88,7 +89,7 @@ func NewFSRequestConfig(ctx context.Context, cfg *setting.Cfg, license licensing
 
 	if fullFrontendSettingsEnabled {
 		reqCtx := contexthandler.FromContext(ctx)
-		fullFrontendSettings, err := frontendsettings.GetBaseFrontendSettings(reqCtx, cfg, license)
+		fullFrontendSettings, err := frontendsettings.GetBaseFrontendSettings(reqCtx, cfg, license, pluginsCDN)
 
 		if err != nil {
 			return FSRequestConfig{}, err

@@ -2493,7 +2493,7 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
@@ -2954,7 +2954,7 @@ var (
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
+			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},

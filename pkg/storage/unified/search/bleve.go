@@ -2196,6 +2196,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		}
 	}
 
+	// Queries shorter than NGRAM_MIN_TOKEN can't hit the title_ngram index. Without this
+	// rewrite, 1-char queries fell through to MatchAllQuery and 2-char queries usually returned
+	// nothing. Treat them as a prefix wildcard ("f" → "f*") so search-as-you-type matches by
+	// prefix via the existing wildcard branch. Callers that already passed a wildcard are left
+	// alone.
+	if q := req.Query; q != "" && len(q) < NGRAM_MIN_TOKEN && !strings.Contains(q, "*") {
+		req.Query = q + "*"
+	}
+
 	if len(req.Query) > 1 {
 		if strings.Contains(req.Query, "*") {
 			// Wildcard query is expensive, should be used with caution.

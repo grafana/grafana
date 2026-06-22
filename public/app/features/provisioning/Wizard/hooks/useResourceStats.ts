@@ -49,7 +49,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
           t('provisioning.bootstrap-step.folders-count', '', {
             count: stat.count,
             defaultValue_one: '{{count}} folder',
-            defaultValue_other: '{{count}} folder',
+            defaultValue_other: '{{count}} folders',
           })
         );
         break;
@@ -59,7 +59,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
           t('provisioning.bootstrap-step.dashboards-count', '', {
             count: stat.count,
             defaultValue_one: '{{count}} dashboard',
-            defaultValue_other: '{{count}} dashboard',
+            defaultValue_other: '{{count}} dashboards',
           })
         );
         break;
@@ -77,7 +77,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
               t('provisioning.bootstrap-step.folders-count', '', {
                 count: stat.count,
                 defaultValue_one: '{{count}} folder',
-                defaultValue_other: '{{count}} folder',
+                defaultValue_other: '{{count}} folders',
               })
             );
             break;
@@ -87,7 +87,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
               t('provisioning.bootstrap-step.dashboards-count', '', {
                 count: stat.count,
                 defaultValue_one: '{{count}} dashboard',
-                defaultValue_other: '{{count}} dashboard',
+                defaultValue_other: '{{count}} dashboards',
               })
             );
             break;
@@ -174,7 +174,7 @@ export function useResourceStats(
     fileCount > 0
       ? t('provisioning.bootstrap-step.files-count', '', {
           count: fileCount,
-          defaultValue_one: '{{count}} files',
+          defaultValue_one: '{{count}} file',
           defaultValue_other: '{{count}} files',
         })
       : t('provisioning.bootstrap-step.empty', 'Empty');

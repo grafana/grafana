@@ -290,7 +290,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-05-22,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
-2026-05-22,queryEditorNext,privatePreview,@grafana/datapro,false,false,true
+2026-05-22,queryEditorNext,preview,@grafana/datapro,false,false,true
 2026-05-22,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-05-22,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
@@ -343,7 +343,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-05-22,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
-2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-05-22,grafana.newPreferencesPage,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
