@@ -2,9 +2,8 @@ package sqlstore
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
-	"math/big"
+	"math/rand/v2"
 	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -32,11 +31,7 @@ const (
 func txnRetryBackoff(retry int) time.Duration {
 	retry = min(retry, 10)
 	delay := min(txnRetryBaseDelay<<retry, txnRetryMaxDelay)
-	n, err := rand.Int(rand.Reader, big.NewInt(int64(delay)))
-	if err != nil {
-		return delay / 2 // fallback to half the delay on error
-	}
-	return time.Duration(n.Int64())
+	return rand.N(delay)
 }
 
 // WithTransactionalDbSession calls the callback with a session within a transaction.
