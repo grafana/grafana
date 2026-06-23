@@ -86,6 +86,7 @@ jobs:
     name: Create security branch (Grafana Security Mirror)
     needs: setup
     permissions:
+      contents: read
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
@@ -96,6 +97,7 @@ jobs:
     name: Create security branch (Enterprise)
     needs: setup
     permissions:
+      contents: read
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
