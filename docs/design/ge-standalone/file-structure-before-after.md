@@ -27,16 +27,16 @@ graph TB
         BUILD["build.sh / enterprise-to-oss.sh"]
     end
 
-    BUILD -->|"rsync overlay"| EXT_STUB
-    BUILD --> WIRE_ENT
-    WIRE_SRC --> WIRE_ENT
-    SRC --> EXT_STUB
-    MAIN --> SERVER
-    SERVER --> WIRE_OSS
-    SERVER --> WIRE_ENT
-    WIRE_OSS --> SERVICES
-    WIRE_ENT --> EXT_STUB
-    WIRE_ENT --> SERVICES
+    BUILD -->|"overlays"| EXT_STUB
+    BUILD -->|"overlays"| WIRE_ENT
+    WIRE_SRC -->|"copied as"| WIRE_ENT
+    SRC -->|"overlays"| EXT_STUB
+    MAIN -->|"initializes"| SERVER
+    SERVER -->|"composes graph from"| WIRE_OSS
+    SERVER -->|"composes graph from"| WIRE_ENT
+    WIRE_OSS -->|"imports dependencies"| SERVICES
+    WIRE_ENT -->|"imports dependencies"| EXT_STUB
+    WIRE_ENT -->|"imports dependencies"| SERVICES
 ```
 
 ### After (target)
