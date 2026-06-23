@@ -3595,9 +3595,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/llm@npm:1.0.8":
-  version: 1.0.8
-  resolution: "@grafana/llm@npm:1.0.8"
+"@grafana/llm@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@grafana/llm@npm:1.0.9"
   dependencies:
     "@modelcontextprotocol/sdk": "npm:^1.26.0"
     publint: "npm:^0.3.12"
@@ -3609,7 +3609,7 @@ __metadata:
     "@grafana/runtime": ^10.4.0 || ^11 || ^12
     react: ^18
     rxjs: ^7.8.2
-  checksum: 10/48eeb37fadb3489831df3d498348c8aa95e37e435321ff3673dec61155dec203d96d2fb94b76401b7fa5b549c3a1517ebc7e49ef9c5d58e146ee316399050e24
+  checksum: 10/69e4c42551c6102ae1169416581551dac21e6bf69ad7f93b8c59153a14426011148c5d98d60ef474b4feb29deda47ae96708a6400e2fd82588aebb0b979c435b
   languageName: node
   linkType: hard
 
@@ -20267,7 +20267,7 @@ __metadata:
     "@grafana/google-sdk": "npm:0.3.5"
     "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.9"
-    "@grafana/llm": "npm:1.0.8"
+    "@grafana/llm": "npm:1.0.9"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.4.10"
