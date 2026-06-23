@@ -123,7 +123,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
       expect(capturedRequest!.url.searchParams.get('ref')).toBe('main');
-      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
+      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete resource: Test Dashboard');
 
       // Branch success redirects to the dashboard list with the PR link and dismisses the drawer
       await waitFor(() => {
@@ -218,7 +218,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       await waitFor(() => {
         expect(screen.getByRole('alert')).toHaveTextContent(
-          'You have selected a branch that does not contain this dashboard'
+          'You have selected a branch that does not contain this resource'
         );
       });
     });
