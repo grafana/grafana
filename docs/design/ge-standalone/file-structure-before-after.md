@@ -43,7 +43,7 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph OSS["github.com/grafana/grafana" (one or more modules)]
+    subgraph OSS["github.com/grafana/grafana (one or more modules)"]
         MAIN_OSS["pkg/cmd/grafana/main.go"]
         WIRE_OSS["pkg/wire/"]
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
@@ -53,7 +53,7 @@ graph TB
         BOOT["pkg/server/bootstrap/"]
     end
 
-    subgraph GEM["github.com/grafana/grafana-enterprise" (one or more modules)]
+    subgraph GEM["github.com/grafana/grafana-enterprise (one or more modules)"]
         MAIN_GE["cmd/grafana-enterprise/main.go"]
         WIRE_GE["pkg/wire/"]
         PKG["pkg/accesscontrol, pkg/apiserver, …"]
