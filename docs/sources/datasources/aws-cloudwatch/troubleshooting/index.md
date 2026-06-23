@@ -190,7 +190,7 @@ These errors occur when querying CloudWatch Metrics.
 1. Verify the metric exists in the selected region.
 1. For custom metrics, add the namespace to **Namespaces of Custom Metrics** in the data source configuration.
 1. Check that the IAM policy includes `cloudwatch:ListMetrics` permission.
-1. CloudWatch limits `ListMetrics` to 500 results per page. To retrieve more metrics, increase the `list_metrics_page_limit` setting in the [Grafana configuration file](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/configure/#configure-the-data-source-with-grafanaini).
+1. CloudWatch limits `ListMetrics` to 500 results per page. To retrieve more metrics, increase the `list_metrics_page_limit` setting in the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#configure-the-data-source-with-grafanaini).
 1. Use the Query Inspector to verify the API request and response.
 
 ### Dimension values not loading
@@ -269,7 +269,7 @@ These errors occur when querying CloudWatch Logs.
 1. Narrow the time range to reduce the amount of data scanned.
 1. Add filters to your query to limit results.
 1. Break complex queries into smaller, more focused queries.
-1. For alerting, the timeout defined in the [Grafana configuration file](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#unified_alerting) takes precedence.
+1. For alerting, the timeout defined in the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#unified_alerting) takes precedence.
 
 ### Log groups not appearing in selector
 
