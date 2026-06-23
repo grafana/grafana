@@ -539,7 +539,7 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-modified-since-ns"
+	ns := nsPrefix + "-ms-ns"
 	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
