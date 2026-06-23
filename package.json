@@ -276,7 +276,7 @@
     "@grafana/faro-web-tracing": "^2.7.0",
     "@grafana/flamegraph": "workspace:*",
     "@grafana/i18n": "workspace:*",
-    "@grafana/llm": "1.0.8",
+    "@grafana/llm": "1.0.9",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "13.1.2",
