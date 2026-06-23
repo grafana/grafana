@@ -1,57 +1,182 @@
-import { css } from '@emotion/css';
+import { useMemo, useState } from 'react';
 
-import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { FeatureBadge, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Alert, Button, EmptyState, Spinner, Stack } from '@grafana/ui';
+import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
+import { useGetResourceStatsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { CONFIGURE_GRAFANA_DOCS_URL } from '../constants';
+import { ConnectRepositoryButton } from '../Shared/ConnectRepositoryButton';
+import { useRepositoryList } from '../hooks/useRepositoryList';
 
-/**
- * Migrate to GitOps tab. This is the entry point for moving existing folders
- * and dashboards into a Git repository. The interactive migration workflow
- * (folder leaderboard, quick wins, the migrate drawer) lands in follow-up
- * changes — for now the tab introduces the feature and links to the guide.
- */
+import { MigrateDrawer } from './MigrateDrawer';
+import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
+import { OverviewStatCards } from './OverviewStatCards';
+import { ResourcesToMigrate } from './ResourcesToMigrate';
+import { useFolderMigrationData } from './hooks/useFolderMigrationData';
+import { resolveSelection } from './selection';
+import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
+
+type DrawerScope = 'all' | 'selected';
+
+function toggle(set: Set<string>, uid: string): Set<string> {
+  const next = new Set(set);
+  if (next.has(uid)) {
+    next.delete(uid);
+  } else {
+    next.add(uid);
+  }
+  return next;
+}
+
 export function Migrate() {
-  const styles = useStyles2(getStyles);
+  const { data, isLoading, isError, error, refetch } = useGetResourceStatsQuery();
+  const {
+    data: folders,
+    isLoading: isFoldersLoading,
+    isError: isFoldersError,
+    refetch: refetchFolders,
+  } = useFolderMigrationData();
+  const [repos] = useRepositoryList({ watch: true });
+  const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
+  const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
+  const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
+
+  const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
+  const totals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
+  const folderCounts = useMemo(() => aggregateFolderCounts(breakdowns), [breakdowns]);
+  const selection = useMemo(
+    () => resolveSelection(folders, selectedFolderUids, selectedDashboardUids),
+    [folders, selectedFolderUids, selectedDashboardUids]
+  );
+
+  // Gate only on the stats query — the header and KPI cards depend on it. The
+  // folder/dashboard enumeration can be slow on large instances, so the table
+  // carries its own loading state below instead of blocking the whole tab.
+  if (isLoading) {
+    return (
+      <Stack direction="row" alignItems="center" gap={1}>
+        <Spinner />
+        <Trans i18nKey="provisioning.migrate.loading">Loading stats...</Trans>
+      </Stack>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Alert severity="error" title={t('provisioning.migrate.error-title', 'Failed to load provisioning stats')}>
+        {getErrorMessage(error)}
+      </Alert>
+    );
+  }
+
+  if (totals.instanceTotal === 0 && folderCounts.total === 0) {
+    return (
+      <Stack direction="column" gap={3}>
+        <MigrateToGitopsHeader />
+        <EmptyState variant="not-found" message={t('provisioning.migrate.empty', 'No provisioned resources yet')} />
+      </Stack>
+    );
+  }
+
+  // Migration writes to a repository's configured branch, so it needs a repo
+  // with the `write` workflow — matching the guard in the drawer. Without one,
+  // the table footer surfaces a connect action instead of a dead button.
+  const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
+  // `allSelected` reflects whether every folder in the table is picked (drives
+  // the "Migrate all" → migrate-everything path). The select-all checkbox itself
+  // is scoped to the search-filtered rows inside the table.
+  const allSelected = folders.length > 0 && folders.every((folder) => selectedFolderUids.has(folder.uid));
+  // "Migrate all" runs the legacy migrate-everything job; a partial selection
+  // needs at least one resolved dashboard ref to send.
+  const canSubmit = allSelected ? folders.length > 0 : selection.resources.length > 0;
+  // Stats-derived: is there anything unmanaged at all? Used for the
+  // migrate-everything fallback when the folder list itself can't be loaded —
+  // that job is stats-driven and doesn't need the per-folder enumeration.
+  const hasUnmanaged =
+    Math.max(0, totals.instanceTotal - totals.managed) + Math.max(0, folderCounts.total - folderCounts.managed) > 0;
+
+  const closeDrawer = () => setDrawerScope(null);
+  const clearSelection = () => {
+    setSelectedFolderUids(new Set());
+    setSelectedDashboardUids(new Set());
+  };
+  const setFoldersSelected = (uids: string[], selected: boolean) => {
+    setSelectedFolderUids((prev) => {
+      const next = new Set(prev);
+      uids.forEach((uid) => (selected ? next.add(uid) : next.delete(uid)));
+      return next;
+    });
+  };
 
   return (
-    <Stack direction="column" gap={2}>
-      <Stack direction="column" gap={1}>
-        <Stack direction="row" gap={1} alignItems="center">
-          <Text element="h2" variant="h2">
-            <Trans i18nKey="provisioning.migrate.header-title">Migrate to GitOps</Trans>
-          </Text>
-          <FeatureBadge featureState={FeatureState.experimental} />
-        </Stack>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.migrate.header-subtitle">
-            Manage your dashboards and folders like code — every change tracked, every update reviewed, every
-            environment reproducible. Connect a Git repository to get started.
-          </Trans>
-        </Text>
-      </Stack>
+    <Stack direction="column" gap={3}>
+      <MigrateToGitopsHeader />
+      <OverviewStatCards totals={totals} />
 
-      <div className={styles.intro}>
-        <Text color="secondary">
-          <Trans i18nKey="provisioning.migrate.intro">
-            The guided migration workflow is on its way. In the meantime, read the{' '}
-            <TextLink external href={CONFIGURE_GRAFANA_DOCS_URL}>
-              provisioning documentation
-            </TextLink>{' '}
-            to learn how Git Sync keeps Grafana and your repository in step.
-          </Trans>
-        </Text>
-      </div>
+      {isFoldersLoading ? (
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Spinner />
+          <Trans i18nKey="provisioning.migrate.loading-resources">Loading resources...</Trans>
+        </Stack>
+      ) : isFoldersError ? (
+        <Stack direction="column" gap={2} alignItems="flex-start">
+          <Alert
+            severity="warning"
+            title={t('provisioning.migrate.folders-error-title', 'Could not load the list of resources to migrate')}
+          >
+            <Trans i18nKey="provisioning.migrate.folders-error-body">
+              The overview above is still accurate. You can still migrate everything now, or refresh the page to load
+              the list and pick individual resources.
+            </Trans>
+          </Alert>
+          {/* Migrating everything is stats-driven and doesn't need the folder
+              list, so keep it reachable even when the list failed to load. */}
+          {hasUnmanaged &&
+            (hasWriteRepo ? (
+              <Button variant="primary" icon="upload" onClick={() => setDrawerScope('all')}>
+                <Trans i18nKey="provisioning.migrate.migrate-everything">Migrate everything</Trans>
+              </Button>
+            ) : (
+              <ConnectRepositoryButton items={repos ?? []} />
+            ))}
+        </Stack>
+      ) : (
+        <ResourcesToMigrate
+          folders={folders}
+          selectedFolderUids={selectedFolderUids}
+          selectedDashboardUids={selectedDashboardUids}
+          onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
+          onToggleDashboard={(uid) => setSelectedDashboardUids((prev) => toggle(prev, uid))}
+          selectedCount={selection.items}
+          allSelected={allSelected}
+          onSetFoldersSelected={setFoldersSelected}
+          // Selecting everything runs the legacy "migrate all unmanaged" job;
+          // a partial selection scopes the job to the picked resources.
+          onMigrateSelected={() => setDrawerScope(allSelected ? 'all' : 'selected')}
+          submitDisabled={!canSubmit}
+          canMigrate={hasWriteRepo}
+          connectAction={<ConnectRepositoryButton items={repos ?? []} />}
+        />
+      )}
+
+      {drawerScope && (
+        <MigrateDrawer
+          repos={repos ?? []}
+          selective={drawerScope === 'selected'}
+          resources={drawerScope === 'selected' ? selection.resources : undefined}
+          selection={
+            drawerScope === 'selected' ? { folders: selection.folders, dashboards: selection.dashboards } : undefined
+          }
+          onDismiss={closeDrawer}
+          onMigrated={() => {
+            // Refresh both the stat cards and the folder/dashboard table so
+            // migrated resources drop out of the selectable rows.
+            refetch();
+            refetchFolders();
+            clearSelection();
+          }}
+        />
+      )}
     </Stack>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  intro: css({
-    padding: theme.spacing(2),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: theme.colors.background.secondary,
-  }),
-});

@@ -88,6 +88,7 @@ type kvStorageBackend struct {
 	eventPruningInterval    time.Duration
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
+	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	//reg     prometheus.Registerer
@@ -165,6 +166,9 @@ type KVBackendOptions struct {
 	Reg                  prometheus.Registerer // TODO add metrics
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
+
+	// GCGate defers the start of the GC until released (optional).
+	GCGate *GCGate
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -276,6 +280,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
@@ -500,6 +505,10 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	}
 
 	go func() {
+		if !b.gcGate.Wait(ctx, ctx.Done()) {
+			return
+		}
+
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
 		select {

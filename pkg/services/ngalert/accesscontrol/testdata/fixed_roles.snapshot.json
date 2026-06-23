@@ -1091,5 +1091,39 @@
     "grants": [
       "Admin"
     ]
+  },
+  {
+    "name": "fixed:alerting.notifications.config:reader",
+    "displayName": "Alerting Notifications Config Reader",
+    "description": "Read the alerting notifications configuration, including external Alertmanager sync state.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      }
+    ],
+    "grants": [
+      "Viewer"
+    ]
+  },
+  {
+    "name": "fixed:alerting.notifications.config:writer",
+    "displayName": "Alerting Notifications Config Writer",
+    "description": "Update the alerting notifications configuration, including the external Alertmanager sync target.",
+    "group": "Alerting",
+    "permissions": [
+      {
+        "action": "notifications.alerting.grafana.app/configs:get",
+        "scope": "configs:*"
+      },
+      {
+        "action": "notifications.alerting.grafana.app/configs:update",
+        "scope": "configs:*"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
   }
 ]

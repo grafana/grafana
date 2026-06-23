@@ -87,9 +87,6 @@ const pluginsSlice = createSlice({
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
     },
-    setDiscardChanges: (state, action: PayloadAction<boolean>) => {
-      state.shouldDiscardChanges = action.payload;
-    },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
       // Close viz picker if closing options pane
@@ -121,7 +118,6 @@ const pluginsSlice = createSlice({
 export const {
   updateEditorInitState,
 
-  setDiscardChanges,
   closeEditor,
   toggleVizPicker,
 } = pluginsSlice.actions;

@@ -177,14 +177,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "refactorVariablesTimeRange",
-			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "faroDatasourceSelector",
 			Description: "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:       FeatureStagePublicPreview,
@@ -324,14 +316,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:        "dashgpt",
-			Description: "Enable AI powered features in dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "aiGeneratedDashboardChanges",
 			Description: "Enable AI powered features for dashboards to auto-summary changes when saving",
 			Stage:       FeatureStageExperimental,
@@ -417,6 +401,15 @@ var (
 		{
 			Name:            "grafana.kubernetesAnnotationsClient",
 			Description:     "Enables usage of the new annotations API client",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+			Generate:        Generate{React: true},
+		},
+		{
+			Name:            "grafana.newPanelQueryErrorsUI",
+			Description:     "Enables a new UI for query errors and notices",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -583,14 +576,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "cachingOptimizeSerializationMemoryUsage",
-			Description: "If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "alertmanagerRemoteSecondary",
 			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -753,15 +738,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
-		},
-		{
-			Name:         "panelFilterVariable",
-			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:        "pdfTables",
@@ -1316,15 +1292,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 
-		{
-			Name:            "dataplaneAggregator",
-			Description:     "Enable grafana dataplane aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
 		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
@@ -1981,14 +1948,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:        "createdByMeSearchFilter",
-			Description: "Enables the created by me search filter on the browse dashboards page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -2041,14 +2000,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "sharingDashboardImage",
-			Description: "Enables image sharing functionality for dashboards",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
 		},
 		{
 			Name:        "preferLibraryPanelTitle",
@@ -2147,10 +2098,10 @@ var (
 		{
 			Name:        "newLogContext",
 			Description: "New Log Context component",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "newClickhouseConfigPageDesign",
@@ -2166,7 +2117,7 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendNavigation,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "interactiveLearning",
@@ -2295,10 +2246,10 @@ var (
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
@@ -2307,14 +2258,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
-		},
-		{
-			Name:        "preventPanelChromeOverflow",
-			Description: "Restrict PanelChrome contents with overflow: hidden;",
-			Stage:       FeatureStagePublicPreview,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "true",
 		},
 		{
 			Name:        "jaegerEnableGrpcEndpoint",
@@ -2410,15 +2353,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "opentsdbBackendMigration",
-			Description:     "Run queries through the data source backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDataSourcesPlugins,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "ttlPluginInstanceManager",
 			Description: "Enable TTL plugin instance manager",
 			Stage:       FeatureStageExperimental,
@@ -2464,8 +2398,8 @@ var (
 		},
 		{
 			Name:        "multiPropsVariables",
-			Description: "Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageGeneralAvailability,
+			Description: "Deprecated. Enables support for variables whose values can have multiple properties",
+			Stage:       FeatureStageDeprecated,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
@@ -2541,7 +2475,7 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
@@ -2719,10 +2653,10 @@ var (
 		{
 			Name:        "react19",
 			Description: "Whether to use the new React 19 runtime",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaFrontendPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:         "frontendServiceUseSettingsService",
@@ -2794,6 +2728,15 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.viewPanelPane",
+			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2993,7 +2936,7 @@ var (
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
+			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -3181,6 +3124,32 @@ var (
 			Description:  "Enables the new visual design refresh for the Grafana UI",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "dashboard.vectorSearch",
+			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
+			Name:         "splunk.useLegacyResultsApi",
+			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "table.protoRowParser",
+			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},

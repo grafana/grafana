@@ -10,10 +10,17 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/kv/consul"
 	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
@@ -61,6 +68,42 @@ func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 			})
 		}
 	})
+}
+
+// VectorSearch must forward the incoming gRPC metadata (which carries the access
+// token) when distributing to a search instance. Dropping it makes the downstream
+// authenticator reject the call with "missing required token".
+func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
+	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+
+	var gotMD metadata.MD
+	mockClient := NewMockResourceClient(t)
+	mockClient.EXPECT().VectorSearch(mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, _ *resourcepb.VectorSearchRequest, _ ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+			gotMD, _ = metadata.FromOutgoingContext(ctx)
+			return &resourcepb.VectorSearchResponse{}, nil
+		})
+
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: mockClient}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	ds := &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+	}
+
+	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
+	_, err := ds.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
+		Key:   &resourcepb.ResourceKey{Namespace: "stacks-11794"},
+		Query: "helloWorld",
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {

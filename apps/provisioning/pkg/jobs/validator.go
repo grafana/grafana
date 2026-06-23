@@ -136,11 +136,23 @@ func validateMigrateJobOptions(opts *provisioning.MigrateJobOptions, supportedRe
 	return list
 }
 
+// MaxSelectiveExportResources caps how many resources a single export-style job
+// (push or migrate) may explicitly request. Selective export fetches each resource
+// individually, so an unbounded list would translate into an unbounded number of
+// per-resource lookups; this bound keeps a single job's work predictable.
+const MaxSelectiveExportResources = 100
+
 // validateExportResourceRefs enforces the rules shared by export-style resource
 // lists (push and migrate): name + kind are required, and each kind/group must
 // match an active entry in the configured supported-resource set.
 func validateExportResourceRefs(base *field.Path, refs []provisioning.ResourceRef, supportedResources []provisioning.SupportedResource) field.ErrorList {
 	list := field.ErrorList{}
+
+	if len(refs) > MaxSelectiveExportResources {
+		list = append(list, field.TooMany(base, len(refs), MaxSelectiveExportResources))
+		return list
+	}
+
 	supported := activeExportResources(supportedResources)
 	for i, r := range refs {
 		path := base.Index(i)
