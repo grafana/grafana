@@ -115,7 +115,7 @@ export interface FeatureToggles {
   faroDatasourceSelector?: boolean;
   /**
   * Enable Faro session replay for Grafana
-  * @default false
+  * @default true
   */
   faroSessionReplay?: boolean;
   /**

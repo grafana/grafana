@@ -211,10 +211,10 @@ export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEva
  *
  * **Details:**
  * - flag key: `faroSessionReplay`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("faroSessionReplay", false, options).value;
+  return useFlag("faroSessionReplay", true, options).value;
 };
 
 /**

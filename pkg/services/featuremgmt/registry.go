@@ -195,10 +195,10 @@ var (
 		{
 			Name:        "faroSessionReplay",
 			Description: "Enable Faro session replay for Grafana",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaSessionReplaySquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "queryHistory.localOnly",
