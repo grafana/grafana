@@ -7,9 +7,11 @@ import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { SharedPreferences } from 'app/core/components/SharedPreferences/SharedPreferences';
+import config from 'app/core/config';
 import { type StoreState } from 'app/types/store';
 
 import UserOrganizations from './UserOrganizations';
+import { UserPasskeys } from './UserPasskeys';
 import UserProfileEditForm from './UserProfileEditForm';
 import { UserProfileEditTabs } from './UserProfileEditTabs';
 import UserSessions from './UserSessions';
@@ -76,6 +78,7 @@ export function UserProfileEditPage({
               <UserTeams isLoading={teamsAreLoading} teams={teams} />
               <UserOrganizations isLoading={orgsAreLoading} setUserOrg={changeUserOrg} orgs={orgs} user={user} />
               <UserSessions isLoading={sessionsAreLoading} revokeUserSession={revokeUserSession} sessions={sessions} />
+              {config.passkey?.enabled && <UserPasskeys />}
             </Stack>
           </Stack>
         </UserProfileEditTabs>
