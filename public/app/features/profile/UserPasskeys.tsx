@@ -251,5 +251,3 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginTop: theme.spacing(2),
   }),
 });
-
-export default UserPasskeys;
