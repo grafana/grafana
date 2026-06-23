@@ -50,7 +50,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const [workflow] = watch(['workflow']);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -72,8 +72,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     repository,
     vars: templateVars,
     workflow,
-    branch: ref ?? '',
-    isBranchDirty: Boolean(formState.dirtyFields.ref),
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 

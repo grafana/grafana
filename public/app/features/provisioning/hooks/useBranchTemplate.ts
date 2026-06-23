@@ -1,19 +1,15 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type WorkflowOption } from '../types';
 import { type BranchTemplateVars, generateBranchToken, renderBranchName } from '../utils/branchName';
 
-import { useTemplateAutofill } from './useTemplateAutofill';
-
 interface UseBranchTemplateArgs {
   repository: RepositoryView | undefined;
   vars: BranchTemplateVars;
   workflow: WorkflowOption | undefined;
-  branch: string;
-  isBranchDirty: boolean;
   /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
   setBranch: (value: string) => void;
 }
@@ -23,14 +19,9 @@ interface UseBranchTemplateArgs {
  * the field is enforced (read-only). The branch name only applies to the branch (pull request)
  * workflow on git repos, so it stays inert for the write workflow.
  */
-export function useBranchTemplate({
-  repository,
-  vars,
-  workflow,
-  branch,
-  isBranchDirty,
-  setBranch,
-}: UseBranchTemplateArgs): { locked: boolean } {
+export function useBranchTemplate({ repository, vars, workflow, setBranch }: UseBranchTemplateArgs): {
+  locked: boolean;
+} {
   const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // One token per drawer open; stable across re-renders so the name doesn't churn as vars change.
   const random = useMemo(() => generateBranchToken(), []);
@@ -46,9 +37,21 @@ export function useBranchTemplate({
   const locked = active && enforce;
   const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
 
-  // No `!locked` here (unlike commit): when locked the value still lives in the form `ref`, so the
-  // field must stay synced to the rendered name. Locked + read-only means it never becomes dirty.
-  useTemplateAutofill({ active, rendered, value: branch, isDirty: isBranchDirty, setValue: setBranch });
+  // Apply the rendered name whenever it changes — on entering the branch workflow (rendered goes
+  // from '' to the template) and on each template-variable change — without ever permanently
+  // freezing. The field stays editable; a manual edit persists until the next variable change
+  // re-renders the template. `enforce` still makes the field read-only via `locked`.
+  const lastApplied = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!active || !rendered) {
+      lastApplied.current = undefined;
+      return;
+    }
+    if (rendered !== lastApplied.current) {
+      lastApplied.current = rendered;
+      setBranch(rendered);
+    }
+  }, [active, rendered, setBranch]);
 
   return { locked };
 }

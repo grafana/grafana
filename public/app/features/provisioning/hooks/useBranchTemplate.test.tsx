@@ -1,4 +1,4 @@
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -40,17 +40,14 @@ function Host({
   defaultRef?: string;
 }) {
   const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
-  const { dirtyFields } = useFormState({ control: methods.control });
   const { locked } = useBranchTemplate({
     repository,
     vars,
     workflow,
-    branch: methods.watch('ref') ?? '',
-    isBranchDirty: Boolean(dirtyFields.ref),
     setBranch: (v) => methods.setValue('ref', v, { shouldDirty: false }),
   });
   // Mirror the shared field's `ref` Controller: a single controlled input whose value lives in the
-  // form `ref` (driven by the pre-fill effect) and that becomes read-only when the template is enforced.
+  // form `ref` (driven by the template effect) and that becomes read-only when the template is enforced.
   return (
     <>
       <input
@@ -92,6 +89,19 @@ describe('useBranchTemplate', () => {
     expect(input).toHaveValue('');
   });
 
+  it('applies the template when the workflow switches to branch', async () => {
+    // Entering the branch workflow (by typing a new branch name) is the only way to reach it; the
+    // template must apply on that transition, not just when the drawer opens already in branch mode.
+    const repository = makeRepo({ nameTemplate: TEMPLATE });
+    const { rerender } = render(<Host repository={repository} vars={dashboardVars} workflow="write" />);
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    expect(input).toHaveValue('');
+
+    rerender(<Host repository={repository} vars={dashboardVars} workflow="branch" />);
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+  });
+
   it('pre-fills the branch field from the rendered template on the branch workflow', async () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
 
@@ -122,7 +132,7 @@ describe('useBranchTemplate', () => {
     await waitFor(() => expect(input).toHaveValue('grafana/create-renamed'));
   });
 
-  it('stops overwriting the field once the user edits it', async () => {
+  it('re-applies the template after a manual edit when a variable changes', async () => {
     const repository = makeRepo({ nameTemplate: TEMPLATE });
     const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
 
@@ -132,8 +142,24 @@ describe('useBranchTemplate', () => {
     await user.type(input, 'x');
     expect(input).toHaveValue('grafana/create-testx');
 
-    // A later variable change must not clobber the user's edit.
+    // A variable change re-renders the template and re-applies it: the field is never permanently
+    // frozen, so the manual edit is overwritten by the fresh rendered name.
     rerender(<Host repository={repository} vars={{ ...dashboardVars, title: 'Renamed' }} />);
+    await waitFor(() => expect(input).toHaveValue('grafana/create-renamed'));
+  });
+
+  it('keeps a manual edit while the template variables are unchanged', async () => {
+    const repository = makeRepo({ nameTemplate: TEMPLATE });
+    const { rerender, user } = render(<Host repository={repository} vars={dashboardVars} />);
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    await waitFor(() => expect(input).toHaveValue('grafana/create-test'));
+
+    await user.type(input, 'x');
+    expect(input).toHaveValue('grafana/create-testx');
+
+    // Re-render with the same vars: the rendered name is unchanged, so the manual edit survives.
+    rerender(<Host repository={repository} vars={dashboardVars} />);
     expect(input).toHaveValue('grafana/create-testx');
   });
 
@@ -179,7 +205,7 @@ describe('useBranchTemplate', () => {
     );
 
     const input = screen.getByRole('textbox', { name: /branch/i });
-    // Give the autofill effect a chance to run; it must be a no-op here.
+    // Give the template effect a chance to run; it must be a no-op here.
     await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
   });
 });

@@ -87,8 +87,6 @@ export function MoveProvisionedDashboardForm({
     repository,
     vars: templateVars,
     workflow,
-    branch: ref ?? '',
-    isBranchDirty: Boolean(methods.formState.dirtyFields.ref),
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 

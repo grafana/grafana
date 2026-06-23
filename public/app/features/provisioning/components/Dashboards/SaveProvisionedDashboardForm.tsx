@@ -117,8 +117,6 @@ export function SaveProvisionedDashboardForm({
     repository,
     vars: templateVars,
     workflow,
-    branch: ref ?? '',
-    isBranchDirty: Boolean(dirtyFields.ref),
     setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
   });
 
