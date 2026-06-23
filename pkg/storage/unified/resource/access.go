@@ -135,6 +135,10 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
+	if allowSelfUserRead(id, req) {
+		span.SetAttributes(attribute.Bool("allowed", true))
+		return claims.CheckResponse{Allowed: true}, nil
+	}
 	resp, err := c.client.Check(ctx, id, req, folder)
 	if err != nil {
 		c.logger.FromContext(ctx).Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t))
@@ -182,6 +186,17 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
 	return checker, zookie, nil
+}
+
+// allowSelfUserRead lets a user read their own user resource without an explicit users:read grant.
+func allowSelfUserRead(id claims.AuthInfo, req claims.CheckRequest) bool {
+	if req.Group != "iam.grafana.app" || req.Resource != "users" || req.Verb != "get" {
+		return false
+	}
+	if id.GetIdentityType() != claims.TypeUser {
+		return false
+	}
+	return req.Name != "" && req.Name == id.GetIdentifier()
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {

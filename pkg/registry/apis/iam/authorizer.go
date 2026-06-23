@@ -153,7 +153,7 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 // "teams" is read-only (Connecter/GET), so it checks user get.
 // "status" supports both GET and PUT, so the check verb mirrors the request verb.
 func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	return gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
+	delegate := gfauthorizer.NewResourceAuthorizerWithSubresourceHandlers(accessClient, map[string]gfauthorizer.SubresourceCheck{
 		"teams": func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
 				Verb:      utils.VerbGet,
@@ -191,6 +191,28 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 			return authorizer.DecisionAllow, "", nil
 		},
 	})
+
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if allowSelfUserRead(ctx, attr) {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return delegate.Authorize(ctx, attr)
+	})
+}
+
+// allowSelfUserRead reports whether the request is a user reading their own user resource.
+func allowSelfUserRead(ctx context.Context, attr authorizer.Attributes) bool {
+	if !attr.IsResourceRequest() || attr.GetSubresource() != "" || attr.GetVerb() != utils.VerbGet {
+		return false
+	}
+	if attr.GetResource() != iamv0.UserResourceInfo.GetName() {
+		return false
+	}
+	ident, ok := authlib.AuthInfoFrom(ctx)
+	if !ok || ident.GetIdentityType() != authlib.TypeUser {
+		return false
+	}
+	return attr.GetName() != "" && attr.GetName() == ident.GetIdentifier()
 }
 
 // newServiceAccountAuthorizer creates an authorizer for service accounts that handles the "tokens" subresource.

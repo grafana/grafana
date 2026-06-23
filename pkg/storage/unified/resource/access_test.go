@@ -121,6 +121,49 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 	}
 }
 
+func TestAuthzLimitedClient_SelfUserRead(t *testing.T) {
+	mockClient := authlib.FixedAccessClient(false)
+	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+
+	self := &identity.StaticRequester{Namespace: "stacks-1", Type: authlib.TypeUser, UserUID: "u-self"}
+
+	check := func(req authlib.CheckRequest) bool {
+		resp, err := client.Check(context.Background(), self, req, "")
+		require.NoError(t, err)
+		return resp.Allowed
+	}
+
+	base := authlib.CheckRequest{Group: "iam.grafana.app", Resource: "users", Verb: utils.VerbGet, Namespace: "stacks-1"}
+
+	t.Run("user can get their own user", func(t *testing.T) {
+		req := base
+		req.Name = "u-self"
+		assert.True(t, check(req))
+	})
+
+	t.Run("user cannot get another user", func(t *testing.T) {
+		req := base
+		req.Name = "u-other"
+		assert.False(t, check(req))
+	})
+
+	t.Run("self case does not apply to writes", func(t *testing.T) {
+		req := base
+		req.Name = "u-self"
+		req.Verb = utils.VerbUpdate
+		assert.False(t, check(req))
+	})
+
+	t.Run("self case does not apply to non-user identities", func(t *testing.T) {
+		req := base
+		req.Name = "svc-1"
+		resp, err := client.Check(context.Background(),
+			&identity.StaticRequester{Namespace: "stacks-1", Type: authlib.TypeAccessPolicy, UserUID: "svc-1"}, req, "")
+		require.NoError(t, err)
+		assert.False(t, resp.Allowed)
+	})
+}
+
 func TestAuthzLimitedClient_Compile(t *testing.T) {
 	mockClient := authlib.FixedAccessClient(false)
 	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})

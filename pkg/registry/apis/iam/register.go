@@ -291,6 +291,9 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == "users" {
+					if allowSelfUserRead(ctx, a) {
+						return authorizer.DecisionAllow, "", nil
+					}
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}

@@ -240,6 +240,88 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 	}
 }
 
+// newUserAuthInfo returns an AuthInfo for a user identity with the given UID.
+func newUserAuthInfo(uid string) types.AuthInfo {
+	return authn.NewIDTokenAuthInfo(
+		authn.Claims[authn.AccessTokenClaims]{},
+		&authn.Claims[authn.IDTokenClaims]{
+			Rest: authn.IDTokenClaims{Type: types.TypeUser, Identifier: uid},
+		},
+	)
+}
+
+func TestUserAuthorizerSelfGet(t *testing.T) {
+	const ownUID = "user-self"
+
+	tests := []struct {
+		name         string
+		verb         string
+		subresource  string
+		name_        string
+		wantDecision authorizer.Decision
+		wantCheck    bool
+	}{
+		{
+			name:         "GET own user is allowed without users:read",
+			verb:         "get",
+			name_:        ownUID,
+			wantDecision: authorizer.DecisionAllow,
+			wantCheck:    false,
+		},
+		{
+			name:         "GET another user falls through to RBAC",
+			verb:         "get",
+			name_:        "user-other",
+			wantDecision: authorizer.DecisionDeny,
+			wantCheck:    true,
+		},
+		{
+			name:         "LIST is not covered by the self case",
+			verb:         "list",
+			name_:        "",
+			wantDecision: authorizer.DecisionDeny,
+			wantCheck:    true,
+		},
+		{
+			name:         "UPDATE own user is not covered by the self case",
+			verb:         "update",
+			name_:        ownUID,
+			wantDecision: authorizer.DecisionDeny,
+			wantCheck:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkCalled := false
+			fakeClient := &fakeAccessClient{
+				checkFunc: func(_ context.Context, _ types.AuthInfo, _ types.CheckRequest, _ string) (types.CheckResponse, error) {
+					checkCalled = true
+					return types.CheckResponse{Allowed: false}, nil
+				},
+			}
+
+			auth := newUserAuthorizer(fakeClient)
+			ctx := types.WithAuthInfo(context.Background(), newUserAuthInfo(ownUID))
+
+			attr := authorizer.AttributesRecord{
+				ResourceRequest: true,
+				APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+				Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+				Subresource:     tt.subresource,
+				Name:            tt.name_,
+				Verb:            tt.verb,
+				Namespace:       "org-1",
+			}
+
+			decision, _, err := auth.Authorize(ctx, attr)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantDecision, decision)
+			assert.Equal(t, tt.wantCheck, checkCalled, "access check consultation mismatch")
+		})
+	}
+}
+
 // TestUserAuthorizerStatusVerbMapping verifies that the user/status subresource
 // maps request verbs to the correct RBAC check verbs (GET→get, UPDATE→update, PATCH→update).
 func TestUserAuthorizerStatusVerbMapping(t *testing.T) {
