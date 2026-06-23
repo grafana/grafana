@@ -8,7 +8,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { FiringAlertsCard, MAX_FIRING_ALERTS } from './FiringAlertsCard';
+import { FiringAlertsCard } from './FiringAlertsCard';
+import { HOME_CARD_MAX_ITEMS } from './constants';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -187,9 +188,9 @@ describe('FiringAlertsCard', () => {
     expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
   });
 
-  it('caps the rendered list at MAX_FIRING_ALERTS while badges count every alert', async () => {
+  it('caps the rendered list at HOME_CARD_MAX_ITEMS while badges count every alert', async () => {
     mockTeams([]);
-    const many = Array.from({ length: MAX_FIRING_ALERTS + 1 }, (_, i) =>
+    const many = Array.from({ length: HOME_CARD_MAX_ITEMS + 1 }, (_, i) =>
       makeAlert({ labels: { alertname: `Alert ${i}`, severity: 'critical', team: 'platform' } })
     );
     mockAlerts(many);
@@ -198,8 +199,8 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('Alert 0')).toBeInTheDocument();
     // Render is capped even though one more alert is firing...
-    expect(screen.getAllByRole('listitem')).toHaveLength(MAX_FIRING_ALERTS);
+    expect(screen.getAllByRole('listitem')).toHaveLength(HOME_CARD_MAX_ITEMS);
     // ...but the severity badge still counts every alert.
-    expect(screen.getByText(new RegExp(`${MAX_FIRING_ALERTS + 1} critical`, 'i'))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`${HOME_CARD_MAX_ITEMS + 1} critical`, 'i'))).toBeInTheDocument();
   });
 });

@@ -164,4 +164,19 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
   });
+
+  it('renders more than five active incidents (display cap raised to 50)', async () => {
+    const many: IncidentPreview[] = Array.from({ length: 8 }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(many);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('Incident 0')).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(8);
+  });
 });

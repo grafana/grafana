@@ -10581,7 +10581,6 @@
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
       "high-count_other": "{{count}} high",
-      "retry": "Retry",
       "severity-critical": "Critical",
       "severity-high": "High",
       "severity-low": "Low",
@@ -10607,7 +10606,6 @@
     "incidents-card": {
       "empty": "No active incidents.",
       "error-title": "Could not load active incidents",
-      "retry": "Retry",
       "title": "Active incidents",
       "view-all": "View all incidents"
     },
@@ -10630,6 +10628,9 @@
       "empty-description": "You can star your favorite dashboards by clicking the <1></1> from the dashboard page.",
       "error-title": "Could not load starred dashboards",
       "loading": "Loading starred dashboards..."
+    },
+    "summary-card": {
+      "retry": "Retry"
     }
   },
   "import-overview": {
