@@ -57,7 +57,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
           </>
         )}
         {isManaged(playlist) && (
-          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} />
+          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
         )}
       </Card.Actions>
       <Card.SecondaryActions>
