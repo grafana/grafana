@@ -9,8 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -246,6 +249,64 @@ func TestCheckDeletePreconditions(t *testing.T) {
 			Preconditions: &metav1.Preconditions{UID: uidPtr("other")},
 		})
 		require.True(t, apierrors.IsConflict(err))
+	})
+}
+
+type listerFunc func(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error)
+
+func (f listerFunc) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	return f(ctx, options)
+}
+
+func TestDeleteCollectionPerItem(t *testing.T) {
+	lister := listerFunc(func(_ context.Context, _ *metainternalversion.ListOptions) (runtime.Object, error) {
+		return &foldersv1.FolderList{Items: []foldersv1.Folder{
+			{ObjectMeta: metav1.ObjectMeta{Name: "a"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "b"}},
+			{ObjectMeta: metav1.ObjectMeta{Name: "c"}},
+		}}, nil
+	})
+
+	t.Run("delegates a delete per listed item", func(t *testing.T) {
+		var deleted []string
+		deleteOne := func(_ context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+			deleted = append(deleted, name)
+			return nil, false, nil
+		}
+
+		out, err := deleteCollectionPerItem(context.Background(), lister, deleteOne, nil, nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, []string{"a", "b", "c"}, deleted)
+		items, err := meta.ExtractList(out)
+		require.NoError(t, err)
+		require.Len(t, items, 3)
+	})
+
+	t.Run("tolerates NotFound from a delegated delete", func(t *testing.T) {
+		deleteOne := func(_ context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+			if name == "b" {
+				return nil, false, apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, name)
+			}
+			return nil, false, nil
+		}
+
+		_, err := deleteCollectionPerItem(context.Background(), lister, deleteOne, nil, nil, nil)
+		require.NoError(t, err)
+	})
+
+	t.Run("stops on the first non-NotFound error", func(t *testing.T) {
+		var attempted []string
+		deleteOne := func(_ context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+			attempted = append(attempted, name)
+			if name == "b" {
+				return nil, false, errors.New("boom")
+			}
+			return nil, false, nil
+		}
+
+		_, err := deleteCollectionPerItem(context.Background(), lister, deleteOne, nil, nil, nil)
+		require.Error(t, err)
+		require.Equal(t, []string{"a", "b"}, attempted, "must stop at the failing item")
 	})
 }
 

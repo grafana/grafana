@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -47,6 +48,13 @@ type finalizerStorage struct {
 func newFinalizerStorage(store *registry.Store, searcher resourcepb.ResourceIndexClient, cascadeEnabled bool) *finalizerStorage {
 	return &finalizerStorage{Store: store, searcher: searcher, cascadeEnabled: cascadeEnabled}
 }
+
+// finalizerStorage must intercept both single and collection deletes; otherwise DeleteCollection is
+// promoted from the embedded store and bypasses the finalizer/label handling.
+var (
+	_ rest.GracefulDeleter   = (*finalizerStorage)(nil)
+	_ rest.CollectionDeleter = (*finalizerStorage)(nil)
+)
 
 func (s *finalizerStorage) Delete(
 	ctx context.Context,
@@ -126,6 +134,69 @@ func (s *finalizerStorage) Delete(
 	}
 	s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	return out, deleted, nil
+}
+
+// collectionLister is the subset of the embedded store used to enumerate a collection delete.
+type collectionLister interface {
+	List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error)
+}
+
+// DeleteCollection routes a collection delete (e.g. `kubectl delete folders --all` or a
+// label-selector delete) through this wrapper's per-object Delete, instead of the embedded store's
+// DeleteCollection. Going straight to the embedded store would skip ensureTerminationMetadata /
+// removeTerminationMetadata: with cascade on the folders would carry the finalizer but never the
+// terminating label the poller searches on (stuck terminating), and with the flag off the vestigial
+// finalizers would not be stripped.
+func (s *finalizerStorage) DeleteCollection(
+	ctx context.Context,
+	deleteValidation rest.ValidateObjectFunc,
+	options *metav1.DeleteOptions,
+	listOptions *metainternalversion.ListOptions,
+) (runtime.Object, error) {
+	return deleteCollectionPerItem(ctx, s.Store, s.Delete, deleteValidation, options, listOptions)
+}
+
+// deleteCollectionPerItem lists the matching folders and deletes each through deleteOne (the
+// wrapper's Delete), so every item gets the same finalizer/label handling a single delete would. It
+// stops at the first non-NotFound error, returning the items deleted so far.
+func deleteCollectionPerItem(
+	ctx context.Context,
+	lister collectionLister,
+	deleteOne func(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error),
+	deleteValidation rest.ValidateObjectFunc,
+	options *metav1.DeleteOptions,
+	listOptions *metainternalversion.ListOptions,
+) (runtime.Object, error) {
+	listObj, err := lister.List(ctx, listOptions)
+	if err != nil {
+		return nil, err
+	}
+	items, err := meta.ExtractList(listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	deleted := make([]runtime.Object, 0, len(items))
+	for _, item := range items {
+		accessor, err := meta.Accessor(item)
+		if err != nil {
+			return nil, err
+		}
+		out, _, err := deleteOne(ctx, accessor.GetName(), deleteValidation, options)
+		if err != nil && !apierrors.IsNotFound(err) {
+			return nil, err
+		}
+		if out != nil {
+			deleted = append(deleted, out)
+		} else {
+			deleted = append(deleted, item)
+		}
+	}
+
+	if err := meta.SetList(listObj, deleted); err != nil {
+		return nil, err
+	}
+	return listObj, nil
 }
 
 // checkDeletePreconditions enforces DeleteOptions.Preconditions (UID / ResourceVersion) against the
