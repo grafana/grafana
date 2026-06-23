@@ -7210,6 +7210,13 @@
           "static-options": "Static options ({{staticOptionsCount}})"
         },
         "title": "Query variable: {{name}}"
+      },
+      "spreadsheet": {
+        "add-option": "Add new option",
+        "drag-to-reorder": "Drag and drop to reorder",
+        "paste-error": "Could not paste clipboard content",
+        "paste-parse-error": "Could not parse clipboard content",
+        "remove-option": "Remove {{optionName}}"
       }
     },
     "query-variable-editor-form": {

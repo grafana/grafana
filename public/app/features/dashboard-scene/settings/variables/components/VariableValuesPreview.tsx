@@ -146,7 +146,7 @@ function VariableValuesWithPropsPreview({
 const sanitizeKey = (key: string) => key.replace(/\./g, '__dot__');
 const unsanitizeKey = (key: string) => key.replace(/__dot__/g, '.');
 
-export function VariableValuesWithoutPropsPreview({
+function VariableValuesWithoutPropsPreview({
   options,
   noPagination,
 }: {

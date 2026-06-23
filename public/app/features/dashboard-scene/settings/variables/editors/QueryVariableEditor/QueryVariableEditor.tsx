@@ -167,6 +167,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
     }
 
     return { datasource, VariableQueryEditor };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasourceRef]);
 
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
