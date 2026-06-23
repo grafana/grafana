@@ -10,8 +10,7 @@ import {
   type ActionModel,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, IconButton, Tag, usePanelContext, useStyles2 } from '@grafana/ui';
-import { VizTooltipFooter } from '@grafana/ui/internal';
+import { Stack, IconButton, Tag, usePanelContext, useStyles2, VizTooltipFooter } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';

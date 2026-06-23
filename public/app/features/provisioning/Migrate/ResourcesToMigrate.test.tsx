@@ -9,21 +9,9 @@ const folders: FolderRow[] = [
     title: 'Team A',
     dashboardCount: 2,
     directDashboards: [
-      { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-      { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
+      { uid: 'd1', title: 'Dashboard One' },
+      { uid: 'd2', title: 'Dashboard Two' },
     ],
-    allDashboards: [
-      { uid: 'd1', title: 'Dashboard One', url: '/d/d1' },
-      { uid: 'd2', title: 'Dashboard Two', url: '/d/d2' },
-    ],
-  },
-  {
-    uid: 'managed',
-    title: 'Managed Folder',
-    managedBy: 'repo',
-    dashboardCount: 3,
-    directDashboards: [],
-    allDashboards: [],
   },
 ];
 
@@ -47,16 +35,15 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
 }
 
 describe('ResourcesToMigrate', () => {
-  it('lists unmanaged folders and hides managed ones', () => {
+  it('lists the folders it is given', () => {
     setup();
 
     expect(screen.getByText('Resources to migrate')).toBeInTheDocument();
     expect(screen.getByText('Team A')).toBeInTheDocument();
-    expect(screen.queryByText('Managed Folder')).not.toBeInTheDocument();
     expect(screen.getByText('Showing 1 of 1 folder')).toBeInTheDocument();
   });
 
-  it('expands a folder to reveal its resources', async () => {
+  it('expands a folder to reveal its dashboards', async () => {
     const { user } = setup();
 
     expect(screen.queryByText('Dashboard One')).not.toBeInTheDocument();
@@ -79,12 +66,10 @@ describe('ResourcesToMigrate', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /select all/i }));
 
-    // Only the single migratable folder shown is selected — not the managed one.
     expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], true);
   });
 
   it('disables the migrate button when the selection cannot be submitted', () => {
-    // e.g. nothing selected, or only empty folders that resolve to no resources.
     setup({ selectedCount: 0, submitDisabled: true });
 
     expect(screen.getByRole('button', { name: /migrate selected \(0\)/i })).toBeDisabled();
@@ -126,10 +111,10 @@ describe('ResourcesToMigrate', () => {
     expect(screen.queryByRole('button', { name: /migrate selected/i })).not.toBeInTheDocument();
   });
 
-  it('renders the all-managed empty state when there are no unmanaged folders', () => {
-    setup({ folders: [folders[1]] });
+  it('renders the all-managed empty state when there are no folders to migrate', () => {
+    setup({ folders: [] });
 
-    expect(screen.getByText('All folders are already managed.')).toBeInTheDocument();
+    expect(screen.getByText('All dashboards are already managed by Git.')).toBeInTheDocument();
   });
 
   describe('search, sort and expansion', () => {
@@ -139,20 +124,15 @@ describe('ResourcesToMigrate', () => {
         title: 'Alpha',
         dashboardCount: 2,
         directDashboards: [
-          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
-          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
-        ],
-        allDashboards: [
-          { uid: 'a1', title: 'Alpha One', url: '/d/a1' },
-          { uid: 'a2', title: 'Alpha Two', url: '/d/a2' },
+          { uid: 'a1', title: 'Alpha One' },
+          { uid: 'a2', title: 'Alpha Two' },
         ],
       },
       {
         uid: 'beta',
         title: 'Beta',
         dashboardCount: 5,
-        directDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
-        allDashboards: [{ uid: 'b1', title: 'Beta One', url: '/d/b1' }],
+        directDashboards: [{ uid: 'b1', title: 'Beta One' }],
       },
     ];
 
@@ -179,6 +159,33 @@ describe('ResourcesToMigrate', () => {
       expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
     });
 
+    it('collapses an expanded folder', async () => {
+      const { user } = setup();
+
+      await user.click(screen.getByRole('button', { name: /expand team a/i }));
+      expect(screen.getByText('Dashboard One')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /collapse team a/i }));
+      expect(screen.queryByText('Dashboard One')).not.toBeInTheDocument();
+    });
+
+    it('re-sorts when the sort control changes', async () => {
+      const { user } = setup({ folders: twoFolders });
+
+      // Default count-desc puts Beta (5) before Alpha (2); switching to A–Z flips it.
+      expect(folderTitleOrder()).toEqual(['Beta', 'Alpha']);
+
+      // The sort control is the only combobox in this panel. Navigate to the
+      // "Fewest resources" option (count-asc) with the keyboard — the menu is
+      // virtualized, so keyboard selection is more reliable than clicking.
+      const sort = screen.getByRole('combobox');
+      await user.click(sort);
+      await user.keyboard('{ArrowDown}{Enter}');
+
+      // count-asc puts Alpha (2) before Beta (5), flipping the default order.
+      expect(folderTitleOrder()).toEqual(['Alpha', 'Beta']);
+    });
+
     it('marks select-all indeterminate when only some visible folders are selected', () => {
       setup({ folders: twoFolders, selectedFolderUids: new Set(['alpha']) });
 
@@ -195,40 +202,6 @@ describe('ResourcesToMigrate', () => {
 
       // Only the visible (matching) folder is toggled, not Beta.
       expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['alpha'], true);
-    });
-
-    it('hints to migrate the folder when its dashboards live only in subfolders', async () => {
-      const subfoldersOnly: FolderRow = {
-        uid: 'parent',
-        title: 'Parent',
-        dashboardCount: 3,
-        directDashboards: [],
-        allDashboards: [{ uid: 'c1', title: 'C1', url: '/d/c1' }],
-      };
-      const { user } = setup({ folders: [subfoldersOnly] });
-
-      await user.click(screen.getByRole('button', { name: /expand parent/i }));
-
-      expect(screen.getByText(/in subfolders/i)).toBeInTheDocument();
-    });
-
-    it('hints how many more resources are nested when a folder has both direct and nested ones', async () => {
-      const mixed: FolderRow = {
-        uid: 'mixed',
-        title: 'Mixed',
-        dashboardCount: 5, // 2 direct + 3 nested
-        directDashboards: [
-          { uid: 'd1', title: 'Direct One', url: '/d/d1' },
-          { uid: 'd2', title: 'Direct Two', url: '/d/d2' },
-        ],
-        allDashboards: [{ uid: 'd1', title: 'Direct One', url: '/d/d1' }],
-      };
-      const { user } = setup({ folders: [mixed] });
-
-      await user.click(screen.getByRole('button', { name: /expand mixed/i }));
-
-      expect(screen.getByText('Direct One')).toBeInTheDocument();
-      expect(screen.getByText(/3 more in subfolders/i)).toBeInTheDocument();
     });
 
     it('locks a folder’s dashboards as checked when the folder itself is selected', async () => {

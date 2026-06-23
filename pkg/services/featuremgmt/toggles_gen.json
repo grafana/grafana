@@ -2715,18 +2715,18 @@
     {
       "metadata": {
         "name": "heatmapRowsAxisOptions",
-        "resourceVersion": "1779473680521",
+        "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-05-22 18:14:40.521505 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-06-22 18:16:05.311396 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5000,6 +5000,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.protoRowParser",
+        "resourceVersion": "1782139478281",
+        "creationTimestamp": "2026-06-22T14:44:38Z"
+      },
+      "spec": {
+        "description": "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

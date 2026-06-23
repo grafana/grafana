@@ -13,7 +13,7 @@ import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
 import { ResourcesToMigrate } from './ResourcesToMigrate';
 import { useFolderMigrationData } from './hooks/useFolderMigrationData';
-import { isMigratableFolder, resolveSelection } from './selection';
+import { resolveSelection } from './selection';
 import { aggregateDashboardTotals, aggregateFolderCounts, computeBreakdowns } from './stats';
 
 type DrawerScope = 'all' | 'selected';
@@ -82,16 +82,13 @@ export function Migrate() {
   // with the `write` workflow — matching the guard in the drawer. Without one,
   // the table footer surfaces a connect action instead of a dead button.
   const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
-  // `allSelected` reflects whether every migratable folder is picked (drives the
-  // "Migrate all" → migrate-everything path). The select-all checkbox itself is
-  // scoped to the search-filtered rows inside the table.
-  const migratableUids = folders.filter(isMigratableFolder).map((f) => f.uid);
-  const allSelected = migratableUids.length > 0 && migratableUids.every((uid) => selectedFolderUids.has(uid));
-  // "Migrate all" (everything) is valid whenever there are migratable folders;
-  // a partial selection needs at least one resolved dashboard ref — picking
-  // only empty folders resolves to nothing migratable, so don't allow it to
-  // silently fall through to a migrate-everything.
-  const canSubmit = allSelected ? migratableUids.length > 0 : selection.resources.length > 0;
+  // `allSelected` reflects whether every folder in the table is picked (drives
+  // the "Migrate all" → migrate-everything path). The select-all checkbox itself
+  // is scoped to the search-filtered rows inside the table.
+  const allSelected = folders.length > 0 && folders.every((folder) => selectedFolderUids.has(folder.uid));
+  // "Migrate all" runs the legacy migrate-everything job; a partial selection
+  // needs at least one resolved dashboard ref to send.
+  const canSubmit = allSelected ? folders.length > 0 : selection.resources.length > 0;
   // Stats-derived: is there anything unmanaged at all? Used for the
   // migrate-everything fallback when the folder list itself can't be loaded —
   // that job is stats-driven and doesn't need the per-folder enumeration.
@@ -114,7 +111,7 @@ export function Migrate() {
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
-      <OverviewStatCards totals={totals} folderCounts={folderCounts} />
+      <OverviewStatCards totals={totals} />
 
       {isFoldersLoading ? (
         <Stack direction="row" alignItems="center" gap={1}>

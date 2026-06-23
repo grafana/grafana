@@ -114,6 +114,8 @@ describe('MigrateDrawer', () => {
     expect(await screen.findByText('Pulling...')).toBeInTheDocument();
     // It must be a migrate job (not a plain pull).
     expect(postedBody).toContain('"action":"migrate"');
+    // Folder UIDs are always regenerated so the migration creates new folders.
+    expect(postedBody).toContain('"generateNewFolderIDs":true');
     // The selection form is replaced by the job view.
     expect(screen.queryByText(/target repository/i)).not.toBeInTheDocument();
   });
@@ -165,7 +167,7 @@ describe('MigrateDrawer', () => {
 
       expect(await screen.findByRole('button', { name: /migrate selected/i })).toBeInTheDocument();
       // The "migrate everything" copy must not show in selective mode.
-      expect(screen.queryByText(/all folders and resources will be migrated/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/all resources not yet managed by git will be migrated/i)).not.toBeInTheDocument();
       expect(screen.getByText(/2 selected resources/i)).toBeInTheDocument();
     });
 
@@ -207,6 +209,8 @@ describe('MigrateDrawer', () => {
 
       expect(await screen.findByText('Pulling...')).toBeInTheDocument();
       expect(postedBody).toContain('"action":"migrate"');
+      // Folder UIDs are regenerated in selective migrations too.
+      expect(postedBody).toContain('"generateNewFolderIDs":true');
       // The selected dashboard refs are forwarded to the migrate job.
       expect(postedBody).toContain('"resources"');
       expect(postedBody).toContain('dash-1');
