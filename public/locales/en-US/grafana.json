@@ -12962,11 +12962,11 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
-      "create-default": "Create resource: {{title}}",
-      "delete-default": "Delete resource: {{title}}",
-      "move-default": "Move resource: {{title}}",
-      "rename-default": "Rename resource: {{title}}",
-      "update-default": "Save resource: {{title}}"
+      "create-default": "Create {{resourceKind}}: {{title}}",
+      "delete-default": "Delete {{resourceKind}}: {{title}}",
+      "move-default": "Move {{resourceKind}}: {{title}}",
+      "rename-default": "Rename {{resourceKind}}: {{title}}",
+      "update-default": "Save {{resourceKind}}: {{title}}"
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",

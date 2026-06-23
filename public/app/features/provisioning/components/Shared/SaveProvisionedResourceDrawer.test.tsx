@@ -99,7 +99,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     setup();
 
     expect(await screen.findByRole('heading', { name: /save provisioned thing/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^save$/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
   });
