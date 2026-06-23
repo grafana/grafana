@@ -84,7 +84,7 @@ export function ModalEditor(props: ModalEditorProps) {
                   </Button>
                 </div>
               ) : (
-                <VariableValuesPreview options={options} staticOptions={[]} />
+                <VariableValuesPreview options={options} staticOptions={[]} noPagination hideTitle />
               )}
             </div>
           </div>
@@ -218,7 +218,7 @@ function getStyles(theme: GrafanaTheme2) {
     splitContainer: css({
       width: '100%',
       overflow: 'auto',
-      padding: theme.spacing(0, 0.5),
+      padding: theme.spacing(2, 0.5),
     }),
     noOptions: css({
       display: 'flex',
@@ -243,7 +243,8 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'absolute',
       left: 0,
       right: 0,
-      bottom: theme.spacing(3),
+      bottom: 0,
+      // Fades ~1.5 table rows above the splitter to hint at truncated content
       height: `calc(${theme.spacing(3)} + 48px)`,
       background: `linear-gradient(transparent, ${theme.colors.background.primary})`,
       pointerEvents: 'none',
