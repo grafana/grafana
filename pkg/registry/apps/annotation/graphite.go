@@ -29,9 +29,8 @@ func FormatGraphiteText(what string, data string) string {
 	return text
 }
 
-// parseGraphiteTags normalizes the Graphite `tags` field: a single space-separated
-// string (Graphite prior to 0.10.0) or an array of strings; anything else (including a
-// missing value) is rejected.
+// parseGraphiteTags normalizes the Graphite `tags` field.
+// Supports either a single space-separated string or an array of strings.
 func parseGraphiteTags(raw any) ([]string, error) {
 	var tagsArray []string
 	switch tags := raw.(type) {
