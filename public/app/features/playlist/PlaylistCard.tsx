@@ -8,9 +8,11 @@ import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
 import {
   getManagerIdentity,
   getManagerKind,
+  getSourcePath,
   isManaged,
   isManagedResourceReadOnly,
 } from 'app/features/provisioning/utils/managedResource';
@@ -66,6 +68,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             </Button>
           </>
         )}
+        <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} />
       </Card.Actions>
       <Card.SecondaryActions>
         <ModalsController key="button-share">
