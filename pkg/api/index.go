@@ -104,6 +104,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
+	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
 	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
 	if err != nil {
@@ -174,6 +175,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Assets:                              assets,
 		RenderBindingSupported:              renderBindingSupported,
 		AssetSriChecksEnabled:               grafanaAssetSriChecks,
+		NewPreferencesPage:                  newPreferencesPage,
 	}
 
 	if hs.Cfg.CSPEnabled {
@@ -295,12 +297,7 @@ func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam str
 	}
 
 	if pref.IsValidThemeID(themePrefId) {
-		theme := pref.GetThemeByID(themePrefId)
-		// TODO refactor
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !theme.IsExtra || hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaconThemes) {
-			return theme
-		}
+		return pref.GetThemeByID(themePrefId)
 	}
 
 	return pref.GetThemeByID(hs.Cfg.DefaultTheme)

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -87,14 +88,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamSearch                        *TeamSearchHandler
+	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
-	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *user.LegacyDisplayREST
+	display *display.DisplayHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.

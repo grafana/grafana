@@ -1,7 +1,7 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactElement } from 'react';
+import { type ReactElement, type ReactNode, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
@@ -21,15 +21,9 @@ import {
   type QueryEditorUIState,
   type QueryOptionsState,
   type QueryRunnerState,
+  type StackedEditorState,
 } from './QueryEditorContext';
 import { type Transformation } from './types';
-
-export function setup(jsx: React.ReactElement) {
-  return {
-    user: userEvent.setup(),
-    ...render(jsx),
-  };
-}
 
 export const ds1SettingsMock: DataSourceInstanceSettings = {
   id: 1,
@@ -125,6 +119,21 @@ export const mockQueryOptionsState: QueryOptionsState = {
   focusedField: null,
 };
 
+/**
+ * Builds a fresh `StackedEditorState` for tests. Defaults to the natural "off" state; callers
+ * pass overrides for the fields they care about (e.g. `{ enabled: true, enter: jest.fn() }`).
+ * Each call returns new `jest.fn()` mocks so assertions don't leak between tests.
+ */
+export function makeStackedMode(overrides: Partial<StackedEditorState> = {}): StackedEditorState {
+  return {
+    enabled: false,
+    enter: jest.fn(),
+    exit: jest.fn(),
+    syncActiveItem: jest.fn(),
+    ...overrides,
+  };
+}
+
 export const mockUIStateBase = {
   selectedQueryDsData: null,
   selectedQueryDsLoading: false,
@@ -145,6 +154,9 @@ export const mockUIStateBase = {
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
   setMultiSelectMode: jest.fn(),
+  stackedMode: makeStackedMode(),
+  confirmingDeleteActionKey: null,
+  setConfirmingDeleteActionKey: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -162,13 +174,13 @@ export const mockTypeConfig: QueryEditorTypeConfigState = {
     icon: 'database',
     color: '#ff9800',
     getLabel: () => 'Query',
-    deleteConfirmation: false,
+    deleteConfirmation: true,
   },
   [QueryEditorType.Expression]: {
     icon: 'calculator-alt',
     color: '#9c27b0',
     getLabel: () => 'Expression',
-    deleteConfirmation: false,
+    deleteConfirmation: true,
   },
   [QueryEditorType.Transformation]: {
     icon: 'process',
@@ -195,6 +207,36 @@ interface CreateQueryEditorProviderOptions {
   qrState?: Partial<QueryRunnerState>;
   panelState?: Partial<PanelState>;
   alertingState?: Partial<AlertingState>;
+}
+
+/**
+ * Wires the inline-delete confirmation state with real React state so tests exercise the same
+ * flow as production. Tests can still override `confirmingDeleteActionKey` / `setConfirmingDeleteActionKey`
+ * via `uiStateOverrides` for edge cases.
+ */
+function StatefulConfirmationProvider({
+  uiState,
+  children,
+  render,
+}: {
+  uiState: QueryEditorUIState;
+  children: ReactNode;
+  render: (uiState: QueryEditorUIState, children: ReactNode) => ReactElement;
+}) {
+  const [confirmingDeleteActionKey, setConfirmingDeleteActionKey] = useState<string | null>(
+    uiState.confirmingDeleteActionKey ?? null
+  );
+
+  const wiredUiState = useMemo<QueryEditorUIState>(
+    () => ({
+      ...uiState,
+      confirmingDeleteActionKey,
+      setConfirmingDeleteActionKey,
+    }),
+    [uiState, confirmingDeleteActionKey]
+  );
+
+  return render(wiredUiState, children);
 }
 
 /**
@@ -248,8 +290,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
   const defaultUiState: QueryEditorUIState = {
     selectedQuery,
     selectedTransformation,
-    selectedQueryRefIds: selectedQuery ? [selectedQuery.refId] : [],
-    selectedTransformationIds: selectedTransformation ? [selectedTransformation.transformId] : [],
+    selectedQueryRefIds: [],
+    selectedTransformationIds: [],
     multiSelectMode: false,
     setSelectedQuery: jest.fn(),
     setSelectedTransformation: jest.fn(),
@@ -270,11 +312,14 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     pendingTransformation: null,
     setPendingTransformation: jest.fn(),
     finalizePendingTransformation: jest.fn(),
+    stackedMode: makeStackedMode(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
     pendingSavedQuery: null,
     setPendingSavedQuery: jest.fn(),
     showVersionBanner: false,
+    confirmingDeleteActionKey: null,
+    setConfirmingDeleteActionKey: jest.fn(),
     ...uiStateOverrides,
   };
 
@@ -294,17 +339,24 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     user: userEvent.setup({ pointerEventsCheck: 0 }),
     ...render(
       <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <QueryEditorProvider
-          dsState={defaultDsState}
-          qrState={defaultQrState}
-          panelState={defaultPanelState}
+        <StatefulConfirmationProvider
           uiState={defaultUiState}
-          actions={defaultActions}
-          alertingState={defaultAlertingState}
-          typeConfig={mockTypeConfig}
+          render={(wiredUiState, wiredChildren) => (
+            <QueryEditorProvider
+              dsState={defaultDsState}
+              qrState={defaultQrState}
+              panelState={defaultPanelState}
+              uiState={wiredUiState}
+              actions={defaultActions}
+              alertingState={defaultAlertingState}
+              typeConfig={mockTypeConfig}
+            >
+              {wiredChildren}
+            </QueryEditorProvider>
+          )}
         >
           {children}
-        </QueryEditorProvider>
+        </StatefulConfirmationProvider>
       </OpenFeatureProvider>
     ),
   };

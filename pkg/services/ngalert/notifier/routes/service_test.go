@@ -5,9 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -71,21 +69,18 @@ func createServiceSut(
 
 func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "grafana-default"},
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{Receiver: definitions.Receiver{Name: "grafana-default"}},
 				},
 			},
-			ExtraConfigs: []definitions.ExtraConfiguration{
+			ExtraConfigs: []v1.ExtraConfiguration{
 				{
-					Identifier: "imported",
-					MergeMatchers: config.Matchers{
-						&labels.Matcher{Type: labels.MatchEqual, Name: "__imported", Value: "true"},
-					},
+					Identifier:         "imported",
 					AlertmanagerConfig: importedConfigYaml,
 				},
 			},
@@ -96,19 +91,19 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 
 func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 	return &legacy_storage.ConfigRevision{
-		Config: &definitions.PostableUserConfig{
-			AlertmanagerConfig: definitions.PostableApiAlertingConfig{
-				Config: definitions.Config{
-					Route: &definitions.Route{Receiver: "grafana-default"},
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{Receiver: "grafana-default"},
 				},
-				Receivers: []*definitions.PostableApiReceiver{
+				Receivers: []*v1.PostableApiReceiver{
 					{Receiver: definitions.Receiver{Name: "grafana-default"}},
 					{Receiver: definitions.Receiver{Name: "empty"}},
 				},
 			},
-			ManagedRoutes: definitions.ManagedRoutes{
-				"route-a": &definition.Route{Receiver: "grafana-default"},
-				"route-b": &definition.Route{Receiver: "grafana-default"},
+			ManagedRoutes: v1.ManagedRoutes{
+				"route-a": &v1.Route{Receiver: "grafana-default"},
+				"route-b": &v1.Route{Receiver: "grafana-default"},
 			},
 		},
 		ConcurrencyToken: "test-token",
@@ -170,7 +165,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
-		route, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.NoError(t, err)
 
 		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
@@ -199,7 +194,7 @@ func TestGetManagedRoute(t *testing.T) {
 
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -262,7 +257,7 @@ func TestGetManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
+		_, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -296,8 +291,8 @@ func TestGetManagedRoutes(t *testing.T) {
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		allowedNames := map[string]struct{}{
-			legacy_storage.UserDefinedRoutingTreeName: {},
-			"route-a": {},
+			models.DefaultRoutingTreeName: {},
+			"route-a":                     {},
 		}
 		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
 			FilterReadFunc: func(_ context.Context, _ identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error) {
@@ -318,7 +313,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		for _, r := range routes {
 			names = append(names, r.Name)
 		}
-		assert.ElementsMatch(t, []string{legacy_storage.UserDefinedRoutingTreeName, "route-a"}, names)
+		assert.ElementsMatch(t, []string{models.DefaultRoutingTreeName, "route-a"}, names)
 	})
 
 	t.Run("returns empty list when user has no access to any route", func(t *testing.T) {
@@ -369,7 +364,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 	t.Run("sets default permissions when create", func(t *testing.T) {
@@ -390,7 +385,7 @@ func TestCreateManagedRoute(t *testing.T) {
 		}
 		sut := createServiceSut(configStore, provStore, features, authz)
 
-		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
 	})
@@ -406,7 +401,7 @@ func TestUpdateManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
+		_, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
@@ -421,7 +416,7 @@ func TestDeleteManagedRoute(t *testing.T) {
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
-		err := sut.DeleteManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, models.ProvenanceNone, "v1", user)
+		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 
@@ -463,5 +458,81 @@ func TestDeleteManagedRoute(t *testing.T) {
 		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, models.ProvenanceNone, "", user)
 		require.NoError(t, err)
 		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+	})
+}
+
+// TestManagedRouteCRUD_DefaultTreeAlias verifies the CRUD methods accept the legacy/canonical alias
+// (models.DefaultRoutingTreeNameAlias, "default") as a reference to the default (root) routing tree,
+// behaving exactly as they do for the emitted name (models.DefaultRoutingTreeName, "user-defined").
+func TestManagedRouteCRUD_DefaultTreeAlias(t *testing.T) {
+	orgID := int64(1)
+	user := &user.SignedInUser{OrgID: 1}
+
+	newSut := func(rev *legacy_storage.ConfigRevision, features featuremgmt.FeatureToggles, authz routeAccessControl) *Service {
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		return createServiceSut(configStore, fakes.NewFakeProvisioningStore(), features, authz)
+	}
+
+	t.Run("Get via alias resolves to the default route", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+		// The response echoes the requested alias, but the route resolves to the root route...
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, route.Name)
+		assert.Equal(t, rev.Config.AlertmanagerConfig.Route.Receiver, route.Receiver)
+		// ...and its identity canonicalizes to the default tree, so RBAC scopes are stable across names.
+		assert.Equal(t, models.DefaultRoutingTreeName, route.GetUID())
+	})
+
+	t.Run("Get via alias resolves to the default route even when the managed routes flag is disabled", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, route.Name)
+	})
+
+	t.Run("Update via alias updates the root route, not a managed route", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		// Fetch the current version so the optimistic concurrency check passes.
+		current, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, user)
+		require.NoError(t, err)
+
+		updated, err := sut.UpdateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "empty"}, models.ProvenanceNone, current.Version, user)
+		require.NoError(t, err)
+		assert.Equal(t, models.DefaultRoutingTreeNameAlias, updated.Name)
+		assert.Equal(t, models.DefaultRoutingTreeName, updated.GetUID())
+		// The root route was modified in place; no managed route was created under the alias.
+		assert.Equal(t, "empty", rev.Config.AlertmanagerConfig.Route.Receiver)
+		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
+	})
+
+	t.Run("Delete via alias resets the default route and does not delete permissions", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		authz := &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{}
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), authz)
+
+		err := sut.DeleteManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, models.ProvenanceNone, "", user)
+		require.NoError(t, err)
+		// Same as deleting by the emitted name: it resets (not deletes) and keeps the route's permissions.
+		assert.Equal(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
+	})
+
+	t.Run("Create with the alias is rejected as a reserved name", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		sut := newSut(rev, featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies), &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
+
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeNameAlias, v1.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		require.ErrorIs(t, err, models.ErrRouteExists)
+		assert.NotContains(t, rev.Config.ManagedRoutes, models.DefaultRoutingTreeNameAlias)
 	})
 }

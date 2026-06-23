@@ -3,9 +3,18 @@ package user
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -13,9 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIntegrationUsers(t *testing.T) {
@@ -48,6 +54,7 @@ func TestIntegrationUsers(t *testing.T) {
 			doHiddenUsersTests(t, helper)
 			doUserFieldSelectorTests(t, helper)
 			doUserStatusUpdateTests(t, helper)
+			doDisplayTests(t, helper)
 
 			if mode < 3 {
 				doUserCRUDTestsUsingTheLegacyAPIs(t, helper)
@@ -589,6 +596,79 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
 		require.Equal(t, wantLastSeenAt, gotLastSeenAt,
 			"lastSeenAt should match the value provided in the status update")
+	})
+}
+
+func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("display endpoint returns identity info for known users and magic keys", func(t *testing.T) {
+		adminID, err := identity.UserIdentifier(helper.Org1.Admin.Identity.GetID())
+		require.NoError(t, err)
+		adminUID := helper.Org1.Admin.Identity.GetUID()
+		adminIDKey := strconv.FormatInt(adminID, 10)
+
+		q := url.Values{}
+		q.Add("key", adminUID)
+		q.Add("key", adminIDKey)
+		q.Add("key", "0")
+		q.Add("key", "anonymous:")
+		q.Add("key", "api-key:my-key")
+		q.Add("key", "bogus:1")
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
+
+		res := &iam.DisplayList{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   path,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.ElementsMatch(t, []string{adminUID, adminIDKey, "0", "anonymous:", "api-key:my-key", "bogus:1"}, res.Keys)
+		require.Equal(t, []string{"bogus:1"}, res.InvalidKeys)
+
+		var sawAdmin, sawSystemAdmin, sawAnonymous, sawAPIKey bool
+		for _, d := range res.Items {
+			switch {
+			case d.Identity.Type == authlib.TypeUser && d.InternalID == adminID:
+				sawAdmin = true
+			case d.Identity.Type == authlib.TypeUser && d.Identity.Name == "0":
+				require.Equal(t, "System admin", d.DisplayName)
+				sawSystemAdmin = true
+			case d.Identity.Type == authlib.TypeAnonymous:
+				require.Equal(t, "Anonymous", d.DisplayName)
+				sawAnonymous = true
+			case d.Identity.Type == authlib.TypeAPIKey:
+				require.Equal(t, "API Key", d.DisplayName)
+				require.Equal(t, "my-key", d.Identity.Name)
+				sawAPIKey = true
+			}
+		}
+		require.True(t, sawAdmin, "admin user should be returned for UID/ID lookup")
+		require.True(t, sawSystemAdmin)
+		require.True(t, sawAnonymous)
+		require.True(t, sawAPIKey)
+	})
+
+	t.Run("display endpoint resolves service accounts with the service-account type", func(t *testing.T) {
+		sa := helper.Org1.AdminServiceAccount
+		q := url.Values{}
+		q.Add("key", strconv.FormatInt(sa.Id, 10))
+
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
+
+		res := &iam.DisplayList{}
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: "GET",
+			Path:   path,
+		}, res)
+
+		require.Equal(t, 200, rsp.Response.StatusCode)
+		require.Empty(t, res.InvalidKeys)
+		require.Len(t, res.Items, 1)
+		require.Equal(t, authlib.TypeServiceAccount, res.Items[0].Identity.Type)
+		require.Equal(t, sa.Id, res.Items[0].InternalID)
 	})
 }
 

@@ -89,7 +89,7 @@ const TeamSettings = ({ team }: Props) => {
               <Input
                 {...register('email')}
                 // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-                placeholder="team@email.com"
+                placeholder="team@example.com"
                 type="email"
                 id="email-input"
               />

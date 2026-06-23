@@ -1,3 +1,3 @@
 export { Controls } from './Controls';
-export { Toolbar } from './Toolbar';
-export { Sidebar } from './Sidebar';
+export { Sidebar } from './sidebar/Sidebar';
+export { Panel } from './Panel';

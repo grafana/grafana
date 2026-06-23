@@ -248,7 +248,9 @@ export function PanelChrome({
       // '.u-axis' targets uPlot axis elements, preventing axis interactions from selecting the panel.
       if (
         evt.target instanceof Element &&
-        (evt.target.closest('button,a,canvas,svg,[role="button"],#grafana-portal-container,[role="columnheader"]') ||
+        (evt.target.closest(
+          'button,a,canvas,svg,[role="button"],[role="combobox"],#grafana-portal-container,[role="columnheader"]'
+        ) ||
           evt.target.classList.contains('u-over') ||
           evt.target.classList.contains('u-axis'))
       ) {
@@ -526,7 +528,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'unset',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',

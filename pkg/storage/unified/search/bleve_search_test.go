@@ -171,10 +171,38 @@ func TestCanSearchByTitle(t *testing.T) {
 
 		// word that doesn't exist
 		checkSearchQuery(t, index, newTestQuery("cats"), nil)
-		// string shorter than 3 chars (ngram min)
-		checkSearchQuery(t, index, newTestQuery("ma"), nil)
 		// substring that doesn't exist
 		checkSearchQuery(t, index, newTestQuery("A01"), nil)
+	})
+
+	t.Run("queries shorter than ngram min are rewritten as prefix wildcards", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "First Team",
+			"name2": "Team Alpha",
+			"name3": "Team Beta",
+			"name4": "mash potato",
+		})
+
+		// 1- and 2-char queries can't hit the n-gram index, so we rewrite them as
+		// a prefix wildcard ("f" → "f*"). The wildcard matches any token starting
+		// with the prefix, giving search-as-you-type prefix matching for short input.
+		checkSearchQuery(t, index, newTestQuery("f"), []string{"name1"})
+		checkSearchQuery(t, index, newTestQuery("fi"), []string{"name1"})
+		checkSearchQuery(t, index, newTestQuery("ma"), []string{"name4"})
+		// no word in any title starts with "zz" — prefix wildcard matches nothing.
+		checkSearchQuery(t, index, newTestQuery("zz"), nil)
+	})
+
+	t.Run("title filter ignores empty tokens from split values", func(t *testing.T) {
+		index := newTestDashboardsIndex(t, threshold, 2, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "foo bar",
+			"name2": "baz",
+		})
+
+		checkSearchQuery(t, index, newQueryByTitle("foo "), []string{"name1"})
+		checkSearchQuery(t, index, newQueryByTitle("foo-"), []string{"name1"})
 	})
 
 	t.Run("title search with character will match one document", func(t *testing.T) {
@@ -248,10 +276,8 @@ func TestCanSearchByTitle(t *testing.T) {
 }
 
 // TestTitleNgramFieldSearch queries exclusively against the title_ngram field
-// (via explicit QueryFields) to prove the dedicated ngram index mapping works
-// independently of the ngram mapping still present on the title field.
-// Once all instances have this mapping, the ngram mapping on title can be
-// removed and partial/prefix matching will rely entirely on title_ngram.
+// (via explicit QueryFields) to prove partial/prefix matching works without
+// relying on the title field mapping.
 func TestTitleNgramFieldSearch(t *testing.T) {
 	key := resource.NamespacedResource{
 		Namespace: "default",
@@ -310,13 +336,16 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 		checkSearchQuery(t, index, newNgramOnlyQuery("hello"), []string{"name1"})
 	})
 
-	t.Run("title_ngram field does not match short terms below ngram min", func(t *testing.T) {
+	t.Run("queries shorter than ngram min match via prefix wildcard", func(t *testing.T) {
 		index := newTestDashboardsIndex(t, threshold, 2, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "dashboard",
+			"name2": "unrelated",
 		})
-		// "da" is 2 chars, below NGRAM_MIN_TOKEN (3) — removeSmallTerms strips it
-		checkSearchQuery(t, index, newNgramOnlyQuery("da"), nil)
+		// "da" is 2 chars, below NGRAM_MIN_TOKEN (3). The query is rewritten to
+		// "da*" and matched as a wildcard against the title_ngram tokens — only
+		// the n-gram tokens starting with "da" match (e.g. "das", "dash", "dashb").
+		checkSearchQuery(t, index, newNgramOnlyQuery("da"), []string{"name1"})
 	})
 }
 
@@ -335,8 +364,7 @@ func TestWildcardQuery(t *testing.T) {
 		})
 
 		checkSearchQuery(t, index, newTestQuery("hell*"), []string{"name1"})
-		// title field also has a keyword mapping that preserves original case,
-		// so capitalized wildcards also match
+		// Title wildcard search is case-insensitive because title fields are indexed lowercased.
 		checkSearchQuery(t, index, newTestQuery("Hell*"), []string{"name1"})
 	})
 
@@ -391,6 +419,8 @@ func TestWildcardQuery(t *testing.T) {
 		checkSearchQuery(t, index, newTestQuery("*grafana dev overview*"), []string{"name1"})
 		// Partial multi-word match
 		checkSearchQuery(t, index, newTestQuery("*dev overview*"), []string{"name1"})
+		// Wildcard matching is case-insensitive for title_phrase.
+		checkSearchQuery(t, index, newTestQuery("*Dev Overview*"), []string{"name1"})
 	})
 
 	t.Run("default wildcard searches email and login fields", func(t *testing.T) {

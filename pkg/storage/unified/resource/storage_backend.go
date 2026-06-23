@@ -88,6 +88,7 @@ type kvStorageBackend struct {
 	eventPruningInterval    time.Duration
 	historyPruner           Pruner
 	garbageCollection       GarbageCollectionConfig
+	gcGate                  *GCGate
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	//reg     prometheus.Registerer
@@ -145,6 +146,16 @@ type KVBackend interface {
 	StorageBackend
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+
+	// KV returns the underlying KV store. Exposed so other subsystems
+	// (e.g. search snapshot storage) can share the same store rather than
+	// opening a second connection.
+	KV() KV
+
+	// LeaseManager returns the lease manager used by this backend, or nil
+	// if leases are disabled. Exposed so other subsystems can share the
+	// same manager and avoid running a second heartbeat loop.
+	LeaseManager() *lease.Manager
 }
 
 type KVBackendOptions struct {
@@ -155,6 +166,9 @@ type KVBackendOptions struct {
 	Reg                  prometheus.Registerer // TODO add metrics
 	Log                  log.Logger
 	GarbageCollection    GarbageCollectionConfig
+
+	// GCGate defers the start of the GC until released (optional).
+	GCGate *GCGate
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -246,7 +260,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			cancel()
 			return nil, errors.New("holder is required when enable_kv_leases is true")
 		}
-		leaseManager = lease.NewManager(kv, opts.Holder)
+		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
 	}
 
 	backend := &kvStorageBackend{
@@ -266,6 +280,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		garbageCollection:       garbageCollection,
+		gcGate:                  opts.GCGate,
 		searchLookback:          opts.SearchLookback,
 		disablePruner:           opts.DisablePruner,
 		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
@@ -330,6 +345,9 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	}
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
+	}
+	if k.leaseManager != nil {
+		k.leaseManager.Stop()
 	}
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
@@ -467,6 +485,17 @@ func (k *kvStorageBackend) initPruner(ctx context.Context) error {
 	return nil
 }
 
+// KV returns the KV store backing this storage backend. See KVBackend.KV.
+func (b *kvStorageBackend) KV() KV {
+	return b.kv
+}
+
+// LeaseManager returns the lease manager owned by this backend, or nil
+// if leases are disabled. See KVBackend.LeaseManager.
+func (b *kvStorageBackend) LeaseManager() *lease.Manager {
+	return b.leaseManager
+}
+
 func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	b.log.Info("starting garbage collection loop")
 
@@ -476,6 +505,10 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 	}
 
 	go func() {
+		if !b.gcGate.Wait(ctx, ctx.Done()) {
+			return
+		}
+
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
 		select {
@@ -758,12 +791,15 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 	return cutoffTimestamp
 }
 
-// toSnowflakeRV converts a microsecond RV to snowflake format if needed.
-// This ensures the KV backend is compatible with both RV formats during the
-// backend transition period.
+// ToSnowflakeRV converts a microsecond RV to snowflake format if needed,
+// leaving values that are already snowflake (or <= 0) unchanged. This keeps
+// the KV backend compatible with both RV formats during the backend
+// transition period, and lets callers outside this package canonicalize RVs
+// to a single encoding for comparison independent of which backend produced
+// them.
 //
 // TODO: remove when compatibility with SQL backend is no longer needed.
-func toSnowflakeRV(rv int64) int64 {
+func ToSnowflakeRV(rv int64) int64 {
 	if rv > 0 && !IsSnowflake(rv) {
 		return rvmanager.SnowflakeFromRV(rv)
 	}
@@ -881,7 +917,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		return 0, apierrors.NewBadRequest(err.Error())
 	}
 
-	event.PreviousRV = toSnowflakeRV(event.PreviousRV)
+	event.PreviousRV = ToSnowflakeRV(event.PreviousRV)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.WriteEvent", trace.WithAttributes(
 		attribute.String("event_type", event.Type.String()),
@@ -1190,7 +1226,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
-	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ReadResource", trace.WithAttributes(
 		attribute.String("namespace", req.Key.Namespace),
@@ -1279,7 +1315,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
-	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListIterator", trace.WithAttributes(
 		attribute.String("namespace", req.Options.Key.Namespace),
@@ -1313,7 +1349,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 			listOptions.ContinueNamespace = token.Namespace
 		}
 		listOptions.ContinueName = token.Name
-		listOptions.ResourceVersion = toSnowflakeRV(token.ResourceVersion)
+		listOptions.ResourceVersion = ToSnowflakeRV(token.ResourceVersion)
 	}
 
 	// We set the listRV to the last event resource version.
@@ -1574,7 +1610,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	sinceRv = toSnowflakeRV(sinceRv)
+	sinceRv = ToSnowflakeRV(sinceRv)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListModifiedSince", trace.WithAttributes(
 		attribute.String("namespace", key.Namespace),
@@ -1612,7 +1648,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		if skipLookback {
 			effectiveRv = sinceRv
 		} else {
-			effectiveRv = subtractDurationFromSnowflake(sinceRv, k.searchLookback)
+			effectiveRv = SubtractDurationFromSnowflake(sinceRv, k.searchLookback)
 		}
 	}
 
@@ -1795,7 +1831,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		return 0, err
 	}
 	key := req.Options.Key
-	req.ResourceVersion = toSnowflakeRV(req.ResourceVersion)
+	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListHistory", trace.WithAttributes(
 		attribute.String("namespace", key.Namespace),
@@ -1812,7 +1848,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		if err != nil {
 			return 0, fmt.Errorf("invalid continue token: %w", err)
 		}
-		lastSeenRV = toSnowflakeRV(token.ResourceVersion)
+		lastSeenRV = ToSnowflakeRV(token.ResourceVersion)
 	}
 
 	// Generate a new resource version for the list

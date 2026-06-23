@@ -39,7 +39,8 @@ type IndexViewData struct {
 	AppTitle  string // TODO: remove and get from request config?
 	AppSubUrl string // TODO: remove and get from request config?
 
-	Settings FSFrontendSettings
+	Settings     FSFrontendSettings
+	FullSettings *dtos.FrontendSettingsDTO // used behind feature flag instead of Settings
 
 	Assets      dtos.EntryPointAssets // Includes CDN info
 	DefaultUser dtos.CurrentUser
@@ -61,6 +62,12 @@ type IndexViewData struct {
 
 	// Feature flag for enabling SRI checks on Grafana assets
 	AssetSriChecksEnabled bool
+
+	// Feature flag for reducing the usage of Bootdata
+	ReduceBootdataAPI bool
+
+	// Feature flag for the new preferences page
+	NewPreferencesPage bool
 }
 
 // Templates setup.
@@ -80,7 +87,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	bootScriptRaw, err := os.ReadFile(filepath.Join(cfg.StaticRootPath, "build", "boot.js"))
 	if err != nil {
-		bootScriptRaw = []byte{}
+		return nil, fmt.Errorf("read boot.js: %w", err)
 	}
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
@@ -129,10 +136,12 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	ofClient := openfeature.NewDefaultClient()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
-	compiledBootScript, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagCompiledBootScript, false, openfeature.TransactionContext(ctx))
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
-	meticulousAIRecorderEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorder, false, openfeature.TransactionContext(ctx))
-	meticulousAIRecorderHighVolume, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMeticulousAIRecorderHighVolume, false, openfeature.TransactionContext(ctx))
+	meticulousAIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaMeticulousAIMode, "off", openfeature.TransactionContext(ctx))
+	meticulousAIEnabled := meticulousAIMode == "on-prod-env" || meticulousAIMode == "on-dev-env"
+	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
+	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
+	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
 		AppTitle:                              "Grafana",
@@ -143,18 +152,15 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		Nonce:                                 reqCtx.RequestNonce,
 		PublicDashboardAccessToken:            reqCtx.PublicDashboardAccessToken,
 		Settings:                              fsSettings,
+		FullSettings:                          requestConfig.FullFrontendSettings, // only populated when FlagFrontendServiceReducedBootDataAPI enabled
 		RenderBindingSupported:                renderBindingSupported,
 		AssetSriChecksEnabled:                 grafanaAssetSriChecks,
-		MeticulousAIEnabled:                   meticulousAIRecorderEnabled,
+		MeticulousAIEnabled:                   meticulousAIEnabled,
 		MeticulousAIRecordingToken:            p.config.MeticulousAIRecordingToken,
-		MeticulousAIProductionEnvironmentFlag: !meticulousAIRecorderHighVolume,
-	}
-
-	if compiledBootScript {
-		data.BootScript = p.bootScript
-		if p.bootScript == "" {
-			p.log.Error("compiledBootScript feature flag enabled but boot.js not found — falling back to inline boot script.")
-		}
+		MeticulousAIProductionEnvironmentFlag: meticulousAIProductionEnvironmentFlag,
+		ReduceBootdataAPI:                     reduceBootdataAPI,
+		NewPreferencesPage:                    newPreferencesPage,
+		BootScript:                            p.bootScript,
 	}
 
 	// TODO -- reevaluate with mt authnz

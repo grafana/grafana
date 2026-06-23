@@ -25,18 +25,13 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// UpsertReplaceSubresources replaces, in a single transaction, the
-	// stored subresource set for each (model, namespace, resource, uid)
-	// present in `vectors`: any stored subresource for those tuples that
-	// isn't being upserted is deleted, then the input vectors are
-	// upserted. Used by the reconciler so stale-row cleanup and
-	// the new write commit atomically.
-	//
-	// TODO: only re-embed and upsert subresources whose content actually
-	// changed since the last write. Today the reconciler re-embeds every
-	// panel on any dashboard write, which is wasteful when only one
-	// panel changed.
-	UpsertReplaceSubresources(ctx context.Context, vectors []Vector) error
+	// UpsertReplaceSubresources upserts `changed` and deletes any stored
+	// subresource of (namespace, model, resource, uid) not listed in
+	// `desired`, in one transaction. `changed` (a subset of `desired`)
+	// holds only the rows that need rewriting; `desired` is the full set
+	// that should remain. Every vector in `changed` must belong to the
+	// given tuple.
+	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) error
 
 	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error
@@ -45,10 +40,12 @@ type VectorBackend interface {
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
-	// GetSubresourceContent returns subresource → stored content. Callers
-	// diff against candidate content to skip re-embedding unchanged rows.
-	// Used for deleting stale subresource embeddings.
-	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, error)
+	// GetSubresourceContent returns subresource → stored content and the
+	// resource's stored folder ("" when no rows exist; folder is uniform
+	// across a resource's rows). Callers diff content to skip re-embedding
+	// unchanged rows and compare folder to catch a move, which changes the
+	// authz folder but not content.
+	GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (content map[string]string, folder string, err error)
 
 	// Exists returns true if any row exists for the (namespace, model,
 	// resource, uid). Cheap indexed lookup; backfill uses it to skip
@@ -74,6 +71,13 @@ type VectorBackend interface {
 	// other embedder models from observing (and erroring on) jobs they don't
 	// own. Operators add rows via SQL migrations; the resource embedder drains them.
 	ListIncompleteBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error)
+
+	// EnsureResourcePartition creates the embeddings_<resource> partition leaf (idempotent).
+	EnsureResourcePartition(ctx context.Context, resource string) error
+
+	// CreateBackfillJob creates a backfill job for (model, resource, stoppingRV).
+	// No-op if a job already exists for (model, resource).
+	CreateBackfillJob(ctx context.Context, model, resource string, stoppingRV int64) error
 
 	// UpdateBackfillJobCheckpoint writes the cursor + optional error after
 	// each processed resource. Best-effort — race with another writer is

@@ -7,12 +7,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/azure"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/bedrock"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/vertex"
 )
@@ -21,24 +26,33 @@ import (
 // when no provider is configured. Callers (the search server) treat nil as
 // "vector search is disabled" and surface Unimplemented to clients.
 //
+// vectorMetrics is optional; when non-nil its EmbedDuration histogram is
+// wired into the constructed Embedder so each provider call is timed.
+//
 // The configured provider's connection fields (project ID for Vertex, region
-// + credentials for Bedrock) must be present when the provider is set;
-// missing required fields return an error so misconfiguration fails at
-// startup, not at first request.
-func ProvideEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+// + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
+// be present when the provider is set; missing required fields return an error
+// so misconfiguration fails at startup, not at first request.
+func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
+	var hist *prometheus.HistogramVec
+	if vectorMetrics != nil {
+		hist = vectorMetrics.EmbedDuration
+	}
 	switch cfg.EmbeddingProvider {
 	case "":
 		return nil, nil
 	case "vertex":
-		return newVertexEmbedder(cfg)
+		return newVertexEmbedder(cfg, hist)
 	case "bedrock":
-		return newBedrockEmbedder(cfg)
+		return newBedrockEmbedder(cfg, hist)
+	case "azure":
+		return newAzureEmbedder(cfg, hist)
 	default:
-		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, or empty)", cfg.EmbeddingProvider)
+		return nil, fmt.Errorf("unknown embedding provider %q (expected vertex, bedrock, azure, or empty)", cfg.EmbeddingProvider)
 	}
 }
 
-func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+func newVertexEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
 	if cfg.VertexProjectID == "" {
 		return nil, fmt.Errorf("vector_embedder.provider=vertex requires vertex_project_id")
 	}
@@ -46,10 +60,11 @@ func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	if err != nil {
 		return nil, fmt.Errorf("vertex client: %w", err)
 	}
-	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions)
+	model := "vertex/" + cfg.VertexModel
+	dense := vertex.NewDenseEmbedder(client, cfg.VertexModel, cfg.VertexDimensions, cfg.VertexBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "vertex/" + cfg.VertexModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.VertexDimensions),
@@ -57,22 +72,54 @@ func newVertexEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
 	}, nil
 }
 
-func newBedrockEmbedder(cfg *setting.Cfg) (*embedder.Embedder, error) {
+func newBedrockEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+	// Adaptive retry adds a client-side rate limiter that backs off request
+	// issuance when Bedrock returns ThrottlingException (429), which the
+	// default standard retryer does not; combined with a higher attempt
+	// ceiling it lets transient token-quota throttling recover instead of
+	// failing the embed at the default 3 attempts.
 	awsCfg, err := awsconfig.LoadDefaultConfig(context.Background(),
 		awsconfig.WithRegion(cfg.BedrockRegion),
+		awsconfig.WithRetryMode(aws.RetryModeAdaptive),
+		awsconfig.WithRetryMaxAttempts(cfg.BedrockMaxAttempts),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("aws config: %w", err)
 	}
 	rt := bedrockruntime.NewFromConfig(awsCfg)
 	client := bedrock.NewClient(rt)
-	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions)
+	model := "bedrock/" + cfg.BedrockModel
+	dense := bedrock.NewDenseEmbedder(client, cfg.BedrockModel, cfg.BedrockDimensions, cfg.BedrockBatchSize)
 	return &embedder.Embedder{
-		TextEmbedder: dense,
-		Model:        "bedrock/" + cfg.BedrockModel,
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
 		VectorType:   embedder.VectorTypeDense,
 		Metric:       embedder.CosineDistance,
 		Dimensions:   uint32(cfg.BedrockDimensions),
 		Normalized:   false, // Cohere on Bedrock returns un-normalized vectors
+	}, nil
+}
+
+func newAzureEmbedder(cfg *setting.Cfg, duration *prometheus.HistogramVec) (*embedder.Embedder, error) {
+	if cfg.AzureEndpoint == "" {
+		return nil, fmt.Errorf("vector_embedder.provider=azure requires azure_endpoint")
+	}
+	apiKey := os.Getenv("AZURE_OPENAI_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("vector_embedder.provider=azure requires the AZURE_OPENAI_API_KEY env var")
+	}
+	client, err := azure.NewClient(cfg.AzureEndpoint, cfg.AzureDeployment, cfg.AzureAPIVersion, apiKey)
+	if err != nil {
+		return nil, fmt.Errorf("azure client: %w", err)
+	}
+	model := "azure/" + cfg.AzureDeployment
+	dense := azure.NewDenseEmbedder(client, cfg.AzureDimensions, cfg.AzureBatchSize)
+	return &embedder.Embedder{
+		TextEmbedder: embedder.Instrument(dense, model, duration),
+		Model:        model,
+		VectorType:   embedder.VectorTypeDense,
+		Metric:       embedder.CosineDistance,
+		Dimensions:   uint32(cfg.AzureDimensions),
+		Normalized:   false, // Azure OpenAI vectors aren't guaranteed unit-norm after dimension reduction
 	}, nil
 }

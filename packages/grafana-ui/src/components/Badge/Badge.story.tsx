@@ -47,4 +47,14 @@ export const Examples: StoryFn<typeof Badge> = () => (
   </Stack>
 );
 
+export const LongTextWrapping: StoryFn<typeof Badge> = () => (
+  <div style={{ width: 180 }}>
+    <Badge
+      text="Badge label that is long enough to wrap to a second line to demonstrate the alignment of the icon"
+      color="blue"
+      icon="clock-nine"
+    />
+  </div>
+);
+
 export default meta;

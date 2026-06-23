@@ -5,10 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
@@ -89,10 +94,51 @@ func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
 func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
 	vec := newFakeVector()
 	o := newBackfiller(t, newFakeStorage(), vec)
-	require.NoError(t, o.Run(context.Background()))
 
-	assert.Equal(t, 1, vec.lockAttempts)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- o.Run(ctx) }()
+
+	// Run loops on a ticker; wait for the lock, then stop it.
+	require.Eventually(t, func() bool {
+		vec.mu.Lock()
+		defer vec.mu.Unlock()
+		return vec.lockAttempts == 1
+	}, time.Second, time.Millisecond)
+	cancel()
+	require.ErrorIs(t, <-done, context.Canceled)
+
 	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+}
+
+// TestBackfill_ObservesItemDuration verifies the per-item histogram
+// fires when an item is processed. A regression here would mean the
+// wiring between processBackfillItem and VectorMetrics is broken.
+func TestBackfill_ObservesItemDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := resource.ProvideVectorMetrics(reg)
+
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns-1", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	emb := newFakeEmbedder(&fakeText{dim: 4})
+	b, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+		Metrics:       m,
+	})
+	require.NoError(t, err)
+
+	b.runBackfill(context.Background())
+
+	// One successful observation under the (group, resource, status) labels
+	// the production code uses.
+	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "vector_storage_backfill_item_duration_seconds"))
 }
 
 func TestRunBackfillJob_HappyPath_EmbedsAndCompletes(t *testing.T) {
@@ -464,8 +510,6 @@ func TestShouldSkipForZeroViews_EmptyName_DoesNotConsult(t *testing.T) {
 	assert.Equal(t, 0, stats.calls)
 }
 
-// fakeNonDashboardBuilder satisfies embed.Builder with a non-dashboard
-// identity. Only used to exercise the builder-identity guard.
 type fakeNonDashboardBuilder struct{}
 
 func (fakeNonDashboardBuilder) Group() string            { return "folder.grafana.app" }
@@ -473,4 +517,52 @@ func (fakeNonDashboardBuilder) Resource() string         { return "folders" }
 func (fakeNonDashboardBuilder) MaxItemsPerResource() int { return 0 }
 func (fakeNonDashboardBuilder) Extract(context.Context, *resourcepb.ResourceKey, []byte, string) ([]embed.Item, error) {
 	return nil, nil
+}
+
+func labeledDashboardJSON(uid, title string) []byte {
+	body, _ := json.Marshal(map[string]any{
+		"metadata": map[string]any{
+			"name":   uid,
+			"labels": map[string]any{controller.LabelPendingDelete: "true"},
+		},
+		"spec": map[string]any{"uid": uid, "title": title},
+	})
+	return body
+}
+
+func makeLabeledListItem(ns, name string, rv int64) listItem {
+	return listItem{Namespace: ns, Name: name, RV: rv, Value: labeledDashboardJSON(name, name+"-title")}
+}
+
+func TestRunBackfillJob_PendingDeleteLabel_SkipsLabeledResources(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		makeLabeledListItem("ns", "dash-a", 50),
+		makeListItem("ns", "dash-b", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "only the unlabeled resource should be embedded")
+	assert.Equal(t, "dash-b", vec.upserts[0][0].UID)
+	require.Len(t, vec.completedJobIDs, 1, "job still completes when items are filtered")
+}
+
+func TestRunBackfillJob_PendingDeleteLabel_RunsBeforeStatsLookup(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeLabeledListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+	stats := newFakeDashboardStats()
+
+	o := newBackfillerWithStats(t, storage, vec, stats)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Equal(t, 0, stats.calls, "pending-delete skip must come before stats lookup")
 }

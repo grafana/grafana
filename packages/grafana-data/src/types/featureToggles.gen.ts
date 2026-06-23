@@ -154,7 +154,7 @@ export interface FeatureToggles {
   */
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   /**
-  * Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled
+  * Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled
   * @default true
   */
   awsAsyncQueryCaching?: boolean;
@@ -163,11 +163,6 @@ export interface FeatureToggles {
   * @default false
   */
   configurableSchedulerTick?: boolean;
-  /**
-  * Enable AI powered features in dashboards
-  * @default true
-  */
-  dashgpt?: boolean;
   /**
   * Enable AI powered features for dashboards to auto-summary changes when saving
   * @default false
@@ -214,18 +209,13 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Enables usage of the new annotations API client
-  * @default false
-  */
-  kubernetesAnnotationsClient?: boolean;
-  /**
-  * Enables k8s short url api and uses it under the hood when handling legacy /api
-  * @default false
+  * Enables k8s short URL API and uses it under the hood when handling legacy /api
+  * @default true
   */
   kubernetesShortURLs?: boolean;
   /**
-  * Routes short url requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
-  * @default false
+  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+  * @default true
   */
   useKubernetesShortURLsAPI?: boolean;
   /**
@@ -294,11 +284,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-  * @default false
-  */
-  cachingOptimizeSerializationMemoryUsage?: boolean;
-  /**
   * Enable Grafana to sync configuration and state with a remote Alertmanager.
   * @default false
   */
@@ -343,6 +328,11 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enable notebook-style layout for dashboards, mixing text cells, code cells, and visualization panels
+  * @default false
+  */
+  dashboardNotebookLayout?: boolean;
   /**
   * Enables default layout selector in dashboard settings
   * @default true
@@ -394,11 +384,6 @@ export interface FeatureToggles {
   */
   feedbackButton?: boolean;
   /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
-  /**
   * Enables generating table data as PDF in reporting
   * @default false
   */
@@ -418,6 +403,11 @@ export interface FeatureToggles {
   * @default false
   */
   canvasPanelPanZoom?: boolean;
+  /**
+  * Load Canvas panel from an external plugin instead of the bundled core plugin
+  * @default false
+  */
+  canvasExternalPlugin?: boolean;
   /**
   * Enables time comparison option in supported panels
   * @default false
@@ -540,7 +530,7 @@ export interface FeatureToggles {
   newDashboardWithFiltersAndGroupBy?: boolean;
   /**
   * Renders ad hoc filters and group by in a single unified control
-  * @default false
+  * @default true
   */
   dashboardUnifiedDrilldownControls?: boolean;
   /**
@@ -920,11 +910,6 @@ export interface FeatureToggles {
   */
   newLogsPanel?: boolean;
   /**
-  * Enables the temporary themes for GrafanaCon
-  * @default true
-  */
-  grafanaconThemes?: boolean;
-  /**
   * Enables the new Jira integration for contact points in cloud alert managers.
   * @default false
   */
@@ -1095,11 +1080,6 @@ export interface FeatureToggles {
   */
   experimentRecentlyViewedDashboards?: boolean;
   /**
-  * Enables the created by me search filter on the browse dashboards page
-  * @default false
-  */
-  createdByMeSearchFilter?: boolean;
-  /**
   * Enable configuration of alert enrichments in Grafana Cloud.
   * @default false
   */
@@ -1129,11 +1109,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingDisableDMAinUI?: boolean;
-  /**
-  * Enables image sharing functionality for dashboards
-  * @default true
-  */
-  sharingDashboardImage?: boolean;
   /**
   * Prefer library panel title over viz panel title.
   * @default false
@@ -1191,7 +1166,7 @@ export interface FeatureToggles {
   favoriteDatasources?: boolean;
   /**
   * New Log Context component
-  * @default false
+  * @default true
   */
   newLogContext?: boolean;
   /**
@@ -1201,7 +1176,7 @@ export interface FeatureToggles {
   newClickhouseConfigPageDesign?: boolean;
   /**
   * Enables team folders functionality
-  * @default false
+  * @default true
   */
   teamFolders?: boolean;
   /**
@@ -1256,18 +1231,13 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new visualization suggestions
-  * @default true
-  */
-  newVizSuggestions?: boolean;
-  /**
   * Enable style actions (copy/paste) in the panel editor
-  * @default false
+  * @default true
   */
   panelStyleActions?: boolean;
   /**
   * Enable visualization presets
-  * @default false
+  * @default true
   */
   vizPresets?: boolean;
   /**
@@ -1277,7 +1247,7 @@ export interface FeatureToggles {
   nestedFramesFieldOverrides?: boolean;
   /**
   * Enable faceted labels filter for series visibility in the legend
-  * @default false
+  * @default true
   */
   vizLegendFacetedFilter?: boolean;
   /**
@@ -1290,11 +1260,6 @@ export interface FeatureToggles {
   * @default false
   */
   pieChartGradientColorScheme?: boolean;
-  /**
-  * Restrict PanelChrome contents with overflow: hidden;
-  * @default true
-  */
-  preventPanelChromeOverflow?: boolean;
   /**
   * Enable querying trace data through Jaeger's gRPC endpoint (HTTP)
   * @default false
@@ -1371,7 +1336,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;
@@ -1397,7 +1363,7 @@ export interface FeatureToggles {
   secretsManagementAppPlatformAwsKeeper?: boolean;
   /**
   * Enables profiles exemplars support in profiles drilldown
-  * @default false
+  * @default true
   */
   profilesExemplars?: boolean;
   /**
@@ -1415,11 +1381,6 @@ export interface FeatureToggles {
   * @default false
   */
   queryEditorNext?: boolean;
-  /**
-  * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
-  * @default false
-  */
-  queryEditorNextMultiSelect?: boolean;
   /**
   * Enables team APIs in the app platform
   * @default false
@@ -1471,8 +1432,8 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirect?: boolean;
   /**
-  * Enables the ability to create multiple alerting policies
-  * @default false
+  * Enables the ability to create multiple notification policies in alerting
+  * @default true
   */
   alertingMultiplePolicies?: boolean;
   /**
@@ -1507,7 +1468,7 @@ export interface FeatureToggles {
   alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
-  * @default false
+  * @default true
   */
   react19?: boolean;
   /**
@@ -1566,11 +1527,6 @@ export interface FeatureToggles {
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
-  * Enables the new colorblind-friendly themes
-  * @default false
-  */
-  colorblindThemes?: boolean;
-  /**
   * Enables fine-grained Y-axis tick options beyond the auto-ticks
   * @default false
   */
@@ -1617,7 +1573,7 @@ export interface FeatureToggles {
   tracesDrilldownTimeSeeker?: boolean;
   /**
   * Mitigates React fiber's retention of previous props/state, causing 2x memory use: https://github.com/facebook/react/issues/36176
-  * @default false
+  * @default true
   */
   clearPreviousFieldValues?: boolean;
   /**
@@ -1630,11 +1586,6 @@ export interface FeatureToggles {
   * @default false
   */
   cacheConfigUnifiedStorageMigration?: boolean;
-  /**
-  * Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-  * @default false
-  */
-  compiledBootScript?: boolean;
   /**
   * Enables validation on the InfluxDB data source configuration page
   * @default false

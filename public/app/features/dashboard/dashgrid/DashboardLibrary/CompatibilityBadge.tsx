@@ -15,7 +15,7 @@ export type CompatibilityState =
   | { status: 'success'; score: number; metricsFound: number; metricsTotal: number }
   | { status: 'error'; errorMessage?: string; errorCode?: string };
 
-export type ErrorCategory = 'not_supported' | 'unexpected';
+type ErrorCategory = 'not_supported' | 'unexpected';
 
 interface ScoreIndicator {
   color: 'green' | 'orange' | 'red';

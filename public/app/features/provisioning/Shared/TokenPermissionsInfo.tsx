@@ -74,6 +74,7 @@ function getPermissionsForProvider(type: InstructionAvailability): Permission[] 
         { name: 'Metadata', access: 'Read only' },
         { name: 'Pull requests', access: 'Read and write' },
         { name: 'Webhooks', access: 'Read and write' },
+        { name: 'Administration', access: 'Read-only' },
       ];
     case 'gitlab':
       return [

@@ -19,8 +19,6 @@ export const FlagKeys = {
   AnalyticsFramework: "analyticsFramework",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the created by me search filter on the browse dashboards page */
-  CreatedByMeSearchFilter: "createdByMeSearchFilter",
   /** Enables support for section level variables (rows and tabs) */
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
@@ -41,16 +39,26 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables usage of the new annotations API client */
+  GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables a new UI for query errors and notices */
+  GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
   /** Enables org-defined dashboard templates for enterprise */
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
+  /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
+  GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
+  /** Enables the sidebar pane with new toggles and options in panel view mode */
+  GrafanaViewPanelPane: "grafana.viewPanelPane",
+  /** Enables the new visual design refresh for the Grafana UI */
+  GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Use stream shards to split queries into smaller subqueries */
@@ -65,18 +73,24 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
+  PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
+  ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
-  /** Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor */
-  QueryEditorNextMultiSelect: "queryEditorNextMultiSelect",
+  /** Store query history in browser IndexedDB instead of server-side */
+  QueryHistoryLocalOnly: "queryHistory.localOnly",
+  /** Replace the Query History drawer with a new Recent Queries modal UI */
+  QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
   /** Enables reporting for any page in Grafana */
@@ -89,6 +103,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
+  TableProtoRowParser: "table.protoRowParser",
 } as const;
 
 /**
@@ -122,17 +138,6 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("assistant.frontend.tools.dashboardTemplates", false, options).value;
-};
-
-/**
- * Enables the created by me search filter on the browse dashboards page
- *
- * **Details:**
- * - flag key: `createdByMeSearchFilter`
- * - default value: `false`
- */
-export const useFlagCreatedByMeSearchFilter = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("createdByMeSearchFilter", false, options).value;
 };
 
 /**
@@ -246,6 +251,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enables usage of the new annotations API client
+ *
+ * **Details:**
+ * - flag key: `grafana.kubernetesAnnotationsClient`
+ * - default value: `false`
+ */
+export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.kubernetesAnnotationsClient", false, options).value;
+};
+
+/**
  * Enables log level inference from log line contents when level is not defined as a field or a label
  *
  * **Details:**
@@ -254,6 +270,17 @@ export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables a new UI for query errors and notices
+ *
+ * **Details:**
+ * - flag key: `grafana.newPanelQueryErrorsUI`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
 };
 
 /**
@@ -279,14 +306,25 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enables firing an event for PanelEditNext feedback that triggers an in-house survey
+ *
+ * **Details:**
+ * - flag key: `grafana.panelEditNextFeedbackEvent`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
  * Prevents flickering in dashboards
  *
  * **Details:**
  * - flag key: `grafana.scenesFlickeringFix`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.scenesFlickeringFix", false, options).value;
+  return useFlag("grafana.scenesFlickeringFix", true, options).value;
 };
 
 /**
@@ -298,6 +336,28 @@ export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.unifiedHomepage", false, options).value;
+};
+
+/**
+ * Enables the sidebar pane with new toggles and options in panel view mode
+ *
+ * **Details:**
+ * - flag key: `grafana.viewPanelPane`
+ * - default value: `false`
+ */
+export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.viewPanelPane", false, options).value;
+};
+
+/**
+ * Enables the new visual design refresh for the Grafana UI
+ *
+ * **Details:**
+ * - flag key: `grafana.visualDesignRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.visualDesignRefresh", false, options).value;
 };
 
 /**
@@ -338,10 +398,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newLogContext`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", false, options).value;
+  return useFlag("newLogContext", true, options).value;
 };
 
 /**
@@ -378,6 +438,17 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
+ * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
+ *
+ * **Details:**
+ * - flag key: `plugins.initDataSourcesAsync`
+ * - default value: `false`
+ */
+export const useFlagPluginsInitDataSourcesAsync = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.initDataSourcesAsync", false, options).value;
+};
+
+/**
  * Enables plugins setting from new apis
  *
  * **Details:**
@@ -400,14 +471,25 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
+ * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+ *
+ * **Details:**
+ * - flag key: `provisioning.gitConventions`
+ * - default value: `false`
+ */
+export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("provisioning.gitConventions", false, options).value;
+};
+
+/**
  * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
  *
  * **Details:**
  * - flag key: `provisioning.readmes`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", false, options).value;
+  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
@@ -433,14 +515,25 @@ export const useFlagQueryEditorNext = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
- * Enables multi-select UX (card checkboxes and bulk-actions footer) in the next query editor
+ * Store query history in browser IndexedDB instead of server-side
  *
  * **Details:**
- * - flag key: `queryEditorNextMultiSelect`
+ * - flag key: `queryHistory.localOnly`
  * - default value: `false`
  */
-export const useFlagQueryEditorNextMultiSelect = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryEditorNextMultiSelect", false, options).value;
+export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.localOnly", false, options).value;
+};
+
+/**
+ * Replace the Query History drawer with a new Recent Queries modal UI
+ *
+ * **Details:**
+ * - flag key: `queryHistory.recentQueriesUI`
+ * - default value: `false`
+ */
+export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryHistory.recentQueriesUI", false, options).value;
 };
 
 /**
@@ -507,5 +600,16 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.
+ *
+ * **Details:**
+ * - flag key: `table.protoRowParser`
+ * - default value: `false`
+ */
+export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.protoRowParser", false, options).value;
 };
 

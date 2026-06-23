@@ -16,7 +16,9 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -110,6 +112,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 	return &UserSync{
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
+		cfg:                       cfg,
 		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
@@ -127,6 +130,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 type UserSync struct {
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
+	cfg                       *setting.Cfg
 	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
@@ -291,6 +295,15 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	if !id.ClientParams.SyncUser {
 		return nil
+	}
+
+	// Auth proxy and LDAP key the asserted role by DefaultOrgID but never set OrgID,
+	// so GetOrgRole() looks up key 0 and resolves to RoleNone. Align OrgID to DefaultOrgID so the
+	// asserted role is written to the k8s user's Spec.Role on create/update.
+	if id.OrgID == 0 &&
+		(id.AuthenticatedBy == login.AuthProxyAuthModule || id.AuthenticatedBy == login.LDAPAuthModule) &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		id.OrgID = s.cfg.DefaultOrgID()
 	}
 
 	// Does user exist in the database?
@@ -540,6 +553,27 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
+	// Sync the asserted org role onto the k8s user's Spec.Role
+	if id.ClientParams.SyncOrgRoles && len(id.OrgRoles) > 0 &&
+		s.cfg.RBAC.SingleOrganization &&
+		s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if assertedRole, ok := id.OrgRoles[id.OrgID]; ok && string(assertedRole) != usr.OrgRole {
+			role := string(assertedRole)
+			updateCmd.OrgRole = &role
+			usr.OrgRole = role
+			needsUpdate = true
+		}
+	}
+
+	// Sync the identity's external auth connection onto the k8s user's Spec.ExternalAuthInfo.
+	if s.shouldSyncExternalAuthInfo(ctx) {
+		if merged, changed := mergeExternalAuthInfo(usr.ExternalAuthInfo, id); changed {
+			updateCmd.ExternalAuthInfo = merged
+			usr.ExternalAuthInfo = merged
+			needsUpdate = true
+		}
+	}
+
 	span.SetAttributes(
 		attribute.String("identity.ID", id.ID),
 		attribute.String("identity.ExternalUID", id.ExternalUID),
@@ -633,12 +667,27 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
+	// Forward the identity's active-org role so the k8s User is created with the
+	// asserted Spec.Role instead of falling back to AutoAssignOrgRole.
+	var defaultOrgRole string
+	if len(id.OrgRoles) > 0 {
+		defaultOrgRole = string(id.GetOrgRole())
+	}
+
+	// Seed the k8s user's Spec.ExternalAuthInfo with the identity's auth connection.
+	var externalAuthInfo []user.ExternalAuthInfo
+	if s.shouldSyncExternalAuthInfo(ctx) {
+		externalAuthInfo, _ = mergeExternalAuthInfo(nil, id)
+	}
+
 	usr, err := s.userService.Create(ctx, &user.CreateUserCommand{
-		Login:        id.Login,
-		Email:        id.Email,
-		Name:         id.Name,
-		IsAdmin:      isAdmin,
-		SkipOrgSetup: len(id.OrgRoles) > 0,
+		Login:            id.Login,
+		Email:            id.Email,
+		Name:             id.Name,
+		IsAdmin:          isAdmin,
+		DefaultOrgRole:   defaultOrgRole,
+		SkipOrgSetup:     len(id.OrgRoles) > 0,
+		ExternalAuthInfo: externalAuthInfo,
 	})
 	if err != nil {
 		return nil, err
@@ -649,6 +698,42 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	}
 
 	return usr, nil
+}
+
+func (s *UserSync) shouldSyncExternalAuthInfo(ctx context.Context) bool {
+	if !s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		return false
+	}
+	resCfg, ok := s.cfg.UnifiedStorage[iamv0alpha1.UserResourceInfo.GroupResource().String()]
+	return ok && resCfg.DualWriterMode >= grafanarest.Mode3
+}
+
+func mergeExternalAuthInfo(existing []user.ExternalAuthInfo, id *authn.Identity) ([]user.ExternalAuthInfo, bool) {
+	switch id.AuthenticatedBy {
+	case "", login.PasswordAuthModule, login.APIKeyAuthModule, login.ExtendedJWTModule, login.RenderModule:
+		return existing, false
+	}
+
+	entry := user.ExternalAuthInfo{
+		Module:      id.AuthenticatedBy,
+		AuthID:      id.AuthID,
+		ExternalUID: id.ExternalUID,
+	}
+
+	for i := range existing {
+		if existing[i].Module != entry.Module {
+			continue
+		}
+		if existing[i] == entry {
+			return existing, false
+		}
+		merged := make([]user.ExternalAuthInfo, len(existing))
+		copy(merged, existing)
+		merged[i] = entry
+		return merged, true
+	}
+
+	return append(append([]user.ExternalAuthInfo{}, existing...), entry), true
 }
 
 func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user.User, *login.UserAuth, error) {

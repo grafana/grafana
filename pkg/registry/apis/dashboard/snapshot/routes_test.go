@@ -123,12 +123,10 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshotService := dashboardsnapshots.NewMockService(t)
 			dashboardService := dashboards.NewFakeDashboardService(t)
 			tt.setupDashboardMock(dashboardService)
 
 			routes := GetRoutes(
-				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
@@ -160,6 +158,59 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+
+	testUser := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID:   "valid-uid",
+		OrgID: orgID,
+	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
+
+	// The storage Create is the seam the real SnapshotLegacyStore -> service -> store
+	// chain collapses to; returning the sentinel simulates a duplicate-key collision.
+	mockStorage := grafanarest.NewMockStorage(t)
+	mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists.Errorf("snapshot with the same key already exists"))
+
+	routes := GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]common.OpenAPIDefinition{},
+		func() rest.Storage { return mockStorage },
+		dashboardService,
+	)
+
+	require.NotEmpty(t, routes.Namespace)
+	handler := routes.Namespace[0].Handler
+
+	bodyBytes, err := json.Marshal(map[string]any{
+		"dashboard": map[string]any{"uid": "valid-uid", "title": "test"},
+		"name":      "test snapshot",
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), testUser))
+	req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+
+	recorder := httptest.NewRecorder()
+	handler(recorder, req)
+
+	assert.Equal(t, http.StatusConflict, recorder.Code)
+	var resp map[string]any
+	err = json.Unmarshal(recorder.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	assert.Equal(t, "dashboardsnapshots.keyAlreadyExists", resp["messageId"])
 }
 
 func TestCreateSnapshotPublicMode(t *testing.T) {
@@ -201,7 +252,6 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			snapshotService := dashboardsnapshots.NewMockService(t)
 			dashboardService := dashboards.NewFakeDashboardService(t)
 
 			var createdSnapshot *dashv0.Snapshot
@@ -213,7 +263,6 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 				Return(&dashv0.Snapshot{}, nil)
 
 			routes := GetRoutes(
-				snapshotService,
 				dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true},
 				acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 				map[string]common.OpenAPIDefinition{},
@@ -252,12 +301,10 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		OrgID:  orgID,
 	}
 
-	snapshotService := dashboardsnapshots.NewMockService(t)
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	mockStorage := grafanarest.NewMockStorage(t)
 
 	routes := GetRoutes(
-		snapshotService,
 		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true, ExternalEnabled: true},
 		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 		map[string]common.OpenAPIDefinition{},
@@ -317,7 +364,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token-123",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -329,7 +375,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			Return(&dashv0.Snapshot{}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -383,7 +428,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "bad-token",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -391,7 +435,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -429,7 +472,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "test-token",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -437,7 +479,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -468,10 +509,8 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalEnabled:  false,
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -512,7 +551,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			ExternalSnapshotToken: "",
 		}
 
-		snapshotService := dashboardsnapshots.NewMockService(t)
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
 			UID:   "dash-1",
@@ -524,7 +562,6 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			Return(&dashv0.Snapshot{}, nil)
 
 		routes := GetRoutes(
-			snapshotService,
 			options,
 			acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
 			map[string]common.OpenAPIDefinition{},
@@ -578,7 +615,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 			Return(&dashv0.Snapshot{}, true, nil)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
@@ -603,7 +639,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 			Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{}}, nil)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			deletePerms(),
 			map[string]common.OpenAPIDefinition{},
@@ -626,7 +661,6 @@ func TestHandleDeleteByKey(t *testing.T) {
 		mockStorage := grafanarest.NewMockStorage(t)
 
 		routes := GetRoutes(
-			dashboardsnapshots.NewMockService(t),
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
 			acmock.New().WithPermissions([]accesscontrol.Permission{}),
 			map[string]common.OpenAPIDefinition{},

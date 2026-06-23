@@ -15,10 +15,12 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
-import { getSingleResourceCommitMessage } from '../../utils/commitMessage';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
@@ -66,6 +68,21 @@ export function DeleteProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
 
+  const templateVars: CommitTemplateVars = {
+    action: 'delete',
+    resourceKind: 'dashboard',
+    resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
+    title: dashboard.state.title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(methods.formState.dirtyFields.comment),
+    setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
+
   const showError = (error: unknown) => {
     setSubmitError(
       getProvisionedRequestError(
@@ -76,7 +93,34 @@ export function DeleteProvisionedDashboardForm({
     );
   };
 
-  const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
+  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
+    panelEditor?.onDiscard();
+    const url = buildResourceBranchRedirectUrl({
+      paramName: 'new_pull_request_url',
+      paramValue: urls?.newPullRequestURL,
+      repoType: info.repoType,
+      action: 'delete',
+    });
+    navigate(url);
+  };
+
+  const { handleSuccess } = useProvisionedRequestHandler({
+    workflow,
+    resourceType: 'dashboard',
+    repository,
+    selectedBranch: ref || loadedFromRef,
+    successMessage: t(
+      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
+      'Dashboard deleted successfully'
+    ),
+    handlers: {
+      onDismiss,
+      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
+    },
+  });
+
+  const handleSubmitForm = async ({ repo, path }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
       showError(
@@ -97,22 +141,15 @@ export function DeleteProvisionedDashboardForm({
     // Branch workflow: use /files API for direct file operations
     if (workflow === 'branch') {
       const branchRef = ref;
-      const commitMessage = getSingleResourceCommitMessage({
-        comment,
-        repository,
-        action: 'delete',
-        resourceKind: 'dashboard',
-        resourceID: dashboard.state.meta.uid ?? dashboard.state.meta.k8s?.name ?? '',
-        title: dashboard.state.title ?? '',
-      });
 
       try {
-        await deleteRepoFile({
+        const data = await deleteRepoFile({
           name: repo,
           path,
           ref: branchRef,
-          message: commitMessage,
+          message,
         }).unwrap();
+        handleSuccess(data);
       } catch (error) {
         showError(error);
       }
@@ -123,6 +160,7 @@ export function DeleteProvisionedDashboardForm({
     const effectiveRef = isNew ? undefined : loadedFromRef;
     const jobSpec = {
       action: 'delete' as const,
+      message,
       delete: {
         ref: effectiveRef,
         resources: [
@@ -151,18 +189,6 @@ export function DeleteProvisionedDashboardForm({
     }
   };
 
-  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
-  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
-    panelEditor?.onDiscard();
-    const url = buildResourceBranchRedirectUrl({
-      paramName: 'new_pull_request_url',
-      paramValue: urls?.newPullRequestURL,
-      repoType: info.repoType,
-      action: 'delete',
-    });
-    navigate(url);
-  };
-
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success') {
@@ -176,23 +202,6 @@ export function DeleteProvisionedDashboardForm({
     },
     [panelEditor, navigate]
   );
-
-  useProvisionedRequestHandler({
-    request,
-    workflow,
-    resourceType: 'dashboard',
-    repository,
-    selectedBranch: ref || loadedFromRef,
-    successMessage: t(
-      'dashboard-scene.delete-provisioned-dashboard-form.success-message',
-      'Dashboard deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess: ({ path, urls }, info) => onBranchSuccess(path, info, urls),
-      onError: showError,
-    },
-  });
 
   return (
     <Drawer
@@ -223,6 +232,8 @@ export function DeleteProvisionedDashboardForm({
                 readOnly={readOnly}
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
+                lockComment={locked}
+                commitMessage={message}
               />
 
               {submitError && <ProvisioningAlert error={submitError} />}
