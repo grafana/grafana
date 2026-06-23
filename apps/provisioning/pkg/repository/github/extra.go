@@ -87,11 +87,11 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 	// If there is a webhook already registered from a previous enabled state, wrap with
 	// GithubWebhookRepository anyway so OnUpdate can delete the stale hook from GitHub.
 	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
-		if r.Status.Webhook != nil && r.Status.Webhook.ID != 0 {
-			return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy, e.factory.replayCache), nil
+		if r.Status.Webhook == nil || r.Status.Webhook.ID == 0 {
+			logger.Debug("Skipping webhook setup: webhook is disabled")
+			return ghRepo, nil
 		}
-		logger.Debug("Skipping webhook setup: webhook is disabled")
-		return ghRepo, nil
+		return NewGithubWebhookRepository(ghRepo, "", "", e.incrementalPolicy, e.factory.replayCache), nil
 	}
 
 	webhookURL := e.webhookBuilder.WebhookURL(ctx, r)
