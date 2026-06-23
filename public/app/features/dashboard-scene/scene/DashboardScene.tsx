@@ -100,7 +100,6 @@ import {
 } from '../utils/utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
-import { DashboardEditSessionTracker } from './DashboardEditSessionTracker';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
@@ -182,13 +181,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _changeTracker: DashboardSceneChangeTracker;
 
   /**
-   * Tracks edit sessions the assistant participated in, to measure how often they get saved.
-   * Owns all of its own state; the scene only signals lifecycle (discard) and exposes it for the
-   * Mutation API client (writes) and save tracking (reads).
-   */
-  public readonly editSessionTracker: DashboardEditSessionTracker;
-
-  /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
@@ -220,7 +212,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
-    this.editSessionTracker = new DashboardEditSessionTracker(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -312,7 +303,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ links: nonDefaultLinks });
   }
 
-  public onEnterEditMode = () => {
+  public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
+    const wasEditing = this.state.isEditing;
+
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
     this._initialUrlState = locationService.getLocation();
@@ -324,6 +317,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(true);
 
     this._changeTracker.startTrackingChanges();
+
+    // Report the start of an edit session once, on the view -> edit transition. `source` tells apart a
+    // user-opened session from one the assistant opened via the Mutation API (no edit_button_clicked).
+    if (!wasEditing) {
+      DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
+    }
   };
 
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -414,9 +413,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
-    // Edits are being discarded, so close any assistant session without crediting a save.
-    this.editSessionTracker.reset();
-
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
@@ -467,9 +463,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
-
-    // Any assistant edits made so far are being reverted, so close the session without crediting a save.
-    this.editSessionTracker.reset();
 
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();

@@ -95,6 +95,7 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
-    scene.onEnterEditMode();
+    // 'assistant' source: the assistant opened the edit session via the Mutation API (no Edit click).
+    scene.onEnterEditMode('assistant');
   }
 }

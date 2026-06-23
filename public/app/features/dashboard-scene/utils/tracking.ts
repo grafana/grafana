@@ -50,6 +50,7 @@ export async function trackDashboardSceneCreatedOrSaved(
   initialProperties: {
     name: string;
     url: string;
+    diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
   }
@@ -69,7 +70,6 @@ export async function trackDashboardSceneCreatedOrSaved(
 
   DashboardInteractions.dashboardCreatedOrSaved(isNew, {
     ...initialProperties,
-    assistant_edit_count: dashboard.editSessionTracker.getAssistantEditCount(),
     ...(dynamicDashboardsTrackingInformation
       ? {
           uid: dashboard.state.uid || '',
@@ -91,9 +91,6 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
-
-  // The save closed the assistant edit session.
-  dashboard.editSessionTracker.reset();
 }
 
 export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {

@@ -32,7 +32,7 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
-  dashboardCopied: (properties: { name: string; url: string }) => {
+  dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
@@ -59,8 +59,9 @@ export const DashboardInteractions = {
           panelsByDatasourceType: Record<string, number>;
         } & DashboardLibraryTrackingInfo)
     ) & {
-      // number of edits in the saved session that came from the assistant (0 when not involved)
-      assistant_edit_count: number;
+      // size of the saved edit: number of diffs between the initial and saved dashboard models.
+      // Optional: only the dashboard scene save path computes it; the legacy dashboard omits it.
+      diff_count?: number;
     }
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
@@ -339,10 +340,10 @@ export const DashboardInteractions = {
     reportDashboardInteraction('move_item', properties);
   },
 
-  // fired once when the assistant makes its first edit in an edit session (the denominator for the
-  // assistant save-rate metric). A started session with no later save was not saved — the user discarded
-  // it or abandoned the tab. The matching numerator is assistant_edit_count on grafana_dashboard_saved.
-  editSessionStarted: (properties: { dashboard_uid?: string }) => {
+  // fired once when the live dashboard scene enters edit mode. `source` distinguishes a user-opened
+  // session ('user', via the Edit button) from one the assistant opened through the Mutation API
+  // ('assistant'), which does not fire edit_button_clicked. Pairs with the dashboard save events.
+  editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);
   },
 };
