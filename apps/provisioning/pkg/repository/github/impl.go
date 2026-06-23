@@ -184,7 +184,7 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	}
 
 	for rulesetID := range rulesetIDs {
-		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, false)
+		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, true)
 		if err != nil {
 			// Fail-closed: a silent false negative would let the Repository save and
 			// then fail every subsequent sync push with a 403. Surfacing a block at
