@@ -34,6 +34,8 @@ The following documents will help you get started working with the CloudWatch da
 - [CloudWatch query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/query-editor/)
 - [Templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/template-variables/)
 - [Configure AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/)
+- [CloudWatch annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/annotations/)
+- [CloudWatch alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/alerting/)
 - [Troubleshoot CloudWatch issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/)
 
 ## Import pre-configured dashboards
