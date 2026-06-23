@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/oauth2"
@@ -203,6 +204,15 @@ func createOAuthInfoFromKeyValues(settingsKV map[string]any, parsingWarns *[]err
 			}
 			return splitStr, nil
 		}
+
+		if from.Kind() == reflect.String && to == reflect.TypeOf(time.Duration(0)) {
+			strData, ok := data.(string)
+			if !ok || strData == "" {
+				return time.Duration(0), nil
+			}
+			return time.ParseDuration(strData)
+		}
+
 		return data, nil
 	}
 
