@@ -75,6 +75,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
 | `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
 | `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
+| `heatmapRowsAxisOptions`                     | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                                                                        | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
@@ -110,7 +111,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
-| `heatmapRowsAxisOptions`          | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                 |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |

@@ -1252,7 +1252,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**
@@ -1331,7 +1331,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;

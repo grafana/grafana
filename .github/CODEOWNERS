@@ -154,7 +154,6 @@
 /pkg/middleware/ @grafana/grafana-backend-group
 /pkg/mocks/ @grafana/grafana-backend-group
 /pkg/models/ @grafana/grafana-backend-group
-/pkg/semconv/ @grafana/grafana-backend-group
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/aggregator @grafana/grafana-app-platform-squad
@@ -1123,6 +1122,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
+/scripts/test-aliases.py @grafana/docs-tooling @jtvdez
 eslint-suppressions.json @grafanabot
 
 # Design system
