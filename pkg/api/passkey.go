@@ -19,14 +19,14 @@ import (
 // and finish halves of one ceremony together; Options is the raw go-webauthn options JSON handed
 // straight to navigator.credentials.* in the browser.
 type passkeyBeginResponse struct {
-	SessionID string          `json:"sessionId"`
+	SessionID string          `json:"sessionID"`
 	Options   json.RawMessage `json:"options"`
 }
 
 // passkeyRegisterFinishRequest is the body posted to finish enrolling a new passkey: the sessionID
 // from begin, a user-chosen display name, and the raw attestation the authenticator produced.
 type passkeyRegisterFinishRequest struct {
-	SessionID string          `json:"sessionId"`
+	SessionID string          `json:"sessionID"`
 	Name      string          `json:"name"`
 	Response  json.RawMessage `json:"response"`
 }
@@ -61,9 +61,29 @@ func mapPasskeyError(err error) response.Response {
 	}
 }
 
+// checkPasskeyLoginRate returns the caller's IP and, if that IP is currently rate-limited for passkey
+// logins, a blocking response to return immediately. The passkey path does not go through the password
+// client, so it must throttle brute-force attempts itself (the loginattempt service no-ops when
+// brute-force protection is disabled in config).
+func (hs *HTTPServer) checkPasskeyLoginRate(c *contextmodel.ReqContext) (string, response.Response) {
+	ip := web.RemoteAddr(c.Req)
+	ok, err := hs.loginAttemptService.ValidateIPAddress(c.Req.Context(), ip)
+	if err != nil {
+		return ip, response.Err(err)
+	}
+	if !ok {
+		return ip, response.Error(http.StatusTooManyRequests, "passkey.too-many-attempts", nil)
+	}
+	return ip, nil
+}
+
 // PasskeyLoginBegin starts a usernameless (discoverable) login ceremony and returns the public-key
 // request options plus the sessionID the browser echoes back on finish. Anonymous endpoint.
 func (hs *HTTPServer) PasskeyLoginBegin(c *contextmodel.ReqContext) response.Response {
+	if _, blocked := hs.checkPasskeyLoginRate(c); blocked != nil {
+		return blocked
+	}
+
 	result, err := hs.passkeyService.BeginLogin(c.Req.Context())
 	if err != nil {
 		return mapPasskeyError(err)
@@ -75,11 +95,23 @@ func (hs *HTTPServer) PasskeyLoginBegin(c *contextmodel.ReqContext) response.Res
 // passkey authn client is the sole reader (see clients/passkey.go), so the request is forwarded
 // untouched through Login, mirroring LoginPost.
 func (hs *HTTPServer) PasskeyLoginFinish(c *contextmodel.ReqContext) response.Response {
+	ip, blocked := hs.checkPasskeyLoginRate(c)
+	if blocked != nil {
+		return blocked
+	}
+
 	// Cap the request body up-front so any downstream consumer inherits the limit.
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, maxPreAuthFormBodySize)
 
 	identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientPasskey, &authn.Request{HTTPRequest: c.Req})
 	if err != nil {
+		// Record only genuine verification failures, keyed by IP (login is usernameless). An expired
+		// challenge is a timeout, not a guess, so it must not count against a slow user.
+		if errors.Is(err, passkey.ErrLoginFailed) {
+			if addErr := hs.loginAttemptService.Add(c.Req.Context(), "", ip); addErr != nil {
+				hs.log.Warn("failed to record passkey login attempt", "error", addErr)
+			}
+		}
 		return mapPasskeyError(err)
 	}
 

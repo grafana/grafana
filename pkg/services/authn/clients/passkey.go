@@ -38,7 +38,7 @@ type Passkey struct {
 // from the begin step plus the raw PublicKeyCredential the authenticator produced. The client owns
 // parsing this body so the assertion is read exactly once on its way to the verifier.
 type loginFinishRequest struct {
-	SessionID string          `json:"sessionId"`
+	SessionID string          `json:"sessionID"`
 	Response  json.RawMessage `json:"response"`
 }
 
