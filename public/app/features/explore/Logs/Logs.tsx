@@ -508,14 +508,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     onCloseCallbackRef?.current();
   }, [onCloseCallbackRef]);
 
-  const onOpenContext = useCallback(
-    (row: LogRowModel, onClose: () => void) => {
-      setContextOpen(true);
-      setContextRow(row);
-      onCloseCallbackRef.current = onClose;
-    },
-    []
-  );
+  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
+    setContextOpen(true);
+    setContextRow(row);
+    onCloseCallbackRef.current = onClose;
+  }, []);
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
