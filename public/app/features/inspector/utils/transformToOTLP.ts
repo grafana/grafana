@@ -4,7 +4,13 @@
 import { type SpanStatus } from '@opentelemetry/api';
 import { type collectorTypes } from '@opentelemetry/exporter-collector';
 
-import { type MutableDataFrame, type TraceKeyValuePair, type TraceLog, type TraceSpanReference, type TraceSpanRow, } from '@grafana/data';
+import {
+  type MutableDataFrame,
+  type TraceKeyValuePair,
+  type TraceLog,
+  type TraceSpanReference,
+  type TraceSpanRow,
+} from '@grafana/data';
 
 export function transformToOTLP(data: MutableDataFrame): {
   batches: collectorTypes.opentelemetryProto.trace.v1.ResourceSpans[];
