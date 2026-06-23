@@ -5615,7 +5615,6 @@
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
           "close": "Close",
-          "modal-title": "Query variable: {{name}}",
           "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
@@ -7063,15 +7062,6 @@
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
     },
-    "modal-editor": {
-      "apply": "Apply",
-      "content-drag-to-resize": "Drag to resize",
-      "discard": "Discard",
-      "on-click-apply-description": "Change variable query",
-      "preview-of-values": "Preview of values ({{ optionsCount }})",
-      "refresh-preview": "Refresh preview",
-      "show-preview": "Show preview"
-    },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
@@ -7205,6 +7195,22 @@
       "go-back": "Back to classic",
       "try-it": "Try it out",
       "upgrade-title": "New editor available"
+    },
+    "query-variable-editor": {
+      "modal": {
+        "apply": "Apply",
+        "apply-description": "Change variable query",
+        "discard": "Discard",
+        "drag-to-resize": "Drag to resize",
+        "preview-of-values": "Preview of values ({{ optionsCount }})",
+        "refresh-preview": "Refresh preview",
+        "show-preview": "Show preview",
+        "tabs": {
+          "query": "Query",
+          "static-options": "Static options ({{staticOptionsCount}})"
+        },
+        "title": "Query variable: {{name}}"
+      }
     },
     "query-variable-editor-form": {
       "description-examples": "Named capture groups can be used to separate the display text and value (<1>see examples</1>).",
