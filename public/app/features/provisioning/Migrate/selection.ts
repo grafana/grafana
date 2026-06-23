@@ -3,7 +3,6 @@ import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 import { resourceKindInfos } from '../utils/resourceKinds';
 
 import { type FolderRow } from './hooks/useFolderMigrationData';
-import { type PlaylistRow } from './hooks/usePlaylistMigrationData';
 
 /**
  * Summary of what the user has picked in the Resources to migrate table.
