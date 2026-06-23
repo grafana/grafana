@@ -23,6 +23,11 @@ describe('getProvisionedRequestError', () => {
       expect(result).toBe('fallback');
     });
 
+    it('returns fallback when 404 has no data payload', () => {
+      const result = getProvisionedRequestError({ status: 404, data: undefined }, 'fallback');
+      expect(result).toBe('fallback');
+    });
+
     it('returns fallback when 404 message is not a string', () => {
       const result = getProvisionedRequestError(makeFetchError(404, { message: ['file not found'] }), 'fallback');
       expect(result).toBe('fallback');
