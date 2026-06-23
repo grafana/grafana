@@ -22,6 +22,10 @@ inputs:
   version:
     description: The version to embed in the grafana binary, example `v1.2.3`. If not provided, then the value in Grafana's package.json will be used
     required: true
+  commit:
+    description: Commit SHA to embed in the binary (-X main.commit). Defaults to the checkout HEAD when empty.
+    required: false
+    default: ''
   build-id:
     description: an identifier number which can be traced back to the workflow run.
     default: ${{github.run_id}}
@@ -97,6 +101,8 @@ runs:
       uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
       env:
         VERSION: ${{ inputs.version }}
+        # Read by pkg/build/cmd to override -X main.commit; empty falls back to git HEAD.
+        COMMIT_SHA: ${{ inputs.commit }}
         ARTIFACTS: ${{ inputs.artifacts }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
         PATCHES_REPO: ${{ inputs.patches-repo }}
