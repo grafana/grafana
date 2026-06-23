@@ -4524,7 +4524,8 @@
       "metadata": {
         "name": "refactorVariablesTimeRange",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-06-06T13:12:09Z"
+        "creationTimestamp": "2023-06-06T13:12:09Z",
+        "deletionTimestamp": "2026-06-18T12:12:56Z"
       },
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",

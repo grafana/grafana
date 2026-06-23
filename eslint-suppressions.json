@@ -2674,7 +2674,7 @@
   },
   "public/app/features/variables/state/actions.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 7
+      "count": 6
     }
   },
   "public/app/features/variables/state/keyedVariablesReducer.ts": {
