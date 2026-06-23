@@ -18,6 +18,7 @@ labels:
 menuTitle: Query editor
 title: Amazon CloudWatch query editor
 weight: 200
+review_date: 2026-06-23
 ---
 
 # Amazon CloudWatch query editor
@@ -244,7 +245,7 @@ You must specify a set of log groups to target for your query using one of the f
   Click **Select log groups** to choose the target log groups for your query.
   When the **Monitoring account** badge appears in the query editor header, you can search and select log groups across multiple accounts.
   Use the **Accounts** filter to narrow results by account.
-  For large lists, use prefix search to narrow the selection.
+  For large lists, use prefix search to narrow the selection. The selector loads log groups in pages, so you can scroll to load more results when many log groups are available.
 - **Name prefix**: Select the **Name prefix** query scope and provide up to five log group name prefixes. The query will run against log groups that have names that start with the specified prefixes. Each prefix must be at least three characters and must not include `*`. This option is only available for **Logs Insights QL**.
 - **All log groups**: Select the **All log groups** query scope. This queries all log groups in the selected region. This option is only available for **Logs Insights QL**.
 
@@ -321,7 +322,7 @@ To enable cross-account observability, complete the following steps:
 
 1. Go to the [Amazon CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html) and follow the instructions for enabling cross-account observability.
 
-1. Add [two API actions](https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
+1. Add [two API actions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#cross-account-observability-permissions) to the IAM policy attached to the role/user running the plugin.
 
 Cross-account querying is available in the plugin through the **Logs**, **Metric search**, and **Metric Insights** modes.
 After you have configured it, you'll see a **Monitoring account** badge in the query editor header.
@@ -330,4 +331,4 @@ After you have configured it, you'll see a **Monitoring account** badge in the q
 
 ## Query caching
 
-When you enable [query and resource caching](/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.
+When you enable [query and resource caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching), Grafana temporarily stores the results of data source queries and resource requests. Query caching is available in CloudWatch Metrics in Grafana Cloud and Grafana Enterprise. It is not available in CloudWatch Logs Insights due to how query results are polled from AWS.

@@ -19,6 +19,7 @@ labels:
 menuTitle: Amazon CloudWatch
 title: Amazon CloudWatch data source
 weight: 200
+review_date: 2026-06-23
 ---
 
 # Amazon CloudWatch data source

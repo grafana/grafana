@@ -17,6 +17,7 @@ labels:
 menuTitle: Template variables
 title: CloudWatch template variables
 weight: 300
+review_date: 2026-06-23
 ---
 
 # CloudWatch template variables

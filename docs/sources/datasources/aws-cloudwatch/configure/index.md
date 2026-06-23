@@ -20,6 +20,7 @@ labels:
 menuTitle: Configure
 title: Configure CloudWatch
 weight: 100
+review_date: 2026-06-23
 ---
 
 # Configure the Amazon CloudWatch data source
@@ -101,7 +102,7 @@ You must use both an access key ID and a secret access key to authenticate.
 | --------------- | ------------------------------------------------------------------- |
 | **Data source** | Select the Application Signals data source from the drop-down menu. |
 
-Grafana automatically creates a link to a trace in Application Signals data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an Application Signals data source configured. For details, see the [Application Signals data source docs](/docs/plugins/grafana-x-ray-datasource/). To view the Application Signals link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
+Grafana automatically creates a link to a trace in Application Signals data source if logs contain the `@xrayTraceId` field. To use this feature, you must already have an Application Signals data source configured. For details, refer to the [Application Signals data source docs](https://grafana.com/docs/plugins/grafana-x-ray-datasource/latest/). To view the Application Signals link, select the log row in either the Explore view or dashboard [Logs panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/logs/) to view the log details section.
 
 To log the `@xrayTraceId`, refer to the [AWS Application Signals documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Application-Monitoring-Sections.html). To provide the field to Grafana, your log queries must also contain the `@xrayTraceId` field, for example by using the query `fields @message, @xrayTraceId`.
 
@@ -287,6 +288,7 @@ The Grafana [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSI
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `allowed_auth_providers`  | Specifies which authentication providers are allowed for the CloudWatch data source. The following providers are enabled by default in open source Grafana: `default` (AWS SDK default), `keys` (Access and secret key), `credentials` (Credentials file), `ec2_IAM_role` (EC2 IAM role).                                                                                                                                                       |
 | `assume_role_enabled`     | Allows you to disable `assume role (ARN)` in the CloudWatch data source. The assume role (ARN) is enabled by default in open source Grafana.                                                                                                                                                                                                                                                                                                    |
+| `per_datasource_http_proxy_enabled` | Allows each CloudWatch data source instance to use its own HTTP proxy configuration for requests to AWS, instead of a shared proxy. Disabled by default. Set to `true` to enable.                                                                                                                                                                                                                                                          |
 | `list_metrics_page_limit` | Sets the limit of List Metrics API pages. When a custom namespace is specified in the query editor, the [List Metrics API](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html) populates the _Metrics_ field and _Dimension_ fields. The API is paginated and returns up to 500 results per page, and the data source also limits the number of pages to 500 by default. This setting customizes that limit. |
 
 ### Provision the data source
