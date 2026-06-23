@@ -63,13 +63,13 @@ TLS errors occur when the MySQL server requires or expects encrypted connections
 
 **Possible causes and solutions:**
 
-| Cause | Solution |
-| ----- | -------- |
-| MySQL has `require_secure_transport` enabled or AWS RDS Proxy enforces TLS | Enable **With CA Cert** or **Skip TLS Verification** in the data source configuration. Either option establishes a TLS connection. |
-| Self-signed or private CA certificate isn't trusted | Enable **With CA Cert** and provide the root certificate under **TLS/SSL Root Certificate**. |
-| Certificate has expired or doesn't match the hostname | Renew the certificate, or enable **Skip TLS Verification** for development environments only. |
-| TLS handshake fails against AWS RDS or RDS Proxy | Provide the [Amazon RDS root CA certificate](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) under **TLS/SSL Root Certificate** with **With CA Cert** enabled. |
-| Organization requires mutual TLS (mTLS) | Enable **Use TLS Client Auth** and provide both a client certificate and key in addition to the CA certificate. |
+| Cause                                                                      | Solution                                                                                                                                                                                     |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MySQL has `require_secure_transport` enabled or AWS RDS Proxy enforces TLS | Enable **With CA Cert** or **Skip TLS Verification** in the data source configuration. Either option establishes a TLS connection.                                                           |
+| Self-signed or private CA certificate isn't trusted                        | Enable **With CA Cert** and provide the root certificate under **TLS/SSL Root Certificate**.                                                                                                 |
+| Certificate has expired or doesn't match the hostname                      | Renew the certificate, or enable **Skip TLS Verification** for development environments only.                                                                                                |
+| TLS handshake fails against AWS RDS or RDS Proxy                           | Provide the [Amazon RDS root CA certificate](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html) under **TLS/SSL Root Certificate** with **With CA Cert** enabled. |
+| Organization requires mutual TLS (mTLS)                                    | Enable **Use TLS Client Auth** and provide both a client certificate and key in addition to the CA certificate.                                                                              |
 
 {{< admonition type="note" >}}
 **Skip TLS Verification** and **With CA Cert** both establish encrypted connections. You don't need **Use TLS Client Auth** unless your setup requires mutual TLS. For most AWS RDS and RDS Proxy connections, **With CA Cert** with the Amazon root CA is sufficient.
