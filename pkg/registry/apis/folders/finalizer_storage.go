@@ -89,13 +89,18 @@ func (s *finalizerStorage) Delete(
 		return nil, false, err
 	}
 
-	// When the caller supplied a precondition, anchor the whole operation on the resource version we
-	// just validated: the metadata mutation enforces it (failing on a concurrent change rather than
-	// retrying over it), and the final store delete re-checks the resource version the mutation
-	// produced. That keeps the precondition atomic end to end -- a concurrent update or
+	// When the caller supplied a resourceVersion precondition, anchor the whole operation on the
+	// resource version we just validated: the metadata mutation enforces it (failing on a concurrent
+	// change rather than retrying over it), and the final store delete re-checks the resource version
+	// the mutation produced. That keeps the precondition atomic end to end -- a concurrent update or
 	// delete/recreate between the check and the final delete conflicts instead of slipping through.
+	//
+	// A UID-only precondition is deliberately not anchored: it guards against delete/recreate while
+	// tolerating updates, so an unrelated change between the Get and the final delete must not turn
+	// into a spurious conflict. We leave expectedRV empty, so the stamp retries over concurrent
+	// changes and the final delete keeps only the UID precondition.
 	expectedRV := ""
-	if options != nil && options.Preconditions != nil {
+	if options != nil && options.Preconditions != nil && options.Preconditions.ResourceVersion != nil {
 		accessor, err := meta.Accessor(obj)
 		if err != nil {
 			return nil, false, apierrors.NewInternalError(fmt.Errorf("folder object metadata: %w", err))
@@ -224,17 +229,22 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 	return nil
 }
 
-// finalDeleteOptions rebases the caller's precondition onto newRV -- the resource version produced by
-// the metadata mutation -- so the embedded store's delete is a compare-and-swap against the object we
-// just stamped, rather than the caller's now-stale resource version. Any UID precondition is kept.
-// When the caller supplied no precondition, options is returned unchanged.
+// finalDeleteOptions rebases a caller's resourceVersion precondition onto newRV -- the resource
+// version produced by the metadata mutation -- so the embedded store's delete is a compare-and-swap
+// against the object we just stamped, rather than the caller's now-stale resource version. A UID
+// precondition is kept as-is, and a UID-only precondition is left without a resourceVersion: pinning
+// it to newRV would make an unrelated concurrent update fail the delete, defeating the point of a
+// UID-only precondition (guard delete/recreate, tolerate updates). When the caller supplied no
+// precondition, options is returned unchanged.
 func finalDeleteOptions(options *metav1.DeleteOptions, newRV string) *metav1.DeleteOptions {
 	if options == nil || options.Preconditions == nil {
 		return options
 	}
 	cp := *options
 	pc := *options.Preconditions
-	pc.ResourceVersion = &newRV
+	if pc.ResourceVersion != nil {
+		pc.ResourceVersion = &newRV
+	}
 	cp.Preconditions = &pc
 	return &cp
 }

@@ -323,6 +323,13 @@ func TestFinalDeleteOptions(t *testing.T) {
 	require.Equal(t, "6", *got.Preconditions.ResourceVersion, "resource version rebased to the post-stamp RV")
 	require.Equal(t, uid, *got.Preconditions.UID, "UID precondition preserved")
 	require.Equal(t, "5", *orig.Preconditions.ResourceVersion, "original options left untouched")
+
+	// A UID-only precondition must stay UID-only: rebasing it onto the post-stamp RV would make an
+	// unrelated concurrent update fail the delete with a spurious conflict.
+	uidOnly := &metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid}}
+	gotUID := finalDeleteOptions(uidOnly, "6")
+	require.Nil(t, gotUID.Preconditions.ResourceVersion, "UID-only precondition gains no resource version")
+	require.Equal(t, uid, *gotUID.Preconditions.UID, "UID precondition preserved")
 }
 
 func TestRemoveTerminationMetadata(t *testing.T) {
