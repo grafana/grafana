@@ -107,6 +107,22 @@ func TestApply_PreservesPlaintextSecureValue(t *testing.T) {
 	assert.Equal(t, "plaintext-token", val)
 }
 
+func TestApply_TargetsManifestNamespace(t *testing.T) {
+	applier, client := newApplier(t)
+
+	var gotNamespace string
+	client.PrependReactor("create", "repositories", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		gotNamespace = action.GetNamespace()
+		return true, action.(k8stesting.CreateAction).GetObject(), nil
+	})
+
+	obj := manifest("Repository", "r")
+	obj.SetNamespace("org-2") // selects org 2
+	applier.Apply(context.Background(), []*unstructured.Unstructured{obj})
+
+	assert.Equal(t, "org-2", gotNamespace, "manifest namespace selects the target org")
+}
+
 func TestApply_SkipsForeignManaged(t *testing.T) {
 	applier, client := newApplier(t, managed(manifest("Repository", "r"), utils.ManagerKindTerraform, "some-workspace"))
 

@@ -28,15 +28,16 @@ const (
 	tokenValue   = "bootstrap-token"
 )
 
-// githubRepoManifest renders a Repository manifest of type github. The token is sourced from the
-// environment so it never appears literally in the file (the file-as-IaC pattern).
-func githubRepoManifest(name string) string {
+// githubRepoManifest renders a Repository manifest of type github in the given namespace (which
+// selects the org: "default" is org 1, "org-N" is org N). The token is sourced from the environment
+// so it never appears literally in the file (the file-as-IaC pattern).
+func githubRepoManifest(name, namespace string) string {
 	return fmt.Sprintf(`
 apiVersion: provisioning.grafana.app/v0alpha1
 kind: Repository
 metadata:
   name: %s
-  namespace: default
+  namespace: %s
 spec:
   title: %s
   type: github
@@ -52,7 +53,7 @@ spec:
 secure:
   token:
     create: "$__env{GH_PAT}"
-`, name, name)
+`, name, namespace, name)
 }
 
 // dashboardManifest is an unsupported kind: the provisioning bootstrap must ignore it, because once
@@ -96,12 +97,17 @@ func TestIntegrationProvisioningBootstrap(t *testing.T) {
 
 	t.Setenv("GH_PAT", tokenValue)
 
-	multiDoc := githubRepoManifest("multi-a") + "---" + githubRepoManifest("multi-b") + "---" + dashboardManifest("skip-me")
+	org2Namespace := "org-2" // org 2 is created by the test helper (OrgB)
+	multiDoc := githubRepoManifest("multi-a", "default") + "---" + githubRepoManifest("multi-b", "default") + "---" + dashboardManifest("skip-me")
 	helper := bootGrafana(t, map[string]string{
-		"github.yaml": githubRepoManifest("gh-repo"),
+		"github.yaml": githubRepoManifest("gh-repo", "default"),
 		"multi.yaml":  multiDoc,
+		"org2.yaml":   githubRepoManifest("org2-repo", org2Namespace),
 	})
 	ctx := context.Background()
+
+	require.Equal(t, org2Namespace, helper.Namespacer(helper.OrgB.OrgID),
+		"sanity check: org 2 maps to the org-2 namespace")
 
 	repos := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -173,5 +179,27 @@ func TestIntegrationProvisioningBootstrap(t *testing.T) {
 		// And it is certainly not created as a repository.
 		_, err = repos.Resource.Get(ctx, "skip-me", metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "skip-me must not exist as a repository, got: %v", err)
+	})
+
+	t.Run("applies repositories to the org selected by the manifest namespace", func(t *testing.T) {
+		org2Repos := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.OrgB.Admin,
+			Namespace: org2Namespace,
+			GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+		})
+
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			got, err := org2Repos.Resource.Get(ctx, "org2-repo", metav1.GetOptions{})
+			if !assert.NoError(c, err) {
+				return
+			}
+			assert.Equal(c, org2Namespace, got.GetNamespace())
+		}, waitTimeout, pollInterval, "org-2 repository should be created in org 2")
+
+		// Org isolation: the org-2 repository must not leak into org 1, and org 1's repos not into org 2.
+		_, err := repos.Resource.Get(ctx, "org2-repo", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "org2-repo must not appear in org 1, got: %v", err)
+		_, err = org2Repos.Resource.Get(ctx, "gh-repo", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "gh-repo must not appear in org 2, got: %v", err)
 	})
 }
