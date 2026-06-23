@@ -63,7 +63,7 @@ test.describe(
 
       // close the modal
       await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton)
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton)
         .click();
 
       // assert the query variable values are in the variable value select

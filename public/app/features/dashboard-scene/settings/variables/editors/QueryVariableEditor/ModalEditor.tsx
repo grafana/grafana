@@ -211,7 +211,11 @@ function useModalEditor({ variable, onClose }: ModalEditorProps) {
           staticOptions: reconcileStaticOptionsProperties(stateUpdate.staticOptions, validProperties),
         };
       }
-      targetVariable.setState(stateUpdate);
+      // Exclude computed properties so that validateAndUpdate() detects the value
+      // change and publishes SceneVariableValueChangedEvent, which notifies dependent
+      // scene objects (e.g. panels with interpolated titles) to re-render.
+      const { value: _, text: __, options: ___, loading: ____, error: _____, ...configState } = stateUpdate;
+      targetVariable.setState(configState);
     }
     setIsLoading(true);
     try {
