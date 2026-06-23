@@ -836,6 +836,64 @@ describe('TableNG utils', () => {
       expect(onClickHandler).toHaveBeenCalledWith(event, { field, rowIndex: 0 });
     });
 
+    it('should keep target blank links as browser-handled links', () => {
+      const onClickHandler = jest.fn();
+      const mockLinks: LinkModel[] = [
+        {
+          title: 'Internal new tab link',
+          href: '/explore?left=%7B%7D',
+          onClick: onClickHandler,
+          target: '_blank',
+          origin: { datasourceUid: 'test' },
+        },
+      ];
+
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: () => mockLinks,
+      };
+
+      const links = getCellLinks(field, 0);
+
+      expect(links?.[0].href).toBe('/explore?left=%7B%7D');
+      expect(links?.[0].target).toBe('_blank');
+      expect(links?.[0].onClick).toBeUndefined();
+      expect(onClickHandler).not.toHaveBeenCalled();
+    });
+
+    it('should keep target blank click handlers when href is missing', () => {
+      const onClickHandler = jest.fn();
+      const mockLinks: LinkModel[] = [
+        {
+          title: 'Internal action link',
+          href: '',
+          onClick: onClickHandler,
+          target: '_blank',
+          origin: { datasourceUid: 'test' },
+        },
+      ];
+
+      const field: Field = {
+        name: 'test',
+        type: FieldType.string,
+        config: {},
+        values: ['value1'],
+        getLinks: () => mockLinks,
+      };
+
+      const links = getCellLinks(field, 0);
+      const event = new MouseEvent('click', { bubbles: true });
+      jest.spyOn(event, 'preventDefault');
+
+      links?.[0].onClick?.(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(onClickHandler).toHaveBeenCalledWith(event, { field, rowIndex: 0 });
+    });
+
     it.each([
       { keyName: 'metaKey', eventOverride: { metaKey: true } },
       { keyName: 'ctrlKey', eventOverride: { ctrlKey: true } },

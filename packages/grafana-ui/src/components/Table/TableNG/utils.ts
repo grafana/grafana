@@ -603,10 +603,16 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
   }
 
   for (let i = 0; i < links?.length; i++) {
-    if (links[i].onClick) {
-      const origOnClick = links[i].onClick;
+    const link = links[i];
+    if (link.onClick) {
+      if (link.target === '_blank' && link.href) {
+        link.onClick = undefined;
+        continue;
+      }
 
-      links[i].onClick = (event: MouseEvent) => {
+      const origOnClick = link.onClick;
+
+      link.onClick = (event: MouseEvent) => {
         // Allow opening in new tab
         if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
           event.preventDefault();
