@@ -12965,6 +12965,7 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
+      "bulk-resource-kind": "resource",
       "dashboard-create-default": "New dashboard: {{title}}",
       "dashboard-delete-default": "Delete dashboard: {{title}}",
       "dashboard-move-default": "Move dashboard: {{title}}",

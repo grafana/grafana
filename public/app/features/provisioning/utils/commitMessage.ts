@@ -111,7 +111,14 @@ export function renderCommitMessage(
   if (!trimmed) {
     return fallbackMessage ?? defaultMessage(vars);
   }
+  // Bulk operations omit `resourceKind`, so substitute a generic noun. Otherwise a
+  // `{{resourceKind}}` placeholder would collapse to an empty token — e.g. a `feat({{resourceKind}}s)`
+  // template would render `feat(s)` instead of `feat(resources)`
+  const resourceKind = vars.resourceKind || t('provisioning.commit-message.bulk-resource-kind', 'resource');
   return trimmed.replace(TEMPLATE_VAR, (_, key: TemplateKey) => {
+    if (key === 'resourceKind') {
+      return resourceKind;
+    }
     const raw = vars[key] ?? '';
     return IDENTITY_KEY_SET.has(key) ? sanitizeLine(raw) : raw;
   });

@@ -203,6 +203,19 @@ describe('useCommitMessageTemplate', () => {
       expect(screen.getByTestId('resolved-message')).toHaveTextContent('chore: delete 3 resources');
     });
 
+    it('renders a {{resourceKind}} placeholder as a generic noun instead of an empty token', async () => {
+      render(
+        <Host
+          repository={makeRepo({ singleResourceMessageTemplate: 'feat({{resourceKind}}s): {{action}} {{title}}' })}
+          vars={bulkVars}
+          fallbackMessage="Delete resources"
+        />
+      );
+
+      const textarea = screen.getByRole('textbox', { name: /comment/i });
+      await waitFor(() => expect(textarea).toHaveValue('feat(resources): delete 3 resources'));
+    });
+
     it('locks to the fallback message when enforcement is on without a template', async () => {
       render(
         <Host repository={makeRepo({ enforceTemplate: true })} vars={bulkVars} fallbackMessage="Delete resources" />
