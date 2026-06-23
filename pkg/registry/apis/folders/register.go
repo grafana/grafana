@@ -541,6 +541,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateTerminatingLabelUnchanged(ctx, f, old); err != nil {
 			return err
 		}
+		if err := validateCascadeFinalizerPreserved(ctx, f, old); err != nil {
+			return err
+		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.accessClient, b.maxNestedFolderDepth)
 	default:
 		return nil

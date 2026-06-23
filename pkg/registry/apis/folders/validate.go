@@ -102,6 +102,33 @@ func validateTerminatingLabelUnchanged(ctx context.Context, f *folders.Folder, o
 		fmt.Errorf("the %q label is managed by folder cascade deletion and cannot be set or modified", TerminatingLabel))
 }
 
+// validateCascadeFinalizerPreserved stops an ordinary client from stripping the cascade-delete
+// finalizer off a folder that is already terminating. Without it, a metadata-only PUT that drops the
+// finalizer would let garbage collection remove the folder before the cascade poller has deleted its
+// contained dashboards, alert rules, and library elements -- orphaning them. The poller clears the
+// finalizer legitimately once cleanup is done, but it runs as a service identity (which is exempt
+// here), so that path is the only one allowed to remove it.
+//
+// Only terminating folders are guarded: on a folder that is not terminating, the Mutate admission
+// step re-adds the finalizer, so a user cannot durably strip it there.
+func validateCascadeFinalizerPreserved(ctx context.Context, f *folders.Folder, old *folders.Folder) error {
+	if old == nil || identity.IsServiceIdentity(ctx) {
+		return nil
+	}
+	if !folderIsTerminating(old) || !hasCascadeFinalizer(old.Finalizers) {
+		return nil
+	}
+	if hasCascadeFinalizer(f.Finalizers) {
+		return nil
+	}
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+	return apierrors.NewForbidden(gr, f.Name,
+		fmt.Errorf("the %q finalizer is managed by folder cascade deletion and cannot be removed while the folder is terminating", CascadeDeleteFinalizer))
+}
+
 // folderIsTerminating reports whether a folder is being cascade-deleted: it has a deletion timestamp,
 // or carries the terminating label. The label is stamped before the timestamp and is admission-
 // protected, so it only ever reflects a real, in-progress delete -- which is why checking it (not

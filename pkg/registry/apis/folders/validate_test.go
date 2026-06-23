@@ -1139,6 +1139,50 @@ func TestValidateTerminatingLabelUnchanged(t *testing.T) {
 	})
 }
 
+func TestValidateCascadeFinalizerPreserved(t *testing.T) {
+	userCtx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	svcCtx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+	now := metav1.Now()
+	terminating := func(finalizers []string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:              "f",
+			Labels:            map[string]string{TerminatingLabel: TerminatingLabelValue},
+			DeletionTimestamp: &now,
+			Finalizers:        finalizers,
+		}}
+	}
+	live := func(finalizers []string) *folders.Folder {
+		return &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "f", Finalizers: finalizers}}
+	}
+	with := []string{CascadeDeleteFinalizer}
+
+	t.Run("user cannot strip the finalizer off a terminating folder", func(t *testing.T) {
+		err := validateCascadeFinalizerPreserved(userCtx, terminating(nil), terminating(with))
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
+	})
+
+	t.Run("user update keeping the finalizer is allowed", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(with), terminating(with)))
+	})
+
+	t.Run("service identity may strip the finalizer", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(svcCtx, terminating(nil), terminating(with)))
+	})
+
+	t.Run("stripping on a non-terminating folder is left to Mutate", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, live(nil), live(with)))
+	})
+
+	t.Run("nothing to preserve when the old folder had no finalizer", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(nil), terminating(nil)))
+	})
+
+	t.Run("create has no old object", func(t *testing.T) {
+		require.NoError(t, validateCascadeFinalizerPreserved(userCtx, terminating(nil), nil))
+	})
+}
+
 func TestValidateRejectsChildrenUnderTerminatingParent(t *testing.T) {
 	ctx := context.Background()
 	terminatingParent := &folders.Folder{ObjectMeta: metav1.ObjectMeta{
