@@ -104,11 +104,6 @@ export interface FeatureToggles {
   */
   renderAuthJWT?: boolean;
   /**
-  * Refactor time range variables flow to reduce number of API calls made when query variables are chained
-  * @default false
-  */
-  refactorVariablesTimeRange?: boolean;
-  /**
   * Enable the data source selector within the Frontend Apps section of the Frontend Observability
   * @default false
   */
@@ -1252,7 +1247,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**

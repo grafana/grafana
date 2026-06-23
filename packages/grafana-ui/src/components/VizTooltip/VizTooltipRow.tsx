@@ -10,15 +10,26 @@ import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { ColorPlacement, type VizTooltipItem } from './types';
+import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
+  /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
   value: string | number | null | ReactNode;
+  /** CSS `justify-content` value for the row layout. Defaults to `'start'`. */
   justify?: string;
-  isActive?: boolean; // for series list
+  /** Whether this row corresponds to the closest/hovered series — renders the label in bold. */
+  isActive?: boolean;
+  /** Right margin applied to the value cell, used to leave room for overlay elements such as the close button. */
   marginRight?: string;
-  isPinned: boolean;
+  /**
+   * Whether the tooltip is currently pinned (locked open by the user).
+   * When pinned, label and value become clickable to copy their text to the clipboard.
+   * Defaults to `false`.
+   */
+  isPinned?: boolean;
+  /** When true the value cell becomes vertically scrollable up to a fixed max-height. */
   showValueScroll?: boolean;
+  /** When true the color indicator is rendered hollow, signalling the field is not shown in the visualization. */
   isHiddenFromViz?: boolean;
 }
 
@@ -32,16 +43,17 @@ const SHOW_SUCCESS_DURATION = 2 * 1000;
 const HORIZONTAL_PX_PER_CHAR = 7;
 const CAN_COPY = Boolean(navigator.clipboard && window.isSecureContext);
 
+/** @alpha */
 export const VizTooltipRow = ({
   label,
   value,
   color,
   colorIndicator,
-  colorPlacement = ColorPlacement.first,
+  colorPlacement = VizTooltipColorPlacement.first,
   justify,
   isActive = false,
   marginRight,
-  isPinned,
+  isPinned = false,
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
@@ -133,7 +145,7 @@ export const VizTooltipRow = ({
 
   return (
     <div className={styles.contentWrapper}>
-      {color && colorPlacement === ColorPlacement.first && (
+      {color && colorPlacement === VizTooltipColorPlacement.first && (
         <div className={styles.colorWrapper}>
           <VizTooltipColorIndicator
             color={color}
@@ -174,7 +186,7 @@ export const VizTooltipRow = ({
       )}
 
       <div className={styles.valueWrapper}>
-        {color && colorPlacement === ColorPlacement.leading && (
+        {color && colorPlacement === VizTooltipColorPlacement.leading && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}
@@ -206,7 +218,7 @@ export const VizTooltipRow = ({
           </>
         )}
 
-        {color && colorPlacement === ColorPlacement.trailing && (
+        {color && colorPlacement === VizTooltipColorPlacement.trailing && (
           <VizTooltipColorIndicator
             color={color}
             colorIndicator={colorIndicator}

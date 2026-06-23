@@ -1,28 +1,15 @@
 import { type FolderRow } from './hooks/useFolderMigrationData';
-import { isMigratableFolder, resolveSelection } from './selection';
+import { resolveSelection } from './selection';
 
-function folder(uid: string, dashboardUids: string[], overrides: Partial<FolderRow> = {}): FolderRow {
-  const dashboards = dashboardUids.map((d) => ({ uid: d, title: d, url: `/d/${d}` }));
+function folder(uid: string, dashboardUids: string[]): FolderRow {
+  const dashboards = dashboardUids.map((d) => ({ uid: d, title: d }));
   return {
     uid,
     title: uid,
     dashboardCount: dashboards.length,
     directDashboards: dashboards,
-    allDashboards: dashboards,
-    ...overrides,
   };
 }
-
-describe('isMigratableFolder', () => {
-  it('treats any unmanaged folder as a target, including empty ones', () => {
-    expect(isMigratableFolder(folder('with-dashboards', ['d1']))).toBe(true);
-    expect(isMigratableFolder(folder('empty', []))).toBe(true);
-  });
-
-  it('excludes already-managed folders', () => {
-    expect(isMigratableFolder(folder('managed', ['d1'], { managedBy: 'repo' }))).toBe(false);
-  });
-});
 
 describe('resolveSelection', () => {
   const folders = [folder('a', ['a1', 'a2']), folder('b', ['b1'])];
@@ -33,7 +20,7 @@ describe('resolveSelection', () => {
     expect(result.resources).toEqual([]);
   });
 
-  it('cascades a selected folder to every dashboard in its subtree', () => {
+  it('cascades a selected folder to the dashboards directly inside it', () => {
     const result = resolveSelection(folders, new Set(['a']), new Set());
 
     expect(result.folders).toBe(1);
