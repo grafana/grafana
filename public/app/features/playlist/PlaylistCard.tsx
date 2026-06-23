@@ -7,7 +7,13 @@ import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { getManagerIdentity, getManagerKind, isManaged } from 'app/features/provisioning/utils/managedResource';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -49,6 +55,9 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
             </Button>
           </>
+        )}
+        {isManaged(playlist) && (
+          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} />
         )}
       </Card.Actions>
       <Card.SecondaryActions>

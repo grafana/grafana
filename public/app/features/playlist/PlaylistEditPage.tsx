@@ -6,7 +6,13 @@ import { locationService } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { getManagerIdentity, getManagerKind, isManaged } from 'app/features/provisioning/utils/managedResource';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
@@ -40,7 +46,12 @@ export const PlaylistEditPage = () => {
   const renderTitle = (title: string) => (
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
-      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
+      {data && isManaged(data) && (
+        <>
+          <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />
+          <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
+        </>
+      )}
     </Stack>
   );
 
