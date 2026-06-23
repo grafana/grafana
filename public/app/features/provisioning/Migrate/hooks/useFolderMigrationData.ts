@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { extractManagerKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 
 const PAGE_SIZE = 200;
 // How many page requests of one kind to have in flight at once. Keeps the
@@ -14,35 +14,26 @@ const PAGE_CONCURRENCY = 5;
 // Safety guardrail so a pathological response (or an enormous instance) can't
 // spin off unbounded requests. Generous on purpose — well past any realistic
 // folder/dashboard count. Exceeding it throws (rather than returning a
-// truncated list) so the page fails loudly; the proper fix is the backend
+// truncated list) so the page fails loudly; the proper fix is a backend
 // roll-up the hook's JSDoc points at.
 const MAX_PAGES = 200;
 
-interface FolderPeekDashboard {
+interface FolderDashboard {
   uid: string;
   title: string;
-  url: string;
 }
 
 export interface FolderRow {
   uid: string;
   title: string;
-  /**
-   * The provisioning tool that manages this folder, if any. A folder is
-   * single-managed: when this is set, every dashboard inside the folder is
-   * managed by the same tool; when it's unset, every dashboard is unmanaged.
-   */
-  managedBy?: string;
-  /** Recursive count: dashboards anywhere inside this folder's subtree. */
+  /** Number of unmanaged dashboards directly in this folder. */
   dashboardCount: number;
-  /** Dashboards directly in this folder (not nested), used by the expand view. */
-  directDashboards: FolderPeekDashboard[];
   /**
-   * Every dashboard anywhere in this folder's subtree. Used by the migrate
-   * call (which only accepts dashboard refs, not folder refs) and by the
-   * cascading folder-selection logic in the UI.
+   * The unmanaged dashboards directly in this folder. Selective migration is
+   * not recursive — dashboards in subfolders are migrated through their own
+   * folder's row, not this one.
    */
-  allDashboards: FolderPeekDashboard[];
+  directDashboards: FolderDashboard[];
 }
 
 interface State {
@@ -52,15 +43,11 @@ interface State {
 }
 
 /**
- * The unified searcher exposes only the *immediate* parent folder UID in
- * `item.location` (`DashboardHit.folder`), not the full ancestor chain.
- * Treat it as that — the recursive ancestor walk happens in aggregate(),
- * using the folder→parent map we build from the folder fetch.
+ * The unified searcher reports a dashboard's *immediate* parent folder UID in
+ * `item.location`. Root-level dashboards come back with an empty UID or the
+ * literal "general" UID; normalize both to undefined.
  */
-function readImmediateParent(location: unknown): string | undefined {
-  if (typeof location !== 'string') {
-    return undefined;
-  }
+function readImmediateParent(location: string): string | undefined {
   const trimmed = location.trim();
   if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
     return undefined;
@@ -87,18 +74,15 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
 
   const first = await searchPage(0);
   const items: DashboardQueryResult[] = first.view.toArray();
-  const totalRows = typeof first.totalRows === 'number' ? first.totalRows : items.length;
+  const totalRows = first.totalRows;
   const pageCount = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
 
   // Fail loudly rather than silently truncating: a partial list would drop rows
-  // from the table and, worse, from the selective-migration payload. The error
-  // surfaces the migrate-everything fallback, which doesn't need the full list.
+  // from the table and, worse, from the selective-migration payload.
   if (pageCount > MAX_PAGES) {
     throw new Error(`Too many ${kind}s to enumerate (${totalRows}); aborting to avoid an incomplete migration list.`);
   }
 
-  // Fetch the remaining pages in small concurrent batches so a large instance
-  // doesn't open one big burst of requests before the tab is interactive.
   for (let page = 1; page < pageCount; page += PAGE_CONCURRENCY) {
     const batch = Array.from({ length: Math.min(PAGE_CONCURRENCY, pageCount - page) }, (_, index) =>
       searchPage(page + index)
@@ -110,23 +94,15 @@ async function fetchAllPages(kind: 'folder' | 'dashboard'): Promise<DashboardQue
   return items;
 }
 
-// `kind: ['folder']` with no location filter returns every folder on the
-// instance — root-level *and* nested. listFolders only returns immediate
-// children of a single parent, which would silently drop subfolders.
-async function fetchAllFolders(): Promise<
-  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
-> {
+// `kind: ['folder']` returns every folder on the instance; we only need each
+// folder's UID and title to label the rows.
+async function fetchAllFolders(): Promise<Array<{ uid: string; title: string }>> {
   const items = await fetchAllPages('folder');
-  return items.map((item) => ({
-    uid: item.uid,
-    title: item.name,
-    parentUid: readImmediateParent(item.location),
-    managedBy: extractManagerKind(item.managedBy),
-  }));
+  return items.map((item) => ({ uid: item.uid, title: item.name }));
 }
 
 async function fetchAllDashboards(): Promise<
-  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
+  Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 > {
   const items = await fetchAllPages('dashboard');
   return items.map((item) => {
@@ -136,141 +112,66 @@ async function fetchAllDashboards(): Promise<
       title: view.title,
       parentUid: readImmediateParent(item.location),
       managedBy: view.managedBy,
-      url: view.url ?? '',
     };
   });
 }
 
+/**
+ * Groups unmanaged dashboards under the folder that directly contains them and
+ * emits one row per folder that has at least one. Migration is dashboard-centric
+ * and non-recursive: a folder's row covers only the dashboards directly inside
+ * it (subfolders get their own rows), and folders with nothing to migrate —
+ * empty, already-managed, or holding only subfolders — are left out entirely.
+ * Dashboards at the root roll up into a synthetic "General" row.
+ */
 function aggregate(
-  folders: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>,
-  dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string; url: string }>
+  folders: Array<{ uid: string; title: string }>,
+  dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 ): FolderRow[] {
-  // Migration is recursive: picking a folder migrates that folder plus every
-  // descendant folder and dashboard. The unified searcher only reports a
-  // dashboard's *immediate* parent, so we have to walk the folder→parent map
-  // ourselves to count dashboards against every ancestor. Dashboards directly
-  // under the General root (no parent) roll up into a synthetic "General" row.
-  const folderParent = new Map<string, string | undefined>();
-  for (const folder of folders) {
-    folderParent.set(folder.uid, folder.parentUid);
-  }
-  // Walks from the immediate parent up to the root, returning [parent, …, root].
-  // Cycle-safe: stops if a UID is revisited (shouldn't happen in well-formed
-  // data, but the API can occasionally return broken payloads).
-  const ancestorsOf = (start: string | undefined): string[] => {
-    const chain: string[] = [];
-    const seen = new Set<string>();
-    let cursor = start;
-    while (cursor && !seen.has(cursor)) {
-      chain.push(cursor);
-      seen.add(cursor);
-      cursor = folderParent.get(cursor);
-    }
-    return chain;
-  };
-
-  const dashboardCountByFolder = new Map<string, number>();
-  const directDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
-  const allDashboardsByFolder = new Map<string, FolderPeekDashboard[]>();
-  const rootDirectDashboards: FolderPeekDashboard[] = [];
-  // rootDashboardCount and rootDirectDashboards only track *migratable* root
-  // dashboards (i.e. unmanaged) — they feed the ResourcesToMigrate UI which is
-  // scoped to migration targets. rootTotalDashboards tracks every root
-  // dashboard so the General row still appears (with the right managedBy)
-  // when every root dashboard is already provisioned.
-  let rootDashboardCount = 0;
-  let rootTotalDashboards = 0;
-  const rootManagerKinds = new Set<string>();
-  let rootHasUnmanaged = false;
-
-  const pushTo = (map: Map<string, FolderPeekDashboard[]>, folderUid: string, dash: FolderPeekDashboard) => {
-    const existing = map.get(folderUid);
-    if (existing) {
-      existing.push(dash);
-    } else {
-      map.set(folderUid, [dash]);
-    }
-  };
+  const folderTitle = new Map(folders.map((folder) => [folder.uid, folder.title]));
+  const directByFolder = new Map<string, FolderDashboard[]>();
+  const rootDashboards: FolderDashboard[] = [];
 
   for (const dash of dashboards) {
-    const dashItem: FolderPeekDashboard = { uid: dash.uid, title: dash.title, url: dash.url };
-    const ancestors = ancestorsOf(dash.parentUid);
-    // Track whether each root has any unmanaged dashboard / which manager
-    // kinds appear there, regardless of whether the dashboard itself is
-    // migratable. This lets the synthetic General row report a single
-    // managedBy when every root dashboard agrees, without skipping past
-    // managed dashboards.
-    if (ancestors.length === 0) {
-      rootTotalDashboards += 1;
-      if (dash.managedBy) {
-        rootManagerKinds.add(dash.managedBy);
-      } else {
-        rootHasUnmanaged = true;
-      }
-    }
-    // Already-managed dashboards aren't migration targets — the migrate
-    // backend only takes unmanaged dashboards, and the UI counts shouldn't
-    // surface them as work to do. Skip them for everything that feeds the
-    // migration flow (subtree counts, expand view, migrate payload).
+    // Already-managed dashboards aren't migration targets — the migrate backend
+    // only takes unmanaged dashboards.
     if (dash.managedBy) {
       continue;
     }
-    if (ancestors.length === 0) {
-      rootDashboardCount += 1;
-      rootDirectDashboards.push(dashItem);
+    const item: FolderDashboard = { uid: dash.uid, title: dash.title };
+    if (!dash.parentUid) {
+      rootDashboards.push(item);
       continue;
     }
-    for (const ancestorUid of ancestors) {
-      dashboardCountByFolder.set(ancestorUid, (dashboardCountByFolder.get(ancestorUid) ?? 0) + 1);
-      pushTo(allDashboardsByFolder, ancestorUid, dashItem);
+    const existing = directByFolder.get(dash.parentUid);
+    if (existing) {
+      existing.push(item);
+    } else {
+      directByFolder.set(dash.parentUid, [item]);
     }
-    pushTo(directDashboardsByFolder, ancestors[0], dashItem);
   }
 
-  const rows: FolderRow[] = folders.map((folder) => ({
-    uid: folder.uid,
-    title: folder.title,
-    managedBy: folder.managedBy,
-    dashboardCount: dashboardCountByFolder.get(folder.uid) ?? 0,
-    directDashboards: directDashboardsByFolder.get(folder.uid) ?? [],
-    allDashboards: allDashboardsByFolder.get(folder.uid) ?? [],
-  }));
-
-  // The General "folder" doesn't have its own managedBy on the backend. Mirror
-  // the single-managed assumption from real folders: only treat it as managed
-  // when every root dashboard agrees on the *same* manager kind.
-  const generalManagedBy =
-    !rootHasUnmanaged && rootTotalDashboards > 0 && rootManagerKinds.size === 1
-      ? rootManagerKinds.values().next().value
-      : undefined;
-  // Synthesize the General row only when it's meaningful: there are unmanaged
-  // root dashboards (a real migration target), or every root dashboard is
-  // managed by a single agreeing tool (a managed row the table filters out).
-  // Skip it when the root has only managed dashboards from mixed tools — there
-  // we'd otherwise emit an unmanaged-looking row with nothing to migrate.
-  // Root-level *folders* are their own rows, so they don't trigger this.
-  if (rootHasUnmanaged || generalManagedBy !== undefined) {
+  const rows: FolderRow[] = [];
+  for (const [uid, directDashboards] of directByFolder) {
+    rows.push({
+      uid,
+      title: folderTitle.get(uid) ?? uid,
+      dashboardCount: directDashboards.length,
+      directDashboards,
+    });
+  }
+  if (rootDashboards.length > 0) {
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.migrate.general-folder-title', 'General (root resources)'),
-      managedBy: generalManagedBy,
-      dashboardCount: rootDashboardCount,
-      directDashboards: rootDirectDashboards,
-      allDashboards: rootDirectDashboards,
+      dashboardCount: rootDashboards.length,
+      directDashboards: rootDashboards,
     });
   }
 
-  // Default ordering: unmanaged folders first, then by dashboard count desc so
-  // the folders with the most to migrate surface at the top, then title. The
-  // table lets the user re-sort; this is just a sensible initial order. This
-  // hook returns every folder (empty ones included); the UI decides what's a
-  // migration target via isMigratableFolder.
+  // Default ordering: most dashboards first so the folders with the most to
+  // migrate surface at the top, then by title. The table lets the user re-sort.
   return rows.sort((a, b) => {
-    const aIsUnmanaged = a.managedBy ? 0 : 1;
-    const bIsUnmanaged = b.managedBy ? 0 : 1;
-    if (aIsUnmanaged !== bIsUnmanaged) {
-      return bIsUnmanaged - aIsUnmanaged;
-    }
     if (b.dashboardCount !== a.dashboardCount) {
       return b.dashboardCount - a.dashboardCount;
     }
@@ -282,8 +183,8 @@ function aggregate(
 
 /**
  * Frontend aggregation that fans out to the existing folder + dashboard search
- * APIs and joins them into a per-folder roll-up of dashboard counts and
- * management state. It pages through every folder and dashboard on the
+ * APIs and joins them into a per-folder list of the unmanaged dashboards each
+ * folder directly contains. It pages through every folder and dashboard on the
  * instance. When a dedicated backend endpoint for this roll-up lands, swap the
  * body of this hook to consume it.
  */

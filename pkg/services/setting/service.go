@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
@@ -244,7 +244,7 @@ func New(config Config) (Service, error) {
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -266,7 +266,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 
 func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
 		trace.WithAttributes(ns))
 	defer span.End()

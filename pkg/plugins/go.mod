@@ -12,7 +12,6 @@ require (
 	github.com/grafana/authlib/types v0.0.0-20260603144019-18cfcbc9496a
 	github.com/grafana/grafana-plugin-sdk-go v0.292.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-plugin v1.7.0
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0
@@ -143,7 +142,4 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace (
-	github.com/grafana/grafana/pkg/apimachinery => ../apimachinery
-	github.com/grafana/grafana/pkg/semconv => ../semconv
-)
+replace github.com/grafana/grafana/pkg/apimachinery => ../apimachinery
