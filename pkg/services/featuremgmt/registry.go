@@ -943,15 +943,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAggregatorCapTokenAuth",
-			Description:     "Enable CAP token based authentication in grafana's embedded kube-aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "groupByVariable",
 			Description:  "Enable groupBy variable support in scenes dashboards",
 			Stage:        FeatureStageExperimental,

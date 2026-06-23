@@ -484,11 +484,6 @@ export interface FeatureToggles {
   */
   sqlExpressionsCodeMirror?: boolean;
   /**
-  * Enable CAP token based authentication in grafana's embedded kube-aggregator
-  * @default false
-  */
-  kubernetesAggregatorCapTokenAuth?: boolean;
-  /**
   * Enable groupBy variable support in scenes dashboards
   * @default false
   */

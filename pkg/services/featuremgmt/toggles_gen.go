@@ -279,10 +279,6 @@ const (
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
 
-	// FlagKubernetesAggregatorCapTokenAuth
-	// Enable CAP token based authentication in grafana's embedded kube-aggregator
-	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
-
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
