@@ -82,6 +82,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/passkey"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
@@ -214,6 +215,8 @@ type HTTPServer struct {
 	oauthTokenService               oauthtoken.OAuthTokenService
 	statsService                    stats.Service
 	authnService                    authn.Service
+	passkeyService                  passkey.Service // nil until B-Wire injects it
+	passkeyStore                    passkey.Store   // nil until B-Wire injects it
 	starApi                         *starApi.API
 	promRegister                    prometheus.Registerer
 	promGatherer                    prometheus.Gatherer
