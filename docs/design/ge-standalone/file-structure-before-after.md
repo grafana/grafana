@@ -24,7 +24,7 @@ graph TB
     subgraph GE["grafana-enterprise (no root go.mod)"]
         SRC["src/pkg/extensions/"]
         WIRE_SRC["src/pkg/wire/server.go"]
-        BUILD["`make enterprise-dev` scripts"]
+        BUILD["make enterprise-dev scripts"]
     end
 
     BUILD -->|"manage overlay"| EXT_STUB
