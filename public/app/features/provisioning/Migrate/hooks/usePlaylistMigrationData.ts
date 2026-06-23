@@ -38,13 +38,19 @@ export function usePlaylistMigrationData(enabled: boolean): State {
   }, [enabled, baseRefetch]);
 
   const rows = useMemo<PlaylistRow[]>(() => {
-    return (data?.items ?? [])
-      .filter((playlist) => !playlist.metadata?.annotations?.[AnnoKeyManagerKind])
-      .map((playlist) => ({
-        uid: playlist.metadata?.name ?? '',
-        title: playlist.spec?.title || playlist.metadata?.name || '',
-      }))
-      .filter((row) => row.uid);
+    return (
+      (data?.items ?? [])
+        // A resource is managed when the manager-kind annotation is *present*, even
+        // if its value is empty or a manager we don't recognize — matching how the
+        // rest of provisioning decides ownership. A truthy check would wrongly
+        // treat an explicit-but-empty manager as unmanaged.
+        .filter((playlist) => !(AnnoKeyManagerKind in (playlist.metadata?.annotations ?? {})))
+        .map((playlist) => ({
+          uid: playlist.metadata?.name ?? '',
+          title: playlist.spec?.title || playlist.metadata?.name || '',
+        }))
+        .filter((row) => row.uid)
+    );
   }, [data]);
 
   return {

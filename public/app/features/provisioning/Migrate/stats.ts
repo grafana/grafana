@@ -23,13 +23,13 @@ type BucketKey = typeof DASHBOARD_BUCKET | typeof FOLDER_BUCKET | typeof PLAYLIS
  * as dashboards. Anything that isn't a tracked resource is ignored.
  */
 function bucketKeyFor(group: string, resource: string): BucketKey | undefined {
-  if (DASHBOARD_GROUPS.includes(group) && resource === 'dashboards') {
+  if (DASHBOARD_GROUPS.includes(group) && resource === resourceKindInfos.dashboard.resource) {
     return DASHBOARD_BUCKET;
   }
-  if (FOLDER_GROUPS.includes(group) && resource === 'folders') {
+  if (FOLDER_GROUPS.includes(group) && resource === resourceKindInfos.folder.resource) {
     return FOLDER_BUCKET;
   }
-  if (PLAYLIST_GROUPS.includes(group) && resource === 'playlists') {
+  if (PLAYLIST_GROUPS.includes(group) && resource === resourceKindInfos.playlist.resource) {
     return PLAYLIST_BUCKET;
   }
   return undefined;

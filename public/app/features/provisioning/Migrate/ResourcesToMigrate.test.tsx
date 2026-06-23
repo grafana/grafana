@@ -21,7 +21,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
   const props = {
     folders,
     selectedFolderUids: new Set<string>(),
-    selectedResourceUids: new Set<string>(),
+    selectedResourceKeys: new Set<string>(),
     onToggleFolder: jest.fn(),
     onToggleResource: jest.fn(),
     selectedCount: 0,
@@ -150,7 +150,8 @@ describe('ResourcesToMigrate', () => {
       await user.click(screen.getByRole('button', { name: /expand playlists/i }));
       await user.click(screen.getByRole('checkbox', { name: 'Morning rotation' }));
 
-      expect(props.onToggleResource).toHaveBeenCalledWith('p1');
+      // Selection is keyed by group/kind/name, not the bare uid.
+      expect(props.onToggleResource).toHaveBeenCalledWith('playlist.grafana.app/Playlist/p1');
     });
 
     it('select-all spans every visible folder, synthetic included', async () => {

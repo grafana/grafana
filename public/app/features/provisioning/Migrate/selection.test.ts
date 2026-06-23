@@ -3,6 +3,11 @@ import { resourceKindInfos } from '../utils/resourceKinds';
 import { type FolderRow } from './hooks/useFolderMigrationData';
 import { resolveSelection } from './selection';
 
+// Composite selection keys, matching `resourceKey` — selection is keyed by
+// group/kind/name so different kinds that share a name can't collide.
+const dashKey = (uid: string) => `${resourceKindInfos.dashboard.group}/${resourceKindInfos.dashboard.kind}/${uid}`;
+const playlistKey = (uid: string) => `${resourceKindInfos.playlist.group}/${resourceKindInfos.playlist.kind}/${uid}`;
+
 function folder(uid: string, dashboardUids: string[]): FolderRow {
   const directResources = dashboardUids.map((d) => ({ uid: d, title: d, kind: resourceKindInfos.dashboard }));
   return {
@@ -45,7 +50,7 @@ describe('resolveSelection', () => {
   });
 
   it('counts a lone dashboard on top of a selected folder', () => {
-    const result = resolveSelection(folders, new Set(['a']), new Set(['b1']));
+    const result = resolveSelection(folders, new Set(['a']), new Set([dashKey('b1')]));
 
     // 1 folder + 1 independent dashboard = 2 items; 3 dashboards in the payload.
     expect(result.items).toBe(2);
@@ -54,7 +59,7 @@ describe('resolveSelection', () => {
   });
 
   it('does not double-count a dashboard that is also inside a selected folder', () => {
-    const result = resolveSelection(folders, new Set(['a']), new Set(['a1']));
+    const result = resolveSelection(folders, new Set(['a']), new Set([dashKey('a1')]));
 
     // The folder already covers a1, so the explicit tick adds no extra item
     // and no duplicate resource.
@@ -67,7 +72,7 @@ describe('resolveSelection', () => {
     const withPlaylists = [...folders, playlistFolder('playlists', ['p1', 'p2'])];
 
     // Select folder 'a' (2 dashboards) plus one individual playlist.
-    const result = resolveSelection(withPlaylists, new Set(['a']), new Set(['p1']));
+    const result = resolveSelection(withPlaylists, new Set(['a']), new Set([playlistKey('p1')]));
 
     expect(result.items).toBe(2);
     expect(result.resources).toHaveLength(3);
@@ -84,5 +89,17 @@ describe('resolveSelection', () => {
     expect(result.items).toBe(1);
     expect(result.resources.map((r) => r.name).sort()).toEqual(['p1', 'p2']);
     expect(result.resources.every((r) => r.kind === 'Playlist')).toBe(true);
+  });
+
+  it('does not conflate a dashboard and a playlist that share a name', () => {
+    // A dashboard and a playlist can legitimately share the name "shared" since
+    // k8s names are unique only within a kind. Composite keys keep them distinct.
+    const withClash = [folder('f', ['shared']), playlistFolder('playlists', ['shared'])];
+
+    const result = resolveSelection(withClash, new Set(), new Set([dashKey('shared')]));
+
+    // Only the dashboard is selected; the same-named playlist must not be pulled in.
+    expect(result.items).toBe(1);
+    expect(result.resources).toEqual([{ name: 'shared', group: 'dashboard.grafana.app', kind: 'Dashboard' }]);
   });
 });

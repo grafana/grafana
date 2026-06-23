@@ -55,12 +55,13 @@ export function Migrate() {
   const {
     data: playlists,
     isLoading: isPlaylistsLoading,
+    isError: isPlaylistsError,
     refetch: refetchPlaylists,
   } = usePlaylistMigrationData(playlistsEnabled);
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
-  const [selectedResourceUids, setSelectedResourceUids] = useState<Set<string>>(new Set());
+  const [selectedResourceKeys, setSelectedResourceKeys] = useState<Set<string>>(new Set());
 
   // Group playlists under a synthetic "Playlists" folder so they flow through
   // the same folder machinery (selection, search, migrate). Built only when the
@@ -87,8 +88,8 @@ export function Migrate() {
   const playlistTotals = useMemo(() => aggregatePlaylistTotals(breakdowns), [breakdowns]);
   const folderCounts = useMemo(() => aggregateFolderCounts(breakdowns), [breakdowns]);
   const selection = useMemo(
-    () => resolveSelection(allFolders, selectedFolderUids, selectedResourceUids),
-    [allFolders, selectedFolderUids, selectedResourceUids]
+    () => resolveSelection(allFolders, selectedFolderUids, selectedResourceKeys),
+    [allFolders, selectedFolderUids, selectedResourceKeys]
   );
 
   // Gate only on the stats query — the header and KPI cards depend on it. The
@@ -144,7 +145,7 @@ export function Migrate() {
   const closeDrawer = () => setDrawerScope(null);
   const clearSelection = () => {
     setSelectedFolderUids(new Set());
-    setSelectedResourceUids(new Set());
+    setSelectedResourceKeys(new Set());
   };
   const setFoldersSelected = (uids: string[], selected: boolean) => {
     setSelectedFolderUids((prev) => {
@@ -164,7 +165,7 @@ export function Migrate() {
           <Spinner />
           <Trans i18nKey="provisioning.migrate.loading-resources">Loading resources...</Trans>
         </Stack>
-      ) : isFoldersError ? (
+      ) : isFoldersError || isPlaylistsError ? (
         <Stack direction="column" gap={2} alignItems="flex-start">
           <Alert
             severity="warning"
@@ -190,9 +191,9 @@ export function Migrate() {
         <ResourcesToMigrate
           folders={allFolders}
           selectedFolderUids={selectedFolderUids}
-          selectedResourceUids={selectedResourceUids}
+          selectedResourceKeys={selectedResourceKeys}
           onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
-          onToggleResource={(uid) => setSelectedResourceUids((prev) => toggle(prev, uid))}
+          onToggleResource={(key) => setSelectedResourceKeys((prev) => toggle(prev, key))}
           selectedCount={selection.items}
           allSelected={allSelected}
           onSetFoldersSelected={setFoldersSelected}

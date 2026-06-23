@@ -33,6 +33,16 @@ export interface MigratableResource {
   kind: ResourceKindInfo;
 }
 
+/**
+ * Stable selection key for a resource. A Kubernetes `metadata.name` is only
+ * unique within a group/kind, so a dashboard and a playlist can share a uid;
+ * keying selection on the uid alone would conflate them. Qualifying by
+ * group/kind keeps different kinds from ever colliding.
+ */
+export function resourceKey(resource: MigratableResource): string {
+  return `${resource.kind.group}/${resource.kind.kind}/${resource.uid}`;
+}
+
 export interface FolderRow {
   uid: string;
   title: string;

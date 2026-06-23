@@ -1,6 +1,6 @@
 import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type FolderRow, type MigratableResource } from './hooks/useFolderMigrationData';
+import { type FolderRow, type MigratableResource, resourceKey } from './hooks/useFolderMigrationData';
 
 /**
  * Summary of what the user has picked in the Resources to migrate table.
@@ -27,48 +27,52 @@ export interface MigrationSelection {
  * a selected folder already covers — so picking a folder *and* a resource inside
  * it counts that resource once. Each resource's ref (group/kind) comes from its
  * own kind, so dashboards, playlists, and any future kind resolve correctly.
+ *
+ * `selectedResourceUids` holds composite resource keys (see `resourceKey`), not
+ * bare names, so resources of different kinds that share a name never collide.
  */
 export function resolveSelection(
   folders: FolderRow[],
   selectedFolderUids: Set<string>,
-  selectedResourceUids: Set<string>
+  selectedResourceKeys: Set<string>
 ): MigrationSelection {
-  // Look up a resource by uid so individually-ticked rows resolve to the right
-  // kind without the caller threading kind through the selection sets.
-  const resourceByUid = new Map<string, MigratableResource>();
+  // Look up a resource by its composite key so individually-ticked rows resolve
+  // to the right kind without the caller threading kind through the selection
+  // sets.
+  const resourceByKey = new Map<string, MigratableResource>();
   for (const folder of folders) {
     for (const resource of folder.directResources) {
-      resourceByUid.set(resource.uid, resource);
+      resourceByKey.set(resourceKey(resource), resource);
     }
   }
 
   const resources: ResourceRef[] = [];
   const seen = new Set<string>();
-  const addResource = (uid: string) => {
-    if (seen.has(uid)) {
+  const addResource = (key: string) => {
+    if (seen.has(key)) {
       return;
     }
-    const resource = resourceByUid.get(uid);
+    const resource = resourceByKey.get(key);
     if (!resource) {
       return;
     }
-    seen.add(uid);
-    resources.push({ name: uid, group: resource.kind.group, kind: resource.kind.kind });
+    seen.add(key);
+    resources.push({ name: resource.uid, group: resource.kind.group, kind: resource.kind.kind });
   };
 
   // Resources covered by a selected folder are tracked separately so we don't
   // double-count them in the "items" tally below.
-  const folderCoveredUids = new Set<string>();
+  const folderCoveredKeys = new Set<string>();
   for (const folder of folders) {
     if (selectedFolderUids.has(folder.uid)) {
-      folder.directResources.forEach((r) => folderCoveredUids.add(r.uid));
+      folder.directResources.forEach((r) => folderCoveredKeys.add(resourceKey(r)));
     }
   }
 
-  folderCoveredUids.forEach(addResource);
-  selectedResourceUids.forEach(addResource);
+  folderCoveredKeys.forEach(addResource);
+  selectedResourceKeys.forEach(addResource);
 
-  const independentResources = Array.from(selectedResourceUids).filter((uid) => !folderCoveredUids.has(uid)).length;
+  const independentResources = Array.from(selectedResourceKeys).filter((key) => !folderCoveredKeys.has(key)).length;
 
   return {
     folders: selectedFolderUids.size,

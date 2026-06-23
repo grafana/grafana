@@ -6,7 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Checkbox, Combobox, EmptyState, FilterInput, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { FolderEntry } from './FolderEntry';
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useFolderMigrationData';
 import { type SortKey, compareFolders } from './sorting';
 
 interface Props {
@@ -17,9 +17,10 @@ interface Props {
    */
   folders: FolderRow[];
   selectedFolderUids: Set<string>;
-  selectedResourceUids: Set<string>;
+  /** Composite keys (see `resourceKey`) of individually-ticked resources. */
+  selectedResourceKeys: Set<string>;
   onToggleFolder: (uid: string) => void;
-  onToggleResource: (uid: string) => void;
+  onToggleResource: (key: string) => void;
   /** Folders + independently-ticked resources, shown in the migrate button. */
   selectedCount: number;
   /** True when every migratable folder is selected — drives the "Migrate all" label. */
@@ -49,7 +50,7 @@ interface Props {
 export function ResourcesToMigrate({
   folders,
   selectedFolderUids,
-  selectedResourceUids,
+  selectedResourceKeys,
   onToggleFolder,
   onToggleResource,
   selectedCount,
@@ -83,11 +84,11 @@ export function ResourcesToMigrate({
   // individually — the user deselects the folder first. Recomputed here (never
   // stored) so deselecting one folder doesn't strip resources covered by
   // another.
-  const folderCoveredResourceUids = useMemo(() => {
+  const folderCoveredResourceKeys = useMemo(() => {
     const covered = new Set<string>();
     for (const folder of folders) {
       if (selectedFolderUids.has(folder.uid)) {
-        folder.directResources.forEach((r) => covered.add(r.uid));
+        folder.directResources.forEach((r) => covered.add(resourceKey(r)));
       }
     }
     return covered;
@@ -207,8 +208,8 @@ export function ResourcesToMigrate({
               folder={folder}
               isExpanded={expanded.has(folder.uid)}
               isSelected={selectedFolderUids.has(folder.uid)}
-              selectedResourceUids={selectedResourceUids}
-              folderCoveredResourceUids={folderCoveredResourceUids}
+              selectedResourceKeys={selectedResourceKeys}
+              folderCoveredResourceKeys={folderCoveredResourceKeys}
               onToggleExpanded={() => toggleExpanded(folder.uid)}
               onToggleFolder={() => onToggleFolder(folder.uid)}
               onToggleResource={onToggleResource}

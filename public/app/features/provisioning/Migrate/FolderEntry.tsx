@@ -4,17 +4,19 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useFolderMigrationData';
 
 interface FolderEntryProps {
   folder: FolderRow;
   isExpanded: boolean;
   isSelected: boolean;
-  selectedResourceUids: Set<string>;
-  folderCoveredResourceUids: Set<string>;
+  /** Composite keys (see `resourceKey`) of individually-ticked resources. */
+  selectedResourceKeys: Set<string>;
+  /** Composite keys of resources covered by a selected folder. */
+  folderCoveredResourceKeys: Set<string>;
   onToggleExpanded: () => void;
   onToggleFolder: () => void;
-  onToggleResource: (uid: string) => void;
+  onToggleResource: (key: string) => void;
 }
 
 /**
@@ -27,8 +29,8 @@ export function FolderEntry({
   folder,
   isExpanded,
   isSelected,
-  selectedResourceUids,
-  folderCoveredResourceUids,
+  selectedResourceKeys,
+  folderCoveredResourceKeys,
   onToggleExpanded,
   onToggleFolder,
   onToggleResource,
@@ -68,14 +70,15 @@ export function FolderEntry({
       {isExpanded && (
         <div className={styles.children}>
           {folder.directResources.map((resource) => {
-            const coveredByFolder = folderCoveredResourceUids.has(resource.uid);
-            const checked = coveredByFolder || selectedResourceUids.has(resource.uid);
+            const key = resourceKey(resource);
+            const coveredByFolder = folderCoveredResourceKeys.has(key);
+            const checked = coveredByFolder || selectedResourceKeys.has(key);
             return (
-              <div key={`resource-${resource.uid}`} className={styles.childRow}>
+              <div key={`resource-${key}`} className={styles.childRow}>
                 <Checkbox
                   value={checked}
                   disabled={coveredByFolder}
-                  onChange={() => onToggleResource(resource.uid)}
+                  onChange={() => onToggleResource(key)}
                   aria-label={resource.title}
                 />
                 <Icon name={resource.kind.icon} size="sm" />
