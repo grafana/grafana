@@ -56,7 +56,8 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
-    | "table.protoRowParser";
+    | "table.protoRowParser"
+    | "dataviz.experimentalColorSchemes";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

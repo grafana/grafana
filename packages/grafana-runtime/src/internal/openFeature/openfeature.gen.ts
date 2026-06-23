@@ -29,6 +29,8 @@ export const FlagKeys = {
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
+  /** Enables additional experimental color schemes for visualizations. */
+  DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
@@ -195,6 +197,17 @@ export const useFlagDatasourcesConfigUiUseNewDatasourceCRUDAPIs = (options?: Rea
  */
 export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasourcesApiServerEnableHealthEndpointFrontend", false, options).value;
+};
+
+/**
+ * Enables additional experimental color schemes for visualizations.
+ *
+ * **Details:**
+ * - flag key: `dataviz.experimentalColorSchemes`
+ * - default value: `false`
+ */
+export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.experimentalColorSchemes", false, options).value;
 };
 
 /**
