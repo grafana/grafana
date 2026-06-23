@@ -5,7 +5,7 @@ import { type UPlotConfigBuilder } from '@grafana/ui';
 import { AnnotationsPlugin } from './AnnotationsPlugin';
 
 jest.mock('./AnnotationsPlugin');
-const mockAnnotationsPlugin2Cluster = jest.mocked(AnnotationsPlugin);
+const mockAnnotationsPlugin = jest.mocked(AnnotationsPlugin);
 
 /**
  * This test checks that we're rendering the expected component for the given value of the feature flag
@@ -21,13 +21,13 @@ describe('AnnotationsPlugin', () => {
     options: {},
   };
   beforeEach(() => {
-    mockAnnotationsPlugin2Cluster.mockClear();
-    mockAnnotationsPlugin2Cluster.mockImplementation(() => null);
+    mockAnnotationsPlugin.mockClear();
+    mockAnnotationsPlugin.mockImplementation(() => null);
   });
 
-  it('renders AnnotationsPlugin2Cluster', () => {
+  it('renders AnnotationsPlugin', () => {
     render(<AnnotationsPlugin {...defaultProps} />);
-    expect(mockAnnotationsPlugin2Cluster).toHaveBeenCalledWith(
+    expect(mockAnnotationsPlugin).toHaveBeenCalledWith(
       expect.objectContaining({ config: defaultProps.config, annotations: [] }),
       expect.objectContaining({})
     );

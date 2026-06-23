@@ -29,7 +29,7 @@ import {
   shouldRenderAnnotationRegion,
 } from './utils';
 
-interface AnnotationsPlugin2ClusterProps {
+interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
   options: VizAnnotations | undefined;
   annotations?: DataFrame[];
@@ -62,7 +62,7 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
   return vals;
 }
 /**
- * Refactored version of the AnnotationsPlugin2 behind `annotationsClustering` feature flag.
+ * Refactored version of the AnnotationsPlugin
  * @param annotations
  * @param timeZone
  * @param config
@@ -82,7 +82,7 @@ export const AnnotationsPlugin = ({
   replaceVariables,
   canvasRegionRendering = true,
   options,
-}: AnnotationsPlugin2ClusterProps) => {
+}: AnnotationsPluginProps) => {
   const plotRef = useRef<uPlot | null>(null);
   const plotRangeRef = useRef<TimeRange2>({
     from: plotRef.current?.scales?.x?.min ?? -1,

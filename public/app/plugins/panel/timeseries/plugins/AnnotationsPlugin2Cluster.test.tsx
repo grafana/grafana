@@ -111,7 +111,7 @@ const uplotMock = jest.requireMock('uplot');
 const uplotMockInstance = uplotMock();
 uplotMockInstance.setData.mockImplementationOnce(() => {});
 
-describe('AnnotationsPlugin2', () => {
+describe('AnnotationsPlugin', () => {
   let hooks: Record<string, (u: uPlot) => {}> = {};
   let config: UPlotConfigBuilder;
   const setUp = (
@@ -139,7 +139,7 @@ describe('AnnotationsPlugin2', () => {
 
     const annotations = props?.annotations ?? [mockAnnotationFrame];
     const frames = annotations.map((fr) => createDataFrame(fr));
-    // @todo we need to call applyFieldOverrides to add the link supplier to the frames on the frames in AnnotationsPlugin2
+    // @todo we need to call applyFieldOverrides to add the link supplier to the frames on the frames in AnnotationsPlugin
     const withOverrides = applyFieldOverrides({
       data: frames,
       fieldConfig: {
