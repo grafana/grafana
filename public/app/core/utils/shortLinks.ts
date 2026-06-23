@@ -45,7 +45,7 @@ const createShortLinkLegacy = async (path: string): Promise<string> => {
 // this function creates a shortURL using the legacy or the new k8s api depending on the feature toggle
 export const createShortLink = memoizeOne(async (path: string): Promise<string> => {
   try {
-    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, true)) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.UseKubernetesShortURLsAPI, false)) {
       // Use RTK API - it handles caching/failures/retries automatically
       const result = await dispatch(
         shortURLAPIv1beta1.endpoints.createShortUrl.initiate({
