@@ -318,8 +318,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this._changeTracker.startTrackingChanges();
 
-    // Report the start of an edit session once, on the view -> edit transition. `source` tells apart a
-    // user-opened session from one the assistant opened via the Mutation API (no edit_button_clicked).
     if (!wasEditing) {
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
     }

@@ -59,8 +59,7 @@ export const DashboardInteractions = {
           panelsByDatasourceType: Record<string, number>;
         } & DashboardLibraryTrackingInfo)
     ) & {
-      // size of the saved edit: number of diffs between the initial and saved dashboard models.
-      // Optional: only the dashboard scene save path computes it; the legacy dashboard omits it.
+      // size of the saved edit (diffs between the initial and saved models); scene save path only
       diff_count?: number;
     }
   ) => {
@@ -340,9 +339,7 @@ export const DashboardInteractions = {
     reportDashboardInteraction('move_item', properties);
   },
 
-  // fired once when the live dashboard scene enters edit mode. `source` distinguishes a user-opened
-  // session ('user', via the Edit button) from one the assistant opened through the Mutation API
-  // ('assistant'), which does not fire edit_button_clicked. Pairs with the dashboard save events.
+  // fired when the dashboard scene enters edit mode; source = how it was opened (Edit button vs assistant)
   editSessionStarted: (properties: { dashboard_uid?: string; source: 'assistant' | 'user' }) => {
     reportDashboardInteraction('edit_session_started', properties);
   },

@@ -69,8 +69,7 @@ export function useSaveDashboard(isCopy = false) {
           resultData.url = `${result.data.url}/${slug}`;
         }
 
-        // Size of the edit being saved. Capture before saveCompleted re-snapshots the baseline (which
-        // would make getDashboardChanges() report ~0).
+        // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
 
         scene.saveCompleted(saveModel, resultData, options.folderUid);
