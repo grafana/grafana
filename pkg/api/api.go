@@ -84,9 +84,12 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/login", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
 
-	// Passkey anonymous login endpoints (no cookie; CSRF skipped when no login cookie is present)
-	r.Post("/api/auth/passkey/login/begin", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginBegin))
-	r.Post("/api/auth/passkey/login/finish", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginFinish))
+	// Passkey anonymous login endpoints (no cookie; CSRF skipped when no login cookie is present).
+	// Gated on the toggle so the nil-until-B-Wire passkey fields are unreachable until B-Wire injects them.
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaPasskeyAuthn) {
+		r.Post("/api/auth/passkey/login/begin", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginBegin))
+		r.Post("/api/auth/passkey/login/finish", requestmeta.SetOwner(requestmeta.TeamAuth), quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.PasskeyLoginFinish))
+	}
 
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
@@ -312,12 +315,15 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
 
-			// Passkey credential-management endpoints (authenticated user, Origin CSRF enforced)
-			userRoute.Post("/passkey/register/begin", routing.Wrap(hs.PasskeyRegisterBegin))
-			userRoute.Post("/passkey/register/finish", routing.Wrap(hs.PasskeyRegisterFinish))
-			userRoute.Get("/passkey/credentials", routing.Wrap(hs.PasskeyListCredentials))
-			userRoute.Patch("/passkey/credentials/:id", routing.Wrap(hs.PasskeyRenameCredential))
-			userRoute.Delete("/passkey/credentials/:id", routing.Wrap(hs.PasskeyDeleteCredential))
+			// Passkey credential-management endpoints (authenticated user, Origin CSRF enforced).
+			// Gated on the toggle so the nil-until-B-Wire passkey fields are unreachable until B-Wire injects them.
+			if hs.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaPasskeyAuthn) {
+				userRoute.Post("/passkey/register/begin", routing.Wrap(hs.PasskeyRegisterBegin))
+				userRoute.Post("/passkey/register/finish", routing.Wrap(hs.PasskeyRegisterFinish))
+				userRoute.Get("/passkey/credentials", routing.Wrap(hs.PasskeyListCredentials))
+				userRoute.Patch("/passkey/credentials/:id", routing.Wrap(hs.PasskeyRenameCredential))
+				userRoute.Delete("/passkey/credentials/:id", routing.Wrap(hs.PasskeyDeleteCredential))
+			}
 
 			userRoute.Get("/auth-tokens", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.RevokeUserAuthToken))
