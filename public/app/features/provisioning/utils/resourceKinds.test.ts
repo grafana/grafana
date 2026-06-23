@@ -82,7 +82,7 @@ describe('getRoute', () => {
   it('builds in-app routes per kind', () => {
     expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
     expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
-    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/play/pl1');
+    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
   });
 });
 
