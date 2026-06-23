@@ -24,16 +24,16 @@ graph TB
     subgraph GE["grafana-enterprise (no root go.mod)"]
         SRC["src/pkg/extensions/"]
         WIRE_SRC["src/pkg/wire/server.go"]
-        BUILD["build.sh / enterprise-to-oss.sh"]
+        BUILD["`make enterprise-dev` scripts"]
     end
 
-    BUILD -->|"overlays"| EXT_STUB
-    BUILD -->|"overlays"| WIRE_ENT
-    WIRE_SRC -->|"copied as"| WIRE_ENT
-    SRC -->|"overlays"| EXT_STUB
+    BUILD -->|"manage overlay"| EXT_STUB
+    BUILD -->|"manage overlay"| WIRE_ENT
+    WIRE_SRC -->|"copied to"| WIRE_ENT
+    SRC -->|"copied to"| EXT_STUB
     MAIN -->|"initializes"| SERVER
-    SERVER -->|"composes graph from"| WIRE_OSS
     SERVER -->|"composes graph from"| WIRE_ENT
+    SERVER -->|"composes graph from"| WIRE_OSS
     WIRE_OSS -->|"imports dependencies"| SERVICES
     WIRE_ENT -->|"imports dependencies"| EXT_STUB
     WIRE_ENT -->|"imports dependencies"| SERVICES
