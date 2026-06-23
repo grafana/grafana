@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { getManagerIdentity, getManagerKind, isManaged } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
@@ -42,6 +45,11 @@ export const PlaylistEditPage = () => {
             <Trans i18nKey="playlist-edit.error-prefix">Error loading playlist:</Trans>
             {JSON.stringify(error)}
           </div>
+        )}
+        {data && isManaged(data) && (
+          <Stack direction="row" gap={1} alignItems="center">
+            <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />
+          </Stack>
         )}
         {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
