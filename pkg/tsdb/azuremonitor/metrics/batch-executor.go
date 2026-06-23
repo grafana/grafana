@@ -16,9 +16,9 @@ import (
 
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
-// Insights custom telemetry) or a Guest OS / Windows Azure Diagnostics (WAD)
-// namespace must fall back to the legacy ARM metrics endpoint — those metrics
-// are not exposed via the metrics-batch data plane.
+// Insights custom telemetry) or a Guest OS metrics namespace must fall back to
+// the legacy ARM metrics endpoint — those metrics are not exposed via the
+// metrics-batch data plane.
 func isBatchableQuery(query backend.DataQuery) bool {
 	var model dataquery.AzureMonitorQuery
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
@@ -33,18 +33,47 @@ func isBatchableQuery(query backend.DataQuery) bool {
 	}
 	if az.MetricNamespace != nil {
 		ns := strings.ToLower(strings.TrimSpace(*az.MetricNamespace))
-		if strings.HasPrefix(ns, "windows azure") || strings.HasPrefix(ns, "wad") {
+		// Guest OS metrics use the namespaces "azure.vm.windows.guestmetrics"
+		// and "azure.vm.linux.guestmetrics". These are not resource types and
+		// are not supported by the metrics-batch data plane.
+		if strings.HasPrefix(ns, "azure.vm.") {
 			return false
 		}
 	}
 	return true
 }
 
-// splitQueryByResource splits a multi-resource query into one backend.DataQuery
+// cloneQueryWithResources returns a copy of query whose embedded AzureMonitor
+// model is shallow-copied with Resources overridden (and Subscription/Region
+// overridden when the corresponding argument is non-nil). All other query
+// fields are preserved. A shallow copy is sufficient because only whole fields
+// are replaced, never mutated in place.
+func cloneQueryWithResources(query backend.DataQuery, model dataquery.AzureMonitorQuery, resources []dataquery.AzureMonitorResource, sub, region *string) (backend.DataQuery, error) {
+	azCopy := *model.AzureMonitor
+	azCopy.Resources = resources
+	if region != nil {
+		azCopy.Region = region
+	}
+	modelCopy := model
+	modelCopy.AzureMonitor = &azCopy
+	if sub != nil {
+		modelCopy.Subscription = sub
+	}
+
+	copyJSON, err := json.Marshal(modelCopy)
+	if err != nil {
+		return backend.DataQuery{}, err
+	}
+	queryCopy := query
+	queryCopy.JSON = copyJSON
+	return queryCopy, nil
+}
+
+// fanOutByResource splits a multi-resource query into one backend.DataQuery
 // per resource. Single-resource and legacy queries are returned unchanged.
 // Used to fan out non-batchable queries (e.g. custom namespace) so that each
 // resource is fetched via its own resource-level ARM URL.
-func splitQueryByResource(query backend.DataQuery) ([]backend.DataQuery, error) {
+func fanOutByResource(query backend.DataQuery) ([]backend.DataQuery, error) {
 	var model dataquery.AzureMonitorQuery
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
 		return nil, err
@@ -56,22 +85,16 @@ func splitQueryByResource(query backend.DataQuery) ([]backend.DataQuery, error) 
 
 	queries := make([]backend.DataQuery, 0, len(az.Resources))
 	for _, resource := range az.Resources {
-		azCopy := *az
-		azCopy.Resources = []dataquery.AzureMonitorResource{resource}
-		modelCopy := model
-		modelCopy.AzureMonitor = &azCopy
 		// Use the resource's own subscription so the ARM URL targets the correct
 		// subscription when resources span multiple subscriptions.
+		var sub *string
 		if resource.Subscription != nil && *resource.Subscription != "" {
-			modelCopy.Subscription = resource.Subscription
+			sub = resource.Subscription
 		}
-
-		copyJSON, err := json.Marshal(modelCopy)
+		queryCopy, err := cloneQueryWithResources(query, model, []dataquery.AzureMonitorResource{resource}, sub, nil)
 		if err != nil {
 			return nil, err
 		}
-		queryCopy := query
-		queryCopy.JSON = copyJSON
 		queries = append(queries, queryCopy)
 	}
 	return queries, nil
@@ -147,22 +170,11 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 	// Build one AzureMonitorQuery per (subscription, region) group.
 	var result []*types.AzureMonitorQuery
 	for _, key := range orderedKeys {
-		// Shallow-copy the model and override the fields that differ per group.
-		azCopy := *azJSONModel
-		azCopy.Resources = groupedResources[key]
-		region := key.region
-		azCopy.Region = &region
-		sub := key.sub
-		modelCopy := queryJSONModel
-		modelCopy.Subscription = &sub
-		modelCopy.AzureMonitor = &azCopy
-
-		copyJSON, err := json.Marshal(modelCopy)
+		sub, region := key.sub, key.region
+		queryCopy, err := cloneQueryWithResources(query, queryJSONModel, groupedResources[key], &sub, &region)
 		if err != nil {
 			return nil, fmt.Errorf("failed to re-encode split query for subscription %q region %q: %w", key.sub, key.region, err)
 		}
-		queryCopy := query
-		queryCopy.JSON = copyJSON
 
 		q, err := e.buildQuery(queryCopy, dsInfo)
 		if err != nil {
@@ -198,7 +210,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 		batchable := isBatchableQuery(query)
 		e.Logger.Debug("query batchability", "refID", query.RefID, "batchable", batchable)
 		if !batchable {
-			subQueries, err := splitQueryByResource(query)
+			subQueries, err := fanOutByResource(query)
 			if err != nil {
 				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue
@@ -225,11 +237,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 				result.Responses[query.RefID] = dr
 			}
 			if len(subErrs) > 0 {
-				errResp := backend.ErrorResponseWithErrorSource(errors.Join(subErrs...))
-				dr := result.Responses[query.RefID]
-				dr.Error = errResp.Error
-				dr.ErrorSource = errResp.ErrorSource
-				result.Responses[query.RefID] = dr
+				attachErr(result, query.RefID, errors.Join(subErrs...))
 			}
 		} else {
 			batchableQueries = append(batchableQueries, query)
@@ -265,13 +273,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 		if br.Err != nil {
 			// HTTP-level failure: attribute the error to every query in the batch.
 			for _, q := range br.Batch.Queries {
-				dr := result.Responses[q.RefID]
-				if dr.Error == nil {
-					errResp := backend.ErrorResponseWithErrorSource(br.Err)
-					dr.Error = errResp.Error
-					dr.ErrorSource = errResp.ErrorSource
-					result.Responses[q.RefID] = dr
-				}
+				attachErr(result, q.RefID, br.Err)
 			}
 			continue
 		}
@@ -287,16 +289,25 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 			// Per-metric or parse error: surface to every query in the batch so
 			// users see it in the Grafana UI rather than it being silently dropped.
 			for _, q := range br.Batch.Queries {
-				dr := result.Responses[q.RefID]
-				if dr.Error == nil {
-					errResp := backend.ErrorResponseWithErrorSource(parseErr)
-					dr.Error = errResp.Error
-					dr.ErrorSource = errResp.ErrorSource
-					result.Responses[q.RefID] = dr
-				}
+				attachErr(result, q.RefID, parseErr)
 			}
 		}
 	}
 
 	return result, nil
+}
+
+// attachErr records err (with its error source) as the error for refID's
+// response, preserving any frames already collected. If an error is already set
+// on the response it is left untouched, so the first failure attributed to a
+// query wins.
+func attachErr(result *backend.QueryDataResponse, refID string, err error) {
+	dr := result.Responses[refID]
+	if dr.Error != nil {
+		return
+	}
+	errResp := backend.ErrorResponseWithErrorSource(err)
+	dr.Error = errResp.Error
+	dr.ErrorSource = errResp.ErrorSource
+	result.Responses[refID] = dr
 }

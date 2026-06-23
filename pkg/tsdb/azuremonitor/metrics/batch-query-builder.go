@@ -64,6 +64,8 @@ func groupQueriesForBatch(queries []*types.AzureMonitorQuery) []BatchQueryGroup 
 	return result
 }
 
+// maxBatchSize is the maximum number of resource IDs the Azure Monitor
+// metrics:getBatch API accepts in a single request (api-version 2023-10-01).
 const maxBatchSize = 50
 
 // Batch represents a single POST request to the Metrics Batch API.

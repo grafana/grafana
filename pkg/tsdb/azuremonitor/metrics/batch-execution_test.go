@@ -275,3 +275,62 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		assert.Contains(t, resp.Responses, "A")
 	})
 }
+
+func TestExecuteBatchTimeSeriesQueryAlertBypass(t *testing.T) {
+	ds := &AzureMonitorDatasource{Logger: log.NewNullLogger()}
+
+	t.Run("fromAlert=true bypasses the batch path and uses legacy ARM", func(t *testing.T) {
+		armResponse := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// The batch path POSTs to /metrics:getBatch; the legacy path GETs the
+			// resource-level metrics URL. Assert we never hit the batch endpoint.
+			assert.NotContains(t, r.URL.Path, "metrics:getBatch", "alert query must not use the batch API")
+			w.Header().Set("Content-Type", "application/json")
+			b, _ := json.Marshal(armResponse)
+			_, _ = w.Write(b)
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv) // BatchAPIEnabled = true
+		q := makeBatchQuery("A", "sub-123", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+		// Batch is enabled AND the flag is on, but fromAlert=true must force legacy.
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, true)
+		require.NoError(t, err)
+		assert.Contains(t, resp.Responses, "A")
+	})
+}
+
+func TestIsBatchableQuery(t *testing.T) {
+	makeQuery := func(metricNamespace string, customNamespace *string) backend.DataQuery {
+		az := &dataquery.AzureMetricQuery{MetricName: strPtr("Percentage CPU")}
+		if metricNamespace != "" {
+			az.MetricNamespace = strPtr(metricNamespace)
+		}
+		az.CustomNamespace = customNamespace
+		raw, _ := json.Marshal(dataquery.AzureMonitorQuery{AzureMonitor: az})
+		return backend.DataQuery{JSON: raw}
+	}
+
+	tests := []struct {
+		name            string
+		metricNamespace string
+		customNamespace *string
+		want            bool
+	}{
+		{"standard resource-type namespace is batchable", "Microsoft.Compute/virtualMachines", nil, true},
+		{"storage namespace is batchable", "microsoft.storage/storageaccounts", nil, true},
+		{"custom namespace is not batchable", "Microsoft.Compute/virtualMachines", strPtr("myCustomNs"), false},
+		{"windows guest OS metrics are not batchable", "azure.vm.windows.guestmetrics", nil, false},
+		{"linux guest OS metrics are not batchable", "azure.vm.linux.guestmetrics", nil, false},
+		{"guest OS namespace match is case-insensitive", "Azure.VM.Windows.GuestMetrics", nil, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isBatchableQuery(makeQuery(tt.metricNamespace, tt.customNamespace)))
+		})
+	}
+}

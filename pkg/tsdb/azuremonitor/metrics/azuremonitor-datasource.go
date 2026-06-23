@@ -98,7 +98,10 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
-	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
+	// Alert queries always use the legacy per-resource ARM path. The batch API is
+	// a subscription-level data-plane endpoint and is intentionally bypassed for
+	// alerting.
+	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled && !fromAlert {
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client)
 	}
 	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
@@ -592,23 +595,7 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
-			var value *float64
-			switch requestedAgg {
-			case "Average":
-				value = point.Average
-			case "Total":
-				value = point.Total
-			case "Maximum":
-				value = point.Maximum
-			case "Minimum":
-				value = point.Minimum
-			case "Count":
-				value = point.Count
-			default:
-				value = point.Count
-			}
-
-			frame.SetRow(i, point.TimeStamp, value)
+			frame.SetRow(i, point.TimeStamp, valueForAggregation(point, requestedAgg))
 		}
 
 		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName)
@@ -620,6 +607,30 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 	}
 
 	return frames, nil
+}
+
+// valueForAggregation returns the metric value for the requested aggregation,
+// defaulting to Count when the aggregation is unset or unrecognised. Shared by
+// the single-resource (parseResponse) and batch (framesFromBatchResponseValue)
+// response parsers.
+func valueForAggregation(point types.AzureMetricTimeseriesData, aggregation string) *float64 {
+	switch aggregation {
+	case "Average":
+		return point.Average
+	case "Total":
+		return point.Total
+	case "Maximum":
+		return point.Maximum
+	case "Minimum":
+		return point.Minimum
+	case "Count":
+		return point.Count
+	default:
+		// No explicit (or an unrecognised) aggregation was requested. Fall back
+		// to Count, preserving long-standing behaviour. Azure may not populate
+		// Count for such queries, in which case the point renders as empty.
+		return point.Count
+	}
 }
 
 // Gets the deep link for the given query

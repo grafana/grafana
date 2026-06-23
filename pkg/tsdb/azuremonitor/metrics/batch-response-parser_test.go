@@ -1,7 +1,6 @@
 package metrics
 
 import (
-	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -288,94 +287,5 @@ func TestParseBatchResponse(t *testing.T) {
 		}
 		_, err := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Error(t, err)
-	})
-}
-
-// TestDistributeBatchResults
-
-func TestDistributeBatchResults(t *testing.T) {
-	id1 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
-	id2 := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm2"
-	q1 := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{id1: {}})
-	q2 := makeQueryWithResources("B", map[string]dataquery.AzureMonitorResource{id2: {}})
-
-	t.Run("successful batches populate frames", func(t *testing.T) {
-		results := []batchResult{
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{q1}},
-				Response: &batchResponse{Values: []batchResponseValue{
-					makeResourceValue(id1, "ns", "westus2", "Success", 1.0),
-				}},
-			},
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{q2}},
-				Response: &batchResponse{Values: []batchResponseValue{
-					makeResourceValue(id2, "ns", "westus2", "Success", 2.0),
-				}},
-			},
-		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com")
-		assert.NoError(t, err)
-		assert.Len(t, framesForRefID(frames, "A"), 1)
-		assert.Len(t, framesForRefID(frames, "B"), 1)
-	})
-
-	t.Run("batch-level error is returned", func(t *testing.T) {
-		batchErr := fmt.Errorf("batch request failed")
-		results := []batchResult{
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{q1, q2}},
-				Err:   batchErr,
-			},
-		}
-		_, err := distributeBatchResults(results, "https://portal.azure.com")
-		assert.Error(t, err)
-	})
-
-	t.Run("failed batch does not prevent other batches from succeeding", func(t *testing.T) {
-		results := []batchResult{
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{q1}},
-				Err:   fmt.Errorf("first batch failed"),
-			},
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{q2}},
-				Response: &batchResponse{Values: []batchResponseValue{
-					makeResourceValue(id2, "ns", "westus2", "Success", 2.0),
-				}},
-			},
-		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com")
-		assert.Error(t, err)
-		assert.Len(t, framesForRefID(frames, "B"), 1)
-	})
-
-	t.Run("query split across two batches accumulates frames from both", func(t *testing.T) {
-		// Simulate a 51-resource query split into two batches
-		qBig := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{id1: {}, id2: {}})
-
-		results := []batchResult{
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qBig}},
-				Response: &batchResponse{Values: []batchResponseValue{
-					makeResourceValue(id1, "ns", "westus2", "Success", 1.0),
-				}},
-			},
-			{
-				Batch: Batch{Queries: []*aztypes.AzureMonitorQuery{qBig}},
-				Response: &batchResponse{Values: []batchResponseValue{
-					makeResourceValue(id2, "ns", "westus2", "Success", 2.0),
-				}},
-			},
-		}
-		frames, err := distributeBatchResults(results, "https://portal.azure.com")
-		assert.NoError(t, err)
-		assert.Len(t, framesForRefID(frames, "A"), 2)
-	})
-
-	t.Run("empty results returns nil frames and no error", func(t *testing.T) {
-		frames, err := distributeBatchResults(nil, "https://portal.azure.com")
-		assert.NoError(t, err)
-		assert.Empty(t, frames)
 	})
 }

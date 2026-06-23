@@ -11,30 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-// distributeBatchResults collects frames from all batch results into a single
-// data.Frames slice. Each frame carries its RefID. Errors from failed batches
-// or resource-level failures are joined and returned alongside any frames that
-// did succeed.
-func distributeBatchResults(results []batchResult, azurePortalURL string) (data.Frames, error) {
-	var frames data.Frames
-	var errs []error
-
-	for _, result := range results {
-		if result.Err != nil {
-			errs = append(errs, result.Err)
-			continue
-		}
-
-		f, err := parseBatchResponse(result, azurePortalURL)
-		frames = append(frames, f...)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	return frames, errors.Join(errs...)
-}
-
 // parseBatchResponse converts a successful batch result into a flat data.Frames
 // slice. Each frame carries its RefID. Resource-level errors are joined and
 // returned alongside any frames that did succeed.
@@ -125,22 +101,7 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 
 			requestedAgg := query.Params.Get("aggregation")
 			for i, point := range series.Data {
-				var value *float64
-				switch requestedAgg {
-				case "Average":
-					value = point.Average
-				case "Total":
-					value = point.Total
-				case "Maximum":
-					value = point.Maximum
-				case "Minimum":
-					value = point.Minimum
-				case "Count":
-					value = point.Count
-				default:
-					value = point.Count
-				}
-				frame.SetRow(i, point.TimeStamp, value)
+				frame.SetRow(i, point.TimeStamp, valueForAggregation(point, requestedAgg))
 			}
 
 			queryURL, err := getQueryUrl(query, azurePortalURL, resourceID, resourceName)
