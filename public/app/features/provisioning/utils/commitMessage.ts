@@ -48,18 +48,29 @@ function sanitizeLine(value: string | undefined): string {
   return (value ?? '').replace(/[\r\n]+/g, ' ').trim();
 }
 
-function defaultMessage({ action, title }: Pick<CommitTemplateVars, 'action' | 'title'>): string {
-  // Resource-agnostic by design: the verb and the noun ("resource") are part of each translatable
-  // string rather than interpolated, so the messages localise cleanly (no fixed word order, no raw
-  // English nouns) and every resource type — dashboards, folders, playlists and any new type —
-  // shares the same copy. A repo can override this via singleResourceMessageTemplate (which can
-  // reference {{resourceKind}}) when resource-specific phrasing is wanted.
+function defaultMessage({
+  action,
+  resourceKind,
+  title,
+}: Pick<CommitTemplateVars, 'action' | 'resourceKind' | 'title'>): string {
   const defaults: Record<CommitAction, string> = {
-    create: t('provisioning.commit-message.create-default', 'Create resource: {{title}}', { title }),
-    update: t('provisioning.commit-message.update-default', 'Save resource: {{title}}', { title }),
-    delete: t('provisioning.commit-message.delete-default', 'Delete resource: {{title}}', { title }),
-    move: t('provisioning.commit-message.move-default', 'Move resource: {{title}}', { title }),
-    rename: t('provisioning.commit-message.rename-default', 'Rename resource: {{title}}', { title }),
+    create: t('provisioning.commit-message.create-default', 'Create {{resourceKind}}: {{title}}', {
+      resourceKind,
+      title,
+    }),
+    update: t('provisioning.commit-message.update-default', 'Save {{resourceKind}}: {{title}}', {
+      resourceKind,
+      title,
+    }),
+    delete: t('provisioning.commit-message.delete-default', 'Delete {{resourceKind}}: {{title}}', {
+      resourceKind,
+      title,
+    }),
+    move: t('provisioning.commit-message.move-default', 'Move {{resourceKind}}: {{title}}', { resourceKind, title }),
+    rename: t('provisioning.commit-message.rename-default', 'Rename {{resourceKind}}: {{title}}', {
+      resourceKind,
+      title,
+    }),
   };
   return defaults[action];
 }

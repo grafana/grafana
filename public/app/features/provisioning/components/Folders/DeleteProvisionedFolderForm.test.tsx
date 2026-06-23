@@ -245,7 +245,7 @@ describe('DeleteProvisionedFolderForm', () => {
           name: 'test-repo',
           jobSpec: {
             action: 'delete',
-            message: 'Delete resource: Test Folder',
+            message: 'Delete folder: Test Folder',
             delete: {
               ref: undefined, // write workflow doesn't set ref
               resources: [

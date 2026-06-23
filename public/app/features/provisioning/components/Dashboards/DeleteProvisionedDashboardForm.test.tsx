@@ -123,7 +123,7 @@ describe('DeleteProvisionedDashboardForm', () => {
 
       expect(capturedRequest!.url.pathname).toContain('/repositories/test-repo/files/dashboards/test.json');
       expect(capturedRequest!.url.searchParams.get('ref')).toBe('main');
-      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete resource: Test Dashboard');
+      expect(capturedRequest!.url.searchParams.get('message')).toBe('Delete dashboard: Test Dashboard');
 
       // Branch success redirects to the dashboard list with the PR link and dismisses the drawer
       await waitFor(() => {

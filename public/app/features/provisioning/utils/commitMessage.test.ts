@@ -17,31 +17,31 @@ describe('renderCommitMessage', () => {
   it('falls back to the built-in resource default for each action when template is empty', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'dashboard', resourceID: '', title: 'My DB' })
-    ).toBe('Create resource: My DB');
+    ).toBe('Create dashboard: My DB');
     expect(
       renderCommitMessage('', { action: 'update', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
-    ).toBe('Save resource: My DB');
+    ).toBe('Save dashboard: My DB');
     expect(
       renderCommitMessage('   ', { action: 'delete', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
-    ).toBe('Delete resource: My DB');
+    ).toBe('Delete dashboard: My DB');
     expect(
       renderCommitMessage(null, { action: 'move', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
-    ).toBe('Move resource: My DB');
+    ).toBe('Move dashboard: My DB');
     expect(
       renderCommitMessage(undefined, { action: 'rename', resourceKind: 'dashboard', resourceID: 'abc', title: 'My DB' })
-    ).toBe('Rename resource: My DB');
+    ).toBe('Rename dashboard: My DB');
   });
 
-  it('uses the same resource-agnostic default regardless of resource kind', () => {
+  it('interpolates the resource kind in the built-in defaults', () => {
     expect(
       renderCommitMessage(undefined, { action: 'create', resourceKind: 'folder', resourceID: '', title: 'ops' })
-    ).toBe('Create resource: ops');
+    ).toBe('Create folder: ops');
     expect(
       renderCommitMessage(undefined, { action: 'rename', resourceKind: 'folder', resourceID: 'uid', title: 'ops' })
-    ).toBe('Rename resource: ops');
+    ).toBe('Rename folder: ops');
     expect(
       renderCommitMessage(undefined, { action: 'delete', resourceKind: 'folder', resourceID: 'uid', title: 'ops' })
-    ).toBe('Delete resource: ops');
+    ).toBe('Delete folder: ops');
   });
 
   it('interpolates {{action}}, {{resourceKind}}, {{resourceID}}, {{title}}', () => {
@@ -208,7 +208,7 @@ describe('getSingleResourceCommitMessage', () => {
         repository: repoWithTemplate(undefined),
         ...baseVars,
       })
-    ).toBe('Save resource: Latency');
+    ).toBe('Save dashboard: Latency');
   });
 
   it('handles an undefined repository (no template available)', () => {
@@ -219,7 +219,7 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         action: 'create',
       })
-    ).toBe('Create resource: Latency');
+    ).toBe('Create dashboard: Latency');
   });
 
   it('appends the Grafana-saved-by trailer to the default message', () => {
@@ -230,7 +230,7 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         ...userVars,
       })
-    ).toBe('Save resource: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
+    ).toBe('Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
   });
 
   it('appends the trailer to a template-rendered message', () => {

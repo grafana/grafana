@@ -1,11 +1,11 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { type ManagedResource } from '../../utils/managedResource';
 
@@ -25,11 +25,6 @@ jest.mock('../../hooks/useLastBranch', () => ({
     getLastBranch: jest.fn().mockReturnValue(undefined),
     setLastBranch: jest.fn(),
   }),
-}));
-
-jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
-  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
-  useGetResourceRepositoryView: jest.fn(),
 }));
 
 jest.mock('react-router-dom-v5-compat', () => {
@@ -61,16 +56,8 @@ const mockRepository: RepositoryView = {
 
 const mockBody = { apiVersion: 'v1', kind: 'Thing', metadata: { name: 'thing-uid' }, spec: { title: 'Test Thing' } };
 
-function mockRepoView(overrides = {}) {
-  (useGetResourceRepositoryView as jest.Mock).mockReturnValue({
-    repository: mockRepository,
-    isLoading: false,
-    isReadOnlyRepo: false,
-    isMissingRepo: false,
-    isInstanceManaged: true,
-    status: 'ready',
-    ...overrides,
-  });
+function mockRepositories(repositories: RepositoryView[]) {
+  server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
 function setup(props: Partial<SaveProvisionedResourceDrawerProps> = {}) {
@@ -93,12 +80,19 @@ function requireCapturedRequest(req: { url: URL; body: unknown } | null): { url:
 
 describe('SaveProvisionedResourceDrawer', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
+  let originalProvisioning: boolean | undefined;
 
   beforeEach(() => {
     capturedRequest = null;
+    originalProvisioning = config.featureToggles.provisioning;
+    config.featureToggles.provisioning = true;
     jest.clearAllMocks();
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    mockRepoView();
+    mockRepositories([mockRepository]);
+  });
+
+  afterEach(() => {
+    config.featureToggles.provisioning = originalProvisioning;
   });
 
   it('renders the drawer header, shared fields and generic save/cancel buttons', async () => {
@@ -110,7 +104,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
   });
 
-  it('commits the provided body for the write workflow with a resource-agnostic message', async () => {
+  it('commits the provided body for the write workflow with a resource typed message', async () => {
     server.use(
       http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -130,7 +124,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     const req = requireCapturedRequest(capturedRequest);
     expect(req.url.pathname).toContain('/repositories/test-repo/files/resources/thing.json');
     expect(req.url.searchParams.get('ref')).toBeNull();
-    expect(req.url.searchParams.get('message')).toBe('Save resource: Test Thing');
+    expect(req.url.searchParams.get('message')).toBe('Save dashboard: Test Thing');
     expect(req.body).toEqual(mockBody);
   });
 
@@ -151,20 +145,24 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(capturedRequest).not.toBeNull();
     });
 
-    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe('Create resource: Test Thing');
+    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('message')).toBe(
+      'Create dashboard: Test Thing'
+    );
   });
 
-  it('shows the read-only banner when the repository cannot be edited', () => {
-    mockRepoView({ isReadOnlyRepo: true });
+  it('shows the read-only banner when the repository cannot be edited', async () => {
+    mockRepositories([{ ...mockRepository, workflows: [] }]);
     setup();
 
+    expect(await screen.findByText('This repository is read only')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
   });
 
-  it('shows the missing-repository banner when no repository resolves', () => {
-    mockRepoView({ repository: undefined, isMissingRepo: true });
+  it('shows the missing-repository banner when no repository resolves', async () => {
+    mockRepositories([]);
     setup();
 
+    expect(await screen.findByText('Repository not found')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^save$/i })).not.toBeInTheDocument();
   });
 });
