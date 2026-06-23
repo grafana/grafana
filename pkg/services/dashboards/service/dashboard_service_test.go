@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -2283,6 +2284,55 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 			t.Fatal("Cleanup job didn't exit within timeout")
 		}
 	})
+
+	t.Run("Should run cleanup through the elector when leader election is enabled", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.K8sDashboardCleanup = setting.K8sDashboardCleanupSettings{
+			Interval:       30 * time.Second,
+			Timeout:        25 * time.Second,
+			BatchSize:      10,
+			LeaderElection: leaderelection.Config{Enabled: true},
+		}
+
+		elector := &recordingElector{}
+		service := &DashboardServiceImpl{
+			cfg:            cfg,
+			log:            log.New("test.logger"),
+			features:       featuremgmt.WithFeatures(),
+			cleanupElector: elector,
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- service.Run(ctx) }()
+
+		// Cancelling leadership should make Run return.
+		cancel()
+
+		select {
+		case err := <-errCh:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run didn't exit within timeout")
+		}
+
+		// The elector path must be taken (not the serverlock path) when enabled.
+		require.True(t, elector.called, "expected the cleanup to run through the elector")
+	})
+}
+
+// recordingElector is a leaderelection.Elector that records whether it was run
+// and acts as leader immediately, delegating to fn.
+type recordingElector struct {
+	called bool
+}
+
+func (e *recordingElector) Run(ctx context.Context, fn func(ctx context.Context), _ ...leaderelection.RunOption) error {
+	e.called = true
+	fn(ctx)
+	return ctx.Err()
 }
 
 // Helper functions for testing

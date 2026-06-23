@@ -453,6 +453,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 			nil,
 			features,
 		),
+		nil, // cleanupElector: leader election disabled in tests
 	)
 	require.NoError(b, err)
 

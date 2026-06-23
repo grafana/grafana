@@ -541,6 +541,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 			nil,
 			featuremgmt.WithFeatures(),
 		),
+		nil, // cleanupElector: leader election disabled in tests
 	)
 	require.NoError(t, err)
 	dashService.RegisterDashboardPermissions(acmock.NewMockedPermissionsService())
