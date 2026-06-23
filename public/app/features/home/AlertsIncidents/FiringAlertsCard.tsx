@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { escapeRegExp } from 'lodash';
 import { useMemo } from 'react';
@@ -6,15 +5,10 @@ import { useAsync } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { Badge, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, LinkButton, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
-import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
-import {
-  canonicalSeverity,
-  SEVERITY_DEFINITIONS,
-  type SeverityLevel,
-} from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { canonicalSeverity, type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -22,6 +16,7 @@ import { type Team } from 'app/types/teams';
 
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { severityLevelColor, severityLevelRank } from './severity';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
@@ -40,10 +35,6 @@ function alertDetailHref(alert: AlertmanagerAlert) {
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
 function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
-}
-
-function severityRank(level?: SeverityLevel) {
-  return level ? SEVERITY_DEFINITIONS.findIndex((d) => d.level === level) : -1;
 }
 
 function severityLabel(level?: SeverityLevel): string {
@@ -81,8 +72,6 @@ export function FiringAlertsCard() {
  * the permission gate is in the parent wrapper.
  */
 function FiringAlertsCardInner() {
-  const styles = useStyles2(getStyles);
-
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
   const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
@@ -123,7 +112,7 @@ function FiringAlertsCardInner() {
       } else if (level === 'major') {
         highCount++;
       }
-      return { alert, level, rank: severityRank(level), startedAt: new Date(alert.startsAt).getTime() };
+      return { alert, level, rank: severityLevelRank(level), startedAt: new Date(alert.startsAt).getTime() };
     });
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
@@ -177,14 +166,9 @@ function FiringAlertsCardInner() {
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
         const detailHref = alertDetailHref(alert);
-        const severity = severityLabel(level);
         return (
           <>
-            <Tooltip content={severity}>
-              <span role="img" aria-label={severity} className={styles.severityIndicator}>
-                <SeverityBars level={level} />
-              </span>
-            </Tooltip>
+            <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
             <SummaryCardTitle href={detailHref}>{alert.labels.alertname}</SummaryCardTitle>
             {alert.labels.team && (
               <Text color="secondary" variant="bodySmall" truncate>
@@ -216,10 +200,3 @@ function FiringAlertsCardInner() {
     />
   );
 }
-
-const getStyles = () => ({
-  severityIndicator: css({
-    display: 'inline-flex',
-    flexShrink: 0,
-  }),
-});

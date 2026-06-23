@@ -59,14 +59,14 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </HomeSection>
-          <Stack direction="row" wrap="wrap" gap={2}>
+          <div className={styles.cardGrid}>
             <div className={styles.card}>
               <FiringAlertsCard />
             </div>
             <div className={styles.card}>
               <IncidentsCard />
             </div>
-          </Stack>
+          </div>
 
           {renderLimitedComponents({
             props: {},
@@ -94,20 +94,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
       },
     },
   }),
+  cardGrid: css({
+    display: 'grid',
+    gap: theme.spacing(2),
+    // auto-fit collapses the empty track when a card renders null, so the other fills the row;
+    // min(100%, 22rem) yields one column on narrow containers and two once ~2x22rem+gap fits — no calc.
+    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 22rem), 1fr))',
+  }),
   card: css({
     display: 'flex',
     flexDirection: 'column',
-    flex: '1 1 100%',
-    [theme.breakpoints.up('md')]: {
-      flex: `1 1 calc(50% - ${theme.spacing(1)})`,
-    },
     minWidth: 0,
-    // A card renders null when unavailable (no alerting permission / no incident plugin);
-    // its empty wrapper then collapses so the remaining card spans the full row.
+    // A card renders null when unavailable; its empty wrapper collapses so auto-fit drops the track
+    // and the remaining card spans the full row.
     '&:empty': {
       display: 'none',
     },
-    // Stretch the card body to fill the row height so both cards stay equal height.
+    // Stretch the card body to fill the grid cell so both cards stay equal height.
     '> *': {
       flex: 1,
     },

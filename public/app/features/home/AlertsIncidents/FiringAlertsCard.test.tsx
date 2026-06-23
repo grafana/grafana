@@ -24,7 +24,7 @@ function makeAlert(overrides: Partial<AlertmanagerAlert> & { labels: Alertmanage
     status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
     annotations: {},
     ...overrides,
-    labels: { alertname: 'test', severity: 'warning', ...overrides.labels },
+    labels: { alertname: 'test', ...overrides.labels },
   };
 }
 
@@ -86,7 +86,7 @@ describe('FiringAlertsCard', () => {
     expect(screen.getByText(/1 high/i)).toBeInTheDocument();
   });
 
-  it('labels each severity dot with its level', async () => {
+  it('labels each row with its severity', async () => {
     mockTeams([]);
     mockAlerts([criticalAlert, highAlert]);
 
@@ -94,8 +94,8 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    expect(screen.getByRole('img', { name: 'Critical' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'High' })).toBeInTheDocument();
+    expect(screen.getByText('Critical')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
   });
 
   it('counts non-canonical severity aliases by canonical level', async () => {
@@ -119,6 +119,7 @@ describe('FiringAlertsCard', () => {
     render(<FiringAlertsCard />);
 
     expect(await screen.findByText('No Severity')).toBeInTheDocument();
+    expect(await screen.findByText('Unknown severity')).toBeInTheDocument();
 
     // Missing severity must not crash canonicalSeverity and must not be counted in either badge
     expect(screen.queryByText(/\d+ critical/i)).not.toBeInTheDocument();
@@ -190,8 +191,13 @@ describe('FiringAlertsCard', () => {
 
   it('caps the rendered list at HOME_CARD_MAX_ITEMS while badges count every alert', async () => {
     mockTeams([]);
+    // Pin descending ages so the cap deterministically drops the oldest alert, not whichever one
+    // happened to straddle a Date.now() millisecond boundary during construction.
     const many = Array.from({ length: HOME_CARD_MAX_ITEMS + 1 }, (_, i) =>
-      makeAlert({ labels: { alertname: `Alert ${i}`, severity: 'critical', team: 'platform' } })
+      makeAlert({
+        startsAt: new Date(Date.now() - i * 1000).toISOString(),
+        labels: { alertname: `Alert ${i}`, severity: 'critical', team: 'platform' },
+      })
     );
     mockAlerts(many);
 

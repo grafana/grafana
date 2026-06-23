@@ -10625,6 +10625,7 @@
       "placeholder": "Welcome to {{edition}}."
     },
     "incidents-card": {
+      "declare": "Declare an incident",
       "empty": "No active incidents.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",

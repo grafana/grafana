@@ -94,6 +94,10 @@ describe('IncidentsCard', () => {
       'href',
       '/a/grafana-incident-app/incidents/101'
     );
+
+    // Populated card links to all incidents, not the declare flow.
+    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 
   it('shows the empty state when there are no active incidents', async () => {
@@ -178,5 +182,69 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText('Incident 0')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(8);
+  });
+
+  it('shows a Declare CTA in the empty state when the user can declare', async () => {
+    mockIncidents([]);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toHaveAttribute(
+      'href',
+      '/a/grafana-incident-app/incidents/declare'
+    );
+    expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
+  });
+
+  it('hides the Declare CTA when the user cannot declare incidents', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockUseIrmPlugin.mockReturnValue({
+      pluginId: SupportedPlugin.Incident,
+      installed: true,
+      loading: false,
+      settings: {
+        ...pluginMeta[SupportedPlugin.Incident],
+        includes: [
+          {
+            type: PluginIncludeType.page,
+            name: 'Declare',
+            path: '/a/grafana-incident-app/incidents/declare',
+            action: 'grafana-incident-app.incidents:write',
+          },
+        ],
+      },
+    });
+    mockIncidents([]);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
+  });
+
+  it('orders incidents by severity before recency', async () => {
+    mockIncidents([
+      {
+        incidentID: '201',
+        title: 'Critical but older',
+        severityLabel: 'Critical',
+        createdTime: '2024-01-01T00:00:00Z',
+      },
+      {
+        incidentID: '202',
+        title: 'Warning but newer',
+        severityLabel: 'Warning',
+        createdTime: '2024-01-02T00:00:00Z',
+      },
+    ]);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('Critical but older')).toBeInTheDocument();
+
+    // Critical outranks the newer Warning incident, so it lists first despite being older.
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Critical but older');
   });
 });

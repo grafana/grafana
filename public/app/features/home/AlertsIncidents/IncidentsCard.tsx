@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Badge, type BadgeColor, LinkButton } from '@grafana/ui';
+import { Badge, LinkButton } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -11,19 +11,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
-
-// Incident severity labels are org-configurable; canonicalSeverity normalizes the well-known aliases
-// (e.g. "high" → major, "SEV1" → critical) the same way the firing-alerts card does. Unknown labels stay neutral.
-function severityColor(severityLabel: string): BadgeColor {
-  switch (canonicalSeverity(severityLabel)) {
-    case 'critical':
-      return 'red';
-    case 'major':
-      return 'orange';
-    default:
-      return 'darkgrey';
-  }
-}
+import { severityLevelColor, severityLevelRank } from './severity';
 
 export function IncidentsCard() {
   const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -37,15 +25,24 @@ export function IncidentsCard() {
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
   // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.
   const canAccess = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents')) : false;
+  const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
 
-  return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} />;
+  return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} canDeclare={canDeclare} />;
 }
 
 /**
  * Inner component avoids calling hooks conditionally —
  * the availability gate lives in the parent wrapper.
  */
-function IncidentsCardInner({ pluginId, canAccess }: { pluginId: string; canAccess: boolean }) {
+function IncidentsCardInner({
+  pluginId,
+  canAccess,
+  canDeclare,
+}: {
+  pluginId: string;
+  canAccess: boolean;
+  canDeclare: boolean;
+}) {
   const { data: incidents, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
 
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
@@ -53,11 +50,17 @@ function IncidentsCardInner({ pluginId, canAccess }: { pluginId: string; canAcce
   // error (401/403/5xx/network) is genuine and surfaced to the user.
   const loadError = !!error && !(isFetchError(error) && error.status === 404);
 
-  // Most recent first, then capped client-side so the card never relies on server ordering.
+  // Most severe first, then most recent within a severity; capped client-side. Unmapped org-custom
+  // severity labels (canonicalSeverity → undefined) rank lowest, after all known severities.
   const displayed = useMemo(
     () =>
       [...(incidents ?? [])]
-        .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
+        .sort(
+          (a, b) =>
+            severityLevelRank(canonicalSeverity(b.severityLabel)) -
+              severityLevelRank(canonicalSeverity(a.severityLabel)) ||
+            new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+        )
         .slice(0, HOME_CARD_MAX_ITEMS),
     [incidents]
   );
@@ -78,7 +81,7 @@ function IncidentsCardInner({ pluginId, canAccess }: { pluginId: string; canAcce
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
         <>
-          <Badge text={incident.severityLabel} color={severityColor(incident.severityLabel)} />
+          <Badge text={incident.severityLabel} color={severityLevelColor(canonicalSeverity(incident.severityLabel))} />
           <SummaryCardTitle
             href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
           >
@@ -88,7 +91,19 @@ function IncidentsCardInner({ pluginId, canAccess }: { pluginId: string; canAcce
         </>
       )}
       footer={
-        canAccess ? (
+        (incidents?.length ?? 0) === 0 ? (
+          canDeclare ? (
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              fill="text"
+              icon="fire"
+              href={createBridgeURL(pluginId, '/incidents/declare')}
+            >
+              <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+            </LinkButton>
+          ) : undefined
+        ) : canAccess ? (
           <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
             <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
           </LinkButton>
