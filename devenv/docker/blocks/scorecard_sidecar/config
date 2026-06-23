@@ -1,0 +1,2 @@
+[plugin_security]
+scorecard_sidecar_url = http://scorecard-sidecar:8080/score

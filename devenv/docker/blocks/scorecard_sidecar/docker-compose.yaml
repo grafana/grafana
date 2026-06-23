@@ -1,0 +1,7 @@
+  scorecard-sidecar:
+    build:
+      context: ./docker/blocks/scorecard_sidecar
+    ports:
+      - "8088:8080"
+    environment:
+      GITHUB_AUTH_TOKEN: ${GITHUB_AUTH_TOKEN}
