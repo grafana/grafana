@@ -11,7 +11,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 
 import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
-import { severityLevelColor } from './severity';
+import { severityLevelColor, severityLevelRank } from './severity';
 
 export function IncidentsCard() {
   const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -45,16 +45,23 @@ type IncidentsCardInnerProps = {
 function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
   const { data: incidents = [], isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
   const incidentCount = incidents?.length ?? 0;
+
   // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
   // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
   // error (401/403/5xx/network) is genuine and surfaced to the user.
   const loadError = !!error && !(isFetchError(error) && error.status === 404);
 
-  // Most recent incidents first; capped client-side.
+  // Most severe first, then most recent within a severity; capped client-side. Unmapped org-custom
+  // severity labels (canonicalSeverity → undefined) rank lowest, after all known severities.
   const displayed = useMemo(
     () =>
       [...incidents]
-        .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
+        .sort(
+          (a, b) =>
+            severityLevelRank(canonicalSeverity(b.severityLabel)) -
+              severityLevelRank(canonicalSeverity(a.severityLabel)) ||
+            new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime()
+        )
         .slice(0, HOME_CARD_MAX_ITEMS),
     [incidents]
   );

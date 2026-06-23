@@ -224,7 +224,7 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 
-  it('orders incidents by most recent created time', async () => {
+  it('orders incidents by severity before recency', async () => {
     mockIncidents([
       {
         incidentID: '201',
@@ -242,8 +242,9 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCard />);
 
-    expect(await screen.findByText('Warning but newer')).toBeInTheDocument();
+    expect(await screen.findByText('Critical but older')).toBeInTheDocument();
 
-    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Warning but newer');
+    // Critical outranks the newer Warning incident, so it lists first despite being older.
+    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('Critical but older');
   });
 });
