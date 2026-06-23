@@ -6,6 +6,15 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isManagedByRepository,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -21,7 +30,14 @@ interface Props {
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
   return (
     <Card noMargin>
-      <Card.Heading>{playlist.spec?.title}</Card.Heading>
+      <Card.Heading>
+        <Stack direction="row" gap={1} alignItems="center" wrap>
+          {playlist.spec?.title}
+          {isManaged(playlist) && (
+            <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
+          )}
+        </Stack>
+      </Card.Heading>
       <Card.Actions>
         <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
           <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
@@ -40,6 +56,9 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
               <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
             </Button>
           </>
+        )}
+        {isManagedByRepository(playlist) && (
+          <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
         )}
       </Card.Actions>
       <Card.SecondaryActions>
