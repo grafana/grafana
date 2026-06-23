@@ -465,12 +465,13 @@ Panel time overrides have no effect when the dashboard's time range is absolute.
 | This entire year     | `1d/y`           |
 | Last entire year     | `1y/y`           |
 
-{{< admonition type="warning">}}
+{{< admonition type="caution">}}
 Avoid using bare month offsets such as `1M` without a rounding suffix.
-Because calendar months vary in length, a plain `1M` shift can produce inconsistent results&mdash;for example, shifting from a 30-day month may truncate the end date unexpectedly.
+Because calendar months vary in length, a plain `1M` shift can produce inconsistent results.
+For example, shifting from a 30-day month might truncate the end date unexpectedly.
 
-Use `1M/M` instead to snap the shifted range to clean calendar month boundaries.
-The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the current month's length.
+Use `1M/M` instead to snap the shifted range to true calendar month boundaries.
+The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the length of the current month.
 {{< /admonition >}}
 
 ### Cache timeout
