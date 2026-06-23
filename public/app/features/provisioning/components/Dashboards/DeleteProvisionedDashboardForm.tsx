@@ -87,7 +87,6 @@ export function DeleteProvisionedDashboardForm({
     setSubmitError(
       getProvisionedRequestError(
         error,
-        'dashboard',
         t('dashboard-scene.delete-provisioned-dashboard-form.delete-error', 'Failed to delete dashboard')
       )
     );

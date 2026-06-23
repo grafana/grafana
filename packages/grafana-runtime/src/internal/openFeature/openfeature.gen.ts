@@ -105,6 +105,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
+  /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
+  UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
 
 /**
@@ -611,5 +613,16 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableProtoRowParser = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.protoRowParser", false, options).value;
+};
+
+/**
+ * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
+ *
+ * **Details:**
+ * - flag key: `useKubernetesShortURLsAPI`
+ * - default value: `true`
+ */
+export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useKubernetesShortURLsAPI", true, options).value;
 };
 

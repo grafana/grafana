@@ -19,6 +19,7 @@ declare module "@openfeature/core" {
     | "provisioning.gitConventions"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
+    | "useKubernetesShortURLsAPI"
     | "stateTimeline.nameAboveBars"
     | "sqlExpressionsCodeMirror"
     | "newSavedQueriesExperience"
