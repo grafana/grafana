@@ -13503,7 +13503,8 @@
     "repository-actions": {
       "connection": "Connection",
       "settings": "Settings",
-      "source-code": "Source code"
+      "source-code": "Source code",
+      "view-folder": "View folder"
     },
     "repository-card": {
       "last-sync": "Last sync: {{date}}",
@@ -13542,7 +13543,7 @@
       "resources": "Resources",
       "status": "Status:",
       "unhealthy": "Unhealthy",
-      "view-folder": "View Folder",
+      "view-resource": "View",
       "webhook": "Webhook",
       "webhook-events": "Events:",
       "webhook-id": "ID:",

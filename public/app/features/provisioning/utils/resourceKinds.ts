@@ -2,7 +2,7 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { type IconName } from '@grafana/ui';
-import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { type ItemType } from '../types';
@@ -29,6 +29,14 @@ export interface ResourceKindInfo {
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
   getRoute?: (name: string) => string;
+  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
+  listRoute: string;
+  /**
+   * Whether resources of this kind are contained in folders, and so can be scoped
+   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
+   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   */
+  folderScoped: boolean;
 }
 
 /**
@@ -45,6 +53,8 @@ export const resourceKindInfos = {
     itemType: 'Folder',
     icon: getIconForKind('folder'),
     getRoute: (name: string) => `/dashboards/f/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
   },
   dashboard: {
     group: DASHBOARD_API_GROUP,
@@ -53,6 +63,8 @@ export const resourceKindInfos = {
     itemType: 'Dashboard',
     icon: getIconForKind('dashboard'),
     getRoute: (name: string) => `/d/${name}`,
+    listRoute: '/dashboards',
+    folderScoped: true,
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
@@ -65,10 +77,30 @@ export const resourceKindInfos = {
     // Link to the edit page (config + items), not /playlists/play, which would
     // immediately launch the fullscreen slideshow — not a sensible "View" target.
     getRoute: (name: string) => `/playlists/edit/${name}`,
+    // Playlists aren't folder-contained — they only have their own collection page.
+    listRoute: '/playlists',
+    folderScoped: false,
   },
 } satisfies Record<string, ResourceKindInfo>;
 
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+/**
+ * Builds the in-app route to view a repository's resources of the given kind.
+ * Folder-scoped kinds resolve to the repository's own folder (named after the
+ * repository) for folder-target repos; everything else — non-folder targets, a
+ * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
+ * collection page.
+ */
+export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
+  const repoName = repo.metadata?.name;
+  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
+    // The repository's folder is named after the repo, so reuse the folder kind's
+    // route rather than duplicating the `/dashboards/f/...` shape here.
+    return resourceKindInfos.folder.getRoute(repoName);
+  }
+  return info.listRoute;
+}
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
