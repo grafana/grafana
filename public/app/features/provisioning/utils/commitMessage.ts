@@ -158,7 +158,10 @@ export function appendSavedByTrailer(message: string, vars: SavedByVars): string
   return `${trimmed}\n\n${trailer}`;
 }
 
-type SingleResourceCommitMessageArgs = CommitTemplateVars & {
+// Shared inputs for resolving a commit message: the template vars plus the editable comment and the
+// repository whose template/default is used. The single- and bulk-resource arg types both build on
+// this rather than one extending the other, so neither reads as a special case of the other.
+type ResourceCommitMessageArgs = CommitTemplateVars & {
   comment: string | undefined;
   repository: RepositoryView | undefined;
 };
@@ -170,18 +173,18 @@ type SingleResourceCommitMessageArgs = CommitTemplateVars & {
  * The `Grafana-saved-by:` trailer is appended in all three paths so the
  * Grafana user who triggered the commit is always recorded in git history.
  */
-export function getSingleResourceCommitMessage({
-  comment,
-  repository,
-  ...vars
-}: SingleResourceCommitMessageArgs): string {
+export function getSingleResourceCommitMessage({ comment, repository, ...vars }: ResourceCommitMessageArgs): string {
   const trimmed = comment?.trim();
   const base = trimmed ? trimmed : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars);
   return appendSavedByTrailer(base, vars);
 }
 
-type BulkResourceCommitMessageArgs = SingleResourceCommitMessageArgs & {
-  /** Multi-resource default used when no repo template is configured. */
+type BulkResourceCommitMessageArgs = ResourceCommitMessageArgs & {
+  /**
+   * Multi-resource default used when no repo template is configured. Must be a non-empty,
+   * human-readable string (e.g. "Delete resources"): it is used verbatim, so an empty string would
+   * produce an empty commit message.
+   */
   fallbackMessage: string;
 };
 

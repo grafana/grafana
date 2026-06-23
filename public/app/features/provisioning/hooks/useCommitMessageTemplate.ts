@@ -18,9 +18,10 @@ interface UseCommitMessageTemplateArgs {
   /** Must not mark the field dirty, or the auto-fill would read as a user edit. */
   setComment: (value: string) => void;
   /**
-   * Multi-resource (bulk) default used when no template is configured. When supplied, the hook
-   * resolves the message via the bulk path so bulk callers keep their own default phrasing instead
-   * of the single-resource built-in. Single-resource callers omit it.
+   * Multi-resource (bulk) default used when no template is configured. Routing is keyed on
+   * *presence* (`undefined` = single-resource path, any string = bulk path), not truthiness, so a
+   * supplied value must be a non-empty, human-readable string — an empty string would route to the
+   * bulk path and be committed verbatim as an empty message. Single-resource callers omit it.
    */
   fallbackMessage?: string;
 }
