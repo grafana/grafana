@@ -53,6 +53,7 @@ import {
   totalsMetric,
   nativeHistogramDurationMetric,
 } from './graphTransform';
+import { composeFilter } from './flowQuery';
 import TempoLanguageProvider from './language_provider';
 import {
   enhanceTraceQlMetricsResponse,
@@ -489,6 +490,24 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       }
     }
 
+    // Flow (SIEM)
+    if (targets.flow?.length) {
+      const target = this.applyVariables(targets.flow[0], options.scopedVars);
+      const filters = target.flowFilters ?? [];
+
+      if (target.flowView === 'topology') {
+        subQueries.push(this.handleFlowTopologyQuery(options, filters));
+      } else {
+        const flowTarget: TempoQuery = {
+          ...target,
+          query: composeFilter(filters),
+          queryType: 'traceql',
+          tableType: SearchTableType.Spans,
+        };
+        subQueries.push(this.handleTraceQlQuery(options, { traceql: [flowTarget] }));
+      }
+    }
+
     // Service Map
     if (this.serviceMap?.datasourceUid && targets.serviceMap?.length > 0) {
       reportInteraction('grafana_traces_service_graph_queried', {
@@ -697,6 +716,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
       })
     );
+  }
+
+  handleFlowTopologyQuery(
+    options: DataQueryRequest<TempoQuery>,
+    _filters: TempoQuery['flowFilters'] = []
+  ): Observable<DataQueryResponse> {
+    // Implemented in the topology task.
+    return of({ data: [], state: LoadingState.Done });
   }
 
   handleTraceQlMetricsQuery(
