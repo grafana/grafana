@@ -1,8 +1,6 @@
 import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
-import { resourceKindInfos } from '../utils/resourceKinds';
-
-import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type FolderRow, type MigratableResource } from './hooks/useFolderMigrationData';
 
 /**
  * Summary of what the user has picked in the Resources to migrate table.
@@ -15,64 +13,66 @@ export interface MigrationSelection {
   folders: number;
   /** Folders + independently-ticked resources, for the "Migrate selected (N)" label. */
   items: number;
-  /** The resource refs to send to the migrate job (dashboards and playlists). */
+  /** The resource refs to send to the migrate job, each tagged with its kind. */
   resources: ResourceRef[];
 }
-
-const DASHBOARD = resourceKindInfos.dashboard;
-const PLAYLIST = resourceKindInfos.playlist;
 
 /**
  * Resolves the table selection into the migrate job payload.
  *
  * Folders aren't accepted by the migrate job directly, and selective migration
- * isn't recursive, so a selected folder cascades only to the dashboards
- * directly inside it (`directDashboards`, already filtered to unmanaged ones).
- * Individually-ticked dashboards are added on top, de-duplicated against the
- * ones a selected folder already covers — so picking a folder *and* a dashboard
- * inside it counts that dashboard once. Playlists aren't folder-scoped, so each
- * ticked playlist maps directly to a ref.
+ * isn't recursive, so a selected folder cascades only to the resources directly
+ * inside it (`directResources`, already filtered to unmanaged ones).
+ * Individually-ticked resources are added on top, de-duplicated against the ones
+ * a selected folder already covers — so picking a folder *and* a resource inside
+ * it counts that resource once. Each resource's ref (group/kind) comes from its
+ * own kind, so dashboards, playlists, and any future kind resolve correctly.
  */
 export function resolveSelection(
   folders: FolderRow[],
   selectedFolderUids: Set<string>,
-  selectedDashboardUids: Set<string>,
-  selectedPlaylistUids: Set<string> = new Set()
+  selectedResourceUids: Set<string>
 ): MigrationSelection {
-  const resources: ResourceRef[] = [];
-
-  const seenDashboards = new Set<string>();
-  const addDashboard = (uid: string) => {
-    if (seenDashboards.has(uid)) {
-      return;
-    }
-    seenDashboards.add(uid);
-    resources.push({ name: uid, group: DASHBOARD.group, kind: DASHBOARD.kind });
-  };
-
-  // Dashboards covered by a selected folder are tracked separately so we don't
-  // double-count them in the "items" tally below.
-  const folderCoveredDashboardUids = new Set<string>();
+  // Look up a resource by uid so individually-ticked rows resolve to the right
+  // kind without the caller threading kind through the selection sets.
+  const resourceByUid = new Map<string, MigratableResource>();
   for (const folder of folders) {
-    if (selectedFolderUids.has(folder.uid)) {
-      folder.directDashboards.forEach((d) => folderCoveredDashboardUids.add(d.uid));
+    for (const resource of folder.directResources) {
+      resourceByUid.set(resource.uid, resource);
     }
   }
 
-  folderCoveredDashboardUids.forEach(addDashboard);
-  selectedDashboardUids.forEach(addDashboard);
+  const resources: ResourceRef[] = [];
+  const seen = new Set<string>();
+  const addResource = (uid: string) => {
+    if (seen.has(uid)) {
+      return;
+    }
+    const resource = resourceByUid.get(uid);
+    if (!resource) {
+      return;
+    }
+    seen.add(uid);
+    resources.push({ name: uid, group: resource.kind.group, kind: resource.kind.kind });
+  };
 
-  selectedPlaylistUids.forEach((uid) => {
-    resources.push({ name: uid, group: PLAYLIST.group, kind: PLAYLIST.kind });
-  });
+  // Resources covered by a selected folder are tracked separately so we don't
+  // double-count them in the "items" tally below.
+  const folderCoveredUids = new Set<string>();
+  for (const folder of folders) {
+    if (selectedFolderUids.has(folder.uid)) {
+      folder.directResources.forEach((r) => folderCoveredUids.add(r.uid));
+    }
+  }
 
-  const independentDashboards = Array.from(selectedDashboardUids).filter(
-    (uid) => !folderCoveredDashboardUids.has(uid)
-  ).length;
+  folderCoveredUids.forEach(addResource);
+  selectedResourceUids.forEach(addResource);
+
+  const independentResources = Array.from(selectedResourceUids).filter((uid) => !folderCoveredUids.has(uid)).length;
 
   return {
     folders: selectedFolderUids.size,
-    items: selectedFolderUids.size + independentDashboards + selectedPlaylistUids.size,
+    items: selectedFolderUids.size + independentResources,
     resources,
   };
 }

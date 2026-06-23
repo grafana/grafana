@@ -6,6 +6,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 
+import { type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
+
 const PAGE_SIZE = 200;
 // How many page requests of one kind to have in flight at once. Keeps the
 // fan-out bounded (folders and dashboards each batch independently) so a large
@@ -18,22 +20,30 @@ const PAGE_CONCURRENCY = 5;
 // roll-up the hook's JSDoc points at.
 const MAX_PAGES = 200;
 
-interface FolderDashboard {
+/**
+ * A single resource that can be migrated, tagged with its kind so the selection
+ * payload and row icon are resolved from the registry rather than hardcoded. The
+ * table is kind-agnostic: dashboards live under their folder, while kinds that
+ * don't support folders (e.g. playlists) are grouped under a synthetic folder
+ * row built by the caller.
+ */
+export interface MigratableResource {
   uid: string;
   title: string;
+  kind: ResourceKindInfo;
 }
 
 export interface FolderRow {
   uid: string;
   title: string;
-  /** Number of unmanaged dashboards directly in this folder. */
-  dashboardCount: number;
+  /** Number of unmanaged resources directly in this folder. */
+  resourceCount: number;
   /**
-   * The unmanaged dashboards directly in this folder. Selective migration is
-   * not recursive — dashboards in subfolders are migrated through their own
+   * The unmanaged resources directly in this folder. Selective migration is
+   * not recursive — resources in subfolders are migrated through their own
    * folder's row, not this one.
    */
-  directDashboards: FolderDashboard[];
+  directResources: MigratableResource[];
 }
 
 interface State {
@@ -129,8 +139,8 @@ function aggregate(
   dashboards: Array<{ uid: string; title: string; parentUid?: string; managedBy?: string }>
 ): FolderRow[] {
   const folderTitle = new Map(folders.map((folder) => [folder.uid, folder.title]));
-  const directByFolder = new Map<string, FolderDashboard[]>();
-  const rootDashboards: FolderDashboard[] = [];
+  const directByFolder = new Map<string, MigratableResource[]>();
+  const rootDashboards: MigratableResource[] = [];
 
   for (const dash of dashboards) {
     // Already-managed dashboards aren't migration targets — the migrate backend
@@ -138,7 +148,7 @@ function aggregate(
     if (dash.managedBy) {
       continue;
     }
-    const item: FolderDashboard = { uid: dash.uid, title: dash.title };
+    const item: MigratableResource = { uid: dash.uid, title: dash.title, kind: resourceKindInfos.dashboard };
     if (!dash.parentUid) {
       rootDashboards.push(item);
       continue;
@@ -152,28 +162,28 @@ function aggregate(
   }
 
   const rows: FolderRow[] = [];
-  for (const [uid, directDashboards] of directByFolder) {
+  for (const [uid, directResources] of directByFolder) {
     rows.push({
       uid,
       title: folderTitle.get(uid) ?? uid,
-      dashboardCount: directDashboards.length,
-      directDashboards,
+      resourceCount: directResources.length,
+      directResources,
     });
   }
   if (rootDashboards.length > 0) {
     rows.push({
       uid: GENERAL_FOLDER_UID,
       title: t('provisioning.migrate.general-folder-title', 'General (root resources)'),
-      dashboardCount: rootDashboards.length,
-      directDashboards: rootDashboards,
+      resourceCount: rootDashboards.length,
+      directResources: rootDashboards,
     });
   }
 
-  // Default ordering: most dashboards first so the folders with the most to
+  // Default ordering: most resources first so the folders with the most to
   // migrate surface at the top, then by title. The table lets the user re-sort.
   return rows.sort((a, b) => {
-    if (b.dashboardCount !== a.dashboardCount) {
-      return b.dashboardCount - a.dashboardCount;
+    if (b.resourceCount !== a.resourceCount) {
+      return b.resourceCount - a.resourceCount;
     }
     // Folder lists are O(folders) — small enough to use localeCompare directly.
     // eslint-disable-next-line @grafana/no-locale-compare

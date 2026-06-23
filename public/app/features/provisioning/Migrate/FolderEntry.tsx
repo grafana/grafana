@@ -10,11 +10,11 @@ interface FolderEntryProps {
   folder: FolderRow;
   isExpanded: boolean;
   isSelected: boolean;
-  selectedDashboardUids: Set<string>;
-  folderCoveredDashboardUids: Set<string>;
+  selectedResourceUids: Set<string>;
+  folderCoveredResourceUids: Set<string>;
   onToggleExpanded: () => void;
   onToggleFolder: () => void;
-  onToggleDashboard: (uid: string) => void;
+  onToggleResource: (uid: string) => void;
 }
 
 /**
@@ -27,11 +27,11 @@ export function FolderEntry({
   folder,
   isExpanded,
   isSelected,
-  selectedDashboardUids,
-  folderCoveredDashboardUids,
+  selectedResourceUids,
+  folderCoveredResourceUids,
   onToggleExpanded,
   onToggleFolder,
-  onToggleDashboard,
+  onToggleResource,
 }: FolderEntryProps) {
   const styles = useStyles2(getStyles);
   return (
@@ -58,7 +58,7 @@ export function FolderEntry({
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
             {t('provisioning.migrate.resources-folder-summary', '', {
-              count: folder.dashboardCount,
+              count: folder.resourceCount,
               defaultValue_one: '{{count}} resource',
               defaultValue_other: '{{count}} resources',
             })}
@@ -67,19 +67,19 @@ export function FolderEntry({
       </div>
       {isExpanded && (
         <div className={styles.children}>
-          {folder.directDashboards.map((dash) => {
-            const coveredByFolder = folderCoveredDashboardUids.has(dash.uid);
-            const checked = coveredByFolder || selectedDashboardUids.has(dash.uid);
+          {folder.directResources.map((resource) => {
+            const coveredByFolder = folderCoveredResourceUids.has(resource.uid);
+            const checked = coveredByFolder || selectedResourceUids.has(resource.uid);
             return (
-              <div key={`dash-${dash.uid}`} className={styles.childRow}>
+              <div key={`resource-${resource.uid}`} className={styles.childRow}>
                 <Checkbox
                   value={checked}
                   disabled={coveredByFolder}
-                  onChange={() => onToggleDashboard(dash.uid)}
-                  aria-label={dash.title}
+                  onChange={() => onToggleResource(resource.uid)}
+                  aria-label={resource.title}
                 />
-                <Icon name="apps" size="sm" />
-                <Text variant="bodySmall">{dash.title}</Text>
+                <Icon name={resource.kind.icon} size="sm" />
+                <Text variant="bodySmall">{resource.title}</Text>
               </div>
             );
           })}

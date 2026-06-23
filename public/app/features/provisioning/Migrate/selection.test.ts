@@ -1,13 +1,27 @@
+import { resourceKindInfos } from '../utils/resourceKinds';
+
 import { type FolderRow } from './hooks/useFolderMigrationData';
 import { resolveSelection } from './selection';
 
 function folder(uid: string, dashboardUids: string[]): FolderRow {
-  const dashboards = dashboardUids.map((d) => ({ uid: d, title: d }));
+  const directResources = dashboardUids.map((d) => ({ uid: d, title: d, kind: resourceKindInfos.dashboard }));
   return {
     uid,
     title: uid,
-    dashboardCount: dashboards.length,
-    directDashboards: dashboards,
+    resourceCount: directResources.length,
+    directResources,
+  };
+}
+
+// A synthetic folder grouping playlists, mirroring how Migrate.tsx surfaces
+// folder-less kinds.
+function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
+  const directResources = playlistUids.map((p) => ({ uid: p, title: p, kind: resourceKindInfos.playlist }));
+  return {
+    uid,
+    title: 'Playlists',
+    resourceCount: directResources.length,
+    directResources,
   };
 }
 
@@ -49,23 +63,26 @@ describe('resolveSelection', () => {
     expect(result.resources.map((r) => r.name).sort()).toEqual(['a1', 'a2']);
   });
 
-  it('adds selected playlists as their own resource refs', () => {
-    const result = resolveSelection(folders, new Set(['a']), new Set(), new Set(['p1', 'p2']));
+  it('resolves each resource ref from its own kind', () => {
+    const withPlaylists = [...folders, playlistFolder('playlists', ['p1', 'p2'])];
 
-    // 1 folder + 2 playlists = 3 items; payload carries the folder's 2
-    // dashboards plus the 2 playlists.
-    expect(result.items).toBe(3);
-    expect(result.resources).toHaveLength(4);
+    // Select folder 'a' (2 dashboards) plus one individual playlist.
+    const result = resolveSelection(withPlaylists, new Set(['a']), new Set(['p1']));
+
+    expect(result.items).toBe(2);
+    expect(result.resources).toHaveLength(3);
     const playlistRefs = result.resources.filter((r) => r.kind === 'Playlist');
-    expect(playlistRefs.map((r) => r.name).sort()).toEqual(['p1', 'p2']);
-    expect(playlistRefs[0]).toMatchObject({ group: 'playlist.grafana.app', kind: 'Playlist' });
+    expect(playlistRefs).toEqual([{ name: 'p1', group: 'playlist.grafana.app', kind: 'Playlist' }]);
   });
 
-  it('resolves a playlist-only selection', () => {
-    const result = resolveSelection(folders, new Set(), new Set(), new Set(['p1']));
+  it('cascades a selected playlists folder to all its playlists', () => {
+    const withPlaylists = [...folders, playlistFolder('playlists', ['p1', 'p2'])];
 
-    expect(result.folders).toBe(0);
+    const result = resolveSelection(withPlaylists, new Set(['playlists']), new Set());
+
+    expect(result.folders).toBe(1);
     expect(result.items).toBe(1);
-    expect(result.resources).toEqual([{ name: 'p1', group: 'playlist.grafana.app', kind: 'Playlist' }]);
+    expect(result.resources.map((r) => r.name).sort()).toEqual(['p1', 'p2']);
+    expect(result.resources.every((r) => r.kind === 'Playlist')).toBe(true);
   });
 });

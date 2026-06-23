@@ -378,21 +378,24 @@ describe('Migrate', () => {
       ],
     };
 
-    it('shows the playlists and combined cards plus the playlist rows', async () => {
+    it('shows the playlists and combined cards plus a synthetic Playlists folder', async () => {
       respondWithStats(withPlaylists);
       enablePlaylists([
         { name: 'p1', title: 'Morning rotation' },
         { name: 'p2', title: 'Ops wall' },
       ]);
 
-      render(<Migrate />);
+      const { user } = render(<Migrate />);
 
-      // Per-kind cards plus the combined "All resources" card.
+      // Per-kind cards plus the combined "All resources" card. "Playlists"
+      // appears both as a card and as the synthetic folder title.
       expect(await screen.findByText('Dashboards')).toBeInTheDocument();
-      expect(screen.getByText('Playlists')).toBeInTheDocument();
+      expect(screen.getAllByText('Playlists').length).toBeGreaterThan(0);
       expect(screen.getByText('All resources')).toBeInTheDocument();
 
-      // The playlists surface as selectable rows in the table.
+      // The playlists are grouped under a synthetic "Playlists" folder; expand
+      // it to reveal the individual selectable playlist rows.
+      await user.click(await screen.findByRole('button', { name: /expand playlists/i }));
       expect(await screen.findByText('Morning rotation')).toBeInTheDocument();
       expect(screen.getByText('Ops wall')).toBeInTheDocument();
     });
@@ -419,6 +422,9 @@ describe('Migrate', () => {
 
       const { user } = render(<Migrate />);
 
+      // Expand the synthetic Playlists folder, then tick a single playlist —
+      // a partial selection (two exist), so it's a selective migrate.
+      await user.click(await screen.findByRole('button', { name: /expand playlists/i }));
       await user.click(await screen.findByRole('checkbox', { name: 'Morning rotation' }));
       const migrateSelected = await screen.findByRole('button', { name: /migrate selected \(1\)/i });
       await waitFor(() => expect(migrateSelected).toBeEnabled());

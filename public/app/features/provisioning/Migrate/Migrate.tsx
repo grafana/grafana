@@ -13,12 +13,16 @@ import { MigrateDrawer } from './MigrateDrawer';
 import { MigrateToGitopsHeader } from './MigrateToGitopsHeader';
 import { OverviewStatCards } from './OverviewStatCards';
 import { ResourcesToMigrate } from './ResourcesToMigrate';
-import { useFolderMigrationData } from './hooks/useFolderMigrationData';
+import { type FolderRow, useFolderMigrationData } from './hooks/useFolderMigrationData';
 import { usePlaylistMigrationData } from './hooks/usePlaylistMigrationData';
 import { resolveSelection } from './selection';
 import { aggregateDashboardTotals, aggregateFolderCounts, aggregatePlaylistTotals, computeBreakdowns } from './stats';
 
 type DrawerScope = 'all' | 'selected';
+
+// Playlists aren't folder-scoped, so they're grouped under a synthetic folder
+// row. The uid is namespaced to avoid colliding with any real folder uid.
+const PLAYLISTS_FOLDER_UID = '__migrate_playlists__';
 
 function toggle(set: Set<string>, uid: string): Set<string> {
   const next = new Set(set);
@@ -56,16 +60,35 @@ export function Migrate() {
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
-  const [selectedDashboardUids, setSelectedDashboardUids] = useState<Set<string>>(new Set());
-  const [selectedPlaylistUids, setSelectedPlaylistUids] = useState<Set<string>>(new Set());
+  const [selectedResourceUids, setSelectedResourceUids] = useState<Set<string>>(new Set());
+
+  // Group playlists under a synthetic "Playlists" folder so they flow through
+  // the same folder machinery (selection, search, migrate). Built only when the
+  // kind is enabled and there are unmanaged playlists.
+  const allFolders = useMemo<FolderRow[]>(() => {
+    if (playlists.length === 0) {
+      return folders;
+    }
+    const playlistsFolder: FolderRow = {
+      uid: PLAYLISTS_FOLDER_UID,
+      title: t('provisioning.migrate.playlists-folder-title', 'Playlists'),
+      resourceCount: playlists.length,
+      directResources: playlists.map((playlist) => ({
+        uid: playlist.uid,
+        title: playlist.title,
+        kind: resourceKindInfos.playlist,
+      })),
+    };
+    return [...folders, playlistsFolder];
+  }, [folders, playlists]);
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
   const totals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
   const playlistTotals = useMemo(() => aggregatePlaylistTotals(breakdowns), [breakdowns]);
   const folderCounts = useMemo(() => aggregateFolderCounts(breakdowns), [breakdowns]);
   const selection = useMemo(
-    () => resolveSelection(folders, selectedFolderUids, selectedDashboardUids, selectedPlaylistUids),
-    [folders, selectedFolderUids, selectedDashboardUids, selectedPlaylistUids]
+    () => resolveSelection(allFolders, selectedFolderUids, selectedResourceUids),
+    [allFolders, selectedFolderUids, selectedResourceUids]
   );
 
   // Gate only on the stats query — the header and KPI cards depend on it. The
@@ -101,18 +124,14 @@ export function Migrate() {
   // with the `write` workflow — matching the guard in the drawer. Without one,
   // the table footer surfaces a connect action instead of a dead button.
   const hasWriteRepo = (repos ?? []).some((repo) => repo.spec?.workflows?.includes('write'));
-  // `allSelected` reflects whether every migratable resource in the table is
-  // picked (drives the "Migrate all" → migrate-everything path). It spans both
-  // folders and playlists. The select-all checkbox itself is scoped to the
+  // `allSelected` reflects whether every migratable folder in the table is
+  // picked (drives the "Migrate all" → migrate-everything path), including the
+  // synthetic playlists folder. The select-all checkbox itself is scoped to the
   // search-filtered rows inside the table.
-  const hasMigratableRows = folders.length > 0 || playlists.length > 0;
-  const allSelected =
-    hasMigratableRows &&
-    folders.every((folder) => selectedFolderUids.has(folder.uid)) &&
-    playlists.every((playlist) => selectedPlaylistUids.has(playlist.uid));
+  const allSelected = allFolders.length > 0 && allFolders.every((folder) => selectedFolderUids.has(folder.uid));
   // "Migrate all" runs the legacy migrate-everything job; a partial selection
   // needs at least one resolved resource ref to send.
-  const canSubmit = allSelected ? hasMigratableRows : selection.resources.length > 0;
+  const canSubmit = allSelected ? allFolders.length > 0 : selection.resources.length > 0;
   // Stats-derived: is there anything unmanaged at all? Used for the
   // migrate-everything fallback when the folder list itself can't be loaded —
   // that job is stats-driven and doesn't need the per-folder enumeration.
@@ -125,18 +144,10 @@ export function Migrate() {
   const closeDrawer = () => setDrawerScope(null);
   const clearSelection = () => {
     setSelectedFolderUids(new Set());
-    setSelectedDashboardUids(new Set());
-    setSelectedPlaylistUids(new Set());
+    setSelectedResourceUids(new Set());
   };
   const setFoldersSelected = (uids: string[], selected: boolean) => {
     setSelectedFolderUids((prev) => {
-      const next = new Set(prev);
-      uids.forEach((uid) => (selected ? next.add(uid) : next.delete(uid)));
-      return next;
-    });
-  };
-  const setPlaylistsSelected = (uids: string[], selected: boolean) => {
-    setSelectedPlaylistUids((prev) => {
       const next = new Set(prev);
       uids.forEach((uid) => (selected ? next.add(uid) : next.delete(uid)));
       return next;
@@ -177,15 +188,11 @@ export function Migrate() {
         </Stack>
       ) : (
         <ResourcesToMigrate
-          folders={folders}
+          folders={allFolders}
           selectedFolderUids={selectedFolderUids}
-          selectedDashboardUids={selectedDashboardUids}
+          selectedResourceUids={selectedResourceUids}
           onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
-          onToggleDashboard={(uid) => setSelectedDashboardUids((prev) => toggle(prev, uid))}
-          playlists={playlists}
-          selectedPlaylistUids={selectedPlaylistUids}
-          onTogglePlaylist={(uid) => setSelectedPlaylistUids((prev) => toggle(prev, uid))}
-          onSetPlaylistsSelected={setPlaylistsSelected}
+          onToggleResource={(uid) => setSelectedResourceUids((prev) => toggle(prev, uid))}
           selectedCount={selection.items}
           allSelected={allSelected}
           onSetFoldersSelected={setFoldersSelected}
