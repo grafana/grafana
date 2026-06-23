@@ -10,8 +10,6 @@ import {
   type RepositorySpec,
 } from '../../api/clients/provisioning/v0alpha1';
 
-import { type ResourceItemType } from './utils/resourceKinds';
-
 export type JobType = 'sync' | 'delete' | 'move' | 'fix' | 'releaseResources' | 'deleteResources';
 
 // Repository type definition - extracted from API client
@@ -94,9 +92,9 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view.
-// Resource-backed item types come from the per-kind registry; `File` is the
+// `Folder`/`Dashboard` are resource-backed (see resourceKinds.ts); `File` is the
 // non-resource fallback for plain files that don't map to a known kind.
-export type ItemType = ResourceItemType | 'File';
+export type ItemType = 'Folder' | 'Dashboard' | 'File';
 export type SyncStatus = 'synced' | 'pending';
 
 export interface TreeItem {

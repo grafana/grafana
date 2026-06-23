@@ -2,7 +2,7 @@ import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import {
-  RESOURCE_KINDS,
+  resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByItemType,
   getKindInfoByResource,
@@ -12,13 +12,13 @@ import {
 
 describe('resourceKinds registry', () => {
   it('exposes an info record per kind with consistent identifiers', () => {
-    expect(RESOURCE_KINDS.dashboard).toMatchObject({
+    expect(resourceKindInfos.dashboard).toMatchObject({
       group: 'dashboard.grafana.app',
       kind: 'Dashboard',
       resource: 'dashboards',
       itemType: 'Dashboard',
     });
-    expect(RESOURCE_KINDS.folder).toMatchObject({
+    expect(resourceKindInfos.folder).toMatchObject({
       group: 'folder.grafana.app',
       kind: 'Folder',
       resource: 'folders',
@@ -27,15 +27,15 @@ describe('resourceKinds registry', () => {
   });
 
   it('sources icons from the search package', () => {
-    expect(RESOURCE_KINDS.dashboard.icon).toBe(getIconForKind('dashboard'));
-    expect(RESOURCE_KINDS.folder.icon).toBe(getIconForKind('folder'));
+    expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
+    expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
   });
 });
 
 describe('getKindInfoByResource', () => {
   it('resolves by plural resource name', () => {
-    expect(getKindInfoByResource('dashboards')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getKindInfoByResource('folders')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByResource('dashboards')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByResource('folders')).toBe(resourceKindInfos.folder);
   });
 
   it('returns undefined for unknown or missing resources', () => {
@@ -46,8 +46,8 @@ describe('getKindInfoByResource', () => {
 
 describe('getKindInfoByItemType', () => {
   it('resolves by item type', () => {
-    expect(getKindInfoByItemType('Dashboard')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getKindInfoByItemType('Folder')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByItemType('Dashboard')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByItemType('Folder')).toBe(resourceKindInfos.folder);
   });
 
   it('returns undefined for the non-resource File type', () => {
@@ -57,12 +57,12 @@ describe('getKindInfoByItemType', () => {
 
 describe('getKindInfoByStatGroup', () => {
   it('matches the full API group', () => {
-    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(RESOURCE_KINDS.dashboard);
-    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByStatGroup('dashboard.grafana.app')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByStatGroup('folder.grafana.app')).toBe(resourceKindInfos.folder);
   });
 
   it('matches the legacy short plural form', () => {
-    expect(getKindInfoByStatGroup('folders')).toBe(RESOURCE_KINDS.folder);
+    expect(getKindInfoByStatGroup('folders')).toBe(resourceKindInfos.folder);
   });
 
   it('returns undefined for unknown groups', () => {
@@ -72,23 +72,23 @@ describe('getKindInfoByStatGroup', () => {
 
 describe('getRoute', () => {
   it('builds in-app routes per kind', () => {
-    expect(RESOURCE_KINDS.dashboard.getRoute('abc')).toBe('/d/abc');
-    expect(RESOURCE_KINDS.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
+    expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
+    expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
   });
 });
 
 describe('countLabel', () => {
   it('produces singular and plural labels per kind', () => {
-    expect(RESOURCE_KINDS.dashboard.countLabel(1)).toBe('1 dashboard');
-    expect(RESOURCE_KINDS.dashboard.countLabel(3)).toBe('3 dashboards');
-    expect(RESOURCE_KINDS.folder.countLabel(1)).toBe('1 folder');
-    expect(RESOURCE_KINDS.folder.countLabel(3)).toBe('3 folders');
+    expect(resourceKindInfos.dashboard.countLabel(1)).toBe('1 dashboard');
+    expect(resourceKindInfos.dashboard.countLabel(3)).toBe('3 dashboards');
+    expect(resourceKindInfos.folder.countLabel(1)).toBe('1 folder');
+    expect(resourceKindInfos.folder.countLabel(3)).toBe('3 folders');
   });
 });
 
 describe('getAvailableResourceKinds', () => {
   it('falls back to all known kinds when availableResources is unset', () => {
-    expect(getAvailableResourceKinds(undefined)).toEqual([RESOURCE_KINDS.folder, RESOURCE_KINDS.dashboard]);
+    expect(getAvailableResourceKinds(undefined)).toEqual([resourceKindInfos.folder, resourceKindInfos.dashboard]);
   });
 
   it('only returns kinds present and not disabled', () => {
@@ -99,9 +99,9 @@ describe('getAvailableResourceKinds', () => {
 
     const result = getAvailableResourceKinds(available);
 
-    expect(result).toEqual([RESOURCE_KINDS.dashboard]);
-    expect(isResourceKindAvailable(RESOURCE_KINDS.dashboard, available)).toBe(true);
-    expect(isResourceKindAvailable(RESOURCE_KINDS.folder, available)).toBe(false);
+    expect(result).toEqual([resourceKindInfos.dashboard]);
+    expect(isResourceKindAvailable(resourceKindInfos.dashboard, available)).toBe(true);
+    expect(isResourceKindAvailable(resourceKindInfos.folder, available)).toBe(false);
   });
 
   it('returns no kinds when none are declared', () => {

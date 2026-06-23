@@ -1,7 +1,11 @@
+import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
+
+import { type ItemType } from '../types';
 
 /**
  * Per-kind UI metadata for provisioning resources.
@@ -20,7 +24,7 @@ export interface ResourceKindInfo {
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
   resource: string;
   /** Label shown for this kind in the combined files/resources tree. */
-  itemType: string;
+  itemType: ItemType;
   /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
   icon: IconName;
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
@@ -35,12 +39,12 @@ export interface ResourceKindInfo {
 /**
  * Registry of provisioning resource kinds, keyed by a stable identifier.
  *
- * `satisfies` keeps the literal types (so the derived unions below stay narrow)
- * while still checking each entry against ResourceKindInfo.
+ * `satisfies` checks each entry against ResourceKindInfo without widening the
+ * value type, so callers still get the concrete record back.
  */
-export const RESOURCE_KINDS = {
+export const resourceKindInfos = {
   folder: {
-    group: 'folder.grafana.app',
+    group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
     itemType: 'Folder',
@@ -54,7 +58,7 @@ export const RESOURCE_KINDS = {
       }),
   },
   dashboard: {
-    group: 'dashboard.grafana.app',
+    group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
     itemType: 'Dashboard',
@@ -69,25 +73,16 @@ export const RESOURCE_KINDS = {
   },
 } satisfies Record<string, ResourceKindInfo>;
 
-type ResourceKind = (typeof RESOURCE_KINDS)[keyof typeof RESOURCE_KINDS];
-
-/** Item types backed by a real resource kind (i.e. everything except plain `File`). */
-export type ResourceItemType = ResourceKind['itemType'];
-/** Known provisioning resource groups. */
-export type ResourceGroup = ResourceKind['group'];
-/** Known provisioning resource kinds. */
-export type ResourceKindName = ResourceKind['kind'];
-
-const ALL_KINDS: ResourceKindInfo[] = Object.values(RESOURCE_KINDS);
+const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return ALL_KINDS.find((info) => info.resource === resource);
+  return allKindInfos.find((info) => info.resource === resource);
 }
 
 /** Look up a kind by its tree item type. */
-export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return ALL_KINDS.find((info) => info.itemType === itemType);
+export function getKindInfoByItemType(itemType: ItemType): ResourceKindInfo | undefined {
+  return allKindInfos.find((info) => info.itemType === itemType);
 }
 
 /**
@@ -96,7 +91,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * endpoint can return interchangeably.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return ALL_KINDS.find((info) => info.group === group || info.resource === group);
+  return allKindInfos.find((info) => info.group === group || info.resource === group);
 }
 
 /**
@@ -109,9 +104,9 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
  */
 export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   if (!availableResources) {
-    return ALL_KINDS;
+    return allKindInfos;
   }
-  return ALL_KINDS.filter((info) =>
+  return allKindInfos.filter((info) =>
     availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled)
   );
 }
