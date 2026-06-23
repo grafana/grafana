@@ -45,9 +45,12 @@ graph TB
 graph TB
     subgraph OSS["github.com/grafana/grafana"]
         MAIN_OSS["pkg/cmd/grafana/main.go"]
-        BOOT["pkg/server/bootstrap/"]
         WIRE_OSS["pkg/wire/"]
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
+    end
+
+    subgraph BOOTGRAPH["bootstrap module (in OSS most likely)"]
+        BOOT["pkg/server/bootstrap/"]
     end
 
     subgraph GEM["github.com/grafana/grafana-enterprise"]
