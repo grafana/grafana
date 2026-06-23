@@ -1,6 +1,6 @@
 import { PanelPlugin, LogsSortOrder, LogsDedupStrategy, LogsDedupDescription, FieldType } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { showDefaultSuggestion } from 'app/features/panel/suggestions/utils';
 
 import { LogsPanel } from './LogsPanel';
@@ -144,7 +144,7 @@ export const plugin = new PanelPlugin<Options>(LogsPanel)
       defaultValue: false,
     });
 
-    if (config.featureToggles.otelLogsFormatting) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.OtelLogsFormatting, false)) {
       builder.addBooleanSwitch({
         path: 'showLogAttributes',
         name: t('logs.show-log-attributes', 'Enable log attributes for OTel logs'),
