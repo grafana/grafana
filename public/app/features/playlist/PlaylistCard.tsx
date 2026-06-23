@@ -24,7 +24,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
   return (
     <Card noMargin>
       <Card.Heading>
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" gap={1} alignItems="center" wrap>
           {playlist.spec?.title}
           {isManaged(playlist) && (
             <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />

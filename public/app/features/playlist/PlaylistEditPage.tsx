@@ -38,7 +38,7 @@ export const PlaylistEditPage = () => {
   };
 
   const renderTitle = (title: string) => (
-    <Stack direction="row" gap={1} alignItems="center">
+    <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
       {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
     </Stack>
