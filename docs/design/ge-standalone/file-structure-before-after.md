@@ -47,8 +47,7 @@ graph TB
         MAIN_OSS["pkg/cmd/grafana/main.go"]
         BOOT["pkg/server/bootstrap/"]
         WSETS["pkg/server/wiresets/"]
-        WIRE_OSS["wireexts_oss.go"]
-        EXT_STUB["pkg/extensions/ stub only"]
+        WIRE_OSS["pkg/wire/"]
         SERVICES["pkg/services/, pkg/api/, apps/, …"]
     end
 
@@ -58,14 +57,13 @@ graph TB
         PKG["pkg/accesscontrol, pkg/apiserver, …"]
     end
 
-    MAIN_GE --> BOOT
-    MAIN_GE --> WIRE_GE
-    WIRE_GE --> WSETS
-    WIRE_GE --> PKG
+    MAIN_GE -->|"bootstraps server with"| BOOT
+    MAIN_GE -->|"composes graph from"| WIRE_GE
+    WIRE_GE -->|"imports dependencies"| PKG
     WSETS --> SERVICES
     PKG --> SERVICES
-    MAIN_OSS --> BOOT
-    BOOT --> WIRE_OSS
+    MAIN_OSS -->|"bootstraps server with"| BOOT
+    BOOT -->|"composes graph from"| WIRE_OSS
     WIRE_OSS --> WSETS
 ```
 
