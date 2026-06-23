@@ -80,7 +80,9 @@ export const resourceKindInfos = {
     // The search package's getIconForKind doesn't know playlists, so use the
     // playlist nav icon directly.
     icon: 'presentation-play',
-    getRoute: (name: string) => `/playlists/play/${name}`,
+    // Link to the edit page (config + items), not /playlists/play, which would
+    // immediately launch the fullscreen slideshow — not a sensible "View" target.
+    getRoute: (name: string) => `/playlists/edit/${name}`,
     countLabel: (count: number) =>
       t('provisioning.bootstrap-step.playlists-count', '', {
         count,
