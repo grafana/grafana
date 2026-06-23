@@ -823,9 +823,12 @@ export function TableNG(props: TableNGProps) {
 
             const tooltipCellStyleOptions = {
               textAlign: getAlignment(tooltipField),
-              textWrap: shouldTextWrap(tooltipField),
+              // tooltips are free-floating overlays that should reveal the full value, so we
+              // always wrap their content and never inherit the per-row cell-height clamp
+              // (which would line-clamp/cut off the content).
+              textWrap: true,
               shouldOverflow: false,
-              maxHeight: maxRowHeight,
+              maxHeight: undefined,
             } satisfies TableCellStyleOptions;
             const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
             const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
@@ -861,7 +864,6 @@ export function TableNG(props: TableNGProps) {
               gridRef,
               placement,
               renderer: tooltipFieldRenderer,
-              tooltipField,
               theme,
               width: tooltipWidth,
             } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
