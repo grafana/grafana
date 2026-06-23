@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { memo, useCallback, useEffect, useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
@@ -17,6 +18,8 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { formatDate } from 'app/core/internationalization/dates';
+
+import { PasskeyEnrollButton } from './PasskeyEnrollButton';
 
 export interface UserPasskey {
   id: number;
@@ -169,6 +172,10 @@ export const UserPasskeys = memo(() => {
         </ScrollContainer>
       )}
 
+      <div className={styles.actions}>
+        <PasskeyEnrollButton onEnrolled={load} />
+      </div>
+
       {pendingDelete && (
         <ConfirmModal
           isOpen
@@ -235,9 +242,12 @@ const PasskeyNameEditor = ({ initialValue, onSave, onCancel }: EditorProps) => {
   );
 };
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     maxWidth: '100%',
+  }),
+  actions: css({
+    marginTop: theme.spacing(2),
   }),
 });
 
