@@ -4,7 +4,7 @@ import { useImperativeHandle, useRef } from 'react';
 
 import { type GrafanaTheme2, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LoadingBar, useStyles2 } from '@grafana/ui';
+import { LoadingBar, TagList, useStyles2 } from '@grafana/ui';
 
 import { type DeepSearchDashboardResult } from './actions/deepSearchActions';
 
@@ -89,13 +89,6 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
       <a ref={ref} className={styles.card} href={locationUtil.assureBaseUrl(result.url)} onClick={onClick}>
         <div className={styles.titleRow}>
           <span className={styles.title}>{result.title}</span>
-          <span className={styles.matchCount}>
-            {t('command-palette.deep-search.match-count', '{{count}} match', {
-              count: result.matchedPanelCount,
-              defaultValue_one: '{{count}} match',
-              defaultValue_other: '{{count}} matches',
-            })}
-          </span>
         </div>
         {result.folderTitle && <div className={styles.folder}>{result.folderTitle}</div>}
         {result.snippets.map((snippet, index) => (
@@ -103,6 +96,7 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
             {snippet}
           </div>
         ))}
+        {result.tags.length > 0 && <TagList tags={result.tags} className={styles.tagList} displayMax={5} />}
       </a>
     );
   }
@@ -201,6 +195,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    tagList: css({
+      // TagList centers by default; left-align under the snippets
+      justifyContent: 'flex-start',
+      flexWrap: 'wrap',
+      marginTop: theme.spacing(0.5),
     }),
   };
 };

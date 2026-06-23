@@ -110,6 +110,29 @@ describe('CommandPalette', () => {
       expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
     });
 
+    it('renders dashboard tags from the snippet as pills', async () => {
+      server.use(
+        getVectorSearchHandler([
+          {
+            name: 'dash-1',
+            title: 'API latency',
+            snippet: 'p99 latency by region\nTags: infra, prod',
+            score: 0.1,
+          },
+        ])
+      );
+
+      setup();
+      const user = userEvent.setup();
+      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
+
+      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
+      // Tags surface as pills, not as raw "Tags:" text in the snippet
+      expect(screen.getByText('infra')).toBeInTheDocument();
+      expect(screen.getByText('prod')).toBeInTheDocument();
+      expect(screen.queryByText(/Tags:/)).not.toBeInTheDocument();
+    });
+
     it('hides the empty state when only deep search has results', async () => {
       server.use(
         getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])

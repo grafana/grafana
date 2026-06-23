@@ -74,6 +74,34 @@ describe('groupDeepSearchResults', () => {
     expect(grouped[0].matchedPanelCount).toBe(4);
   });
 
+  it('strips the redundant folder and dashboard title from snippet breadcrumbs and hoists tags', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({
+        dashboardUid: 'dash-1',
+        // The hit title is `dashboardTitle — panelTitle` (titles may contain " — ")
+        dashboardTitle: 'Kafka — Broker & Consumer Lag — Consumer group lag',
+        folderTitle: 'Streaming',
+        content:
+          'Streaming → Kafka — Broker & Consumer Lag → Consumer group lag → Offset lag per group.\nTags: infra, prod',
+      }),
+    ]);
+
+    // Folder ("Streaming") and dashboard ("Kafka — Broker & Consumer Lag") segments are dropped;
+    // panel title and description are kept, and the "Tags:" line is removed from the snippet text
+    expect(grouped[0].snippets).toEqual(['Consumer group lag → Offset lag per group.']);
+    // Tags are parsed out and surfaced at the dashboard level (rendered as pills)
+    expect(grouped[0].tags).toEqual(['infra', 'prod']);
+  });
+
+  it('keeps a snippet unchanged when it has no redundant breadcrumb prefix and reports no tags', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({ dashboardTitle: 'API latency', folderTitle: 'Observability', content: 'p99 latency by region' }),
+    ]);
+
+    expect(grouped[0].snippets).toEqual(['p99 latency by region']);
+    expect(grouped[0].tags).toEqual([]);
+  });
+
   it('skips hits without a dashboard uid and empty snippets', () => {
     const grouped = groupDeepSearchResults([
       panelResult({ dashboardUid: '' }),

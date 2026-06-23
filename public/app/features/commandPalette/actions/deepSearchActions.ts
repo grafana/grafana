@@ -19,12 +19,68 @@ export interface DeepSearchDashboardResult {
   title: string;
   url: string;
   folderTitle?: string;
+  /** Dashboard tags, parsed from the matched panel snippet. */
+  tags: string[];
   /** Up to MAX_SNIPPETS_PER_DASHBOARD matched panel texts, best match first. */
   snippets: string[];
   /** Total panel-level matches for this dashboard (can exceed snippets shown). */
   matchedPanelCount: number;
   /** Lowest cosine distance among this dashboard's matches (lower = closer). */
   bestScore: number;
+}
+
+// Separator the backend uses to join the snippet breadcrumb
+// (folderTitle → dashboardTitle → rowName → panelTitle → description).
+const BREADCRUMB_SEPARATOR = ' → ';
+// The backend appends dashboard tags as a dedicated "Tags: a, b" line.
+const TAGS_LINE_PREFIX = 'Tags: ';
+
+/** Parses dashboard tags out of a snippet's "Tags: a, b" line, if present. */
+function parseSnippetTags(content: string): string[] {
+  const line = content.split('\n').find((l) => l.startsWith(TAGS_LINE_PREFIX));
+  if (!line) {
+    return [];
+  }
+  return line
+    .slice(TAGS_LINE_PREFIX.length)
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Cleans a snippet for display. Drops the "Tags:" line (tags are rendered as
+ * pills on the card) and the leading folder/dashboard-title breadcrumb segments
+ * (already shown as the card header + subtitle, so repeating them is noise).
+ * Titles can contain " — " but never the " → " breadcrumb separator, so each is
+ * exactly one segment: the folder segment equals the resolved folder title, and
+ * the dashboard segment is the prefix of the card title (which is
+ * `dashboardTitle — panelTitle`). Row name, panel title and queries are kept.
+ * Snippets that don't match (e.g. the mock) are returned unchanged.
+ */
+function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string): string {
+  const lines = snippet.split('\n').filter((line) => !line.startsWith(TAGS_LINE_PREFIX));
+  if (lines.length === 0) {
+    return '';
+  }
+
+  const segments = lines[0].split(BREADCRUMB_SEPARATOR);
+  let start = 0;
+  while (start < segments.length) {
+    const segment = segments[start];
+    const isFolder = folderTitle !== undefined && segment === folderTitle;
+    const isDashboard = segment === cardTitle || cardTitle.startsWith(segment + ' — ');
+    if (!isFolder && !isDashboard) {
+      break;
+    }
+    start++;
+  }
+
+  if (start > 0) {
+    lines[0] = segments.slice(start).join(BREADCRUMB_SEPARATOR);
+  }
+  // If the whole breadcrumb was redundant, drop the now-empty first line
+  return (lines[0] === '' ? lines.slice(1) : lines).join('\n');
 }
 
 /**
@@ -48,6 +104,8 @@ export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSe
         title: result.dashboardTitle,
         url: `/d/${result.dashboardUid}`,
         folderTitle: result.folderTitle,
+        // Tags are dashboard-level, so the same on every panel snippet — take the first
+        tags: parseSnippetTags(result.content),
         snippets: [],
         matchedPanelCount: 0,
         bestScore: result.score,
@@ -58,7 +116,10 @@ export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSe
     group.matchedPanelCount += 1;
     group.bestScore = Math.min(group.bestScore, result.score);
     if (group.snippets.length < MAX_SNIPPETS_PER_DASHBOARD && result.content) {
-      group.snippets.push(result.content);
+      const text = formatSnippet(result.content, result.dashboardTitle, result.folderTitle);
+      if (text) {
+        group.snippets.push(text);
+      }
     }
   }
 
