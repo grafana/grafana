@@ -183,6 +183,8 @@ describe('GeomapPanel - View Listener', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+    const { centerPointRegistry } = require('./view');
+    centerPointRegistry.getIfExists.mockReturnValue(null);
 
     // Suppress expected React warnings about setState before mount
     jest.spyOn(console, 'error').mockImplementation((message) => {
@@ -491,9 +493,27 @@ describe('GeomapPanel - View Listener', () => {
       expect(mockMap.updateSize).toHaveBeenCalled();
     });
 
-    it('should handle data changes', async () => {
+    it('should not handle data changes before new props are committed', async () => {
+      const { applyLayerFilter } = require('./utils/layers');
+      const { centerPointRegistry } = require('./view');
+      centerPointRegistry.getIfExists.mockImplementation((id: string) =>
+        id === 'fit' ? { id: 'fit' } : null
+      );
+
+      panel = new GeomapPanel({
+        ...props,
+        options: {
+          ...props.options,
+          view: {
+            ...props.options.view,
+            id: 'fit',
+          },
+        },
+      });
+
       const div = document.createElement('div');
       await panel.initMapAsync(div);
+      jest.clearAllMocks();
 
       const newData = {
         ...props.data,
@@ -506,7 +526,8 @@ describe('GeomapPanel - View Listener', () => {
       };
 
       panel.shouldComponentUpdate(newProps);
-      expect(panel.props.data).not.toBe(newData);
+      expect(applyLayerFilter).not.toHaveBeenCalled();
+      expect(mockMap.setView).not.toHaveBeenCalled();
     });
 
     it('should handle componentDidUpdate for dimension changes', async () => {
@@ -765,7 +786,43 @@ describe('GeomapPanel - View Listener', () => {
       panel.dataChanged(newData);
       // Verify applyLayerFilter is called via mock
       const { applyLayerFilter } = require('./utils/layers');
-      expect(applyLayerFilter).toHaveBeenCalled();
+      expect(applyLayerFilter).toHaveBeenCalledWith(expect.anything(), expect.anything(), newData);
+    });
+
+    it('should refit to data after the new panel data is committed', async () => {
+      const { applyLayerFilter } = require('./utils/layers');
+      const { centerPointRegistry } = require('./view');
+      centerPointRegistry.getIfExists.mockImplementation((id: string) =>
+        id === 'fit' ? { id: 'fit' } : null
+      );
+
+      panel = new GeomapPanel({
+        ...props,
+        options: {
+          ...props.options,
+          view: {
+            ...props.options.view,
+            id: 'fit',
+          },
+        },
+      });
+
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+      jest.clearAllMocks();
+
+      const prevProps = props;
+      const newData = {
+        ...props.data,
+        series: [{ fields: [], length: 0 }],
+      };
+
+      Object.assign(panel.props, { data: newData });
+
+      panel.componentDidUpdate(prevProps);
+
+      expect(applyLayerFilter).toHaveBeenCalledWith(expect.anything(), expect.anything(), newData);
+      expect(mockMap.setView).toHaveBeenCalledWith(mockView);
     });
   });
 

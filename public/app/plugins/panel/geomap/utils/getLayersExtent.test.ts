@@ -7,7 +7,7 @@ import VectorSource from 'ol/source/Vector';
 
 import { type MapLayerState } from '../types';
 
-import { getLayerGroupExtent, getLayersExtent } from './getLayersExtent';
+import { EXCLUDE_FROM_FIT_TO_DATA, getLayerGroupExtent, getLayersExtent } from './getLayersExtent';
 
 type TestVectorLayer = VectorLayer<VectorSource<Feature<Geometry>>>;
 
@@ -85,5 +85,27 @@ describe('getLayerGroupExtent', () => {
 
     const extents = getLayerGroupExtent(group, true);
     expect(extents[0]).toEqual([9, 9, 9, 9]);
+  });
+
+  it('should skip helper layers excluded from fit-to-data extents', () => {
+    const dataSource = new VectorSource({ features: [new Feature(new Point([10, 10]))] });
+    const dataLayer = new VectorLayer({ source: dataSource });
+
+    const helperSource = new VectorSource({
+      features: [
+        new Feature(
+          new LineString([
+            [0, 0],
+            [100, 100],
+          ])
+        ),
+      ],
+    });
+    const helperLayer = new VectorLayer({ source: helperSource });
+    helperLayer.set(EXCLUDE_FROM_FIT_TO_DATA, true);
+
+    const group = new LayerGroup({ layers: [dataLayer, helperLayer] });
+
+    expect(getLayerGroupExtent(group, false)).toEqual([dataSource.getExtent()]);
   });
 });

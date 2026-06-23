@@ -29,6 +29,7 @@ import { StyleEditor } from '../../editor/StyleEditor';
 import { routeStyle } from '../../style/markers';
 import { defaultStyleConfig, type StyleConfig } from '../../style/types';
 import { getStyleConfigState } from '../../style/utils';
+import { EXCLUDE_FROM_FIT_TO_DATA } from '../../utils/getLayersExtent';
 import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
@@ -215,6 +216,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       }),
       style: crosshairStyle,
     });
+    crosshairLayer.set(EXCLUDE_FROM_FIT_TO_DATA, true);
 
     const linesLayer = new VectorImage({
       source: new VectorSource({
@@ -222,6 +224,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       }),
       style: lineStyle,
     });
+    linesLayer.set(EXCLUDE_FROM_FIT_TO_DATA, true);
 
     const layer = new LayerGroup({
       layers: [vectorLayer, crosshairLayer, linesLayer],
