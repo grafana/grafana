@@ -57,7 +57,7 @@ export const ColorValueEditor = ({
             {details && (
               <>
                 {value ? (
-                  <button className={cx(resetButtonStyles, styles.colorText)} onClick={showColorPicker}>
+                  <button type="button" className={cx(resetButtonStyles, styles.colorText)} onClick={showColorPicker}>
                     {value}
                   </button>
                 ) : (
