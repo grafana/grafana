@@ -167,6 +167,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	section := cfg.Raw.Section("unified_storage")
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
+	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
+	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
@@ -261,6 +263,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
 	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
+	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
+	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
+	cfg.IndexSnapshotKVChunkSizeMiB = section.Key("index_snapshot_kv_chunk_size_mib").MustInt(0)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)
 	if cfg.IndexSnapshotThreshold < cfg.IndexFileThreshold {
 		cfg.Logger.Warn("index_snapshot_threshold is smaller than index_file_threshold, overriding", "configured", cfg.IndexSnapshotThreshold, "index_file_threshold", cfg.IndexFileThreshold)
@@ -315,6 +320,12 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.BedrockModel = embedSection.Key("bedrock_model").MustString("cohere.embed-v4:0")
 	cfg.BedrockDimensions = embedSection.Key("bedrock_dimensions").MustInt(1024)
 	cfg.BedrockBatchSize = embedSection.Key("bedrock_batch_size").MustInt(50)
+	cfg.BedrockMaxAttempts = embedSection.Key("bedrock_max_attempts").MustInt(5)
+	cfg.AzureEndpoint = embedSection.Key("azure_endpoint").String()
+	cfg.AzureDeployment = embedSection.Key("azure_deployment").MustString("text-embedding-3-small")
+	cfg.AzureAPIVersion = embedSection.Key("azure_api_version").MustString("2024-02-01")
+	cfg.AzureDimensions = embedSection.Key("azure_dimensions").MustInt(1024)
+	cfg.AzureBatchSize = embedSection.Key("azure_batch_size").MustInt(50)
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

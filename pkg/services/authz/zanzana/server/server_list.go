@@ -33,8 +33,17 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", r.GetNamespace(),
+		"group", r.GetGroup(),
+		"resource", r.GetResource(),
+		"subresource", r.GetSubresource(),
+		"verb", r.GetVerb(),
+	)
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("List").Observe(time.Since(t).Seconds())
+		ctxLogger.Debug("List execution time", "duration", time.Since(t).Milliseconds())
 	}(time.Now())
 
 	res, err := s.list(ctx, r)
@@ -368,23 +377,26 @@ func getRequestHash(req *openfgav1.ListObjectsRequest) (string, error) {
 
 func typedObjects(typ string, objects []string) []string {
 	prefix := typ + ":"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func genericObjects(gr string, objects []string) []string {
 	prefix := common.TypeResourcePrefix + gr + "/"
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], prefix)
+		out[i] = strings.TrimPrefix(objects[i], prefix)
 	}
-	return objects
+	return out
 }
 
 func folderObject(objects []string) []string {
+	out := make([]string, len(objects))
 	for i := range objects {
-		objects[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
+		out[i] = strings.TrimPrefix(objects[i], common.TypeFolderPrefix)
 	}
-	return objects
+	return out
 }

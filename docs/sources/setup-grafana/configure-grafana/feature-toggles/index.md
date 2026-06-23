@@ -33,7 +33,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `provisioning`                               | Enables Git Sync and as-code provisioning for Grafana resources                                                                                               | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                                                         | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled                           | Yes                |
-| `dashgpt`                                    | Enable AI powered features in dashboards                                                                                                                      | Yes                |
 | `kubernetesShortURLs`                        | Enables k8s short URL API and uses it under the hood when handling legacy /api                                                                                | Yes                |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                                                     | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
@@ -69,15 +68,18 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
-| `sharingDashboardImage`                      | Enables image sharing functionality for dashboards                                                                                                            | Yes                |
+| `newLogContext`                              | New Log Context component                                                                                                                                     | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
 | `panelStyleActions`                          | Enable style actions (copy/paste) in the panel editor                                                                                                         | Yes                |
 | `vizPresets`                                 | Enable visualization presets                                                                                                                                  | Yes                |
 | `vizLegendFacetedFilter`                     | Enable faceted labels filter for series visibility in the legend                                                                                              | Yes                |
+| `heatmapRowsAxisOptions`                     | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                                                                        | Yes                |
 | `opentsdbBackendMigration`                   | Run queries through the data source backend                                                                                                                   |                    |
-| `multiPropsVariables`                        | Enables support for variables whose values can have multiple properties                                                                                       | Yes                |
 | `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
+| `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
+| `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
+| `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
 
 ## Public preview feature toggles
@@ -89,6 +91,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTitleSearch`                | Search for dashboards using panel title                                                                |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
+| `provisioning.readmes`            | Render the README.md of a Git Sync provisioned folder inline below its dashboards list                 |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
 | `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
@@ -108,12 +111,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `teamFolders`                     | Enables team folders functionality                                                                     |
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
-| `heatmapRowsAxisOptions`          | Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)                 |
-| `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `panelTimeSettings`               | Enables a new panel time settings drawer                                                               |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |
-| `profilesExemplars`               | Enables profiles exemplars support in profiles drilldown                                               |
 | `pyroscopeUTF8LabelNames`         | Enables support for UTF-8 label names in Pyroscope label selectors                                     |
+| `queryEditorNext`                 | Enables next generation query editor experience                                                        |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                           |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session                  |
 

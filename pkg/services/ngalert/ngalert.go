@@ -14,6 +14,7 @@ import (
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/lokiconfig"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -96,6 +98,7 @@ func ProvideService(
 	routeResourcePermissions accesscontrol.RoutePermissionsService,
 	userService user.Service,
 	orgService org.Service,
+	clientGenerator resource.ClientGenerator,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                      cfg,
@@ -124,6 +127,7 @@ func ProvideService(
 		store:                    ruleStore,
 		httpClientProvider:       httpClientProvider,
 		pluginContextProvider:    pluginContextProvider,
+		clientGenerator:          clientGenerator,
 		ResourcePermissions:      resourcePermissions,
 		RouteResourcePermissions: routeResourcePermissions,
 		userService:              userService,
@@ -183,12 +187,23 @@ type AlertNG struct {
 	userService              user.Service
 	orgService               org.Service
 
-	bus          bus.Bus
-	pluginsStore pluginstore.Store
-	tracer       tracing.Tracer
+	bus             bus.Bus
+	pluginsStore    pluginstore.Store
+	tracer          tracing.Tracer
+	clientGenerator resource.ClientGenerator
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
+}
+
+// newRuleSequenceStore returns a RuleSequenceStore backed by the k8s API if a
+// ClientGenerator is available, or nil otherwise (which causes NewScheduler
+// to fall back to the NoopRuleSequenceStore).
+func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
+	if ng.clientGenerator == nil {
+		return nil
+	}
+	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
 }
 
 func (ng *AlertNG) init() error {
@@ -292,6 +307,18 @@ func (ng *AlertNG) init() error {
 		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
 	}
 
+	externalAMSyncer := notifier.NewExternalAMSyncer(
+		ng.DataSourceService,
+		ng.httpClientProvider,
+		dsRequestValidator,
+		ng.Cfg,
+		multiOrgMetrics,
+		moaLogger,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
+		ng.store,
+	)
+
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
 		ng.store,
@@ -308,10 +335,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles,
 		notificationHistorian,
 		skipClustering,
-		ng.store,
-		ng.DataSourceService,
-		ng.httpClientProvider,
-		dsRequestValidator,
+		externalAMSyncer,
 		opts...,
 	)
 	if err != nil {
@@ -373,6 +397,7 @@ func (ng *AlertNG) init() error {
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
+		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
 		AlertSender:          alertsRouter,

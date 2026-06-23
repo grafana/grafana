@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -99,6 +100,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
+	supportedResources  []resources.SupportedResource
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
@@ -180,6 +182,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
+	supportedResources []resources.SupportedResource,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -196,7 +199,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider)
+		clients = resources.NewClientFactory(configProvider, supportedResources...)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -224,6 +227,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
+		supportedResources:                  supportedResources,
 		parsers:                             parsers,
 		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), folderAPIVersion), //nolint:staticcheck
 		resourceLister:                      resourceLister,
@@ -316,6 +320,11 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
+	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	if err != nil {
+		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
+	}
+
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	folderAPIVersion := cfg.ProvisioningFolderAPIVersion
@@ -343,6 +352,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
+		supportedResources,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -382,6 +392,7 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
+		supportedResources,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -533,20 +544,48 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	case "files":
 		return authorizer.DecisionAllow, "", nil
 
-	// refs subresource - editors need to see branches to push changes
+	// refs subresource - lists the branches/commits of the repository.
+	//
+	// Two distinct flows legitimately need refs, and the repositories resource has no
+	// Editor tier to express both (repositories:read is granted to Viewer, write/create/
+	// delete to Admin), so we authorize with an OR of two semantically-correct checks:
+	//   1. Admins / repository owners setting up or editing a repository pick a target
+	//      branch -> repositories:write (VerbUpdate), scoped to this repository.
+	//   2. Editors saving changes or opening a PR via the files/push-job flow need the
+	//      branch list -> jobs:create (VerbCreate), namespace-scoped (as authorizeAdminJob).
+	// Viewers satisfy neither and are denied, which is the intended tightening. Each check
+	// uses its own correct resource, so this stays coherent under future per-repository
+	// scoping (unlike borrowing the jobs resource with the repository name).
 	case "refs":
-		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+		if err := b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
 			Namespace: a.GetNamespace(),
+		}, ""); err == nil {
+			return authorizer.DecisionAllow, "", nil
+		}
+		return toAuthorizerDecision(b.accessWithEditor.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbCreate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.JobResourceInfo.GetName(),
+			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Read-only subresources: resources, history, status (admin only)
+	// Read-only subresources: resources, history, status (admin only).
+	//
+	// These expose repository management/inspection views and must be admin-only. We gate
+	// on repositories:write (VerbUpdate) - an admin-only action - rather than
+	// repositories:read, which is granted to Viewer and would expose these views to
+	// viewers/editors. There is no admin-only *read* action on the repositories resource,
+	// so write is the honest gate ("you can inspect a repository's management views if you
+	// can manage it"). We keep the repositories resource with the repository Name rather
+	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
+	// access is later scoped to individual repositories.
 	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.RepositoryResourceInfo.GetName(),
 			Name:      a.GetName(),
@@ -729,7 +768,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
 
 	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaGetter)
-	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator)
+	connWebhookValidator := repogithub.NewConnectionWebhookValidator(b)
+	repoAdmissionValidator := repository.NewAdmissionValidator(b.allowedTargets, b.repoValidator, existingReposValidator, connWebhookValidator)
 	b.admissionHandler.RegisterMutator(provisioning.RepositoryResourceInfo.GetName(), repository.NewAdmissionMutator(b.repoFactory, b.minSyncInterval))
 	b.admissionHandler.RegisterValidator(provisioning.RepositoryResourceInfo.GetName(), repoAdmissionValidator)
 	// Connection mutator and validator
@@ -739,7 +779,15 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs validator (no mutator needed)
-	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator())
+	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
+	for _, r := range b.supportedResources {
+		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
 	jobStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, provisioning.JobResourceInfo, opts.OptsGetter)
@@ -792,14 +840,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("status")] = repositoryStatusStorage
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
-	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = NewConnectionRepositoriesConnector(b)
+	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
 
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = WithTimeout(NewTestConnector(b, testTester), 30*time.Second)
 	// The files subresource handles GET/POST/PUT/DELETE in a single connector
 	// and the appropriate role fallback differs per verb: reads should fall
 	// back to Viewer, writes to Editor. A static accessWithEditor would over-
@@ -809,16 +857,11 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// connector via ProvisioningAuthorizer.AuthorizeResource, and repository-
 	// level operations remain Admin-gated by authorizeRepositorySubresource.
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
-		getter: b,
-		lister: b.resourceLister,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
-		repoGetter: b,
-	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.folderAPIVersion, b.maxFileSize), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled), 30*time.Second)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -1325,7 +1368,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 							Examples: map[string]*spec3.Example{
 								"dashboard": {
 									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: dashboards.grafana.app/v0alpha1
+										Value: `apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 spec:
   title: Sample dashboard
@@ -1469,6 +1512,25 @@ spec:
 	}
 	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"] = schema
 
+	// availableResources is an array of SupportedResource; its $ref is stripped by the
+	// defs loop above (empty ReferenceCallback) and has to be re-attached (same pattern
+	// as RepositoryViewList.items).
+	availableResources := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"]
+	availableResources.Items = &spec.SchemaOrArray{
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				AllOf: []spec.Schema{
+					{
+						SchemaProps: spec.SchemaProps{
+							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "SupportedResource"),
+						},
+					},
+				},
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"] = availableResources
+
 	// Fix up the RepositoryView.commit ref. Schemas added via the defs loop above
 	// use an empty ReferenceCallback, so non-primitive fields like commit lose
 	// their $ref and have to be re-attached here (same pattern as RepositoryViewList.items).
@@ -1481,6 +1543,28 @@ spec:
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
+
+	// Re-attach the RepositoryView.branchOptions ref for the same reason as commit above.
+	branchOptionsSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"]
+	branchOptionsSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "BranchOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"] = branchOptionsSchema
+
+	// Re-attach the RepositoryView.pullRequest ref for the same reason as commit above.
+	pullRequestSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"]
+	pullRequestSchema.AllOf = []spec.Schema{
+		{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "PullRequestOptions"),
+			},
+		},
+	}
+	oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"] = pullRequestSchema
 
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{
@@ -1556,6 +1640,18 @@ func (b *APIBuilder) GetConnection(ctx context.Context, name string) (connection
 		return nil, err
 	}
 	return b.asConnection(ctx, obj, nil)
+}
+
+func (b *APIBuilder) GetConnectionSpec(ctx context.Context, name string) (*provisioning.Connection, error) {
+	obj, err := b.connectionStore.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	c, ok := obj.(*provisioning.Connection)
+	if !ok {
+		return nil, fmt.Errorf("unexpected connection type %T", obj)
+	}
+	return c, nil
 }
 
 func (b *APIBuilder) GetRepoFactory() repository.Factory {

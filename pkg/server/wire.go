@@ -10,6 +10,7 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	promclient "github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
@@ -191,7 +192,7 @@ import (
 	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -421,7 +422,6 @@ var wireBasicSet = wire.NewSet(
 	accesscontrol.ProvideFixedRolesLoader,
 	accesscontrol.ProvideNoopIAMRolesSyncer,
 	accesscontrol.ProvideNoopGlobalRoleSeeder,
-	accesscontrol.ProvideNoopBasicRoleAggregator,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -592,9 +592,23 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }
 
-func InitializeDocumentBuilders(cfg *setting.Cfg) (resource.DocumentBuilderSupplier, error) {
-	wire.Build(wireExtsSet)
-	return &unifiedsearch.StandardDocumentBuilders{}, nil
+// InitializeSearchSupport builds the document builders together with the
+// dashboard stats they use, so the storage-server target shares a single
+// stats instance (and a single metrics registration) between the search
+// document builders and the vector backfiller. It receives the dependencies
+// the module server has already constructed so they aren't recreated.
+func InitializeSearchSupport(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg promclient.Registerer) (SearchSupport, error) {
+	wire.Build(wireExtsSearchSupportSet, wire.Struct(new(SearchSupport), "*"))
+	return SearchSupport{}, nil
+}
+
+// InitializeDashboardStats builds only the dashboard stats dependency used by
+// the vector backfiller views filter, for the storage-server target running
+// without enable_search. It receives the dependencies the module server has
+// already constructed so they aren't recreated.
+func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer, reg promclient.Registerer) (builders.DashboardStats, error) {
+	wire.Build(wireExtsDashboardStatsSet)
+	return nil, nil
 }
 
 /*

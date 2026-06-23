@@ -68,6 +68,13 @@ func setupTestWebAssets(tb testing.TB) string {
 	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest.json"), []byte(manifest), 0644)
 	require.NoError(tb, err)
 
+	// Also write the React 19 manifest so tests work regardless of the react19 feature flag state
+	err = os.WriteFile(filepath.Join(buildDir, "assets-manifest-react19.json"), []byte(manifest), 0644)
+	require.NoError(tb, err)
+
+	err = os.WriteFile(filepath.Join(buildDir, "boot.js"), []byte("// test boot stub"), 0644)
+	require.NoError(tb, err)
+
 	return publicDir
 }
 

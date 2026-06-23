@@ -14,9 +14,10 @@ import {
   useReducerEntries,
   useManagedSort,
   useNestedRows,
+  useColWidths,
 } from './hooks';
 import { type TableRow } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+import { applyFilter, createTypographyContext, compileFrameToRecordsV2 as compileFrameToRecords } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);
 
@@ -401,7 +402,18 @@ describe('TableNG hooks', () => {
           []
         )
       );
-      expect(result.current).toMatchSnapshot();
+
+      expect(result.current[0].raw[0].name).toBe('Alice');
+      expect(result.current[0].raw[0].age).toBe(30);
+      expect(result.current[0].raw[0].active).toBe(true);
+
+      expect(result.current[0].raw[1].name).toBe('Bob');
+      expect(result.current[0].raw[1].age).toBe(25);
+      expect(result.current[0].raw[1].active).toBe(false);
+
+      expect(result.current[0].raw[2].name).toBe('Charlie');
+      expect(result.current[0].raw[2].age).toBe(35);
+      expect(result.current[0].raw[2].active).toBe(true);
     });
 
     it('should apply sorting and filtering', () => {
@@ -1366,6 +1378,36 @@ describe('TableNG hooks', () => {
       rerender({ nestedVisibleFields: fields, availableWidth: 300 });
 
       expect(result.current.nestedFieldWidths).toEqual([200, 200]);
+    });
+  });
+
+  describe('useColWidths', () => {
+    function makeFields(names: string[]): Field[] {
+      return names.map((name) => ({
+        name,
+        type: FieldType.string,
+        config: {},
+        values: [],
+      }));
+    }
+
+    it('recomputes widths when reset key changes without new field objects', () => {
+      const fields = makeFields(['a', 'b']);
+      const { result, rerender } = renderHook(
+        ({ resetKey }: { resetKey?: symbol }) => useColWidths(fields, 600, undefined, resetKey),
+        { initialProps: { resetKey: undefined as symbol | undefined } }
+      );
+
+      expect(result.current[0]).toEqual([300, 300]);
+
+      fields[0].config.custom = { width: 100 };
+      rerender({ resetKey: Symbol() });
+      expect(result.current[0]).toEqual([100, 500]);
+
+      fields[0].config.custom = {};
+      rerender({ resetKey: Symbol() });
+
+      expect(result.current[0]).toEqual([300, 300]);
     });
   });
 });

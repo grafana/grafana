@@ -1,6 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-import { type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { defaultDashboard } from '@grafana/schema';
 import { type DashboardInitError, DashboardInitPhase, type DashboardState } from 'app/types/dashboard';
@@ -42,11 +41,6 @@ const dashboardSlice = createSlice({
         );
       };
     },
-    cleanUpDashboard: (state) => {
-      state.initPhase = DashboardInitPhase.NotStarted;
-      state.initError = null;
-      state.getModel = () => null;
-    },
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
@@ -56,23 +50,11 @@ const dashboardSlice = createSlice({
   },
 });
 
-export interface PanelModelAndPluginReadyPayload {
-  panelId: number;
-  plugin: PanelPlugin;
-}
-
-export interface SetPanelInstanceStatePayload {
-  panelId: number;
-  value: unknown;
-}
-
 export const {
   dashboardInitFetching,
   dashboardInitFailed,
   dashboardInitCompleted,
-  dashboardInitServices,
-  cleanUpDashboard,
-  addPanel,
+
   setInitialDatasource,
 } = dashboardSlice.actions;
 

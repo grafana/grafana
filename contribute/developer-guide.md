@@ -9,7 +9,7 @@ Make sure you have the following dependencies installed before setting up your d
 - [Git](https://git-scm.com/)
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
-- [GCC](https://gcc.gnu.org/) (optional, not recommded; enables CGO for smaller, dynamically linked binaries)
+- [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
 
 ### macOS
 
@@ -62,6 +62,20 @@ make lefthook-uninstall
 ```
 
 > We strongly encourage contributors who work on the frontend to install the precommit hooks, even if your IDE formats on save. By doing so, the `eslint-suppressions.json` file is kept in sync.
+
+### Knip
+
+We use [Knip](https://knip.dev/) in our CI to find unused code or dependencies in our frontend stack. If your PR leaves any orphaned file or dependencies, the CI check will fail. Check the errors in the CI logs or use the following command to run locally:
+
+```sh
+yarn knip
+```
+
+In some cases, fixes can be automatically applied:
+
+```sh
+yarn knip:fix
+```
 
 ## Build Grafana
 
@@ -192,7 +206,7 @@ make build
 
 The Grafana binaries will be installed in `bin\\windows-amd64`.
 
-Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
+Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
 ## Test Grafana
 

@@ -120,7 +120,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
   );
 }
 
-export async function validateFolderName(folderName: string, parentFolderUid?: string) {
+async function validateFolderName(folderName: string, parentFolderUid?: string) {
   try {
     await validationSrv.validateNewFolderName(folderName, parentFolderUid);
     return true;
