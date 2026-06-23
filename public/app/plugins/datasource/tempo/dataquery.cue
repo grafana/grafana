@@ -61,7 +61,7 @@ composableKinds: DataQuery: {
 					metricsQueryType?: #MetricsQueryType
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" @cuetsy(kind="type")
+				#TempoQueryType: "traceql" | "traceqlSearch" | "serviceMap" | "upload" | "nativeSearch" | "traceId" | "clear" | "flow" @cuetsy(kind="type")
 
 				#MetricsQueryType: "range" | "instant" @cuetsy(kind="enum")
 

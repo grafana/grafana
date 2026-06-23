@@ -17,6 +17,7 @@ import {
 } from '@grafana/ui';
 
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
+import { FlowQuerySection } from './FlowQuerySection';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { type TempoQueryType } from './dataquery.gen';
 import { type TempoDatasource } from './datasource';
@@ -114,6 +115,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
       { value: 'traceqlSearch', label: 'Search' },
       { value: 'traceql', label: 'TraceQL' },
       { value: 'serviceMap', label: 'Service Graph' },
+      { value: 'flow', label: 'Flow (SIEM)' },
     ];
 
     // Migrate user to new query type if they are using the old search query type
@@ -221,6 +223,15 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         )}
         {query.queryType === 'serviceMap' && (
           <ServiceGraphSection graphDatasourceUid={graphDatasourceUid} query={query} onChange={onChange} />
+        )}
+        {query.queryType === 'flow' && (
+          <FlowQuerySection
+            datasource={this.props.datasource}
+            query={query}
+            onChange={onChange}
+            onRunQuery={this.props.onRunQuery}
+            range={this.props.range}
+          />
         )}
         {query.queryType === 'traceql' && (
           <QueryEditor

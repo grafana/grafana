@@ -2,6 +2,7 @@ import { type DataSourceJsonData } from '@grafana/data';
 import { type NodeGraphOptions, type TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 
 import { type TempoQuery as TempoBase, type TempoQueryType, type TraceqlFilter } from './dataquery.gen';
+import { type FlowFacetFilter, type FlowView } from './flowQuery';
 
 export interface TempoJsonData extends DataSourceJsonData {
   tracesToLogs?: TraceToLogsOptions;
@@ -32,6 +33,9 @@ export interface TempoQuery extends TempoBase {
   queryType: TempoQueryType;
   serviceMapUseNativeHistograms?: boolean;
   overrideStreamingEnabled?: boolean;
+  // Flow (SIEM) tab state — facet drill-down filters and the active view.
+  flowFilters?: FlowFacetFilter[];
+  flowView?: FlowView;
 }
 
 export interface MyDataSourceOptions extends DataSourceJsonData {}

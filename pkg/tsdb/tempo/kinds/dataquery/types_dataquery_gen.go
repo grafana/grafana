@@ -134,6 +134,7 @@ const (
 	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
 	TempoQueryTypeTraceId       TempoQueryType = "traceId"
 	TempoQueryTypeClear         TempoQueryType = "clear"
+	TempoQueryTypeFlow          TempoQueryType = "flow"
 )
 
 // The state of the TraceQL streaming search query
