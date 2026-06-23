@@ -4,19 +4,14 @@ import {
   type BannerDismissedProperties,
   type DashboardSavedFromTemplateProperties,
   type EditOpenedProperties,
-  type SaveAsCompletedProperties,
-  type SaveAsFailedProperties,
+  type CreatedProperties,
   type SaveAsOpenedProperties,
-  type SaveCompletedProperties,
-  type SaveConflictShownProperties,
-  type SaveFailedProperties,
+  type UpdatedProperties,
   type SavedBannerGalleryClickedProperties,
   type BrowsedProperties,
   type VersionRestoredProperties,
-  type SaveTemplateInfoCompletedProperties,
-  type SaveTemplateInfoFailedProperties,
+  type UpdatedMetadataProperties,
   type DeleteCompletedProperties,
-  type SaveTemplateInfoConflictShownProperties,
 } from './types';
 
 const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboard_template');
@@ -31,25 +26,12 @@ const createCustomTemplateEvent = defineFeatureEvents('grafana', 'custom_dashboa
 export const CustomDashboardTemplateInteractions = {
   /** Fired when the user opens the "Save as template" flow from a dashboard's save menu. */
   saveAsOpened: createCustomTemplateEvent<SaveAsOpenedProperties>('save_as_opened'),
-  /** Fired when the user successfully creates a new template from a dashboard. */
-  saveAsCompleted: createCustomTemplateEvent<SaveAsCompletedProperties>('save_as_completed'),
-  /** Fired when creating a new template fails. */
-  saveAsFailed: createCustomTemplateEvent<SaveAsFailedProperties>('save_as_failed'),
-  /** Fired when the user successfully saves changes to an existing template. */
-  saveCompleted: createCustomTemplateEvent<SaveCompletedProperties>('save_completed'),
-  /** Fired when saving changes to an existing template fails. */
-  saveFailed: createCustomTemplateEvent<SaveFailedProperties>('save_failed'),
-  /** Fired when the user successfully saves changes to the template info. */
-  saveTemplateInfoCompleted:
-    createCustomTemplateEvent<SaveTemplateInfoCompletedProperties>('save_template_info_completed'),
-  /** Fired when saving changes to the template info fails. */
-  saveTemplateInfoFailed: createCustomTemplateEvent<SaveTemplateInfoFailedProperties>('save_template_info_failed'),
-  /** Fired when the user saves changes to the template info and a version conflict is detected (HTTP 409). */
-  saveTemplateInfoConflictShown: createCustomTemplateEvent<SaveTemplateInfoConflictShownProperties>(
-    'save_template_info_conflict_shown'
-  ),
-  /** Fired when the template save form surfaces a version conflict (HTTP 409) to the user. */
-  saveConflictShown: createCustomTemplateEvent<SaveConflictShownProperties>('save_conflict_shown'),
+  /** Fired when the user attempts to create a new template from a dashboard. */
+  created: createCustomTemplateEvent<CreatedProperties>('created'),
+  /** Fired when the user attempts to save changes to an existing template. */
+  updated: createCustomTemplateEvent<UpdatedProperties>('updated'),
+  /** Fired when the user attempts to save changes to the template metadata. */
+  updatedMetadata: createCustomTemplateEvent<UpdatedMetadataProperties>('updated_metadata'),
   /** Fired when the user successfully deletes a template. */
   deleted: createCustomTemplateEvent<DeleteCompletedProperties>('deleted'),
   /** Fired when a user opens the "use template" flow that hydrates a new (unsaved) dashboard from a template. */

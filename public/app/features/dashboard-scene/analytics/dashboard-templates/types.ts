@@ -5,66 +5,49 @@ export interface SaveAsOpenedProperties extends EventProperty {
   dashboardUid: string;
 }
 
-export interface SaveAsCompletedProperties extends EventProperty {
+export interface CreatedProperties extends EventProperty {
+  /** Outcome of the create attempt. */
+  status: 'completed' | 'failed';
   /** UID of the source dashboard the template was created from. */
   dashboardUid: string;
-  /** UID of the newly created template resource. */
-  templateUid: string;
-  /** Number of tags attached to the template. */
-  tagCount: number;
-  /** Whether the user filled in a description for the template. */
-  hasDescription: boolean;
-}
-
-export interface SaveAsFailedProperties extends EventProperty {
-  /** UID of the source dashboard the user attempted to save as a template. */
-  dashboardUid: string;
-  /** HTTP status returned by the failing request, when available. */
+  /** UID of the newly created template resource. Present when status is 'completed'. */
+  templateUid?: string;
+  /** Number of tags attached to the template. Present when status is 'completed'. */
+  tagCount?: number;
+  /** Whether the user filled in a description for the template. Present when status is 'completed'. */
+  hasDescription?: boolean;
+  /** HTTP status returned by the failing request, when available. Present when status is 'failed'. */
   errorStatus?: number;
 }
 
-export interface SaveCompletedProperties extends EventProperty {
-  /** UID of the template resource that was saved. */
+export interface UpdatedProperties extends EventProperty {
+  /** Outcome of the update attempt. */
+  status: 'completed' | 'conflict' | 'failed';
+  /** UID of the template resource that was updated. */
   templateUid: string;
-  /** Whether the user attached a save message describing the change. */
-  withMessage: boolean;
-  /** Whether the save used the "overwrite" path after a version conflict. */
-  overwriteUsed: boolean;
+  /** Whether the user attached a save message describing the change. Present when status is 'completed'. */
+  withMessage?: boolean;
+  /** Whether the save used the "overwrite" path after a version conflict. Present when status is 'completed'. */
+  overwriteUsed?: boolean;
+  /** HTTP status returned by the failing request, when available. Present when status is 'failed'. */
+  errorStatus?: number;
 }
 
-export interface SaveTemplateInfoCompletedProperties extends EventProperty {
-  /** UID of the template resource that was modified. */
+export interface UpdatedMetadataProperties extends EventProperty {
+  /** Outcome of the metadata update attempt. */
+  status: 'completed' | 'conflict' | 'failed';
+  /** UID of the template resource whose metadata was updated. */
   templateUid: string;
-  /** Number of tags attached to the template. */
-  tagCount: number;
-  /** Whether the user filled in a description for the template. */
-  hasDescription: boolean;
-}
-export interface SaveTemplateInfoConflictShownProperties extends EventProperty {
-  /** UID of the template resource where the conflict was detected. */
-  templateUid: string;
-}
-export interface SaveTemplateInfoFailedProperties extends EventProperty {
-  /** UID of the template resource that failed to modify. */
-  templateUid: string;
-  /** HTTP status returned by the failing request, when available. */
+  /** Number of tags attached to the template. Present when status is 'completed'. */
+  tagCount?: number;
+  /** Whether the user filled in a description for the template. Present when status is 'completed'. */
+  hasDescription?: boolean;
+  /** HTTP status returned by the failing request, when available. Present when status is 'failed'. */
   errorStatus?: number;
 }
 
 export interface DeleteCompletedProperties extends EventProperty {
   /** UID of the template resource that was deleted. */
-  templateUid: string;
-}
-
-export interface SaveFailedProperties extends EventProperty {
-  /** UID of the template resource that failed to save. */
-  templateUid: string;
-  /** HTTP status returned by the failing request, when available. */
-  errorStatus?: number;
-}
-
-export interface SaveConflictShownProperties extends EventProperty {
-  /** UID of the template resource where the conflict was detected. */
   templateUid: string;
 }
 
