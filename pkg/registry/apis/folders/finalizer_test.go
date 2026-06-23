@@ -90,15 +90,25 @@ func TestApplyTerminationMetadata(t *testing.T) {
 	})
 }
 
-// fakeFolderStore is a minimal folderGetUpdater that serves one object and records updates.
+// fakeFolderStore is a minimal folderStore that serves one object and records updates and deletes.
 type fakeFolderStore struct {
 	obj         runtime.Object
 	getErr      error
 	updateErr   error
 	updateCalls int
+	deleteErr   error
+	deleteCalls int
 }
 
 func (f *fakeFolderStore) New() runtime.Object { return &foldersv1.Folder{} }
+
+func (f *fakeFolderStore) Delete(_ context.Context, _ string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	f.deleteCalls++
+	if f.deleteErr != nil {
+		return nil, false, f.deleteErr
+	}
+	return f.obj, true, nil
+}
 
 func (f *fakeFolderStore) Get(_ context.Context, _ string, _ *metav1.GetOptions) (runtime.Object, error) {
 	if f.getErr != nil {
@@ -330,6 +340,48 @@ func TestFinalDeleteOptions(t *testing.T) {
 	gotUID := finalDeleteOptions(uidOnly, "6")
 	require.Nil(t, gotUID.Preconditions.ResourceVersion, "UID-only precondition gains no resource version")
 	require.Equal(t, uid, *gotUID.Preconditions.UID, "UID precondition preserved")
+}
+
+func TestFinalizeCascadeDelete(t *testing.T) {
+	stamped := func() *foldersv1.Folder {
+		return &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name:       "f",
+			Finalizers: []string{CascadeDeleteFinalizer, "other.io/keep"},
+			Labels:     map[string]string{TerminatingLabel: TerminatingLabelValue, "keep": "yes"},
+		}}
+	}
+
+	t.Run("on success the marker is left in place for the cascade", func(t *testing.T) {
+		store := &fakeFolderStore{obj: stamped()}
+		_, deleted, err := finalizeCascadeDelete(context.Background(), store, "f", &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+		require.Equal(t, 0, store.updateCalls, "no rollback on success")
+		require.True(t, HasCascadeFinalizer(store.obj.(*foldersv1.Folder)))
+	})
+
+	t.Run("a delete conflict rolls the terminating marker back", func(t *testing.T) {
+		store := &fakeFolderStore{obj: stamped(), deleteErr: apierrors.NewConflict(schema.GroupResource{Resource: "folders"}, "f", errors.New("rv changed"))}
+
+		_, _, err := finalizeCascadeDelete(context.Background(), store, "f", &metav1.DeleteOptions{})
+		require.True(t, apierrors.IsConflict(err), "original delete conflict is returned")
+		require.Equal(t, 1, store.deleteCalls)
+
+		// The marker the poller searches on must be gone so it does not resume the cascade.
+		got := store.obj.(*foldersv1.Folder)
+		require.False(t, HasCascadeFinalizer(got), "cascade finalizer stripped on rollback")
+		require.NotContains(t, got.Labels, TerminatingLabel, "terminating label stripped on rollback")
+		require.Equal(t, []string{"other.io/keep"}, got.Finalizers, "unrelated finalizer preserved")
+		require.Equal(t, "yes", got.Labels["keep"], "unrelated label preserved")
+	})
+
+	t.Run("a NotFound delete needs no rollback", func(t *testing.T) {
+		store := &fakeFolderStore{obj: stamped(), deleteErr: apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, "f")}
+
+		_, _, err := finalizeCascadeDelete(context.Background(), store, "f", &metav1.DeleteOptions{})
+		require.True(t, apierrors.IsNotFound(err))
+		require.Equal(t, 0, store.updateCalls, "no rollback attempted past the gone object")
+	})
 }
 
 func TestRemoveTerminationMetadata(t *testing.T) {

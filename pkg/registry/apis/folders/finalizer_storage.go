@@ -133,12 +133,33 @@ func (s *finalizerStorage) Delete(
 	// completes), then mark its subtree asynchronously off the request path -- deleting a large tree
 	// must not block (or time out) the request. The cascade poller is the backstop: it completes any
 	// marking this best-effort pass does not finish and removes finalizers once children are gone.
-	out, deleted, err := s.Store.Delete(ctx, name, rest.ValidateAllObjectFunc, finalDeleteOptions(options, newRV))
+	out, deleted, err := finalizeCascadeDelete(ctx, s.Store, name, finalDeleteOptions(options, newRV))
 	if err != nil {
 		return out, deleted, err
 	}
 	s.markSubtreeAsync(genericapirequest.NamespaceValue(ctx), name)
 	return out, deleted, nil
+}
+
+// finalizeCascadeDelete runs the post-stamp store delete and, on failure, rolls the termination
+// marker back. ensureTerminationMetadata has already persisted the terminating label and finalizer,
+// which the poller searches on; if the delete fails -- e.g. a conditional delete that loses a race on
+// the post-stamp resource version -- returning the error without undoing the marker would leave the
+// caller with a conflict while the poller still deletes the folder and its contents. Removing the
+// marker makes the outcome match the error. Rollback is best-effort: NotFound means the folder is
+// already gone (no marker to worry about), and any other rollback failure leaves the poller as the
+// backstop, so it is logged rather than masking the original delete error.
+func finalizeCascadeDelete(ctx context.Context, store folderStore, name string, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+	out, deleted, err := store.Delete(ctx, name, rest.ValidateAllObjectFunc, options)
+	if err == nil || apierrors.IsNotFound(err) {
+		// NotFound means the folder is already gone -- there is no marker left to roll back.
+		return out, deleted, err
+	}
+	if _, rbErr := removeTerminationMetadata(ctx, store, name, ""); rbErr != nil && !apierrors.IsNotFound(rbErr) {
+		logging.FromContext(ctx).Warn("folder cascade: failed to roll back termination marker after delete error; poller may still cascade",
+			"namespace", genericapirequest.NamespaceValue(ctx), "folder", name, "deleteError", err, "rollbackError", rbErr)
+	}
+	return out, deleted, err
 }
 
 // collectionLister is the subset of the embedded store used to enumerate a collection delete.
