@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -49,6 +50,7 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	pluginManifestInstallers pluginmanifest.AppInstallers,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -103,6 +105,11 @@ func ProvideAppInstallers(
 	if cfg.AnnotationAppPlatform.Enabled {
 		installers = append(installers, annotationAppInstaller)
 	}
+
+	// pluginManifestInstallers is empty unless FlagPluginsAppSDKManifest is enabled;
+	// the flag is gated in pluginmanifest.ProvideAppInstallers.
+	installers = append(installers, pluginManifestInstallers...)
+
 	return installers
 }
 

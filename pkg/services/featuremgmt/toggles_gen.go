@@ -969,4 +969,8 @@ const (
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
+
+	// FlagPluginsAppSDKManifest
+	// Enables reading and parsing app-sdk manifest files from plugin bundles
+	FlagPluginsAppSDKManifest = "plugins.appSDKManifest"
 )

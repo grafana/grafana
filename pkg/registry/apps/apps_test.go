@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
+	"github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -63,6 +64,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				historianAppInstaller,
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
+				pluginmanifest.AppInstallers(nil),
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)

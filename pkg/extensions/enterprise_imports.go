@@ -291,6 +291,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	_ "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	_ "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	_ "github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	_ "github.com/grafana/grafana/pkg/registry/apps/plugins"
 	_ "github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	_ "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"

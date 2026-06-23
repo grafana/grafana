@@ -1,0 +1,21 @@
+{
+  "type": "app",
+  "name": "Test App With SDK Manifest",
+  "id": "test-app-with-sdk-manifest",
+  "info": {
+    "description": "Test app plugin with an embedded app-sdk manifest",
+    "author": {
+      "name": "Test Inc.",
+      "url": "http://test.com"
+    },
+    "version": "1.0.0",
+    "logos": {
+      "small": "img/logo_small.png",
+      "large": "img/logo_large.png"
+    }
+  },
+  "dependencies": {
+    "grafanaVersion": "11.x.x",
+    "plugins": []
+  }
+}

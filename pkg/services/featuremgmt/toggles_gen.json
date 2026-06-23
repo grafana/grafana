@@ -3993,6 +3993,20 @@
     },
     {
       "metadata": {
+        "name": "plugins.appSDKManifest",
+        "resourceVersion": "1781525468906",
+        "creationTimestamp": "2026-06-15T12:11:08Z"
+      },
+      "spec": {
+        "description": "Enables reading and parsing app-sdk manifest files from plugin bundles",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.initDataSourcesAsync",
         "resourceVersion": "1779789947610",
         "creationTimestamp": "2026-05-26T10:05:47Z"
@@ -4885,8 +4899,11 @@
     {
       "metadata": {
         "name": "splunk.useLegacyResultsApi",
-        "resourceVersion": "1781865637365",
-        "creationTimestamp": "2026-06-19T10:40:37Z"
+        "resourceVersion": "1781898821091",
+        "creationTimestamp": "2026-06-19T10:40:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-06-19 19:53:41.091144446 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",

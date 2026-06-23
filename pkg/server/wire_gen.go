@@ -98,6 +98,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	playlist2 "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
+	"github.com/grafana/grafana/pkg/registry/apps/pluginmanifest"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/querycaching"
 	migrator5 "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
@@ -890,7 +891,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	appInstallers, err := pluginmanifest.ProvideAppInstallers(featureToggles, inMemory, middlewareHandler, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, appInstallers)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1625,7 +1630,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
+	appInstallers, err := pluginmanifest.ProvideAppInstallers(featureToggles, inMemory, middlewareHandler, plugincontextProvider)
+	if err != nil {
+		return nil, err
+	}
+	v9 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, appInstallers)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()

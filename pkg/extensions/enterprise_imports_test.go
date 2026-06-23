@@ -7,6 +7,8 @@ package extensions
 
 import (
 	_ "github.com/alicebob/miniredis/v2"
+	_ "github.com/google/go-cmp/cmp"
+	_ "github.com/google/go-cmp/cmp/cmpopts"
 	_ "github.com/grafana/authlib/authz/proto/v1"
 	_ "github.com/grafana/dataplane/examples"
 	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
