@@ -37,19 +37,21 @@ export const PlaylistEditPage = () => {
     ),
   };
 
+  const renderTitle = (title: string) => (
+    <Stack direction="row" gap={1} alignItems="center">
+      <h1>{title}</h1>
+      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
+    </Stack>
+  );
+
   return (
-    <Page navId="dashboards/playlists" pageNav={pageNav}>
+    <Page navId="dashboards/playlists" pageNav={pageNav} renderTitle={renderTitle}>
       <Page.Contents isLoading={isLoading}>
         {isError && (
           <div>
             <Trans i18nKey="playlist-edit.error-prefix">Error loading playlist:</Trans>
             {JSON.stringify(error)}
           </div>
-        )}
-        {data && isManaged(data) && (
-          <Stack direction="row" gap={1} alignItems="center">
-            <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />
-          </Stack>
         )}
         {data && <PlaylistForm onSubmit={onSubmit} playlist={data} />}
       </Page.Contents>
