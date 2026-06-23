@@ -107,7 +107,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.new-provisioned-folder-form.error-saving', 'An error occurred while creating folder.')
       )
     );

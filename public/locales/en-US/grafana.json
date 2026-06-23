@@ -12983,16 +12983,11 @@
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
-      "dashboard-create-default": "New dashboard: {{title}}",
-      "dashboard-delete-default": "Delete dashboard: {{title}}",
-      "dashboard-move-default": "Move dashboard: {{title}}",
-      "dashboard-rename-default": "Rename dashboard: {{title}}",
-      "dashboard-update-default": "Save dashboard: {{title}}",
-      "folder-create-default": "Create folder: {{title}}",
-      "folder-delete-default": "Delete folder: {{title}}",
-      "folder-move-default": "Move folder: {{title}}",
-      "folder-rename-default": "Rename folder: {{title}}",
-      "folder-update-default": "Save folder: {{title}}"
+      "create-default": "Create {{resourceKind}}: {{title}}",
+      "delete-default": "Delete {{resourceKind}}: {{title}}",
+      "move-default": "Move {{resourceKind}}: {{title}}",
+      "rename-default": "Rename {{resourceKind}}: {{title}}",
+      "update-default": "Save {{resourceKind}}: {{title}}"
     },
     "commit-options": {
       "description-enforce-template": "Pre-fill the commit message in save dialogs from the template above and make it read-only.",
@@ -13154,8 +13149,7 @@
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
     "error": {
-      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
-      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
+      "branch-not-found": "You have selected a branch that does not contain this resource. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {
@@ -13642,6 +13636,14 @@
         }
       },
       "title-error-saving-file": "Error saving file"
+    },
+    "save-resource": {
+      "button-cancel": "Cancel",
+      "button-save": "Save",
+      "button-saving": "Saving...",
+      "error-saving": "Failed to save changes",
+      "missing-info": "Missing required fields for saving",
+      "read-only-message": "To edit this resource, please update it in your repository directly."
     },
     "setup-modal": {
       "done": "Done",
