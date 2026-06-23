@@ -98,7 +98,7 @@ export function ModalEditor(props: ModalEditorProps) {
           <div {...secondaryProps} style={{ ...secondaryProps.style, minHeight: 0 }}>
             <div className={styles.splitContainer}>
               {queryError && <Alert title={queryError.message} severity="error" />}
-              <Editor variable={draftVariable} />
+              <Editor variable={draftVariable} hideRefresh hideStaticOptions hidePreview />
             </div>
           </div>
         </div>
