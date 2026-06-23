@@ -9,6 +9,7 @@ import {
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -58,7 +59,7 @@ function getCanSkipEarly(folder: FolderDTO | DashboardViewItem | undefined): boo
   if (hasParent) {
     return true;
   }
-  const isNotManaged = folder.managedBy !== ManagerKind.Repo;
+  const isNotManaged = !isItemManagedByRepository(folder);
   if (isNotManaged) {
     return true;
   }

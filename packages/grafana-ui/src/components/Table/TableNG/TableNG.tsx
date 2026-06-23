@@ -93,7 +93,8 @@ import {
 import {
   calculateFooterHeight,
   canFieldBeColorized,
-  compileFrameToRecords,
+  compileFrameToRecordsV1,
+  compileFrameToRecordsV2,
   createTypographyContext,
   displayJsonValue,
   extractPixelValue,
@@ -139,6 +140,7 @@ export function TableNG(props: TableNGProps) {
     onCellFilterAdded,
     onColumnResize,
     onSortByChange,
+    protoParserEnabled,
     showTypeIcons,
     structureRev,
     timeRange,
@@ -191,8 +193,11 @@ export function TableNG(props: TableNGProps) {
     return getDisplayName(firstNestedField);
   }, [data, hasNestedFrames]);
   const frameToRecords = useMemo(
-    () => compileFrameToRecords(data, nestedFramesFieldName),
-    [data, nestedFramesFieldName]
+    () =>
+      protoParserEnabled
+        ? compileFrameToRecordsV2(data, nestedFramesFieldName)
+        : compileFrameToRecordsV1(data, nestedFramesFieldName),
+    [data, nestedFramesFieldName, protoParserEnabled]
   );
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
 

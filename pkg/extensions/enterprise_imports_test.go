@@ -39,6 +39,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
+	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	_ "github.com/grafana/grafana/pkg/storage/unified/testing"
 	_ "github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
