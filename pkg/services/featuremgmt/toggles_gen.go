@@ -1013,4 +1013,8 @@ const (
 	// FlagDatasourcesQueryGateway
 	// Data source query gateway
 	FlagDatasourcesQueryGateway = "datasources.queryGateway"
+
+	// FlagPluginsAppSDKManifest
+	// Enables reading and parsing app-sdk manifest files from plugin bundles
+	FlagPluginsAppSDKManifest = "plugins.appSDKManifest"
 )
