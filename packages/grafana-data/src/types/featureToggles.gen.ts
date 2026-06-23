@@ -690,11 +690,6 @@ export interface FeatureToggles {
   */
   prometheusAzureOverrideAudience?: boolean;
   /**
-  * Enable grafana dataplane aggregator
-  * @default false
-  */
-  dataplaneAggregator?: boolean;
-  /**
   * Allows authenticated API calls in actions
   * @default false
   */
