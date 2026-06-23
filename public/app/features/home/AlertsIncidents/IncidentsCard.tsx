@@ -10,15 +10,19 @@ import { Alert, Badge, type BadgeColor, Button, LinkButton, Stack, Text, TextLin
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HomeSection } from '../HomeSection';
 
+import { CARD_LIST_MAX_HEIGHT } from './constants';
+
 const MAX_INCIDENTS = 5;
 
-// Incident severity labels are org-configurable, so only the well-known levels get a color and everything else stays neutral.
+// Incident severity labels are org-configurable; canonicalSeverity normalizes the well-known aliases
+// (e.g. "high" → major, "SEV1" → critical) the same way the firing-alerts card does. Unknown labels stay neutral.
 function severityColor(severityLabel: string): BadgeColor {
-  switch (severityLabel.toLowerCase()) {
+  switch (canonicalSeverity(severityLabel)) {
     case 'critical':
       return 'red';
     case 'major':
@@ -162,6 +166,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(0.5),
+    // Match the firing-alerts card's max height so the two cards line up; scroll if ever exceeded.
+    maxHeight: CARD_LIST_MAX_HEIGHT,
+    overflowY: 'auto',
   }),
   row: css({
     display: 'flex',

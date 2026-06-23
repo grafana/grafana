@@ -25,6 +25,8 @@ import { type Team } from 'app/types/teams';
 
 import { HomeSection } from '../HomeSection';
 
+import { CARD_LIST_MAX_HEIGHT } from './constants';
+
 // Cap rendered rows so a large org's full firing-alert set can't put hundreds of DOM nodes on the
 // homepage; the count/severity badges still reflect the true total and the footer links to the full list.
 export const MAX_FIRING_ALERTS = 50;
@@ -276,7 +278,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     gap: theme.spacing(0.5),
     // Show roughly five rows; scroll the rest so every team-relevant alert stays reachable.
-    maxHeight: theme.spacing(22),
+    maxHeight: CARD_LIST_MAX_HEIGHT,
     overflowY: 'auto',
     // Negative margin + matching padding gives the scrollbar a gutter clear of the age column
     // while keeping that column's right edge aligned with the sibling cards.
