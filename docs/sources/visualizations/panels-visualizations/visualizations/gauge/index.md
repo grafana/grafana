@@ -135,8 +135,8 @@ Adjust how the gauge is displayed.
 | Style | Choose a gauge shape:<ul><li>**Circle** - Fills clockwise around a circle, starting from the 12 o'clock position.</li><li>**Arc** - Fills from left to right around an arc.</li></ul> |
 | Orientation | Choose a stacking direction:<ul><li>**Auto** - Gauges display in rows and columns.</li><li>**Horizontal** - Gauges display top to bottom.</li><li>**Vertical** - Gauges display left to right.</li></ul> |
 | Gauge size | Choose a gauge size mode:<ul><li>**Auto** - Grafana determines the best gauge size.</li><li>**Manual** - Manually configure the gauge size.</li></ul>This option only applies when **Orientation** is set to **Horizontal** or **Vertical**. |
-| Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
-| Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scrollbar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
+| Min width | Set the minimum width of vertically-oriented gauges. If you set a minimum width, the x-axis scroll bar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
+| Min height | Set the minimum height of horizontally-oriented gauges. If you set a minimum height, the y-axis scroll bar is automatically displayed when there's a large amount of data. This option only applies when **Gauge size** is set to **Manual**. |
 | Bar width factor | Set a factor between 0.1 and 1 to control the width of the gauge bar relative to the total gauge area. |
 | Bar style | Choose the shape of the gauge bar. Choose from **Flat** or **Rounded**. |
 | Segments | Enter a value between 1 and 100 to break the gauge into equal segments. Segments are always fully filled, even if the gauge's current value falls within a segment. |

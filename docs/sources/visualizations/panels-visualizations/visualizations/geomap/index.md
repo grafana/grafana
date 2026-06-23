@@ -362,7 +362,7 @@ The Night / Day layer displays night and day regions based on the current time r
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| Data | Configures the data set for the layer. For more information, refer to [Data](#data). |
+| Data | Configures the dataset for the layer. For more information, refer to [Data](#data). |
 | Show | Selects which panel time range endpoint drives the night and day regions. Choose **From** or **To**. |
 | Night region color | Picks the color for the night region. |
 | Display sun | Toggles the sun icon. |
