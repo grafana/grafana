@@ -39,16 +39,13 @@ function getManagedCount(managed?: ManagerStats[]) {
 }
 
 function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
-  let counts: string[] = [];
   let resourceCount = 0;
 
   const addStat = (stat: ResourceCount) => {
-    const kindInfo = getKindInfoByStatGroup(stat.group);
-    if (!kindInfo) {
-      return;
+    // Only count kinds the UI knows about (folders, dashboards, ...).
+    if (getKindInfoByStatGroup(stat.group)) {
+      resourceCount += stat.count;
     }
-    resourceCount += stat.count;
-    counts.push(kindInfo.countLabel(stat.count));
   };
 
   stats?.forEach(addStat);
@@ -59,10 +56,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
     }
   });
 
-  return {
-    counts,
-    resourceCount,
-  };
+  return resourceCount;
 }
 
 /**
@@ -78,12 +72,11 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
     return isSupportedFile(path);
   }).length;
 
-  const { counts, resourceCount } = getResourceCount(stats?.instance);
+  const resourceCount = getResourceCount(stats?.instance);
 
   return {
     fileCount,
     resourceCount,
-    resourceCountString: counts.join(',\n'),
   };
 }
 
@@ -108,7 +101,7 @@ export function useResourceStats(
 
   const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
-  const { resourceCount, resourceCountString, fileCount } = useMemo(
+  const { resourceCount, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
     [filesQuery.data, resourceStatsQuery.data]
   );
@@ -118,8 +111,7 @@ export function useResourceStats(
       // managed does not exist in response when first time connecting to a repo
       managedCount: getManagedCount(resourceStatsQuery.data?.managed),
       // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed)
-        .resourceCount,
+      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed),
     };
   }, [resourceStatsQuery.data]);
 
@@ -132,7 +124,13 @@ export function useResourceStats(
 
   // Format display strings
   const resourceCountDisplay =
-    resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty');
+    resourceCount > 0
+      ? t('provisioning.bootstrap-step.resources-count', '', {
+          count: resourceCount,
+          defaultValue_one: '{{count}} resource',
+          defaultValue_other: '{{count}} resources',
+        })
+      : t('provisioning.bootstrap-step.empty', 'Empty');
   const fileCountDisplay =
     fileCount > 0
       ? t('provisioning.bootstrap-step.files-count', '', {

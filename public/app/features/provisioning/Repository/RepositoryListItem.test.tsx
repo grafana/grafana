@@ -121,7 +121,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={repo} />);
 
       expect(screen.getByRole('link', { name: '2 dashboards' })).toHaveAttribute('href', '/dashboards/f/test-repo');
-      expect(screen.getByRole('link', { name: '1 folder' })).toHaveAttribute('href', '/dashboards/f/test-repo');
+      expect(screen.getByRole('link', { name: '1 folders' })).toHaveAttribute('href', '/dashboards/f/test-repo');
     });
 
     it('links non-foldered kinds to their own collection', () => {

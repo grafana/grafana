@@ -1,7 +1,6 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
-import { t } from '@grafana/i18n';
 import { type IconName } from '@grafana/ui';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getIconForKind } from 'app/features/search/service/utils';
@@ -38,12 +37,7 @@ export interface ResourceKindInfo {
    * dashboards browse; others (e.g. playlists) only have their `listRoute`.
    */
   folderScoped: boolean;
-  /** Localized "N <kind>" count label (handles singular/plural). */
-  countLabel: (count: number) => string;
 }
-
-// countLabel uses literal `t()` keys per kind so i18n extraction keeps working —
-// see useResourceStats for where these counts are surfaced.
 
 /**
  * Registry of provisioning resource kinds, keyed by a stable identifier.
@@ -61,12 +55,6 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/dashboards/f/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    countLabel: (count: number) =>
-      t('provisioning.bootstrap-step.folders-count', '', {
-        count,
-        defaultValue_one: '{{count}} folder',
-        defaultValue_other: '{{count}} folders',
-      }),
   },
   dashboard: {
     group: DASHBOARD_API_GROUP,
@@ -77,12 +65,6 @@ export const resourceKindInfos = {
     getRoute: (name: string) => `/d/${name}`,
     listRoute: '/dashboards',
     folderScoped: true,
-    countLabel: (count: number) =>
-      t('provisioning.bootstrap-step.dashboards-count', '', {
-        count,
-        defaultValue_one: '{{count}} dashboard',
-        defaultValue_other: '{{count}} dashboards',
-      }),
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
@@ -98,12 +80,6 @@ export const resourceKindInfos = {
     // Playlists aren't folder-contained — they only have their own collection page.
     listRoute: '/playlists',
     folderScoped: false,
-    countLabel: (count: number) =>
-      t('provisioning.bootstrap-step.playlists-count', '', {
-        count,
-        defaultValue_one: '{{count}} playlist',
-        defaultValue_other: '{{count}} playlists',
-      }),
   },
 } satisfies Record<string, ResourceKindInfo>;
 

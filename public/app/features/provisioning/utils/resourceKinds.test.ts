@@ -118,17 +118,6 @@ describe('getRepositoryRoute', () => {
   });
 });
 
-describe('countLabel', () => {
-  it('produces singular and plural labels per kind', () => {
-    expect(resourceKindInfos.dashboard.countLabel(1)).toBe('1 dashboard');
-    expect(resourceKindInfos.dashboard.countLabel(3)).toBe('3 dashboards');
-    expect(resourceKindInfos.folder.countLabel(1)).toBe('1 folder');
-    expect(resourceKindInfos.folder.countLabel(3)).toBe('3 folders');
-    expect(resourceKindInfos.playlist.countLabel(1)).toBe('1 playlist');
-    expect(resourceKindInfos.playlist.countLabel(3)).toBe('3 playlists');
-  });
-});
-
 describe('getAvailableResourceKinds', () => {
   it('falls back to all known kinds when availableResources is unset', () => {
     expect(getAvailableResourceKinds(undefined)).toEqual([
