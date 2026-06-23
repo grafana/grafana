@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/passkey"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -119,35 +118,14 @@ func (hs *HTTPServer) PasskeyLoginFinish(c *contextmodel.ReqContext) response.Re
 	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
 }
 
-// interactiveAuthModules are the login methods that represent a real, interactive human sign-in.
-// Passkey enrollment is restricted to these; non-interactive identities (API keys, JWT, extended JWT,
-// render keys, auth proxy) are refused even though they are authenticated. Fail closed: anything not
-// listed (including a future/unknown module) is rejected.
-var interactiveAuthModules = map[string]struct{}{
-	loginservice.PasswordAuthModule:   {},
-	loginservice.LDAPAuthModule:       {},
-	loginservice.SAMLAuthModule:       {},
-	loginservice.PasskeyAuthModule:    {},
-	loginservice.GenericOAuthModule:   {},
-	loginservice.GithubAuthModule:     {},
-	loginservice.GoogleAuthModule:     {},
-	loginservice.GitLabAuthModule:     {},
-	loginservice.AzureADAuthModule:    {},
-	loginservice.OktaAuthModule:       {},
-	loginservice.GrafanaComAuthModule: {},
-	loginservice.GrafanaNetAuthModule: {},
-}
-
-func isInteractiveAuthModule(module string) bool {
-	_, ok := interactiveAuthModules[module]
-	return ok
-}
-
 // requireInteractiveSession refuses passkey enrollment for non-interactive identities. Enrolling a
 // passkey is high-trust (the new credential is a permanent way into the account), so it is limited to
-// interactive human logins even though API keys, JWT, render keys, and auth proxy are "signed in".
+// real interactive logins. A grafana_session cookie — and therefore c.UserToken — is what the session
+// client issues for any interactive login (password, OAuth, SAML, LDAP, passkey); non-interactive
+// identities (API keys, JWT, render keys, auth proxy without a login token) never carry one. We key off
+// the token rather than the auth module because built-in password sessions have no auth_module recorded.
 func (hs *HTTPServer) requireInteractiveSession(c *contextmodel.ReqContext) response.Response {
-	if !isInteractiveAuthModule(c.GetAuthenticatedBy()) {
+	if c.UserToken == nil {
 		return response.Error(http.StatusForbidden, "passkey enrollment requires an interactive login session", nil)
 	}
 	return nil

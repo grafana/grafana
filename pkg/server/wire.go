@@ -132,6 +132,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/passkey"
+	"github.com/grafana/grafana/pkg/services/passkey/passkeyimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -433,6 +435,9 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideAuthnService,
 	authnimpl.ProvideAuthnServiceAuthenticateOnly,
 	authnimpl.ProvideRegistration,
+	passkeyimpl.ProvideStore,
+	passkeyimpl.ProvideService,
+	wire.Bind(new(passkey.Service), new(*passkeyimpl.Service)),
 	supportbundlesimpl.ProvideService,
 	extsvcaccounts.ProvideExtSvcAccountsService,
 	wire.Bind(new(serviceaccounts.ExtSvcAccountsService), new(*extsvcaccounts.ExtSvcAccountsService)),

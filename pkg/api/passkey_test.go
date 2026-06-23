@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/grafana/grafana/pkg/services/passkey"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -156,9 +156,9 @@ func TestPasskeyRegisterBegin(t *testing.T) {
 	svc := &fakePasskeyService{beginRegResult: &passkey.BeginResult{SessionID: "reg-1", Options: json.RawMessage(`{}`)}}
 	server := setupPasskeyServer(t, svc, &fakePasskeyStore{}, nil)
 
-	req := webtest.RequestWithSignedInUser(
+	req := requestAsInteractiveUser(
 		server.NewPostRequest("/api/user/passkey/register/begin", nil),
-		&user.SignedInUser{UserID: 99, OrgID: 1, Login: "alice", Name: "Alice Doe", AuthenticatedBy: loginservice.PasswordAuthModule},
+		&user.SignedInUser{UserID: 99, OrgID: 1, Login: "alice", Name: "Alice Doe"},
 	)
 	res, err := server.Send(req)
 	require.NoError(t, err)
@@ -247,10 +247,11 @@ func TestPasskeyRegisterRejectsNonInteractiveSession(t *testing.T) {
 	svc := &fakePasskeyService{beginRegResult: &passkey.BeginResult{SessionID: "reg-1", Options: json.RawMessage(`{}`)}}
 	server := setupPasskeyServer(t, svc, &fakePasskeyStore{}, nil)
 
-	// An API-key identity is authenticated but not an interactive human login, so enrollment is refused.
+	// A request with no grafana_session cookie (e.g. API-key / token auth) carries no UserToken, so it
+	// is not an interactive login and must not be able to enroll a passkey.
 	req := webtest.RequestWithSignedInUser(
 		server.NewPostRequest("/api/user/passkey/register/begin", nil),
-		&user.SignedInUser{UserID: 99, OrgID: 1, AuthenticatedBy: loginservice.APIKeyAuthModule},
+		&user.SignedInUser{UserID: 99, OrgID: 1},
 	)
 	res, err := server.Send(req)
 	require.NoError(t, err)
@@ -258,17 +259,12 @@ func TestPasskeyRegisterRejectsNonInteractiveSession(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, res.StatusCode)
 }
 
-func TestIsInteractiveAuthModule(t *testing.T) {
-	for _, m := range []string{
-		loginservice.PasswordAuthModule, loginservice.LDAPAuthModule, loginservice.SAMLAuthModule,
-		loginservice.PasskeyAuthModule, loginservice.GithubAuthModule, loginservice.GenericOAuthModule,
-	} {
-		require.True(t, isInteractiveAuthModule(m), "expected %q to be interactive", m)
-	}
-	for _, m := range []string{
-		loginservice.APIKeyAuthModule, loginservice.JWTModule, loginservice.ExtendedJWTModule,
-		loginservice.RenderModule, loginservice.AuthProxyAuthModule, "", "some-future-module",
-	} {
-		require.False(t, isInteractiveAuthModule(m), "expected %q to be rejected", m)
-	}
+// requestAsInteractiveUser attaches a signed-in user backed by a session token — i.e. a normal
+// interactive cookie session, which is what passkey enrollment requires.
+func requestAsInteractiveUser(req *http.Request, usr *user.SignedInUser) *http.Request {
+	return webtest.RequestWithWebContext(req, &contextmodel.ReqContext{
+		SignedInUser: usr,
+		IsSignedIn:   true,
+		UserToken:    &auth.UserToken{},
+	})
 }
