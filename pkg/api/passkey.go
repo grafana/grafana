@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/passkey"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -118,9 +119,47 @@ func (hs *HTTPServer) PasskeyLoginFinish(c *contextmodel.ReqContext) response.Re
 	return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo, hs.Features)
 }
 
+// interactiveAuthModules are the login methods that represent a real, interactive human sign-in.
+// Passkey enrollment is restricted to these; non-interactive identities (API keys, JWT, extended JWT,
+// render keys, auth proxy) are refused even though they are authenticated. Fail closed: anything not
+// listed (including a future/unknown module) is rejected.
+var interactiveAuthModules = map[string]struct{}{
+	loginservice.PasswordAuthModule:   {},
+	loginservice.LDAPAuthModule:       {},
+	loginservice.SAMLAuthModule:       {},
+	loginservice.PasskeyAuthModule:    {},
+	loginservice.GenericOAuthModule:   {},
+	loginservice.GithubAuthModule:     {},
+	loginservice.GoogleAuthModule:     {},
+	loginservice.GitLabAuthModule:     {},
+	loginservice.AzureADAuthModule:    {},
+	loginservice.OktaAuthModule:       {},
+	loginservice.GrafanaComAuthModule: {},
+	loginservice.GrafanaNetAuthModule: {},
+}
+
+func isInteractiveAuthModule(module string) bool {
+	_, ok := interactiveAuthModules[module]
+	return ok
+}
+
+// requireInteractiveSession refuses passkey enrollment for non-interactive identities. Enrolling a
+// passkey is high-trust (the new credential is a permanent way into the account), so it is limited to
+// interactive human logins even though API keys, JWT, render keys, and auth proxy are "signed in".
+func (hs *HTTPServer) requireInteractiveSession(c *contextmodel.ReqContext) response.Response {
+	if !isInteractiveAuthModule(c.GetAuthenticatedBy()) {
+		return response.Error(http.StatusForbidden, "passkey enrollment requires an interactive login session", nil)
+	}
+	return nil
+}
+
 // PasskeyRegisterBegin starts enrolling a new passkey for the already-authenticated user. The user
 // identity comes from the session, never the request body.
 func (hs *HTTPServer) PasskeyRegisterBegin(c *contextmodel.ReqContext) response.Response {
+	if errResp := hs.requireInteractiveSession(c); errResp != nil {
+		return errResp
+	}
+
 	userID, errResp := hs.getUserID(c)
 	if errResp != nil {
 		return errResp
@@ -136,6 +175,10 @@ func (hs *HTTPServer) PasskeyRegisterBegin(c *contextmodel.ReqContext) response.
 
 // PasskeyRegisterFinish verifies the attestation and persists the new credential under the given name.
 func (hs *HTTPServer) PasskeyRegisterFinish(c *contextmodel.ReqContext) response.Response {
+	if errResp := hs.requireInteractiveSession(c); errResp != nil {
+		return errResp
+	}
+
 	userID, errResp := hs.getUserID(c)
 	if errResp != nil {
 		return errResp
