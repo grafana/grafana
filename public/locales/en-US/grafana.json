@@ -12935,6 +12935,8 @@
       "folders-count_other": "{{count}} folders",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "playlists-count_one": "{{count}} playlist",
+      "playlists-count_other": "{{count}} playlists",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
