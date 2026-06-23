@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { useAsyncRetry } from 'react-use';
+import { useCallback, useEffect, useState } from 'react';
+import { useAsyncFn } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -27,32 +27,24 @@ export async function getSnapshots(opts?: SnapshotListOptions): Promise<Snapshot
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [continueToken, setContinueToken] = useState<string | undefined>();
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
 
-  const {
-    loading: isInitialLoading,
-    error: initialError,
-    retry: loadInitial,
-  } = useAsyncRetry(async () => {
-    const page = await getSnapshots();
-    setSnapshots(page.items);
-    setContinueToken(page.continueToken);
-  }, []);
-
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !continueToken) {
-      return;
-    }
-    setIsLoadingMore(true);
-    try {
-      const page = await getSnapshots({ continue: continueToken });
-      setSnapshots((prev) => [...prev, ...page.items]);
+  const [{ loading, error }, loadSnapshots] = useAsyncFn(
+    async (token?: string) => {
+      const page = await getSnapshots(token ? { continue: token } : undefined);
+      setSnapshots((prev) => (token ? [...prev, ...page.items] : page.items));
       setContinueToken(page.continueToken);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  }, [continueToken, isLoadingMore]);
+    },
+    [],
+    { loading: true }
+  );
+
+  useEffect(() => {
+    loadSnapshots();
+  }, [loadSnapshots]);
+
+  const isInitialLoading = loading && snapshots.length === 0;
+  const isLoadingMore = loading && snapshots.length > 0;
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
@@ -67,18 +59,18 @@ export const SnapshotListTable = () => {
     [snapshots]
   );
 
-  if (initialError && !isInitialLoading) {
+  if (error && snapshots.length === 0 && !continueToken) {
     return (
       <Alert
         severity="error"
         title={t('snapshot.load-error.title', 'Failed to load snapshots')}
         action={
-          <Button variant="secondary" onClick={loadInitial}>
+          <Button variant="secondary" onClick={() => loadSnapshots()}>
             <Trans i18nKey="snapshot.load-error.retry">Retry</Trans>
           </Button>
         }
       >
-        {initialError.message}
+        {error.message}
       </Alert>
     );
   }
@@ -143,7 +135,7 @@ export const SnapshotListTable = () => {
 
       {!isInitialLoading && continueToken && (
         <Box paddingTop={2}>
-          <LoadMoreButton onClick={loadMore} loading={isLoadingMore} />
+          <LoadMoreButton onClick={() => loadSnapshots(continueToken)} loading={isLoadingMore} />
         </Box>
       )}
 
