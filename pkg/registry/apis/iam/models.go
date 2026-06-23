@@ -3,6 +3,7 @@ package iam
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
@@ -50,6 +52,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	userLegacyStore                  *user.LegacyStore
 	saLegacyStore                    *serviceaccount.LegacyStore
 	legacyTeamStore                  *team.LegacyStore
+	externalGroupReconciler          legacy.ExternalGroupReconciler
 	teamBindingLegacyStore           *teambinding.LegacyBindingStore
 	ssoLegacyStore                   *sso.LegacyStore
 	roleApiInstaller                 RoleApiInstaller
@@ -85,14 +88,14 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamSearch                        *TeamSearchHandler
+	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
 
-	teamGroupsHandler externalgroupmapping.TeamGroupsHandler
+	teamGroupsHandlerProvider externalgroupmapping.TeamGroupsHandlerProvider
 
 	// non-k8s api route
-	display *user.LegacyDisplayREST
+	display *display.DisplayHandler
 
 	// ac is used for legacy permission checks in role bindings.
 	// nil where only k8s-mapped permissions are supported.
@@ -105,6 +108,10 @@ type IdentityAccessManagementAPIBuilder struct {
 	features featuremgmt.FeatureToggles
 
 	tracing tracing.Tracer
+
+	// Getters for existence validation during TeamBinding create
+	teamGetter rest.Getter
+	userGetter rest.Getter
 
 	cfgProvider    configprovider.ConfigProvider
 	settingService settingsvc.Service

@@ -33,8 +33,10 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
+export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+
 export function useEditPaneCollapsed() {
-  return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
+  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementForSelection(
@@ -169,18 +171,6 @@ export interface ChangeVariableTypeActionHelperProps {
   oldVariable: SceneVariable;
   newVariable: SceneVariable;
   source: SceneVariableSet;
-}
-
-export interface ChangeTitleActionHelperProps {
-  oldTitle: string;
-  newTitle: string;
-  source: DashboardScene;
-}
-
-export interface ChangeDescriptionActionHelperProps {
-  oldDescription: string;
-  newDescription: string;
-  source: DashboardScene;
 }
 
 export interface MoveElementActionHelperProps {
@@ -366,7 +356,7 @@ interface EditActionProps<Source extends SceneObject, T extends keyof Source['st
   newValue: Source['state'][T];
 }
 
-export function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
+function makeEditAction<Source extends SceneObject, T extends keyof Source['state']>({
   description,
   prop,
 }: MakeEditActionProps<Source, T>) {

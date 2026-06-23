@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -549,7 +551,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				name:    "PolicyRouting",
 				inputNS: ngmodels.NotificationSettingsFromPolicy("test-policy"),
 				expectedNS: apimodels.AlertRuleNotificationSettings{
-					Policy: util.Pointer("test-policy"),
+					Policy: new("test-policy"),
 				},
 			},
 		} {
@@ -815,7 +817,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := NewPrometheusSrv(
 				log.NewNopLogger(),
 				fakeAIM,
-				fakeSch,
+				NewInMemoryRuleMutator(fakeSch, fakeAIM),
 				ruleStore,
 				&fakeRuleAccessControlService{},
 				fakes.NewFakeProvisioningStore(),
@@ -889,7 +891,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
 			fakeAIM,
-			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			NewInMemoryRuleMutator(newFakeSchedulerReader(t).setupStates(fakeAIM), fakeAIM),
 			ruleStore,
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
@@ -1111,7 +1113,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
 			fakeAIM,
-			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			NewInMemoryRuleMutator(newFakeSchedulerReader(t).setupStates(fakeAIM), fakeAIM),
 			ruleStore,
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
@@ -1266,7 +1268,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		api := NewPrometheusSrv(
 			log.NewNopLogger(),
 			fakeAIM,
-			newFakeSchedulerReader(t).setupStates(fakeAIM),
+			NewInMemoryRuleMutator(newFakeSchedulerReader(t).setupStates(fakeAIM), fakeAIM),
 			ruleStore,
 			accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 			fakes.NewFakeProvisioningStore(),
@@ -1404,7 +1406,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			api := NewPrometheusSrv(
 				log.NewNopLogger(),
 				fakeAIM,
-				newFakeSchedulerReader(t).setupStates(fakeAIM),
+				NewInMemoryRuleMutator(newFakeSchedulerReader(t).setupStates(fakeAIM), fakeAIM),
 				ruleStore,
 				accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 				fakes.NewFakeProvisioningStore(),
@@ -1908,7 +1910,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		})
 
 		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
+			r, err := http.NewRequest("GET", "/api/v1/rules?state=recovering", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
@@ -2065,7 +2067,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.ElementsMatch(t, healths, []string{"ok", "error"})
 		})
 
-		t.Run("then with all rules filtered out, no groups returned", func(t *testing.T) {
+		t.Run("unknown health returns 400 Bad Request", func(t *testing.T) {
 			r, err := http.NewRequest("GET", "/api/v1/rules?health=unknown", nil)
 			require.NoError(t, err)
 			c := &contextmodel.ReqContext{
@@ -2076,11 +2078,10 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
+			require.Equal(t, http.StatusBadRequest, resp.Status())
 			var res apimodels.RuleResponse
 			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-
-			require.Len(t, res.Data.RuleGroups, 0)
+			require.Contains(t, res.Error, "unknown health")
 		})
 	})
 
@@ -3398,7 +3399,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				api := NewPrometheusSrv(
 					log.NewNopLogger(),
 					fakeAIM,
-					newFakeSchedulerReader(t).setupStates(fakeAIM),
+					NewInMemoryRuleMutator(newFakeSchedulerReader(t).setupStates(fakeAIM), fakeAIM),
 					ruleStore,
 					accesscontrol.NewRuleService(acimpl.ProvideAccessControl(featuremgmt.WithFeatures())),
 					fakes.NewFakeProvisioningStore(),
@@ -3476,6 +3477,111 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 }
 
+func TestNewDBRuleMutator(t *testing.T) {
+	orgID := int64(1)
+	ruleUID := "test-rule-1"
+
+	t.Run("calls GetStatesForRuleUID exactly once per rule", func(t *testing.T) {
+		fakeAIM := NewFakeAlertInstanceManager(t)
+		fakeAIM.GenerateAlertInstances(orgID, ruleUID, 3, withAlertingState())
+
+		callCount := 0
+		counting := &countingAlertInstanceManager{
+			inner:     fakeAIM,
+			callCount: &callCount,
+		}
+
+		mutator := NewDBRuleMutator(counting)
+
+		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+		alertingRule := apimodels.AlertingRule{State: "inactive"}
+
+		mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+
+		require.Equal(t, 1, callCount, "GetStatesForRuleUID should be called exactly once")
+		assert.Equal(t, "firing", alertingRule.State)
+		assert.NotEmpty(t, alertingRule.Health)
+	})
+
+	t.Run("sets status and alert state from same fetch", func(t *testing.T) {
+		fakeAIM := NewFakeAlertInstanceManager(t)
+		fakeAIM.GenerateAlertInstances(orgID, ruleUID, 2, withAlertingState())
+
+		mutator := NewDBRuleMutator(fakeAIM)
+
+		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+		alertingRule := apimodels.AlertingRule{State: "inactive"}
+
+		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+
+		// Status fields
+		assert.Equal(t, "ok", alertingRule.Health)
+		assert.NotZero(t, alertingRule.EvaluationTime)
+
+		// Alert state fields
+		assert.Equal(t, "firing", alertingRule.State)
+		assert.Equal(t, int64(2), totals["alerting"])
+	})
+
+	t.Run("empty states returns ok health and inactive state", func(t *testing.T) {
+		fakeAIM := NewFakeAlertInstanceManager(t)
+
+		mutator := NewDBRuleMutator(fakeAIM)
+
+		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID("no-states")).GenerateRef()
+		alertingRule := apimodels.AlertingRule{State: "inactive"}
+
+		totals, _ := mutator(context.Background(), rule, &alertingRule, nil, nil, nil, -1)
+
+		assert.Equal(t, "ok", alertingRule.Health)
+		assert.Equal(t, "inactive", alertingRule.State)
+		assert.Empty(t, totals)
+	})
+
+	t.Run("matches NewInMemoryRuleMutator output", func(t *testing.T) {
+		fakeAIM := NewFakeAlertInstanceManager(t)
+		fakeAIM.GenerateAlertInstances(orgID, ruleUID, 3, withAlertingState())
+		fakeSch := newFakeSchedulerReader(t).setupStates(fakeAIM)
+
+		defaultMutator := NewInMemoryRuleMutator(fakeSch, fakeAIM)
+		singleMutator := NewDBRuleMutator(fakeAIM)
+
+		rule := ngmodels.RuleGen.With(ngmodels.RuleGen.WithOrgID(orgID), ngmodels.RuleGen.WithUID(ruleUID)).GenerateRef()
+
+		defaultRule := apimodels.AlertingRule{State: "inactive"}
+		singleRule := apimodels.AlertingRule{State: "inactive"}
+
+		defaultTotals, defaultFiltered := defaultMutator(context.Background(), rule, &defaultRule, nil, nil, nil, -1)
+		singleTotals, singleFiltered := singleMutator(context.Background(), rule, &singleRule, nil, nil, nil, -1)
+
+		// Status fields should match
+		assert.Equal(t, defaultRule.Health, singleRule.Health)
+		assert.Equal(t, defaultRule.LastError, singleRule.LastError)
+		assert.Equal(t, defaultRule.EvaluationTime, singleRule.EvaluationTime)
+		assert.Equal(t, defaultRule.LastEvaluation, singleRule.LastEvaluation)
+
+		// Alert state fields should match
+		assert.Equal(t, defaultRule.State, singleRule.State)
+		assert.Equal(t, defaultTotals, singleTotals)
+		assert.Equal(t, defaultFiltered, singleFiltered)
+	})
+}
+
+// countingAlertInstanceManager wraps AlertInstanceManager and counts GetStatesForRuleUID calls.
+type countingAlertInstanceManager struct {
+	inner     state.AlertInstanceManager
+	callCount *int
+}
+
+func (c *countingAlertInstanceManager) GetAll(ctx context.Context, orgID int64) []*state.State {
+	return c.inner.GetAll(ctx, orgID)
+}
+
+func (c *countingAlertInstanceManager) GetStatesForRuleUID(ctx context.Context, orgID int64, alertRuleUID string) []*state.State {
+	*c.callCount++
+	return c.inner.GetStatesForRuleUID(ctx, orgID, alertRuleUID)
+}
+
 func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
 	fakeStore, fakeAIM, api, _ := setupAPIFull(t)
 	return fakeStore, fakeAIM, api
@@ -3491,7 +3597,7 @@ func setupAPIFull(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, Pr
 	api := *NewPrometheusSrv(
 		log.NewNopLogger(),
 		fakeAIM,
-		fakeSch,
+		NewInMemoryRuleMutator(fakeSch, fakeAIM),
 		fakeStore,
 		fakeAuthz,
 		fakeProvisioning,
@@ -3601,4 +3707,112 @@ func withExpressionsMultiQuery() ngmodels.AlertRuleMutator {
 		}
 		r.Data = queries
 	}
+}
+
+func noopRuleMutator(_ context.Context, _ *ngmodels.AlertRule, _ *apimodels.AlertingRule, _ map[eval.State]struct{}, _ labels.Matchers, _ []ngmodels.LabelOption, _ int64) (map[string]int64, map[string]int64) {
+	return nil, nil
+}
+
+func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
+	const orgID int64 = 1
+	const nsUID = "folder-status-preparer"
+
+	// newStore builds a fake store containing the given rules and a matching AllowedNamespaces map.
+	newStore := func(t *testing.T, rules ...*ngmodels.AlertRule) (*fakes.RuleStore, map[string]string) {
+		t.Helper()
+		store := fakes.NewRuleStore(t)
+		allowed := map[string]string{}
+		for _, r := range rules {
+			store.PutRule(context.Background(), r)
+			allowed[r.NamespaceUID] = "folder"
+		}
+		return store, allowed
+	}
+
+	t.Run("is invoked with the page's rule UIDs", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		// Two rules in the same group so a single store fetch returns both.
+		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-a", NamespaceUID: nsUID, OrgID: orgID}
+		rule1 := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-1"), gen.WithTitle("rule-1")).GenerateRef()
+		rule2 := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-2"), gen.WithTitle("rule-2")).GenerateRef()
+
+		store, allowed := newStore(t, rule1, rule2)
+
+		var capturedUIDs []string
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             url.Values{},
+			AllowedNamespaces: allowed,
+			StatusPreparer: func(ruleUIDs []string) {
+				capturedUIDs = append(capturedUIDs, ruleUIDs...)
+			},
+		}
+
+		resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+
+		require.Equal(t, "success", resp.Status)
+		sort.Strings(capturedUIDs)
+		assert.Equal(t, []string{"uid-1", "uid-2"}, capturedUIDs, "StatusPreparer should receive the UIDs of the rules on the page")
+	})
+
+	t.Run("is invoked once per fetched store page", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		// Three rules, each in its own group, so group_limit=1 forces one store fetch per group.
+		rule1 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-1", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-1")).GenerateRef()
+		rule2 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-2", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-2")).GenerateRef()
+		rule3 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-3", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-3")).GenerateRef()
+
+		store, allowed := newStore(t, rule1, rule2, rule3)
+
+		query := url.Values{}
+		query.Set("group_limit", "1")
+
+		var calls int
+		var pages [][]string
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             query,
+			AllowedNamespaces: allowed,
+			StatusPreparer: func(ruleUIDs []string) {
+				calls++
+				pages = append(pages, append([]string(nil), ruleUIDs...))
+			},
+		}
+
+		resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+
+		require.Equal(t, "success", resp.Status)
+		// group_limit=1 returns a single group per page, but the response only contains
+		// the first page's group. The preparer should still have been invoked at least once.
+		assert.GreaterOrEqual(t, calls, 1, "StatusPreparer should be invoked for the fetched page")
+		require.NotEmpty(t, pages)
+		// The first page must carry exactly the first group's single rule UID.
+		assert.Len(t, pages[0], 1, "each page with group_limit=1 should contain a single rule's UID")
+	})
+
+	t.Run("nil StatusPreparer is a no-op", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-nil", NamespaceUID: nsUID, OrgID: orgID}
+		rule := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-nil"), gen.WithTitle("rule-nil")).GenerateRef()
+
+		store, allowed := newStore(t, rule)
+
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             url.Values{},
+			AllowedNamespaces: allowed,
+			StatusPreparer:    nil,
+		}
+
+		require.NotPanics(t, func() {
+			resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+			require.Equal(t, "success", resp.Status)
+			require.Len(t, resp.Data.RuleGroups, 1)
+			require.Len(t, resp.Data.RuleGroups[0].Rules, 1)
+			assert.Equal(t, "uid-nil", resp.Data.RuleGroups[0].Rules[0].UID)
+		})
+	})
 }

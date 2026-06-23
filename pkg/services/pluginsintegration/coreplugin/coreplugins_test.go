@@ -26,7 +26,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Loki},
 		{ID: MSSQL},
 		{ID: MySQL},
-		{ID: OpenTSDB},
 		{ID: Parca},
 		{ID: PostgreSQL},
 		{ID: Prometheus},
@@ -34,7 +33,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Tempo},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
-		{ID: Zipkin},
 		{ID: Jaeger},
 	}
 

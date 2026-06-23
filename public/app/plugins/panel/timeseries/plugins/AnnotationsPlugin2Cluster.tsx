@@ -193,7 +193,14 @@ export const AnnotationsPlugin2Cluster = ({
                 renderLine(ctx, y0, y1, x1, color);
 
                 if (canvasRegionRendering) {
-                  ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
+                  // stop invalid colors from breaking the panel
+                  try {
+                    ctx.fillStyle = colorManipulator.alpha(color, regionOpacity ?? 0.1);
+                  } catch (e) {
+                    console.error(`Invalid color: ${color}.`, e);
+                    ctx.fillStyle = colorManipulator.alpha(DEFAULT_ANNOTATION_COLOR_HEX8, regionOpacity ?? 0.1);
+                  }
+
                   ctx.fillRect(x0, y0, x1 - x0, u.bbox.height);
                 }
               }

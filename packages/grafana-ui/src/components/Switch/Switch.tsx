@@ -2,9 +2,11 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, type HTMLProps, useId } from 'react';
 
 import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { useFieldContext } from '../Forms/FieldContext';
 import { Icon } from '../Icon/Icon';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
@@ -19,17 +21,32 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-switch--docs
  */
 export const Switch = forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
+  (
+    {
+      value,
+      checked,
+      onChange,
+      id: idProp,
+      label,
+      disabled: disabledProp,
+      invalid: invalidProp = false,
+      ...inputProps
+    },
+    ref
+  ) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
     const styles = useStyles2(getSwitchStyles);
     const generatedId = useId();
-    const switchId = id ? id : generatedId;
+    const fieldContext = useFieldContext();
+    const invalid = invalidProp ?? fieldContext.invalid;
+    const disabled = disabledProp ?? fieldContext.disabled;
+    const switchId = idProp ?? fieldContext.id ?? generatedId;
 
     return (
-      <div className={cx(styles.switch, invalid && styles.invalid)}>
+      <div className={cx(styles.switch, invalid && styles.invalid)} data-testid={selectors.components.Switch.container}>
         <input
           type="checkbox"
           role="switch"
@@ -43,9 +60,8 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchId} aria-label={label}>
-          <Icon name="check" size="xs" />
-        </label>
+        <label htmlFor={switchId} aria-label={label} />
+        <Icon name="check" size="xs" />
       </div>
     );
   }
@@ -61,13 +77,29 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
+  (
+    {
+      transparent,
+      className,
+      showLabel,
+      label,
+      value,
+      disabled: disabledProp,
+      id: idProp,
+      invalid: invalidProp,
+      ...props
+    },
+    ref
+  ) => {
     const styles = useStyles2(getSwitchStyles, transparent);
+    const defaultId = useId();
+    const fieldContext = useFieldContext();
+    const invalid = invalidProp ?? fieldContext.invalid;
+    const disabled = disabledProp ?? fieldContext.disabled;
+    const id = idProp ?? fieldContext.id ?? defaultId;
 
     return (
-      <div
-        className={cx(styles.inlineContainer, className, props.disabled && styles.disabled, invalid && styles.invalid)}
-      >
+      <div className={cx(styles.inlineContainer, className, disabled && styles.disabled, invalid && styles.invalid)}>
         {showLabel && (
           <label
             htmlFor={id}
@@ -76,7 +108,15 @@ export const InlineSwitch = forwardRef<HTMLInputElement, InlineSwitchProps>(
             {label}
           </label>
         )}
-        <Switch {...props} id={id} label={label} ref={ref} value={value} />
+        <Switch
+          {...props}
+          disabled={disabled}
+          invalid={invalid}
+          id={id}
+          label={showLabel ? undefined : label}
+          ref={ref}
+          value={value}
+        />
       </div>
     );
   }
@@ -98,42 +138,48 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       zIndex: -1000,
       position: 'absolute',
 
-      '&:checked + label': {
-        background: theme.colors.primary.main,
-        borderColor: theme.colors.primary.main,
+      '&:checked': {
+        '~ label': {
+          background: theme.colors.accent.main,
+          borderColor: theme.colors.accent.main,
 
-        '&:hover': {
-          background: theme.colors.primary.shade,
+          '&:hover': {
+            background: theme.colors.accent.shade,
+          },
         },
 
-        svg: {
+        '~ svg': {
           transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.primary.contrastText,
-          color: theme.colors.primary.main,
+          background: theme.colors.accent.contrastText,
+          color: theme.colors.accent.main,
         },
       },
 
-      '&:disabled + label': {
-        background: theme.colors.action.disabledBackground,
-        borderColor: theme.colors.border.weak,
-        cursor: 'not-allowed',
+      '&:disabled': {
+        '~ label': {
+          background: theme.colors.action.disabledBackground,
+          borderColor: theme.colors.border.weak,
+          cursor: 'not-allowed',
+        },
 
-        svg: {
+        '~ svg': {
           background: theme.colors.text.disabled,
         },
       },
 
-      '&:disabled:checked + label': {
-        background: theme.colors.primary.transparent,
+      '&:disabled:checked': {
+        '~ label': {
+          background: theme.colors.accent.transparent,
+        },
 
-        svg: {
-          color: theme.colors.primary.contrastText,
+        '~ svg': {
+          color: theme.colors.accent.contrastText,
         },
       },
 
-      '&:focus + label, &:focus-visible + label': getFocusStyles(theme),
+      '&:focus ~ label, &:focus-visible ~ label': getFocusStyles(theme),
 
-      '&:focus:not(:focus-visible) + label': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible) ~ label': getMouseFocusStyles(theme),
     },
 
     label: {
@@ -150,26 +196,26 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       '&:hover': {
         borderColor: theme.components.input.borderHover,
       },
+    },
+    svg: {
+      position: 'absolute',
+      display: 'block',
+      color: 'transparent',
+      width: theme.spacing(1.5),
+      height: theme.spacing(1.5),
+      borderRadius: theme.shape.radius.circle,
+      background: theme.colors.text.secondary,
+      boxShadow: theme.shadows.z1,
+      left: 0,
+      pointerEvents: 'none',
+      top: '50%',
+      transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
+      },
 
-      svg: {
-        position: 'absolute',
-        display: 'block',
-        color: 'transparent',
-        width: theme.spacing(1.5),
-        height: theme.spacing(1.5),
-        borderRadius: theme.shape.radius.circle,
-        background: theme.colors.text.secondary,
-        boxShadow: theme.shadows.z1,
-        left: 0,
-        top: '50%',
-        transform: `translate3d(${theme.spacing(0.25)}, -50%, 0)`,
-        [theme.transitions.handleMotion('no-preference')]: {
-          transition: 'transform 0.2s cubic-bezier(0.19, 1, 0.22, 1)',
-        },
-
-        '@media (forced-colors: active)': {
-          border: `1px solid ${theme.colors.primary.contrastText}`,
-        },
+      '@media (forced-colors: active)': {
+        border: `1px solid ${theme.colors.accent.contrastText}`,
       },
     },
   }),
@@ -205,7 +251,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     color: theme.colors.text.primary,
   }),
   invalid: css({
-    'input + label, input:checked + label, input:hover + label': {
+    'input ~ label, input:checked ~ label, input:hover ~ label': {
       border: `1px solid ${theme.colors.error.border}`,
     },
   }),

@@ -18,7 +18,7 @@ type Service interface {
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
-	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, error)
+	GetTeamIDsByUser(ctx context.Context, query *GetTeamIDsByUserQuery) ([]int64, []string, error)
 	IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveUsersMemberships(tx context.Context, userID int64) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)

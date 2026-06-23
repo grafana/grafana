@@ -11,10 +11,10 @@ func TestBuildResourceURI(t *testing.T) {
 	t.Run("AzureMonitor Resource URI Builder", func(t *testing.T) {
 		t.Run("when there is no resource uri", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				MetricDefinition:    strPtr("Microsoft.Web/serverFarms"),
-				ResourceGroup:       strPtr("rg"),
-				ResourceName:        strPtr("rn1"),
+				DefaultSubscription: new("default-sub"),
+				MetricDefinition:    new("Microsoft.Web/serverFarms"),
+				ResourceGroup:       new("rg"),
+				ResourceName:        new("rn1"),
 			}
 
 			result, err := ub.BuildResourceURI()
@@ -27,7 +27,7 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when only resource uri is provided it returns the resource URI", func(t *testing.T) {
 			ub := &UrlBuilder{
-				ResourceURI: strPtr("/subscriptions/sub/resource/uri"),
+				ResourceURI: new("/subscriptions/sub/resource/uri"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -37,11 +37,11 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when resource uri and legacy fields are provided the legacy fields are ignored", func(t *testing.T) {
 			ub := &UrlBuilder{
-				ResourceURI:         strPtr("/subscriptions/sub/resource/uri"),
-				DefaultSubscription: strPtr("default-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.NetApp/netAppAccounts/capacityPools/volumes"),
-				ResourceName:        strPtr("rn1/rn2/rn3"),
+				ResourceURI:         new("/subscriptions/sub/resource/uri"),
+				DefaultSubscription: new("default-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.NetApp/netAppAccounts/capacityPools/volumes"),
+				ResourceName:        new("rn1/rn2/rn3"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -52,10 +52,10 @@ func TestBuildResourceURI(t *testing.T) {
 		t.Run("Legacy URL Builder params", func(t *testing.T) {
 			t.Run("when metric definition is in the short form", func(t *testing.T) {
 				ub := &UrlBuilder{
-					DefaultSubscription: strPtr("default-sub"),
-					ResourceGroup:       strPtr("rg"),
-					MetricNamespace:     strPtr("Microsoft.Compute/virtualMachines"),
-					ResourceName:        strPtr("rn"),
+					DefaultSubscription: new("default-sub"),
+					ResourceGroup:       new("rg"),
+					MetricNamespace:     new("Microsoft.Compute/virtualMachines"),
+					ResourceName:        new("rn"),
 				}
 
 				url, err := ub.BuildResourceURI()
@@ -66,11 +66,11 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metric definition is in the short form and a subscription is defined", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				Subscription:        strPtr("specified-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.Compute/virtualMachines"),
-				ResourceName:        strPtr("rn"),
+				DefaultSubscription: new("default-sub"),
+				Subscription:        new("specified-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.Compute/virtualMachines"),
+				ResourceName:        new("rn"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -80,10 +80,10 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metric definition is Microsoft.Storage/storageAccounts/blobServices", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/blobServices"),
-				ResourceName:        strPtr("rn1"),
+				DefaultSubscription: new("default-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.Storage/storageAccounts/blobServices"),
+				ResourceName:        new("rn1"),
 			}
 
 			result, err := ub.BuildResourceURI()
@@ -96,10 +96,10 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metric definition is Microsoft.Storage/storageAccounts/tableServices", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/tableServices"),
-				ResourceName:        strPtr("rn1/default"),
+				DefaultSubscription: new("default-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.Storage/storageAccounts/tableServices"),
+				ResourceName:        new("rn1/default"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -109,10 +109,10 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metric definition is Microsoft.Storage/storageAccounts/fileServices", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.Storage/storageAccounts/fileServices"),
-				ResourceName:        strPtr("rn1/default"),
+				DefaultSubscription: new("default-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.Storage/storageAccounts/fileServices"),
+				ResourceName:        new("rn1/default"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -122,10 +122,10 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metric definition is Microsoft.NetApp/netAppAccounts/capacityPools/volumes", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				ResourceGroup:       strPtr("rg"),
-				MetricNamespace:     strPtr("Microsoft.NetApp/netAppAccounts/capacityPools/volumes"),
-				ResourceName:        strPtr("rn1/rn2/rn3"),
+				DefaultSubscription: new("default-sub"),
+				ResourceGroup:       new("rg"),
+				MetricNamespace:     new("Microsoft.NetApp/netAppAccounts/capacityPools/volumes"),
+				ResourceName:        new("rn1/rn2/rn3"),
 			}
 
 			url, err := ub.BuildResourceURI()
@@ -149,10 +149,10 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("provider extraction from metricNamespaceArray", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				MetricNamespace:     strPtr("provider1/service1"),
-				ResourceGroup:       strPtr("rg"),
-				ResourceName:        strPtr("rn1/rn2/rn3"),
+				DefaultSubscription: new("default-sub"),
+				MetricNamespace:     new("provider1/service1"),
+				ResourceGroup:       new("rg"),
+				ResourceName:        new("rn1/rn2/rn3"),
 			}
 			expectedProvider := "provider1"
 
@@ -171,8 +171,8 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when metricNamespace is not in the correct format", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				MetricNamespace:     strPtr("invalidformat"),
+				DefaultSubscription: new("default-sub"),
+				MetricNamespace:     new("invalidformat"),
 			}
 
 			_, err := ub.BuildResourceURI()
@@ -183,9 +183,9 @@ func TestBuildResourceURI(t *testing.T) {
 
 		t.Run("when resourceNameArray index out of range", func(t *testing.T) {
 			ub := &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				MetricNamespace:     strPtr("provider1/service1"),
-				ResourceName:        strPtr("rn1/rn2/rn3"),
+				DefaultSubscription: new("default-sub"),
+				MetricNamespace:     new("provider1/service1"),
+				ResourceName:        new("rn1/rn2/rn3"),
 			}
 
 			_, err := ub.BuildResourceURI()
@@ -194,9 +194,9 @@ func TestBuildResourceURI(t *testing.T) {
 			}
 
 			ub = &UrlBuilder{
-				DefaultSubscription: strPtr("default-sub"),
-				MetricNamespace:     strPtr("provider1/service1/service2"),
-				ResourceName:        strPtr(""),
+				DefaultSubscription: new("default-sub"),
+				MetricNamespace:     new("provider1/service1/service2"),
+				ResourceName:        new(""),
 			}
 
 			_, err = ub.BuildResourceURI()

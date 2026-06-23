@@ -21,7 +21,7 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext() {
+async function getTestContext(annotations?: Record<string, string>) {
   jest.clearAllMocks();
 
   const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
@@ -34,6 +34,7 @@ async function getTestContext() {
         },
         metadata: {
           name: 'foo',
+          ...(annotations ? { annotations } : {}),
         },
       })
     )
@@ -44,8 +45,6 @@ async function getTestContext() {
       <PlaylistEditPage />
     </TestProvider>
   );
-  await waitFor(() => expect(backendSrvMock).toHaveBeenCalledTimes(1));
-
   return { rerender, backendSrvMock };
 }
 
@@ -55,9 +54,26 @@ describe('PlaylistEditPage', () => {
       await getTestContext();
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
+      expect(await screen.findByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('5s');
       expect(screen.getAllByRole('row')).toHaveLength(1);
+    });
+
+    it('then it should not render the provisioned badge for an unmanaged playlist', async () => {
+      await getTestContext();
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+    });
+
+    it('then it should render the provisioned badge for a managed playlist', async () => {
+      await getTestContext({
+        'grafana.app/managedBy': 'repo',
+        'grafana.app/managerId': 'foo-repo',
+      });
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
   });
 

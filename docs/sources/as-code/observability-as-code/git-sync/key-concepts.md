@@ -21,7 +21,7 @@ aliases:
 
 # Git Sync key concepts
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
 
@@ -105,6 +105,74 @@ Git Sync is bidirectional, and syncs a repository resource with your Grafana ins
 6. Synchronization occurs at regular intervals (configurable), or instantly if you use webhooks.
 
 You can find the provisioned dashboards organized in folders under **Dashboards**.
+
+### Sync targets
+
+With Git Sync you can place synced resources in Grafana in two ways:
+
+- **Folder sync**: Grafana creates a folder named after the repository and places all synced resources inside it. Subdirectories in the repository become subfolders within that folder. **This is the default behavior**.
+- **Folderless sync**: Grafana places synced resources at the top level, without creating a wrapper folder. Files at the repository path root become top-level resources, and subdirectories become top-level folders.
+
+Use folder sync to keep each repository's resources grouped together under a dedicated folder. Use folderless sync when you want provisioned resources to appear at the top of your Dashboards view instead of nested inside a repository folder.
+
+Both modes can coexist with each other and with resources that aren't managed by Git Sync.
+
+The following examples use the same repository to show how the same files appear with each mode.
+
+The repository `grafana-manifests` syncs from the path `grafana/`:
+
+```
+your-org/grafana-manifests/
+└── grafana/
+    ├── cpu-metrics.json
+    └── team-platform/
+        ├── .folder.json
+        └── memory-usage.json
+```
+
+The instance also has content that isn't managed by Git Sync: a manually created **Ops** folder and an **Ad-hoc dashboard**.
+
+**With folder sync**, a repository folder wraps the synced resources, alongside the unprovisioned content:
+
+```
+Dashboards
+├── 📁 grafana-manifests/      ← managed by Git Sync
+│   ├── CPU Metrics Dashboard
+│   └── 📁 team-platform/
+│       └── Memory Usage Dashboard
+├── 📁 Ops/                    ← not managed by Git Sync
+│   └── Ops dashboard
+└── Ad-hoc dashboard           ← not managed by Git Sync
+```
+
+**With folderless sync**, the same files map to the top level, next to the unprovisioned content:
+
+```
+Dashboards
+├── CPU Metrics Dashboard      ← managed by Git Sync
+├── 📁 team-platform/          ← managed by Git Sync
+│   └── Memory Usage Dashboard
+├── 📁 Ops/                    ← not managed by Git Sync
+│   └── Ops dashboard
+└── Ad-hoc dashboard           ← not managed by Git Sync
+```
+
+Folderless sync only manages the resources it provisions. The unprovisioned **Ops** folder and **Ad-hoc dashboard** are left untouched.
+
+#### Multiple folderless repositories
+
+Because folderless sync doesn't create a wrapper folder, several folderless repositories can sync to the top level at the same time. Each repository manages only the resources it provisions:
+
+```
+Dashboards
+├── CPU Metrics Dashboard      ← managed by grafana-manifests
+├── 📁 team-platform/          ← managed by grafana-manifests
+│   └── Memory Usage Dashboard
+├── Billing Overview           ← managed by finance-dashboards
+├── 📁 invoices/               ← managed by finance-dashboards
+│   └── Monthly Invoices
+└── Ad-hoc dashboard           ← not managed by Git Sync
+```
 
 ### Git Sync states
 

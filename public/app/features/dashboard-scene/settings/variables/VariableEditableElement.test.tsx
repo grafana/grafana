@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
@@ -24,6 +24,8 @@ jest.mock('../../utils/interactions', () => ({
 }));
 
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
+
+const TestWrapper = getWrapper({ renderWithRouter: true });
 
 function buildTestVariables() {
   const var1 = new CustomVariable({ name: 'query0', query: 'a, b, c' });
@@ -146,25 +148,27 @@ describe('VariableEditableElement', () => {
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
-    expect(screen.getByText('Choose variable type')).toBeInTheDocument();
+    expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
 
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
 
-  return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
+  return (
+    <TestWrapper>
+      <Sidebar contextValue={sidebarContext}>{children}</Sidebar>
+    </TestWrapper>
+  );
 }
 
 function renderVariableEditPane(dashboard: DashboardScene) {
   const editPane = dashboard.state.editPane;
 
   render(
-    <TestProvider>
-      <WrapSidebar>
-        <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-      </WrapSidebar>
-    </TestProvider>
+    <WrapSidebar>
+      <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+    </WrapSidebar>
   );
 }
 

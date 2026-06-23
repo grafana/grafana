@@ -298,6 +298,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					JwtTokenAuth: &plugins.JWTTokenAuth{
 						Url:    "https://jwt.example.com/token",
 						Scopes: []string{"read"},
+						// #nosec G101 -- test fixture, not a real credential
 						Params: map[string]string{
 							"token_uri":    "https://jwt.example.com/token",
 							"client_email": "client@example.com",

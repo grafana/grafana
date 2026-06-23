@@ -24,15 +24,15 @@ describe('getTimeFieldWidth', () => {
       DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH / 2
     );
   });
-  it('Should return timestamp field width with padding for showInspectLogLine', () => {
-    expect(getTimeFieldWidth(undefined, 0, { showInspectLogLine: true })).toEqual(
+  it('Should return timestamp field width with padding for enableLogDetails', () => {
+    expect(getTimeFieldWidth(undefined, 0, { enableLogDetails: true })).toEqual(
       DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH / 2
     );
   });
   it('Should return timestamp field width with padding for both options', () => {
     expect(
       getTimeFieldWidth(undefined, 0, {
-        showInspectLogLine: true,
+        enableLogDetails: true,
         showCopyLogLink: true,
       })
     ).toEqual(DEFAULT_TIME_FIELD_WIDTH + ROW_ACTION_BUTTON_WIDTH);

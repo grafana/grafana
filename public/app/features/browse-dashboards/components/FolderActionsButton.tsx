@@ -13,12 +13,13 @@ import { BulkMoveProvisionedResource } from 'app/features/provisioning/component
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
 import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
-import { ManagerKind } from '../../apiserver/types';
+import { extractErrorMessage } from '../../../api/utils';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -49,7 +50,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     canSetPermissions,
   } = getFolderPermissions(folder);
 
-  const isProvisionedFolder = folder.managedBy === ManagerKind.Repo;
+  const isProvisionedFolder = isItemManagedByRepository(folder);
   const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
   // Can only move folders when the folder is not provisioned
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
@@ -73,14 +74,14 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
     const result = await deleteFolder(folder);
 
     if (result.error) {
+      const fallbackMessage = t(
+        'browse-dashboards.folder-actions-button.delete-folder-error',
+        'Error deleting folder. Please try again later.'
+      );
+
       appEvents.publish({
         type: AppEvents.alertError.name,
-        payload: [
-          t(
-            'browse-dashboards.folder-actions-button.delete-folder-error',
-            'Error deleting folder. Please try again later.'
-          ),
-        ],
+        payload: [extractErrorMessage(result.error, fallbackMessage)],
       });
       return;
     }

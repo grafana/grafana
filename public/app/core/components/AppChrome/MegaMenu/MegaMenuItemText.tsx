@@ -114,7 +114,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
 
     '&:focus-visible': {
       boxShadow: 'none',
-      outline: `2px solid ${theme.colors.primary.main}`,
+      outline: `2px solid ${theme.colors.accent.main}`,
       outlineOffset: '-2px',
     },
   }),

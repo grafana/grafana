@@ -19,33 +19,33 @@ func TestDimensionFiltersMigration(t *testing.T) {
 	}{
 		{
 			name:                     "will return new format unchanged",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{"testFilter"}}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{"testFilter"}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{"testFilter"}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{"testFilter"}}},
 		},
 		{
 			name:                     "correctly updates old format with wildcard",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &wildcard}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq")}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &wildcard}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq")}},
 		},
 		{
 			name:                     "correctly updates old format with a value",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &testFilter}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &testFilter}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly ignores wildcard if filters has a value",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &wildcard, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &wildcard, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly merges values if filters has a value (ignores duplicates)",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &testFilter, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &testFilter, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{testFilter}}},
 		},
 		{
 			name:                     "correctly merges values if filters has a value",
-			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filter: &additionalTestFilter, Filters: []string{testFilter}}},
-			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: strPtr("testDimension"), Operator: strPtr("eq"), Filters: []string{testFilter, additionalTestFilter}}},
+			dimensionFilters:         []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filter: &additionalTestFilter, Filters: []string{testFilter}}},
+			expectedDimensionFilters: []dataquery.AzureMetricDimension{{Dimension: new("testDimension"), Operator: new("eq"), Filters: []string{testFilter, additionalTestFilter}}},
 		},
 	}
 

@@ -1,16 +1,19 @@
+import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Card, LinkButton, Stack, Text, TextLink } from '@grafana/ui';
-import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
+import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
+import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
+import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -22,6 +25,7 @@ export function RepositoryListItem({ repository }: Props) {
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   const { metadata, spec, status } = repository;
   const name = metadata?.name ?? '';
+  const styles = useStyles2(getStyles);
 
   const getRepositoryMeta = (): ReactNode[] => {
     const meta: ReactNode[] = [];
@@ -57,17 +61,15 @@ export function RepositoryListItem({ repository }: Props) {
   };
 
   return (
-    <Card noMargin key={name}>
-      <Card.Figure>
+    <Card noMargin key={name} className={styles.card}>
+      <Card.Figure className={styles.figure}>
         <RepoIcon type={spec?.type} />
       </Card.Figure>
       <Card.Heading>
-        <Stack gap={2} direction="row" alignItems="center">
+        <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && (
-            <Badge color="darkgrey" text={t('provisioning.repository-card.read-only-badge', 'Read only')} />
-          )}
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
         </Stack>
       </Card.Heading>
 
@@ -76,23 +78,30 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.description && <Text>{spec.description}</Text>}
           {status?.stats?.length && (
             <Stack gap={1} direction="row" wrap>
-              {status.stats.map((stat, index) => (
-                <LinkButton
-                  key={index}
-                  fill="outline"
-                  size="md"
-                  variant="secondary"
-                  href={getListURL(repository, stat)}
-                >
-                  {stat.count} {stat.resource}
-                </LinkButton>
-              ))}
+              {status.stats.map((stat, index) => {
+                const info = getKindInfoByStatGroup(stat.group);
+                const icon = info?.icon ?? 'file-alt';
+                const label = `${stat.count} ${stat.resource}`;
+                // Known kinds link to where the repository's resources live; unknown
+                // kinds have no destination, so render a non-interactive badge.
+                const href = info ? getRepositoryRoute(info, repository) : undefined;
+
+                return href ? (
+                  <LinkButton key={index} fill="outline" size="md" variant="secondary" icon={icon} href={href}>
+                    {label}
+                  </LinkButton>
+                ) : (
+                  <Button key={index} fill="outline" size="md" variant="secondary" icon={icon} disabled>
+                    {label}
+                  </Button>
+                );
+              })}
             </Stack>
           )}
         </Stack>
       </Card.Description>
 
-      <Card.Meta>{getRepositoryMeta()}</Card.Meta>
+      <Card.Meta className={styles.meta}>{getRepositoryMeta()}</Card.Meta>
 
       <Card.Actions>
         <Stack gap={1} direction="row">
@@ -120,13 +129,29 @@ export function RepositoryListItem({ repository }: Props) {
   );
 }
 
-// Helper function
-function getListURL(repo: Repository, stats: ResourceCount): string {
-  if (stats.resource === 'playlists') {
-    return '/playlists';
-  }
-  if (repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
-  }
-  return '/dashboards';
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  card: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        gridTemplate: `
+          "Figure"
+          "Heading"
+          "Meta"
+          "Description" 1fr
+          "Actions" / 1fr
+        `,
+      },
+    },
+  }),
+  figure: css({
+    [theme.breakpoints.down('md')]: {
+      '&&': {
+        marginRight: 0,
+        marginBottom: theme.spacing(1),
+      },
+    },
+  }),
+  meta: css({
+    flexWrap: 'wrap',
+  }),
+});

@@ -269,6 +269,45 @@ describe('Layout mutation commands', () => {
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows.map((r) => r.state.title)).toEqual(['First', 'Second', 'Third']);
     });
+
+    it('adds a row with conditionalRendering', async () => {
+      const scene = buildRowsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_ROW',
+        payload: {
+          row: {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Conditional Row',
+              conditionalRendering: {
+                kind: 'ConditionalRenderingGroup',
+                spec: {
+                  visibility: 'hide',
+                  condition: 'or',
+                  items: [
+                    {
+                      kind: 'ConditionalRenderingTimeRangeSize',
+                      spec: { value: '1h' },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[1].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('hide');
+      expect(serialized?.spec.condition).toBe('or');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingTimeRangeSize');
+    });
   });
 
   describe('REMOVE_ROW', () => {
@@ -348,6 +387,86 @@ describe('Layout mutation commands', () => {
       const body = scene.state.body as unknown as RowsLayoutManager;
       expect(body.state.rows[0].state.collapse).toBe(true);
     });
+
+    it('sets conditionalRendering with a variable condition', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'hide',
+                condition: 'and',
+                items: [
+                  {
+                    kind: 'ConditionalRenderingVariable',
+                    spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('hide');
+      expect(serialized?.spec.condition).toBe('and');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingVariable');
+    });
+
+    it('clears conditionalRendering when items is empty', async () => {
+      const scene = buildRowsScene(['Row']);
+      const executor = new DashboardMutationClient(scene);
+
+      await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'show',
+                condition: 'and',
+                items: [
+                  {
+                    kind: 'ConditionalRenderingVariable',
+                    spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      });
+
+      const result = await executor.execute({
+        type: 'UPDATE_ROW',
+        payload: {
+          path: '/rows/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: { visibility: 'show', condition: 'and', items: [] },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      const serialized = body.state.rows[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.items).toHaveLength(0);
+    });
   });
 
   describe('MOVE_ROW', () => {
@@ -421,6 +540,39 @@ describe('Layout mutation commands', () => {
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs.map((t) => t.state.title)).toEqual(['First', 'Second', 'Third']);
     });
+
+    it('adds a tab with conditionalRendering', async () => {
+      const scene = buildTabsScene(['Existing']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'ADD_TAB',
+        payload: {
+          tab: {
+            kind: 'TabsLayoutTab',
+            spec: {
+              title: 'Conditional Tab',
+              conditionalRendering: {
+                kind: 'ConditionalRenderingGroup',
+                spec: {
+                  visibility: 'show',
+                  condition: 'and',
+                  items: [{ kind: 'ConditionalRenderingData', spec: { value: false } }],
+                },
+              },
+            },
+          },
+          parentPath: '/',
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const serialized = body.state.tabs[1].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('show');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingData');
+    });
   });
 
   describe('REMOVE_TAB', () => {
@@ -482,6 +634,35 @@ describe('Layout mutation commands', () => {
       expect(result.success).toBe(true);
       const body = scene.state.body as unknown as TabsLayoutManager;
       expect(body.state.tabs[0].state.title).toBe('New Title');
+    });
+
+    it('sets conditionalRendering with a data condition', async () => {
+      const scene = buildTabsScene(['Tab']);
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'UPDATE_TAB',
+        payload: {
+          path: '/tabs/0',
+          spec: {
+            conditionalRendering: {
+              kind: 'ConditionalRenderingGroup',
+              spec: {
+                visibility: 'show',
+                condition: 'and',
+                items: [{ kind: 'ConditionalRenderingData', spec: { value: true } }],
+              },
+            },
+          },
+        },
+      });
+
+      expect(result.success).toBe(true);
+      const body = scene.state.body as unknown as TabsLayoutManager;
+      const serialized = body.state.tabs[0].state.conditionalRendering?.serialize();
+      expect(serialized?.spec.visibility).toBe('show');
+      expect(serialized?.spec.items).toHaveLength(1);
+      expect(serialized?.spec.items[0].kind).toBe('ConditionalRenderingData');
     });
   });
 
@@ -598,6 +779,50 @@ describe('Layout mutation commands', () => {
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
       expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('preserves panel ids and keeps grid item keys unique when moving panels', async () => {
+      const panel1 = new VizPanel({ key: 'panel-1', title: 'P1', pluginId: 'timeseries' });
+      const panel2 = new VizPanel({ key: 'panel-2', title: 'P2', pluginId: 'timeseries' });
+      const panel3 = new VizPanel({ key: 'panel-3', title: 'P3', pluginId: 'timeseries' });
+      const row = new RowItem({
+        title: 'Row',
+        layout: DefaultGridLayoutManager.fromVizPanels([panel1, panel2, panel3]),
+      });
+      const body = new RowsLayoutManager({ rows: [row] });
+      const state: Record<string, unknown> = { uid: 'test-dash', isEditing: false, body };
+      const scene = {
+        state,
+        serializer: mockSerializer({ 'panel-1': 1, 'panel-2': 2, 'panel-3': 3 }),
+        canEditDashboard: jest.fn(() => true),
+        onEnterEditMode: jest.fn(() => {
+          state.isEditing = true;
+        }),
+        forceRender: jest.fn(),
+        setState: jest.fn((partial: Record<string, unknown>) => {
+          Object.assign(state, partial);
+        }),
+      };
+      currentTestScene = scene;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const executor = new DashboardMutationClient(scene as unknown as DashboardScene);
+
+      for (const name of ['panel-1', 'panel-2', 'panel-3']) {
+        const result = await executor.execute({
+          type: 'MOVE_PANEL',
+          payload: { element: { name }, toParent: '/rows/0', position: { x: 0, y: 0, width: 24, height: 8 } },
+        });
+        expect(result.success).toBe(true);
+      }
+
+      const panels = (scene.state.body as unknown as RowsLayoutManager).state.rows[0].state.layout.getVizPanels();
+      expect(panels).toHaveLength(3);
+
+      const keyToTitle = Object.fromEntries(panels.map((p) => [p.state.key, p.state.title]));
+      expect(keyToTitle).toEqual({ 'panel-1': 'P1', 'panel-2': 'P2', 'panel-3': 'P3' });
+
+      const gridItemKeys = panels.map((p) => p.parent?.state.key);
+      expect(new Set(gridItemKeys).size).toBe(3);
     });
 
     it('returns no-op when toParent is omitted and no position is provided', async () => {

@@ -13,7 +13,8 @@ import {
 import { transformToOTLP } from '@grafana-plugins/tempo/resultTransformer';
 
 import { transformToJaeger } from '../../../plugins/datasource/jaeger/responseTransform';
-import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/transforms';
+
+import { transformToZipkin } from './transformToZipkin';
 
 /**
  * Downloads a DataFrame as a TXT file.
@@ -24,11 +25,13 @@ import { transformToZipkin } from '../../../plugins/datasource/zipkin/utils/tran
 export function downloadLogsModelAsTxt(logsModel: Pick<LogsModel, 'meta' | 'rows'>, title = '', fields: string[] = []) {
   let textToDownload = '';
 
-  logsModel.meta?.forEach((metaItem) => {
-    const string = `${metaItem.label}: ${JSON.stringify(metaItem.value)}\n`;
-    textToDownload = textToDownload + string;
-  });
-  textToDownload = textToDownload + '\n\n';
+  if (logsModel.meta?.length) {
+    logsModel.meta?.forEach((metaItem) => {
+      const string = `${metaItem.label ? `${metaItem.label}: ` : ''}${JSON.stringify(metaItem.value)}\n`;
+      textToDownload = textToDownload + string;
+    });
+    textToDownload = textToDownload + '\n\n';
+  }
 
   logsModel.rows.forEach((row) => {
     const entry = !fields.length ? row.entry : fields.map((field) => row.labels[field] ?? '').join(' ');
@@ -56,9 +59,11 @@ export function downloadDataFrameAsCsv(
   title: string,
   csvConfig?: CSVConfig,
   transformId: DataTransformerID = DataTransformerID.noop,
-  excelCompatibilityMode = false
+  excelCompatibilityMode = false,
+  trailingNewline = false
 ) {
   let blob;
+  const newline = trailingNewline ? (csvConfig?.newline ?? '\r\n') : '';
 
   if (excelCompatibilityMode) {
     /**
@@ -70,13 +75,13 @@ export function downloadDataFrameAsCsv(
      *
      * When excel opens a utf16le csv file it will no longer try to use the system list separator, and instead use \t as the separator.
      */
-    const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' });
+    const dataFrameCsv = toCSV([dataFrame], { ...csvConfig, useExcelHeader: false, delimiter: '\t' }) + newline;
     const utf16le = new Uint16Array(Array.from('\ufeff' + dataFrameCsv).map((char) => char.charCodeAt(0)));
     blob = new Blob([utf16le], {
       type: 'text/csv;charset=utf-16le',
     });
   } else {
-    const dataFrameCsv = toCSV([dataFrame], csvConfig);
+    const dataFrameCsv = toCSV([dataFrame], csvConfig) + newline;
     blob = new Blob([dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
     });

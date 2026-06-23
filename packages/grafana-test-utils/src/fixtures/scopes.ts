@@ -2,13 +2,13 @@
  * Types for Scopes API - matching @grafana/data types
  */
 
-export interface ScopeFilter {
+interface ScopeFilter {
   key: string;
   value: string;
   operator: 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
 }
 
-export interface ScopeSpec {
+interface ScopeSpec {
   title: string;
   filters: ScopeFilter[];
 }
@@ -20,7 +20,7 @@ export interface Scope {
   spec: ScopeSpec;
 }
 
-export interface ScopeNodeSpec {
+interface ScopeNodeSpec {
   nodeType: 'container' | 'leaf';
   title: string;
   description?: string;
@@ -37,12 +37,12 @@ export interface ScopeNode {
   spec: ScopeNodeSpec;
 }
 
-export interface ScopeDashboardBindingSpec {
+interface ScopeDashboardBindingSpec {
   dashboard: string;
   scope: string;
 }
 
-export interface ScopeDashboardBindingStatus {
+interface ScopeDashboardBindingStatus {
   dashboardTitle: string;
   groups?: string[];
 }

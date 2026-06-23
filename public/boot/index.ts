@@ -133,7 +133,22 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
 
   // Handle SSO auto-login redirection from /bootdata.
   // Only redirect if there's no login error to avoid redirect loops.
-  if (rawBootData.autoLoginRedirectURL && !rawBootData.settings.loginError && !queryParams.has('disableAutoLogin')) {
+  const hasLoginError = rawBootData.settings?.loginError || window.grafanaBootData.settings.loginError;
+  const annonAccessPages = [
+    /\/dashboard\/snapshot\/.*$/,
+    /\/invite$/,
+    /\/signup$/,
+    /\/user\/password\/send-reset-email$/,
+    /\/user\/password\/reset$/,
+    /\/public-dashboards\/.*$/,
+  ];
+  const isAllowedAnonPage = annonAccessPages.some((regex) => regex.test(window.location.pathname));
+  if (
+    rawBootData.autoLoginRedirectURL &&
+    !hasLoginError &&
+    !queryParams.has('disableAutoLogin') &&
+    !isAllowedAnonPage
+  ) {
     // Copied from context_srv.setRedirectToUrl
     const redirectPath = window.location.href.substring(window.location.origin.length);
     if (redirectPath !== '/login') {
@@ -201,33 +216,48 @@ async function initGrafana() {
     return Promise.reject({ redirect: bootData.redirect });
   }
 
-  window.grafanaBootData.settings = {
-    ...bootData.settings,
-    ...window.grafanaBootData.settings,
-  };
-  window.grafanaBootData.navTree = bootData.navTree;
+  // TODO: move grabbing user info behind the !window.__grafanaReduceBootdataAPI check once we have
+  // a MT-friendly substitute for it.
+  //
+  // When the __grafanaReduceBootdataAPI flag is enabled, we want to use as little of the boot data response
+  // as possible, and eventually not even call it. However there's no substitute for the user's auth state yet
+  // but we still want to test this codepath, so we keep the user info grabbing here for now.
   window.grafanaBootData.user = bootData.user;
-  if (bootData.settings?.buildInfo?.edition) {
-    window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
+
+  if (!window.__grafanaReduceBootdataAPI) {
+    window.grafanaBootData.settings = {
+      ...bootData.settings,
+      ...window.grafanaBootData.settings,
+    };
+    window.grafanaBootData.navTree = bootData.navTree;
+
+    if (bootData.settings?.buildInfo?.edition) {
+      window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
+    }
+
+    // The per-theme CSS still contains some global styles needed
+    // to render the page correctly.
+    const cssLink = document.createElement('link');
+    cssLink.rel = 'stylesheet';
+
+    const theme = window.grafanaBootData.user.theme;
+    if (theme === 'system') {
+      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      window.grafanaBootData.user.lightTheme = !darkQuery.matches;
+    }
+
+    const isLightTheme = window.grafanaBootData.user.lightTheme;
+
+    document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
+
+    const lang = window.grafanaBootData.user.language;
+    if (lang) {
+      document.documentElement.lang = lang;
+    }
+
+    cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
+    document.head.appendChild(cssLink);
   }
-
-  // The per-theme CSS still contains some global styles needed
-  // to render the page correctly.
-  const cssLink = document.createElement('link');
-  cssLink.rel = 'stylesheet';
-
-  const theme = window.grafanaBootData.user.theme;
-  if (theme === 'system') {
-    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    window.grafanaBootData.user.lightTheme = !darkQuery.matches;
-  }
-
-  const isLightTheme = window.grafanaBootData.user.lightTheme;
-
-  document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
-
-  cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
-  document.head.appendChild(cssLink);
 
   // Set custom fav icon if set in whitelabeling settings
   // @ts-ignore - enterprise only setting.

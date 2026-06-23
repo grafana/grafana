@@ -2,9 +2,20 @@ import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Box, Card, type CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Box,
+  Card,
+  type CellProps,
+  Grid,
+  Icon,
+  InteractiveTable,
+  LinkButton,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { type Repository, type ResourceCount } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RecentJobs } from '../Job/RecentJobs';
@@ -12,6 +23,7 @@ import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
+import { getKindInfoByStatGroup, getRepositoryRoute } from '../utils/resourceKinds';
 import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
@@ -42,7 +54,13 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         id: 'Resource',
         header: 'Resource Type',
         cell: ({ row: { original } }: StatCell<'resource'>) => {
-          return <span>{original.resource}</span>;
+          const info = getKindInfoByStatGroup(original.group);
+          return (
+            <Stack direction="row" gap={1} alignItems="center">
+              <Icon name={info?.icon ?? 'file-alt'} />
+              <span>{info?.kind ?? original.resource}</span>
+            </Stack>
+          );
         },
         size: 'auto',
       },
@@ -54,8 +72,27 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         },
         size: 100,
       },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row: { original } }: StatCell) => {
+          const info = getKindInfoByStatGroup(original.group);
+          // Unknown kinds have no destination, so no action.
+          if (!info) {
+            return null;
+          }
+          return (
+            <Stack justifyContent="flex-end">
+              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+                <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
+              </LinkButton>
+            </Stack>
+          );
+        },
+        size: 100,
+      },
     ],
-    []
+    [repo]
   );
   return (
     <Box padding={2}>
@@ -83,11 +120,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   </Box>
                 )}
               </Card.Description>
-              <Card.Actions className={styles.actions}>
-                <LinkButton size="md" href={getFolderURL(repo)} icon="folder-open" variant="secondary">
-                  <Trans i18nKey="provisioning.repository-overview.view-folder">View Folder</Trans>
-                </LinkButton>
-              </Card.Actions>
             </Card>
           </div>
 
@@ -162,13 +194,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   );
 }
 
-function getFolderURL(repo: Repository) {
-  if (repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
-  }
-  return '/dashboards';
-}
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardContainer: css({
@@ -214,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 function getWebhookURL(repo: Repository) {
   const { status, spec } = repo;
   if (spec?.type === 'github' && status?.webhook?.url && spec.github?.url) {
-    return `${spec.github.url}/settings/hooks/${status.webhook?.id}`;
+    return textUtil.sanitizeUrl(`${spec.github.url}/settings/hooks/${status.webhook?.id}`);
   }
   return undefined;
 }

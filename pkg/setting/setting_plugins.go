@@ -39,6 +39,8 @@ var (
 		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
 		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
 		"elasticsearch":                {ID: "elasticsearch"},
+		"zipkin":                       {ID: "zipkin"},
+		"opentsdb":                     {ID: "opentsdb"},
 	}
 )
 
@@ -154,6 +156,9 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}
+		}
+		if cfg.IsEnterprise {
+			preinstallPluginsAsync["grafana-assistant-app"] = InstallPlugin{"grafana-assistant-app", "", ""}
 		}
 		cfg.processPreinstallPlugins(rawInstallPluginsAsync, preinstallPluginsAsync)
 

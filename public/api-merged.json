@@ -1844,6 +1844,12 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "description": "Limit response to annotations created by a specific user, identified by UID.",
+            "name": "userUID",
+            "in": "query"
+          },
+          {
             "type": "integer",
             "format": "int64",
             "description": "Find annotations for a specified alert rule by its ID.\ndeprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.",
@@ -3358,7 +3364,7 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards",
         "tags": [
           "dashboards"
         ],
@@ -3709,7 +3715,7 @@
     },
     "/dashboards/uid/{uid}": {
       "get": {
-        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
@@ -3746,7 +3752,7 @@
         }
       },
       "delete": {
-        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
+        "description": "Will delete the dashboard given the specified unique identifier (uid).\n\nUse: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}",
         "tags": [
           "dashboards"
         ],
@@ -3782,7 +3788,7 @@
     },
     "/dashboards/uid/{uid}/permissions": {
       "get": {
-        "description": "Use: /apis/dashboards.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
+        "description": "Use: /apis/dashboard.grafana.app/v1/namespaces/{ns}/dashboards/{uid}/access",
         "tags": [
           "dashboards",
           "permissions"
@@ -3865,7 +3871,7 @@
     },
     "/dashboards/uid/{uid}/restore": {
       "post": {
-        "description": "This API will be removed when /apis/dashboards.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
+        "description": "This API will be removed when /apis/dashboard.grafana.app/v1 is released.\nYou can restore a dashboard by reading it from history, then creating it again.",
         "tags": [
           "dashboards",
           "versions"
@@ -5409,188 +5415,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "404": {
-            "$ref": "#/responses/notFoundError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/groups": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "List groups that have mappings set. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getMappedGroups",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupsResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/groups/{group_id}": {
-      "put": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Update mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "updateGroupMappings",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupAttributes"
-            }
-          },
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Create mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "createGroupMappings",
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/GroupAttributes"
-            }
-          },
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "$ref": "#/responses/apiResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Delete mappings for a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "deleteGroupMappings",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "204": {
-            "$ref": "#/responses/okResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/groupsync/groups/{group_id}/roles": {
-      "get": {
-        "tags": [
-          "group_attribute_sync",
-          "enterprise"
-        ],
-        "summary": "Get roles mapped to a group. This endpoint is behind the feature flag `groupAttributeSync` and is considered experimental.",
-        "operationId": "getGroupRoles",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "group_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getGroupRolesResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -10115,60 +9939,6 @@
         }
       }
     },
-    "/user/helpflags/clear": {
-      "get": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Clear user help flag.",
-        "operationId": "clearHelpFlags",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
-    "/user/helpflags/{flag_id}": {
-      "put": {
-        "tags": [
-          "signed_in_user"
-        ],
-        "summary": "Set user help flag.",
-        "operationId": "setHelpFlag",
-        "parameters": [
-          {
-            "type": "string",
-            "name": "flag_id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/responses/helpFlagResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/user/orgs": {
       "get": {
         "security": [
@@ -14557,6 +14327,12 @@
         },
         "subject": {
           "type": "string"
+        },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
         }
       }
     },
@@ -16788,26 +16564,6 @@
         }
       }
     },
-    "Group": {
-      "type": "object",
-      "properties": {
-        "groupID": {
-          "type": "string"
-        },
-        "mappings": {}
-      }
-    },
-    "GroupAttributes": {
-      "type": "object",
-      "properties": {
-        "roles": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "HTTPClientConfig": {
       "type": "object",
       "title": "HTTPClientConfig configures an HTTP client.",
@@ -18517,9 +18273,6 @@
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
-        "regionalFormat": {
-          "type": "string"
-        },
         "theme": {
           "type": "string",
           "enum": [
@@ -19175,8 +18928,12 @@
           "description": "UID for the home dashboard",
           "type": "string"
         },
+        "homeURL": {
+          "description": "Explicit home URL (NOTE: this can only be modified in the system settings)",
+          "type": "string"
+        },
         "language": {
-          "description": "Selected language (beta)",
+          "description": "Selected language",
           "type": "string"
         },
         "navbar": {
@@ -19185,16 +18942,12 @@
         "queryHistory": {
           "$ref": "#/definitions/PreferencesQueryHistoryPreference"
         },
-        "regionalFormat": {
-          "description": "Selected locale (beta)",
-          "type": "string"
-        },
         "theme": {
-          "description": "light, dark, empty is default",
+          "description": "user interface theme",
           "type": "string"
         },
         "timezone": {
-          "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+          "description": "The timezone selection",
           "type": "string"
         },
         "weekStart": {
@@ -20212,6 +19965,12 @@
           "type": "string",
           "format": "date-time"
         },
+        "urls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ReportURLItem"
+          }
+        },
         "userId": {
           "type": "integer",
           "format": "int64"
@@ -20391,6 +20150,17 @@
           "type": "string"
         },
         "to": {
+          "type": "string"
+        }
+      }
+    },
+    "ReportURLItem": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "url": {
           "type": "string"
         }
       }
@@ -21877,6 +21647,7 @@
           "type": "string"
         },
         "uid": {
+          "description": "Deprecated: always empty; no per-entry id.",
           "type": "string"
         }
       }
@@ -22727,9 +22498,6 @@
         "queryHistory": {
           "$ref": "#/definitions/QueryHistoryPreference"
         },
-        "regionalFormat": {
-          "type": "string"
-        },
         "theme": {
           "type": "string",
           "enum": [
@@ -23013,6 +22781,12 @@
     "UserSearchHitDTO": {
       "type": "object",
       "properties": {
+        "accessControl": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
         "authLabels": {
           "type": "array",
           "items": {
@@ -23053,6 +22827,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "role": {
           "type": "string"
         },
         "uid": {
@@ -23453,21 +23230,6 @@
         }
       }
     },
-    "getGroupsResponse": {
-      "type": "object",
-      "properties": {
-        "groups": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Group"
-          }
-        },
-        "total": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
     "gettableAlert": {
       "description": "GettableAlert gettable alert",
       "type": "object",
@@ -23716,14 +23478,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/matcher"
-      }
-    },
-    "messageResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
       }
     },
     "peerStatus": {
@@ -24095,12 +23849,6 @@
         "items": {
           "$ref": "#/definitions/UserToken"
         }
-      }
-    },
-    "apiResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/messageResponse"
       }
     },
     "badRequestError": {
@@ -24621,21 +24369,6 @@
         }
       }
     },
-    "getGroupRolesResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/RoleDTO"
-        }
-      }
-    },
-    "getGroupsResponse": {
-      "description": "(empty)",
-      "schema": {
-        "$ref": "#/definitions/getGroupsResponse"
-      }
-    },
     "getHomeDashboardResponse": {
       "description": "(empty)",
       "schema": {
@@ -24963,21 +24696,6 @@
       "description": "GoneError is returned when the requested endpoint was removed.",
       "schema": {
         "$ref": "#/definitions/ErrorResponseBody"
-      }
-    },
-    "helpFlagResponse": {
-      "description": "(empty)",
-      "schema": {
-        "type": "object",
-        "properties": {
-          "helpFlags1": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
       }
     },
     "importDashboardResponse": {

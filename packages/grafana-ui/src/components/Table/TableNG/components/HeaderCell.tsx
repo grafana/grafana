@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
 import React, { useEffect, useRef } from 'react';
-import { type Column, type SortDirection } from 'react-data-grid';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
+import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { getFieldTypeIcon } from '../../../../types/icon';

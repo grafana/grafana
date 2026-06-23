@@ -100,10 +100,7 @@ export const usePluginDetailsTabs = (
       });
     }
 
-    if (
-      config.featureToggles.unifiedStorageSearchUI &&
-      (pluginConfig.meta.type === PluginType.panel || pluginConfig.meta.type === PluginType.datasource)
-    ) {
+    if (pluginConfig.meta?.type === PluginType.panel || pluginConfig.meta?.type === PluginType.datasource) {
       navModelChildren.push({
         text: PluginTabLabels.USAGE,
         icon: 'list-ul',

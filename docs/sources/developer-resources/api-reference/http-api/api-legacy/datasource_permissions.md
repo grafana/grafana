@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../../../http_api/datasource_permissions/ # /docs/grafana/next/http_api/datasource_permissions/
-  - ../../../http_api/datasourcepermissions/ # /docs/grafana/next/http_api/datasourcepermissions/
-  - ../../../developers/http_api/datasource_permissions/ # /docs/grafana/next/developers/http_api/datasource_permissions/
+  - ../../../../http_api/datasource_permissions/ # /docs/grafana/next/http_api/datasource_permissions/
+  - ../../../../http_api/datasourcepermissions/ # /docs/grafana/next/http_api/datasourcepermissions/
+  - ../../../../developers/http_api/datasource_permissions/ # /docs/grafana/next/developers/http_api/datasource_permissions/
   - ../../../../developer-resources/api-reference/http-api/datasource_permissions/ #legacy folder
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/http-api/api-legacy/datasource_permissions/
 description: Data Source Permissions API
@@ -39,7 +39,7 @@ Permissions can be set for a user, team, service account or a basic role (Admin,
 
 ### Optional `ds_type` query parameter {#ds-type}
 
-Every endpoint in this API accepts an optional query parameter `ds_type`. Set it to the data source **plugin type** (for example `prometheus` or `loki`). Use `ds_type` when more than one data source in the organization shares the same UID so Grafana can resolve the correct instance. If the UID is unique in the organization, you can omit `ds_type`.
+Every endpoint in this API accepts an optional query parameter `ds_type`. Set it to the data source **plugin type** (for example `prometheus` or `loki`). Use `ds_type` when more than one data source in the organization shares the same UID so Grafana can resolve the correct instance.
 
 ## Get permissions for a data source
 
@@ -178,6 +178,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
+When granting a `Query` permission, the user also has read access to the data source.
+
 **Example response:**
 
 ```http
@@ -228,6 +230,8 @@ Append `?ds_type=<TYPE>` when you need to disambiguate the UID; refer to [Option
 
 To add a permission, set the `permission` field to either `Query`, `Edit`, or `Admin`.
 To remove a permission, set the `permission` field to an empty string.
+
+When adding `Query`, `Edit`, or `Admin` permissions, the user implicitly has `Read` access.
 
 **Required permissions**
 

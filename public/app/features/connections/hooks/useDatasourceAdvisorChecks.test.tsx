@@ -12,6 +12,7 @@ import { config, usePluginFunctions } from '@grafana/runtime';
 
 import {
   AdvisorCheckProvider,
+  useCreateDatasourceAdvisorChecks,
   useDatasourceFailureByUID,
   useLatestDatasourceCheck,
   useRetryDatasourceAdvisorCheck,
@@ -89,14 +90,26 @@ function mockPluginFunctions(options: {
   completedCheck?: Check;
   completedChecksLoading?: boolean;
   retryCheckFn?: jest.Mock;
+  createChecksFn?: jest.Mock;
+  createChecksLoading?: boolean;
+  includeCreateChecksFn?: boolean;
   pluginLoading?: boolean;
 }) {
-  const { completedCheck, completedChecksLoading = false, retryCheckFn, pluginLoading = false } = options;
+  const {
+    completedCheck,
+    completedChecksLoading = false,
+    retryCheckFn,
+    createChecksFn,
+    createChecksLoading = false,
+    includeCreateChecksFn = true,
+    pluginLoading = false,
+  } = options;
 
   // Pre-create stable return objects to avoid infinite re-render loops.
   // In production, RTK Query hooks return referentially stable values;
   // the mock must do the same for useLayoutEffect deps to stabilize.
   const stableRetryCheck = retryCheckFn ?? jest.fn();
+  const stableCreateChecks = createChecksFn ?? jest.fn();
   const completedData: CheckList | undefined = completedCheck
     ? { apiVersion: 'advisor.grafana.app/v0alpha1', kind: 'CheckList', items: [completedCheck], metadata: {} }
     : undefined;
@@ -106,6 +119,10 @@ function mockPluginFunctions(options: {
     data: completedData,
   };
   const retryResult = { retryCheck: stableRetryCheck };
+  const createChecksResult = {
+    createChecks: stableCreateChecks,
+    createCheckState: { isLoading: createChecksLoading },
+  };
 
   usePluginFunctionsMock.mockImplementation(({ extensionPointId }: { extensionPointId: string }) => {
     if (extensionPointId === PluginExtensionPoints.AdvisorCompletedChecks) {
@@ -118,6 +135,15 @@ function mockPluginFunctions(options: {
       return {
         isLoading: pluginLoading,
         functions: pluginLoading ? [] : [{ pluginId: 'grafana-advisor-app', fn: () => retryResult }],
+      };
+    }
+    if (extensionPointId === PluginExtensionPoints.AdvisorCreateChecks) {
+      return {
+        isLoading: pluginLoading,
+        functions:
+          pluginLoading || !includeCreateChecksFn
+            ? []
+            : [{ pluginId: 'grafana-advisor-app', fn: () => createChecksResult }],
       };
     }
     return { isLoading: false, functions: [] };
@@ -395,5 +421,76 @@ describe('useRetryDatasourceAdvisorCheck', () => {
     });
 
     expect(retryCheckFn).not.toHaveBeenCalled();
+  });
+});
+
+describe('useCreateDatasourceAdvisorChecks', () => {
+  const originalFeatureToggles = config.featureToggles;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    config.featureToggles = {
+      ...originalFeatureToggles,
+      grafanaAdvisor: true,
+      advisorDatasourceIntegration: true,
+    };
+    useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
+  });
+
+  afterEach(() => {
+    config.featureToggles = originalFeatureToggles;
+  });
+
+  it('calls createChecks when advisor is enabled', () => {
+    const createChecksFn = jest.fn();
+    mockPluginFunctions({ createChecksFn });
+
+    const { result } = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
+    act(() => {
+      result.current.createChecks();
+    });
+
+    expect(createChecksFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call createChecks when advisor is disabled', () => {
+    config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
+    const createChecksFn = jest.fn();
+    mockPluginFunctions({ createChecksFn });
+
+    const { result } = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
+    act(() => {
+      result.current.createChecks();
+    });
+
+    expect(createChecksFn).not.toHaveBeenCalled();
+  });
+
+  it('returns running state while create checks are running', () => {
+    mockPluginFunctions({ createChecksLoading: true });
+
+    const { result } = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
+
+    expect(result.current.isCreatingChecks).toBe(true);
+  });
+
+  it('returns running state while completed checks are still processing', () => {
+    mockPluginFunctions({ completedChecksLoading: true });
+
+    const { result } = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
+
+    expect(result.current.isCreatingChecks).toBe(true);
+  });
+
+  it('keeps advisor checks available when create checks function is not exposed', () => {
+    const check = makeCheck({ name: 'latest', creationTimestamp: '2026-03-11T13:00:00Z', failures: emptyReport });
+    mockPluginFunctions({ completedCheck: check, includeCreateChecksFn: false });
+
+    const latestCheckResult = renderHook(() => useLatestDatasourceCheck(), { wrapper });
+    const createResult = renderHook(() => useCreateDatasourceAdvisorChecks(), { wrapper });
+
+    expect(latestCheckResult.result.current.check?.metadata.name).toBe('latest');
+    expect(latestCheckResult.result.current.isLoading).toBe(false);
+    expect(createResult.result.current.isAvailable).toBe(false);
   });
 });

@@ -109,16 +109,20 @@ export function RelatedNotificationsSidebar({
               <Text variant="bodySmall" color="secondary">
                 {batch.notifications.length === 1
                   ? t('alerting.notification-detail.batch-count-one', '1 delivery')
-                  : t('alerting.notification-detail.batch-count-many', '{{count}} deliveries', {
+                  : t('alerting.notification-detail.batch-count-many', '', {
                       count: batch.notifications.length,
+                      defaultValue_one: '{{count}} deliveries',
+                      defaultValue_other: '{{count}} deliveries',
                     })}
               </Text>
               {batch.failedCount > 0 ? (
                 <Stack direction="row" gap={0.5} alignItems="center">
                   <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
                   <Text variant="bodySmall" color="error">
-                    {t('alerting.notification-detail.batch-failed', '{{count}} failed', {
+                    {t('alerting.notification-detail.batch-failed', '', {
                       count: batch.failedCount,
+                      defaultValue_one: '{{count}} failed',
+                      defaultValue_other: '{{count}} failed',
                     })}
                   </Text>
                 </Stack>

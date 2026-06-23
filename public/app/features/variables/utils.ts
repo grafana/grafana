@@ -5,7 +5,6 @@ import {
   type ScopedVars,
   type UrlQueryMap,
   type UrlQueryValue,
-  type VariableType,
   VariableRefresh,
   type VariableWithOptions,
   type QueryVariableModel,
@@ -18,7 +17,6 @@ import { type StoreState } from 'app/types/store';
 import { getState } from '../../store/store';
 import { type TimeSrv } from '../dashboard/services/TimeSrv';
 
-import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { type KeyedVariableIdentifier, type VariableIdentifier, type VariablePayload } from './state/types';
@@ -172,17 +170,6 @@ export function getVariableRefresh(variable: BaseVariableModel): VariableRefresh
   return variable.refresh;
 }
 
-export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
-  return variableAdapters
-    .list()
-    .filter((v) => v.id !== 'system')
-    .map(({ id, name, description }) => ({
-      label: name,
-      value: id,
-      description,
-    }));
-}
-
 function getUrlValueForComparison(value: unknown) {
   if (isArray(value)) {
     if (value.length === 0) {
@@ -195,7 +182,7 @@ function getUrlValueForComparison(value: unknown) {
   return value;
 }
 
-export interface UrlQueryType {
+interface UrlQueryType {
   value: UrlQueryValue;
   removed?: boolean;
 }

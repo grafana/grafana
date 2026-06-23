@@ -127,7 +127,7 @@ export function getSyncStepStatus(state: SyncStepState): StepStatusInfo {
 
 const AUTH_TYPE_FIELDS = new Set(['repository.token', 'repository.tokenUser', 'repository.url']);
 
-export function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
+function getEarliestErrorStep(fieldErrors: ErrorDetails[]): WizardStep {
   const formErrors = getFormErrors(fieldErrors);
   // If any of the form errors are in the auth type fields, return the auth type step, otherwise return the connection step
   return formErrors.some(([path]) => AUTH_TYPE_FIELDS.has(path)) ? 'authType' : 'connection';

@@ -15,11 +15,13 @@ import (
 )
 
 type githubClient struct {
-	gh *github.Client
+	gh    *github.Client
+	owner string
+	repo  string
 }
 
-func NewClient(client *github.Client) Client {
-	return &githubClient{client}
+func NewClient(client *github.Client, owner, repo string) Client {
+	return &githubClient{gh: client, owner: owner, repo: repo}
 }
 
 // translateGitHubError converts GitHub API errors into common repository errors
@@ -77,8 +79,8 @@ const (
 	maxPRFiles  = 1000 // Maximum number of files allowed in a pull request
 )
 
-func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error) {
-	protection, _, err := r.gh.Repositories.GetBranchProtection(ctx, owner, repository, branch)
+func (r *githubClient) GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error) {
+	protection, _, err := r.gh.Repositories.GetBranchProtection(ctx, r.owner, r.repo, branch)
 	if err != nil {
 		// Branch has no protection rules at all - this is fine, skip the check.
 		if errors.Is(err, github.ErrBranchNotProtected) {
@@ -95,8 +97,8 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 				// User lacks admin permissions to view branch protection.
 				// Skip check gracefully - if protection rules block pushes, they'll find out at push time.
 				logging.FromContext(ctx).Warn("Skipping branch protection check: token lacks Administration read permission",
-					slog.String("owner", owner),
-					slog.String("repository", repository),
+					slog.String("owner", r.owner),
+					slog.String("repository", r.repo),
 					slog.String("branch", branch))
 				return nil, nil
 			case http.StatusNotFound:
@@ -117,16 +119,16 @@ func (r *githubClient) GetBranchProtection(ctx context.Context, owner, repositor
 	return bp, nil
 }
 
-func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error) {
+func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Rulesets, error) {
 	// Create logger with base context
 	logger := logging.FromContext(ctx).With(
-		slog.String("owner", owner),
-		slog.String("repository", repository),
+		slog.String("owner", r.owner),
+		slog.String("repository", r.repo),
 		slog.String("branch", branch))
 
 	// Get all active rules that apply to this specific branch
 	// This API returns only active rules (no disabled/evaluate enforcement)
-	branchRules, _, err := r.gh.Repositories.GetRulesForBranch(ctx, owner, repository, branch, nil)
+	branchRules, _, err := r.gh.Repositories.GetRulesForBranch(ctx, r.owner, r.repo, branch, nil)
 	if err != nil {
 		// Handle common error cases
 		var ghErr *github.ErrorResponse
@@ -155,22 +157,66 @@ func (r *githubClient) GetRulesets(ctx context.Context, owner, repository, branc
 		return nil, nil
 	}
 
-	// Check if pull request rule is active
 	// Only pull_request rules actually block direct pushes.
 	// Other rules like non_fast_forward (blocks force push only),
 	// required_status_checks (checks run after push), etc. do not prevent regular git push operations.
-	if len(branchRules.PullRequest) > 0 {
-		logger.Debug("Branch requires pull request (blocks direct push)",
-			slog.Int("pr_rule_count", len(branchRules.PullRequest)))
-		return &Rulesets{RequiresPullRequest: true}, nil
+	if len(branchRules.PullRequest) == 0 {
+		logger.Debug("No blocking rules found for branch")
+		return nil, nil
 	}
 
-	logger.Debug("No blocking rules found for branch")
+	// bypass_actors live on the parent ruleset, not on the per-branch rule entries.
+	// We must fetch each unique parent to know whether the current actor (e.g. the
+	// GitHub App installation token in use) can bypass the PR requirement; GitHub
+	// evaluates that for us and returns it as `current_user_can_bypass`, so we don't
+	// need to know the App's installation ID to match against bypass_actors.
+	rulesetIDs := make(map[int64]struct{}, len(branchRules.PullRequest))
+	for _, rule := range branchRules.PullRequest {
+		if rule == nil {
+			continue
+		}
+		if rule.RulesetID == 0 {
+			// Without a valid ID we can't fetch the parent to confirm bypass — keep blocking.
+			logger.Warn("Pull request rule has zero ruleset_id, treating as blocking")
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+		rulesetIDs[rule.RulesetID] = struct{}{}
+	}
+
+	for rulesetID := range rulesetIDs {
+		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, false)
+		if err != nil {
+			// Fail-closed: a silent false negative would let the Repository save and
+			// then fail every subsequent sync push with a 403. Surfacing a block at
+			// setup is the safer default.
+			logger.Warn("Failed to fetch parent ruleset, treating PR requirement as blocking",
+				slog.Int64("ruleset_id", rulesetID),
+				slog.Any("error", err))
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+
+		// Only "always" and "exempt" allow unrestricted direct push.
+		// "pull_request" only bypasses during PR merge — direct push remains blocked.
+		canBypass := ruleset.CurrentUserCanBypass
+		if canBypass == nil ||
+			(*canBypass != github.BypassModeAlways && *canBypass != github.BypassModeExempt) {
+			logger.Debug("Branch requires pull request (current actor cannot bypass)",
+				slog.Int64("ruleset_id", rulesetID),
+				slog.Any("current_user_can_bypass", canBypass))
+			return &Rulesets{RequiresPullRequest: true}, nil
+		}
+
+		logger.Debug("Ruleset PR requirement is bypassable by current actor",
+			slog.Int64("ruleset_id", rulesetID),
+			slog.String("bypass_mode", string(*canBypass)))
+	}
+
+	logger.Debug("All PR-requiring rulesets are bypassable by current actor")
 	return nil, nil
 }
 
-func (r *githubClient) GetRepository(ctx context.Context, owner, repository string) (Repository, error) {
-	repo, _, err := r.gh.Repositories.Get(ctx, owner, repository)
+func (r *githubClient) GetRepository(ctx context.Context) (Repository, error) {
+	repo, _, err := r.gh.Repositories.Get(ctx, r.owner, r.repo)
 	if err != nil {
 		return Repository{}, translateGitHubError(err)
 	}
@@ -183,9 +229,9 @@ func (r *githubClient) GetRepository(ctx context.Context, owner, repository stri
 }
 
 // Commits returns a list of commits for a given repository and branch.
-func (r *githubClient) Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error) {
+func (r *githubClient) Commits(ctx context.Context, path, branch string) ([]Commit, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.RepositoryCommit, *github.Response, error) {
-		return r.gh.Repositories.ListCommits(ctx, owner, repository, &github.CommitsListOptions{
+		return r.gh.Repositories.ListCommits(ctx, r.owner, r.repo, &github.CommitsListOptions{
 			Path:        path,
 			SHA:         branch,
 			ListOptions: *opts,
@@ -241,9 +287,9 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 	return ret, nil
 }
 
-func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error) {
+func (r *githubClient) ListWebhooks(ctx context.Context) ([]WebhookConfig, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
-		return r.gh.Repositories.ListHooks(ctx, owner, repository, opts)
+		return r.gh.Repositories.ListHooks(ctx, r.owner, r.repo, opts)
 	}
 
 	hooks, err := paginatedList(
@@ -278,7 +324,7 @@ func (r *githubClient) ListWebhooks(ctx context.Context, owner, repository strin
 	return ret, nil
 }
 
-func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error) {
+func (r *githubClient) CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error) {
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
@@ -294,7 +340,7 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 		},
 	}
 
-	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, owner, repository, hook)
+	createdHook, _, err := r.gh.Repositories.CreateHook(ctx, r.owner, r.repo, hook)
 	if err != nil {
 		return WebhookConfig{}, translateGitHubError(err)
 	}
@@ -311,8 +357,8 @@ func (r *githubClient) CreateWebhook(ctx context.Context, owner, repository stri
 	}, nil
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error) {
-	hook, _, err := r.gh.Repositories.GetHook(ctx, owner, repository, webhookID)
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error) {
+	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
 		return WebhookConfig{}, translateGitHubError(err)
 	}
@@ -334,15 +380,15 @@ func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string,
 	}, nil
 }
 
-func (r *githubClient) DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error {
-	_, err := r.gh.Repositories.DeleteHook(ctx, owner, repository, webhookID)
+func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error {
+	_, err := r.gh.Repositories.DeleteHook(ctx, r.owner, r.repo, webhookID)
 	if err != nil {
 		return translateGitHubError(err)
 	}
 	return nil
 }
 
-func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error {
+func (r *githubClient) EditWebhook(ctx context.Context, cfg WebhookConfig) error {
 	if cfg.ContentType == "" {
 		cfg.ContentType = "form"
 	}
@@ -357,16 +403,16 @@ func (r *githubClient) EditWebhook(ctx context.Context, owner, repository string
 			URL:         &cfg.URL,
 		},
 	}
-	_, _, err := r.gh.Repositories.EditHook(ctx, owner, repository, cfg.ID, hook)
+	_, _, err := r.gh.Repositories.EditHook(ctx, r.owner, r.repo, cfg.ID, hook)
 	if err != nil {
 		return translateGitHubError(err)
 	}
 	return nil
 }
 
-func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error) {
+func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
 	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
-		return r.gh.PullRequests.ListFiles(ctx, owner, repository, number, opts)
+		return r.gh.PullRequests.ListFiles(ctx, r.owner, r.repo, number, opts)
 	}
 
 	files, err := paginatedList(
@@ -390,12 +436,12 @@ func (r *githubClient) ListPullRequestFiles(ctx context.Context, owner, reposito
 	return ret, nil
 }
 
-func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error {
+func (r *githubClient) CreatePullRequestComment(ctx context.Context, number int, body string) error {
 	comment := &github.IssueComment{
 		Body: &body,
 	}
 
-	if _, _, err := r.gh.Issues.CreateComment(ctx, owner, repository, number, comment); err != nil {
+	if _, _, err := r.gh.Issues.CreateComment(ctx, r.owner, r.repo, number, comment); err != nil {
 		return translateGitHubError(err)
 	}
 

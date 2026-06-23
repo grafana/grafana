@@ -24,8 +24,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	dataplaneaggregator "github.com/grafana/grafana/pkg/aggregator/apiserver"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -35,9 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -48,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -96,10 +92,6 @@ type service struct {
 	authorizer *authorizer.GrafanaAuthorizer
 	dualWriter dualwrite.Service
 
-	pluginClient       plugins.Client
-	datasources        datasource.ScopedPluginDatasourceProvider
-	contextProvider    datasource.PluginContextWrapper
-	pluginStore        pluginstore.Store
 	unified            resource.ResourceClient
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
@@ -119,10 +111,6 @@ func ProvideService(
 	rr routing.RouteRegister,
 	tracing *tracing.TracingService,
 	db db.DB,
-	pluginClient plugins.Client,
-	datasources datasource.ScopedPluginDatasourceProvider,
-	contextProvider datasource.PluginContextWrapper,
-	pluginStore pluginstore.Store,
 	dualWriter dualwrite.Service,
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
@@ -150,10 +138,6 @@ func ProvideService(
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
 		metrics:                           reg,
-		pluginClient:                      pluginClient,
-		datasources:                       datasources,
-		contextProvider:                   contextProvider,
-		pluginStore:                       pluginStore,
 		dualWriter:                        dualWriter,
 		unified:                           unified,
 		secrets:                           secrets,
@@ -204,6 +188,13 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
+		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
+		// Snapshots are shared via URL with the key, so they are always publicly accessible.
+		// Authorization is enforced by the snapshot authorizer.
+		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
+		k8sRoute.Get(snapshotPath, handler)
+		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
@@ -453,31 +444,23 @@ func (s *service) start(ctx context.Context) error {
 	// stash the options for later use
 	s.options = o
 
-	delegate := server
-
 	var runningServer *genericapiserver.GenericAPIServer
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	isDataplaneAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator)
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(
-			s.options, serverConfig, &aggregatorrunner.ExtraConfig{}, delegate, s.scheme, builders,
+			s.options, serverConfig, &aggregatorrunner.ExtraConfig{}, server, s.scheme, builders,
 		)
 		if err != nil {
 			return err
 		}
 		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
 		if aggregatorServer != nil {
-			if !isDataplaneAggregatorEnabled {
-				runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
-				if err != nil {
-					s.log.Error("aggregator runner failed to run", "err", err)
-					return err
-				}
-			} else {
-				delegate = aggregatorServer
+			runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+			if err != nil {
+				s.log.Error("aggregator runner failed to run", "err", err)
+				return err
 			}
 		} else {
 			// even though the FT is set to true, enterprise isn't linked
@@ -485,14 +468,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	if isDataplaneAggregatorEnabled {
-		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
-		if err != nil {
-			return err
-		}
-	}
-
-	if !isDataplaneAggregatorEnabled && !isKubernetesAggregatorEnabled {
+	if !isKubernetesAggregatorEnabled {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
@@ -541,54 +517,6 @@ func (s *service) startCoreServer(
 	return server, nil
 }
 
-func (s *service) startDataplaneAggregator(
-	ctx context.Context,
-	transport *grafanaapiserveroptions.RoundTripperFunc,
-	serverConfig *genericapiserver.RecommendedConfig,
-	delegate *genericapiserver.GenericAPIServer,
-) (*genericapiserver.GenericAPIServer, error) {
-	config := &dataplaneaggregator.Config{
-		GenericConfig: serverConfig,
-		ExtraConfig: dataplaneaggregator.ExtraConfig{
-			PluginClient: s.pluginClient,
-			PluginContextProvider: &pluginContextProvider{
-				pluginStore:     s.pluginStore,
-				datasources:     s.datasources,
-				contextProvider: s.contextProvider,
-			},
-		},
-	}
-
-	if err := s.options.GrafanaAggregatorOptions.ApplyTo(config, s.options.RecommendedOptions.Etcd); err != nil {
-		return nil, err
-	}
-
-	completedConfig := config.Complete()
-
-	aggregatorServer, err := completedConfig.NewWithDelegate(delegate)
-	if err != nil {
-		return nil, err
-	}
-
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.Ready)
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		s.stoppedCh <- prepared.RunWithContext(ctx)
-	}()
-
-	return aggregatorServer.GenericAPIServer, nil
-}
-
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	return &clientrest.Config{
 		Transport: &grafanaapiserveroptions.RoundTripperFunc{
@@ -596,7 +524,12 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
-				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
+				ctx := req.Context()
+				// Preserve a Requester already on ctx (e.g. service identity
+				// injected by an internal lookup); fall back to c.SignedInUser.
+				if _, err := identity.GetRequester(ctx); err != nil {
+					ctx = identity.WithRequester(ctx, c.SignedInUser)
+				}
 				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
 				return wrapped(req.WithContext(ctx))
 			},
@@ -631,33 +564,6 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
-}
-
-type pluginContextProvider struct {
-	pluginStore     pluginstore.Store
-	datasources     datasource.ScopedPluginDatasourceProvider
-	contextProvider datasource.PluginContextWrapper
-}
-
-func (p *pluginContextProvider) GetPluginContext(ctx context.Context, pluginID string, uid string) (backend.PluginContext, error) {
-	all := p.pluginStore.Plugins(ctx)
-
-	var datasourceProvider datasource.PluginDatasourceProvider
-	for _, plugin := range all {
-		if plugin.ID == pluginID {
-			datasourceProvider = p.datasources.GetDatasourceProvider(plugin.JSONData)
-		}
-	}
-	if datasourceProvider == nil {
-		return backend.PluginContext{}, fmt.Errorf("plugin not found")
-	}
-
-	s, err := datasourceProvider.GetInstanceSettings(ctx, uid)
-	if err != nil {
-		return backend.PluginContext{}, err
-	}
-
-	return p.contextProvider.PluginContextForDataSource(ctx, s)
 }
 
 func useNamespaceFromPath(path string, user *user.SignedInUser) {

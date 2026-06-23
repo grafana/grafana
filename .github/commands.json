@@ -117,14 +117,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/OpenTSDB",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/Loki",
     "action": "addToProject",
     "addToProject": {
@@ -173,18 +165,10 @@
   },
   {
     "type": "label",
-    "name": "datasource/Zipkin",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/explore",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/111"
+      "url": "https://github.com/orgs/grafana/projects/908"
     }
   },
   {
@@ -957,6 +941,14 @@
   },
   {
     "type": "label",
+    "name": "area/grafana-assistant",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/1145"
+    }
+  },
+  {
+    "type": "label",
     "name": "area/backend/db/sqlite",
     "action": "addToProject",
     "addToProject": {
@@ -985,14 +977,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Zipkin",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

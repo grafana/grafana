@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { TextLink, useStyles2 } from '@grafana/ui';
+import { Text, TextLink, useStyles2 } from '@grafana/ui';
 
 import { type Card } from '../types';
 
@@ -27,7 +27,11 @@ export const DocsCard = ({ card }: Props) => {
           <div className={styles.heading}>
             {card.done ? t('gettingstarted.docs-card.complete', 'complete') : card.heading}
           </div>
-          <h4 className={styles.title}>{card.title}</h4>
+          <div className={styles.title}>
+            <Text variant="h4" element="h3">
+              {card.title}
+            </Text>
+          </div>
         </a>
       </div>
       <div className={styles.learnUrl}>
@@ -66,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
     }),
     heading: css({
       textTransform: 'uppercase',
-      color: complete ? theme.v1.palette.blue95 : '#FFB357',
+      color: complete ? theme.colors.success.text : theme.colors.accent.text,
       marginBottom: theme.spacing(2),
     }),
     title: css({

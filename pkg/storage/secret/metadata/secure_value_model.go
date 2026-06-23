@@ -41,6 +41,9 @@ type secureValueDB struct {
 	Decrypters  sql.NullString
 	Ref         sql.NullString
 	ExternalID  string
+
+	// Gargbage collection
+	GCAttempts int
 }
 
 // toKubernetes maps a DB row into a Kubernetes resource (metadata + spec).

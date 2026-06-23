@@ -1,5 +1,4 @@
 import { type FC, type SyntheticEvent } from 'react';
-import { type CellRendererProps, type Column } from 'react-data-grid';
 
 import {
   type DataFrame,
@@ -14,7 +13,8 @@ import {
   type SelectableValue,
   type FieldState,
 } from '@grafana/data';
-import { type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
+import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
+import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
@@ -24,21 +24,16 @@ import { type ApplyFilterResult, type TextAlign } from './utils';
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
-export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
-export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
-export type FooterItem = Array<KeyValue<string>> | string | undefined;
+type TableFilterActionCallback = (item: AdHocFilterItem) => void;
+type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
+type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
-export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
-
-export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
-  cellOptions: TableCellOptions;
-  headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
-};
+type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -99,20 +94,6 @@ export interface TableRow {
   [columnName: string]: TableCellValue;
 }
 
-export interface CustomCellRendererProps {
-  field: Field;
-  rowIndex: number;
-  frame: DataFrame;
-  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
-  // types could be propagated here.
-  value: unknown;
-}
-
-export interface CustomHeaderRendererProps {
-  field: Field;
-  defaultContent: React.ReactNode;
-}
-
 export interface TableSortByFieldState {
   displayName: string;
   desc?: boolean;
@@ -125,7 +106,7 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
-export interface BaseTableProps {
+interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -163,6 +144,8 @@ export interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // temporary feature toggle to manage rollout of the proto-based parser
+  protoParserEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -296,11 +279,6 @@ export interface NestedRowEntry {
 
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
-
-export interface ScrollPosition {
-  x: number;
-  y: number;
-}
 
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;

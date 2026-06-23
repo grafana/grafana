@@ -69,7 +69,9 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	if maxOpenConn > 0 {
 		dbSection.Key("max_open_conn").SetValue(strconv.Itoa(maxOpenConn))
 	}
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, backend)
 	backendService, ok := backend.(services.Service)
@@ -123,7 +125,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 	t.Cleanup(db.CleanupTestDB)
 
 	newKvBackend := func(ctx context.Context) (resource.StorageBackend, sqldb.DB) {
-		return unitest.NewTestSqlKvBackend(t, ctx, true)
+		return unitest.NewTestSqlKvBackend(t, ctx, unitest.SQLKVBackendModeRVManager)
 	}
 
 	opts := &unitest.TestOptions{
@@ -170,7 +172,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 
 	// Create search options
 	features := featuremgmt.WithFeatures()
-	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(features, cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled
@@ -223,17 +225,19 @@ func TestClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		grpcService.StopAsync()
 		_ = services.StopAndAwaitTerminated(ctx, grpcService)
 	})
 
-	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, grpcService,
+	svc, err := sql.ProvideUnifiedStorageGrpcService(cfg, features, nil, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)
@@ -333,16 +337,18 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 
 	registerer := prometheus.NewPedanticRegistry()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	backend, err := sql.NewStorageBackend(cfg, dbstore, registerer, storageMetrics, false)
+	eDB, err := sql.ProvideResourceDB(cfg, dbstore)
+	require.NoError(t, err)
+	backend, err := sql.NewStorageBackend(cfg, eDB, registerer, storageMetrics, false, nil, nil)
 	require.NoError(t, err)
 	backendService := backend.(services.Service)
 	require.NotNil(t, backendService)
 	require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
 
-	grpcService, err := grpcserver.ProvideDSKitService(cfg, features, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
+	grpcService, err := grpcserver.ProvideDSKitService(cfg, otel.Tracer("test-grpc-server"), prometheus.NewPedanticRegistry(), "test-grpc-server")
 	require.NoError(t, err)
 
-	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, kv.Config{}, nil, backend, grpcService,
+	svc, err := sql.ProvideSearchGRPCService(cfg, features, log.New("test"), registerer, docBuilders, nil, nil, nil, kv.Config{}, nil, backend, nil, nil, grpcService,
 		sql.WithAuthenticator(func(ctx context.Context) (context.Context, error) {
 			auth := grpcUtils.Authenticator{Tracer: otel.Tracer("test")}
 			return auth.Authenticate(ctx)

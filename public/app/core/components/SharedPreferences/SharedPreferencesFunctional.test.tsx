@@ -1,9 +1,11 @@
-import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
+import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { mockComboboxRect } from '@grafana/test-utils';
+import { preferencesHandlers } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
@@ -14,8 +16,7 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 const getPrefsUpdateRequest = async (requests: Request[]) => {
-  const prefsUpdate = requests.find((r) => r.url.match('/preferences') && r.method === 'PUT');
-
+  const prefsUpdate = requests.find((r) => r.url.match('/preferences') && r.method === 'PATCH');
   return prefsUpdate!.clone().json();
 };
 
@@ -38,11 +39,13 @@ const setup = async () => {
 const mockReload = jest.fn();
 const originalLocation = window.location;
 
-testWithFeatureToggles({ enable: ['grafanaconThemes'] });
+beforeEach(() => {
+  mockReload.mockClear();
+});
 
 beforeAll(() => {
   jest.spyOn(window, 'location', 'get').mockReturnValue({ ...originalLocation, reload: mockReload });
-  comboboxTestSetup();
+  mockComboboxRect();
 });
 
 afterAll(() => {
@@ -120,14 +123,15 @@ describe('SharedPreferencesFunctional', () => {
     const newPreferences = await getPrefsUpdateRequest(requests);
 
     expect(newPreferences).toEqual({
-      timezone: 'Australia/Sydney',
-      weekStart: 'saturday',
-      theme: 'dark',
-      homeDashboardUID: dashboardToSelect.uid,
-      queryHistory: { homeTab: '' },
-      language: 'fr-FR',
-      regionalFormat: '',
-      navbar: { bookmarkUrls: [] },
+      spec: {
+        timezone: 'Australia/Sydney',
+        weekStart: 'saturday',
+        theme: 'dark',
+        homeDashboardUID: dashboardToSelect.uid,
+        queryHistory: { homeTab: '' },
+        language: 'fr-FR',
+        navbar: { bookmarkUrls: [] },
+      },
     });
   });
 
@@ -135,7 +139,7 @@ describe('SharedPreferencesFunctional', () => {
     const capture = captureRequests();
     const { user } = await setup();
 
-    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Sapphire dusk');
+    await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: /Interface theme/ }), 'Gilded grove');
 
     await user.click(screen.getByText('Save preferences'));
 
@@ -143,7 +147,7 @@ describe('SharedPreferencesFunctional', () => {
     const newPreferences = await getPrefsUpdateRequest(requests);
 
     expect(newPreferences).toMatchObject({
-      theme: 'sapphiredusk',
+      spec: { theme: 'gildedgrove' },
     });
   });
 
@@ -166,14 +170,15 @@ describe('SharedPreferencesFunctional', () => {
     const newPreferences = await getPrefsUpdateRequest(requests);
 
     expect(newPreferences).toEqual({
-      timezone: '',
-      weekStart: '',
-      theme: '',
-      homeDashboardUID: '',
-      queryHistory: { homeTab: '' },
-      language: '',
-      regionalFormat: '',
-      navbar: { bookmarkUrls: [] },
+      spec: {
+        timezone: '',
+        weekStart: '',
+        theme: '',
+        homeDashboardUID: '',
+        queryHistory: { homeTab: '' },
+        language: '',
+        navbar: { bookmarkUrls: [] },
+      },
     });
   });
 
@@ -181,5 +186,43 @@ describe('SharedPreferencesFunctional', () => {
     const { user } = await setup();
     await user.click(screen.getByText('Save preferences'));
     expect(mockReload).toHaveBeenCalled();
+  });
+  it('shows an error alert when preferences fail to load', async () => {
+    server.use(
+      preferencesHandlers.listPreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+    );
+    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" />);
+    expect(await screen.findByText('Error loading preferences')).toBeInTheDocument();
+  });
+  it('shows an error alert when saving preferences fails', async () => {
+    server.use(
+      preferencesHandlers.updatePreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+    );
+    const { user } = await setup();
+    await user.click(screen.getByText('Save preferences'));
+
+    expect(await screen.findByText('Error updating preferences')).toBeInTheDocument();
+  });
+  it('does not save when onConfirm returns false', async () => {
+    const onConfirm = jest.fn().mockResolvedValue(false);
+    const capture = captureRequests((r) => r.url.includes('/preferences') && r.method === 'PATCH');
+
+    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" onConfirm={onConfirm} />);
+    const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
+    await waitFor(() => expect(themeSelect).not.toBeDisabled());
+
+    await userEvent.setup().click(screen.getByText('Save preferences'));
+
+    const requests = await capture;
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(requests).toHaveLength(0);
+    expect(mockReload).not.toHaveBeenCalled();
+  });
+  it('renders all form fields as disabled when disabled prop is true', async () => {
+    render(<SharedPreferencesFunctional resourceUri="user" preferenceType="user" disabled />);
+    const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
+    await waitFor(() => expect(themeSelect).toBeDisabled());
+
+    expect(screen.getByText('Save preferences').closest('button')).not.toBeDisabled();
   });
 });

@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,6 +29,9 @@ func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cle
 		cleanupSettings: cleanupSettings,
 	}
 }
+
+// Close is a no-op as sqlAdapter does not own the underlying sqlstore
+func (a *sqlAdapter) Close() error { return nil }
 
 func (a *sqlAdapter) Get(ctx context.Context, namespace, name string) (*annotationV0.Annotation, error) {
 	id, err := parseAnnotationID(name)
@@ -183,7 +188,8 @@ func (a *sqlAdapter) Delete(ctx context.Context, namespace, name string) error {
 	})
 }
 
-func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
+// Cleanup runs the legacy SQL cleaner; before is ignored because cleanupSettings carries its own cutoff.
+func (a *sqlAdapter) Cleanup(ctx context.Context, _ time.Time) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
 	}
@@ -216,10 +222,12 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 }
 
 func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) *annotationV0.Annotation {
+	name := fmt.Sprintf("a-%d", item.ID)
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("a-%d", item.ID),
+			Name:      name,
 			Namespace: namespace,
+			UID:       types.UID(name),
 		},
 		Spec: annotationV0.AnnotationSpec{
 			Text: item.Text,
@@ -235,8 +243,11 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 		anno.Spec.PanelID = &item.PanelID
 	}
 
-	if item.UserUID != "" {
-		if m, err := utils.MetaAccessor(anno); err == nil {
+	if item.ID > 0 {
+		SetLegacyID(anno, item.ID)
+	}
+	if m, err := utils.MetaAccessor(anno); err == nil {
+		if item.UserUID != "" {
 			m.SetCreatedBy(claims.NewTypeID(claims.TypeUser, item.UserUID))
 		}
 	}

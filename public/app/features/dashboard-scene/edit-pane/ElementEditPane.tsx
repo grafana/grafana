@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
-import { ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2, Box } from '@grafana/ui';
 
 import { DashboardEditPane } from './DashboardEditPane';
 import { EditPaneHeader } from './EditPaneHeader';
@@ -11,30 +11,41 @@ import { getEditableElementForSelection } from './shared';
 
 export class ElementEditPane extends SceneObjectBase {
   public static Component = ElementEditPaneRenderer;
+  protected static _renderBeforeActivation = true;
 
   public getId() {
     return 'element' as const;
   }
 }
 
-export function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
   const styles = useStyles2(getStyles);
+
+  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+  const selected = editPane.state.selectionContext.selected;
+
   const element = useMemo(() => {
-    return getEditableElementForSelection(editPane, editPane.state.selectionContext.selected);
-  }, [editPane]);
+    return getEditableElementForSelection(editPane, selected);
+  }, [editPane, selected]);
+
+  const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
 
   if (!element) {
     return null;
   }
 
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
-
   return (
     <div className={styles.wrapper}>
       <EditPaneHeader element={element} editPane={editPane} />
       <ScrollContainer showScrollIndicators={true}>
-        <div className={styles.categories}>{categories.map((cat) => cat.renderElement())}</div>
+        <div className={styles.categories}>
+          {element.renderTopButton && (
+            <Box display="flex" alignItems={'center'} paddingTop={2} paddingLeft={2} paddingRight={2}>
+              {element.renderTopButton()}
+            </Box>
+          )}
+          {categories.map((cat) => cat.renderElement())}
+        </div>
       </ScrollContainer>
     </div>
   );

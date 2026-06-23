@@ -27,16 +27,16 @@ type RepositoryResources interface {
 	SetTree(tree FolderTree)
 	EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error)
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
-	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
+	EnsureFolderTreeExists(ctx context.Context, tree FolderTree, opts EnsureFolderTreeExistsOptions) error
 	RemoveFolderFromTree(folderID string)
 	RemoveFolder(ctx context.Context, folderName string) error
 	RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error)
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
-	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error)
-	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error)
+	WriteResourceFromFile(ctx context.Context, path, ref string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
+	ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
+	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
 	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)
@@ -93,7 +93,7 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	obj, err := client.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return "", fmt.Errorf("resource not found: %s/%s/%s", gvr.Group, gvr.Resource, name)
+			return "", &ResourceNotFoundError{Group: gvr.Group, Resource: gvr.Resource, Name: name}
 		}
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}

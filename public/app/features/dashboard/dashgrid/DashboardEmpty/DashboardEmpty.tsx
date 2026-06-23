@@ -111,6 +111,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
                 <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
               </Text>
               <Tooltip
+                placement="top"
                 content={
                   <Trans i18nKey="dashboard.empty.layout-default-hint">
                     The selected layout will also be used as the default for all new tabs and rows. You can change this

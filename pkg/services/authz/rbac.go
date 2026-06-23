@@ -73,14 +73,6 @@ func ProvideAuthZClient(
 		return zanzanaClient, nil
 	}
 
-	// Provisioning uses mode 4 (read+write only to unified storage)
-	// For G12 launch, we can disable caching for this and find a more scalable solution soon
-	// most likely this would involve passing the RV (timestamp!) in each check method
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
-		authCfg.cacheTTL = 0
-	}
-
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer, reg)
@@ -93,7 +85,9 @@ func ProvideAuthZClient(
 		return rbacClient, nil
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
-		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		rbacSettings := rbac.Settings{
+			CacheTTL: authCfg.cacheTTL,
+		}
 		if cfg != nil {
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
 		}
@@ -328,7 +322,10 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
-		rbac.Settings{CacheTTL: cfg.CacheTTL, LocalFolderCacheTTL: cfg.LocalFolderCacheTTL}, // anonymous org role can only be set in-proc
+		rbac.Settings{
+			CacheTTL:            cfg.CacheTTL,
+			LocalFolderCacheTTL: cfg.LocalFolderCacheTTL,
+		}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()

@@ -7,6 +7,7 @@ import {
   type DataTransformerConfig,
   getDataSourceRef,
   getNextRefId,
+  type ScopedVars,
 } from '@grafana/data';
 import { config, getDataSourceSrv, isExpressionReference, reportInteraction } from '@grafana/runtime';
 import {
@@ -25,11 +26,11 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
+import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getDashboardSceneFor, getQueryRunnerFor } from '../../utils/utils';
-import { getUpdatedHoverHeader } from '../getPanelFrameOptions';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
-import { filterDataTransformerConfigs } from './QueryEditor/utils';
+import { filterDataTransformerConfigs, getPanelScopedVars } from './QueryEditor/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from './constants';
 
 const reportTransformationEditInteraction = throttle((context: string, type: string) => {
@@ -104,6 +105,11 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   public constructor(state: PanelDataPaneNextState) {
     super(state);
     this.addActivationHandler(() => this.onActivate());
+  }
+
+  /** Scene scope for resolving section-scoped (row/tab) datasource variables. See {@link getPanelScopedVars}. */
+  private getPanelContext(): ScopedVars {
+    return getPanelScopedVars(this.state.panelRef.resolve());
   }
 
   private onActivate() {
@@ -192,8 +198,9 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
         return;
       }
 
-      const datasource = await getDataSourceSrv().get(datasourceToLoad);
-      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+      const panelContext = this.getPanelContext();
+      const datasource = await getDataSourceSrv().get(datasourceToLoad, panelContext);
+      const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad, panelContext);
 
       // Treat a missing dsSettings as a load failure so the catch block can attempt the
       // default fallback — same recovery path as a rejected get() call.
@@ -360,6 +367,90 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     }
   };
 
+  public bulkDeleteQueries = (refIds: readonly string[]) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+    const refIdSet = new Set(refIds);
+    const queries = queryRunner.state.queries.filter(({ refId }) => !refIdSet.has(refId));
+    queryRunner.setState({ queries });
+    this.resolveUniformDatasource();
+    this.runQueries();
+  };
+
+  public bulkToggleQueriesHide = (refIds: readonly string[], hide: boolean) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+    const refIdSet = new Set(refIds);
+    const queries = queryRunner.state.queries.map((q) => (refIdSet.has(q.refId) ? { ...q, hide } : q));
+    queryRunner.setState({ queries });
+    this.runQueries();
+  };
+
+  public bulkChangeDataSource = async (refIds: readonly string[], dsRef: DataSourceRef) => {
+    const queryRunner = getQueryRunnerFor(this.state.panelRef.resolve());
+    if (!queryRunner) {
+      return;
+    }
+
+    const panelContext = this.getPanelContext();
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef, panelContext);
+    if (!newDataSource) {
+      this.setState({ dsError: new Error(`Datasource not found: ${dsRef.uid ?? dsRef.type}`) });
+      return;
+    }
+
+    let defaultQuery: Partial<DataQuery> | undefined;
+    try {
+      const ds = await getDataSourceSrv().get(dsRef, panelContext);
+      defaultQuery = ds.getDefaultQuery?.(CoreApp.PanelEditor);
+    } catch {
+      this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
+      return;
+    }
+
+    const refIdSet = new Set(refIds);
+    const requiresMixedMode = queryRunner.state.datasource?.uid !== MIXED_DATASOURCE_NAME;
+
+    const remapQuery = (query: DataQuery, fallbackDsRef?: DataSourceRef): DataQuery => {
+      if (refIdSet.has(query.refId)) {
+        const previousDataSource = query.datasource
+          ? getDataSourceSrv().getInstanceSettings(query.datasource, panelContext)
+          : undefined;
+        const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
+        if (shouldUseDefaultQuery && defaultQuery) {
+          return { ...defaultQuery, ...query, datasource: dsRef };
+        }
+        return { ...query, datasource: dsRef };
+      }
+      if (fallbackDsRef && !query.datasource) {
+        return { ...query, datasource: fallbackDsRef };
+      }
+      return query;
+    };
+
+    if (requiresMixedMode) {
+      const currentPanelDsRef = queryRunner.state.datasource;
+      const defaultDsSettings = getDataSourceSrv().getInstanceSettings(config.defaultDatasource);
+      const fallbackDsRef = currentPanelDsRef ?? (defaultDsSettings ? getDataSourceRef(defaultDsSettings) : undefined);
+
+      queryRunner.setState({
+        queries: queryRunner.state.queries.map((query) => remapQuery(query, fallbackDsRef)),
+        datasource: { type: 'mixed', uid: MIXED_DATASOURCE_NAME },
+      });
+    } else {
+      queryRunner.setState({
+        queries: queryRunner.state.queries.map((query) => remapQuery(query)),
+      });
+    }
+
+    this.resolveUniformDatasource();
+    queryRunner.runQueries();
+  };
+
   // Transformation Operations
   private getSceneDataTransformer(): SceneDataTransformer | undefined {
     const panel = this.state.panelRef.resolve();
@@ -448,6 +539,32 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     this.runQueries();
   };
 
+  public bulkDeleteTransformations = (indices: number[]) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+    const indexSet = new Set(indices);
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).filter(
+      (_, i) => !indexSet.has(i)
+    );
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
+  public bulkToggleTransformationsDisabled = (indices: number[], disabled: boolean) => {
+    const transformer = this.getSceneDataTransformer();
+    if (!transformer) {
+      return;
+    }
+    const indexSet = new Set(indices);
+    const transformations = filterDataTransformerConfigs(transformer.state.transformations).map((t, i) =>
+      indexSet.has(i) ? { ...t, disabled } : t
+    );
+    transformer.setState({ transformations });
+    this.runQueries();
+  };
+
   /**
    * Changes the datasource for a specific query.
    *
@@ -472,7 +589,8 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
       return;
     }
 
-    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef);
+    const panelContext = this.getPanelContext();
+    const newDataSource = getDataSourceSrv().getInstanceSettings(dsRef, panelContext);
     if (!newDataSource) {
       // Surface the failure in the editor rather than throwing — the caller (sidebar DS picker)
       // does not wrap changeDataSource in a try/catch, so a thrown error would be silently swallowed.
@@ -488,7 +606,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     const targetQuery = queries[targetIndex];
     const previousDataSource = targetQuery.datasource
-      ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource)
+      ? getDataSourceSrv().getInstanceSettings(targetQuery.datasource, panelContext)
       : undefined;
 
     const shouldUseDefaultQuery = !previousDataSource || previousDataSource.type !== newDataSource.type;
@@ -496,7 +614,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     let updatedQuery: DataQuery;
     if (shouldUseDefaultQuery) {
       try {
-        const ds = await getDataSourceSrv().get(dsRef);
+        const ds = await getDataSourceSrv().get(dsRef, panelContext);
         updatedQuery = { ...ds.getDefaultQuery?.(CoreApp.PanelEditor), ...targetQuery, datasource: dsRef };
       } catch {
         this.setState({ dsError: new Error(`Failed to load datasource: ${newDataSource.name ?? newDataSource.uid}`) });
@@ -570,7 +688,7 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
 
     if (timeFrom !== undefined || timeShift !== undefined) {
       panelStateUpdate.$timeRange = new PanelTimeRange({ timeFrom, timeShift, hideTimeOverride });
-      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange);
+      panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, panelStateUpdate.$timeRange?.state);
     } else {
       panelStateUpdate.$timeRange = undefined;
       panelStateUpdate.hoverHeader = getUpdatedHoverHeader(panel.state.title, undefined);

@@ -7,9 +7,9 @@ import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
+import { useSoloPanelContext, renderMatchingSoloPanels } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
 import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
-import { useSoloPanelContext, renderMatchingSoloPanels } from '../SoloPanelContext';
 import { getIsLazy } from '../layouts-shared/utils';
 import { AUTO_GRID_ITEM_DROP_TARGET_ATTR } from '../types/DashboardDropTarget';
 
@@ -66,6 +66,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
                 isLazy && (!isConditionallyHidden || !renderHidden) ? (
                   <LazyLoader
                     key={item.state.key!}
+                    mode="query"
                     className={cx(
                       conditionalRenderingClass,
                       styles.wrapper,

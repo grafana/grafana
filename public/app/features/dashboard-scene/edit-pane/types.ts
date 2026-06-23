@@ -11,12 +11,10 @@ export interface EditPaneSelectionActions {
   clearSelection(noEvent?: boolean): void;
 }
 
-export type DashboardSidebarPaneName = 'element' | 'outline' | 'filters' | 'add' | 'code' | 'variable-type-selection';
-
 export interface DashboardSidebarPane extends SceneObject {
-  getId(): DashboardSidebarPaneName;
-  /**
-   * Some panes like code editor require a wider pane
-   */
+  getId(): string;
+  /** Some panes like code editor require a wider pane  */
   minWidth?: number;
+  /** Exclude this pane from the go back history */
+  excludeFromHistory?: boolean;
 }

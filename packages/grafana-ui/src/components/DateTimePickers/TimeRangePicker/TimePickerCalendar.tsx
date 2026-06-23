@@ -15,7 +15,7 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
-export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
+const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
   return {
     container: css({
       top: 0,
@@ -37,7 +37,7 @@ export const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
       boxShadow: theme.shadows.z3,
       backgroundColor: theme.colors.background.elevated,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
     }),
 
     modal: css({

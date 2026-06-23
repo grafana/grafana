@@ -33,8 +33,8 @@ import { AlertingRuleQueryExtensionPoint } from '../extensions/AlertingRuleQuery
 import { QueryOptions } from './QueryOptions';
 import { VizWrapper } from './VizWrapper';
 
-export const DEFAULT_MAX_DATA_POINTS = 43200;
-export const DEFAULT_MIN_INTERVAL = '1s';
+const DEFAULT_MAX_DATA_POINTS = 43200;
+const DEFAULT_MIN_INTERVAL = '1s';
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -56,7 +56,6 @@ interface Props {
   index: number;
   thresholds: ThresholdsConfig;
   thresholdsType?: GraphThresholdsStyleMode;
-  onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -77,7 +76,6 @@ export const QueryWrapper = ({
   queries,
   thresholds,
   thresholdsType,
-  onChangeThreshold,
   condition,
   onSetCondition,
   onChangeQueryOptions,

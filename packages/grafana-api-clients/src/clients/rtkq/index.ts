@@ -5,6 +5,9 @@ import { generatedAPI as advisorAPIv0alpha1 } from './advisor/v0alpha1';
 import { generatedAPI as collectionsAPIv1alpha1 } from './collections/v1alpha1';
 import { generatedAPI as correlationsAPIv0alpha1 } from './correlations/v0alpha1';
 import { generatedAPI as dashboardAPIv0alpha1 } from './dashboard/v0alpha1';
+import { generatedAPI as dashboardAPIv1beta1 } from './dashboard/v1beta1';
+import { generatedAPI as dashboardAPIv2 } from './dashboard/v2';
+import { generatedAPI as dashboardAPIv2beta1 } from './dashboard/v2beta1';
 import { generatedAPI as folderAPIv1beta1 } from './folder/v1beta1';
 import { generatedAPI as historianAlertingAPIv0alpha1 } from './historian.alerting/v0alpha1';
 import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
@@ -20,7 +23,7 @@ import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
-// PLOP_INJECT_IMPORT
+// GENERATED:IMPORT
 
 /** RTK Query middleware for all API clients  */
 export const allMiddleware = [
@@ -43,7 +46,10 @@ export const allMiddleware = [
   orgPreferencesAPI.middleware,
   teamPreferencesAPI.middleware,
   notificationsAlertingAPIv1beta1.middleware,
-  // PLOP_INJECT_MIDDLEWARE
+  dashboardAPIv1beta1.middleware,
+  dashboardAPIv2.middleware,
+  dashboardAPIv2beta1.middleware,
+  // GENERATED:MIDDLEWARE
 ] as const;
 
 /** RTK Query reducers for all API clients  */
@@ -67,7 +73,10 @@ export const allReducers = {
   [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
   [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
   [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
-  // PLOP_INJECT_REDUCER
+  [dashboardAPIv1beta1.reducerPath]: dashboardAPIv1beta1.reducer,
+  [dashboardAPIv2.reducerPath]: dashboardAPIv2.reducer,
+  [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
+  // GENERATED:REDUCER
 };
 
 export * from './createBaseQuery';

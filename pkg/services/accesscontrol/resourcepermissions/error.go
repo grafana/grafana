@@ -23,6 +23,8 @@ var (
 				MustTemplate(invalidAssignmentMessage, errutil.WithPublic(invalidAssignmentMessage))
 	ErrInvalidResourceID = errutil.BadRequest("resourcePermissions.invalidResourceID").
 				MustTemplate(invalidResourceIDMessage, errutil.WithPublic(invalidResourceIDMessage))
+	ErrExternalTeamMember = errutil.BadRequest("resourcePermissions.externalTeamMember",
+		errutil.WithPublicMessage("Cannot modify permission of externally-synced team member"))
 )
 
 func ErrInvalidParamData(param string, err error) errutil.TemplateData {

@@ -100,6 +100,14 @@ export const DashboardInteractions = {
     reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
+  addFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_filter_button_clicked', properties);
+  },
+
+  addSectionFilterButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_section_filter_button_clicked', properties);
+  },
+
   // dashboards_new_variable_type_selected
   // when a user selects a variable type when creating a new variable
   variableTypeSelected: (properties: { type: string }) => {
@@ -112,7 +120,7 @@ export const DashboardInteractions = {
 
   // dashboards_new_section_variable_type_selected
   // when a user selects a variable type when creating a new section (row/tab) variable
-  sectionVariableTypeSelected: (properties: { type: string }) => {
+  sectionVariableTypeSelected: (properties: { type: string; sectionOwner: 'row' | 'tab' | undefined }) => {
     reportDashboardInteraction('new_section_variable_type_selected', properties);
   },
 
@@ -126,6 +134,12 @@ export const DashboardInteractions = {
   // when a user drags and drops a variable in the content outline
   variablesReordered: (properties: { source: 'edit_pane' }) => {
     reportDashboardInteraction('variables_reordered', properties);
+  },
+
+  // dashboards_variable_value_changed
+  // when a user changes a variable value from dashboard controls, the controls menu, or a section
+  variableValueChanged: (properties: { type: string }) => {
+    reportDashboardInteraction('variable_value_changed', properties);
   },
 
   // dashboards_add_annotation_button_clicked
@@ -210,14 +224,17 @@ export const DashboardInteractions = {
   toolbarShareClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'share' });
   },
-  toolbarShareDropdownClick: () => {
-    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
-  },
   toolbarAddClick: () => {
     reportDashboardInteraction('toolbar_actions_clicked', { item: 'add' });
   },
-
   // Sharing interactions:
+  toolbarShareDropdownClick: () => {
+    reportDashboardInteraction('toolbar_actions_clicked', { item: 'share_dropdown' });
+  },
+  // clicking on a specific share option in the toolbar share button dropdown
+  toolbarShareDropdownOptionClick: (option: string) => {
+    reportDashboardInteraction('toolbar_share_option_clicked', { item: 'share_dropdown_option', option });
+  },
   sharingCategoryClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_category_clicked', properties);
   },

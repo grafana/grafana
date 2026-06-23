@@ -50,23 +50,19 @@ describe('adHocVariableFiltersEqual', () => {
     ).toBeFalsy();
   });
 
-  describe('when filter property is undefined', () => {
-    afterAll(() => {
-      jest.clearAllMocks();
-    });
-
+  describe('when filter property is undefined or empty', () => {
     it('should compare two adhoc variables where both are missing the filter property and return true', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
       expect(adHocVariableFiltersEqual(undefined, undefined)).toBeTruthy();
-
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
     });
 
-    it('should compare two adhoc variables where one is undefined and return false', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(() => {});
-      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+    it('should compare undefined filters with empty array and return true', () => {
+      expect(adHocVariableFiltersEqual(undefined, [])).toBeTruthy();
+      expect(adHocVariableFiltersEqual([], undefined)).toBeTruthy();
+    });
 
-      expect(warnSpy).toHaveBeenCalledWith('Adhoc variable filter property is undefined');
+    it('should compare two adhoc variables where one is undefined and the other has filters and return false', () => {
+      expect(adHocVariableFiltersEqual(undefined, [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
+      expect(adHocVariableFiltersEqual([], [{ value: 'asdio', key: 'qwe', operator: 'wer' }])).toBeFalsy();
     });
   });
 });

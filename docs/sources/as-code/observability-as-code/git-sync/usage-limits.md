@@ -27,7 +27,7 @@ aliases:
 
 # Usage and performance limitations
 
-{{< admonition type="caution" >}}
+{{< admonition type="note" >}}
 
 **Git Sync is now GA for Grafana Cloud, OSS and Enterprise.**
 
@@ -39,14 +39,31 @@ aliases:
 
 When Git Sync is enabled, the database load might increase, especially if your Grafana instance has many folders and nested folders. Evaluate the performance impact, if any, in a non-production environment.
 
-## Usage tiers
+## Usage tiers and limits
 
 The following Git Sync per-tier limits apply:
 
 | Tier                                      | **Cloud - Free** | **Cloud - Other** | **On-prem OSS** | **On-prem Enterprise** |
 | ----------------------------------------- | ---------------- | ----------------- | --------------- | ---------------------- |
 | Amount of repositories                    | 1                | 10                | 10              | 10                     |
-| Amount of synced resources per repository | 20               | 1,000             | 1,000           | 1,000                  |
+| Amount of synced resources per repository | 20               | 1,000             | No limit        | No limit               |
+
+**Currently Git Sync doesn't allow to sync more than 1,000 resources per connection.** For details on usage and storage limits, refer to [Dashboard and folder limits](https://grafana.com/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/usage-limits/#other-usage-limits).
+
+### Modify your usage limits
+
+Before changing your usage limits, study your specific use case. Design the repository structure carefully, and determine how many repositories and how many resources you can support. For example, setting over 1,000 resources per repository may impact your system's performance.
+
+If you're a Cloud user, contact Support to modify the amount of repositories you can sync.
+
+If you're an on-prem user, you can customize your limits via configuration settings:
+
+- Use `max_repositories` to set the amount of repositories you can sync. Refer to [`max_repositories`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_repositories) in the Configure Grafana section to learn more.
+- Use `max_resources_per_repository` to set the amount of resources per repository to sync. Refer to [`max_resources_per_repository`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_resources_per_repository) in the Configure Grafana section to learn more.
+
+### Nested folders
+
+Git Sync supports up to four nested folders within a repository.
 
 ## Compatible Git providers
 
@@ -59,7 +76,9 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 | GitLab       | Cloud, Enterprise      | Personal Access Token               |
 | Bitbucket    | Cloud, Enterprise      | API token with scopes               |
 
-Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
+Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
+
+To learn more about Git, refer to [Getting Started - About Version Control](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) of the [Pro Git book](https://git-scm.com/book/en/v2) in the official Git documentation.
 
 ### The Pure Git repository type
 
@@ -67,7 +86,9 @@ The Pure Git repository type uses the [Smart HTTP protocol v2](https://git-scm.c
 
 {{< admonition type="note" >}}
 
-Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported. Make sure your Git server supports protocol v2 over HTTPS.
+Pure Git only supports **Smart HTTP protocol v2**. Earlier protocol versions (v1, v0) and SSH transport are not supported.
+
+Make sure your Git server supports protocol v2 over HTTPS. Some providers, like Azure DevOps, only use v1 and are therefore not compatible with Git Sync.
 
 {{< /admonition >}}
 
@@ -116,7 +137,7 @@ When migrating existing dashboards, the folder structure will be replicated in t
 
 ### Use existing resources
 
-If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `grafanactl`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
+If you want to manage existing resources with Git Sync, you can save them from the UI, save them as JSON files and commit them to the synced repository, or use `gcx`. Refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/export-resources) for more details.
 
 ### Restore resources
 

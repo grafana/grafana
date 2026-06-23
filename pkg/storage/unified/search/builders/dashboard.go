@@ -232,6 +232,7 @@ type DashboardDocumentBuilder struct {
 
 type DashboardStats interface {
 	GetStats(ctx context.Context, namespace string) (map[string]map[string]int64, error)
+	GetDashboardStats(ctx context.Context, namespace, dashboardUid string) (map[string]int64, error)
 }
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
@@ -303,7 +304,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 		}
 		if p.LibraryPanel != "" {
 			doc.References = append(doc.References, resource.ResourceReference{
-				Group:    "dashboards.grafana.app",
+				Group:    "dashboard.grafana.app",
 				Kind:     "LibraryPanel",
 				Name:     p.LibraryPanel,
 				Relation: "depends-on",
@@ -354,7 +355,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 }
 
 func DashboardFields() []string {
-	baseFields := []string{
+	baseFields := []string{ //nolint:prealloc
 		DASHBOARD_SCHEMA_VERSION,
 		DASHBOARD_LINK_COUNT,
 		DASHBOARD_PANEL_TYPES,

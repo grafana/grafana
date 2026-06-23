@@ -12,14 +12,14 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -231,6 +231,44 @@ func TestPrometheusWriter_Write(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrRejectedWrite)
 	})
+
+	t.Run("max write message size is a non-retryable rejection", func(t *testing.T) {
+		msg := "the incoming push request has been rejected because its message size of 157568313 bytes (uncompressed) is larger than the allowed limit of 104857600 bytes (err-mimir-distributor-max-write-message-size). To adjust the related limit, configure -distributor.max-recv-msg-size, or contact your service administrator."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrNonRetryableWrite)
+		// It must still report as ErrRejectedWrite so existing handling keeps working,
+		// keep its verbatim message, and not leak the internal classification.
+		require.ErrorIs(t, err, ErrRejectedWrite)
+		require.Contains(t, err.Error(), "series was rejected")
+		require.NotContains(t, err.Error(), "non-retryable")
+	})
+
+	t.Run("a retryable expected rejection is not classified non-retryable", func(t *testing.T) {
+		msg := "send data to ingesters: failed pushing to ingester ingester-1: user=1: per-user series limit of 10 exceeded (err-mimir-max-series-per-user)."
+		clientErr := testClientWriteError{
+			statusCode: http.StatusBadRequest,
+			msg:        &msg,
+		}
+		client.writeSeriesFunc = func(ctx context.Context, ts promremote.TSList, opts promremote.WriteOptions) (promremote.WriteResult, promremote.WriteError) {
+			return promremote.WriteResult{}, clientErr
+		}
+
+		err := writer.Write(ctx, "test", now, frames, 1, map[string]string{"extra": "label"})
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrRejectedWrite)
+		require.NotErrorIs(t, err, ErrNonRetryableWrite)
+	})
 }
 
 func TestExtractActualError(t *testing.T) {
@@ -248,7 +286,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "non-JSON error message",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("body=non-JSON error"),
+				msg:        new("body=non-JSON error"),
 			},
 			expected: "non-JSON error",
 		},
@@ -256,7 +294,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "no body=",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`test message {"message":"some message"}`),
+				msg:        new(`test message {"message":"some message"}`),
 			},
 			expected: `test message {"message":"some message"}`,
 		},
@@ -264,7 +302,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body= and valid JSON with error field",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`error body={"error":"nested error message"}`),
+				msg:        new(`error body={"error":"nested error message"}`),
 			},
 			expected: "nested error message",
 		},
@@ -272,7 +310,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body= and invalid JSON",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusBadRequest,
-				msg:        util.Pointer(`body={"error":"some error`), // Missing closing brace
+				msg:        new(`body={"error":"some error`), // Missing closing brace
 			},
 			expected: `{"error":"some error`,
 		},
@@ -280,7 +318,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with nothing after body=",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("random error without body="),
+				msg:        new("random error without body="),
 			},
 			expected: "random error without body=",
 		},
@@ -288,7 +326,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with string body",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer("random error body=invalid-json-content"),
+				msg:        new("random error body=invalid-json-content"),
 			},
 			expected: "invalid-json-content",
 		},
@@ -296,7 +334,7 @@ func TestExtractActualError(t *testing.T) {
 			name: "error message with body and valid JSON without error field",
 			inputErr: testClientWriteError{
 				statusCode: http.StatusInternalServerError,
-				msg:        util.Pointer(`error body={"key":"value"}`),
+				msg:        new(`error body={"key":"value"}`),
 			},
 			expected: `{"key":"value"}`,
 		},

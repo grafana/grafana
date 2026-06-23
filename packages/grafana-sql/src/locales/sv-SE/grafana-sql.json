@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "Datauppsättningsväljare"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "Fel"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

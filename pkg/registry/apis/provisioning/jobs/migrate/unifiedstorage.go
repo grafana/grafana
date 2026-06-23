@@ -31,7 +31,11 @@ func NewUnifiedStorageMigrator(
 	}
 }
 
-func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+	options := provisioning.MigrateJobOptions{}
+	if job.Spec.Migrate != nil {
+		options = *job.Spec.Migrate
+	}
 	namespace := repo.Config().GetNamespace()
 
 	// Export resources first (for both folder and instance sync).
@@ -43,8 +47,11 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 
 	exportJob := provisioning.Job{
 		Spec: provisioning.JobSpec{
+			Message: job.Spec.Message,
 			Push: &provisioning.ExportJobOptions{
-				Message: options.Message,
+				Message:              options.Message,
+				Resources:            options.Resources,
+				GenerateNewFolderIDs: options.GenerateNewFolderIDs,
 			},
 		},
 	}
@@ -72,8 +79,14 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		return fmt.Errorf("pull resources: %w", err)
 	}
 
-	// For instance-type repositories, also clean the namespace
-	if repo.Config().Spec.Sync.Target != provisioning.SyncTargetTypeFolder {
+	// For instance-type repositories, also clean the namespace.
+	// In selective mode (caller supplied an explicit Resources list) we skip
+	// the cleanup, because deleting every other unmanaged resource would be
+	// destructive — the user only asked to take over the named ones.
+	// Folderless repositories also coexist with unmanaged resources, so they
+	// must never trigger a namespace clean.
+	target := repo.Config().Spec.Sync.Target
+	if target != provisioning.SyncTargetTypeFolder && target != provisioning.SyncTargetTypeFolderless && len(options.Resources) == 0 {
 		progress.SetMessage(ctx, "clean namespace")
 		if err := m.namespaceCleaner.Clean(ctx, namespace, progress); err != nil {
 			return fmt.Errorf("clean namespace: %w", err)

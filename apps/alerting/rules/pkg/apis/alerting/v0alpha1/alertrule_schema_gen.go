@@ -22,7 +22,7 @@ var (
 					return "", errors.New("provided object must be of type *AlertRule")
 				}
 
-				return cast.Spec.Title, nil
+				return string(cast.Spec.Title), nil
 			},
 		},
 			{
@@ -50,7 +50,7 @@ var (
 						return "", nil
 					}
 
-					return cast.Spec.PanelRef.DashboardUID, nil
+					return string(cast.Spec.PanelRef.DashboardUID), nil
 				},
 			},
 			{
@@ -65,6 +65,57 @@ var (
 					}
 
 					return fmt.Sprintf("%d", cast.Spec.PanelRef.PanelID), nil
+				},
+			},
+			{
+				FieldSelector: "spec.notificationSettings.type",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.NotificationSettings == nil {
+						return "", nil
+					}
+					if cast.Spec.NotificationSettings.SimplifiedRouting != nil {
+						return "SimplifiedRouting", nil
+					}
+					if cast.Spec.NotificationSettings.NamedRoutingTree != nil {
+						return "NamedRoutingTree", nil
+					}
+					return "", nil
+				},
+			},
+			{
+				FieldSelector: "spec.notificationSettings.receiver",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.NotificationSettings == nil {
+						return "", nil
+					}
+					if cast.Spec.NotificationSettings.SimplifiedRouting != nil {
+						return string(cast.Spec.NotificationSettings.SimplifiedRouting.Receiver), nil
+					}
+					return "", nil
+				},
+			},
+			{
+				FieldSelector: "spec.notificationSettings.routingTree",
+				FieldValueFunc: func(o resource.Object) (string, error) {
+					cast, ok := o.(*AlertRule)
+					if !ok {
+						return "", errors.New("provided object must be of type *AlertRule")
+					}
+					if cast.Spec.NotificationSettings == nil {
+						return "", nil
+					}
+					if cast.Spec.NotificationSettings.NamedRoutingTree != nil {
+						return string(cast.Spec.NotificationSettings.NamedRoutingTree.RoutingTree), nil
+					}
+					return "", nil
 				},
 			},
 		}))

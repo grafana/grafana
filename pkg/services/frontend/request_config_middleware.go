@@ -8,6 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -24,7 +25,7 @@ import (
 // - Stores final configuration in context
 //
 // Otherwise, uses base configuration for all requests.
-func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, settingsService settingservice.Service) web.Middleware {
+func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, settingsService settingservice.Service, pluginsCDN *pluginscdn.Service) web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx, span := tracing.Start(r.Context(), "frontend.RequestConfigMiddleware")
@@ -33,41 +34,67 @@ func RequestConfigMiddleware(cfg *setting.Cfg, license licensing.Licensing, sett
 			reqCtx := contexthandler.FromContext(ctx)
 			logger := reqCtx.Logger
 
+			ofClient := openfeature.NewDefaultClient()
+			fullFrontendSettingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceReducedBootDataAPI, false, openfeature.TransactionContext(ctx))
+
 			// Create base request config from global settings
 			// This is the default configuration that will be used for all requests
-			requestConfig := NewFSRequestConfig(cfg, license)
+			requestConfig, err := NewFSRequestConfig(ctx, cfg, license, pluginsCDN, fullFrontendSettingsEnabled)
+
+			if err != nil {
+				logger.Error("failed to create request config", "err", err)
+				span.RecordError(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			if fullFrontendSettingsEnabled && requestConfig.FullFrontendSettings != nil {
+				requestConfig.FullFrontendSettings.Namespace = request.NamespaceValue(ctx)
+			}
 
 			// Fetch tenant-specific configuration if the feature toggle is enabled and namespace is present
-			ofClient := openfeature.NewDefaultClient()
 			settingsEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceUseSettingsService, false, openfeature.TransactionContext(ctx))
 
-			if settingsEnabled {
-				if namespace, ok := request.NamespaceFrom(ctx); ok {
-					if namespace != "" && settingsService != nil {
-						// Fetch tenant overrides for relevant sections only
-						selector := metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      "section",
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{"security", "analytics"},
-							}, {
-								// don't return values from defaults.ini as they conflict with the services's own defaults
-								Key:      "source",
-								Operator: metav1.LabelSelectorOpNotIn,
-								Values:   []string{"defaults"},
-							}},
-						}
+			if settingsService != nil && settingsEnabled {
+				namespace, ok := request.NamespaceFrom(ctx)
 
-						settings, err := settingsService.ListAsIni(ctx, selector)
-						if err != nil {
-							settingsFetchMetric.WithLabelValues("error").Inc()
-							logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
-							// Fall back to base config
-						} else {
-							settingsFetchMetric.WithLabelValues("success").Inc()
-							// Merge tenant overrides with base config
-							requestConfig.ApplyOverrides(settings, logger)
+				if ok && namespace != "" {
+					// Fetch tenant overrides for relevant sections only
+					sourceFilterEnabled, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagFrontendServiceSettingsSourceFilter, false, openfeature.TransactionContext(ctx))
+
+					var sourceExpression metav1.LabelSelectorRequirement
+					if sourceFilterEnabled {
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"us"},
 						}
+					} else {
+						// don't return values from defaults.ini as they conflict with the service's own defaults
+						sourceExpression = metav1.LabelSelectorRequirement{
+							Key:      "source",
+							Operator: metav1.LabelSelectorOpNotIn,
+							Values:   []string{"defaults"},
+						}
+					}
+
+					selector := metav1.LabelSelector{
+						MatchExpressions: []metav1.LabelSelectorRequirement{{
+							Key:      "section",
+							Operator: metav1.LabelSelectorOpIn,
+							Values:   []string{"security", "analytics"},
+						}, sourceExpression},
+					}
+
+					settings, err := settingsService.ListAsIni(ctx, selector)
+					if err != nil {
+						settingsFetchMetric.WithLabelValues("error").Inc()
+						logger.Error("failed to fetch tenant settings", "namespace", namespace, "err", err)
+						// Fall back to base config
+					} else {
+						settingsFetchMetric.WithLabelValues("success").Inc()
+						// Merge tenant overrides with base config
+						requestConfig.ApplyOverrides(settings, logger, fullFrontendSettingsEnabled)
 					}
 				}
 			}

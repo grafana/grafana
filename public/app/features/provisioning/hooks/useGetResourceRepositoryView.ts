@@ -1,17 +1,18 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { type Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { type RepoType } from '../Wizard/types';
+import { getManagerIdentity, isManagedByRepository } from '../utils/managedResource';
 import { getIsReadOnlyRepo } from '../utils/repository';
 
 interface GetResourceRepositoryArgs {
   name?: string; // the repository name
   folderName?: string; // folder we are targeting
   skipQuery?: boolean;
+  includeInstance?: boolean;
 }
 
 export enum RepoViewStatus {
@@ -32,16 +33,34 @@ interface RepositoryViewData {
   isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
+  /**
+   * True when loading has settled and no repository could be resolved.
+   * Consumers gating forms (e.g. ProvisionedFormGate) should use this
+   * instead of re-deriving it from isLoading/repository.
+   */
+  isMissingRepo: boolean;
 }
 
 // This is safe to call as a viewer (you do not need full access to the Repository configs)
-export const useGetResourceRepositoryView = ({
+export const useGetResourceRepositoryView = (args: GetResourceRepositoryArgs): RepositoryViewData => {
+  const data = useResourceRepositoryViewData(args);
+  return {
+    ...data,
+    isMissingRepo: !data.isLoading && !data.repository,
+  };
+};
+
+const useResourceRepositoryViewData = ({
   name,
   folderName,
   skipQuery,
-}: GetResourceRepositoryArgs): RepositoryViewData => {
+  includeInstance,
+}: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
   const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
+  // Skip when caller has no target. This query is shared across many
+  // components, so a failing fetch would cycle all of them through retries.
+  // `includeInstance` overrides the skip for root-level instance lookups.
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName && !includeInstance);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
@@ -76,6 +95,21 @@ export const useGetResourceRepositoryView = ({
   }
 
   if (settingsError || folderError) {
+    // 403 = caller lacks provisioning.settings:read (e.g. folder Admin with no basic
+    // role). If the target folder's own annotations show it is not repo-managed,
+    // provisioning is irrelevant to this user — treat as "not provisioned" instead of
+    // failing closed and blocking unrelated flows like dashboard import.
+    // Repo-annotated folders and name-based lookups stay fail-closed: git-sync flows
+    // cannot proceed without the settings data anyway.
+    if (
+      isFetchError(settingsError) &&
+      settingsError.status === 403 &&
+      !name &&
+      !folderError &&
+      !(folder && isManagedByRepository(folder))
+    ) {
+      return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
+    }
     return {
       isLoading: false,
       isInstanceManaged: false,
@@ -135,9 +169,8 @@ export const useGetResourceRepositoryView = ({
     // For nested folders we need to see what the folder thinks.
     // Only treat as repo-managed if the manager kind is explicitly 'repo' —
     // folders managed by plugins, terraform, kubectl, etc. should not be matched against provisioning repos.
-    const annotatedManagerKind = folder?.metadata?.annotations?.[AnnoKeyManagerKind];
-    const annotatedFolderName = folder?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-    if (annotatedFolderName && annotatedManagerKind === ManagerKind.Repo) {
+    const annotatedFolderName = folder ? getManagerIdentity(folder) : undefined;
+    if (annotatedFolderName && folder && isManagedByRepository(folder)) {
       repository = items.find((repo) => repo.name === annotatedFolderName);
       if (repository) {
         return {

@@ -61,7 +61,14 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			// Create checks use an empty Name. For a subfolder, Folder is the parent;
+			// permission must be evaluated on the parent folder (can_create), not on "general".
+			if resource.folder != "" {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && resource.folder == "" {
 			resource.folder = accesscontrol.GeneralFolderUID
 		}
@@ -101,7 +108,12 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
-			resource.name = accesscontrol.GeneralFolderUID
+			if resource.folder != "" {
+				resource.name = resource.folder
+				resource.folder = ""
+			} else {
+				resource.name = accesscontrol.GeneralFolderUID
+			}
 		} else if resource.HasFolderSupport() && resource.folder == "" {
 			resource.folder = accesscontrol.GeneralFolderUID
 		}
