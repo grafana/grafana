@@ -2,6 +2,8 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
+import { isGitHubBased } from './repositoryTypes';
+
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
 
@@ -127,13 +129,7 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
         ...baseConfig,
         generateDashboardPreviews: data.generateDashboardPreviews,
       };
-      // Add connection reference at spec level if using GitHub App
-      // connection name is only available for the app flow
-      // Prefer data.connectionName over the parameter for consistency
-      const finalConnectionName = data.connectionName || connectionName;
-      if (finalConnectionName) {
-        spec.connection = { name: finalConnectionName };
-      }
+      break;
       break;
     case 'gitlab':
       spec.gitlab = baseConfig;
@@ -153,6 +149,16 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       };
       spec.workflows = spec.workflows.filter((v) => v !== 'branch'); // branch only supported by github
       break;
+  }
+
+  // Add connection reference at spec level when using GitHub App (github and
+  // githubEnterprise). The connection name is only available for the app flow;
+  // prefer data.connectionName over the parameter for consistency.
+  if (isGitHubBased(data.type)) {
+    const finalConnectionName = data.connectionName || connectionName;
+    if (finalConnectionName) {
+      spec.connection = { name: finalConnectionName };
+    }
   }
 
   // We need to deep clone the data, so it doesn't become immutable

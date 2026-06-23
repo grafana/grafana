@@ -11,7 +11,7 @@ import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfig
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { WebhookSection } from '../Config/WebhookSection';
 import { useConnectionList } from '../hooks/useConnectionList';
-import { isGitProvider } from '../utils/repositoryTypes';
+import { isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
@@ -34,7 +34,7 @@ export const FinishStep = memo(function FinishStep() {
     'githubAuthType',
   ]);
 
-  const isGithub = type === 'github';
+  const isGithub = isGitHubBased(type);
   const isGitBased = isGitProvider(type);
 
   const [connections] = useConnectionList(isGithub && githubAuthType === 'github-app' ? {} : skipToken);

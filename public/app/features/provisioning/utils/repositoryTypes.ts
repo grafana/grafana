@@ -81,6 +81,12 @@ export const isGitProvider = (type: RepoType) => {
   return GIT_PROVIDER_TYPES.includes(type);
 };
 
+// GitHub and GitHub Enterprise share the same auth flow (GitHub App or PAT),
+// connection handling, and deep-link URL structure.
+export const isGitHubBased = (type?: RepoType) => {
+  return type === 'github' || type === 'githubEnterprise';
+};
+
 /**
  * Get repository configurations ordered by provider type priority:
  * 1. Git providers first (github, gitlab, bitbucket) - excludes pure git

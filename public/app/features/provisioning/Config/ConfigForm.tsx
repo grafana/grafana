@@ -36,7 +36,7 @@ import { type RepositoryFormData } from '../types';
 import { dataToSpec, deriveSigningKeySecret } from '../utils/data';
 import { extractFormErrors, getConfigFormErrors } from '../utils/getFormErrors';
 import { getHasTokenInstructions } from '../utils/git';
-import { getRepositoryTypeConfig, isGitProvider } from '../utils/repositoryTypes';
+import { getRepositoryTypeConfig, isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
 
 import { BranchOptionsSection } from './BranchOptionsSection';
 import { CommitOptionsSection } from './CommitOptionsSection';
@@ -93,7 +93,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
   // Repositories using GitHub App have a connection reference in their spec,
   // whereas PAT-based repositories store credentials directly
   const connectionName = data?.spec?.connection?.name;
-  const usesGitHubApp = Boolean(connectionName && type === 'github');
+  const usesGitHubApp = Boolean(connectionName && isGitHubBased(type));
 
   const {
     options: connectionOptions,
@@ -428,7 +428,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
             )}
           </>
         )}
-        {type === 'github' && (
+        {isGitHubBased(type) && (
           <WebhookSection<RepositoryFormData>
             register={register}
             control={control}
