@@ -327,6 +327,8 @@ func TestIsBatchableQuery(t *testing.T) {
 		{"windows guest OS metrics are not batchable", "azure.vm.windows.guestmetrics", nil, false},
 		{"linux guest OS metrics are not batchable", "azure.vm.linux.guestmetrics", nil, false},
 		{"guest OS namespace match is case-insensitive", "Azure.VM.Windows.GuestMetrics", nil, false},
+		{"WAD namespace is not batchable", "WAD", nil, false},
+		{"windows azure diagnostics namespace is not batchable", "Windows Azure Diagnostics", nil, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

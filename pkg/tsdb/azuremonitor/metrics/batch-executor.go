@@ -16,9 +16,9 @@ import (
 
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
-// Insights custom telemetry) or a Guest OS metrics namespace must fall back to
-// the legacy ARM metrics endpoint — those metrics are not exposed via the
-// metrics-batch data plane.
+// Insights custom telemetry) or a Guest OS / Windows Azure Diagnostics (WAD)
+// namespace must fall back to the legacy ARM metrics endpoint — those metrics
+// are not exposed via the metrics-batch data plane.
 func isBatchableQuery(query backend.DataQuery) bool {
 	var model dataquery.AzureMonitorQuery
 	if err := json.Unmarshal(query.JSON, &model); err != nil {
@@ -34,9 +34,13 @@ func isBatchableQuery(query backend.DataQuery) bool {
 	if az.MetricNamespace != nil {
 		ns := strings.ToLower(strings.TrimSpace(*az.MetricNamespace))
 		// Guest OS metrics use the namespaces "azure.vm.windows.guestmetrics"
-		// and "azure.vm.linux.guestmetrics". These are not resource types and
-		// are not supported by the metrics-batch data plane.
-		if strings.HasPrefix(ns, "azure.vm.") {
+		// and "azure.vm.linux.guestmetrics"; legacy Windows Azure Diagnostics
+		// (WAD) metrics use "windows azure"/"wad" namespaces. None of these are
+		// resource types, so they are not supported by the metrics-batch data
+		// plane and must fall back to the legacy ARM endpoint.
+		if strings.HasPrefix(ns, "azure.vm.") ||
+			strings.HasPrefix(ns, "windows azure") ||
+			strings.HasPrefix(ns, "wad") {
 			return false
 		}
 	}
