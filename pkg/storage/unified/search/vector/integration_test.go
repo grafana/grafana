@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -570,4 +571,49 @@ func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
 
 	// Idempotent: a second call (fast path) is a no-op, no error.
 	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+}
+
+// TestIntegrationVectorTimestamps pins the created_at/updated_at contract:
+// created_at is stamped once on insert and preserved across re-embeds, while
+// updated_at advances on every upsert of the same row.
+func TestIntegrationVectorTimestamps(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	v := Vector{
+		Namespace: "integration-test", Resource: testResource, UID: "dash-ts", Title: "Dash",
+		Subresource: "panel/1", ResourceVersion: 10, Folder: "folder-a",
+		Content: "original content", Metadata: json.RawMessage(`{}`),
+		Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{v}))
+
+	created1, updated1 := readEmbeddingTimestamps(t, engine, v.Namespace, v.Model, v.UID, v.Subresource)
+	require.False(t, created1.IsZero(), "created_at must be stamped on insert")
+	// Both columns default to the same transaction timestamp on insert.
+	require.Equal(t, created1, updated1)
+
+	// CURRENT_TIMESTAMP has microsecond resolution and is fixed per
+	// transaction, so a short sleep guarantees a strictly greater updated_at
+	// on the next upsert without flakiness.
+	time.Sleep(10 * time.Millisecond)
+
+	v.Content = "changed content"
+	v.Embedding = makeEmbedding(0.6, 0.4)
+	require.NoError(t, backend.Upsert(ctx, []Vector{v}))
+
+	created2, updated2 := readEmbeddingTimestamps(t, engine, v.Namespace, v.Model, v.UID, v.Subresource)
+	require.Equal(t, created1, created2, "created_at must not change on re-embed")
+	require.True(t, updated2.After(updated1), "updated_at must advance on re-embed")
+
+	require.NoError(t, backend.Delete(ctx, v.Namespace, testModel, testResource, v.UID))
+}
+
+func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model, uid, subresource string) (createdAt, updatedAt time.Time) {
+	t.Helper()
+	row := engine.DB().QueryRowContext(context.Background(),
+		`SELECT created_at, updated_at FROM embeddings
+			WHERE namespace = $1 AND model = $2 AND uid = $3 AND subresource = $4`,
+		namespace, model, uid, subresource)
+	require.NoError(t, row.Scan(&createdAt, &updatedAt))
+	return createdAt, updatedAt
 }
