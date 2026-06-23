@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -137,29 +136,28 @@ describe('SnapshotListTable', () => {
     render(<SnapshotListTable />);
 
     await waitFor(() => expect(screen.getByText('Snap 1')).toBeInTheDocument());
-    expect(screen.queryByTestId('load-more-snapshots')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show more snapshots' })).not.toBeInTheDocument();
   });
 
   test('renders Load More when k8s returns a continue token and appends the next page on click', async () => {
     config.featureToggles.kubernetesSnapshots = true;
     get.mockResolvedValueOnce(k8sFirstPage).mockResolvedValueOnce(k8sSecondPage);
 
-    render(<SnapshotListTable />);
+    const { user } = render(<SnapshotListTable />);
 
     await waitFor(() => expect(screen.getByText('K8s Snap 1')).toBeInTheDocument());
     expect(screen.getByText('K8s Snap 2')).toBeInTheDocument();
 
-    const button = screen.getByTestId('load-more-snapshots');
-    expect(button).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'Show more snapshots' });
 
-    await userEvent.click(button);
+    await user.click(button);
 
     await waitFor(() => expect(screen.getByText('K8s Snap 3')).toBeInTheDocument());
     // first two rows remain visible
     expect(screen.getByText('K8s Snap 1')).toBeInTheDocument();
     expect(screen.getByText('K8s Snap 2')).toBeInTheDocument();
     // continue token is gone so button is no longer rendered
-    expect(screen.queryByTestId('load-more-snapshots')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show more snapshots' })).not.toBeInTheDocument();
     expect(get).toHaveBeenNthCalledWith(2, k8sUrl, { continue: 'tok-page-2' });
   });
 
@@ -176,22 +174,21 @@ describe('SnapshotListTable', () => {
     };
     get.mockResolvedValueOnce(singleItemFirstPage).mockResolvedValueOnce(k8sSecondPage);
 
-    render(<SnapshotListTable />);
+    const { user } = render(<SnapshotListTable />);
 
     await waitFor(() => expect(screen.getByText('Only Snap')).toBeInTheDocument());
 
     // Delete the only visible row
-    await userEvent.click(screen.getByRole('button', { name: '' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: '' }));
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     await waitFor(() => expect(screen.queryByText('Only Snap')).not.toBeInTheDocument());
 
     // Empty state must not take over while a continue token is outstanding
     expect(screen.queryByText("You haven't created any snapshots yet")).not.toBeInTheDocument();
-    const loadMore = screen.getByTestId('load-more-snapshots');
-    expect(loadMore).toBeInTheDocument();
+    const loadMore = screen.getByRole('button', { name: 'Show more snapshots' });
 
-    await userEvent.click(loadMore);
+    await user.click(loadMore);
     await waitFor(() => expect(screen.getByText('K8s Snap 3')).toBeInTheDocument());
   });
 
@@ -204,8 +201,6 @@ describe('SnapshotListTable', () => {
     // no empty-state message before resolution
     expect(screen.queryByText("You haven't created any snapshots yet")).not.toBeInTheDocument();
 
-    await waitFor(() =>
-      expect(screen.getByText("You haven't created any snapshots yet")).toBeInTheDocument()
-    );
+    await waitFor(() => expect(screen.getByText("You haven't created any snapshots yet")).toBeInTheDocument());
   });
 });

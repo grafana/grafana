@@ -3,7 +3,7 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Button, ConfirmModal, EmptyState, ScrollContainer, Stack, TextLink } from '@grafana/ui';
+import { Box, Button, ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
 import {
   getDashboardSnapshotSrv,
   type Snapshot,
@@ -127,9 +127,7 @@ export const SnapshotListTable = () => {
 
       {!isInitialLoading && continueToken && (
         <Box paddingTop={2}>
-          <Stack>
-            <LoadMoreButton onClick={loadMore} loading={isLoadingMore} />
-          </Stack>
+          <LoadMoreButton onClick={loadMore} loading={isLoadingMore} />
         </Box>
       )}
 
@@ -159,13 +157,7 @@ interface LoadMoreButtonProps {
 
 function LoadMoreButton({ onClick, loading }: LoadMoreButtonProps) {
   return (
-    <Button
-      data-testid="load-more-snapshots"
-      type="button"
-      variant="secondary"
-      onClick={onClick}
-      disabled={loading}
-    >
+    <Button type="button" variant="secondary" onClick={onClick} disabled={loading}>
       {loading ? (
         <Trans i18nKey="snapshot.load-more.loading">Loading more snapshots…</Trans>
       ) : (
