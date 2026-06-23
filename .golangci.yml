@@ -34,18 +34,6 @@ linters:
   settings:
     depguard:
       rules:
-        aggregator:
-          list-mode: lax
-          files:
-            - ./pkg/aggregator/*
-            - ./pkg/aggregator/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/aggregator
-            - github.com/grafana/grafana/pkg/semconv
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apimachinery is not allowed to import grafana core
         apimachinery:
           list-mode: lax
           files:
@@ -109,8 +97,6 @@ linters:
             - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
-            - '**/pkg/tsdb/opentsdb/*'
-            - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
             - '**/pkg/tsdb/tempo/*'

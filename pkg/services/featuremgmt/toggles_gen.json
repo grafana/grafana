@@ -1629,20 +1629,6 @@
     },
     {
       "metadata": {
-        "name": "dataplaneAggregator",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-08-09T08:41:07Z"
-      },
-      "spec": {
-        "description": "Enable grafana dataplane aggregator",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -2715,18 +2701,18 @@
     {
       "metadata": {
         "name": "heatmapRowsAxisOptions",
-        "resourceVersion": "1779473680521",
+        "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-05-22 18:14:40.521505 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-06-22 18:16:05.311396 +0000 UTC"
         }
       },
       "spec": {
         "description": "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3713,7 +3699,8 @@
       "metadata": {
         "name": "opentsdbBackendMigration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-04T08:11:33Z"
+        "creationTimestamp": "2025-12-04T08:11:33Z",
+        "deletionTimestamp": "2026-06-18T19:53:42Z"
       },
       "spec": {
         "description": "Run queries through the data source backend",
@@ -4524,7 +4511,8 @@
       "metadata": {
         "name": "refactorVariablesTimeRange",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-06-06T13:12:09Z"
+        "creationTimestamp": "2023-06-06T13:12:09Z",
+        "deletionTimestamp": "2026-06-18T12:12:56Z"
       },
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
