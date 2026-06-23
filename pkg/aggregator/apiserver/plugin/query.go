@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"k8s.io/component-base/tracing"
 	"k8s.io/klog/v2"
@@ -15,7 +16,6 @@ import (
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	aggregationv0alpha1 "github.com/grafana/grafana/pkg/aggregator/apis/aggregation/v0alpha1"
 	"github.com/grafana/grafana/pkg/aggregator/apiserver/util"
-	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
 )
 
 func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
@@ -62,8 +62,8 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		}
 
 		span.AddEvent("GetPluginContext",
-			grafanasemconv.GrafanaDatasourceUid(dsRef.UID),
-			grafanasemconv.GrafanaDatasourceType(dsRef.Type),
+			attribute.String("grafana.datasource.uid", dsRef.UID),
+			attribute.String("grafana.datasource.type", dsRef.Type),
 		)
 		pluginContext, err := h.pluginContextProvider.GetPluginContext(ctx, dsRef.Type, dsRef.UID)
 		if err != nil {
@@ -72,7 +72,7 @@ func (h *PluginHandler) QueryDataHandler() http.HandlerFunc {
 		}
 
 		ctx = config.WithGrafanaConfig(ctx, pluginContext.GrafanaConfig)
-		span.AddEvent("QueryData start", grafanasemconv.GrafanaDatasourceRequestQueryCount(len(queries)))
+		span.AddEvent("QueryData start", attribute.Int("grafana.datasource.request.query_count", len(queries)))
 		rsp, err := h.client.QueryData(ctx, &backend.QueryDataRequest{
 			Queries:       queries,
 			PluginContext: pluginContext,

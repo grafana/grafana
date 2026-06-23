@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRepository_ConnectionName(t *testing.T) {
@@ -50,6 +51,46 @@ func TestRepository_ConnectionName(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("ConnectionName() = %q, want %q", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestRepositoryType_IsGitHub(t *testing.T) {
+	tests := []struct {
+		name     string
+		repoType v0alpha1.RepositoryType
+		want     bool
+	}{
+		{
+			name:     "github",
+			repoType: v0alpha1.GitHubRepositoryType,
+			want:     true,
+		},
+		{
+			name:     "githubEnterprise",
+			repoType: v0alpha1.GitHubEnterpriseRepositoryType,
+			want:     true,
+		},
+		{
+			name:     "git",
+			repoType: v0alpha1.GitRepositoryType,
+			want:     false,
+		},
+		{
+			name:     "gitlab",
+			repoType: v0alpha1.GitLabRepositoryType,
+			want:     false,
+		},
+		{
+			name:     "bitbucket",
+			repoType: v0alpha1.BitbucketRepositoryType,
+			want:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.repoType.IsGitHub())
 		})
 	}
 }
