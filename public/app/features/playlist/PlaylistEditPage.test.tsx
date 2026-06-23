@@ -5,6 +5,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
+import {
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 
@@ -106,6 +112,49 @@ describe('PlaylistEditPage', () => {
         )
       );
       expect(locationService.getLocation().pathname).toEqual('/playlists');
+    });
+  });
+
+  describe('when the playlist is repository-managed', () => {
+    it('opens the save drawer instead of calling the playlist API', async () => {
+      jest.clearAllMocks();
+      const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
+        of(
+          createFetchResponse({
+            spec: {
+              title: 'Test Playlist',
+              interval: '5s',
+              items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
+            },
+            metadata: {
+              name: 'foo',
+              annotations: {
+                [AnnoKeyManagerKind]: ManagerKind.Repo,
+                [AnnoKeyManagerIdentity]: 'test-repo',
+                [AnnoKeySourcePath]: 'playlists/foo.json',
+              },
+            },
+          })
+        )
+      );
+
+      render(
+        <TestProvider>
+          <PlaylistEditPage />
+        </TestProvider>
+      );
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      // Wait for the form (rendered once the playlist data loads) before submitting.
+      const saveButton = await screen.findByRole('button', { name: /save/i });
+      backendSrvMock.mockClear();
+
+      fireEvent.submit(saveButton);
+
+      // The provisioning save drawer opens...
+      expect(await screen.findByRole('heading', { name: /save provisioned playlist/i })).toBeInTheDocument();
+      // ...and the playlist replace API is not called.
+      expect(backendSrvMock).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'PUT' }));
     });
   });
 });

@@ -12502,6 +12502,9 @@
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards"
     },
+    "save-provisioned": {
+      "drawer-title": "Save provisioned playlist"
+    },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"
   },

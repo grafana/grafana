@@ -19,7 +19,7 @@ import { getRepoFileUrl } from '../utils/git';
 import { PushSuccessMessage } from './PushSuccessMessage';
 import { useLastBranch } from './useLastBranch';
 
-type ResourceType = 'dashboard' | 'folder'; // Add more as needed, e.g., 'alert', etc.
+type ResourceType = 'dashboard' | 'folder' | 'playlist'; // Add more as needed, e.g., 'alert', etc.
 
 // Information object that gets passed to all handlers
 interface ProvisionedOperationInfo {

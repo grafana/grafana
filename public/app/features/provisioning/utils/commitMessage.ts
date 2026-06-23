@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 export type CommitAction = 'create' | 'update' | 'delete' | 'move' | 'rename';
-export type CommitResourceKind = 'dashboard' | 'folder';
+export type CommitResourceKind = 'dashboard' | 'folder' | 'playlist';
 type CommitResourceID = string;
 
 export interface CommitTemplateVars {
