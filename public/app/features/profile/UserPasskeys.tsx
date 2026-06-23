@@ -185,6 +185,7 @@ export const UserPasskeys = memo(() => {
             'You will not be able to sign in with "{{name}}" again. This cannot be undone.',
             { name: pendingDelete.name }
           )}
+          confirmationText={t('user-passkeys.delete-modal.confirmation', 'Delete')}
           confirmText={t('user-passkeys.delete-modal.confirm', 'Delete')}
           dismissText={t('user-passkeys.delete-modal.cancel', 'Cancel')}
           onConfirm={() => remove(pendingDelete.id)}

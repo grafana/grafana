@@ -77,7 +77,13 @@ describe('UserPasskeys', () => {
 
     const modal = await screen.findByRole('dialog');
     expect(within(modal).getByText(/cannot be undone/i)).toBeInTheDocument();
-    await userEvent.click(within(modal).getByRole('button', { name: 'Delete' }));
+
+    // The confirm button is disabled until the user types the confirmation text.
+    const confirmButton = within(modal).getByRole('button', { name: 'Delete' });
+    expect(confirmButton).toBeDisabled();
+    await userEvent.type(within(modal).getByRole('textbox'), 'Delete');
+    expect(confirmButton).toBeEnabled();
+    await userEvent.click(confirmButton);
 
     await waitFor(() => expect(del).toHaveBeenCalledWith('/api/user/passkey/credentials/1'));
   });
