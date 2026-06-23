@@ -22,6 +22,11 @@ describe('getProvisionedRequestError', () => {
       const result = getProvisionedRequestError(makeFetchError(404), 'fallback');
       expect(result).toBe('fallback');
     });
+
+    it('returns fallback when 404 message is not a string', () => {
+      const result = getProvisionedRequestError(makeFetchError(404, { message: ['file not found'] }), 'fallback');
+      expect(result).toBe('fallback');
+    });
   });
 
   describe('non-404 fetch errors', () => {
