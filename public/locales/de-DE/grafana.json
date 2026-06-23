@@ -9898,10 +9898,16 @@
         },
         "name-limit": "Limit",
         "name-mode": "Modus",
+        "name-overflow": "",
         "name-placement": "Platzierung",
         "name-values": "Werte",
         "name-visibility": "Sichtbarkeit",
         "name-width": "Breite",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "Unten",
           "label-right": "Rechts"
@@ -11226,6 +11232,8 @@
         }
       },
       "fields-section": "Felder",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "Log-Linie ausblenden",
       "inline-mode": "Inline anzeigen",
       "inline-no-scrolls": "",
@@ -11971,9 +11979,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "Verwalten Sie Zuordnungen von Identitätsanbietergruppen zu Grafana-Rollen"
     },
     "help": {
       "title": "Hilfe"
@@ -14263,6 +14268,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "Die Datenquelle für diese Abfrage konnte nicht geladen werden",
     "loading-datasource": "Datenquelle wird geladen",
     "no-query-editor-component": "Das Datenquellen-Plugin exportiert keine Komponente des Abfrage-Editors"

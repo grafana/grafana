@@ -9837,10 +9837,16 @@
         },
         "name-limit": "限制",
         "name-mode": "模式",
+        "name-overflow": "",
         "name-placement": "放置",
         "name-values": "值",
         "name-visibility": "可见度",
         "name-width": "宽度",
+        "overflow-options": {
+          "label-ellipsis": "",
+          "label-wrap": ""
+        },
+        "placeholder-width": "",
         "placement-options": {
           "label-bottom": "底部",
           "label-right": "右侧"
@@ -11155,6 +11161,8 @@
         }
       },
       "fields-section": "字段",
+      "filter-for-log-line": "",
+      "filter-out-log-line": "",
       "hide-log-line": "隐藏日志行",
       "inline-mode": "内联显示",
       "inline-no-scrolls": "",
@@ -11900,9 +11908,6 @@
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
-    },
-    "groupsync": {
-      "subtitle": "管理身份提供商组与 Grafana 角色的映射"
     },
     "help": {
       "title": "帮助"
@@ -14168,6 +14173,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-load-error-body": "",
     "datasource-load-error-title": "加载此查询的数据源失败",
     "loading-datasource": "正在加载数据源",
     "no-query-editor-component": "数据源插件未导出任何查询编辑器组件"
