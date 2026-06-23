@@ -262,12 +262,14 @@ message QueryRequest {
 message QueryResponse {
   oneof result {
     GetFolderParentsResult folder_parents = 1;
+    ListUserPermissionsResult user_permissions = 2;
   }
 }
 
 message QueryOperation {
   oneof operation {
     GetFolderParentsQuery get_folder_parents = 1;
+    ListUserPermissionsQuery list_user_permissions = 2;
   }
 }
 
@@ -279,4 +281,16 @@ message GetFolderParentsQuery {
 message GetFolderParentsResult {
   // List of parent folder UIDs
   repeated string parent_uids = 1;
+}
+
+message ListUserPermissionsQuery {
+  // Subject in Zanzana format (e.g. "user:<uid>" or "service-account:<uid>")
+  string subject = 1;
+  // Team UIDs for contextual team membership tuples
+  repeated string teams = 2;
+}
+
+message ListUserPermissionsResult {
+  // Grant tuples assigned to the subject and its resolved roles
+  repeated TupleKey grants = 1;
 }

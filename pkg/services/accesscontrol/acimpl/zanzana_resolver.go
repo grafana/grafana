@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -32,6 +33,10 @@ type ZanzanaPermissionResolver struct {
 	client        zanzana.Client
 	userSvc       user.Service
 	scopeResolver *uidToIDResolver
+	// actionResolver expands action-set permissions (e.g. dashboards:view) resolved from
+	// Zanzana grant tuples into their underlying actions, mirroring how legacy RBAC expands
+	// managed permissions before they are returned.
+	actionResolver ac.ActionResolver
 	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
 	// team memberships are sent as Zanzana contextual tuples for the current user, so the
 	// merged permissions match what the forward Check path (which uses the groups claim)
@@ -44,12 +49,14 @@ func NewZanzanaPermissionResolver(
 	userSvc user.Service,
 	configProvider restcfg.RestConfigProvider,
 	useExternalGroups bool,
+	actionResolver ac.ActionResolver,
 ) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
 		client:            client,
 		userSvc:           userSvc,
 		useExternalGroups: useExternalGroups,
 		scopeResolver:     newUIDToIDResolver(configProvider),
+		actionResolver:    actionResolver,
 	}
 }
 
@@ -69,7 +76,28 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
 	namespace := types.OrgNamespaceFormatter(usr.GetOrgID())
-	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
+
+	resp, err := r.client.Query(ctx, &authzextv1.QueryRequest{
+		Namespace: namespace,
+		Operation: &authzextv1.QueryOperation{
+			Operation: &authzextv1.QueryOperation_ListUserPermissions{
+				ListUserPermissions: &authzextv1.ListUserPermissionsQuery{
+					Subject: subject,
+					Teams:   r.teamsForCurrentUser(usr),
+				},
+			},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("zanzana query failed: %w", err)
+	}
+
+	result := resp.GetUserPermissions()
+	if result == nil {
+		return nil, nil
+	}
+
+	return r.grantsToLegacyPermissions(ctx, namespace, result.GetGrants()), nil
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana
@@ -430,6 +458,61 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	}
 
 	return permissions, nil
+}
+
+func (r *ZanzanaPermissionResolver) grantsToLegacyPermissions(ctx context.Context, namespace string, grants []*authzextv1.TupleKey) []ac.Permission {
+	permissions := make([]ac.Permission, 0, len(grants))
+	for _, grant := range grants {
+		for _, gp := range common.TranslateGrantTuple(grant) {
+			scope := r.formatGrantScope(ctx, namespace, gp.Action, gp.Scope)
+			if scope == "" {
+				continue
+			}
+			permissions = append(permissions, ac.Permission{
+				Action: gp.Action,
+				Scope:  scope,
+			})
+		}
+	}
+
+	// Expand action sets (e.g. dashboards:view -> dashboards:read) so the merged result
+	// matches legacy RBAC, which expands managed permissions the same way before returning.
+	if r.actionResolver != nil {
+		permissions = r.actionResolver.ExpandActionSets(permissions)
+	}
+
+	return dedupePermissions(permissions)
+}
+
+func (r *ZanzanaPermissionResolver) formatGrantScope(ctx context.Context, namespace, action string, scope common.GrantScope) string {
+	if isTeamRBACAction(action) {
+		if scope.Identifier == "*" {
+			return teamWildcardScope()
+		}
+		resolved, err := r.resolveTeamScope(ctx, namespace, scope.Identifier)
+		if err != nil {
+			zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", scope.Identifier, "error", err)
+			return resourceScope(scope.Kind, scope.Identifier)
+		}
+		return resolved
+	}
+
+	return common.FormatGrantScope(scope)
+}
+
+// dedupePermissions removes duplicate action+scope pairs while preserving order.
+func dedupePermissions(permissions []ac.Permission) []ac.Permission {
+	seen := make(map[permKey]struct{}, len(permissions))
+	out := permissions[:0]
+	for _, p := range permissions {
+		k := permKey{action: p.Action, scope: p.Scope}
+		if _, dup := seen[k]; dup {
+			continue
+		}
+		seen[k] = struct{}{}
+		out = append(out, p)
+	}
+	return out
 }
 
 func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {

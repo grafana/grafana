@@ -49,6 +49,8 @@ func (s *Server) query(ctx context.Context, req *authzextv1.QueryRequest) (*auth
 	switch op := req.Operation.Operation.(type) {
 	case *authzextv1.QueryOperation_GetFolderParents:
 		return s.queryFolderParents(ctx, storeInf, op.GetFolderParents)
+	case *authzextv1.QueryOperation_ListUserPermissions:
+		return s.queryListUserPermissions(ctx, storeInf, op.ListUserPermissions)
 	default:
 		return nil, errors.New("unsupported query operation type")
 	}

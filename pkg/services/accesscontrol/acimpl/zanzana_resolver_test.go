@@ -15,7 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
@@ -32,35 +35,44 @@ func (c *verbErroringZanzanaClient) List(_ context.Context, req *authzv1.ListReq
 	return c.allResp, nil
 }
 
-func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
+func TestSearchUsersPermissions_SkipsFailingAction(t *testing.T) {
 	client := &verbErroringZanzanaClient{
 		failVerb: utils.VerbCreate,
 		allResp:  &authzv1.ListResponse{All: true},
 	}
-	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
+	userSvc := &usertest.FakeUserService{ExpectedUser: &user.User{ID: 1, UID: "u1"}}
+	r := NewZanzanaPermissionResolver(client, userSvc, nil, false, nil)
 
-	usr := &identity.StaticRequester{
+	siu := &identity.StaticRequester{
 		Type:    claims.TypeUser,
-		UserID:  1,
-		UserUID: "u1",
+		UserID:  2,
+		UserUID: "admin",
 		OrgID:   1,
 	}
 
-	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	result, err := r.SearchUsersPermissions(context.Background(), siu, 1, ac.SearchOptions{UserID: 1})
 	require.NoError(t, err)
 
+	perms := result[1]
 	require.Contains(t, permScopes(perms, "dashboards:read"), ac.Scope("dashboards", "*"))
 	require.Contains(t, permScopes(perms, "folders:read"), ac.Scope("folders", "*"))
 	require.Empty(t, permScopes(perms, "dashboards:create"))
 	require.Empty(t, permScopes(perms, "folders:create"))
 }
 
-// capturingZanzanaClient records every ListRequest it receives so tests can
-// assert on the group / resource / verb / subject sent to Zanzana.
+// capturingZanzanaClient records Query and List requests for tests.
 type capturingZanzanaClient struct {
 	fakeZanzanaClient
-	mu        sync.Mutex
-	listCalls []*authzv1.ListRequest
+	mu         sync.Mutex
+	queryCalls []*authzextv1.QueryRequest
+	listCalls  []*authzv1.ListRequest
+}
+
+func (c *capturingZanzanaClient) Query(_ context.Context, req *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
+	c.mu.Lock()
+	c.queryCalls = append(c.queryCalls, req)
+	c.mu.Unlock()
+	return c.queryResp, c.queryErr
 }
 
 func (c *capturingZanzanaClient) List(_ context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
@@ -696,12 +708,10 @@ func TestLegacyZanzanaParity(t *testing.T) {
 	}
 }
 
-// TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups verifies the merge
-// resolver sends the signed-in user's team memberships as List `Teams`, so team-based
-// grants (resolved via contextual team:<name>#member tuples) surface in the merged
-// permissions. It mirrors the id token groups claim: external (proxy/IdP) groups when
-// id_use_external_groups_for_groups_claim is set, otherwise stored team memberships.
-func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.T) {
+// TestResolveCurrentUserPermissions_PassesTeamsToQuery verifies the merge
+// resolver sends the signed-in user's team memberships in ListUserPermissionsQuery,
+// so team-based grants surface in the merged permissions.
+func TestResolveCurrentUserPermissions_PassesTeamsToQuery(t *testing.T) {
 	newReq := func(stored, external []string) identity.Requester {
 		return &identity.StaticRequester{
 			Type:           claims.TypeUser,
@@ -724,18 +734,99 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cap := &capturingZanzanaClient{}
-			cap.listResp = &authzv1.ListResponse{}
-			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
+			cap := &capturingZanzanaClient{
+				fakeZanzanaClient: fakeZanzanaClient{
+					queryResp: &authzextv1.QueryResponse{
+						Result: &authzextv1.QueryResponse_UserPermissions{
+							UserPermissions: &authzextv1.ListUserPermissionsResult{},
+						},
+					},
+				},
+			}
+			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups, nil)
 
 			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
 			require.NoError(t, err)
-			require.NotEmpty(t, cap.listCalls, "expected the resolver to issue List requests")
-			for _, c := range cap.listCalls {
-				require.Equal(t, tc.wantTeams, c.Teams, "every List request must carry the user's teams")
-			}
+			require.Len(t, cap.queryCalls, 1)
+
+			op := cap.queryCalls[0].GetOperation().GetListUserPermissions()
+			require.NotNil(t, op)
+			require.Equal(t, tc.wantTeams, op.GetTeams())
+			require.Equal(t, "user:u1", op.GetSubject())
 		})
 	}
+}
+
+func TestResolveCurrentUserPermissions_TranslatesGrantTuples(t *testing.T) {
+	grant := common.ToAuthzExtTupleKey(common.NewResourceTuple(
+		"user:u1",
+		common.RelationGet,
+		"dashboard.grafana.app",
+		"dashboards",
+		"",
+		"dash-1",
+	))
+
+	fake := &fakeZanzanaClient{
+		queryResp: &authzextv1.QueryResponse{
+			Result: &authzextv1.QueryResponse_UserPermissions{
+				UserPermissions: &authzextv1.ListUserPermissionsResult{
+					Grants: []*authzextv1.TupleKey{grant},
+				},
+			},
+		},
+	}
+	r := NewZanzanaPermissionResolver(fake, &usertest.FakeUserService{}, nil, false, nil)
+
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserUID: "u1",
+		OrgID:   1,
+	})
+	require.NoError(t, err)
+	require.Equal(t, []ac.Permission{{
+		Action: "dashboards:read",
+		Scope:  "dashboards:uid:dash-1",
+	}}, perms)
+}
+
+func TestResolveCurrentUserPermissions_ExpandsActionSets(t *testing.T) {
+	// An action-set relation (view) translates to the dashboards:view action set, which
+	// must be expanded to its underlying actions so the result matches legacy RBAC.
+	grant := common.ToAuthzExtTupleKey(common.NewResourceTuple(
+		"user:u1",
+		common.RelationSetView,
+		"dashboard.grafana.app",
+		"dashboards",
+		"",
+		"dash-1",
+	))
+
+	fake := &fakeZanzanaClient{
+		queryResp: &authzextv1.QueryResponse{
+			Result: &authzextv1.QueryResponse_UserPermissions{
+				UserPermissions: &authzextv1.ListUserPermissionsResult{
+					Grants: []*authzextv1.TupleKey{grant},
+				},
+			},
+		},
+	}
+
+	actionResolver := resourcepermissions.NewActionSetService()
+	actionResolver.StoreActionSet("dashboards:view", []string{"dashboards:read"})
+
+	r := NewZanzanaPermissionResolver(fake, &usertest.FakeUserService{}, nil, false, actionResolver)
+
+	perms, err := r.ResolveCurrentUserPermissions(context.Background(), &identity.StaticRequester{
+		Type:    claims.TypeUser,
+		UserUID: "u1",
+		OrgID:   1,
+	})
+	require.NoError(t, err)
+	require.Equal(t, []ac.Permission{{
+		Action: "dashboards:read",
+		Scope:  "dashboards:uid:dash-1",
+	}}, perms)
 }
 
 // permScopes returns the scopes the resolver produced for the given action.
