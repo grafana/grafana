@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useMedia } from 'react-use';
+import { useMeasure, useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -16,7 +16,7 @@ import {
   type SidebarContextValue,
 } from '@grafana/ui';
 import { getInternalRadius } from '@grafana/ui/internal';
-import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
+import NativeScrollbar from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -72,7 +72,8 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
+  const [controlsRef, { height: controlsHeight }] = useMeasure<HTMLDivElement>();
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled, controlsHeight);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -174,12 +175,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     editPane.clearSelection();
   };
 
-  const onBodyRef = (ref: HTMLDivElement | null) => {
-    if (ref) {
-      dashboard.onSetScrollRef(new DivScrollElement(ref));
-    }
-  };
-
   function renderBody() {
     const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
@@ -196,24 +191,24 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
 
     return (
-      <div
-        className={styles.bodyWrapper}
-        data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
-      >
-        <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
-          ref={onBodyRef}
-          onPointerDown={onClearSelection}
-          data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
-        >
-          {body}
-        </div>
+      <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
+        <div className={styles.bodyWrapper} data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}>
+          <div
+            className={cx(styles.bodyContent, sidebarContext.isHiddenPreference && styles.bodyContentNoSidebar)}
+            onPointerDown={onClearSelection}
+            data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+            {...sidebarContext.outerWrapperProps}
+          >
+            {body}
+          </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-        </Sidebar>
-      </div>
+          <div className={styles.stickySidebar}>
+            <Sidebar contextValue={sidebarContext}>
+              <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+            </Sidebar>
+          </div>
+        </div>
+      </NativeScrollbar>
     );
   }
 
@@ -223,7 +218,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     <AssistantPopoverContext.Provider value={popoverContextValue}>
       <div className={styles.container}>
         <ElementSelectionContext.Provider value={selectionContext}>
-          <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
+          <div ref={controlsRef} className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
             {controls}
           </div>
           {renderBody()}
@@ -292,7 +287,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean, controlsHeight = 0) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -310,11 +305,11 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
     bodyWrapper: css({
       label: 'body-wrapper',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
+      alignItems: 'flex-start',
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
-      overflow: 'hidden',
 
       [theme.breakpoints.down('sm')]: {
         flex: 1,
@@ -328,19 +323,24 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
       padding: theme.spacing(0, 2, 2, 2),
       overflow: 'unset',
     }),
-    scrollContainer: css({
+    bodyContent: css({
       display: 'flex',
       flexDirection: 'column',
-      flexGrow: 1,
-      minHeight: 0,
-      overflow: 'auto',
-      scrollbarWidth: 'thin',
-      scrollbarGutter: 'stable',
-      // without top padding the fixed controls headers is rendered over the selection outline.
+      flex: '1 1 0',
+      minWidth: 0,
+      // without top padding the fixed controls header is rendered over the selection outline.
       padding: theme.spacing(0.125, 1, 2, 2),
     }),
-    scrollContainerNoSidebar: css({
+    bodyContentNoSidebar: css({
       paddingRight: theme.spacing(2),
+    }),
+    stickySidebar: css({
+      position: 'sticky',
+      top: headerHeight + controlsHeight,
+      alignSelf: 'flex-start',
+      width: 0,
+      height: `calc(100vh - ${headerHeight + controlsHeight}px)`,
+      zIndex: theme.zIndex.navbarFixed,
     }),
     body: css({
       label: 'body',
