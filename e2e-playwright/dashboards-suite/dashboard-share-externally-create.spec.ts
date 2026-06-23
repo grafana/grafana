@@ -15,6 +15,16 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
+    test.beforeEach(async ({ request }) => {
+      const existingResponse = await request.get(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards`);
+      if (existingResponse.ok()) {
+        const existing = await existingResponse.json();
+        if (existing?.uid) {
+          await request.delete(`/api/dashboards/uid/${DASHBOARD_UID_2}/public-dashboards/${existing.uid}`);
+        }
+      }
+    });
+
     test('Close share externally drawer', async ({ page, gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: DASHBOARD_UID });
 
