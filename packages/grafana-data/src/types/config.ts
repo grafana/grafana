@@ -348,6 +348,9 @@ export interface GrafanaConfig {
     enabled: boolean;
     presenceIndicatorsDisabled?: boolean;
   };
+  passkey?: {
+    enabled: boolean;
+  };
 }
 
 interface SqlConnectionLimits {
