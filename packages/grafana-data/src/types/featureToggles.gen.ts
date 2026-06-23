@@ -1150,11 +1150,6 @@ export interface FeatureToggles {
   */
   favoriteDatasources?: boolean;
   /**
-  * New Log Context component
-  * @default true
-  */
-  newLogContext?: boolean;
-  /**
   * Enables new design for the Clickhouse data source configuration page
   * @default true
   */

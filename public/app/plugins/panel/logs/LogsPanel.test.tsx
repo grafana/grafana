@@ -16,21 +16,21 @@ import {
   DataFrameType,
   LogSortOrderChangeEvent,
 } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 // eslint-disable-next-line no-restricted-imports
 import * as grafanaUI from '@grafana/ui';
-import { type LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
+import { type LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { configureStore } from 'app/store/configureStore';
 
 import { LogsPanel } from './LogsPanel';
 import * as useDatasourcesFromTargetsModule from './useDatasourcesFromTargets';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
-type LogRowContextModalProps = ComponentProps<typeof LogRowContextModal>;
+type LogLineContextProps = ComponentProps<typeof LogLineContext>;
 
-const logRowContextModalMock = jest.fn().mockReturnValue(<div>LogRowContextModal</div>);
-jest.mock('app/features/logs/components/log-context/LogRowContextModal', () => ({
-  LogRowContextModal: (props: LogRowContextModalProps) => logRowContextModalMock(props),
+const logLineContextMock = jest.fn().mockReturnValue(<div>LogLineContext</div>);
+jest.mock('app/features/logs/components/panel/LogLineContext', () => ({
+  LogLineContext: (props: LogLineContextProps) => logLineContextMock(props),
 }));
 
 const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
@@ -213,13 +213,9 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
   });
 
   describe('log context', () => {
-    let originalNewLogContext: boolean | undefined;
-
     let useDatasourcesSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      originalNewLogContext = config.featureToggles.newLogContext;
-      config.featureToggles.newLogContext = false;
       useDatasourcesSpy = jest
         .spyOn(useDatasourcesFromTargetsModule, 'useDatasourcesFromTargets')
         .mockImplementation((targets) => {
@@ -237,7 +233,6 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
     });
 
     afterEach(() => {
-      config.featureToggles.newLogContext = originalNewLogContext;
       useDatasourcesSpy.mockRestore();
     });
 
@@ -340,7 +335,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       expect(screen.queryByText('Show context')).not.toBeInTheDocument();
     });
 
-    it('should render the mocked `LogRowContextModal` after click', async () => {
+    it('should render the mocked `LogLineContext` after click', async () => {
       setup(
         {
           data: {
@@ -357,7 +352,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       );
       await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
       await userEvent.click(screen.getByText('Show context'));
-      expect(screen.getByText(/LogRowContextModal/i)).toBeInTheDocument();
+      expect(screen.getByText(/LogLineContext/i)).toBeInTheDocument();
     });
 
     it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
@@ -378,7 +373,7 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
       await userEvent.click(screen.getByText('Show context'));
 
-      const getRowContextCb = logRowContextModalMock.mock.calls[0][0].getRowContext;
+      const getRowContextCb = logLineContextMock.mock.calls[0][0].getRowContext;
       getRowContextCb({}, {});
       expect(showContextDs.getLogRowContext).toBeCalled();
     });

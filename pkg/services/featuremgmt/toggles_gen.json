@@ -3604,6 +3604,7 @@
         "name": "newLogContext",
         "resourceVersion": "1781279681608",
         "creationTimestamp": "2025-07-31T22:56:50Z",
+        "deletionTimestamp": "2026-06-23T19:18:29Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-12 15:54:41.608564 +0000 UTC"
         }

@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { groupBy } from 'lodash';
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -51,7 +50,6 @@ import {
 } from '@grafana/ui';
 import { createAndCopyShortLink, getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
-import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, type LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
@@ -224,7 +222,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const { register, unregister, outlineItems, updateItem } = useContentOutlineContext() ?? {};
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
-  const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
   const enableNewLogsTable = useFlagLogsTablePanelNG();
 
   const tableHeight = getLogsTableHeight();
@@ -508,29 +505,16 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   let onCloseContext = useCallback(() => {
     setContextOpen(false);
     setContextRow(undefined);
-    if (!newLogContextEnabled) {
-      reportInteraction('grafana_explore_logs_log_context_closed', {
-        datasourceType: contextRow?.datasourceType,
-        logRowUid: contextRow?.uid,
-      });
-    }
     onCloseCallbackRef?.current();
-  }, [contextRow?.datasourceType, contextRow?.uid, newLogContextEnabled, onCloseCallbackRef]);
+  }, [onCloseCallbackRef]);
 
   const onOpenContext = useCallback(
     (row: LogRowModel, onClose: () => void) => {
-      // we are setting the `contextOpen` open state and passing it down to the `LogRow` in order to highlight the row when a LogContext is open
       setContextOpen(true);
       setContextRow(row);
-      if (!newLogContextEnabled) {
-        reportInteraction('grafana_explore_logs_log_context_opened', {
-          datasourceType: row.datasourceType,
-          logRowUid: row.uid,
-        });
-      }
       onCloseCallbackRef.current = onClose;
     },
-    [newLogContextEnabled]
+    []
   );
 
   const onPermalinkClick = useCallback(
@@ -801,19 +785,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
 
   return (
     <>
-      {!newLogContextEnabled && getRowContext && contextRow && (
-        <LogRowContextModal
-          open={contextOpen}
-          row={contextRow}
-          onClose={onCloseContext}
-          getRowContext={(row, options) => getRowContext(row, contextRow, options)}
-          getRowContextQuery={getRowContextQuery}
-          getLogRowContextUi={getLogRowContextUi}
-          logsSortOrder={logsSortOrder}
-          timeZone={timeZone}
-        />
-      )}
-      {newLogContextEnabled && getRowContext && contextRow && (
+      {getRowContext && contextRow && (
         <LogLineContext
           open={contextOpen}
           log={contextRow}

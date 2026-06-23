@@ -69,8 +69,6 @@ export const FlagKeys = {
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
   ManagedPluginsV2: "managedPluginsV2",
-  /** New Log Context component */
-  NewLogContext: "newLogContext",
   /** Enables the new Saved queries (query library) modal experience */
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
@@ -417,17 +415,6 @@ export const useFlagLokiShardSplitting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("managedPluginsV2", false, options).value;
-};
-
-/**
- * New Log Context component
- *
- * **Details:**
- * - flag key: `newLogContext`
- * - default value: `true`
- */
-export const useFlagNewLogContext = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newLogContext", true, options).value;
 };
 
 /**
