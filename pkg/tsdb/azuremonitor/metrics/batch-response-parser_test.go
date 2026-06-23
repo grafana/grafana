@@ -199,6 +199,31 @@ func TestFramesFromBatchResponseValue(t *testing.T) {
 	})
 }
 
+// TestFramesFromBatchResponseValueGrafanaSql verifies the batch path applies the
+// same GrafanaSql frame reshaping (time/value/resourceName columns) as the
+// single-resource parseResponse, so SQL-over-metrics queries work under batch.
+func TestFramesFromBatchResponseValueGrafanaSql(t *testing.T) {
+	q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
+		"/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/myvm": {},
+	})
+	q.GrafanaSql = true
+
+	rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/myVM",
+		"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
+
+	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+
+	f := frames[0]
+	require.Len(t, f.Fields, 3, "grafanaSql frame should have time, value, resourceName columns")
+	require.Equal(t, "time", f.Fields[0].Name)
+	require.Equal(t, "value", f.Fields[1].Name)
+	require.Equal(t, "resourceName", f.Fields[2].Name)
+	// resourceName preserves the canonical casing from the resource ID.
+	require.Equal(t, "myVM", f.Fields[2].At(0))
+}
+
 // framesForRefID returns the subset of frames whose RefID matches.
 func framesForRefID(frames data.Frames, refID string) data.Frames {
 	var out data.Frames
@@ -288,4 +313,97 @@ func TestParseBatchResponse(t *testing.T) {
 		_, err := parseBatchResponse(result, "https://portal.azure.com")
 		assert.Error(t, err)
 	})
+}
+
+// TestFramesFromBatchResponseValueAlias exercises the shared builder's alias /
+// legend branch on the batch path (previously untested), including the minimal
+// AzureMonitorResponse adapter used for {{namespace}}/{{metric}}.
+func TestFramesFromBatchResponseValueAlias(t *testing.T) {
+	lowerID := "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+	q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
+		lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+	})
+	q.Alias = "{{namespace}} {{resourceName}} {{metric}}"
+
+	rv := makeResourceValue("/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1",
+		"microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
+
+	frames, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.NotNil(t, frames[0].Fields[1].Config)
+	require.Equal(t, "microsoft.compute/virtualmachines vm1 Percentage CPU", frames[0].Fields[1].Config.DisplayName)
+}
+
+// TestParseResponseLegacyBatchEquivalence is the key guard for the shared-builder
+// refactor: for the same logical resource/metric/series, the single-resource ARM
+// parser and the batch parser must produce equivalent frames (field names,
+// labels, config, and values) — for both default and GrafanaSql queries.
+func TestParseResponseLegacyBatchEquivalence(t *testing.T) {
+	const fullID = "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm1"
+	const lowerID = "/subscriptions/sub/resourcegroups/rg/providers/microsoft.compute/virtualmachines/vm1"
+
+	build := func(grafanaSql bool) (data.Frames, data.Frames) {
+		q := makeQueryWithResources("A", map[string]dataquery.AzureMonitorResource{
+			lowerID: {ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1")},
+		})
+		q.Alias = "{{resourceName}} {{metric}}"
+		q.GrafanaSql = grafanaSql
+
+		// Legacy ARM response: the resource ID arrives as a metadata label.
+		arm := aztypes.AzureMonitorResponse{
+			Namespace: "microsoft.compute/virtualmachines",
+			Value: []aztypes.AzureMetricValue{{
+				Name: aztypes.AzureMetricName{Value: "Percentage CPU", LocalizedValue: "Percentage CPU"},
+				Unit: "Percent",
+				Timeseries: []aztypes.AzureMetricTimeseries{{
+					Metadatavalues: []aztypes.AzureMetricMetadataValue{{
+						Name:  aztypes.AzureMetricName{Value: "microsoft.resourceid", LocalizedValue: "microsoft.resourceid"},
+						Value: fullID,
+					}},
+					Data: makeTimeseriesData(42.0),
+				}},
+			}},
+		}
+		// Equivalent batch value: the resource ID arrives as the resourceid field.
+		rv := makeResourceValue(fullID, "microsoft.compute/virtualmachines", "westus2", "Success", 42.0)
+
+		ds := &AzureMonitorDatasource{}
+		legacy, err := ds.parseResponse(arm, q, "https://portal.azure.com", q.Subscription)
+		require.NoError(t, err)
+		batch, err := framesFromBatchResponseValue(rv, q, "https://portal.azure.com")
+		require.NoError(t, err)
+		return legacy, batch
+	}
+
+	for _, grafanaSql := range []bool{false, true} {
+		name := "default query"
+		if grafanaSql {
+			name = "grafanaSql query"
+		}
+		t.Run(name, func(t *testing.T) {
+			legacy, batch := build(grafanaSql)
+			require.Len(t, legacy, 1)
+			require.Len(t, batch, 1)
+			assertFramesEquivalent(t, legacy[0], batch[0])
+		})
+	}
+}
+
+// assertFramesEquivalent checks that two frames match on the user-visible
+// attributes: RefID, field names, labels, config, and row values.
+func assertFramesEquivalent(t *testing.T, legacy, batch *data.Frame) {
+	t.Helper()
+	require.Equal(t, legacy.RefID, batch.RefID, "RefID")
+	require.Equal(t, len(legacy.Fields), len(batch.Fields), "field count")
+	for i := range legacy.Fields {
+		lf, bf := legacy.Fields[i], batch.Fields[i]
+		require.Equalf(t, lf.Name, bf.Name, "field %d name", i)
+		require.Equalf(t, lf.Labels, bf.Labels, "field %d labels", i)
+		require.Equalf(t, lf.Config, bf.Config, "field %d config", i)
+		require.Equalf(t, lf.Len(), bf.Len(), "field %d length", i)
+		for j := 0; j < lf.Len(); j++ {
+			require.Equalf(t, lf.At(j), bf.At(j), "field %d row %d", i, j)
+		}
+	}
 }

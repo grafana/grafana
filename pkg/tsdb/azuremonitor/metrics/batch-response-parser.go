@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -66,51 +65,32 @@ func framesFromBatchResponseValue(resourceValue batchResponseValue, query *types
 			for _, md := range series.Metadatavalues {
 				labels[md.Name.LocalizedValue] = md.Value
 			}
-			labels["resourceName"] = resourceName
 
-			frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
-			frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
-			frame.RefID = query.RefID
-			frame.Fields[0].Name = data.TimeSeriesTimeFieldName
-
-			dataField := frame.Fields[1]
-			dataField.Name = metric.Name.LocalizedValue
-			dataField.Labels = labels
-			if metric.Unit != "Unspecified" {
-				dataField.SetConfig(&data.FieldConfig{
-					Unit: toGrafanaUnit(metric.Unit),
-				})
+			// Minimal AzureMonitorResponse so the shared builder can format the
+			// legend; formatAzureMonitorLegendKey reads only Namespace and Value[0].
+			amr := types.AzureMonitorResponse{
+				Namespace: resourceValue.Namespace,
+				Value:     []types.AzureMetricValue{metric.AzureMetricValue},
 			}
 
-			if query.Alias != "" {
-				// Construct a minimal AzureMonitorResponse to reuse formatAzureMonitorLegendKey.
-				amr := types.AzureMonitorResponse{
-					Namespace:      resourceValue.Namespace,
-					Resourceregion: resourceValue.ResourceRegion,
-					Value:          []types.AzureMetricValue{metric.AzureMetricValue},
-				}
-				// Use query.Subscription so that {{subscription}} resolves to the
+			frame, err := buildMetricFrame(metricFrameInput{
+				query:        query,
+				series:       series,
+				labels:       labels,
+				metricName:   metric.Name.LocalizedValue,
+				unit:         metric.Unit,
+				resourceID:   resourceID,
+				resourceName: resourceName,
+				amr:          &amr,
+				// Use query.Subscription so {{subscription}} resolves to the
 				// per-resource subscription rather than the datasource default.
-				displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, query.Subscription)
-				if dataField.Config != nil {
-					dataField.Config.DisplayName = displayName
-				} else {
-					dataField.SetConfig(&data.FieldConfig{DisplayName: displayName})
-				}
-			}
-
-			requestedAgg := query.Params.Get("aggregation")
-			for i, point := range series.Data {
-				frame.SetRow(i, point.TimeStamp, valueForAggregation(point, requestedAgg))
-			}
-
-			queryURL, err := getQueryUrl(query, azurePortalURL, resourceID, resourceName)
+				subscription: query.Subscription,
+			}, azurePortalURL)
 			if err != nil {
 				errs = append(errs, err)
 				continue
 			}
-			frameWithLink := loganalytics.AddConfigLinks(*frame, queryURL, nil)
-			frames = append(frames, &frameWithLink)
+			frames = append(frames, frame)
 		}
 	}
 
