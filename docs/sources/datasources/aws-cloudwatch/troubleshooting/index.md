@@ -31,7 +31,14 @@ The data source health check validates both metrics and logs permissions. If you
 
 ## Authentication errors
 
-These errors occur when AWS credentials are invalid, missing, or don't have the required permissions.
+These errors occur when AWS credentials are invalid, missing, or don't have the required permissions. Use the following table to match the error message you see to its most likely cause and the section that resolves it.
+
+| Error message | Likely cause | Refer to |
+| --- | --- | --- |
+| `AccessDenied: User is not authorized to perform: cloudwatch:...` | The IAM policy is missing required CloudWatch permissions. | [Access Denied or Not authorized to perform this operation](#access-denied-or-not-authorized-to-perform-this-operation) |
+| `InvalidClientTokenId` or `UnrecognizedClientException: The security token included in the request is invalid` | Credentials are invalid, deactivated, or rotated, or a transient Grafana Cloud incident is in progress. | [InvalidClientTokenId or UnrecognizedClientException](#invalidclienttokenid-or-unrecognizedclientexception) |
+| `AccessDenied: ... not authorized to perform: sts:AssumeRole` | The role trust relationship, role ARN, or external ID is incorrect. | [Unable to assume role](#unable-to-assume-role) |
+| `AccessDenied: ... no VPC endpoint policy allows the cloudwatch:ListMetrics action` | A VPC endpoint policy or service control policy (SCP) blocks the action. | [Access blocked by a VPC endpoint policy or service control policy](#access-blocked-by-a-vpc-endpoint-policy-or-service-control-policy) |
 
 ### "Access Denied" or "Not authorized to perform this operation"
 
@@ -51,12 +58,33 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
 | Wrong AWS region                        | Verify the default region in the data source configuration matches where your resources are located.                                                                                                                                                                                                                                                                                                                                  |
 | Assume Role ARN is incorrect            | Verify the role ARN format: `arn:aws:iam::<account-id>:role/<role-name>`. Check that the role exists in the AWS Console.                                                                                                                                                                                                                                                                                                              |
 
+<!-- vale Grafana.Headings = NO -->
+
+### "InvalidClientTokenId" or "UnrecognizedClientException"
+
+<!-- vale Grafana.Headings = YES -->
+
+**Symptoms:**
+
+- Save & test fails with `InvalidClientTokenId: The security token included in the request is invalid`
+- Queries fail with `UnrecognizedClientException: The security token included in the request is invalid`
+- The error appears suddenly without any configuration change
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| --- | --- |
+| Access key or secret key is invalid or mistyped | Verify the credentials in the AWS Console under **IAM** > **Users** > your user > **Security credentials**. Re-enter them in the data source configuration. |
+| Credentials were deactivated, deleted, or rotated | Generate new credentials in AWS and update the data source configuration. |
+| Temporary credentials expired | Generate new temporary credentials, or switch to a long-lived authentication method such as Assume Role. |
+| Transient Grafana Cloud incident | If multiple data sources fail at the same time with `InvalidClientTokenId` and your credentials are unchanged, check the [Grafana Cloud status page](https://status.grafana.com/) for an ongoing incident before you rotate credentials. |
+
 ### "Unable to assume role"
 
 **Symptoms:**
 
 - Authentication fails when using Assume Role ARN
-- Error message references STS or AssumeRole
+- Error references STS or AssumeRole, for example, `AccessDenied: User is not authorized to perform: sts:AssumeRole`
 
 **Solutions:**
 
@@ -87,6 +115,54 @@ These errors occur when AWS credentials are invalid, missing, or don't have the 
   ]
 }
 ```
+
+### "Save & test" passes but queries return no data
+
+**Symptoms:**
+
+- **Save & test** succeeds, but panels and the query editor return no data
+- Namespaces, metrics, or dimensions don't load even though the connection test passed
+- The issue appears only when you use an **Assume Role ARN**
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| --- | --- |
+| The connection test only validates the assume-role step | When you configure an **Assume Role ARN**, **Save & test** confirms that the primary credentials can perform `sts:AssumeRole`. It doesn't verify that the assumed role has CloudWatch or Logs permissions. Attach the required query permissions to the assumed role, not only to the primary credentials. |
+| The assumed role is missing CloudWatch permissions | Add the metrics and logs actions, such as `cloudwatch:ListMetrics`, `cloudwatch:GetMetricData`, `logs:DescribeLogGroups`, and `logs:StartQuery`, to the assumed role's policy. Refer to [Configure CloudWatch](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/) for complete policy examples. |
+| Permissions are attached to the wrong identity | Confirm that the policy is attached to the role named in **Assume Role ARN**, not to the IAM user or role that provides the primary credentials. |
+
+### Access blocked by a VPC endpoint policy or service control policy
+
+**Symptoms:**
+
+- Credentials are valid and the IAM policy grants the action, but requests still fail with `AccessDenied`
+- The error references a VPC endpoint policy, for example, `AccessDenied: ... no VPC endpoint policy allows the cloudwatch:ListMetrics action`
+- Access fails only from within a VPC or in a restricted account, such as a FedRAMP environment
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| --- | --- |
+| A VPC endpoint policy restricts which actions are allowed | Update the policy on the CloudWatch, Logs, EC2, or STS VPC endpoints to allow the required actions, such as `cloudwatch:ListMetrics` and `cloudwatch:GetMetricData`. |
+| A service control policy (SCP) explicitly denies a required action | Review the service control policies applied to the account or organizational unit. An explicit `Deny` in an SCP overrides any `Allow` in an IAM policy, so the action must be permitted at both levels. |
+| Requests route through the wrong endpoint | Confirm that the data source region and any custom endpoint match the VPC endpoints that permit the required actions. |
+
+### Data source stops working after about an hour
+
+**Symptoms:**
+
+- The data source works initially, then queries fail after roughly an hour
+- Errors reference an expired or invalid security token
+- Saving the data source again, or restarting Grafana, temporarily restores access until it fails again
+
+**Possible causes and solutions:**
+
+| Cause | Solution |
+| --- | --- |
+| Temporary credentials expired and weren't refreshed | Methods that use temporary credentials, such as Assume Role or STS, issue short-lived tokens. If the data source uses static temporary credentials, switch to an authentication method that refreshes automatically, such as Assume Role with long-lived base credentials or an EKS/EC2 instance role. Refer to [AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/). |
+| You're running an outdated Grafana version | Token-refresh behavior has been affected by bugs in specific Grafana versions. If restarting or re-saving the data source only restores access temporarily, upgrade to the latest Grafana version, which may contain a fix. |
+| Programmatic workaround needed in the interim | As a temporary workaround, re-save the data source on a schedule through the [data source HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/data_source/#update-an-existing-data-source) to force a credential refresh until you can upgrade. |
 
 ### AWS SDK Default authentication not working
 
@@ -184,6 +260,7 @@ These errors occur when querying CloudWatch Metrics.
 
 - Expected metrics don't appear in the query editor
 - Metric drop-down is empty for a namespace
+- A specific metric is missing from the drop-down even though it exists in the CloudWatch console
 
 **Solutions:**
 
@@ -191,6 +268,7 @@ These errors occur when querying CloudWatch Metrics.
 1. For custom metrics, add the namespace to **Namespaces of Custom Metrics** in the data source configuration.
 1. Check that the IAM policy includes `cloudwatch:ListMetrics` permission.
 1. CloudWatch limits `ListMetrics` to 500 results per page. To retrieve more metrics, increase the `list_metrics_page_limit` setting in the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#configure-the-data-source-with-grafanaini).
+1. Type the metric name directly into the **Metric name** field. For some AWS namespaces, the data source uses a predefined metric list, so newer or less common metrics might not appear in the drop-down even though you can still query them. If the metric exists in your CloudWatch console, enter its exact name to query it.
 1. Use the Query Inspector to verify the API request and response.
 
 ### Dimension values not loading

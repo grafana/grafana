@@ -276,6 +276,30 @@ Cross-account observability lets you retrieve metrics and logs across different 
 
 For more information on configuring authentication, refer to [Configure AWS authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/).
 
+### Permissions reference
+
+The following table explains why each permission is needed and whether it's required, so you can scope a policy to only the features you use. Grant `cloudwatch:GetMetricData` only for metrics, the `logs:` actions only for logs, and the EC2 and tag actions only if you use the related template variables. Granting a permission that you don't use has no effect on functionality.
+
+| Permission | Purpose | Required |
+| --- | --- | --- |
+| `cloudwatch:ListMetrics` | Lists available metrics and populates the namespace, metric, and dimension fields in the query editor. | Required for metrics queries and metrics template variables. |
+| `cloudwatch:GetMetricData` | Retrieves metric data points for queries and metric math expressions. | Required for metrics queries. |
+| `cloudwatch:GetInsightRuleReport` | Retrieves data from CloudWatch Contributor Insights rules. | Optional. Only needed if you query Contributor Insights rules. |
+| `cloudwatch:DescribeAlarms`, `cloudwatch:DescribeAlarmsForMetric`, `cloudwatch:DescribeAlarmHistory` | Reads CloudWatch alarm configuration and history. | Optional. Only needed if you display alarm data. |
+| `pi:GetResourceMetrics` | Retrieves Performance Insights metrics for supported resources, such as RDS databases. | Optional. Only needed if you query Performance Insights metrics. |
+| `logs:DescribeLogGroups` | Lists log groups and populates the log group selector. | Required for logs queries and the Log Groups template variable. |
+| `logs:StartQuery`, `logs:StopQuery`, `logs:GetQueryResults` | Runs CloudWatch Logs Insights queries and retrieves their results. | Required for logs queries. |
+| `logs:GetLogGroupFields` | Retrieves the fields available in a log group for autocomplete. | Optional. Improves the logs query editor experience. |
+| `logs:GetLogEvents` | Retrieves individual log events. | Optional. Only needed for queries that read raw log events. |
+| `logs:Unmask` | Reveals data masked by a CloudWatch Logs data protection policy. | Optional. Only needed to view masked sensitive data. |
+| `ec2:DescribeRegions` | Lists available AWS regions. | Optional. Only needed if you rely on dynamic region discovery. |
+| `ec2:DescribeInstances`, `ec2:DescribeTags` | Resolves EC2 instance attributes and tags for dimension and EC2 template variables. | Optional. Only needed for EC2 Instance Attributes template variables. |
+| `ec2:DescribeVolumes` | Resolves EBS volume IDs for the EBS Volume IDs template variable. | Optional. Only needed for EBS Volume IDs template variables. |
+| `tag:GetResources` | Resolves resource ARNs for the Resource ARNs template variable. | Optional. Only needed for Resource ARNs template variables. |
+| `oam:ListSinks`, `oam:ListAttachedLinks` | Discovers linked accounts for CloudWatch cross-account observability. | Optional. Only needed for cross-account observability. |
+
+When you use an **Assume Role ARN**, attach these query permissions to the assumed role. The primary credentials only need permission to perform `sts:AssumeRole`. For details, refer to [Assume a role](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/aws-authentication/#assume-a-role).
+
 ### CloudWatch Logs data protection
 
 CloudWatch Logs can protect data by applying log group data protection policies. When data protection is enabled for a log group, any sensitive data that matches the identifiers you select is automatically masked. To view masked data, your IAM role or user must have the `logs:Unmask` permission. For more details, refer to [the AWS guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html) on masking sensitive log data.

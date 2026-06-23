@@ -140,6 +140,10 @@ The Grafana Assume Role authentication provider lets you access AWS without crea
 
 The Grafana AWS account then makes a Security Token Service (STS) request to generate temporary credentials for your AWS data. This request includes an `externalID` unique to your Grafana Cloud account, which ensures users can access only their own AWS resources.
 
+{{< admonition type="note" >}}
+The trust policy names the shared Grafana AWS account as the trusted principal, but this doesn't grant every Grafana customer access to your role. The `sts:ExternalId` condition restricts the trust to your unique external ID, so AWS only allows an assume-role request that presents that exact value. Grafana sends your external ID only for your own data source requests. The external ID isn't a secret, but combined with the account-level trust it ensures one customer can't assume another customer's role. Keep the `sts:ExternalId` condition in the trust policy—removing it would let any account that Grafana trusts assume your role.
+{{< /admonition >}}
+
 For more information, refer to the [AWS documentation on external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
 
 To use the Grafana Assume Role:
