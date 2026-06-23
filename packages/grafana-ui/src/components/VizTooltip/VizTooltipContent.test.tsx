@@ -8,40 +8,44 @@ const makeItem = (label: string, value = 'val'): VizTooltipItem => ({ label, val
 describe('VizTooltipContent', () => {
   describe('item rendering', () => {
     it('renders all item labels', () => {
-      render(<VizTooltipContent items={[makeItem('Alpha'), makeItem('Beta'), makeItem('Gamma')]} isPinned={false} />);
+      render(<VizTooltipContent items={[makeItem('Alpha'), makeItem('Beta'), makeItem('Gamma')]} />);
       expect(screen.getByText('Alpha')).toBeInTheDocument();
       expect(screen.getByText('Beta')).toBeInTheDocument();
       expect(screen.getByText('Gamma')).toBeInTheDocument();
     });
 
     it('renders all item values', () => {
-      render(<VizTooltipContent items={[makeItem('A', '10'), makeItem('B', '20')]} isPinned={false} />);
+      render(<VizTooltipContent items={[makeItem('A', '10'), makeItem('B', '20')]} />);
       expect(screen.getByText('10')).toBeInTheDocument();
       expect(screen.getByText('20')).toBeInTheDocument();
     });
 
     it('renders nothing when items array is empty', () => {
-      const { container } = render(<VizTooltipContent items={[]} isPinned={false} />);
-      // Only the wrapper div is present with no rows
+      const { container } = render(<VizTooltipContent items={[]} />);
       expect(container.firstChild?.childNodes.length).toBe(0);
+    });
+  });
+
+  describe('isPinned', () => {
+    it('defaults to false when isPinned is omitted', () => {
+      render(<VizTooltipContent items={[makeItem('A')]} />);
+      expect(screen.getByText('A')).toBeInTheDocument();
     });
   });
 
   describe('scrollable behavior', () => {
     it('applies overflowY auto and maxHeight when scrollable is true', () => {
-      const { container } = render(
-        <VizTooltipContent items={[makeItem('A')]} isPinned={false} scrollable maxHeight={200} />
-      );
+      const { container } = render(<VizTooltipContent items={[makeItem('A')]} scrollable maxHeight={200} />);
       expect(container.firstChild).toHaveStyle({ overflowY: 'auto', maxHeight: '200px' });
     });
 
     it('does not apply overflow styles when scrollable is false', () => {
-      const { container } = render(<VizTooltipContent items={[makeItem('A')]} isPinned={false} scrollable={false} />);
+      const { container } = render(<VizTooltipContent items={[makeItem('A')]} scrollable={false} />);
       expect(container.firstChild).not.toHaveStyle({ overflowY: 'auto' });
     });
 
     it('does not apply overflow styles by default', () => {
-      const { container } = render(<VizTooltipContent items={[makeItem('A')]} isPinned={false} />);
+      const { container } = render(<VizTooltipContent items={[makeItem('A')]} />);
       expect(container.firstChild).not.toHaveStyle({ overflowY: 'auto' });
     });
   });
@@ -49,7 +53,7 @@ describe('VizTooltipContent', () => {
   describe('children', () => {
     it('renders children after the items', () => {
       render(
-        <VizTooltipContent items={[makeItem('A')]} isPinned={false}>
+        <VizTooltipContent items={[makeItem('A')]}>
           <div data-testid="extra-child">footer content</div>
         </VizTooltipContent>
       );
@@ -58,7 +62,7 @@ describe('VizTooltipContent', () => {
 
     it('renders children even when items is empty', () => {
       render(
-        <VizTooltipContent items={[]} isPinned={false}>
+        <VizTooltipContent items={[]}>
           <span data-testid="child">child</span>
         </VizTooltipContent>
       );
