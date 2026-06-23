@@ -32,6 +32,9 @@ posts:
       - whats-new/2026-06-11-add-variables-to-rows-and-tabs.md
       - whats-new/2026-06-18-sidebar-and-toolbar-improvements-for-the-new-dashboard-experience.md
       - whats-new/2026-06-11-revamped-query-editor-now-in-public-preview-with-multi-select-and-stacked-view.md
+  - title: Grafana Assistant
+    items:
+      - whats-new/2026-06-23-grafana-assistant-is-now-pre-installed-in-grafana-enterprise.md
   - title: Data sources
     items:
       - whats-new/2026-06-11-pdc-now-supports-mqtt-github-and-ibm-db2.md
