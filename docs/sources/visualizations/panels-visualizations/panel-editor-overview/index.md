@@ -102,8 +102,6 @@ You can duplicate the styles of one panel in another panel with the same visuali
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-copy-paste-styles.mp4" >}}
 
-This option is available for core panels that come with Grafana.
-
 To copy and paste a panel style, follow these steps:
 
 1. Navigate to the dashboard you want to update.
@@ -114,3 +112,23 @@ To copy and paste a panel style, follow these steps:
 1. Navigate to the panel on which you want to copy the style.
 1. Click the panel menu and select **Styles > Paste styles**.
 1. Save your changes.
+
+This option is available for the following visualizations:
+
+{{< column-list >}}
+
+- Bar chart
+- Bar gauge
+- Candlestick
+- Gauge
+- Heatmap
+- Histogram
+- Pie chart
+- Stat
+- State timeline
+- Status history
+- Time series
+- Trend
+- XY chart
+
+{{< /column-list >}}
