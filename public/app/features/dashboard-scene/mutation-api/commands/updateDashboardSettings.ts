@@ -1,6 +1,8 @@
 import { type z } from 'zod';
 
-import { sceneGraph } from '@grafana/scenes';
+import { textUtil } from '@grafana/data';
+import { behaviors, sceneGraph } from '@grafana/scenes';
+import { DashboardCursorSync, type DashboardLink } from '@grafana/schema';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -8,6 +10,43 @@ import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './typ
 const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
 export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
+
+type CursorSyncValue = NonNullable<UpdateDashboardSettingsPayload['cursorSync']>;
+type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
+
+const CURSOR_SYNC_TO_ENUM: Record<CursorSyncValue, DashboardCursorSync> = {
+  Off: DashboardCursorSync.Off,
+  Crosshair: DashboardCursorSync.Crosshair,
+  Tooltip: DashboardCursorSync.Tooltip,
+};
+
+function cursorSyncToString(sync?: DashboardCursorSync): CursorSyncValue {
+  switch (sync) {
+    case DashboardCursorSync.Crosshair:
+      return 'Crosshair';
+    case DashboardCursorSync.Tooltip:
+      return 'Tooltip';
+    default:
+      return 'Off';
+  }
+}
+
+// The payload links are partial; fill the full DashboardLink shape and sanitize
+// the URL since these render as clickable links and the input is model-controlled.
+function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
+  return {
+    title: link.title,
+    url: link.url ? textUtil.sanitizeUrl(link.url) : '',
+    type: link.type ?? 'link',
+    tooltip: link.tooltip ?? '',
+    icon: link.icon ?? '',
+    tags: link.tags ?? [],
+    asDropdown: link.asDropdown ?? false,
+    targetBlank: link.targetBlank ?? false,
+    includeVars: link.includeVars ?? false,
+    keepTime: link.keepTime ?? false,
+  };
+}
 
 interface DashboardSettings {
   title: string;
@@ -17,6 +56,14 @@ interface DashboardSettings {
   refresh: string;
   timeRange: { from: string; to: string };
   timezone: string;
+  cursorSync: CursorSyncValue;
+  links: DashboardLink[];
+}
+
+function findCursorSyncBehavior(
+  scene: Parameters<MutationCommand['handler']>[1]['scene']
+): behaviors.CursorSync | undefined {
+  return scene.state.$behaviors?.find((b): b is behaviors.CursorSync => b instanceof behaviors.CursorSync);
 }
 
 function readCurrentSettings(scene: Parameters<MutationCommand['handler']>[1]['scene']): DashboardSettings {
@@ -34,6 +81,8 @@ function readCurrentSettings(scene: Parameters<MutationCommand['handler']>[1]['s
       to: timeRange.state.to,
     },
     timezone: timeRange.state.timeZone ?? '',
+    cursorSync: cursorSyncToString(findCursorSyncBehavior(scene)?.state.sync),
+    links: scene.state.links ?? [],
   };
 }
 
@@ -92,6 +141,19 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
         } else {
           warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
         }
+      }
+
+      if (payload.cursorSync !== undefined) {
+        const cursorSyncBehavior = findCursorSyncBehavior(scene);
+        if (cursorSyncBehavior) {
+          cursorSyncBehavior.setState({ sync: CURSOR_SYNC_TO_ENUM[payload.cursorSync] });
+        } else {
+          warnings.push('cursorSync could not be set: CursorSync behavior not found in scene');
+        }
+      }
+
+      if (payload.links !== undefined) {
+        scene.setState({ links: payload.links.map(normalizeDashboardLink) });
       }
 
       const newValue = readCurrentSettings(scene);

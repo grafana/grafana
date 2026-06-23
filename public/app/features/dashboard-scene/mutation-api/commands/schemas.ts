@@ -1120,6 +1120,23 @@ const movePanelPayloadSchema = z.object({
   position: gridPositionSchema.optional().describe('DEPRECATED: Use layoutItem instead.'),
 });
 
+const dashboardLinkSchema = z.object({
+  title: z.string().describe('Link label shown in the dashboard top bar'),
+  url: z.string().optional().describe('Link target URL (required when type is "link")'),
+  type: z
+    .enum(['link', 'dashboards'])
+    .optional()
+    .default('link')
+    .describe('Link type: "link" (single URL) or "dashboards" (by tags)'),
+  tooltip: z.string().optional().describe('Hover tooltip'),
+  icon: z.string().optional().describe('Icon name, e.g. "external link"'),
+  targetBlank: z.boolean().optional().describe('Open in a new tab'),
+  asDropdown: z.boolean().optional().describe('Render tag-based links as a dropdown'),
+  includeVars: z.boolean().optional().describe('Append current template variable values to the link'),
+  keepTime: z.boolean().optional().describe('Append the current time range to the link'),
+  tags: z.array(z.string()).optional().describe('Tags used when type is "dashboards"'),
+});
+
 const updateDashboardSettingsPayloadSchema = z.object({
   title: z.string().optional().describe('Dashboard title'),
   description: z.string().optional().describe('Dashboard description'),
@@ -1137,6 +1154,14 @@ const updateDashboardSettingsPayloadSchema = z.object({
     .describe('Dashboard time range'),
   timezone: z.string().optional().describe('Timezone ("browser", "utc", or IANA timezone)'),
   editable: z.boolean().optional().describe('Whether the dashboard is editable'),
+  cursorSync: z
+    .enum(['Off', 'Crosshair', 'Tooltip'])
+    .optional()
+    .describe('Shared crosshair/tooltip behavior across panels'),
+  links: z
+    .array(dashboardLinkSchema)
+    .optional()
+    .describe('Replaces the full dashboard links list. Pass [] to clear all links.'),
 });
 
 /**
@@ -1178,6 +1203,6 @@ export const payloads = {
   ),
   getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
   updateDashboardSettings: updateDashboardSettingsPayloadSchema.describe(
-    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable)'
+    'Update dashboard settings (title, description, tags, refresh, time range, timezone, editable, cursorSync, links)'
   ),
 };

@@ -1,15 +1,28 @@
-import { sceneGraph } from '@grafana/scenes';
+import { behaviors, sceneGraph } from '@grafana/scenes';
+import { DashboardCursorSync } from '@grafana/schema';
 
 import type { DashboardControls } from '../../scene/DashboardControls';
 import type { DashboardScene } from '../../scene/DashboardScene';
 
 import { updateDashboardSettingsCommand } from './updateDashboardSettings';
 
-jest.mock('@grafana/scenes', () => ({
-  sceneGraph: {
-    getTimeRange: jest.fn(),
-  },
-}));
+jest.mock('@grafana/scenes', () => {
+  class CursorSync {
+    public state: { sync: number };
+    constructor(state: { sync: number }) {
+      this.state = state;
+    }
+    public setState = jest.fn((partial: Record<string, unknown>) => {
+      Object.assign(this.state, partial);
+    });
+  }
+  return {
+    sceneGraph: {
+      getTimeRange: jest.fn(),
+    },
+    behaviors: { CursorSync },
+  };
+});
 
 function buildTestScene(
   overrides: Partial<{
@@ -18,8 +31,11 @@ function buildTestScene(
     tags: string[];
     editable: boolean;
     isEditing: boolean;
+    links: unknown[];
+    withCursorSync: boolean;
   }> = {}
 ) {
+  const { withCursorSync = true, links: linksOverride, ...stateOverrides } = overrides;
   const timeRangeState: Record<string, unknown> = {
     from: 'now-6h',
     to: 'now',
@@ -44,6 +60,8 @@ function buildTestScene(
   const controlsState = { refreshPicker };
   const controls = { state: controlsState } as unknown as DashboardControls;
 
+  const cursorSync = new behaviors.CursorSync({ sync: DashboardCursorSync.Off });
+
   const state: Record<string, unknown> = {
     title: 'Test Dashboard',
     description: '',
@@ -52,7 +70,9 @@ function buildTestScene(
     isEditing: false,
     $timeRange: timeRange,
     controls,
-    ...overrides,
+    links: linksOverride ?? [],
+    $behaviors: withCursorSync ? [cursorSync] : [],
+    ...stateOverrides,
   };
 
   const scene = {
@@ -69,7 +89,7 @@ function buildTestScene(
 
   (sceneGraph.getTimeRange as jest.Mock).mockReturnValue(timeRange);
 
-  return { scene: scene as unknown as DashboardScene, timeRange, refreshPicker };
+  return { scene: scene as unknown as DashboardScene, timeRange, refreshPicker, cursorSync };
 }
 
 describe('UPDATE_DASHBOARD_SETTINGS', () => {
@@ -163,6 +183,57 @@ describe('UPDATE_DASHBOARD_SETTINGS', () => {
     expect(result.success).toBe(true);
     expect(timeRange.setState).toHaveBeenCalledWith({ timeZone: 'America/New_York' });
     expect(result.data).toMatchObject({ timezone: 'America/New_York' });
+  });
+
+  it('updates cursorSync via the CursorSync behavior', async () => {
+    const { scene, cursorSync } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler({ cursorSync: 'Crosshair' }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(cursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
+    expect(result.data).toMatchObject({ cursorSync: 'Crosshair' });
+  });
+
+  it('warns when cursorSync is requested but the CursorSync behavior is missing', async () => {
+    const { scene } = buildTestScene({ withCursorSync: false });
+    const result = await updateDashboardSettingsCommand.handler({ cursorSync: 'Tooltip' }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toContain('cursorSync could not be set: CursorSync behavior not found in scene');
+  });
+
+  it('replaces dashboard links and fills the full link shape', async () => {
+    const { scene } = buildTestScene();
+    const result = await updateDashboardSettingsCommand.handler(
+      { links: [{ title: 'Runbook', url: 'https://runbooks.example.com', type: 'link', targetBlank: true }] },
+      { scene }
+    );
+
+    expect(result.success).toBe(true);
+    expect(scene.setState).toHaveBeenCalledWith({
+      links: [
+        {
+          title: 'Runbook',
+          url: 'https://runbooks.example.com',
+          type: 'link',
+          tooltip: '',
+          icon: '',
+          tags: [],
+          asDropdown: false,
+          targetBlank: true,
+          includeVars: false,
+          keepTime: false,
+        },
+      ],
+    });
+  });
+
+  it('clears links with an empty array', async () => {
+    const { scene } = buildTestScene({ links: [{ title: 'old', url: 'https://x' }] });
+    const result = await updateDashboardSettingsCommand.handler({ links: [] }, { scene });
+
+    expect(result.success).toBe(true);
+    expect(scene.setState).toHaveBeenCalledWith({ links: [] });
   });
 
   it('applies multiple settings at once', async () => {
