@@ -347,6 +347,61 @@ func TestSyncExternalAMs_NoUID_Skipped(t *testing.T) {
 	assertNoExtraConfigSaved(t, cs, 1)
 }
 
+func TestSyncExternalAMs_SeedsSingletonWhenUnconfigured(t *testing.T) {
+	// Fresh stack: flag on, no ini override, no spec UID, and the Config
+	// singleton does NOT exist yet (no setUID call). The sync worker must seed
+	// the empty singleton so it reliably exists without a manual create.
+	adminCfg := newFakeConfigClient()
+
+	moa, cs := buildSyncTestMOA(t, adminCfg, &dsfakes.FakeDataSourceService{}, true, "", []int64{1})
+
+	// Precondition: nothing seeded the singleton during bootstrap.
+	_, err := adminCfg.lookup("org-1")
+	require.True(t, k8serrors.IsNotFound(err), "singleton should be absent before the sync tick")
+
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	// The singleton now exists, carrying Synced=Unknown/NotConfigured (sync is on
+	// but nothing is configured for this org) and no spec.
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err, "singleton should have been seeded by the sync tick")
+	assert.Equal(t, alertingnotifv0alpha1.ConfigSingletonName, obj.GetName())
+	assert.Nil(t, obj.Spec.ExternalAlertmanagerSync, "seeded doc carries no spec config")
+	var synced *alertingnotifv0alpha1.ConfigCondition
+	for i := range obj.Status.Conditions {
+		if obj.Status.Conditions[i].Type == conditionTypeExternalAlertmanagerSynced {
+			synced = &obj.Status.Conditions[i]
+		}
+	}
+	require.NotNil(t, synced, "expected an ExternalAlertmanagerSynced condition on the seeded doc")
+	assert.Equal(t, alertingnotifv0alpha1.ConfigConditionStatusUnknown, synced.Status)
+	assert.Equal(t, conditionReasonNotConfigured, synced.Reason)
+
+	// No sync happened (nothing to sync) — the seed is the only side effect.
+	assertNoExtraConfigSaved(t, cs, 1)
+}
+
+func TestSyncExternalAMs_SeedDoesNotClobberExistingConfig(t *testing.T) {
+	// The singleton already exists (carrying a spec UID). The seed-on-missing
+	// path must be a no-op: an empty spec must not overwrite the configured one.
+	// (Operator ini is empty so resolution falls through to the spec UID.)
+	mimirSrv := startMimirServer(t, "route:\n  receiver: mimir-receiver\nreceivers:\n  - name: mimir-receiver")
+	ds := makeMimirDS("mimir-uid", 1, mimirSrv.URL)
+	dsSvc := &dsfakes.FakeDataSourceService{DataSources: []*datasources.DataSource{ds}}
+
+	adminCfg := newFakeConfigClient()
+	adminCfg.setUID(1, "mimir-uid")
+
+	moa, _ := buildSyncTestMOA(t, adminCfg, dsSvc, true, "", []int64{1})
+	moa.SyncAlertmanagersForOrgs(context.Background(), []int64{1})
+
+	obj, err := adminCfg.lookup("org-1")
+	require.NoError(t, err)
+	require.NotNil(t, obj.Spec.ExternalAlertmanagerSync, "existing spec UID must be preserved")
+	require.NotNil(t, obj.Spec.ExternalAlertmanagerSync.DatasourceUid)
+	assert.Equal(t, "mimir-uid", *obj.Spec.ExternalAlertmanagerSync.DatasourceUid)
+}
+
 func TestSyncExternalAMs_DisabledOrgSkipped(t *testing.T) {
 	// Org 1 enabled, org 2 disabled. Both have admin config UIDs, but only org 1
 	// has its DS registered in the fake DS service. If the syncer respected the
