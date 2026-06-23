@@ -13,6 +13,7 @@ import {
   getManagerKind,
   getSourcePath,
   isManaged,
+  isManagedByRepository,
 } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
@@ -56,7 +57,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             </Button>
           </>
         )}
-        {isManaged(playlist) && (
+        {isManagedByRepository(playlist) && (
           <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} size="md" />
         )}
       </Card.Actions>

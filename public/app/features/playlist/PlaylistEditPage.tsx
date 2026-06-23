@@ -12,6 +12,7 @@ import {
   getManagerKind,
   getSourcePath,
   isManaged,
+  isManagedByRepository,
 } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
@@ -46,11 +47,9 @@ export const PlaylistEditPage = () => {
   const renderTitle = (title: string) => (
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
-      {data && isManaged(data) && (
-        <>
-          <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />
-          <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
-        </>
+      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
+      {data && isManagedByRepository(data) && (
+        <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
       )}
     </Stack>
   );
