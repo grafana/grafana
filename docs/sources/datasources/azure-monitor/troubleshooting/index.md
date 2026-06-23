@@ -114,13 +114,13 @@ These errors occur when credentials configured in the data source or in Azure ar
 
 **Possible causes and solutions:**
 
-| Cause                                        | Solution                                                                                                                                                          |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Certificate has expired                      | Check the certificate expiration date in Azure Portal under **App registrations** > your app > **Certificates & secrets**. Upload a new certificate if expired.  |
-| Wrong certificate format                     | Verify you're using the correct format (PEM or PFX) and that the content matches what you selected. PEM requires separate certificate and private key fields.     |
-| PFX password is incorrect                    | For encrypted PFX certificates, verify the password is correct.                                                                                                   |
-| Private key doesn't match the certificate    | Ensure the private key corresponds to the certificate uploaded to Azure. Regenerate the certificate and key pair if needed.                                       |
-| Certificate not uploaded to Azure             | Verify the public certificate is uploaded to the app registration under **Certificates & secrets** > **Certificates** in the Azure Portal.                       |
+| Cause                                     | Solution                                                                                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Certificate has expired                   | Check the certificate expiration date in Azure Portal under **App registrations** > your app > **Certificates & secrets**. Upload a new certificate if expired. |
+| Wrong certificate format                  | Verify you're using the correct format (PEM or PFX) and that the content matches what you selected. PEM requires separate certificate and private key fields.   |
+| PFX password is incorrect                 | For encrypted PFX certificates, verify the password is correct.                                                                                                 |
+| Private key doesn't match the certificate | Ensure the private key corresponds to the certificate uploaded to Azure. Regenerate the certificate and key pair if needed.                                     |
+| Certificate not uploaded to Azure         | Verify the public certificate is uploaded to the app registration under **Certificates & secrets** > **Certificates** in the Azure Portal.                      |
 
 ## Grafana server configuration errors
 

@@ -70,12 +70,12 @@ You're taken to the **Settings** tab where you can configure the data source.
 The Azure Monitor data source supports five authentication methods. Choose based on where Grafana is hosted, your security requirements, and whether you need alerting:
 
 | Authentication method                     | Best for                                   | Grafana Cloud | Supports alerting | Server configuration required |
-| ----------------------------------------- | ------------------------------------------ | ------------- | ----------------- | ---------------------- |
-| **App Registration (client secret)**      | Any Grafana deployment                     | ✓             | ✓                 | No                     |
-| **App Registration (client certificate)** | Any Grafana deployment                     | ✓             | ✓                 | No                     |
-| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | ✗             | ✓                 | Yes                    |
-| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | ✗             | ✓                 | Yes                    |
-| **Current User**                          | User-level access control                  | ✓             | Partial            | Yes                    |
+| ----------------------------------------- | ------------------------------------------ | ------------- | ----------------- | ----------------------------- |
+| **App Registration (client secret)**      | Any Grafana deployment                     | ✓             | ✓                 | No                            |
+| **App Registration (client certificate)** | Any Grafana deployment                     | ✓             | ✓                 | No                            |
+| **Managed Identity**                      | Grafana hosted in Azure (VMs, App Service) | ✗             | ✓                 | Yes                           |
+| **Workload Identity**                     | Grafana in Kubernetes (AKS)                | ✗             | ✓                 | Yes                           |
+| **Current User**                          | User-level access control                  | ✓             | Partial           | Yes                           |
 
 {{< admonition type="note" >}}
 **Current User** authentication doesn't support background operations like alerting, reporting, and recording rules. To use alerting with Current User, you must configure **fallback service credentials**. Alerts then run under the fallback credential's permissions. Refer to [Limitations and fallback credentials](#limitations-and-fallback-credentials) for details.
