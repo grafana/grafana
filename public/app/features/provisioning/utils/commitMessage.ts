@@ -14,7 +14,7 @@ interface BaseCommitTemplateVars {
 }
 
 /** Single-resource operations always identify the resource by kind. */
-export interface SingleResourceTemplateVars extends BaseCommitTemplateVars {
+interface SingleResourceTemplateVars extends BaseCommitTemplateVars {
   action: CommitAction;
   resourceKind: CommitResourceKind;
 }
@@ -24,7 +24,7 @@ export interface SingleResourceTemplateVars extends BaseCommitTemplateVars {
  * Restricting `action` to the bulk-capable values also keeps single-resource callers honest: a
  * create/update/rename object that drops `resourceKind` won't accidentally match this variant.
  */
-export interface BulkResourceTemplateVars extends BaseCommitTemplateVars {
+interface BulkResourceTemplateVars extends BaseCommitTemplateVars {
   action: Extract<CommitAction, 'delete' | 'move'>;
   resourceKind?: never;
 }
