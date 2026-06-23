@@ -2,10 +2,12 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentProps } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import HomeRoute from './HomeRoute';
 
@@ -22,17 +24,26 @@ setupMockServer();
 describe('HomeRoute', () => {
   let probeCallCount = 0;
 
-  const stubHomeProbe = (body: Record<string, unknown>, init?: ResponseInit) => {
+  const stubMergedPreferences = (spec: Record<string, unknown>, init?: ResponseInit) => {
     server.use(
-      http.get('/api/dashboards/home', () => {
+      http.get(MERGED_PREFS_URL, () => {
         probeCallCount++;
-        return HttpResponse.json(body, init);
+        return HttpResponse.json({ metadata: {}, spec }, init);
       })
     );
   };
 
   beforeEach(() => {
     probeCallCount = 0;
+    setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+
+    // Deny alerting permission so the FiringAlertsCard renders null
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    // Stub endpoints that FiringAlertsCard would call
+    server.use(
+      http.get('/api/user/teams', () => HttpResponse.json([])),
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([]))
+    );
   });
 
   afterEach(async () => {
@@ -46,9 +57,8 @@ describe('HomeRoute', () => {
 
   const props = {} as ComponentProps<typeof HomeRoute>;
 
-  it('flag off → renders dashboard proxy without probing', async () => {
-    // Body would route to <HomePage> if probe fired — proves the flag-off branch is structural.
-    stubHomeProbe({ dashboard: {}, meta: { isDefaultHome: true } });
+  it('flag off → renders dashboard proxy without probing merged preferences', async () => {
+    stubMergedPreferences({ homeDashboardUID: '' });
 
     render(<HomeRoute {...props} />);
 
@@ -56,64 +66,46 @@ describe('HomeRoute', () => {
     expect(probeCallCount).toBe(0);
   });
 
-  it('flag on + bundled default response → renders HomePage', async () => {
+  it('flag on + homeDashboardUID empty → renders HomePage', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: {}, meta: { isDefaultHome: true } });
+    stubMergedPreferences({ homeDashboardUID: '' });
 
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
   });
 
-  it('flag on + classic response with UID → renders dashboard proxy', async () => {
+  it('flag on + homeDashboardUID absent → renders HomePage', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: { uid: 'abc' }, meta: {} });
+    stubMergedPreferences({});
+
+    render(<HomeRoute {...props} />);
+
+    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
+  });
+
+  it('flag on + homeDashboardUID present → renders dashboard proxy', async () => {
+    setTestFlags({ 'grafana.unifiedHomepage': true });
+    stubMergedPreferences({ homeDashboardUID: 'abc' });
 
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + classic response with k8s meta → renders dashboard proxy', async () => {
+  it('flag on + homeDashboardUID: default-home-dashboard → renders dashboard proxy', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: {}, meta: { k8s: { name: 'x' } } });
+    stubMergedPreferences({ homeDashboardUID: 'default-home-dashboard' });
 
     render(<HomeRoute {...props} />);
 
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + k8s resource response → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({
-      kind: 'Dashboard',
-      spec: { title: 'Custom' },
-      metadata: { name: 'x' },
-      access: {},
-    });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
-  });
-
-  it('flag on + redirect response → calls locationService.replace', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ redirectUri: '/d/abc' });
-
-    render(<HomeRoute {...props} />);
-
-    // test-utils render replaces the locationService singleton with a fresh HistoryWrapper,
-    // so spy-before-render doesn't work. Assert on the resulting location instead.
-    await waitFor(() => {
-      expect(locationService.getLocation().pathname).toContain('/d/abc');
-    });
-  });
-
-  it('flag on + probe error → falls back to dashboard proxy', async () => {
+  it('flag on + merged endpoint returns 500 → renders dashboard proxy', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
     server.use(
-      http.get('/api/dashboards/home', () => {
+      http.get(MERGED_PREFS_URL, () => {
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
       })
     );
@@ -123,30 +115,16 @@ describe('HomeRoute', () => {
     expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
   });
 
-  it('flag on + meta.isDefaultHome: false (no uid) → renders dashboard proxy', async () => {
+  it('flag on + homeURL present → calls locationService.replace', async () => {
     setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: {}, meta: { isDefaultHome: false } });
+    stubMergedPreferences({ homeURL: '/d/abc' });
 
     render(<HomeRoute {...props} />);
 
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
-  });
-
-  it('flag on + meta.isDefaultHome: true with uid → renders HomePage (backend signal wins)', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: { uid: 'foo' }, meta: { isDefaultHome: true } });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByText(/Welcome to Grafana/i)).toBeInTheDocument();
-  });
-
-  it('flag on + no isDefaultHome field → renders dashboard proxy', async () => {
-    setTestFlags({ 'grafana.unifiedHomepage': true });
-    stubHomeProbe({ dashboard: {}, meta: {} });
-
-    render(<HomeRoute {...props} />);
-
-    expect(await screen.findByTestId('dashboard-page-proxy-stub')).toBeInTheDocument();
+    // test-utils render replaces the locationService singleton with a fresh HistoryWrapper,
+    // so spy-before-render doesn't work. Assert on the resulting location instead.
+    await waitFor(() => {
+      expect(locationService.getLocation().pathname).toContain('/d/abc');
+    });
   });
 });

@@ -30,6 +30,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeDefaultGridLayout } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
+import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
@@ -44,7 +45,6 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
-import { useSoloPanelContext } from '../SoloPanelContext';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
@@ -683,7 +683,14 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
       className={cx(styles.container, isEditing && styles.containerEditing)}
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
     >
-      {model.state.grid.Component && <model.state.grid.Component model={model.state.grid} />}
+      {model.state.grid.Component && (
+        // #123563: Workaround, needs proper fixing downstream
+        // Force-remount when toggling between empty and populated. react-grid-layout caches its
+        // computed container height in internal state; without a fresh mount it stays sized to
+        // the last panel and overflows on top of the Add panel button below. Needs further investigation
+        // as part of #123563.
+        <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+      )}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>
           <CanvasGridAddActions layoutManager={model} />

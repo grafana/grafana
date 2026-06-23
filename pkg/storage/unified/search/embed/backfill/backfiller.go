@@ -4,22 +4,49 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
+
 const backfillPageSize = 100
+
+// dashboardGroup / dashboardResource gate the views filter to dashboard
+// builders; the filter is a no-op for any other resource type.
+const (
+	dashboardGroup    = "dashboard.grafana.app"
+	dashboardResource = "dashboards"
+)
+
+// viewsLast30DaysKey matches pkg/extensions/usageinsights.statsToMap.
+const viewsLast30DaysKey = "views_last_30_days"
 
 type Options struct {
 	Storage       resource.StorageBackend
 	VectorBackend vector.VectorBackend
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
+	// DashboardStats is optional; nil disables the views filter.
+	DashboardStats builders.DashboardStats
+	// Metrics is optional; when nil the backfiller runs without
+	// observability instrumentation (handy for unit tests).
+	Metrics *resource.VectorMetrics
+	// Interval is how often Run re-scans for incomplete jobs (jobs are
+	// created lazily by the reconciler's write path). Defaults to 1m.
+	Interval time.Duration
 }
 
 type VectorBackfiller struct {
@@ -31,8 +58,13 @@ type VectorBackfiller struct {
 	// is stable across pod restarts. Precomputed because the set is
 	// immutable after construction.
 	sortedBuilders []embed.Builder
+	dashboardStats builders.DashboardStats
 	log            log.Logger
+	metrics        *resource.VectorMetrics
+	interval       time.Duration
 }
+
+const defaultBackfillInterval = time.Minute
 
 func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	if opts.Storage == nil {
@@ -66,18 +98,27 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 		sorted = append(sorted, builders[k])
 	}
 
+	interval := opts.Interval
+	if interval <= 0 {
+		interval = defaultBackfillInterval
+	}
+
 	return &VectorBackfiller{
 		storage:        opts.Storage,
 		vectorBackend:  opts.VectorBackend,
 		batchEmbedder:  opts.BatchEmbedder,
 		builders:       builders,
 		sortedBuilders: sorted,
+		dashboardStats: opts.DashboardStats,
 		log:            log.New("backfill"),
+		metrics:        opts.Metrics,
+		interval:       interval,
 	}, nil
 }
 
-// Run first acquires a Postgres advisory lock so that only one process runs the
-// backfiller at a time.
+// Run acquires a Postgres advisory lock so only one process backfills, then
+// drains incomplete jobs immediately and on every interval tick. The periodic
+// re-scan picks up new jobs from the reconciler.
 func (b *VectorBackfiller) Run(ctx context.Context) error {
 	release, acquired, err := b.vectorBackend.TryAcquireBackfillLock(ctx)
 	if err != nil {
@@ -90,7 +131,16 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 	defer release()
 
 	b.runBackfill(ctx)
-	return ctx.Err()
+	t := time.NewTicker(b.interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-t.C:
+			b.runBackfill(ctx)
+		}
+	}
 }
 
 // runBackfill processes every incomplete vector_backfill_jobs row serially.
@@ -250,27 +300,69 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
-func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) error {
-	rv := iter.ResourceVersion()
-	if rv > job.StoppingRV {
-		return nil
-	}
+func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
+	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
+	defer span.End()
 
 	namespace := iter.Namespace()
 	name := iter.Name()
+	group := builder.Group()
+	res := builder.Resource()
+	span.SetAttributes(
+		attribute.String("group", group),
+		attribute.String("resource", res),
+		attribute.String("namespace", namespace),
+		attribute.String("uid", name),
+	)
+
+	start := time.Now()
+	statusLabel := "embedded"
+	defer func() {
+		if retErr != nil {
+			statusLabel = "error"
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		if b.metrics != nil {
+			metricutil.ObserveWithExemplar(ctx,
+				b.metrics.BackfillItemDuration.WithLabelValues(group, res, statusLabel),
+				time.Since(start).Seconds(),
+			)
+		}
+	}()
+
+	rv := iter.ResourceVersion()
+	// Compare in snowflake space so the bound holds whether the item RV and
+	// the stored stopping_rv came from the kv (snowflake) or legacy sql
+	// (microsecond) backend — e.g. after a SQL<->KV backend swap.
+	if resource.ToSnowflakeRV(rv) > resource.ToSnowflakeRV(job.StoppingRV) {
+		statusLabel = "skipped_rv_past_stopping"
+		return nil
+	}
 
 	// if the embedding exists, then we don't need to backfill it
-	exists, err := b.vectorBackend.Exists(ctx, namespace, job.Model, builder.Resource(), name)
+	exists, err := b.vectorBackend.Exists(ctx, namespace, job.Model, res, name)
 	if err != nil {
 		return fmt.Errorf("exists check: %w", err)
 	}
 	if exists {
+		statusLabel = "skipped_already_embedded"
+		return nil
+	}
+
+	if embed.HasPendingDeleteLabel(iter.Value()) {
+		statusLabel = "skipped_pending_delete"
+		return nil
+	}
+
+	if b.shouldSkipForZeroViews(ctx, builder, namespace, name) {
+		statusLabel = "skipped_zero_views"
 		return nil
 	}
 
 	key := &resourcepb.ResourceKey{
-		Group:     builder.Group(),
-		Resource:  builder.Resource(),
+		Group:     group,
+		Resource:  res,
 		Namespace: namespace,
 		Name:      name,
 	}
@@ -283,10 +375,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		items = items[:resCap]
 	}
 	if len(items) == 0 {
+		statusLabel = "skipped_empty_extract"
 		return nil
 	}
 
-	vectors, err := b.batchEmbedder.Embed(ctx, namespace, builder.Resource(), rv, items)
+	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
 	if err != nil {
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
@@ -295,4 +388,36 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
+}
+
+// shouldSkipForZeroViews returns true only when the stats provider
+// definitively reports zero views in the last 30 days for this
+// dashboard. Anything ambiguous (nil provider, non-dashboard builder,
+// lookup error, missing key) returns false — embed it.
+func (b *VectorBackfiller) shouldSkipForZeroViews(ctx context.Context, builder embed.Builder, namespace, name string) bool {
+	if b.dashboardStats == nil {
+		return false
+	}
+	if builder.Group() != dashboardGroup || builder.Resource() != dashboardResource {
+		return false
+	}
+	if name == "" || namespace == "" {
+		return false
+	}
+	stats, err := b.dashboardStats.GetDashboardStats(ctx, namespace, name)
+	if err != nil {
+		b.log.Error("backfiller dashboard stats check failed", "namespace", namespace, "name", name, "err", err)
+		return false
+	}
+	views, ok := stats[viewsLast30DaysKey]
+	if !ok {
+		return false
+	}
+	if views > 0 {
+		b.log.Info("backfiller embedding dashboard with views in last 30 days", "namespace", namespace, "name", name, "views", views)
+		return false
+	}
+	b.log.FromContext(ctx).Debug("backfill: skipping dashboard with zero views in last 30 days",
+		"namespace", namespace, "name", name)
+	return true
 }

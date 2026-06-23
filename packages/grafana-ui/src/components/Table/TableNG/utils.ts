@@ -1,7 +1,6 @@
 import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
-import { type ColumnWidth, type ColumnWidths, type SortColumn } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
 import { type Count, varPreLine } from 'uwrap';
 
@@ -19,6 +18,7 @@ import {
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { type ColumnWidth, type ColumnWidths, type SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
   type FieldTextAlignment,
@@ -47,8 +47,6 @@ import {
 } from './types';
 
 /* ---------------------------- Cell calculations --------------------------- */
-export type CellNumLinesCalculator = (text: string, cellWidth: number) => number;
-
 /**
  * @internal
  * Returns the default row height based on the theme and cell height setting.
@@ -628,10 +626,7 @@ export const getCellLinks = (field: Field, rowIdx: number) => {
  * @internal
  * Processes nested table rows
  */
-export const processNestedTableRows = (
-  rows: TableRow[],
-  processParents: (parents: TableRow[]) => TableRow[]
-): TableRow[] => {
+const processNestedTableRows = (rows: TableRow[], processParents: (parents: TableRow[]) => TableRow[]): TableRow[] => {
   // Separate parent and child rows
   // Array for parentRows: enables sorting and maintains order for iteration
   // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
@@ -782,12 +777,13 @@ export function applyFilter(
 
 /* ----------------------------- Data grid mapping ---------------------------- */
 /**
- * @internal
+ * @deprecated @internal
  */
-export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+export function compileFrameToRecordsV1(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const hasNestedFrames = (nestedFramesFieldName ?? '').length > 0;
   const fnBody = `
     const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+    const hasNestedFrames = ${hasNestedFrames};
     const frameLength = frame.length ?? values[0]?.length ?? 0;
     const rows = Array(frameLength);
 
@@ -819,6 +815,98 @@ export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: 
   // Uses new Function() for performance as it's faster than creating rows using loops
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+}
+
+// Row metadata keys that must never be shadowed by a same-named data column when
+// building rows via prototype getters (a column named e.g. "__index" would otherwise
+// override the metadata that every cell lookup depends on).
+const RESERVED_ROW_KEYS = new Set(['__depth', '__index', '__parentIndex']);
+
+/**
+ * @internal
+ * Builds a converter that maps a DataFrame (struct-of-arrays) into an array of
+ * TableRows (array-of-structs) without eval/`unsafe-eval`.
+ *
+ * Rather than copying every cell value into each row (which forces V8 to use
+ * slow computed-key stores and dominates conversion time on wide frames), each
+ * data row is created from a per-frame prototype that exposes one getter per
+ * column. The getter reads `frame.fields[col].values[this.__index]` on demand,
+ * so construction is O(rows) tiny objects instead of O(rows * cols) writes.
+ *
+ * The `row[displayName]` access contract is preserved for all consumers (sort,
+ * filter, row-height measuring). Note that columns are exposed via the prototype
+ * rather than as own properties, so they do not appear in `Object.keys(row)` /
+ * `JSON.stringify(row)`; no consumer relies on enumerating row own-keys.
+ */
+export function compileFrameToRecordsV2(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
+  const displayNames = frame.fields.map(getDisplayName);
+  const nestedName = (nestedFramesFieldName ?? '').length > 0 ? nestedFramesFieldName : undefined;
+  const nestedColIdx = nestedName ? displayNames.indexOf(nestedName) : -1;
+
+  return (frame: DataFrame, nestedRowIndex?: number): TableRow[] => {
+    const values = frame.fields.map((f) => f.values);
+    const frameLength = frame.length ?? values[0]?.length ?? 0;
+
+    // Build a prototype carrying one getter per column. The nested-frames column
+    // is intentionally not exposed (it is replaced by an expander placeholder row),
+    // and the reserved meta keys are never shadowed by a same-named column so the
+    // true row metadata (notably __index, used to resolve every cell) always wins.
+    const proto = {
+      __depth: -1,
+      __index: -1,
+      __parentIndex: undefined,
+    };
+    const descriptors: PropertyDescriptorMap = {};
+    for (let j = 0; j < displayNames.length; j++) {
+      const name = displayNames[j];
+      if (j === nestedColIdx || RESERVED_ROW_KEYS.has(name)) {
+        continue;
+      }
+      const col = values[j];
+      descriptors[name] = {
+        enumerable: true,
+        get(this: TableRow) {
+          return col[this.__index];
+        },
+      };
+    }
+    Object.defineProperties(proto, descriptors);
+
+    const hasParent = nestedRowIndex != null;
+    const nestedValues = nestedColIdx === -1 ? undefined : values[nestedColIdx];
+
+    const createRow = (index: number, depth: number): TableRow => {
+      const row: TableRow = Object.create(proto);
+      row.__depth = depth;
+      row.__index = index;
+      if (hasParent) {
+        row.__parentIndex = nestedRowIndex;
+      }
+      return row;
+    };
+
+    // Fast path: without a nested-frames column the output is exactly one row
+    // per frame entry, so it can be sized up front and written by index.
+    if (nestedValues === undefined) {
+      const result = Array(frameLength);
+      for (let i = 0; i < frameLength; i++) {
+        result[i] = createRow(i, 0);
+      }
+      return result;
+    }
+
+    // Nested path: each entry may emit an extra expander placeholder row, so the
+    // final length isn't known without inspecting the nested column.
+    const rows: TableRow[] = [];
+    for (let i = 0; i < frameLength; i++) {
+      rows.push(createRow(i, 0));
+      if (nestedValues[i]) {
+        rows.push({ __depth: 1, __index: i });
+      }
+    }
+
+    return rows;
+  };
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
@@ -1213,3 +1301,8 @@ export const IS_SAFARI_26 = (() => {
   const minorVersion = +safariVersionMatch[2];
   return majorVersion === 26 && minorVersion <= 1;
 })();
+
+export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
+  const key = frame?.meta?.custom?.stableRowKey;
+  return key != null ? String(key) : String(rowIndex);
+};

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
@@ -42,6 +42,7 @@ export const TimeSeriesPanel = ({
   options,
   fieldConfig,
   onChangeTimeRange,
+  onOptionsChange,
   replaceVariables,
   id,
 }: TimeSeriesPanelProps) => {
@@ -108,6 +109,13 @@ export const TimeSeriesPanel = ({
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
+  const onPinnedToSidebarChange = useCallback(
+    (pinned: boolean) => {
+      onOptionsChange({ ...options, legend: { ...options.legend, facetedFilterPinned: pinned } });
+    },
+    [onOptionsChange, options]
+  );
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -136,6 +144,7 @@ export const TimeSeriesPanel = ({
       dataLinkPostProcessor={dataLinkPostProcessor}
       cursorSync={cursorSync}
       annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
+      onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
         return (

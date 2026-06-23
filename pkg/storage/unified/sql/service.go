@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
@@ -64,11 +65,13 @@ type service struct {
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
 	storageMetrics *resource.StorageMetrics
+	vectorMetrics  *resource.VectorMetrics
 	scheduler      *scheduler.Scheduler
 	searchClient   resourcepb.ResourceIndexClient
 
 	// -- Search Services
 	docBuilders      resource.DocumentBuilderSupplier
+	dashboardStats   builders.DashboardStats
 	indexMetrics     *resource.BleveIndexMetrics
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
@@ -92,12 +95,21 @@ func WithAuthenticator(authn func(ctx context.Context) (context.Context, error))
 	}
 }
 
+// WithDashboardStats sets the dashboard stats used by the vector backfiller
+// views filter. Optional; nil disables the filter.
+func WithDashboardStats(stats builders.DashboardStats) ServiceOption {
+	return func(s *service) {
+		s.dashboardStats = stats
+	}
+}
+
 func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
 	reg prometheus.Registerer,
 	docBuilders resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
@@ -107,7 +119,7 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -138,6 +150,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
@@ -148,7 +161,7 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -201,13 +214,14 @@ func newService(
 	docBuilders resource.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
+	vectorMetrics *resource.VectorMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedder *embedder.Embedder,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
-	authn := grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
+	authn := newGrpcAuthenticator(cfg, tracer)
 
 	return &service{
 		backend:            backend,
@@ -221,6 +235,7 @@ func newService(
 		reg:                reg,
 		docBuilders:        docBuilders,
 		storageMetrics:     storageMetrics,
+		vectorMetrics:      vectorMetrics,
 		indexMetrics:       indexMetrics,
 		searchRing:         searchRing,
 		searchClient:       searchClient,
@@ -369,7 +384,15 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		return err
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex)
+	var snapshotStore search.RemoteIndexStore
+	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
+		snapshotStore, err = BuildKVSnapshotStore(s.cfg, s.backend, s.log)
+		if err != nil {
+			return err
+		}
+	}
+
+	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}
@@ -386,9 +409,11 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		SearchClient:   s.searchClient,
 		StorageMetrics: s.storageMetrics,
 		IndexMetrics:   s.indexMetrics,
+		VectorMetrics:  s.vectorMetrics,
 		Features:       s.features,
 		QOSQueue:       s.queue,
 		OwnsIndexFn:    s.OwnsIndex,
+		DashboardStats: s.dashboardStats,
 	}
 
 	if !s.searchStandalone && s.cfg.OverridesFilePath != "" {
@@ -455,6 +480,14 @@ func ReadGrpcServerConfig(cfg *setting.Cfg) *grpcutils.AuthenticatorConfig {
 		AllowedAudiences: section.Key("allowed_audiences").Strings(","),
 		AllowInsecure:    cfg.Env == setting.Dev,
 	}
+}
+
+func newGrpcAuthenticator(cfg *setting.Cfg, tracer trace.Tracer) interceptors.AuthenticatorFunc {
+	unsafe := cfg.SectionWithEnvOverrides("grpc_server_authentication").Key("unsafe").MustBool(false)
+	if unsafe && cfg.Env == setting.Dev {
+		return grpcutils.NewUnsafeAuthenticator(tracer)
+	}
+	return grpcutils.NewAuthenticator(ReadGrpcServerConfig(cfg), tracer)
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
@@ -560,4 +593,48 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 	resourcepb.RegisterResourceIndexServer(srv, handler)
 	resourcepb.RegisterManagedObjectIndexServer(srv, handler)
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
+}
+
+// BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
+// store and lease manager with the storage backend. The caller is
+// responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
+// function validates the remaining preconditions and fails loudly so
+// misconfiguration is caught at process start rather than at the first
+// snapshot operation.
+//
+// Exported so wiring paths outside this package (notably the
+// unified-kv-grpc client in pkg/extensions/storage/unified/kv) can
+// reuse the same construction and validation when they build their
+// own search options.
+func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
+	if cfg.IndexSnapshotBucketURL != "" {
+		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
+	}
+	if !cfg.EnableKVLeases {
+		return nil, fmt.Errorf("index_snapshot_storage_kv requires enable_kv_leases")
+	}
+
+	kvBackend, ok := backend.(resource.KVBackend)
+	if !ok {
+		return nil, fmt.Errorf("index_snapshot_storage_kv requires a KV-backed storage backend (got %T)", backend)
+	}
+
+	leaseMgr := kvBackend.LeaseManager()
+	if leaseMgr == nil {
+		// Defensive: enable_kv_leases above should already have triggered
+		// lease manager creation in the backend.
+		return nil, fmt.Errorf("storage backend has no lease manager; cannot use index_snapshot_storage_kv")
+	}
+
+	store, err := search.NewKVRemoteIndexStore(search.KVRemoteIndexStoreConfig{
+		KV:               kvBackend.KV(),
+		LeaseManager:     leaseMgr,
+		ChunkSize:        int64(cfg.IndexSnapshotKVChunkSizeMiB) * 1024 * 1024,
+		ChunkConcurrency: cfg.IndexSnapshotKVChunkConcurrency,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("building KV remote index store: %w", err)
+	}
+	logger.Info("using KV-backed snapshot store for search indexes")
+	return store, nil
 }

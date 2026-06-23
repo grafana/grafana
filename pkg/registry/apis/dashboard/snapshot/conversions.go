@@ -113,8 +113,13 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 	}
 
 	// Map expires
-	if snap.Spec.Expires != nil {
-		cmd.Expires = *snap.Spec.Expires
+	// snap.Spec.Expires is an absolute timestamp in milliseconds; cmd.Expires is a
+	// duration in seconds, so convert back to a remaining duration.
+	if snap.Spec.Expires != nil && *snap.Spec.Expires > 0 {
+		remaining := time.Until(time.UnixMilli(*snap.Spec.Expires))
+		if remaining > 0 {
+			cmd.Expires = int64(remaining.Seconds())
+		}
 	}
 
 	// Map external settings

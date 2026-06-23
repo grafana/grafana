@@ -5,7 +5,6 @@ import {
   type VisualizationSuggestionsSupplier,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 
 import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 
@@ -26,6 +25,9 @@ function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSu
 export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
   dataSummary
 ) => {
+  if (!config.featureToggles.logsTablePanelNG) {
+    return;
+  }
   const score = getTableSuggestionScore(dataSummary);
   if (score === undefined) {
     return;
@@ -44,8 +46,6 @@ export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Opti
             s.fieldConfig.defaults.custom.minWidth = 50;
           }
         },
-        // TODO: delete this in once "new" suggestions are fully rolled out
-        imgSrc: dataSummary.fieldCount === 0 && !config.featureToggles.newVizSuggestions ? icnTablePanelSvg : undefined,
       },
     },
   ];

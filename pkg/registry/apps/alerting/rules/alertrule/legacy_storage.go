@@ -28,6 +28,37 @@ var validNotificationSettingsTypes = []string{
 	string(ngmodels.NotificationSettingsTypeNamedRoutingTree),
 }
 
+// onlyAlertingVersions filters versions to those representing alerting rules. Versions of
+// recording rules share storage but should not surface through the AlertRule resource.
+func onlyAlertingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
+	out := versions[:0]
+	for _, v := range versions {
+		if v == nil {
+			continue
+		}
+		if v.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// onlyAlertingRules filters deleted rules to those representing alerting rules.
+func onlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
+	out := rules[:0]
+	for _, r := range rules {
+		if r == nil {
+			continue
+		}
+		if r.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
 var (
 	_ grafanarest.Storage = (*legacyStorage)(nil)
 )
@@ -60,6 +91,37 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
+// listSpecialMode handles the reserved label selectors (grafana.app/get-history and
+// grafana.app/get-trash). It returns handled=true when the selector matched and the result was
+// produced; callers should otherwise continue with the regular list pipeline.
+func (s *legacyStorage) listSpecialMode(ctx context.Context, orgID int64, user identity.Requester, opts *internalversion.ListOptions) (runtime.Object, bool, error) {
+	mode, ruleName, err := common.ParseListMode(opts.LabelSelector, opts.FieldSelector)
+	if err != nil {
+		return nil, true, k8serrors.NewBadRequest(err.Error())
+	}
+	switch mode {
+	case common.ListModeHistory:
+		versions, err := s.service.GetAlertRuleVersions(ctx, user, ruleName)
+		if err != nil {
+			if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
+				return nil, true, k8serrors.NewNotFound(ResourceInfo.GroupResource(), ruleName)
+			}
+			return nil, true, err
+		}
+		out, err := convertVersionsToK8sResources(orgID, onlyAlertingVersions(versions), s.namespacer)
+		return out, true, err
+	case common.ListModeTrash:
+		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
+		if err != nil {
+			return nil, true, err
+		}
+		out, err := convertDeletedToK8sResources(orgID, onlyAlertingRules(deleted), s.namespacer)
+		return out, true, err
+	case common.ListModeNormal:
+	}
+	return nil, false, nil
+}
+
 func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOptions) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
@@ -69,6 +131,10 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if out, handled, err := s.listSpecialMode(ctx, info.OrgID, user, opts); handled || err != nil {
+		return out, err
 	}
 
 	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)

@@ -1,10 +1,17 @@
-import { PageLayoutType } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
+import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
+import { DashboardTabs } from './DashboardTabs/DashboardTabs';
+import { HomeSection } from './HomeSection';
 import useHomeGreeting from './useHomeGreeting';
 
 const getEdition = () => {
@@ -20,7 +27,16 @@ const getEdition = () => {
 };
 
 export default function HomePage() {
+  const styles = useStyles2(getStyles);
   const greeting = useHomeGreeting();
+
+  const { components: preComponents } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepagePre,
+  });
+
+  const { components: extraComponents } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.HomepageExtra,
+  });
 
   return (
     <Page
@@ -33,8 +49,41 @@ export default function HomePage() {
       layout={PageLayoutType.Home}
     >
       <Page.Contents>
-        <></>
+        <Stack direction="column" gap={2}>
+          <HomeSection direction="column" display="flex" gap={2}>
+            {renderLimitedComponents({
+              props: {},
+              components: preComponents,
+              pluginId: SETUPGUIDE_PLUGIN_ID,
+            })}
+            <DashboardTabs />
+          </HomeSection>
+          <FiringAlertsCard />
+
+          {renderLimitedComponents({
+            props: {},
+            components: extraComponents,
+            pluginId: SETUPGUIDE_PLUGIN_ID,
+            wrapper: ({ children }) => (
+              <div className={styles.extra}>
+                <HomeSection>{children}</HomeSection>
+              </div>
+            ),
+          })}
+        </Stack>
       </Page.Contents>
     </Page>
   );
 }
+
+const getStyles = () => ({
+  extra: css({
+    display: 'contents',
+
+    '> div': {
+      '&:empty': {
+        display: 'none',
+      },
+    },
+  }),
+});

@@ -18,6 +18,7 @@ import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardSidebarPane } from '../../edit-pane/types';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -50,7 +51,7 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
   }
 }
 
-export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
+function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
       const dashboard = getDashboardSceneFor(model);
@@ -70,7 +71,8 @@ export function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableA
       if (sectionOwner === dashboard) {
         DashboardInteractions.variableTypeSelected({ type });
       } else {
-        DashboardInteractions.sectionVariableTypeSelected({ type });
+        const sectionOwnerType = isRowItem(sectionOwner) ? 'row' : isTabItem(sectionOwner) ? 'tab' : undefined;
+        DashboardInteractions.sectionVariableTypeSelected({ type, sectionOwner: sectionOwnerType });
       }
     },
     [model]
@@ -151,7 +153,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   );
 }
 
-export function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
+function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: EditableVariableType) => void }) {
   const options = useMemo(() => getVariableTypeSelectOptions(), []);
   const styles = useStyles2(getStyles);
 

@@ -12,7 +12,7 @@ jest.mock('./hooks/useTransformationInputData', () => ({
 }));
 
 jest.mock('./TransformationFilterDisplay', () => ({
-  TransformationFilterDisplay: () => <div data-testid="transformation-filter-display" />,
+  TransformationFilterEditor: () => <div data-testid="transformation-filter-display" />,
 }));
 
 jest.mock('./TransformationEditor', () => ({

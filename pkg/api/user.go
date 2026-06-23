@@ -79,13 +79,18 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	userProfile.AuthLabels = []string{}
-	if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-		authLabel := login.GetAuthProviderLabel(authInfo.AuthModule)
-		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
+	if len(userProfile.AuthModules) > 0 {
 		userProfile.IsExternal = true
-
+		for _, authModule := range userProfile.AuthModules {
+			userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authModule))
+			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(hs.Cfg, authModule)
+			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(hs.Cfg, authModule)
+		}
+	} else if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil {
+		// Legacy fallback: extract auth info from the user_auth table.
+		userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authInfo.AuthModule))
+		userProfile.IsExternal = true
 		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
 		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule)
 	}
@@ -578,8 +583,6 @@ func redirectToChangePassword(c *contextmodel.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
-// swagger:route PUT /user/helpflags/{flag_id} signed_in_user setHelpFlag
-//
 // Set user help flag.
 //
 // Responses:
@@ -613,8 +616,6 @@ func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, &util.DynMap{"message": "Help flag set", "helpFlags1": *bitmask})
 }
 
-// swagger:route GET /user/helpflags/clear signed_in_user clearHelpFlags
-//
 // Clear user help flag.
 //
 // Responses:
@@ -788,7 +789,6 @@ type GetSignedInUserTeamListResponse struct {
 	Body []*team.TeamDTO `json:"body"`
 }
 
-// swagger:response helpFlagResponse
 type HelpFlagResponse struct {
 	// The response message
 	// in: body

@@ -281,10 +281,11 @@ export const groupToNestedTable: DataTransformerInfo<
 function createSubframe(
   fields: Field[],
   frameLength: number,
-  { showSubframeHeaders = SHOW_NESTED_HEADERS_DEFAULT }: GroupToNestedTableTransformerOptionsV2
+  { showSubframeHeaders = SHOW_NESTED_HEADERS_DEFAULT }: GroupToNestedTableTransformerOptionsV2,
+  stableRowKey: string
 ) {
   return {
-    meta: { custom: { noHeader: !showSubframeHeaders } },
+    meta: { custom: { noHeader: !showSubframeHeaders, stableRowKey } },
     length: frameLength,
     fields,
   };
@@ -319,7 +320,7 @@ function groupToSubframes(
 ): DataFrame[][] {
   const subFrames: DataFrame[][] = [];
 
-  for (const [, value] of valuesByGroupKey) {
+  for (const [groupKey, value] of valuesByGroupKey) {
     const nestedFields: Field[] = [];
 
     for (const fieldName in value) {
@@ -346,9 +347,9 @@ function groupToSubframes(
     }
 
     if (nestedFields.length > 0) {
-      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options)]);
+      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options, groupKey)]);
     } else {
-      subFrames.push([createSubframe([], 0, options)]);
+      subFrames.push([createSubframe([], 0, options, groupKey)]);
     }
   }
 

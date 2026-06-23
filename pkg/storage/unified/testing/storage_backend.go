@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -44,6 +45,7 @@ const (
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
+	TestReadAtRVBeforeDelete      = "read at RV before delete"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -94,6 +96,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVBeforeDelete},
 	}
 
 	for _, tc := range cases {
@@ -536,8 +539,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -1176,11 +1180,16 @@ func runTestIntegrationBackendListHistoryErrorReporting(t *testing.T, backend re
 }
 
 func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
 	server := newServer(t, backend)
 	store, ok := backend.(resource.BlobSupport)
 	require.True(t, ok)
 	ns := nsPrefix + "-ns1"
+	// Blob RPCs gate on namespace match; the default empty-user ctx from
+	// NewTestContext would 403.
+	ctx := identity.WithServiceIdentityForSingleNamespaceContext(
+		testutil.NewTestContext(t, time.Now().Add(5*time.Second)),
+		ns,
+	)
 
 	t.Run("put and fetch blob", func(t *testing.T) {
 		key := &resourcepb.ResourceKey{
@@ -1189,6 +1198,31 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Resource:  "rrr",
 			Name:      "nnn",
 		}
+
+		// PutBlob must 404 before the parent exists (see blob.proto).
+		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource:    key,
+			Method:      resourcepb.PutBlobRequest_GRPC,
+			ContentType: "plain/text",
+			Value:       []byte("rejected"),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, preExisting.Error)
+		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+
+		initial := &unstructured.Unstructured{}
+		initialMeta, err := utils.MetaAccessor(initial)
+		require.NoError(t, err)
+		initialMeta.SetName(key.Name)
+		initialMeta.SetNamespace(key.Namespace)
+		initial.SetAPIVersion(key.Group + "/v1")
+		initial.SetKind("Test")
+		initialVal, err := initial.MarshalJSON()
+		require.NoError(t, err)
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
@@ -1218,7 +1252,6 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 22222")
 
-		// Save a resource with annotation
 		obj := &unstructured.Unstructured{}
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -1229,21 +1262,21 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
 		require.NoError(t, err)
-		out, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: val})
+		out, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: val, ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
 		require.Nil(t, out.Error)
-		require.True(t, out.ResourceVersion > 0)
+		require.True(t, out.ResourceVersion > created.ResourceVersion)
 
 		// The server (not store!) will lookup the saved annotation and return the correct payload
 		res, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 22222")
 
 		// But we can still get an older version with an explicit UID
 		res, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: b1.Uid})
 		require.NoError(t, err)
-		require.Nil(t, out.Error)
+		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
 	})
 }
@@ -1684,6 +1717,12 @@ func toBulkIterator(items []*resourcepb.BulkRequest) *sliceBulkRequestIterator {
 	return &sliceBulkRequestIterator{ix: -1, items: items}
 }
 
+// ToBulkIterator returns a BulkRequestIterator over the given requests, for use by
+// bulk-processing tests in other packages.
+func ToBulkIterator(items []*resourcepb.BulkRequest) resource.BulkRequestIterator {
+	return toBulkIterator(items)
+}
+
 func (s *sliceBulkRequestIterator) Next() bool {
 	s.ix++
 	return s.ix < len(s.items)
@@ -1893,6 +1932,61 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(404), resp.Error.Code)
 	})
+}
+
+// runTestIntegrationBackendReadAtRVBeforeDelete pins down the read-at-RV
+// behaviour the dashboard restore-from-trash flow depends on: the trash listing
+// surfaces each item's delete-event RV, and the restore flow reads the resource
+// at deleteRV-1 to fetch the live pre-delete state. The sequence has multiple
+// modifications, unrelated traffic on other resources, and a re-add after the
+// delete, so a passing assertion really exercises "find the highest non-deleted
+// RV ≤ requested for this resource" rather than "give me the only live event".
+func runTestIntegrationBackendReadAtRVBeforeDelete(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-pre-del-rv"
+
+	rvAdd, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	// Unrelated traffic so the target's RVs are not contiguous in the global stream.
+	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvMod1, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvAdd))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvMod2, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvMod1))
+	require.NoError(t, err)
+
+	rvDel, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvMod2))
+	require.NoError(t, err)
+	require.Greater(t, rvDel, rvMod2)
+
+	// Activity after the delete: other resources, plus a re-add of the same
+	// name. None of this should influence the lookup at rvDel-1.
+	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Name:      "target",
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		},
+		ResourceVersion: rvDel - 1,
+	})
+	require.Nil(t, resp.Error)
+	require.Equal(t, rvMod2, resp.ResourceVersion)
+	require.Contains(t, string(resp.Value), "target MODIFIED")
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns

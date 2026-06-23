@@ -46,12 +46,10 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 	require.NoError(t, err)
 
 	identifier := "test-create-get-config"
-	mergeMatchers := "_imported=true"
 
 	headers := map[string]string{
 		"Content-Type":                         "application/yaml",
 		"X-Grafana-Alerting-Config-Identifier": identifier,
-		"X-Grafana-Alerting-Merge-Matchers":    mergeMatchers,
 	}
 	var amConfig apimodels.AlertmanagerUserConfig
 	require.NoError(t, yaml.Unmarshal(configYaml, &amConfig))
@@ -128,4 +126,72 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, templates.Items[2].Spec.Kind)
 		assert.Equal(t, "template", templates.Items[3].Spec.Title)
 	})
+}
+
+func TestIntegrationPromotedTemplates(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
+			featuremgmt.FlagAlertingImportAlertmanagerAPI,
+		},
+	})
+
+	client, err := v1beta1.NewTemplateGroupClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	cliCfg := helper.Org1.Admin.NewRestConfig()
+	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
+
+	identifier := "test-promote-templates"
+
+	amConfig := apimodels.AlertmanagerUserConfig{
+		AlertmanagerConfig: `
+route:
+  receiver: sinkhole
+receivers:
+  - name: sinkhole
+`,
+		TemplateFiles: map[string]string{
+			"imported": `{{ define "imported" }}
+{{ end }}`,
+			"template": `{{ define "template" }}
+  {{ template "imported" . }}
+{{ end }}`,
+		},
+	}
+
+	response := alertingApi.ConvertPrometheusPostAlertmanagerConfig(t, amConfig, map[string]string{
+		"Content-Type":                         "application/yaml",
+		"X-Grafana-Alerting-Config-Identifier": identifier,
+		"X-Grafana-Alerting-Promote":           "true",
+	})
+	require.Equal(t, "success", response.Status)
+
+	// After promote the config must not be stored as an extra config.
+	_, status, _ := alertingApi.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+		"X-Grafana-Alerting-Config-Identifier": identifier,
+	})
+	require.Equal(t, 404, status)
+
+	// Promoted templates must appear via the k8s API.
+	templates, err := client.List(context.Background(), apis.DefaultNamespace, resource.ListOptions{})
+	require.NoError(t, err)
+
+	// Find the two promoted templates (default Grafana template is always present).
+	var promoted []v1beta1.TemplateGroup
+	for _, tpl := range templates.Items {
+		if tpl.Spec.Title == "imported" || tpl.Spec.Title == "template" {
+			promoted = append(promoted, tpl)
+		}
+	}
+	require.Len(t, promoted, 2, "both promoted templates must be visible via k8s API")
+
+	for _, tpl := range promoted {
+		assert.Equal(t, v1beta1.TemplateGroupTemplateKindMimir, tpl.Spec.Kind,
+			"promoted Mimir template must have Mimir kind, got %q for %q", tpl.Spec.Kind, tpl.Spec.Title)
+		assert.EqualValues(t, models.ProvenanceNone, tpl.GetProvenanceStatus(),
+			"promoted template must have no provenance (not locked)")
+	}
 }

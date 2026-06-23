@@ -21,7 +21,7 @@ export interface PanelDataErrorViewProps {
  *
  * @internal
  */
-export type PanelDataErrorViewType = React.ComponentType<PanelDataErrorViewProps>;
+type PanelDataErrorViewType = React.ComponentType<PanelDataErrorViewProps>;
 
 /**
  * PanelDataErrorView allows panels to show a consistent error message when

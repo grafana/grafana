@@ -2,6 +2,7 @@ package sql
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -35,6 +36,13 @@ var (
 const (
 	bulkHistoryInsertSQLiteMaxRows  = 8
 	bulkHistoryInsertDefaultMaxRows = 1000
+
+	// analyzeResourceHistoryRowThreshold is the number of rows bulk-loaded into
+	// resource_history to trigger an ANALYZE before the resource backfill.
+	analyzeResourceHistoryRowThreshold = 10000
+
+	// txChunkerMaxRows forces a chunk commit at this row count as safety cap.
+	txChunkerMaxRows = 100_000
 )
 
 // noRollbackTx wraps a db.Tx but makes Rollback() a no-op.
@@ -227,6 +235,10 @@ func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings
 		}
 	}
 
+	if b.migrationChunkedWrites && b.dialect.DialectName() != "sqlite" {
+		return b.processBulkChunked(ctx, setting, iter)
+	}
+
 	return b.processBulk(ctx, setting, iter)
 }
 
@@ -289,9 +301,14 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 		if len(batch) == 0 {
 			return rollbackWithError(fmt.Errorf("missing request batch"))
 		}
-		if err := b.insertHistoryBatch(ctx, tx, batch, rv, rsp); err != nil {
+		if _, err := b.insertHistoryBatch(ctx, tx, batch, rv, rsp, nil); err != nil {
 			return rollbackWithError(err)
 		}
+	}
+
+	// Refresh planner stats so syncCollection's self-join avoids a nested-loop plan.
+	if err := b.analyzeResourceHistoryForBackfill(ctx, tx, rsp.Processed); err != nil {
+		return rollbackWithError(err)
 	}
 
 	// Now update the resource table from history
@@ -302,8 +319,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			return rollbackWithError(fmt.Errorf("missing summary key for: %s", k))
 		}
 
-		err := bulk.syncCollection(key, summary)
-		if err != nil {
+		if err := bulk.syncCollection(key, summary); err != nil {
 			return err
 		}
 
@@ -322,7 +338,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 			}
 		} else {
 			// Make sure the collection RV is above our last written event
-			_, err = b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
+			_, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
 				return "", nil
 			})
 			if err != nil {
@@ -339,12 +355,294 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	return nil
 }
 
-func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, batch []*resourcepb.BulkRequest, rv *bulkRV, rsp *resourcepb.BulkResponse) error {
+// processBulkChunked mirrors processBulkWithTx but uses multiple txs and autocommit.
+//
+// Note: mid-stream rollback is not possible. A RollbackRequested signal or error
+// returns a hard error after best-effort re-wiping the committed chunks.
+func (b *backend) processBulkChunked(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+	rsp := &resourcepb.BulkResponse{}
+	budget := b.migrationChunkMaxBytes
+
+	// Clear each collection using bounded autocommit batches.
+	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
+	for _, key := range setting.Collection {
+		summary, err := b.deleteCollectionChunked(ctx, key)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+			return rsp
+		}
+		summaries[resource.NSGR(key)] = summary
+		rsp.Summary = append(rsp.Summary, summary)
+	}
+
+	if err := b.writeBulkChunked(ctx, setting, iter, rsp, summaries, budget); err != nil {
+		// Best-effort re-wipe of the partially committed collections.
+		for _, key := range setting.Collection {
+			if _, derr := b.deleteCollectionChunked(ctx, key); derr != nil {
+				b.log.Warn("cleanup after failed chunked migration", "key", resource.NSGR(key), "error", derr)
+			}
+		}
+		rsp.Error = resource.AsErrorResult(err)
+		return rsp
+	}
+	return rsp
+}
+
+// txChunker owns a sequence of bounded transactions on a db.DB. Callers Exec
+// against the open tx field and report work via add(); it commits and reopens
+// once pending bytes reach the budget or rows reach maxRows. flush commits the
+// last tx. Not safe for concurrent use.
+type txChunker struct {
+	ctx      context.Context
+	db       db.DB
+	opts     *sql.TxOptions
+	budget   int64             // commit when pendingBytes >= budget
+	maxRows  int               // forced commit when pendingRows >= maxRows
+	onCommit func(bytes int64) // optional, fired after each committed chunk that had work
+
+	tx           db.Tx // open transaction; nil after a commit/begin error
+	pendingBytes int64
+	pendingRows  int
+}
+
+// newTxChunker falls back to the default budget when non-positive and begins the
+// first transaction.
+func newTxChunker(ctx context.Context, database db.DB, opts *sql.TxOptions, budget int64, maxRows int, onCommit func(int64)) (*txChunker, error) {
+	if budget <= 0 {
+		budget = defaultChunkBudget
+	}
+	tx, err := database.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	return &txChunker{ctx: ctx, db: database, opts: opts, budget: budget, maxRows: maxRows, onCommit: onCommit, tx: tx}, nil
+}
+
+// commit commits the open tx (firing onCommit when it held work) and resets the
+// counters. The chunker holds no open tx afterward.
+func (c *txChunker) commit() error {
+	if c.tx == nil {
+		return nil
+	}
+	hadWork := c.pendingRows > 0
+	err := c.tx.Commit()
+	c.tx = nil
+	if err != nil {
+		return err
+	}
+	if hadWork && c.onCommit != nil {
+		c.onCommit(c.pendingBytes)
+	}
+	c.pendingBytes, c.pendingRows = 0, 0
+	return nil
+}
+
+// add accumulates the last write's bytes/rows; once the byte budget or row limit
+// is reached it commits the chunk and opens a fresh transaction.
+func (c *txChunker) add(bytes int64, rows int) error {
+	c.pendingBytes += bytes
+	c.pendingRows += rows
+	if c.pendingBytes >= c.budget || (c.maxRows > 0 && c.pendingRows >= c.maxRows) {
+		if err := c.commit(); err != nil {
+			return err
+		}
+		tx, err := c.db.BeginTx(c.ctx, c.opts)
+		if err != nil {
+			return err
+		}
+		c.tx = tx
+	}
+	return nil
+}
+
+// abort rolls back the open transaction
+func (c *txChunker) abort() error {
+	if c.tx == nil {
+		return nil
+	}
+	err := c.tx.Rollback()
+	c.tx = nil
+	return err
+}
+
+// writeBulkChunked stream history in chunks, refresh stats, and
+// then backfill the resource table using name ranges.
+func (b *backend) writeBulkChunked(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator, rsp *resourcepb.BulkResponse, summaries map[string]*resourcepb.BulkResponse_Summary, budget int64) error {
+	// Write each event into history, committed per chunk.
+	rv := newBulkRV()
+	batchIter, ok := iter.(resource.BulkRequestBatchIterator)
+	if !ok {
+		batchIter = &singleRequestBatchIterator{iter: iter}
+	}
+
+	// colSizes accumulates max-RV row size per NSGR
+	// for backfill with budget without a second pass.
+	colSizes := map[string]backfillSizes{}
+
+	var onCommit func(int64)
+	if b.bulkCommitObserver != nil {
+		onCommit = func(bytes int64) {
+			b.bulkCommitObserver("history", bytes)
+		}
+	}
+	chunker, err := newTxChunker(ctx, b.db, ReadCommitted, budget, txChunkerMaxRows, onCommit)
+	if err != nil {
+		return err
+	}
+	processChunkFn := func() error {
+		if batchIter.RollbackRequested() {
+			return fmt.Errorf("bulk migration rollback requested (best-effort)")
+		}
+		batch := batchIter.Batch()
+		if len(batch) == 0 {
+			if err := chunker.abort(); err != nil {
+				b.log.Warn("rollback", "error", err)
+			}
+			return fmt.Errorf("missing request batch")
+		}
+		bytes, err := b.insertHistoryBatch(ctx, chunker.tx, batch, rv, rsp, colSizes)
+		if err != nil {
+			return err
+		}
+		return chunker.add(int64(bytes), len(batch))
+	}
+
+	for batchIter.NextBatch() {
+		if err := processChunkFn(); err != nil {
+			if abortErr := chunker.abort(); abortErr != nil {
+				b.log.Warn("rollback", "error", err, "aborting", abortErr)
+			}
+			return err
+		}
+	}
+	if err := chunker.commit(); err != nil {
+		return err
+	}
+
+	// Refresh planner stats so backfill avoids a nested-loop plan.
+	if err := b.analyzeResourceHistoryForBackfill(ctx, b.db, rsp.Processed); err != nil {
+		return err
+	}
+
+	// Backfill the resource table from history and finalize
+	worker := &bulkWroker{
+		ctx:     ctx,
+		tx:      b.db,
+		dialect: b.dialect,
+		logger:  logging.FromContext(ctx),
+	}
+	for _, key := range setting.Collection {
+		k := resource.NSGR(key)
+		summary := summaries[k]
+		if summary == nil {
+			return fmt.Errorf("missing summary key for: %s", k)
+		}
+
+		// Paginated INSERT...SELECT backfill: split the rebuild into
+		// byte-bounded name ranges so no single write-set exceeds the budget.
+		sizes := colSizes[k]
+		sizeOf := func(name string) int64 {
+			ns := sizes[name]
+			if ns == nil || ns.deleted {
+				return 0
+			}
+			return int64(ns.size)
+		}
+
+		names, err := dbutil.Query(ctx, b.db, sqlResourceHistoryDistinctNames, &sqlResourceHistoryDistinctNamesRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			Response:    new(distinctName),
+		})
+		if err != nil {
+			return err
+		}
+		nameList := make([]string, len(names))
+		for i, n := range names {
+			nameList[i] = n.Name
+		}
+
+		for _, r := range planNameRanges(nameList, sizeOf, budget) {
+			if err := worker.insertFromHistoryRange(key, r.startName, r.endName); err != nil {
+				return err
+			}
+			if b.bulkCommitObserver != nil {
+				b.bulkCommitObserver("backfill", r.plannedBytes)
+			}
+		}
+
+		if err := worker.collectStats(key, summary); err != nil {
+			return err
+		}
+
+		// Bump the collection RV above our last written event. It manages its own
+		// transaction, so a failure is warn-only as in processBulkWithTx.
+		if _, err := b.rvManager.ExecWithRV(ctx, key, func(_ context.Context, _ db.Tx) (string, error) {
+			return "", nil
+		}); err != nil {
+			b.log.Warn("error increasing RV", "error", err)
+		}
+
+		// Update the last import time LAST. This is important to trigger
+		// reindexing of the resource for a given namespace.
+		if err := b.updateLastImportTime(ctx, b.db, key, time.Now()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// analyzeResourceHistoryForBackfill exists because syncCollection's self-join would otherwise
+// run against stale statistics: resource_history was just bulk-loaded in this same transaction,
+// so the planner still sees it as empty and picks an O(n^2) nested-loop plan that never finishes
+// on large rebuilds.
+func (b *backend) analyzeResourceHistoryForBackfill(ctx context.Context, tx db.ContextExecer, processed int64) error {
+	if b.dialect.DialectName() != "postgres" || processed < int64(b.analyzeBulkRowThreshold) {
+		return nil
+	}
+	table, err := b.dialect.Ident("resource_history")
+	if err != nil {
+		return err
+	}
+	_, err = tx.ExecContext(ctx, "ANALYZE "+table)
+	return err
+}
+
+// nameMaxRow records the byte size and delete flag of the highest-RV row seen
+// for a name. The backfill copies that row, so size is the name's write-set cost.
+type nameMaxRow struct {
+	rv      int64
+	size    int
+	deleted bool
+}
+
+// backfillSizes maps a name to its max-RV row summary for a single collection.
+type backfillSizes map[string]*nameMaxRow
+
+// observe keeps the highest-RV row for name, recording its size and delete flag.
+func (s backfillSizes) observe(name string, resourceVersion int64, size int, deleted bool) {
+	cur, ok := s[name]
+	if !ok {
+		s[name] = &nameMaxRow{rv: resourceVersion, size: size, deleted: deleted}
+		return
+	}
+	if resourceVersion > cur.rv {
+		cur.rv = resourceVersion
+		cur.size = size
+		cur.deleted = deleted
+	}
+}
+
+// insertHistoryBatch inserts a batch of history rows. When colSizes is non-nil
+// (chunked path), it records per-name max-RV value size and delete flag.
+func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, batch []*resourcepb.BulkRequest, rv *bulkRV, rsp *resourcepb.BulkResponse, colSizes map[string]backfillSizes) (int, error) {
 	rows := make([]sqlResourceRequest, 0, len(batch))
 	payloadBytes := 0
 	for _, req := range batch {
 		if req == nil {
-			return fmt.Errorf("missing request")
+			return 0, fmt.Errorf("missing request")
 		}
 		rsp.Processed++
 		payloadBytes += len(req.Value)
@@ -363,12 +661,21 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
 				Action: req.Action,
-				Error:  "unable to unmarshal json",
+				Error:  fmt.Sprintf("unable to unmarshal json (bulk): %s", err.Error()),
 			})
 			continue
 		}
 
 		resourceVersion := rv.next(obj)
+		if colSizes != nil {
+			nsgr := resource.NSGR(req.Key)
+			sizes := colSizes[nsgr]
+			if sizes == nil {
+				sizes = backfillSizes{}
+				colSizes[nsgr] = sizes
+			}
+			sizes.observe(req.Key.Name, resourceVersion, len(req.Value), req.Action == resourcepb.BulkRequest_DELETED)
+		}
 		rows = append(rows, sqlResourceRequest{
 			WriteEvent: resource.WriteEvent{
 				Key:        req.Key,
@@ -384,7 +691,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 	}
 
 	if len(rows) == 0 {
-		return nil
+		return payloadBytes, nil
 	}
 
 	insertStart := time.Now()
@@ -398,7 +705,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Rows:        rows[start:end],
 		}); err != nil {
-			return fmt.Errorf("insert into resource history: %w", err)
+			return payloadBytes, fmt.Errorf("insert into resource history: %w", err)
 		}
 	}
 	insertDuration := time.Since(insertStart)
@@ -409,7 +716,7 @@ func (b *backend) insertHistoryBatch(ctx context.Context, tx db.ContextExecer, b
 		b.log.Debug("bulk insert timing", "processed", rsp.Processed, "batch_size", len(batch), "inserted", len(rows), "payload_bytes", payloadBytes, "insert", insertDuration)
 	}
 
-	return nil
+	return payloadBytes, nil
 }
 
 func bulkHistoryInsertRowLimit(dialectName string) int {
@@ -449,7 +756,7 @@ func (s *singleRequestBatchIterator) RollbackRequested() bool {
 	return s.iter.RollbackRequested()
 }
 
-func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
+func (b *backend) updateLastImportTime(ctx context.Context, tx db.ContextExecer, key *resourcepb.ResourceKey, now time.Time) error {
 	if _, err := dbutil.Exec(ctx, tx, sqlResourceLastImportTimeInsert, sqlResourceLastImportTimeInsertRequest{
 		SQLTemplate:    sqltemplate.New(b.dialect),
 		Namespace:      key.Namespace,
@@ -507,17 +814,193 @@ func (w *bulkWroker) deleteCollection(key *resourcepb.ResourceKey) (*resourcepb.
 	return summary, err
 }
 
-// Copy the latest value from history into the active resource table
+const (
+	// deleteCollectionChunkBatchSize is the number of candidate rows fetched per
+	// SELECT during a chunked wipe.
+	deleteCollectionChunkBatchSize = 2000
+	// defaultChunkBudget (256 MiB) when b.migrationChunkMaxBytes is <= 0 and chunking is enabled.
+	defaultChunkBudget = 256 * 1024 * 1024
+)
+
+// deleteCollectionChunked clears the resource and resource_history tables for a
+// namespace/group/resource in multiple transactions.
+func (b *backend) deleteCollectionChunked(ctx context.Context, key *resourcepb.ResourceKey) (*resourcepb.BulkResponse_Summary, error) {
+	summary := &resourcepb.BulkResponse_Summary{
+		Namespace: key.Namespace,
+		Group:     key.Group,
+		Resource:  key.Resource,
+	}
+
+	// History first, then the active resource table, matching deleteCollection.
+	history, err := b.wipeTableChunked(ctx, key, tableResourceHistory)
+	if err != nil {
+		return nil, err
+	}
+	summary.PreviousHistory = history
+
+	count, err := b.wipeTableChunked(ctx, key, tableResource)
+	if err != nil {
+		return nil, err
+	}
+	summary.PreviousCount = count
+
+	return summary, nil
+}
+
+// wipeTableChunked deletes every row for key from the table ("resource"
+// or "resource_history") and returns the number of rows deleted.
+func (b *backend) wipeTableChunked(ctx context.Context, key *resourcepb.ResourceKey, table string) (int64, error) {
+	budget := b.migrationChunkMaxBytes
+	if budget <= 0 {
+		budget = defaultChunkBudget
+	}
+	var totalDeleted int64
+
+	for {
+		// Get delete candidates and their value sizes to bound each delete's write-set.
+		// Read them into a slice (not held open across the deletes) and delete every
+		// one before the next SELECT, or the loop won't terminate.
+		candidates, err := dbutil.Query(ctx, b.db, sqlChunkCandidates, &sqlChunkCandidatesRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Table:       table,
+			Namespace:   key.Namespace,
+			Group:       key.Group,
+			Resource:    key.Resource,
+			BatchSize:   deleteCollectionChunkBatchSize,
+			Response:    new(chunkCandidate),
+		})
+		if err != nil {
+			return 0, err
+		}
+		if len(candidates) == 0 {
+			break
+		}
+
+		// Greedily group guids into sub-batches whose total value bytes stay under
+		// budget; an oversize row goes alone in its own sub-batch.
+		var (
+			guids   []string
+			subSize int64
+		)
+		flush := func() error {
+			if len(guids) == 0 {
+				return nil
+			}
+			res, err := dbutil.Exec(ctx, b.db, sqlDeleteByGUIDs, &sqlDeleteByGUIDsRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Table:       table,
+				Namespace:   key.Namespace,
+				Group:       key.Group,
+				Resource:    key.Resource,
+				GUIDs:       guids,
+			})
+			if err != nil {
+				return err
+			}
+			rows, err := res.RowsAffected()
+			if err != nil {
+				return err
+			}
+			totalDeleted += rows
+			guids = guids[:0]
+			subSize = 0
+			return nil
+		}
+
+		for _, c := range candidates {
+			cost := c.Size
+			if len(guids) > 0 && subSize+cost > budget {
+				if err := flush(); err != nil {
+					return 0, err
+				}
+			}
+			guids = append(guids, c.GUID)
+			subSize += cost
+		}
+		if err := flush(); err != nil {
+			return 0, err
+		}
+	}
+
+	return totalDeleted, nil
+}
+
+// syncCollection copies the latest history value into the resource table for the
+// whole collection, then records its stats.
 func (w *bulkWroker) syncCollection(key *resourcepb.ResourceKey, summary *resourcepb.BulkResponse_Summary) error {
+	if err := w.insertFromHistoryRange(key, "", ""); err != nil {
+		return err
+	}
+	return w.collectStats(key, summary)
+}
+
+// insertFromHistoryRange copies the latest history value into the resource table
+// for names in the half-open range (startName, endName]. An empty bound leaves
+// that side unbounded.
+func (w *bulkWroker) insertFromHistoryRange(key *resourcepb.ResourceKey, startName, endName string) error {
 	w.logger.Info("synchronize collection", "key", resource.NSGR(key))
 	_, err := dbutil.Exec(w.ctx, w.tx, sqlResourceInsertFromHistory, &sqlResourceInsertFromHistoryRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),
 		Key:         key,
+		StartName:   startName,
+		EndName:     endName,
 	})
-	if err != nil {
-		return err
+	return err
+}
+
+// nameRange selects the names for one backfill INSERT...SELECT: those with
+// startName < name <= endName. An empty startName/endName means no lower/upper
+// bound. plannedBytes is the summed size of those names, for budgeting.
+type nameRange struct {
+	startName    string
+	endName      string
+	plannedBytes int64
+}
+
+// planNameRanges splits names into contiguous half-open (startName, endName]
+// ranges whose summed sizeOf stays within budget, keeping each backfill
+// write-set under the byte cap.
+//
+// names MUST be kept in DB collation order (as returned by the distinct-name query).
+//
+// The result covers every name exactly once and ends with an unbounded range
+// (endName == "") as a catch-all. An empty names slice yields one unbounded
+// range, matching the original single-statement backfill.
+func planNameRanges(names []string, sizeOf func(name string) int64, budget int64) []nameRange {
+	if budget <= 0 {
+		budget = defaultChunkBudget
+	}
+	if len(names) == 0 {
+		return []nameRange{{startName: "", endName: ""}}
 	}
 
+	var ranges []nameRange
+	rangeStart := "" // exclusive lower bound of the current open range
+	prev := ""       // most recently accumulated name (acc > 0 ⇒ prev is set)
+	var acc int64
+
+	for _, name := range names {
+		sz := sizeOf(name)
+
+		// Adding this name would overflow the current non-empty range: close
+		// the range at the previous name and start a new one there.
+		if acc > 0 && acc+sz > budget {
+			ranges = append(ranges, nameRange{startName: rangeStart, endName: prev, plannedBytes: acc})
+			rangeStart = prev
+			acc = 0
+		}
+		acc += sz
+		prev = name
+	}
+
+	// Final range: unbounded above so any name past the last boundary is still
+	// copied. It carries the trailing accumulated bytes.
+	ranges = append(ranges, nameRange{startName: rangeStart, endName: "", plannedBytes: acc})
+	return ranges
+}
+
+// collectStats reads the resource stats for the collection and records them in summary.
+func (w *bulkWroker) collectStats(key *resourcepb.ResourceKey, summary *resourcepb.BulkResponse_Summary) error {
 	w.logger.Info("get stats (still in transaction)", "key", resource.NSGR(key))
 	rows, err := dbutil.QueryRows(w.ctx, w.tx, sqlResourceStats, &sqlStatsRequest{
 		SQLTemplate: sqltemplate.New(w.dialect),

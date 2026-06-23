@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { forwardRef, type HTMLProps, useId } from 'react';
 
 import { type GrafanaTheme2, deprecationWarning } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -45,7 +46,7 @@ export const Switch = forwardRef<HTMLInputElement, Props>(
     const switchId = idProp ?? fieldContext.id ?? generatedId;
 
     return (
-      <div className={cx(styles.switch, invalid && styles.invalid)}>
+      <div className={cx(styles.switch, invalid && styles.invalid)} data-testid={selectors.components.Switch.container}>
         <input
           type="checkbox"
           role="switch"
@@ -139,18 +140,18 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
 
       '&:checked': {
         '~ label': {
-          background: theme.colors.primary.main,
-          borderColor: theme.colors.primary.main,
+          background: theme.colors.accent.main,
+          borderColor: theme.colors.accent.main,
 
           '&:hover': {
-            background: theme.colors.primary.shade,
+            background: theme.colors.accent.shade,
           },
         },
 
         '~ svg': {
           transform: `translate3d(${theme.spacing(2.25)}, -50%, 0)`,
-          background: theme.colors.primary.contrastText,
-          color: theme.colors.primary.main,
+          background: theme.colors.accent.contrastText,
+          color: theme.colors.accent.main,
         },
       },
 
@@ -168,11 +169,11 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
 
       '&:disabled:checked': {
         '~ label': {
-          background: theme.colors.primary.transparent,
+          background: theme.colors.accent.transparent,
         },
 
         '~ svg': {
-          color: theme.colors.primary.contrastText,
+          color: theme.colors.accent.contrastText,
         },
       },
 
@@ -214,7 +215,7 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
       },
 
       '@media (forced-colors: active)': {
-        border: `1px solid ${theme.colors.primary.contrastText}`,
+        border: `1px solid ${theme.colors.accent.contrastText}`,
       },
     },
   }),

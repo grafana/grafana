@@ -26,7 +26,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) (resource.KVBackend, sqldb.DB) {
+type SQLKVBackendMode string
+
+const (
+	SQLKVBackendModeRVManager         SQLKVBackendMode = "rvmanager"
+	SQLKVBackendModeLeases            SQLKVBackendMode = "leases"
+	SQLKVBackendModeOptimisticLocking SQLKVBackendMode = "optimistic-locking"
+)
+
+func NewTestSqlKvBackend(t *testing.T, ctx context.Context, mode SQLKVBackendMode) (resource.KVBackend, sqldb.DB) {
+	t.Helper()
+
 	dbstore := db.InitTestDB(t)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
@@ -46,7 +56,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		kvOpts.UseChannelNotifier = true
 	}
 
-	if withRvManager {
+	switch mode {
+	case SQLKVBackendModeRVManager:
 		dialect := sqltemplate.DialectForDriver(dbConn.DriverName())
 		rvManager, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
 			Dialect: dialect,
@@ -55,9 +66,12 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 		require.NoError(t, err)
 
 		kvOpts.RvManager = rvManager
-	} else {
+	case SQLKVBackendModeLeases:
 		kvOpts.EnableKVLeases = true
 		kvOpts.Holder = "test-holder-" + uuid.NewString()
+	case SQLKVBackendModeOptimisticLocking:
+	default:
+		require.FailNowf(t, "invalid SQLKV backend mode", "mode: %s", mode)
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)

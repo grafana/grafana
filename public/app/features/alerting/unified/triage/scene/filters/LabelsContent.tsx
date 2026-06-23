@@ -13,8 +13,8 @@ import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, u
 import { useLabelSectionOpen } from './labelFilter.hooks';
 import { filterLabels } from './labelFilter.utils';
 
-export const DEFAULT_VISIBLE_LABELS = 25;
-export const DEFAULT_VISIBLE_VALUES = 12;
+const DEFAULT_VISIBLE_LABELS = 25;
+const DEFAULT_VISIBLE_VALUES = 12;
 
 // --- Shared content component (also used by LabelsColumn) ---
 
@@ -108,6 +108,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
             i18nKey="alerting.triage.show-all-labels"
             values={{ count: allLabels.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}
@@ -181,6 +185,10 @@ function LabelValuesList({ labelKey, values, onValueClick, valueHits }: LabelVal
             i18nKey="alerting.triage.show-all-values"
             values={{ count: matchedValues.length }}
             defaults={'Show all ({{ count }})'}
+            tOptions={{
+              defaultValue_one: 'Show all ({{ count }})',
+              defaultValue_other: 'Show all ({{ count }})',
+            }}
           />
         </Button>
       )}

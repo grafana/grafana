@@ -43,7 +43,9 @@ describe('RuleEditor grafana managed rules', () => {
     id: 1,
     type: DashboardSearchItemType.DashDB,
     accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
       [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
     },
   };
 
@@ -52,7 +54,9 @@ describe('RuleEditor grafana managed rules', () => {
     uid: 'abcde',
     id: 2,
     accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
       [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
     },
   };
   beforeEach(() => {
