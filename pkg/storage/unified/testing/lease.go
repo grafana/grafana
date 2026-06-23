@@ -46,7 +46,7 @@ func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
 
 func newLeaseManagerNoGC(store kv.KV, holder string, opts ...lease.ManagerOption) *lease.Manager {
 	opts = append(opts, lease.WithGarbageCollectionDisabled)
-	return lease.NewManager(store, holder, opts...)
+	return lease.NewManager(store, holder, nil, opts...)
 }
 
 func runLeaseHappyPath(t *testing.T, store kv.KV) {
@@ -242,7 +242,11 @@ func runLeaseExpiration(t *testing.T, store kv.KV) {
 		// Wait past TTL with a small buffer for timer slack.
 		time.Sleep(ttl + 50*time.Millisecond)
 
-		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		// Acquire with a generous TTL for the second holder. The test only
+		// verifies that b can take over once a's short-lived lease expires.
+		// A short TTL here would race b's own expiry against its release on a
+		// slow machine and fail with ErrLeaseLost.
+		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(time.Minute))
 		require.NoError(t, err, "second holder should be able to acquire after TTL elapsed")
 		require.NotNil(t, leaseB)
 		require.NoError(t, b.Release(ctx, leaseB))

@@ -55,7 +55,7 @@ interface LogLineDetailsFieldProps {
   log: LogListModel;
 }
 
-export const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
+const LogLineDetailsField = ({ field, log }: LogLineDetailsFieldProps) => {
   const { onPinLine, pinLineButtonTooltipTitle, prettifyJSON } = useLogListContext();
   const { closeDetails } = useLogDetailsContext();
 

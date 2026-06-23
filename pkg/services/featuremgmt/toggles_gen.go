@@ -63,10 +63,6 @@ const (
 	// Uses JWT-based auth for rendering instead of relying on remote cache
 	FlagRenderAuthJWT = "renderAuthJWT"
 
-	// FlagRefactorVariablesTimeRange
-	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
-	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
-
 	// FlagAwsDatasourcesTempCredentials
 	// Support temporary security credentials in AWS plugins for Grafana Cloud customers
 	FlagAwsDatasourcesTempCredentials = "awsDatasourcesTempCredentials"
@@ -94,6 +90,10 @@ const (
 	// FlagProvisioningExport
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
+
+	// FlagProvisioningGitConventions
+	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
+	FlagProvisioningGitConventions = "provisioning.gitConventions"
 
 	// FlagGrafanaAPIServerEnsureKubectlAccess
 	// Start an additional https handler and write kubectl options
@@ -195,10 +195,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagCachingOptimizeSerializationMemoryUsage
-	// If enabled, the caching backend gradually serializes query responses for the cache, comparing against the configured `[caching]max_value_mb` value as it goes. This can can help prevent Grafana from running out of memory while attempting to cache very large query responses.
-	FlagCachingOptimizeSerializationMemoryUsage = "cachingOptimizeSerializationMemoryUsage"
-
 	// FlagAlertmanagerRemoteSecondary
 	// Enable Grafana to sync configuration and state with a remote Alertmanager.
 	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
@@ -234,6 +230,10 @@ const (
 	// FlagReportRenderBinding
 	// Enables render binding support for report rendering
 	FlagReportRenderBinding = "reportRenderBinding"
+
+	// FlagCanvasExternalPlugin
+	// Load Canvas panel from an external plugin instead of the bundled core plugin
+	FlagCanvasExternalPlugin = "canvasExternalPlugin"
 
 	// FlagCloudRBACRoles
 	// Enabled grafana cloud specific RBAC roles
@@ -531,10 +531,6 @@ const (
 	// Add compact=true when fetching rules
 	FlagFetchRulesInCompactMode = "fetchRulesInCompactMode"
 
-	// FlagGrafanaconThemes
-	// Enables the temporary themes for GrafanaCon
-	FlagGrafanaconThemes = "grafanaconThemes"
-
 	// FlagAlertingUseNewSimplifiedRoutingHashAlgorithm
 	FlagAlertingUseNewSimplifiedRoutingHashAlgorithm = "alertingUseNewSimplifiedRoutingHashAlgorithm"
 
@@ -738,10 +734,6 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
-	// FlagOpentsdbBackendMigration
-	// Run queries through the data source backend
-	FlagOpentsdbBackendMigration = "opentsdbBackendMigration"
-
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
@@ -807,7 +799,7 @@ const (
 	FlagKubernetesUsersRedirect = "kubernetesUsersRedirect"
 
 	// FlagAlertingMultiplePolicies
-	// Enables the ability to create multiple alerting policies
+	// Enables the ability to create multiple notification policies in alerting
 	FlagAlertingMultiplePolicies = "alertingMultiplePolicies"
 
 	// FlagApppluginsRegisterAPIServer
@@ -874,10 +866,6 @@ const (
 	// Enables the advisor report integration with datasource pages
 	FlagAdvisorDatasourceIntegration = "advisorDatasourceIntegration"
 
-	// FlagColorblindThemes
-	// Enables the new colorblind-friendly themes
-	FlagColorblindThemes = "colorblindThemes"
-
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
@@ -918,10 +906,6 @@ const (
 	// Enables the query service to do query caching
 	FlagQuerycachingUseInQueryService = "querycaching.useInQueryService"
 
-	// FlagCompiledBootScript
-	// Boots the frontend using the boot.js script built from TS instead of the embedded boot script
-	FlagCompiledBootScript = "compiledBootScript"
-
 	// FlagInfluxDBConfigValidation
 	// Enables validation on the InfluxDB data source configuration page
 	FlagInfluxDBConfigValidation = "influxDBConfigValidation"
@@ -929,6 +913,10 @@ const (
 	// FlagClickHouseConfigValidation
 	// Enables validation on the ClickHouse data source configuration page
 	FlagClickHouseConfigValidation = "clickHouseConfigValidation"
+
+	// FlagGrafanaNewPreferencesPage
+	// Whether to use the new SharedPreferences functional component
+	FlagGrafanaNewPreferencesPage = "grafana.newPreferencesPage"
 
 	// FlagDatasourceUseNewCRUDAPIs
 	// Use the new datasource API groups for datasource CRUD requests, backend flag
@@ -977,4 +965,12 @@ const (
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
+
+	// FlagDashboardVectorSearch
+	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
+	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagSplunkUseLegacyResultsApi
+	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
+	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"
 )

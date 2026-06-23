@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
@@ -908,6 +908,42 @@ func TestShouldUpload(t *testing.T) {
 		assert.False(t, should)
 	})
 
+	t.Run("skips when mutation count is below threshold and snapshot is still fresh", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
+	t.Run("uploads when mutation count is below threshold but snapshot is stale", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 8 * time.Hour, UploadInterval: time.Minute, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-5*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.True(t, should)
+	})
+
+	t.Run("skips stale snapshot when upload interval has not elapsed", func(t *testing.T) {
+		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, MaxIndexAge: 2 * time.Hour, UploadInterval: 4 * time.Hour, MinDocChanges: 100})
+		idx := newUploadTestIndex(t, be, key, 150)
+		require.NoError(t, writeSnapshotMutationCount(idx.index, 50))
+		now := time.Now()
+		be.setUploadTracking(key, now.Add(-2*time.Hour))
+
+		should, err := be.shouldUpload(key, idx, now)
+		require.NoError(t, err)
+		assert.False(t, should)
+	})
+
 	t.Run("uploads when interval elapsed and mutation count is large enough", func(t *testing.T) {
 		be, _ := newTestBleveBackend(t, SnapshotOptions{MinDocCount: 1, UploadInterval: time.Minute, MinDocChanges: 25})
 		idx := newUploadTestIndex(t, be, key, 150)
@@ -966,7 +1002,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil)
+	index, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
@@ -1081,7 +1117,7 @@ func newConfiguredSnapshotBackend(t *testing.T, bucketURL string) (*bleveBackend
 	cfg.IndexSnapshotBucketURL = bucketURL
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil)
+	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
 	require.True(t, ok)
@@ -1111,8 +1147,12 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	snapshotDir := filepath.Join(t.TempDir(), "snapshot")
 	require.NoError(t, writeFakeSnapshot(snapshotDir, &meta))
-	_, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
+	uploadedKey, err := UploadIndexSnapshot(ctx, store, key, snapshotDir, meta, testLogger)
 	require.NoError(t, err)
+	// UploadIndexSnapshot derives the persisted UploadTimestamp from a freshly
+	// generated ULID, not from the caller's meta. Use that as the expected value
+	// so the assertion below is exact and not subject to scheduling delays.
+	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
 	// Fresh backend pointing at the same bucket should download instead of building.
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
@@ -1147,7 +1187,8 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 
 	trackedAt, tracked := be.getUploadTracking(key)
 	require.True(t, tracked)
-	assert.WithinDuration(t, meta.UploadTimestamp, trackedAt, time.Second)
+	assert.True(t, expectedUploadedAt.Equal(trackedAt),
+		"trackedAt %s should equal manifest UploadTimestamp %s", trackedAt, expectedUploadedAt)
 
 	mutationCount, err := readSnapshotMutationCount(bi.index)
 	require.NoError(t, err)

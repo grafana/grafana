@@ -251,6 +251,81 @@ describe('VizLayout', () => {
       );
       expect(children).toHaveBeenCalledWith(800, 600);
     });
+
+    describe('with a string (css) legend width', () => {
+      it('applies the string width as-is to the legend element', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        expect(screen.getByTestId(selectors.components.VizLayout.legend)).toHaveStyle({ width: '35%' });
+      });
+
+      it('does not apply maxWidth when a string width is set', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%" maxWidth="50%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        expect(screen.getByTestId(selectors.components.VizLayout.legend)).not.toHaveStyle({ maxWidth: '50%' });
+      });
+
+      it('does not subtract a fixed pixel amount from the chart width for a string width', () => {
+        // With a css width the legend size is not known up-front, so the chart
+        // width comes solely from the measured legend, not from the width prop.
+        mockUseMeasure.mockReturnValue([jest.fn(), { ...noMeasure, width: 150 }]);
+        const children = jest.fn().mockReturnValue(null);
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width="35%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {children}
+          </VizLayout>
+        );
+        expect(children).toHaveBeenCalledWith(650, 600);
+      });
+
+      it('still applies maxWidth when width is a number', () => {
+        render(
+          <VizLayout
+            width={800}
+            height={600}
+            legend={
+              <VizLayout.Legend placement="right" width={200} maxWidth="50%">
+                <div />
+              </VizLayout.Legend>
+            }
+          >
+            {() => null}
+          </VizLayout>
+        );
+        const el = screen.getByTestId(selectors.components.VizLayout.legend);
+        expect(el).toHaveStyle({ width: '200px', maxWidth: '50%' });
+      });
+    });
   });
 
   describe('small screen behavior', () => {

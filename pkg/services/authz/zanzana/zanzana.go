@@ -34,6 +34,9 @@ const (
 	RelationCreate = common.RelationCreate
 	RelationDelete = common.RelationDelete
 
+	RelationGetPermissions = common.RelationGetPermissions
+	RelationSetPermissions = common.RelationSetPermissions
+
 	RelationSubresourceSetView  = common.RelationSubresourceSetView
 	RelationSubresourceSetEdit  = common.RelationSubresourceSetEdit
 	RelationSubresourceSetAdmin = common.RelationSubresourceSetAdmin
@@ -76,6 +79,7 @@ var (
 
 	NewTupleEntry             = common.NewTupleEntry
 	NewObjectEntry            = common.NewObjectEntry
+	NewGroupResourceTuple     = common.NewGroupResourceTuple
 	TranslateToResourceTuple  = common.TranslateToResourceTuple
 	IsFolderResourceTuple     = common.IsFolderResourceTuple
 	MergeFolderResourceTuples = common.MergeFolderResourceTuples

@@ -15,6 +15,8 @@ export interface UseFolderReadmeResult {
   /** Path of the README relative to the repository's configured root. */
   readmePath: string;
   status: FolderReadmeStatus;
+  /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
+  isLoading: boolean;
   /** Markdown body of the README, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
@@ -52,8 +54,10 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
       : skipToken
   );
 
+  const isLoading = isRepoLoading || isFileLoading;
+
   let status: FolderReadmeStatus;
-  if (isRepoLoading || isFileLoading) {
+  if (isLoading) {
     status = 'loading';
   } else if (error && isFetchError(error) && error.status === 404) {
     status = 'missing';
@@ -85,6 +89,7 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
     folder,
     readmePath,
     status,
+    isLoading,
     markdownContent,
     refetch,
   };

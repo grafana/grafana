@@ -2,13 +2,17 @@ package user
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -370,10 +374,12 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 	}
 
 	type searchUserHit struct {
-		UID   string `json:"uid"`
-		Name  string `json:"name"`
-		Login string `json:"login"`
-		Email string `json:"email"`
+		ID      int64     `json:"id"`
+		UID     string    `json:"uid"`
+		Name    string    `json:"name"`
+		Login   string    `json:"login"`
+		Email   string    `json:"email"`
+		Created time.Time `json:"created"`
 	}
 
 	type searchUsersResponse struct {
@@ -458,6 +464,8 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Equal(t, alphaUser.Result.UID, hit.UID)
 				require.Equal(t, "Alpha User", hit.Name)
 				require.Equal(t, "alpha@example.com", hit.Email)
+				require.Equal(t, alphaUser.Result.ID, hit.ID)
+				require.False(t, hit.Created.IsZero(), "created timestamp should be populated")
 			})
 
 			t.Run("should filter results by query", func(t *testing.T) {
@@ -562,6 +570,154 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearchAuthorization$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type searchUserHit struct {
+		UID   string `json:"uid"`
+		Login string `json:"login"`
+	}
+
+	type searchUsersResponse struct {
+		TotalCount int64           `json:"totalCount"`
+		Users      []searchUserHit `json:"users"`
+	}
+
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {DualWriterMode: mode},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			alphaResp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "alpha-authz", "email": "alpha-authz@example.com", "login": "alpha-authz", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, alphaResp.Response.StatusCode, "body: %s", string(alphaResp.Body))
+			require.NotZero(t, alphaResp.Result.ID, "alpha create returned zero ID; body=%s", string(alphaResp.Body))
+			alphaID := alphaResp.Result.ID
+
+			betaResp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "beta-authz", "email": "beta-authz@example.com", "login": "beta-authz", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, betaResp.Response.StatusCode, "body: %s", string(betaResp.Body))
+
+			// The scoped user needs two grants to exercise the redirect + filter chain
+			// end-to-end:
+			//   1) users:read — required by the /api/users/search route gate (see the
+			//      editor_route_gate sub-test above). Any scope is fine here; the
+			//      gate only checks the action.
+			//   2) org.users:read scoped to a single user — the data filter consults
+			//      this. The scope format depends on which filter serves the
+			//      response:
+			//        Mode 0-3 (legacy SQL filter): accesscontrol.Filter at
+			//          pkg/services/org/orgimpl/store.go:555 expects "users:id:" and
+			//          builds `org_user.user_id IN (alphaID)`.
+			//        Mode 4-5 (bleve via authzLimitedClient -> RBAC): the iam/users
+			//          mapper uses attribute "uid", and the scope resolver translates
+			//          stored "users:id:<N>" by reading the legacy SQL `user` table.
+			//          In unified-only modes alpha isn't in legacy SQL, so we store
+			//          the scope already in "users:uid:<UID>" form to bypass the
+			//          resolver.
+			orgUsersReadScopeAttr := "id"
+			orgUsersReadScopeID := strconv.FormatInt(alphaID, 10)
+			if mode >= rest.Mode4 {
+				orgUsersReadScopeAttr = "uid"
+				orgUsersReadScopeID = alphaResp.Result.UID
+			}
+			scopedUser := helper.CreateUser(
+				"scoped-search-user",
+				apis.Org1,
+				org.RoleEditor,
+				[]resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           []string{accesscontrol.ActionUsersRead},
+						Resource:          "global.users",
+						ResourceAttribute: "id",
+						ResourceID:        strconv.FormatInt(alphaID, 10),
+					},
+					{
+						Actions:           []string{accesscontrol.ActionOrgUsersRead},
+						Resource:          "users",
+						ResourceAttribute: orgUsersReadScopeAttr,
+						ResourceID:        orgUsersReadScopeID,
+					},
+				},
+			)
+
+			// Wait for the search index to pick up the new users.
+			time.Sleep(2 * time.Second)
+
+			t.Run("server admin sees all users via the K8s redirect", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/users/search?perpage=100",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+				logins := make([]string, 0, len(rsp.Result.Users))
+				for _, u := range rsp.Result.Users {
+					logins = append(logins, u.Login)
+				}
+				require.Contains(t, logins, "alpha-authz", "server admin should see alpha-authz; got: %v", logins)
+				require.Contains(t, logins, "beta-authz", "server admin should see beta-authz; got: %v", logins)
+			})
+
+			t.Run("editor without users:read is denied at the route gate", func(t *testing.T) {
+				// Org1.Editor holds org.users:read but no users:read. The
+				// /api/users/search route gate requires ActionUsersRead, so it
+				// 403s before reaching the K8s redirect or the bleve filter.
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Editor,
+					Method: "GET",
+					Path:   "/api/users/search",
+				}, &searchUsersResponse{})
+				require.Equal(t, 403, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+			})
+
+			t.Run("scoped users:read returns only the allowed user", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   scopedUser,
+					Method: "GET",
+					Path:   "/api/users/search?perpage=100",
+				}, &searchUsersResponse{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+				logins := make([]string, 0, len(rsp.Result.Users))
+				for _, u := range rsp.Result.Users {
+					logins = append(logins, u.Login)
+				}
+				require.Contains(t, logins, "alpha-authz", "scoped user should see their allowed target; got: %v", logins)
+				require.NotContains(t, logins, "beta-authz", "scoped user must not see beta (users:read is scoped to alpha); got: %v", logins)
+				require.Len(t, rsp.Result.Users, 1, "scoped user should see exactly one user; got: %v", logins)
+			})
 		})
 	}
 }

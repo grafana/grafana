@@ -21,6 +21,12 @@
       "border": "#ff934d",
       "name": "primary"
     },
+    "accent": {
+      "main": "#ff934d",
+      "text": "#f99a5c",
+      "border": "#ff934d",
+      "name": "accent"
+    },
     "secondary": {
       "main": "rgba(195, 195, 245, 0.10)",
       "shade": "rgba(195, 195, 245, 0.14)",
@@ -31,6 +37,7 @@
     },
     "background": {
       "canvas": "#000",
+      "page": "#09090C",
       "primary": "#121118",
       "secondary": "#211e28",
       "elevated": "#211e28"

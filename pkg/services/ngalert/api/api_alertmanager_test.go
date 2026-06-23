@@ -464,7 +464,7 @@ var validConfig = `{
 				"version": "v1",
 				"type": "email",
 				"settings": {
-					"addresses": "<example@email.com>"
+					"addresses": "<example@example.com>"
 				}
 			}]
 		}]
@@ -491,7 +491,7 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -501,7 +501,7 @@ var validConfigWithoutAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
 		}]
@@ -542,7 +542,7 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<some@email.com>"
+					"addresses": "<some@example.com>"
 				}
 			}]
 		},{
@@ -552,7 +552,7 @@ var validConfigWithAutogen = `{
 				"type": "email",
 				"version": "v1",
 				"settings": {
-					"addresses": "<other@email.com>"
+					"addresses": "<other@example.com>"
 				}
 			}]
 		}]

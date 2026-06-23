@@ -26,7 +26,6 @@ const (
 	DS_LOKI              = "loki"
 	DS_MSSQL             = "mssql"
 	DS_MYSQL             = "mysql"
-	DS_OPENTSDB          = "opentsdb"
 	DS_POSTGRES          = "grafana-postgresql-datasource"
 	DS_PROMETHEUS        = "prometheus"
 	DS_AMAZON_PROMETHEUS = "grafana-amazonprometheus-datasource"
@@ -76,16 +75,26 @@ type DataSource struct {
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
-func IsSecureSocksDSProxyEnabled(jsonData *simplejson.Json) bool {
-	return jsonData != nil && jsonData.Get("enableSecureSocksProxy").MustBool(false)
+func IsSecureSocksDSProxyEnabled(jsonData map[string]any) bool {
+	v, _ := jsonData["enableSecureSocksProxy"].(bool)
+	return v
 }
 
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 	if ds.isSecureSocksDSProxyEnabled == nil {
-		enabled := IsSecureSocksDSProxyEnabled(ds.JsonData)
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonDataMap())
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled
+}
+
+// JsonDataMap returns JsonData as a map[string]any, or empty map if unset
+func (ds *DataSource) JsonDataMap() map[string]any {
+	def := map[string]any{}
+	if ds.JsonData == nil {
+		return def
+	}
+	return ds.JsonData.MustMap(def)
 }
 
 type TeamHTTPHeadersJSONData struct {

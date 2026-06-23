@@ -116,6 +116,7 @@ func (hs *HTTPServer) getShortURL(c *contextmodel.ReqContext) response.Response 
 		if shorturls.ErrShortURLNotFound.Is(err) {
 			return response.Err(shorturls.ErrShortURLNotFound.Errorf("shorturl not found: %w", err))
 		}
+		return response.Err(shorturls.ErrShortURLInternal.Errorf("failed to get short URL: %w", err))
 	}
 
 	return response.JSON(http.StatusOK, shortURL)
@@ -156,7 +157,13 @@ func (sk8s *shortURLK8sHandler) getKubernetesShortURLsHandler(c *contextmodel.Re
 		return
 	}
 
-	c.JSON(http.StatusOK, shorturl.UnstructuredToLegacyShortURL(*out))
+	legacyShortURL, err := shorturl.UnstructuredToLegacyShortURL(*out)
+	if err != nil {
+		sk8s.writeError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, legacyShortURL)
 }
 
 func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmodel.ReqContext) {

@@ -27,8 +27,17 @@ func (s *Server) Check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 	defer span.End()
 	span.SetAttributes(attribute.String("namespace", r.GetNamespace()))
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", r.GetNamespace(),
+		"group", r.GetGroup(),
+		"resource", r.GetResource(),
+		"subresource", r.GetSubresource(),
+		"verb", r.GetVerb(),
+	)
 	defer func(t time.Time) {
 		s.metrics.requestDurationSeconds.WithLabelValues("Check").Observe(time.Since(t).Seconds())
+		ctxLogger.Debug("Check execution time", "duration", time.Since(t).Milliseconds())
 	}(time.Now())
 
 	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
@@ -58,7 +67,7 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 
 	relation := common.VerbMapping[r.GetVerb()]
 
-	contextuals, err := s.getContextuals(r.GetSubject())
+	contextuals, err := s.getContextuals(r.GetSubject(), r.GetTeams())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
@@ -205,6 +214,29 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 }
 
 func (s *Server) openfgaCheck(ctx context.Context, store *zanzana.StoreInfo, subject, relation, object string, contextuals *openfgav1.ContextualTupleKeys, resourceCtx *structpb.Struct) (*openfgav1.CheckResponse, error) {
+	chunks := contextualTupleChunks(contextuals)
+	if len(chunks) == 0 {
+		return s.doOpenFGACheck(ctx, store, subject, relation, object, nil, resourceCtx)
+	}
+	if len(chunks) == 1 {
+		return s.doOpenFGACheck(ctx, store, subject, relation, object, chunks[0], resourceCtx)
+	}
+
+	var last *openfgav1.CheckResponse
+	for _, chunk := range chunks {
+		res, err := s.doOpenFGACheck(ctx, store, subject, relation, object, chunk, resourceCtx)
+		if err != nil {
+			return nil, err
+		}
+		if res.GetAllowed() {
+			return res, nil
+		}
+		last = res
+	}
+	return last, nil
+}
+
+func (s *Server) doOpenFGACheck(ctx context.Context, store *zanzana.StoreInfo, subject, relation, object string, contextuals *openfgav1.ContextualTupleKeys, resourceCtx *structpb.Struct) (*openfgav1.CheckResponse, error) {
 	res, err := s.openFGAClient.Check(ctx, &openfgav1.CheckRequest{
 		StoreId:              store.ID,
 		AuthorizationModelId: store.ModelID,

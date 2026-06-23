@@ -83,23 +83,32 @@ export type CombinedFolder = FolderDTO & {
   ownerReferences?: OwnerReference[];
 };
 
+function resolveDisplayName(userKey: string | undefined, userDisplay?: DisplayList): string {
+  const anonymous = t('folders.api.anonymous-user', 'Anonymous');
+  if (!userKey) {
+    return anonymous;
+  }
+  const idx = userDisplay?.keys?.indexOf(userKey) ?? -1;
+  if (idx < 0) {
+    return anonymous;
+  }
+  return userDisplay?.display?.[idx]?.displayName || anonymous;
+}
+
 const combineFolderResponses = (
   folder: Folder,
   legacyFolder: FolderDTO,
   parents: FolderInfo[],
   userDisplay?: DisplayList
 ) => {
-  const updatedBy = folder.metadata.annotations?.[AnnoKeyUpdatedBy];
-  const createdBy = folder.metadata.annotations?.[AnnoKeyCreatedBy];
-
   const newData: CombinedFolder = {
     canAdmin: legacyFolder.canAdmin,
     canDelete: legacyFolder.canDelete,
     canEdit: legacyFolder.canEdit,
     canSave: legacyFolder.canSave,
     accessControl: legacyFolder.accessControl,
-    createdBy: (createdBy && userDisplay?.display[userDisplay?.keys.indexOf(createdBy)]?.displayName) || 'Anonymous',
-    updatedBy: (updatedBy && userDisplay?.display[userDisplay?.keys.indexOf(updatedBy)]?.displayName) || 'Anonymous',
+    createdBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyCreatedBy], userDisplay),
+    updatedBy: resolveDisplayName(folder.metadata.annotations?.[AnnoKeyUpdatedBy], userDisplay),
     ...appPlatformFolderToLegacyFolder(folder),
     ownerReferences: folder.metadata.ownerReferences || [],
   };
@@ -543,9 +552,9 @@ export function useGetAffectedItems({ folder, dashboard }: Pick<DashboardTreeSel
   const folderUIDs = Object.keys(folder).filter((uid) => folder[uid]);
   const dashboardUIDs = Object.keys(dashboard).filter((uid) => dashboard[uid]);
 
-  // TODO: Remove constant condition here once we have a solution for the app platform counts
-  // As of now, the counts are not calculated recursively, so we need to use the legacy API
-  const shouldUseAppPlatformAPI = false && Boolean(config.featureToggles.foldersAppPlatformAPI);
+  // Note the app platform counts are not calculated recursively, so the two APIs don't report the same numbers for
+  // nested folders but both are good enough to report whether folder is empty or not.
+  const shouldUseAppPlatformAPI = Boolean(config.featureToggles.foldersAppPlatformAPI);
   const hookParams:
     | Parameters<typeof useLegacyGetAffectedItemsQuery>[0]
     | Parameters<typeof useGetAffectedItemsQuery>[0] = {

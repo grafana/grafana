@@ -212,7 +212,13 @@ export {
 } from './field/overrides/processors';
 
 // Utils
-export { PanelOptionsEditorBuilder, FieldConfigEditorBuilder } from './utils/OptionsUIBuilders';
+export {
+  PanelOptionsEditorBuilder,
+  FieldConfigEditorBuilder,
+  type NestedValueAccess,
+  type NestedPanelOptions,
+  isNestedPanelOptions,
+} from './utils/OptionsUIBuilders';
 export { getFlotPairs, getFlotPairsConstant } from './utils/flotPairs';
 export { locationUtil } from './utils/location';
 export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam, toURLRange } from './utils/url';
@@ -275,6 +281,7 @@ export { store, Store } from './utils/store';
 export { LocalStorageValueProvider } from './utils/LocalStorageValueProvider';
 export { throwIfAngular } from './utils/throwIfAngular';
 export { fuzzySearch } from './utils/fuzzySearch';
+export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
@@ -333,7 +340,7 @@ export type { ThemeRichColor, GrafanaTheme2 } from './themes/types';
 export type { ThemeColors } from './themes/createColors';
 export type { ThemeBreakpoints, ThemeBreakpointsKey } from './themes/breakpoints';
 export type { ThemeShadows } from './themes/createShadows';
-export type { ThemeShape } from './themes/createShape';
+export type { ThemeShape, Radii } from './themes/createShape';
 export type { ThemeTypography, ThemeTypographyVariant, ThemeTypographyVariantTypes } from './themes/createTypography';
 export type { ThemeTransitions } from './themes/createTransitions';
 export type { ThemeSpacing, ThemeSpacingTokens } from './themes/createSpacing';
@@ -439,6 +446,7 @@ export {
 export { LayoutModes, type LayoutMode } from './types/layout';
 export {
   PanelPlugin,
+  type PanelOptionsSupplier,
   type SetFieldConfigOptionsArgs,
   type StandardOptionConfig,
   type PanelScreenshotContext,

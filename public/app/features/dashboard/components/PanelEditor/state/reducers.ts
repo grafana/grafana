@@ -7,14 +7,14 @@ import { DisplayMode } from '../types';
 
 export const PANEL_EDITOR_UI_STATE_STORAGE_KEY = 'grafana.dashboard.editor.ui';
 
-export const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
+const DEFAULT_PANEL_EDITOR_UI_STATE: PanelEditorUIState = {
   isPanelOptionsVisible: true,
   rightPaneSize: 400,
   topPaneSize: 0.45,
   mode: DisplayMode.Fill,
 };
 
-export interface PanelEditorUIState {
+interface PanelEditorUIState {
   /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
   /* Pixels or percentage */
@@ -87,9 +87,6 @@ const pluginsSlice = createSlice({
     setEditorPanelData: (state, action: PayloadAction<PanelData>) => {
       state.getData = () => action.payload;
     },
-    setDiscardChanges: (state, action: PayloadAction<boolean>) => {
-      state.shouldDiscardChanges = action.payload;
-    },
     setPanelEditorUIState: (state, action: PayloadAction<Partial<PanelEditorUIState>>) => {
       state.ui = { ...state.ui, ...action.payload };
       // Close viz picker if closing options pane
@@ -120,15 +117,12 @@ const pluginsSlice = createSlice({
 
 export const {
   updateEditorInitState,
-  setEditorPanelData,
-  setDiscardChanges,
+
   closeEditor,
-  setPanelEditorUIState,
   toggleVizPicker,
-  toggleTableView,
 } = pluginsSlice.actions;
 
-export const panelEditorReducer = pluginsSlice.reducer;
+const panelEditorReducer = pluginsSlice.reducer;
 
 export default {
   panelEditor: panelEditorReducer,

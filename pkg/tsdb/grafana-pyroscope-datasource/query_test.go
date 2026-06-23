@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	querierv1 "github.com/grafana/pyroscope/api/gen/proto/go/querier/v1"
@@ -21,6 +22,7 @@ func Test_query(t *testing.T) {
 	client := &FakeClient{}
 	ds := &PyroscopeDatasource{
 		client: client,
+		logger: log.NewNullLogger(),
 	}
 
 	pCtx := backend.PluginContext{
@@ -135,7 +137,7 @@ func Test_profileToDataFrame(t *testing.T) {
 		},
 		Units: "short",
 	}
-	frame := responseToDataFrames(profile, 15.0, "goroutine:goroutine:count:goroutine:count")
+	frame := responseToDataFrames(profile, 15.0, "goroutine:goroutine:count:goroutine:count", log.NewNullLogger())
 	require.Equal(t, 4, len(frame.Fields))
 	require.Equal(t, data.NewField("level", nil, []int64{0, 1, 1}), frame.Fields[0])
 	require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
@@ -154,7 +156,7 @@ func Test_levelsToTree(t *testing.T) {
 			{Values: []int64{0, 15, 0, 3}},
 		}
 
-		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func1:func3"})
+		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func1:func3"}, log.NewNullLogger())
 		require.Equal(t, &ProfileTree{
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{
@@ -174,7 +176,7 @@ func Test_levelsToTree(t *testing.T) {
 			{Values: []int64{0, 20, 0, 4, 50, 10, 0, 5}},
 		}
 
-		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func3", "func1:func4", "func3:func5"})
+		tree := levelsToTree(levels, []string{"root", "func1", "func2", "func3", "func1:func4", "func3:func5"}, log.NewNullLogger())
 		require.Equal(t, &ProfileTree{
 			Start: 0, Value: 100, Level: 0, Name: "root", Nodes: []*ProfileTree{
 				{

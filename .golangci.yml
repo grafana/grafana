@@ -111,8 +111,6 @@ linters:
             - '**/pkg/tsdb/mssql/**/*'
             - '**/pkg/tsdb/mysql/*'
             - '**/pkg/tsdb/mysql/**/*'
-            - '**/pkg/tsdb/opentsdb/*'
-            - '**/pkg/tsdb/opentsdb/**/*'
             - '**/pkg/tsdb/parca/*'
             - '**/pkg/tsdb/parca/**/*'
             - '**/pkg/tsdb/tempo/*'

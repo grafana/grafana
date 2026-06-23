@@ -102,6 +102,34 @@ func repoConfig(name string) *provisioning.Repository {
 	}
 }
 
+func TestWorker_CommitMessageFromJobSpec(t *testing.T) {
+	ctx := context.Background()
+	w := NewWorker(testFolderGVK)
+
+	mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+	mockStaged := repository.NewMockStagedRepository(t)
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	job := makeTestJob("feature-branch")
+	job.Spec.Message = "custom folder metadata message"
+
+	mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.MatchedBy(func(opts repository.StageOptions) bool {
+		return opts.CommitOnlyOnceMessage == "custom folder metadata message"
+	})).Return(mockStaged, nil)
+
+	mockStaged.EXPECT().ReadTree(mock.Anything, "feature-branch").Return([]repository.FileTreeEntry{}, nil)
+	mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+	mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+	mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+	mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on branch feature-branch").Return()
+	mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
+	mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on branch feature-branch").Return()
+
+	err := w.Process(ctx, mockRepo, job, mockProgress)
+	require.NoError(t, err)
+}
+
 func TestWorker_Process(t *testing.T) {
 	t.Run("creates _folder.json for directories without metadata", func(t *testing.T) {
 		ctx := context.Background()

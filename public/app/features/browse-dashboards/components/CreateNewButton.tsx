@@ -16,6 +16,7 @@ import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/Da
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
   getImportPhrase,
@@ -25,8 +26,6 @@ import {
   getNewTemplateDashboardPhrase,
 } from 'app/features/search/tempI18nPhrases';
 import { type FolderDTO } from 'app/types/folders';
-
-import { ManagerKind } from '../../apiserver/types';
 
 import { NewFolderForm } from './NewFolderForm';
 
@@ -115,20 +114,18 @@ export default function CreateNewButton({
             }
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
           />
-          {!isProvisionedInstance && parentFolder?.managedBy !== ManagerKind.Repo && (
-            <Menu.Item
-              label={getImportPhrase()}
-              icon={ITEM_ICONS['dashboards/import']}
-              iconColor={dashboardIconColor}
-              onClick={() =>
-                reportInteraction('grafana_menu_item_clicked', {
-                  url: buildUrl('/dashboard/import', parentFolder?.uid),
-                  from: location.pathname,
-                })
-              }
-              url={buildUrl('/dashboard/import', parentFolder?.uid)}
-            />
-          )}
+          <Menu.Item
+            label={getImportPhrase()}
+            icon={ITEM_ICONS['dashboards/import']}
+            iconColor={dashboardIconColor}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', {
+                url: buildUrl('/dashboard/import', parentFolder?.uid),
+                from: location.pathname,
+              })
+            }
+            url={buildUrl('/dashboard/import', parentFolder?.uid)}
+          />
           {renderPreBuiltDashboardAction && (
             <Menu.Item
               label={getNewTemplateDashboardPhrase()}
@@ -183,7 +180,7 @@ export default function CreateNewButton({
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {parentFolder?.managedBy === ManagerKind.Repo || isProvisionedInstance ? (
+          {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
             <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
           ) : (
             <NewFolderForm
