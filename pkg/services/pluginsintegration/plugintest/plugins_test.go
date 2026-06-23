@@ -238,7 +238,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"influxdb":                         {},
 		"loki":                             {},
 		"prometheus":                       {},
-		"tempo":                            {},
 		"grafana-testdata-datasource":      {},
 		"grafana-postgresql-datasource":    {},
 		"mysql":                            {},
