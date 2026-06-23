@@ -150,6 +150,81 @@ describe('SaveProvisionedResourceDrawer', () => {
     );
   });
 
+  it('sends the ref and runs the branch-success handler for the branch workflow', async () => {
+    const onBranchSuccess = jest.fn();
+    // workflows[0] === 'branch' makes the branch (PR) workflow the default.
+    mockRepositories([{ ...mockRepository, workflows: ['branch'] }]);
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({
+          ref: 'feature-branch',
+          path: 'resources/thing.json',
+          urls: { newPullRequestURL: 'https://example.com/pr/1' },
+          resource: { upsert: {} },
+        });
+      })
+    );
+
+    const { user } = setup({ onBranchSuccess });
+
+    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(capturedRequest).not.toBeNull();
+    });
+    // Branch workflow commits to a branch, so the ref is sent (unlike the write workflow).
+    expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
+    await waitFor(() => {
+      expect(onBranchSuccess).toHaveBeenCalled();
+    });
+  });
+
+  it('calls onWriteSuccess after committing to the configured branch', async () => {
+    const onWriteSuccess = jest.fn();
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () =>
+        HttpResponse.json({ ref: 'main', path: 'resources/thing.json', resource: { upsert: {} } })
+      )
+    );
+
+    const { user } = setup({ onWriteSuccess });
+
+    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(onWriteSuccess).toHaveBeenCalled();
+    });
+  });
+
+  it('shows an error alert when the commit fails', async () => {
+    server.use(
+      http.put(`${BASE}/repositories/:name/files/*`, () => HttpResponse.json({ message: 'Boom' }, { status: 500 }))
+    );
+
+    const { user } = setup();
+
+    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
+  it('shows an error when the resource has no source path to commit to', async () => {
+    const { user } = setup({
+      resource: {
+        metadata: { annotations: { 'grafana.app/managedBy': 'repo', 'grafana.app/managerId': 'test-repo' } },
+      },
+    });
+
+    await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+  });
+
   it('shows the read-only banner when the repository cannot be edited', async () => {
     mockRepositories([{ ...mockRepository, workflows: [] }]);
     setup();

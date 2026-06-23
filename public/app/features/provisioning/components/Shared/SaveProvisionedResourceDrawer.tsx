@@ -1,4 +1,4 @@
-import { createElement, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -63,6 +63,7 @@ function FormContent({
   title,
   body,
   action = 'update',
+  successMessage,
   initialValues,
   repository,
   canPushToConfiguredBranch,
@@ -102,9 +103,7 @@ function FormContent({
     // preview page). Resources without a preview page surface the branch/PR link here instead.
     const linkUrl = urls?.newPullRequestURL ?? repository?.url;
     dispatch(
-      notifyApp(
-        createSuccessNotification('', '', undefined, createElement(PushSuccessMessage, { branch: ref, url: linkUrl }))
-      )
+      notifyApp(createSuccessNotification('', '', undefined, <PushSuccessMessage branch={ref} url={linkUrl} />))
     );
     onBranchSuccess?.({ ref, urls });
   };
@@ -113,6 +112,7 @@ function FormContent({
     workflow,
     resourceType,
     repository,
+    successMessage,
     handlers: {
       onDismiss,
       onWriteSuccess: () => onWriteSuccess?.(),
@@ -180,13 +180,14 @@ function FormContent({
 }
 
 /**
- * Generic drawer for committing a repository-managed resource to git.
+ * Drawer for committing a repository-managed resource to git, reusable across the provisioned
+ * resource kinds in {@link CommitResourceKind}.
  *
  * Owns the complete drawer (header + branch/path/comment fields + replace-file mutation + request
- * handling) and is resource-agnostic: callers supply the resource type, the file `body` to commit,
- * a `drawerTitle`, and success handlers (navigation / cache invalidation). The managing repository
- * and source path are resolved from the resource's annotations. Used by playlists today; other
- * k8s-style resources can reuse it as-is.
+ * handling): callers supply the resource type, the file `body` to commit, a `drawerTitle`, and
+ * success handlers (navigation / cache invalidation). The managing repository and source path are
+ * resolved from the resource's annotations. New resource kinds can reuse it once they're added to
+ * `CommitResourceKind` (and the shared fields / request handler, which key off the same type).
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   const { resource, title, drawerTitle, branchPrefix = 'resource', readOnlyMessage, onDismiss } = props;
