@@ -355,6 +355,33 @@ describe.each([false, true])('LogsPanel with controls = %s', (showControls: bool
       expect(screen.getByText(/LogLineContext/i)).toBeInTheDocument();
     });
 
+    it('passes the computed storage key to LogLineContext', async () => {
+      setup(
+        {
+          id: 42,
+          data: {
+            ...defaultProps.data,
+            series,
+            request: {
+              ...defaultProps.data.request,
+              app: CoreApp.Dashboard,
+              dashboardUID: 'abc123',
+              targets: [{ refId: 'A', datasource: { uid: 'show-context' } }],
+            },
+          },
+        },
+        showControls
+      );
+      await userEvent.click((await screen.findAllByLabelText('Log menu'))[0]);
+      await userEvent.click(screen.getByText('Show context'));
+
+      expect(logLineContextMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          logOptionsStorageKey: 'abc123.42',
+        })
+      );
+    });
+
     it('should call `getLogRowContext` if the user clicks the show context toggle', async () => {
       setup(
         {

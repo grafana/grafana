@@ -11075,10 +11075,6 @@
       "load-older": "Loading older logs...",
       "older-logs": "Older logs"
     },
-    "log-context-buttons": {
-      "center-matched-line": "Center matched line",
-      "label-wrap-lines": "Wrap lines"
-    },
     "log-details": {
       "fields": "Fields",
       "links": "Links",
