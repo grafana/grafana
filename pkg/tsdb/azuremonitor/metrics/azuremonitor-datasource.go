@@ -98,10 +98,7 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
 	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
-	// Alert queries always use the legacy per-resource ARM path. The batch API is
-	// a subscription-level data-plane endpoint and is intentionally bypassed for
-	// alerting.
-	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled && !fromAlert {
+	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
 		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client)
 	}
 	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
