@@ -180,7 +180,7 @@ func addAlertingConfig(t *testing.T, env *server.TestEnv) {
 		1: {accesscontrol.ActionAlertingReceiversCreate: nil},
 	}}
 
-	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, 1, u)
+	_, err := env.Server.HTTPServer.AlertNG.Api.ReceiverService.CreateReceiver(context.Background(), &receiverWithSecrets, alertmodels.ProvenanceToManagerProperties(alertmodels.ProvenanceNone), 1, u)
 	require.NoError(t, err)
 }
 

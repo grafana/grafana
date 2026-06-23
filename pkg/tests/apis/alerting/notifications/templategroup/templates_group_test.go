@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -823,5 +824,68 @@ func TestIntegrationKinds(t *testing.T) {
 		created.Spec.Kind = v1beta1.TemplateGroupTemplateKindMimir
 		_, err = client.Update(ctx, created, resource.UpdateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "expected bad request but got %s", err)
+	})
+}
+
+func TestIntegrationTemplateGroupManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	adminClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
+
+	t.Run("ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		tmpl := &v1beta1.TemplateGroup{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "default",
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.TemplateGroupSpec{
+				Title:   "mp-roundtrip",
+				Content: `{{ define "mp-roundtrip" }} test {{ end }}`,
+				Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
+			},
+		}
+
+		created, err := adminClient.Create(ctx, tmpl, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		// A fresh read resolves the manager from storage and preserves kind + identity losslessly,
+		// while the provenance view is the coarse ProvenanceAPI for legacy readers.
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus(),
+			"terraform manager should map to ProvenanceAPI for legacy readers")
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to the classic-api manager when read via k8s", func(t *testing.T) {
+		tmpl := &v1beta1.TemplateGroup{
+			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Spec: v1beta1.TemplateGroupSpec{
+				Title:   "mp-classic-api",
+				Content: `{{ define "mp-classic-api" }} test {{ end }}`,
+				Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
+			},
+		}
+		tmpl.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		created, err := adminClient.Create(ctx, tmpl, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+		require.Equal(t, string(ngmodels.ProvenanceAPI), retrieved.GetProvenanceStatus())
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
 	})
 }

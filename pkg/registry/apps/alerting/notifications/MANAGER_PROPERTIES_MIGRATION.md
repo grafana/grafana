@@ -24,11 +24,10 @@ Resources in scope (all under `pkg/registry/apps/alerting/notifications/`):
   change or splitting provenance/manager across two stores (divergence risk).
   Left with current provenance-only behavior.
 
-> **Done so far:** the shared `GetManagerPropertiesByType` store primitive (+ interface/mock/fake)
-> and the `timeinterval` resource end-to-end (service write/read, conversions, legacy storage,
-> HTTP + file-provisioning + cloud-migration callers), with unit tests green. Remaining: an
-> integration round-trip test for timeinterval (mirroring the rules `compat` tests) and the
-> other four resources.
+> **Status:** the four store-backed resources (mute timings, templates, routing trees, contact
+> points) are migrated end-to-end with unit tests, and each has an integration round-trip test
+> (k8s create with `managedBy: terraform` → fresh read preserves kind+identity; legacy provenance
+> maps to `api`). Inhibition rules are deferred (see below).
 
 (`historian`, `alertenrichment` don't use provenance — out of scope.)
 

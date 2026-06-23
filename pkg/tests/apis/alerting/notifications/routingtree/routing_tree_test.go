@@ -1595,3 +1595,71 @@ func createWildcardPermission(actions ...string) resourcepermissions.SetResource
 		ResourceID:        "*",
 	}
 }
+
+func TestIntegrationRoutingTreeManagerPropertiesRoundTrip(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	helper := getTestHelper(t)
+	adminClient := common.NewRoutingTreeClient(t, helper.Org1.Admin)
+
+	// Reuse the default tree's receiver so the created managed route is valid.
+	defaultTree, err := adminClient.Get(ctx, v1beta1.UserDefinedRoutingTreeName, v1.GetOptions{})
+	require.NoError(t, err)
+	receiver := defaultTree.Spec.Defaults.Receiver
+
+	t.Run("ManagerKindTerraform survives round-trip through legacy storage", func(t *testing.T) {
+		tree := &v1beta1.RoutingTree{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mp-roundtrip",
+				Namespace: "default",
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
+				},
+			},
+			Spec: v1beta1.RoutingTreeSpec{
+				Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: receiver},
+			},
+		}
+
+		created, err := adminClient.Create(ctx, tree, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		// A fresh read resolves the manager from storage and preserves kind + identity losslessly,
+		// while the provenance view is the coarse ProvenanceAPI for legacy readers.
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindTerraform), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind],
+			"ManagerKindTerraform should survive round-trip through legacy storage")
+		require.Equal(t, "my-terraform-workspace", retrieved.GetAnnotations()[utils.AnnoKeyManagerIdentity],
+			"manager identity should survive round-trip through legacy storage")
+		require.Equal(t, string(models.ProvenanceAPI), retrieved.GetProvenanceStatus(),
+			"terraform manager should map to ProvenanceAPI for legacy readers")
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+
+	t.Run("legacy ProvenanceAPI maps to the classic-api manager when read via k8s", func(t *testing.T) {
+		tree := &v1beta1.RoutingTree{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mp-classic-api",
+				Namespace: "default",
+			},
+			Spec: v1beta1.RoutingTreeSpec{
+				Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: receiver},
+			},
+		}
+		tree.SetProvenanceStatus(string(models.ProvenanceAPI))
+
+		created, err := adminClient.Create(ctx, tree, v1.CreateOptions{})
+		require.NoError(t, err)
+
+		retrieved, err := adminClient.Get(ctx, created.Name, v1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindClassicAPI), retrieved.GetAnnotations()[utils.AnnoKeyManagerKind]) //nolint:staticcheck
+		require.Equal(t, string(models.ProvenanceAPI), retrieved.GetProvenanceStatus())
+
+		require.NoError(t, adminClient.Delete(ctx, created.Name, v1.DeleteOptions{}))
+	})
+}
