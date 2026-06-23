@@ -78,6 +78,11 @@ type k8sRESTAdapter struct {
 
 	snowflakeNode *snowflake.Node
 
+	// maxScopeCount caps how many scopes may be attached to a single
+	// annotation. 0 means no scopes are allowed. Negative values are
+	// rejected by the settings loader.
+	maxScopeCount int
+
 	tracer  trace.Tracer
 	metrics *Metrics
 	logger  log.Logger
@@ -226,6 +231,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
+	if err := s.validateScopeCount(annotation); err != nil {
+		return nil, err
+	}
+
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, apierrors.NewUnauthorized("failed to get requester from context")
@@ -233,9 +242,9 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	annotation.SetCreatedBy(user.GetUID())
 
 	if s.snowflakeNode != nil {
-		if getLegacyID(annotation) == 0 {
+		if GetLegacyID(annotation) == 0 {
 			id := s.snowflakeNode.Generate().Int64() & maxSafeJSInt
-			setLegacyID(annotation, id)
+			SetLegacyID(annotation, id)
 		}
 	}
 
@@ -287,6 +296,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, apierrors.NewBadRequest("namespace in URL does not match namespace in body")
 	}
 
+	if err := s.validateScopeCount(resource); err != nil {
+		return nil, false, err
+	}
+
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
 	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
@@ -301,6 +314,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, resource.Name, fmt.Errorf("insufficient permissions"))
+	}
+
+	// Preserve legacy data when the caller omits it, mirroring the legacy API's behavior.
+	// An absent annotation keeps the stored value, while a present annotation overwrites or clears it.
+	if _, ok := getLegacyData(resource); !ok {
+		if existingData, ok := getLegacyData(existing); ok {
+			setLegacyData(resource, existingData)
+		}
 	}
 
 	updated, err := s.store.Update(ctx, resource)
@@ -386,6 +407,14 @@ func parseFieldSelector(fs fields.Selector, opts *ListOptions) error {
 		default:
 			return fmt.Errorf("unsupported field selector: %s", r.Field)
 		}
+	}
+	return nil
+}
+
+func (s *k8sRESTAdapter) validateScopeCount(a *annotationV0.Annotation) error {
+	if len(a.Spec.Scopes) > s.maxScopeCount {
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"too many scopes: %d (max allowed %d)", len(a.Spec.Scopes), s.maxScopeCount))
 	}
 	return nil
 }

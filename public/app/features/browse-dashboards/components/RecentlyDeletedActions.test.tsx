@@ -1,10 +1,11 @@
-import type { ComponentProps } from 'react';
+import { act, type ComponentProps } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { DataFrameView, FieldType, toDataFrame } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { type DashboardQueryResult } from '../../search/service/types';
@@ -18,6 +19,13 @@ import { RestoreModal } from './RestoreModal';
 jest.mock('../api/useRecentlyDeletedStateManager');
 jest.mock('../state/hooks');
 jest.mock('../../search/service/deletedDashboardsCache');
+jest.mock('app/features/dashboard/api/dashboard_api', () => ({
+  getDashboardAPI: jest.fn(),
+}));
+jest.mock('../api/browseDashboardsAPI', () => ({
+  ...jest.requireActual('../api/browseDashboardsAPI'),
+  useRestoreDashboardMutation: () => [jest.fn().mockResolvedValue({ data: { name: 'dashboard-1' } })],
+}));
 jest.mock('./RestoreModal', () => ({
   RestoreModal: jest.fn(() => null),
 }));
@@ -30,6 +38,7 @@ const mockUseRecentlyDeletedStateManager = useRecentlyDeletedStateManager as jes
 >;
 const mockUseActionSelectionState = useActionSelectionState as jest.MockedFunction<typeof useActionSelectionState>;
 const mockRestoreModal = RestoreModal as jest.MockedFunction<typeof RestoreModal>;
+const mockGetDashboardAPI = getDashboardAPI as jest.MockedFunction<typeof getDashboardAPI>;
 
 describe('RecentlyDeletedActions', () => {
   beforeEach(() => {
@@ -107,6 +116,49 @@ describe('RecentlyDeletedActions', () => {
     expect(getRestoreModalProps().originCandidate).toBe('');
   });
 
+  it('fetches the dashboard at the resource version before the delete event when restoring', async () => {
+    // The trash listing returns the delete event's RV. The fix subtracts one
+    // so the GET resolves to the live dashboard, not the tombstone.
+    const deleteRV = '2067893224188780544';
+    const previousRV = '2067893224188780543';
+
+    (deletedDashboardsCache.getAsTable as jest.Mock).mockResolvedValueOnce({
+      rows: [
+        {
+          cells: [],
+          object: {
+            metadata: { name: 'dashboard-1', resourceVersion: deleteRV, creationTimestamp: '2024-01-01T00:00:00Z' },
+          },
+        },
+      ],
+      columnDefinitions: [],
+      metadata: { resourceVersion: deleteRV },
+    });
+
+    mockUseActionSelectionState.mockReturnValue({
+      dashboard: { 'dashboard-1': true },
+      folder: {},
+    });
+
+    const getDashboard = jest.fn().mockResolvedValue({
+      metadata: { name: 'dashboard-1', annotations: {} },
+      spec: {},
+    });
+    // Only `getDashboard` is exercised by onRestore; the rest of the API is unused here.
+    mockGetDashboardAPI.mockResolvedValue({ getDashboard } as unknown as Awaited<ReturnType<typeof getDashboardAPI>>);
+
+    const { user } = render(<RecentlyDeletedActions />);
+    await user.click(screen.getByRole('button', { name: 'Restore' }));
+
+    const onConfirm = getRestoreModalProps().onConfirm;
+    expect(onConfirm).toBeDefined();
+    await act(async () => {
+      await onConfirm!('folder-target');
+    });
+
+    expect(getDashboard).toHaveBeenCalledWith('dashboard-1', { resourceVersion: previousRV });
+  });
+
   it('does not preselect a folder when selected dashboards have mixed origins', async () => {
     setRecentlyDeletedState({
       uids: ['dashboard-1', 'dashboard-2'],
@@ -144,6 +196,7 @@ function setRecentlyDeletedState({ uids, locations }: { uids: string[]; location
   const mockView = new DataFrameView<DashboardQueryResult>(mockDataFrame);
 
   const mockStateManager = {
+    doSearch: jest.fn().mockResolvedValue(undefined),
     doSearchWithDebounce: jest.fn(),
     state: {
       query: '',

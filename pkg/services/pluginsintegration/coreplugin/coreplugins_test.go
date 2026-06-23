@@ -26,7 +26,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Loki},
 		{ID: MSSQL},
 		{ID: MySQL},
-		{ID: OpenTSDB},
 		{ID: Parca},
 		{ID: PostgreSQL},
 		{ID: Prometheus},

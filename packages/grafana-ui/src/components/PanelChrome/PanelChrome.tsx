@@ -528,7 +528,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'unset',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       height: '100%',
       display: 'flex',
       flexDirection: 'column',

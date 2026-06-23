@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -3705,4 +3707,112 @@ func withExpressionsMultiQuery() ngmodels.AlertRuleMutator {
 		}
 		r.Data = queries
 	}
+}
+
+func noopRuleMutator(_ context.Context, _ *ngmodels.AlertRule, _ *apimodels.AlertingRule, _ map[eval.State]struct{}, _ labels.Matchers, _ []ngmodels.LabelOption, _ int64) (map[string]int64, map[string]int64) {
+	return nil, nil
+}
+
+func TestPrepareRuleGroupStatusesV2_StatusPreparer(t *testing.T) {
+	const orgID int64 = 1
+	const nsUID = "folder-status-preparer"
+
+	// newStore builds a fake store containing the given rules and a matching AllowedNamespaces map.
+	newStore := func(t *testing.T, rules ...*ngmodels.AlertRule) (*fakes.RuleStore, map[string]string) {
+		t.Helper()
+		store := fakes.NewRuleStore(t)
+		allowed := map[string]string{}
+		for _, r := range rules {
+			store.PutRule(context.Background(), r)
+			allowed[r.NamespaceUID] = "folder"
+		}
+		return store, allowed
+	}
+
+	t.Run("is invoked with the page's rule UIDs", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		// Two rules in the same group so a single store fetch returns both.
+		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-a", NamespaceUID: nsUID, OrgID: orgID}
+		rule1 := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-1"), gen.WithTitle("rule-1")).GenerateRef()
+		rule2 := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-2"), gen.WithTitle("rule-2")).GenerateRef()
+
+		store, allowed := newStore(t, rule1, rule2)
+
+		var capturedUIDs []string
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             url.Values{},
+			AllowedNamespaces: allowed,
+			StatusPreparer: func(ruleUIDs []string) {
+				capturedUIDs = append(capturedUIDs, ruleUIDs...)
+			},
+		}
+
+		resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+
+		require.Equal(t, "success", resp.Status)
+		sort.Strings(capturedUIDs)
+		assert.Equal(t, []string{"uid-1", "uid-2"}, capturedUIDs, "StatusPreparer should receive the UIDs of the rules on the page")
+	})
+
+	t.Run("is invoked once per fetched store page", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		// Three rules, each in its own group, so group_limit=1 forces one store fetch per group.
+		rule1 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-1", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-1")).GenerateRef()
+		rule2 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-2", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-2")).GenerateRef()
+		rule3 := gen.With(gen.WithGroupKey(ngmodels.AlertRuleGroupKey{RuleGroup: "group-3", NamespaceUID: nsUID, OrgID: orgID}), gen.WithUID("uid-3")).GenerateRef()
+
+		store, allowed := newStore(t, rule1, rule2, rule3)
+
+		query := url.Values{}
+		query.Set("group_limit", "1")
+
+		var calls int
+		var pages [][]string
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             query,
+			AllowedNamespaces: allowed,
+			StatusPreparer: func(ruleUIDs []string) {
+				calls++
+				pages = append(pages, append([]string(nil), ruleUIDs...))
+			},
+		}
+
+		resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+
+		require.Equal(t, "success", resp.Status)
+		// group_limit=1 returns a single group per page, but the response only contains
+		// the first page's group. The preparer should still have been invoked at least once.
+		assert.GreaterOrEqual(t, calls, 1, "StatusPreparer should be invoked for the fetched page")
+		require.NotEmpty(t, pages)
+		// The first page must carry exactly the first group's single rule UID.
+		assert.Len(t, pages[0], 1, "each page with group_limit=1 should contain a single rule's UID")
+	})
+
+	t.Run("nil StatusPreparer is a no-op", func(t *testing.T) {
+		gen := ngmodels.RuleGen
+		groupKey := ngmodels.AlertRuleGroupKey{RuleGroup: "group-nil", NamespaceUID: nsUID, OrgID: orgID}
+		rule := gen.With(gen.WithGroupKey(groupKey), gen.WithUID("uid-nil"), gen.WithTitle("rule-nil")).GenerateRef()
+
+		store, allowed := newStore(t, rule)
+
+		opts := RuleGroupStatusesOptions{
+			Ctx:               context.Background(),
+			OrgID:             orgID,
+			Query:             url.Values{},
+			AllowedNamespaces: allowed,
+			StatusPreparer:    nil,
+		}
+
+		require.NotPanics(t, func() {
+			resp := PrepareRuleGroupStatusesV2(log.NewNopLogger(), store, opts, noopRuleMutator, fakes.NewFakeProvisioningStore())
+			require.Equal(t, "success", resp.Status)
+			require.Len(t, resp.Data.RuleGroups, 1)
+			require.Len(t, resp.Data.RuleGroups[0].Rules, 1)
+			assert.Equal(t, "uid-nil", resp.Data.RuleGroups[0].Rules[0].UID)
+		})
+	})
 }

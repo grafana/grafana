@@ -157,7 +157,11 @@ describe('AlertRuleForm — submit routing by group presence', () => {
   const folder = mockFolder({
     title: 'Folder A',
     uid: grafanaRulerRule.grafana_alert.namespace_uid,
-    accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+    accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
+      [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
+    },
   });
 
   beforeEach(() => {
@@ -341,7 +345,11 @@ describe('AlertRuleForm — alerting.rulesAPIV2 gate (flag off)', () => {
       mockFolder({
         title: 'Folder A',
         uid: grafanaRulerRule.grafana_alert.namespace_uid,
-        accessControl: { [AccessControlAction.AlertingRuleUpdate]: true },
+        accessControl: {
+          [AccessControlAction.AlertingRuleRead]: true,
+          [AccessControlAction.AlertingRuleUpdate]: true,
+          [AccessControlAction.FoldersRead]: true,
+        },
       })
     );
     mockPreviewApiResponse(server, []);

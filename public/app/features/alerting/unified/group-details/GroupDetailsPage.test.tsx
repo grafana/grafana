@@ -72,6 +72,7 @@ describe('GroupDetailsPage', () => {
       AccessControlAction.AlertingRuleUpdate,
       AccessControlAction.AlertingRuleExternalRead,
       AccessControlAction.AlertingRuleExternalWrite,
+      AccessControlAction.FoldersRead,
     ]);
   });
 

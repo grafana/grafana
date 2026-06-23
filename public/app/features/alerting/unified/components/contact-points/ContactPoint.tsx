@@ -273,17 +273,15 @@ const ContactPointReceiverMetadataRow = ({ diagnostics, sendingResolved }: Conta
 
 const getStyles = (theme: GrafanaTheme2) => ({
   contactPointWrapper: css({
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     border: `solid 1px ${theme.colors.border.weak}`,
-    borderBottom: 'none',
+    overflow: 'hidden',
   }),
   integrationWrapper: css({
     position: 'relative',
 
     background: `${theme.colors.background.primary}`,
     padding: `${theme.spacing(1)} ${theme.spacing(1.5)}`,
-
-    borderBottom: `solid 1px ${theme.colors.border.weak}`,
   }),
   metadataRow: css({
     borderBottomLeftRadius: `${theme.shape.radius.default}`,

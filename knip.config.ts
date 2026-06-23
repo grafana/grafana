@@ -21,7 +21,6 @@ const externalisedDatasources = [
   'loki',
   'mssql',
   'mysql',
-  'opentsdb',
   'parca',
   'tempo',
 ];

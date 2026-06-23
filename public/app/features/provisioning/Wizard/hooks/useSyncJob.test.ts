@@ -28,7 +28,9 @@ describe('useSyncJob', () => {
 
     await waitFor(() => {
       expect(result.current.job).toBeDefined();
-      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: {} }));
+      // generateNewFolderIDs is always sent so migrated folders are recreated
+      // rather than taking over the originals.
+      expect(body).toEqual(expect.objectContaining({ action: 'migrate', migrate: { generateNewFolderIDs: true } }));
     });
   });
 
@@ -55,6 +57,29 @@ describe('useSyncJob', () => {
 
   it('does not set a job when no repository is selected', async () => {
     const { result } = renderHook(() => useSyncJob({ repoName: '' }), { wrapper: getWrapper({}) });
+
+    await act(() => result.current.startJob(true));
+
+    expect(result.current.job).toBeUndefined();
+  });
+
+  it('does not set a job when the response has no job name', async () => {
+    // A 2xx response without metadata.name is treated as a failure to start.
+    server.use(http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json({})));
+
+    const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
+
+    await act(() => result.current.startJob(true));
+
+    expect(result.current.job).toBeUndefined();
+  });
+
+  it('does not set a job when job creation errors', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json({ message: 'boom' }, { status: 500 }))
+    );
+
+    const { result } = renderHook(() => useSyncJob({ repoName: 'repo-1' }), { wrapper: getWrapper({}) });
 
     await act(() => result.current.startJob(true));
 

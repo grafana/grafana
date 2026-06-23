@@ -3,14 +3,16 @@ import { get as lodashGet } from 'lodash';
 import {
   type EventBus,
   type InterpolateFunction,
+  isNestedPanelOptions,
+  type NestedValueAccess,
   type PanelData,
   type PanelPlugin,
+  type PanelOptionsSupplier,
   type StandardEditorContext,
   type VariableSuggestionsScope,
   type FieldConfigSource,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
-import { type NestedValueAccess, isNestedPanelOptions, type PanelOptionsSupplier } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';

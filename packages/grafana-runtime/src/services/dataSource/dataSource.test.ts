@@ -1,5 +1,6 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
+import { TracedError } from '../../utils/TracedError';
 import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
@@ -148,7 +149,7 @@ describe('plugin', () => {
       await expect(getDataSourceInstance(settings.uid)).rejects.toThrow(/module not found/);
     });
 
-    it('logs the failure with the raw error as cause and does not sanitize the rethrow', async () => {
+    it('logs a TracedError that preserves the original stack and does not sanitize the rethrow', async () => {
       const settings = ds();
       initDataSourceInstanceSettings({ [settings.name]: settings }, settings.name);
       const importError = new Error('module not found');
@@ -158,8 +159,10 @@ describe('plugin', () => {
 
       expect(logError).toHaveBeenCalledTimes(1);
       const [loggedError] = logError.mock.calls[0];
-      expect(loggedError).toBeInstanceOf(Error);
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toContain('Failed to import datasource plugin');
       expect(loggedError.cause).toBe(importError);
+      expect(loggedError.stack).toBe(importError.stack);
     });
 
     it('returns the same instance for name-based and uid-based lookups', async () => {

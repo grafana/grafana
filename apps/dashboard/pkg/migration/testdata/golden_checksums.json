@@ -14,8 +14,6 @@
   "dev-dashboards-output/datasource-mssql/mssql_unittest.v42.json": "985bab4a2dfda0494bbe00e1be6034354af96db100f07b7ab5cd014294986e92",
   "dev-dashboards-output/datasource-mysql/mysql_fakedata.v42.json": "4c1e1c67578a30a17fdd82c9fdc4570e90e8a6e90b7dc3c5bbf47e0704bfb27c",
   "dev-dashboards-output/datasource-mysql/mysql_unittest.v42.json": "60944ba2fbffba5416766fb858fe2ca6aa114bc2fba1793a2b3930ee47216a60",
-  "dev-dashboards-output/datasource-opentsdb/opentsdb.v42.json": "1d34830eac8ec9c4620fe2d54aab5d3d2e32cc2b4b626016f7bb598fd61e7bb6",
-  "dev-dashboards-output/datasource-opentsdb/opentsdb_v23.v42.json": "f7c1d6f8cd8b7173dddd96796b71b05d21c6fcfdc564e18dd135a26f03017d63",
   "dev-dashboards-output/datasource-postgres/postgres_fakedata.v42.json": "56e70b06aa663034431eb33d40e8b293cf822b0992ad68ebb7c1aeb95efb6f96",
   "dev-dashboards-output/datasource-postgres/postgres_unittest.v42.json": "8bddcbcc0a9d4c3768287bfb5e0e391e00fc70d144cbfa5915b5937d192d80b2",
   "dev-dashboards-output/datasource-testdata/bar-gauge-demo2.v42.json": "c4d44de6b8c11af6d4b4adf70d701590a5565a4922ca7b4a65139d3896aaeee3",

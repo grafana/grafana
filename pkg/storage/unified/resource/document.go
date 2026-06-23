@@ -45,6 +45,31 @@ type DocumentBuilderInfo struct {
 
 	// Complicated builders (eg dashboards!) will be declared dynamically and managed by the ResourceServer
 	Namespaced NamespacedDocumentSupplier
+
+	// SearchFieldsHash is a stable hex hash over the SearchFieldDefinition
+	// slices registered for GroupResource across every version. The hash is
+	// stored in IndexBuildInfo when an index is built and re-checked on
+	// startup so the index is rebuilt automatically when index-affecting
+	// search-field metadata changes.
+	//
+	// Empty when the builder does not use a SearchFieldsProvider.
+	SearchFieldsHash string
+}
+
+// SearchFieldsHashesForBuilders returns a lower-cased "group/resource" map
+// of SearchFieldsHash values collected from the given DocumentBuilderInfo
+// entries. Empty hashes are skipped so consumers can use len(...) == 0 as a
+// shorthand for "no expected hash".
+func SearchFieldsHashesForBuilders(builders []DocumentBuilderInfo) map[string]string {
+	out := map[string]string{}
+	for _, b := range builders {
+		if b.SearchFieldsHash == "" {
+			continue
+		}
+		key := strings.ToLower(b.GroupResource.Group + "/" + b.GroupResource.Resource)
+		out[key] = b.SearchFieldsHash
+	}
+	return out
 }
 
 type DocumentBuilderSupplier interface {
@@ -603,7 +628,12 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name:        SEARCH_FIELD_CREATED,
 				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp", // date?
+				Description: "created timestamp (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_UPDATED,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "updated timestamp (unix millis)",
 			},
 			{
 				Name:        SEARCH_FIELD_CREATED_BY,

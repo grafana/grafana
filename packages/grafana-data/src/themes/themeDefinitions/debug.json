@@ -5,6 +5,7 @@
     "mode": "dark",
     "background": {
       "canvas": "#000033",
+      "page": "#00003C",
       "primary": "#000044",
       "secondary": "#000055",
       "elevated": "#000055"

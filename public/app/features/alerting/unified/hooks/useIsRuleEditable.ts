@@ -1,4 +1,5 @@
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 import { type RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
@@ -64,8 +65,15 @@ export function useIsRuleEditable(rulesSourceName: string, rule?: RulerRuleDTO):
       };
     }
 
-    const canEditGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.update, folder);
-    const canRemoveGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.delete, folder);
+    // The backend requires alert.rules:read and folders:read as prerequisites for any
+    // write operation (POST /api/ruler/grafana/api/v1/rules/{Namespace}).
+    // Mirror that compound requirement here so the edit form is blocked before Save.
+    const canReadGrafanaRules = contextSrv.hasPermissionInMetadata(rulePermission.read, folder);
+    const canReadFolder = contextSrv.hasPermissionInMetadata(AccessControlAction.FoldersRead, folder);
+    const canEditGrafanaRules =
+      canReadGrafanaRules && canReadFolder && contextSrv.hasPermissionInMetadata(rulePermission.update, folder);
+    const canRemoveGrafanaRules =
+      canReadGrafanaRules && canReadFolder && contextSrv.hasPermissionInMetadata(rulePermission.delete, folder);
 
     return {
       isRulerAvailable: true,

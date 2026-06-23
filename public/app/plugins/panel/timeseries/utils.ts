@@ -11,11 +11,9 @@ import {
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
+import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { type AdHocFilterItem } from '@grafana/ui';
 import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
-
-import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
 
 type ScaleKey = string;
 
@@ -339,10 +337,6 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
 }
-
-export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
-  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
-};
 
 export function getGroupedFilters(
   frame: DataFrame,

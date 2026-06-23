@@ -78,7 +78,7 @@ export const getCascaderStyles = (theme: GrafanaTheme2) => {
           overflow: 'hidden',
           background: theme.colors.background.elevated,
           border: `none`,
-          borderRadius: theme.shape.radius.default,
+          borderRadius: theme.shape.radius.lg,
           boxShadow: theme.shadows.z3,
           whiteSpace: 'nowrap',
 

@@ -9,6 +9,7 @@ import {
   type HistoryItem,
   type PanelData,
   getDataSourceRef,
+  getNextRefId,
   isSystemOverrideWithRef,
 } from '@grafana/data';
 import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -100,6 +101,48 @@ export class QueryEditorRows extends PureComponent<Props> {
       const isMixed = uniqueDatasources.size > 1;
       const newDatasourceRef = {
         uid: isMixed ? MIXED_DATASOURCE_NAME : query.datasource.uid,
+      };
+      const shouldChangeDatasource = dsSettings.uid !== newDatasourceRef.uid;
+      if (shouldChangeDatasource) {
+        onUpdateDatasources?.(newDatasourceRef);
+      }
+    }
+
+    onRunQueries();
+  }
+
+  // Replace the query at `index` with several queries (e.g. selecting a recent entry that ran
+  // multiple queries together). The first replacement keeps the original refId; the rest get
+  // fresh refIds computed against the growing set so they don't collide.
+  onReplaceQueries(replacementQueries: DataQuery[], index: number) {
+    const { queries, onQueriesChange, onUpdateDatasources, dsSettings, onRunQueries } = this.props;
+
+    if (replacementQueries.length === 0) {
+      return;
+    }
+
+    const originalRefId = queries[index]?.refId;
+    const newQueries = [...queries];
+    const replacements: DataQuery[] = [];
+    replacementQueries.forEach((replacement, replacementIndex) => {
+      if (replacementIndex === 0) {
+        replacements.push({ ...replacement, refId: originalRefId ?? replacement.refId });
+      } else {
+        // Exclude the slot being replaced when picking the next refId, plus the ones we've staged.
+        const taken = [...newQueries.filter((_, i) => i !== index), ...replacements];
+        replacements.push({ ...replacement, refId: getNextRefId(taken) });
+      }
+    });
+    newQueries.splice(index, 1, ...replacements);
+    onQueriesChange(newQueries, { skipAutoImport: true });
+
+    // Update datasources based on the new query set
+    const replacementDatasourceUid = replacementQueries.find((q) => q.datasource?.uid)?.datasource?.uid;
+    if (replacementDatasourceUid) {
+      const uniqueDatasources = new Set(newQueries.map((q) => q.datasource?.uid));
+      const isMixed = uniqueDatasources.size > 1;
+      const newDatasourceRef = {
+        uid: isMixed ? MIXED_DATASOURCE_NAME : replacementDatasourceUid,
       };
       const shouldChangeDatasource = dsSettings.uid !== newDatasourceRef.uid;
       if (shouldChangeDatasource) {
@@ -230,6 +273,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                       onChangeDataSource={onChangeDataSourceSettings}
                       onChange={(query) => this.onChangeQuery(query, index)}
                       onReplace={(query) => this.onReplaceQuery(query, index)}
+                      onReplaceQueries={(queries) => this.onReplaceQueries(queries, index)}
                       onRemoveQuery={this.onRemoveQuery}
                       onAddQuery={onAddQuery}
                       onRunQuery={onRunQueries}

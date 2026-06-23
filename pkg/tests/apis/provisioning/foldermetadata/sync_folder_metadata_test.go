@@ -550,6 +550,14 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		helper.SyncAndWait(t, repo, nil)
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
 
+		// Wait until the dashboard is parented and visible before the second
+		// sync. The second sync's compare diffs against the managed-resources
+		// index; if the dashboard has not been indexed yet, the folder UID
+		// change cannot re-parent it and the old-folder cleanup deletes it.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"my-folder/dashboard.json": "original-uid",
+		})
+
 		// Change UID in _folder.json, keep title the same.
 		updatedContent := folderMetadataJSON("new-uid", "My Folder")
 		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)

@@ -8,23 +8,29 @@ import (
 	"sync"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"golang.org/x/sync/errgroup"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var logger = log.New("accesscontrol.zanzana_resolver")
+var zLogger = log.New("accesscontrol.zanzana_resolver")
 
 // ZanzanaPermissionResolver handles resolving user permissions using Zanzana
 type ZanzanaPermissionResolver struct {
-	client  zanzana.Client
-	userSvc user.Service
+	client        zanzana.Client
+	userSvc       user.Service
+	scopeResolver *uidToIDResolver
 	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
 	// team memberships are sent as Zanzana contextual tuples for the current user, so the
 	// merged permissions match what the forward Check path (which uses the groups claim)
@@ -32,11 +38,17 @@ type ZanzanaPermissionResolver struct {
 	useExternalGroups bool
 }
 
-func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service, useExternalGroups bool) *ZanzanaPermissionResolver {
+func NewZanzanaPermissionResolver(
+	client zanzana.Client,
+	userSvc user.Service,
+	configProvider restcfg.RestConfigProvider,
+	useExternalGroups bool,
+) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
 		client:            client,
 		userSvc:           userSvc,
 		useExternalGroups: useExternalGroups,
+		scopeResolver:     newUIDToIDResolver(configProvider),
 	}
 }
 
@@ -55,7 +67,7 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
-	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
+	namespace := types.OrgNamespaceFormatter(usr.GetOrgID())
 	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
 }
 
@@ -88,12 +100,12 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var subject string
 	if isServiceAccount {
-		subject = claims.NewTypeID(claims.TypeServiceAccount, uid)
+		subject = types.NewTypeID(types.TypeServiceAccount, uid)
 	} else {
-		subject = claims.NewTypeID(claims.TypeUser, uid)
+		subject = types.NewTypeID(types.TypeUser, uid)
 	}
 
-	namespace := claims.OrgNamespaceFormatter(orgID)
+	namespace := types.OrgNamespaceFormatter(orgID)
 
 	var err error
 	if options.Action != "" {
@@ -173,7 +185,7 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 						return err
 					}
-					logger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
+					zLogger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
 					return nil
 				}
 
@@ -229,6 +241,32 @@ func folderScopeForLegacyRBAC(folderUID string) string {
 // both direct dashboard objects (Items) and enclosing folders (Folders).
 func isDashboardRBACAction(action string) bool {
 	return strings.HasPrefix(action, "dashboards:")
+}
+
+// isTeamRBACAction matches team-management actions whose scopes need UID→ID translation.
+func isTeamRBACAction(action string) bool {
+	return strings.HasPrefix(action, "teams:") || strings.HasPrefix(action, "teams.")
+}
+
+// resolveTeamScope translates a team UID to the legacy teams:id:<numericID> scope.
+func (r *ZanzanaPermissionResolver) resolveTeamScope(ctx context.Context, namespace, teamUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetTeamIDByUID(ctx, nsInfo, teamUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope("teams", "id", fmt.Sprintf("%d", id)), nil
+}
+
+// teamWildcardScope returns the legacy wildcard scope for teams (teams:id:*).
+func teamWildcardScope() string {
+	return ac.Scope("teams", "id", "*")
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
@@ -294,6 +332,11 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else if isTeamRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  teamWildcardScope(),
+			})
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
@@ -303,10 +346,23 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	}
 
 	// Items are objects of the listed resource type, scoped by that resource.
+	// Team actions need UID→ID translation so scopes match legacy RBAC (teams:id:<n>).
 	for _, item := range resp.Items {
+		var itemScope string
+		if isTeamRBACAction(action) {
+			resolved, err := r.resolveTeamScope(ctx, namespace, item)
+			if err != nil {
+				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
+			} else {
+				itemScope = resolved
+			}
+		} else {
+			itemScope = resourceScope(resource, item)
+		}
 		appendIfMatches(ac.Permission{
 			Action: action,
-			Scope:  resourceScope(resource, item),
+			Scope:  itemScope,
 		})
 	}
 
@@ -447,4 +503,76 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 		return legacy
 	}
 	return MergePermissions(legacy, zPerms)
+}
+
+var teamGVR = schema.GroupVersionResource{
+	Group:    "iam.grafana.com",
+	Version:  "v0alpha1",
+	Resource: "teams",
+}
+
+type uidToIDResolver struct {
+	mu             sync.RWMutex
+	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
+	configProvider restcfg.RestConfigProvider
+}
+
+func newUIDToIDResolver(configProvider restcfg.RestConfigProvider) *uidToIDResolver {
+	return &uidToIDResolver{
+		clients:        make(map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface),
+		configProvider: configProvider,
+	}
+}
+
+func (r *uidToIDResolver) getDynamicClient(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	r.mu.RLock()
+	cli, ok := r.clients[gvr]
+	r.mu.RUnlock()
+	if ok {
+		return cli.Namespace(nsInfo.Value), nil
+	}
+
+	if r.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
+	}
+
+	restCfg, err := r.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dyn, err := dynamic.NewForConfig(restCfg)
+	if err != nil {
+		return nil, err
+	}
+	cli = dyn.Resource(gvr)
+
+	r.mu.Lock()
+	r.clients[gvr] = cli
+	r.mu.Unlock()
+
+	return cli.Namespace(nsInfo.Value), nil
+}
+
+func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	cli, err := r.getDynamicClient(ctx, nsInfo, gvr)
+	if err != nil {
+		return 0, err
+	}
+
+	srvCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+	result, err := cli.Get(srvCtx, name, metav1.GetOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	meta, err := utils.MetaAccessor(result)
+	if err != nil {
+		return 0, err
+	}
+	return meta.GetDeprecatedInternalID(), nil // nolint:staticcheck
+}
+
+func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, teamGVR, uid)
 }

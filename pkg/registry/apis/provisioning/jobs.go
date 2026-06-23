@@ -382,11 +382,16 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 
 // authorizeAdminJob checks that the requesting user has admin privileges.
 // Used for job types that are restricted to administrators.
+//
+// We check repositories:write (an admin-only RBAC action) rather than
+// jobs:create, because jobs:create is granted to Editor and would let editors
+// trigger admin-restricted jobs (pull, releaseResources, deleteResources).
+// The fallback role still allows admins whose RBAC isn't explicitly set up.
 func (c *jobsConnector) authorizeAdminJob(ctx context.Context, cfg *provisioning.Repository) error {
 	return c.access.WithFallbackRole(identity.RoleAdmin).Check(ctx, authlib.CheckRequest{
-		Verb:      "create",
+		Verb:      utils.VerbUpdate,
 		Group:     provisioning.GROUP,
-		Resource:  provisioning.JobResourceInfo.GetName(),
+		Resource:  provisioning.RepositoryResourceInfo.GetName(),
 		Namespace: cfg.Namespace,
 	}, "")
 }

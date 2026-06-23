@@ -27,6 +27,13 @@ export function createAlertmanagerWrapper(alertmanagerSourceName: string) {
 }
 
 /**
+ * Alertmanager source name that does not match any datasource. Use with
+ * `createAlertmanagerWrapper` and no notification permissions to leave
+ * `selectedAlertmanager` undefined in AlertmanagerContext.
+ */
+export const UNRESOLVED_ALERTMANAGER_SOURCE = 'does-not-exist';
+
+/**
  * The minimum permission that makes the Grafana built-in alertmanager appear in the
  * available alertmanagers list (`getAlertManagerDataSourcesByPermission` checks
  * `builtinAlertmanagerPermissions`, which includes `AlertingNotificationsRead`).
@@ -64,23 +71,34 @@ export function setupGrafanaAlertmanager() {
 }
 
 export function setupVanillaPrometheusAlertmanager() {
+  const name = 'vanilla-prometheus-alertmanager';
+
   setupDataSources(
     mockDataSource<AlertManagerDataSourceJsonData>({
-      name: GRAFANA_RULES_SOURCE_NAME,
+      uid: name,
+      name,
       type: DataSourceType.Alertmanager,
       jsonData: { implementation: AlertManagerImplementation.prometheus },
     })
   );
-  return 'does-not-exist';
+
+  return name;
 }
 
-export function setupMimirAlertmanager(uid: string) {
+const MIMIR_ALERTMANAGER_UID = 'mimir-alertmanager';
+
+export function setupMimirAlertmanager({
+  uid = MIMIR_ALERTMANAGER_UID,
+  name = MIMIR_ALERTMANAGER_UID,
+}: { uid?: string; name?: string } = {}) {
   setupDataSources(
     mockDataSource<AlertManagerDataSourceJsonData>({
-      name: uid,
+      uid,
+      name,
       type: DataSourceType.Alertmanager,
       jsonData: { implementation: AlertManagerImplementation.mimir },
     })
   );
-  return uid;
+
+  return name;
 }

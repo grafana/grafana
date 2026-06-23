@@ -649,10 +649,8 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		options.featureToggles,
 		nil,
 		false,
-		nil, // adminConfigStore - not needed when datasource sync feature flag is off
-		nil, // datasourceService - not needed when datasource sync feature flag is off
-		nil, // httpClientProvider - not needed when datasource sync feature flag is off
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed when datasource sync feature flag is off
+		// Sync deps are nil — tests do not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 		moaOpts...,
 	)
 	require.NoError(t, err)

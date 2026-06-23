@@ -49,8 +49,9 @@ func (m *UnifiedStorageMigrator) Migrate(ctx context.Context, repo repository.Re
 		Spec: provisioning.JobSpec{
 			Message: job.Spec.Message,
 			Push: &provisioning.ExportJobOptions{
-				Message:   options.Message,
-				Resources: options.Resources,
+				Message:              options.Message,
+				Resources:            options.Resources,
+				GenerateNewFolderIDs: options.GenerateNewFolderIDs,
 			},
 		},
 	}

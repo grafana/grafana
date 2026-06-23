@@ -4,8 +4,7 @@ import * as React from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
-import { VizTooltipFooter } from '@grafana/ui/internal';
+import { ScrollContainer, usePanelContext, useStyles2, VizTooltipFooter } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
 import { type AnnotationTooltipProps } from './AnnotationTooltip2';
@@ -119,7 +118,7 @@ export const AnnotationTooltip2Cluster = ({
         ))}
 
         {/* @todo move to inner cluster loop when annotation field overrides are supported https://github.com/grafana/grafana/issues/112685, https://github.com/grafana/grafana/issues/119619 */}
-        <VizTooltipFooter actions={actions} dataLinks={links ?? []} />
+        <VizTooltipFooter actions={actions} dataLinks={links} />
       </ScrollContainer>
     </div>
   );

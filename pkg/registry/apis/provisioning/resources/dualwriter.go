@@ -315,6 +315,14 @@ func (r *DualReadWriter) UpdateFolderMetadata(ctx context.Context, opts DualWrit
 		},
 	}
 
+	// URLs must point at the updated _folder.json file, not the directory, so the
+	// "view file" link resolves to the actual changed resource on the remote.
+	urls, err := getFolderURLs(ctx, safepath.Join(opts.Path, folderMetadataFileName), opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+	wrap.URLs = urls
+
 	if r.shouldUpdateGrafanaDB(opts, nil) {
 		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)

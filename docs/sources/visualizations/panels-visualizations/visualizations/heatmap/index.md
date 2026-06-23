@@ -107,8 +107,6 @@ The following options control how data in the heatmap is calculated and grouped.
 
 <!-- prettier-ignore-end -->
 
-{{< docs/public-preview product="The **Y Bucket scale** option for pre-bucketed data" featureFlag="`heatmapRowsAxisOptions`" >}}
-
 ### Y-Axis options
 
 The following options define the display of the y-axis.

@@ -1,6 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { TracedError } from '../../utils/TracedError';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
@@ -112,16 +113,13 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-
-        {
-          message: 'Failed to load plugin metas 500:Internal Server Error',
-          stack: expect.any(String),
-          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
-        }
-      );
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Failed to load plugin metas 500:Internal Server Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
     });
 
     it('initPluginMetas should log when fetch rejects', async () => {
@@ -140,16 +138,13 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledTimes(1);
-      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).toHaveBeenCalledWith(
-        new Error(`getCachedPromise: Something failed while resolving a cached promise`),
-
-        {
-          message: 'Network Error',
-          stack: expect.any(String),
-          key: expect.stringMatching(/^loadPluginMetas:-?\d+$/),
-        }
-      );
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
     });
   });
 

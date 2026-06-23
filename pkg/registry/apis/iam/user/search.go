@@ -49,12 +49,15 @@ type accessControlCheck struct {
 	name     string // user UID of the resource being checked
 }
 
+// Only verbs whose relation is defined on the authz model's "user" type may be
+// checked here. A check for a relation the type lacks fails the whole batch
+// (e.g. "relation 'user#create' not found"), blanking out all access control
+// metadata. The "user" type defines only get/update/delete, so VerbCreate
+// (org.users:add) and VerbGetPermissions (users.permissions:read) are omitted.
 var userAccessControlChecks = []accessControlCheck{
 	{action: "org.users:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbList},
-	{action: "org.users:add", group: iamv0.GROUP, resource: "users", verb: utils.VerbCreate},
 	{action: "org.users:remove", group: iamv0.GROUP, resource: "users", verb: utils.VerbDelete},
 	{action: "org.users:write", group: iamv0.GROUP, resource: "users", verb: utils.VerbUpdate},
-	{action: "users.permissions:read", group: iamv0.GROUP, resource: "users", verb: utils.VerbGetPermissions},
 	{action: "users.roles:read", group: iamv0.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
@@ -351,6 +354,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 			}
 			request.SortBy = append(request.SortBy, s)
 		}
+	} else {
+		request.SortBy = append(request.SortBy, &resourcepb.ResourceSearchRequest_Sort{
+			Field: resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN,
+		})
 	}
 
 	resp, err := s.client.Search(ctx, request)

@@ -3,7 +3,17 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { SourceLink } from 'app/features/provisioning/components/SourceLink';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  isManagedByRepository,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
@@ -34,8 +44,18 @@ export const PlaylistEditPage = () => {
     ),
   };
 
+  const renderTitle = (title: string) => (
+    <Stack direction="row" gap={1} alignItems="center" wrap>
+      <h1>{title}</h1>
+      {data && isManaged(data) && <ManagedBadge managerKind={getManagerKind(data)} name={getManagerIdentity(data)} />}
+      {data && isManagedByRepository(data) && (
+        <SourceLink repositoryName={getManagerIdentity(data)} sourcePath={getSourcePath(data)} />
+      )}
+    </Stack>
+  );
+
   return (
-    <Page navId="dashboards/playlists" pageNav={pageNav}>
+    <Page navId="dashboards/playlists" pageNav={pageNav} renderTitle={renderTitle}>
       <Page.Contents isLoading={isLoading}>
         {isError && (
           <div>

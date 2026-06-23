@@ -1,6 +1,6 @@
 {
   "name": "get-document",
-  "version": "1.0.0-grafana.0",
+  "version": "13.2.0-pre",
   "description": "Vendored fork of get-document — see VENDORED.md",
   "license": "MIT",
   "private": true,

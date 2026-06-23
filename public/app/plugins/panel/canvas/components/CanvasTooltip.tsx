@@ -14,18 +14,22 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
-import { Portal, useStyles2, useTheme2, VizTooltipContainer, usePanelContext } from '@grafana/ui';
 import {
+  CloseButton,
+  Portal,
+  type VizTooltipItem,
+  VizTooltipContainer,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
-  type VizTooltipItem,
-  CloseButton,
-} from '@grafana/ui/internal';
+  getFieldDisplayLinks,
+  usePanelContext,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 import { getActions, getActionsDefaultField } from 'app/features/actions/utils';
 import { type Scene } from 'app/features/canvas/runtime/scene';
 
-import { getDataLinks } from '../../status-history/utils';
 import { getElementFields, getRowIndex } from '../utils';
 
 interface Props {
@@ -79,7 +83,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
       : []),
   ];
 
-  // NOTE: almost identical to getDataLinks() helper
   const links: Array<LinkModel<Field>> = [];
 
   if ((element.options.links?.length ?? 0) > 0 && element.getLinks) {
@@ -96,7 +99,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   if (scene.data?.series) {
     getElementFields(scene.data?.series, element.options).forEach((field) => {
-      links.push(...getDataLinks(field, getRowIndex(element.data.field, scene)));
+      links.push(...getFieldDisplayLinks(field, getRowIndex(element.data.field, scene)));
     });
   }
 

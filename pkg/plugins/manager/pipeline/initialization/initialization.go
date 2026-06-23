@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // Initializer is responsible for the Initialization stage of the plugin loader pipeline.
@@ -49,7 +49,7 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Initialize {
 // Initialize will execute the Initialize steps of the Initialization stage.
 func (i *Initialize) Initialize(ctx context.Context, ps *plugins.Plugin) (*plugins.Plugin, error) {
 	ctx, span := i.tracer.Start(ctx, "initialization.Initialize", trace.WithAttributes(
-		semconv.GrafanaPluginId(ps.ID),
+		attribute.String("grafana.plugin.id", ps.ID),
 	))
 	defer span.End()
 

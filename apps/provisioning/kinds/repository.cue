@@ -108,6 +108,11 @@ repository: {
 					// The API path is appended automatically. Trailing slashes are stripped.
 					// Must be a valid HTTP or HTTPS URL (e.g. `https://grafana.example.com`).
 					baseUrl?: string
+					// Disabled turns off webhook integration for this repository. When true,
+					// Grafana will not register or receive webhook events from the Git provider
+					// and will poll the repository on an interval instead. Use this when Grafana
+					// is not reachable from the public internet.
+					disabled?: bool
 				}
 				#CommitOptions: {
 					// Template for commit messages produced by single-resource UI operations

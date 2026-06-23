@@ -5,14 +5,18 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
 import { ResourceStatusCard } from './ResourceStatusCard';
-import { type FolderCounts, type MigrationTotals } from './stats';
+import { type MigrationTotals } from './stats';
 
 interface OverviewStatCardsProps {
   totals: MigrationTotals;
-  folderCounts: FolderCounts;
 }
 
-export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsProps) {
+/**
+ * The migration is dashboard-centric: the objective is zero dashboards not
+ * managed by Git. So the overview reports how much of the dashboards are
+ * managed; folder and combined totals aren't the goal and are left off for now.
+ */
+export function OverviewStatCards({ totals }: OverviewStatCardsProps) {
   const styles = useStyles2(getStyles);
   return (
     <div className={styles.statCardsRow}>
@@ -20,16 +24,6 @@ export function OverviewStatCards({ totals, folderCounts }: OverviewStatCardsPro
         label={t('provisioning.migrate.dashboards', 'Dashboards')}
         managed={totals.managed}
         total={totals.instanceTotal}
-      />
-      <ResourceStatusCard
-        label={t('provisioning.migrate.folders', 'Folders')}
-        managed={folderCounts.managed}
-        total={folderCounts.total}
-      />
-      <ResourceStatusCard
-        label={t('provisioning.migrate.all-resources', 'All resources')}
-        managed={totals.managed + folderCounts.managed}
-        total={totals.instanceTotal + folderCounts.total}
       />
     </div>
   );

@@ -403,7 +403,7 @@ receivers:
 		require.NotNil(t, rawResp.Stats)
 		require.Equal(t, identifier, rawResp.Stats.AddedRoute)
 		require.Contains(t, rawResp.Stats.AddedReceivers, "promoted-webhook")
-		require.Contains(t, rawResp.Stats.AddedTemplates, "promoted.tmpl")
+		require.Len(t, rawResp.Stats.AddedTemplates, 1, "one template UID should be reported as added")
 
 		// Promoted config must not be stored in ExtraConfigs.
 		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{

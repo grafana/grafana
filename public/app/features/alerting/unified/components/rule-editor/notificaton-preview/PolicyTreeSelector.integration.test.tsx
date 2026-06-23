@@ -400,7 +400,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -463,7 +465,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -544,7 +548,9 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -699,7 +705,9 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );
@@ -747,7 +755,9 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
           uid: grafanaRulerNamespace.uid,
           title: grafanaRulerNamespace.name,
           accessControl: {
+            [AccessControlAction.AlertingRuleRead]: true,
             [AccessControlAction.AlertingRuleUpdate]: true,
+            [AccessControlAction.FoldersRead]: true,
           },
         })
       );

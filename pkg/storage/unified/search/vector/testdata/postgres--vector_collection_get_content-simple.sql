@@ -1,6 +1,7 @@
 SELECT
     "subresource",
-    "content"
+    "content",
+    "folder"
     FROM embeddings
     WHERE "resource"  = 'dashboards'
     AND "namespace" = 'stacks-123'

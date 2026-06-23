@@ -29,7 +29,7 @@ import {
   buildInspectValue,
   buildNestedColumnWidthsMap,
   calculateFooterHeight,
-  compileFrameToRecords,
+  compileFrameToRecordsV2 as compileFrameToRecords,
   computeColWidths,
   createTypographyContext,
   displayJsonValue,
@@ -228,7 +228,9 @@ describe('TableNG utils', () => {
       const frameToRecords = compileFrameToRecords(frame);
       const records = frameToRecords(frame);
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
+      // Columns are exposed via prototype getters, not own properties, so assert with
+      // toMatchObject (walks the prototype chain) rather than toEqual (own-props only).
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
     });
 
     it('should handle nested frames', () => {
@@ -254,9 +256,9 @@ describe('TableNG utils', () => {
       const frameToRecords = compileFrameToRecords(parentFrame, 'nested');
       const records = frameToRecords(parentFrame);
       expect(records).toHaveLength(4);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, id: 100 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, id: 100 });
       expect(records[1]).toEqual({ __depth: 1, __index: 0 });
-      expect(records[2]).toEqual({ __depth: 0, __index: 1, id: 200 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 1, id: 200 });
       expect(records[3]).toEqual({ __depth: 1, __index: 1 });
     });
 
@@ -272,8 +274,8 @@ describe('TableNG utils', () => {
       const records = frameToRecords(frame, 3);
 
       expect(records).toHaveLength(2);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
-      expect(records[1]).toEqual({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, __parentIndex: 3, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, __parentIndex: 3, time: 2, value: 20 });
     });
 
     it('should infer length from field values when frame.length is not set', () => {
@@ -288,9 +290,9 @@ describe('TableNG utils', () => {
       const records = frameToRecords(frame);
 
       expect(records).toHaveLength(3);
-      expect(records[0]).toEqual({ __depth: 0, __index: 0, time: 1, value: 10 });
-      expect(records[1]).toEqual({ __depth: 0, __index: 1, time: 2, value: 20 });
-      expect(records[2]).toEqual({ __depth: 0, __index: 2, time: 3, value: 30 });
+      expect(records[0]).toMatchObject({ __depth: 0, __index: 0, time: 1, value: 10 });
+      expect(records[1]).toMatchObject({ __depth: 0, __index: 1, time: 2, value: 20 });
+      expect(records[2]).toMatchObject({ __depth: 0, __index: 2, time: 3, value: 30 });
     });
 
     it('should produce no rows when frame.length is not set and the nested frame has no fields', () => {

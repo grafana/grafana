@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -903,6 +904,56 @@ func TestValidateJob(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "push action at the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
+		{
+			name: "migrate action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -1124,6 +1175,15 @@ func TestHistoricJobAdmissionValidator_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// makeDashboardRefs builds n valid dashboard resource refs for limit tests.
+func makeDashboardRefs(n int) []provisioning.ResourceRef {
+	refs := make([]provisioning.ResourceRef, n)
+	for i := range refs {
+		refs[i] = provisioning.ResourceRef{Name: fmt.Sprintf("dash-%d", i), Kind: "Dashboard"}
+	}
+	return refs
 }
 
 func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {

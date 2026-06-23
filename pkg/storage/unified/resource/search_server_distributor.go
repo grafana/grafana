@@ -151,7 +151,11 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	if r.Key != nil {
 		ns = r.Key.Namespace
 	}
-	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), ns)
 	return client.(*RingClient).Client.VectorSearch(ctx, r)
 }
 

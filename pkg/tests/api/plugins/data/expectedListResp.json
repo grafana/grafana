@@ -1483,56 +1483,6 @@
     "angularDetected": false
   },
   {
-    "name": "OpenTSDB",
-    "type": "datasource",
-    "id": "opentsdb",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Open source time series database",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/opentsdb/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/opentsdb/img/opentsdb_logo.png",
-        "large": "public/plugins/opentsdb/img/opentsdb_logo.png"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/opentsdb/",
-    "category": "tsdb",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
     "name": "Parca",
     "type": "datasource",
     "id": "parca",

@@ -70,9 +70,11 @@ func GetTeamBindingBuilder() (resource.DocumentBuilderInfo, error) {
 		},
 	)
 
+	gr := iamv0.TeamBindingResourceInfo.GroupResource()
 	return resource.DocumentBuilderInfo{
-		GroupResource: iamv0.TeamBindingResourceInfo.GroupResource(),
-		Fields:        fields,
-		Builder:       resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		GroupResource:    gr,
+		Fields:           fields,
+		Builder:          resource.StandardDocumentBuilderWithFields(iamManifests, provider),
+		SearchFieldsHash: provider.IndexAffectingHash(gr.Group, gr.Resource),
 	}, nil
 }

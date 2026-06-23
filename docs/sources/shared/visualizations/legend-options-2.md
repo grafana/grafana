@@ -1,8 +1,8 @@
 ---
 title: Legend mode and legend placement
 comments: |
-  There are two legend shared files to cover the most common combinations of options. 
-  Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content. 
+  There are two legend shared files to cover the most common combinations of options.
+  Using two shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content.
   This file is used in the following visualizations: state timeline, status history
 ---
 
@@ -30,4 +30,11 @@ Choose where to display the legend.
 
 ### Width
 
-Control how wide the legend is when placed on the right side of the visualization. This option is only displayed if you set the legend placement to **Right**.
+Control how wide the legend is when placed on the right side of the visualization. The value may be a simple pixel width or a more complex [CSS width property](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/width) such as `max(200px, 20%)`. This option is only displayed if you set the legend placement to **Right**.
+
+### Overflow
+
+Control how overflow for long series names is handled. This option is only displayed if you set the legend placement to **Right** and mode is **Table**.
+
+- **Ellipsis -** Truncates the series names with "..." at the end.
+- **Wrap -** Word-wraps the series names to multiple lines.

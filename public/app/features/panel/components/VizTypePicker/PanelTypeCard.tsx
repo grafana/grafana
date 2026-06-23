@@ -154,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       cursor: 'pointer',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       boxShadow: theme.shadows.z1,
       border: `1px solid ${theme.colors.background.secondary}`,
       alignItems: 'center',

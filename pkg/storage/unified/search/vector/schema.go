@@ -162,4 +162,15 @@ END $$;`))
 		migrator.NewAddTableMigration(rateBuckets))
 	mg.AddMigration("create vector_search_rate_buckets window_start index",
 		migrator.NewAddIndexMigration(rateBuckets, rateBuckets.Indices[0]))
+
+	// created_at = first embed, updated_at = last re-embed. ADD COLUMN on
+	// the partitioned parent propagates to every leaf. updated_at is bumped
+	// in the upsert's DO UPDATE (see vector_collection_upsert.sql); created_at
+	// is never touched after insert.
+	mg.AddMigration("add created_at and updated_at to embeddings",
+		migrator.NewRawSQLMigration("").Postgres(`
+			ALTER TABLE embeddings
+				ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+		`))
 }

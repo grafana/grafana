@@ -1,6 +1,5 @@
 import { renderHook } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
@@ -46,11 +45,11 @@ describe('useAlertmanagerAdminAbility', () => {
 
   describe('external (Mimir) alertmanager', () => {
     it('should return NotSupported for DecryptSecrets regardless of permissions held', () => {
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([EXTERNAL_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingProvisioningReadSecrets]);
 
       const { result } = renderHook(() => useAlertmanagerAdminAbility(AlertmanagerAdminAction.DecryptSecrets), {
-        wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID),
+        wrapper: createAlertmanagerWrapper(amSource),
       });
 
       expect(isNotSupported(result.current)).toBe(true);

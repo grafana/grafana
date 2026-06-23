@@ -1,5 +1,4 @@
-import { FieldType } from '@grafana/data';
-import { type PanelOptionsSupplier } from '@grafana/data/internal';
+import { FieldType, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ConnectionDirection, DirectionDimensionMode } from '@grafana/schema';
 import { SVGElements } from 'app/features/canvas/runtime/element';

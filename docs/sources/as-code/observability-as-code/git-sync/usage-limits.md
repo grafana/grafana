@@ -78,6 +78,8 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 
 Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
+To learn more about Git, refer to [Getting Started - About Version Control](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) of the [Pro Git book](https://git-scm.com/book/en/v2) in the official Git documentation.
+
 ### The Pure Git repository type
 
 The Pure Git repository type uses the [Smart HTTP protocol v2](https://git-scm.com/docs/protocol-v2) (Git over HTTPS), with no provider-specific logic. Pure Git delivers the core Git Sync workflow: your repository is the source of truth, you may edit dashboards in the UI, and Grafana stays in sync.

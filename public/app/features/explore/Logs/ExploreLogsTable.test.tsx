@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -67,29 +68,31 @@ describe('ExploreLogsTable', () => {
 
   const setUp = (props?: Partial<React.ComponentProps<typeof ExploreLogsTable>>) => {
     return (
-      <ExploreLogsTable
-        data={panelData}
-        width={100}
-        timeZone={'UTC'}
-        externalOptions={{
-          frameIndex: 0,
-        }}
-        buildLinkToLogLine={buildLinkToLogLine}
-        eventBus={new EventBusSrv()}
-        height={100}
-        onOptionsChange={function (options: Options): void {
-          throw new Error('Function not implemented.');
-        }}
-        onFieldConfigChange={function (config: FieldConfigSource): void {
-          throw new Error('Function not implemented.');
-        }}
-        onChangeTimeRange={function (range: AbsoluteTimeRange): void {
-          throw new Error('Function not implemented.');
-        }}
-        onClickFilterLabel={undefined}
-        onClickFilterOutLabel={undefined}
-        {...props}
-      />
+      <OpenFeatureTestProvider>
+        <ExploreLogsTable
+          data={panelData}
+          width={100}
+          timeZone={'UTC'}
+          externalOptions={{
+            frameIndex: 0,
+          }}
+          buildLinkToLogLine={buildLinkToLogLine}
+          eventBus={new EventBusSrv()}
+          height={100}
+          onOptionsChange={function (options: Options): void {
+            throw new Error('Function not implemented.');
+          }}
+          onFieldConfigChange={function (config: FieldConfigSource): void {
+            throw new Error('Function not implemented.');
+          }}
+          onChangeTimeRange={function (range: AbsoluteTimeRange): void {
+            throw new Error('Function not implemented.');
+          }}
+          onClickFilterLabel={undefined}
+          onClickFilterOutLabel={undefined}
+          {...props}
+        />
+      </OpenFeatureTestProvider>
     );
   };
 

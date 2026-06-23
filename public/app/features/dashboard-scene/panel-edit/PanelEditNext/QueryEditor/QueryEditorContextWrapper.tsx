@@ -352,7 +352,7 @@ export function QueryEditorContextWrapper({
     Boolean(pendingExpression) || Boolean(pendingTransformation)
   );
 
-  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings);
+  const { selectedQueryDsData, selectedQueryDsLoading } = useSelectedQueryDatasource(selectedQuery, dsSettings, panel);
 
   const uiState = useMemo(
     () => ({

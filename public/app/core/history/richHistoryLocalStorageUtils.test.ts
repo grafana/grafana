@@ -36,6 +36,37 @@ const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
   },
 ];
 
+const now = Date.now();
+const historyWithMixedStarred: Array<RichHistoryQuery<MockQuery>> = [
+  {
+    id: 'old-starred',
+    createdAt: now - 30 * 24 * 60 * 60 * 1000, // 30 days ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'old query', refId: '1' }],
+    starred: true,
+  },
+  {
+    id: 'old-unstarred',
+    createdAt: now - 30 * 24 * 60 * 60 * 1000, // 30 days ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'old unstarred query', refId: '1' }],
+    starred: false,
+  },
+  {
+    id: 'recent',
+    createdAt: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
+    comment: '',
+    datasourceUid: 'ds1',
+    datasourceName: 'datasource 1',
+    queries: [{ expr: 'recent query', refId: '1' }],
+    starred: false,
+  },
+];
+
 describe('filterQueries', () => {
   it('should include all entries for empty filters', () => {
     const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], '');
@@ -64,5 +95,17 @@ describe('filterQueries', () => {
   it('should include queries based on comments', () => {
     const filteredQueries = filterAndSortQueries(storedHistory, SortOrder.Ascending, [], 'comment 2');
     expect(filteredQueries).toMatchObject([expect.objectContaining({ id: '2' })]);
+  });
+  it('should include starred queries outside time filter but exclude unstarred ones', () => {
+    const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+    const filteredQueries = filterAndSortQueries(historyWithMixedStarred, SortOrder.Descending, [], '', [
+      fourteenDaysAgo,
+      now,
+    ]);
+    expect(filteredQueries).toHaveLength(2);
+    expect(filteredQueries).toMatchObject([
+      expect.objectContaining({ id: 'recent' }),
+      expect.objectContaining({ id: 'old-starred' }),
+    ]);
   });
 });

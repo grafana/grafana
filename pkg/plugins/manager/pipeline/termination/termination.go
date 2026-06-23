@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // Terminator is responsible for the Termination stage of the plugin loader pipeline.
@@ -49,7 +49,7 @@ func New(cfg *config.PluginManagementCfg, opts Opts) (*Terminate, error) {
 // Terminate will execute the Terminate steps of the Termination stage.
 func (t *Terminate) Terminate(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	ctx, span := t.tracer.Start(ctx, "termination.Terminate", trace.WithAttributes(
-		semconv.GrafanaPluginId(p.ID),
+		attribute.String("grafana.plugin.id", p.ID),
 	))
 	defer span.End()
 

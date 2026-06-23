@@ -52,7 +52,7 @@ export type StepStatusInfo =
   | { status: 'idle' | 'running' }
   | { status: 'success'; success?: string | StatusInfo }
   | { status: 'error'; error: string | StatusInfo; warning?: string | StatusInfo; action?: AlertAction }
-  | { status: 'warning'; warning: string | StatusInfo };
+  | { status: 'warning'; warning: string | StatusInfo; action?: AlertAction };
 
 export type ConnectionCreationResult = { success: true; connectionName: string } | { success: false; error: string };
 

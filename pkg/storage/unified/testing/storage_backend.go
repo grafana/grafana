@@ -45,6 +45,7 @@ const (
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
+	TestReadAtRVBeforeDelete      = "read at RV before delete"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -95,6 +96,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
+		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVBeforeDelete},
 	}
 
 	for _, tc := range cases {
@@ -537,8 +539,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-history-ns"
-	rvCreated, _ := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	ns := nsPrefix + "-ms-ns"
+	rvCreated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
 	require.Greater(t, rvCreated, int64(0))
 	rvUpdated, err := WriteEvent(ctx, backend, "item1", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvCreated))
 	require.NoError(t, err)
@@ -1929,6 +1932,61 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(404), resp.Error.Code)
 	})
+}
+
+// runTestIntegrationBackendReadAtRVBeforeDelete pins down the read-at-RV
+// behaviour the dashboard restore-from-trash flow depends on: the trash listing
+// surfaces each item's delete-event RV, and the restore flow reads the resource
+// at deleteRV-1 to fetch the live pre-delete state. The sequence has multiple
+// modifications, unrelated traffic on other resources, and a re-add after the
+// delete, so a passing assertion really exercises "find the highest non-deleted
+// RV ≤ requested for this resource" rather than "give me the only live event".
+func runTestIntegrationBackendReadAtRVBeforeDelete(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: "testuser"},
+		Rest:   authn.AccessTokenClaims{},
+	}))
+	ns := nsPrefix + "-pre-del-rv"
+
+	rvAdd, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	// Unrelated traffic so the target's RVs are not contiguous in the global stream.
+	_, err = WriteEvent(ctx, backend, "noise-a", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvMod1, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvAdd))
+	require.NoError(t, err)
+
+	_, err = WriteEvent(ctx, backend, "noise-b", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	rvMod2, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns, rvMod1))
+	require.NoError(t, err)
+
+	rvDel, err := WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_DELETED, WithNamespaceAndRV(ns, rvMod2))
+	require.NoError(t, err)
+	require.Greater(t, rvDel, rvMod2)
+
+	// Activity after the delete: other resources, plus a re-add of the same
+	// name. None of this should influence the lookup at rvDel-1.
+	_, err = WriteEvent(ctx, backend, "noise-c", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+	_, err = WriteEvent(ctx, backend, "target", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
+	require.NoError(t, err)
+
+	resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Name:      "target",
+			Namespace: ns,
+			Group:     "group",
+			Resource:  "resource",
+		},
+		ResourceVersion: rvDel - 1,
+	})
+	require.Nil(t, resp.Error)
+	require.Equal(t, rvMod2, resp.ResourceVersion)
+	require.Contains(t, string(resp.Value), "target MODIFIED")
 }
 
 // runTestIntegrationBackendErrorResponses tests that the server API returns

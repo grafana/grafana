@@ -25,6 +25,7 @@ export {
   logMeasurement,
   type MonitoringLogger,
 } from './utils/logging';
+export { TracedError } from './utils/TracedError';
 export {
   DataSourceWithBackend,
   HealthCheckError,

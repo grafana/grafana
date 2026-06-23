@@ -20,28 +20,25 @@ type OptionsProvider interface {
 const defaultEtcdPathPrefix = "/registry/grafana.app"
 
 type Options struct {
-	RecommendedOptions       *genericoptions.RecommendedOptions
-	APIEnablementOptions     *genericoptions.APIEnablementOptions
-	GrafanaAggregatorOptions *GrafanaAggregatorOptions
-	StorageOptions           *StorageOptions
-	ExtraOptions             *ExtraOptions
-	APIOptions               []OptionsProvider
+	RecommendedOptions   *genericoptions.RecommendedOptions
+	APIEnablementOptions *genericoptions.APIEnablementOptions
+	StorageOptions       *StorageOptions
+	ExtraOptions         *ExtraOptions
+	APIOptions           []OptionsProvider
 }
 
 func NewOptions(codec runtime.Codec) *Options {
 	return &Options{
-		RecommendedOptions:       NewRecommendedOptions(codec),
-		APIEnablementOptions:     genericoptions.NewAPIEnablementOptions(),
-		GrafanaAggregatorOptions: NewGrafanaAggregatorOptions(),
-		StorageOptions:           NewStorageOptions(),
-		ExtraOptions:             NewExtraOptions(),
+		RecommendedOptions:   NewRecommendedOptions(codec),
+		APIEnablementOptions: genericoptions.NewAPIEnablementOptions(),
+		StorageOptions:       NewStorageOptions(),
+		ExtraOptions:         NewExtraOptions(),
 	}
 }
 
 func (o *Options) AddFlags(fs *pflag.FlagSet) {
 	o.RecommendedOptions.AddFlags(fs)
 	o.APIEnablementOptions.AddFlags(fs)
-	o.GrafanaAggregatorOptions.AddFlags(fs)
 	o.StorageOptions.AddFlags(fs)
 	o.ExtraOptions.AddFlags(fs)
 
@@ -56,10 +53,6 @@ func (o *Options) Validate() []error {
 	}
 
 	if errs := o.StorageOptions.Validate(); len(errs) != 0 {
-		return errs
-	}
-
-	if errs := o.GrafanaAggregatorOptions.Validate(); len(errs) != 0 {
 		return errs
 	}
 

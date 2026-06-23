@@ -19,6 +19,13 @@ export interface RichHistorySettings {
   lastUsedDatasourceFilters?: string[];
 }
 
+export const DEFAULT_RICH_HISTORY_SETTINGS: RichHistorySettings = {
+  retentionPeriod: 14,
+  starredTabAsFirstTab: false,
+  activeDatasourcesOnly: false,
+  lastUsedDatasourceFilters: [],
+};
+
 export type RichHistorySearchFilters = {
   search: string;
   sortOrder: SortOrder;

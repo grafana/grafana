@@ -26,9 +26,6 @@ const panelsSlice = createSlice({
     removePanel: (state, action: PayloadAction<{ key: string }>) => {
       delete state[action.payload.key];
     },
-    removeAllPanels: (state) => {
-      Object.keys(state).forEach((key) => delete state[key]);
-    },
   },
 });
 
@@ -37,7 +34,7 @@ interface PanelModelAndPluginReadyPayload {
   plugin: PanelPlugin;
 }
 
-export const { panelModelAndPluginReady, removePanel, removeAllPanels } = panelsSlice.actions;
+export const { panelModelAndPluginReady, removePanel } = panelsSlice.actions;
 
 const panelsReducer = panelsSlice.reducer;
 

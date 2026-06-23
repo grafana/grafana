@@ -24,6 +24,11 @@ type RepositoryByConnectionLister interface {
 	ListByConnection(ctx context.Context, connectionName string) ([]provisioning.Repository, error)
 }
 
+// ConnectionSpecGetter fetches a raw Connection spec by name within the current namespace.
+type ConnectionSpecGetter interface {
+	GetConnectionSpec(ctx context.Context, name string) (*provisioning.Connection, error)
+}
+
 // storageListerBackend is an interface for listing repositories from storage.
 // This is typically implemented by grafanarest.Storage.
 type storageListerBackend interface {

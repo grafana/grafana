@@ -244,7 +244,7 @@ func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) 
 	}
 
 	if item.ID > 0 {
-		setLegacyID(anno, item.ID)
+		SetLegacyID(anno, item.ID)
 	}
 	if m, err := utils.MetaAccessor(anno); err == nil {
 		if item.UserUID != "" {

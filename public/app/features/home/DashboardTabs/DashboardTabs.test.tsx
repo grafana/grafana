@@ -35,6 +35,7 @@ function makeDashboardHit(overrides: Partial<DashboardHit> & { name: string; tit
   return {
     resource: 'dashboards',
     folder: 'general',
+    field: {},
     ...overrides,
   };
 }
@@ -51,8 +52,9 @@ const starredHits: DashboardHit[] = [
 ];
 
 const mostUsedHits: DashboardHit[] = [
-  makeDashboardHit({ name: 'most-used-1', title: 'Most Used Dashboard 1' }),
-  makeDashboardHit({ name: 'most-used-2', title: 'Most Used Dashboard 2' }),
+  makeDashboardHit({ name: 'most-used-1', title: 'Most Used Dashboard 1', field: { views_last_30_days: 100 } }),
+  makeDashboardHit({ name: 'most-used-2', title: 'Most Used Dashboard 2', field: { views_last_30_days: 50 } }),
+  makeDashboardHit({ name: 'most-used-3', title: 'Most Used Dashboard 3', field: { views_last_30_days: null } }),
 ];
 
 function seedRecent(uids: string[]) {
@@ -193,6 +195,19 @@ describe('DashboardTabs', () => {
       expect(await screen.findByText('Recent Dashboard 1')).toBeInTheDocument();
 
       expect(screen.queryByRole('tab', { name: /most used/i })).not.toBeInTheDocument();
+    });
+
+    it('does not render dashboards with no views in the last 30 days', async () => {
+      config.licenseInfo.enabledFeatures = { analytics: true };
+      seedRecent(['recent-1', 'recent-2']);
+      server.use(getCustomSearchHandler(allHits));
+
+      const { user } = render(<DashboardTabs />);
+
+      await user.click(await screen.findByRole('tab', { name: /most used/i }));
+
+      expect(await screen.findByText('Most Used Dashboard 1')).toBeInTheDocument();
+      expect(screen.queryByText('Most Used Dashboard 3')).not.toBeInTheDocument();
     });
 
     it('auto-switches to Most used when recent is empty and most-used has items', async () => {

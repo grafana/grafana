@@ -124,6 +124,12 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   useCustomConfig?: (builder: FieldConfigEditorBuilder<TFieldConfigOptions>) => void;
 }
 
+/**
+ * Callback used to declare a panel's option editors via {@link PanelPlugin.setPanelOptions}.
+ * Receives a builder and an editor context, and should call builder methods to register editors.
+ *
+ * @typeParam TOptions - The panel options type.
+ */
 export type PanelOptionsSupplier<TOptions> = (
   builder: PanelOptionsEditorBuilder<TOptions>,
   context: StandardEditorContext<TOptions>

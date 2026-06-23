@@ -492,7 +492,6 @@ approval_rules:
       changed_files:
         paths:
           - ^pkg\/apis\/(?:(?:[^/]*(?:/|$))*)$
-          - ^pkg\/aggregator\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apimachinery\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^hack\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$

@@ -67,7 +67,7 @@ If an option is only available in view mode or edit mode, that's indicated:
   - **Query**: Open the **Inspect** drawer in the **Query** tab.
   - **Panel JSON**: Open the **Inspect** drawer in the **JSON** tab.
 - **Time settings**: Opens the **Panel time settings** drawer where you can set panel-specific time options. Public preview. For more information, refer to [Panel time settings](#panel-time-settings).
-- **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard.
+- **Styles**: Edit mode only. Copy and paste styles from one panel to another in the same dashboard. For more information, refer to [Copy and paste panel styles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/panel-editor-overview/#copy-and-paste-panel-styles).
 - **Assistant**: View mode only. Access Grafana Assistant help options. This option is only available on Grafana Cloud.
 - **Metrics drilldown**: Open the panel in the **Drilldown > Metrics** feature for further exploration. For more information, refer to [Metrics drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/simplified-exploration/metrics/).
 - **Extensions**: View mode only. Access other actions provided by installed applications, such as declaring an incident. This option is only available in view mode and only appears if you have app plugins installed that contribute an [extension](https://grafana.com/developers/plugin-tools/key-concepts/ui-extensions) to the panel menu.
@@ -174,14 +174,14 @@ Time series
 
 To add a panel to an empty dashboard, click or drag the panel onto the dashboard:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.0.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.1.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
 1. Click **Edit** in the top-right corner of the dashboard.
 1. Click the **Add new element** icon (blue plus sign).
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.0.png" max-width="250px" alt="Add element icon" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.1.png" max-width="250px" alt="Add element icon" >}}
 
 1. Click or drag a panel onto the dashboard.
 

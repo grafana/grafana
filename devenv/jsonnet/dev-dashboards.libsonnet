@@ -83,8 +83,6 @@
     "mysql_unittest": (import '../dev-dashboards/datasource-mysql/mysql_unittest.json'),
     "new_features_in_v74": (import '../dev-dashboards/datasource-testdata/new_features_in_v74.json'),
     "new_features_in_v8": (import '../dev-dashboards/datasource-testdata/new_features_in_v8.json'),
-    "opentsdb": (import '../dev-dashboards/datasource-opentsdb/opentsdb.json'),
-    "opentsdb_v23": (import '../dev-dashboards/datasource-opentsdb/opentsdb_v23.json'),
     "panel-geomap": (import '../dev-dashboards/panel-geomap/panel-geomap.json'),
     "panel-stat-tests": (import '../dev-dashboards/panel-stat/panel-stat-tests.json'),
     "panel_test_piechart": (import '../dev-dashboards/panel-piechart/panel_test_piechart.json'),

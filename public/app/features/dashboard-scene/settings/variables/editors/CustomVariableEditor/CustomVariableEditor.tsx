@@ -2,7 +2,6 @@ import { isObject } from 'lodash';
 import { type FormEvent, useCallback, useState } from 'react';
 
 import { type CustomVariableModel, shallowCompare } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type CustomVariable } from '@grafana/scenes';
 
 import { CustomVariableForm } from '../../components/CustomVariableForm';
@@ -52,16 +51,12 @@ export function CustomVariableEditor({ variable, onRunQuery }: CustomVariableEdi
     (event: FormEvent<HTMLTextAreaElement>) => {
       setPrevQuery('');
 
-      if (config.featureToggles.multiPropsVariables && valuesFormat === 'json') {
+      if (valuesFormat === 'json') {
         const validationError = validateJsonQuery(event.currentTarget.value.trim());
         setQueryValidationError(validationError);
         if (validationError) {
           return;
         }
-      }
-
-      if (!config.featureToggles.multiPropsVariables) {
-        variable.setState({ valuesFormat: 'csv' });
       }
 
       variable.setState({ query: event.currentTarget.value });

@@ -73,8 +73,12 @@ func (t *TemplateGroup) Validate() error {
 	return def.Validate()
 }
 
-func NewTemplateGroup(name, content string, kind TemplateKind, provenance models.Provenance) TemplateGroup {
-	uid := TemplateUID(kind, name)
+// NewTemplateGroup creates a new TemplateGroup with the specified UID, name, content, kind, and provenance.
+// If the UID is empty, it generates a deterministic UID based on the template kind and name.
+func NewTemplateGroup(uid ResourceUID, name, content string, kind TemplateKind, provenance models.Provenance) TemplateGroup {
+	if uid == "" {
+		uid = TemplateUID(kind, name)
+	}
 	return TemplateGroup{
 		ResourceMetadata: ResourceMetadata{
 			UID:        uid,
@@ -96,7 +100,7 @@ func TemplateFilesToTemplates(templateFiles map[string]string, kind TemplateKind
 
 	templates := make(map[ResourceUID]TemplateGroup, len(templateFiles))
 	for name, content := range templateFiles {
-		tmpl := NewTemplateGroup(name, content, kind, models.ProvenanceNone)
+		tmpl := NewTemplateGroup("", name, content, kind, models.ProvenanceNone)
 		templates[tmpl.UID] = tmpl
 	}
 	return templates
@@ -113,6 +117,35 @@ func TemplatesToTemplateFiles(templates map[ResourceUID]TemplateGroup) map[strin
 		templateFiles[tg.Title] = tg.Content
 	}
 	return templateFiles
+}
+
+// ManagedTemplatesToTemplates converts a ManagedTemplates map (keyed by UID) to the internal TemplateGroup map.
+func ManagedTemplatesToTemplates(managed map[string]definition.PostableApiTemplate) map[ResourceUID]TemplateGroup {
+	if managed == nil {
+		return nil
+	}
+	out := make(map[ResourceUID]TemplateGroup, len(managed))
+	for uid, t := range managed {
+		tmpl := NewTemplateGroup(ResourceUID(uid), t.Name, t.Content, TemplateKind(t.Kind), models.ProvenanceNone)
+		out[ResourceUID(uid)] = tmpl
+	}
+	return out
+}
+
+// TemplatesToManagedTemplates converts the internal TemplateGroup map to a ManagedTemplates map keyed by UID.
+func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[string]definition.PostableApiTemplate {
+	if templates == nil {
+		return nil
+	}
+	out := make(map[string]definition.PostableApiTemplate, len(templates))
+	for uid, tg := range templates {
+		out[string(uid)] = definition.PostableApiTemplate{
+			Name:    tg.Title,
+			Content: tg.Content,
+			Kind:    definition.TemplateKind(tg.Kind),
+		}
+	}
+	return out
 }
 
 // TemplateUID generates a deterministic UID for a template based on its name.

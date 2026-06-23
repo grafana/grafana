@@ -28,7 +28,12 @@ export {
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
-export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export {
+  initOpenFeature,
+  getFeatureFlagClient,
+  getLocalStorageProvider,
+  getOFREPWebProvider,
+} from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';

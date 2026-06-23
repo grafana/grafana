@@ -189,7 +189,6 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'from')}
                 allowEmpty={true}
                 placeholder="HH:mm"
-                size="sm"
               />
             </Stack>
           </Field>
@@ -210,7 +209,6 @@ export const TimeRegionEditor = ({ value, onChange }: Props) => {
                 onChange={(v) => onTimeChange(v ? dateTimeAsMoment(v) : v, 'to')}
                 allowEmpty={true}
                 placeholder="HH:mm"
-                size="sm"
               />
             </Stack>
           </Field>

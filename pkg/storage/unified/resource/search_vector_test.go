@@ -80,7 +80,7 @@ func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
-func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, []vector.Vector) error {
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []string) error {
 	return nil
 }
 func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
@@ -89,8 +89,8 @@ func (f *fakeVectorBackend) Delete(context.Context, string, string, string, stri
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, error) {
-	return nil, nil
+func (f *fakeVectorBackend) GetSubresourceContent(context.Context, string, string, string, string) (map[string]string, string, error) {
+	return nil, "", nil
 }
 func (f *fakeVectorBackend) Exists(context.Context, string, string, string, string) (bool, error) {
 	return false, nil

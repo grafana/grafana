@@ -365,6 +365,7 @@ const injectedRtkApi = api
             from: queryArg['from'],
             to: queryArg.to,
             userId: queryArg.userId,
+            userUID: queryArg.userUid,
             alertId: queryArg.alertId,
             alertUID: queryArg.alertUid,
             dashboardId: queryArg.dashboardId,
@@ -1975,6 +1976,8 @@ export type GetAnnotationsApiArg = {
   to?: number;
   /** Limit response to annotations created by specific user. */
   userId?: number;
+  /** Limit response to annotations created by a specific user, identified by UID. */
+  userUid?: string;
   /** Find annotations for a specified alert rule by its ID.
     deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead. */
   alertId?: number;

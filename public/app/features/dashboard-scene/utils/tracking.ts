@@ -50,6 +50,7 @@ export async function trackDashboardSceneCreatedOrSaved(
   initialProperties: {
     name: string;
     url: string;
+    diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
   }

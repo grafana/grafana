@@ -15,6 +15,7 @@ import { VariableList } from './VariableSetEditableElement';
 
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     addVariableButtonClicked: jest.fn(),
   },
 }));

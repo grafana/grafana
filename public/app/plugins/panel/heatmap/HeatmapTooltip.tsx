@@ -13,24 +13,26 @@ import {
   type PanelData,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
-import { TooltipDisplayMode, useTheme2 } from '@grafana/ui';
 import {
+  VizTooltipColorIndicator,
+  VizTooltipColorPlacement,
+  TooltipDisplayMode,
+  type VizTooltipItem,
   VizTooltipContent,
   VizTooltipFooter,
   VizTooltipHeader,
   VizTooltipWrapper,
-  type VizTooltipItem,
-  ColorIndicator,
-  ColorPlacement,
-} from '@grafana/ui/internal';
+  getFieldDisplayLinks,
+  isTooltipScrollable,
+  useTheme2,
+} from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { getDisplayValuesAndLinks } from 'app/features/visualization/data-hover/DataHoverView';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
-import { getDataLinks, getFieldActions } from '../status-history/utils';
-import { isTooltipScrollable } from '../timeseries/utils';
+import { getFieldActions } from '../status-history/utils';
 
 import { type HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
@@ -278,8 +280,8 @@ const HeatmapHoverCell = ({
         label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
         color: cellColor ?? '#FFF',
-        colorPlacement: ColorPlacement.trailing,
-        colorIndicator: ColorIndicator.value,
+        colorPlacement: VizTooltipColorPlacement.trailing,
+        colorIndicator: VizTooltipColorIndicator.value,
       },
       ...getContentLabels(),
       ...fromToInt,
@@ -305,8 +307,8 @@ const HeatmapHoverCell = ({
         label: val.label,
         value: val.value,
         color: val.color ?? '#FFF',
-        colorIndicator: ColorIndicator.value,
-        colorPlacement: ColorPlacement.trailing,
+        colorIndicator: VizTooltipColorIndicator.value,
+        colorPlacement: VizTooltipColorPlacement.trailing,
         isActive: val.isActive,
       });
     });
@@ -325,7 +327,7 @@ const HeatmapHoverCell = ({
       const hasLinks = (linksField.config.links?.length ?? 0) > 0;
 
       if (visible && hasLinks) {
-        links = getDataLinks(linksField, xValueIdx);
+        links = getFieldDisplayLinks(linksField, xValueIdx);
       }
 
       actions = canExecuteActions

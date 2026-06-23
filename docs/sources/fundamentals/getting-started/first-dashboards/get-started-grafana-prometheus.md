@@ -305,7 +305,7 @@ curl http://localhost:9090/metrics
 
 - It should return a number of metrics and metadata about the metrics being exposed.
 
-## Check Prometheus metrics in Grafana Metics Drilldown
+## Check Prometheus metrics in Grafana Metrics Drilldown
 
 In your Grafana instance, go to the [Drilldown](https://www.grafana.com/docs/grafana/latest/explore/simplified-exploration/metrics/) view and experience query-less browsing of Prometheus-compatible metrics.
 

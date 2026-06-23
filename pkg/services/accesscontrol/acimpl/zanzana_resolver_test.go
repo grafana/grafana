@@ -688,7 +688,7 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 		t.Run(tc.name, func(t *testing.T) {
 			cap := &capturingZanzanaClient{}
 			cap.listResp = &authzv1.ListResponse{}
-			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, tc.useExternalGroups)
+			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
 
 			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
 			require.NoError(t, err)
@@ -735,6 +735,12 @@ func TestListPermissions_ScopeKindFollowsResource(t *testing.T) {
 
 	for _, entry := range actions {
 		t.Run(entry.Action, func(t *testing.T) {
+			// Only dashboard/folder actions use uid-based scopes with folder entries.
+			// Other typed resources (teams, users, etc.) have their own scope formats.
+			if !isDashboardRBACAction(entry.Action) && !strings.HasPrefix(entry.Action, "folders") {
+				t.Skip("only dashboard/folder actions use uid-based scopes with folder entries")
+			}
+
 			// Cover both code paths: a directly-assigned object and an enclosing folder.
 			resp := &authzv1.ListResponse{
 				Items:   []string{itemUID},
@@ -771,8 +777,15 @@ func TestListPermissions_AllScopeKindFollowsResource(t *testing.T) {
 			require.NotEmpty(t, perms, "action %q produced no permissions for All grant", entry.Action)
 
 			scopes := permScopes(perms, entry.Action)
-			require.Contains(t, scopes, ac.Scope(entry.Resource, "*"),
-				"All grant must produce the %q wildcard", entry.Resource)
+
+			if isDashboardRBACAction(entry.Action) || strings.HasPrefix(entry.Action, "folders") {
+				require.Contains(t, scopes, ac.Scope(entry.Resource, "*"),
+					"All grant must produce the %q wildcard", entry.Resource)
+			} else {
+				// Typed resources (teams, users, etc.) may use different scope formats;
+				// they have dedicated tests.
+				t.Skip("typed resource All scopes tested separately")
+			}
 
 			for _, s := range scopes {
 				k := scopeKind(s)
@@ -781,6 +794,34 @@ func TestListPermissions_AllScopeKindFollowsResource(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestListPermissions_TeamActions verifies team actions produce legacy id-based scopes.
+// Without a scope resolver (nil in unit tests), items fall back to teams:uid:<name>.
+func TestListPermissions_TeamActions(t *testing.T) {
+	t.Run("All=true produces teams:id:* wildcard", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "teams:read", Scope: "teams:id:*"},
+		}, perms)
+	})
+
+	t.Run("items fall back to uid scope when scope resolver is nil", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"team-abc"}}, "teams:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "teams:read", Scope: "teams:uid:team-abc"},
+		}, perms)
+	})
+
+	t.Run("teams.permissions actions use same scope format", func(t *testing.T) {
+		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams.permissions:read", "")
+		require.NoError(t, err)
+		require.Equal(t, []ac.Permission{
+			{Action: "teams.permissions:read", Scope: "teams:id:*"},
+		}, perms)
+	})
 }
 
 // TestListPermissions_PermissionManagementActionsScoping pins how *.permissions:*

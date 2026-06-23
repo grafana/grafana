@@ -76,6 +76,13 @@ type StorageOptions struct {
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
 
+	// RequireFolder rejects writes that omit the grafana.app/folder annotation
+	// or use the root/general folder. Orthogonal to EnableFolderSupport:
+	//   - EnableFolderSupport=false rejects writes that DO set the folder annotation.
+	//   - RequireFolder=true rejects writes that DO NOT set it (or set it to root).
+	// Only meaningful when EnableFolderSupport=true.
+	RequireFolder bool
+
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 

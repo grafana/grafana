@@ -38,6 +38,11 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
     error: undefined,
   })),
 }));
+// The Migrate tab also builds a folder list from the unified searcher; return
+// an already-resolved empty list so its render is synchronous here.
+jest.mock('./Migrate/hooks/useFolderMigrationData', () => ({
+  useFolderMigrationData: jest.fn(() => ({ data: [], isLoading: false, isError: false })),
+}));
 
 // Page resolves navId against the nav index; seed the provisioning node so it
 // renders its children instead of a "page not found" state.

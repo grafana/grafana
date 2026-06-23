@@ -6,12 +6,16 @@ import * as React from 'react';
 import { type DataFrame, type Field, formattedValueToString, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type TimeZone } from '@grafana/schema';
-import { floatingUtils, Portal, type UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
-import { type VizTooltipItem } from '@grafana/ui/internal';
+import {
+  floatingUtils,
+  Portal,
+  type UPlotConfigBuilder,
+  type VizTooltipItem,
+  getFieldDisplayLinks,
+  useStyles2,
+} from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
-
-import { getDataLinks } from '../../status-history/utils';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -129,7 +133,7 @@ export const ExemplarMarker = ({
     dataFrame.fields.forEach((field: Field) => {
       const value = field.values[rowIndex];
 
-      links.push(...getDataLinks(field, rowIndex));
+      links.push(...getFieldDisplayLinks(field, rowIndex));
 
       const fieldDisplay = field.display?.(value) ?? { text: `${value}`, numeric: +value };
 

@@ -1,7 +1,6 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -9,8 +8,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 function useVariableHasMultiProps(variable: MultiValueVariable) {
   const state = variable.useState();
-  const hasMultiProps =
-    config.featureToggles.multiPropsVariables && 'valuesFormat' in state && state.valuesFormat === 'json';
+  const hasMultiProps = 'valuesFormat' in state && state.valuesFormat === 'json';
   return hasMultiProps;
 }
 

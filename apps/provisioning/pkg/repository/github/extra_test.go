@@ -178,10 +178,10 @@ func TestExtra_Build(t *testing.T) {
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:             "https://github.com/test/repo",
-						Branch:          "main",
-						WebhookDisabled: true,
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
 					},
+					Webhook: &provisioning.WebhookConfig{Disabled: true},
 				},
 			},
 			setupDecrypter: func() repository.Decrypter {

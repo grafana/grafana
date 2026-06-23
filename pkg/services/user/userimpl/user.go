@@ -123,6 +123,21 @@ func (s *Service) GetByUID(ctx context.Context, cmd *user.GetUserByUIDQuery) (*u
 }
 
 func (s *Service) ListByIdOrUID(ctx context.Context, uids []string, ids []int64) ([]*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.wrapper.ListByIdOrUID")
+	defer span.End()
+
+	ctxLogger := s.logger.FromContext(ctx)
+
+	if s.isKubernetesUserServiceEnabled(ctx) && !s.shouldFallbackToLegacy(ctx) {
+		result, err := s.k8sService.ListByIdOrUID(s.k8sCtxWithIdentity(ctx), uids, ids)
+		if err == nil {
+			span.SetAttributes(attribute.Bool("fallback_to_legacy", false))
+			return result, nil
+		}
+		ctxLogger.Warn("k8s ListByIdOrUID failed, falling back to legacy", "err", err)
+	}
+
+	span.SetAttributes(attribute.Bool("fallback_to_legacy", true))
 	return s.legacyService.ListByIdOrUID(ctx, uids, ids)
 }
 

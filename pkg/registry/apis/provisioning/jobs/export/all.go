@@ -29,12 +29,15 @@ func exportAll(ctx context.Context, repoName string, options provisioning.Export
 		return err
 	}
 
-	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
-		return err
+	// A selective export must not pull in the entire instance folder tree: only
+	// the folders needed to place the requested resources are written, and each
+	// resource's missing parent folder is generated on demand from its ancestry.
+	if len(options.Resources) > 0 {
+		return ExportSpecificResources(ctx, options, folderClient, clients, repositoryResources, progress, generateNewUIDs)
 	}
 
-	if len(options.Resources) > 0 {
-		return ExportSpecificResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)
+	if err := ExportFolders(ctx, repoName, options, folderClient, repositoryResources, progress); err != nil {
+		return err
 	}
 
 	return ExportResources(ctx, options, clients, repositoryResources, progress, generateNewUIDs)

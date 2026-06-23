@@ -10,27 +10,27 @@ import (
 //go:generate mockery --name Client --structname MockClient --inpackage --filename mock_client.go --with-expecter
 type Client interface {
 	// Repositories
-	GetRepository(ctx context.Context, owner, repository string) (Repository, error)
+	GetRepository(ctx context.Context) (Repository, error)
 
 	// Branch protection
-	GetBranchProtection(ctx context.Context, owner, repository, branch string) (*BranchProtection, error)
+	GetBranchProtection(ctx context.Context, branch string) (*BranchProtection, error)
 
 	// Repository rulesets
-	GetRulesets(ctx context.Context, owner, repository, branch string) (*Rulesets, error)
+	GetRulesets(ctx context.Context, branch string) (*Rulesets, error)
 
 	// Commits
-	Commits(ctx context.Context, owner, repository, path, branch string) ([]Commit, error)
+	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Webhooks
-	ListWebhooks(ctx context.Context, owner, repository string) ([]WebhookConfig, error)
-	CreateWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, owner, repository string, webhookID int64) (WebhookConfig, error)
-	DeleteWebhook(ctx context.Context, owner, repository string, webhookID int64) error
-	EditWebhook(ctx context.Context, owner, repository string, cfg WebhookConfig) error
+	ListWebhooks(ctx context.Context) ([]WebhookConfig, error)
+	CreateWebhook(ctx context.Context, cfg WebhookConfig) (WebhookConfig, error)
+	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
+	DeleteWebhook(ctx context.Context, webhookID int64) error
+	EditWebhook(ctx context.Context, cfg WebhookConfig) error
 
 	// Pull requests
-	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
+	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
+	CreatePullRequestComment(ctx context.Context, number int, body string) error
 }
 
 type Repository struct {

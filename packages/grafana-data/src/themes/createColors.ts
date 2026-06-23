@@ -34,8 +34,10 @@ const createThemeColorsBaseSchema = <TColor>(color: TColor) =>
       }),
 
       background: z.object({
-        /** Dashboard and body background */
+        /** Body background */
         canvas: z.string().optional(),
+        /** Page container background */
+        page: z.string().optional(),
         /** Primary content pane background (panels etc) */
         primary: z.string().optional(),
         /** Cards and elements that need to stand out on the primary background */
@@ -179,6 +181,7 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray05,
+    page: palette.gray10,
     primary: palette.gray10,
     secondary: palette.gray15,
     elevated: palette.gray15,
@@ -271,6 +274,7 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
 
   background = {
     canvas: palette.gray100,
+    page: palette.white,
     primary: palette.white,
     secondary: palette.gray95,
     elevated: palette.white,

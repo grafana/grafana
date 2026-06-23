@@ -5,14 +5,23 @@ export const initPreferences = async () => {
   if (!preferences) {
     return;
   }
+  // URL prefs take precedence over saved preferences, matching the backend's
+  // getURLPrefs behavior used when the flag is disabled.
+  const params = new URLSearchParams(window.location.search);
+  const themeParam = params.get('theme');
+  const langParam = params.get('lang');
+
   const { theme, language, weekStart, timezone } = preferences.spec;
-  if (theme !== undefined) {
-    window.grafanaBootData.user.theme = theme;
-    applyTheme(theme);
+  const themeWithOverride = themeParam ?? theme;
+  const languageWithOverride = langParam ?? language;
+
+  if (themeWithOverride !== undefined) {
+    window.grafanaBootData.user.theme = themeWithOverride;
+    applyTheme(themeWithOverride);
   }
-  if (language !== undefined) {
-    window.grafanaBootData.user.language = language;
-    document.documentElement.lang = language;
+  if (languageWithOverride !== undefined) {
+    window.grafanaBootData.user.language = languageWithOverride;
+    document.documentElement.lang = languageWithOverride;
   }
   if (weekStart !== undefined) {
     window.grafanaBootData.user.weekStart = weekStart;

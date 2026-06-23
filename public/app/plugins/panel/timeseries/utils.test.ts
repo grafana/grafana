@@ -1,16 +1,9 @@
 import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
-import { TooltipDisplayMode } from '@grafana/schema';
 import { LineInterpolation } from '@grafana/ui';
 
 import { type AdHocFilterItem } from '../../../../../packages/grafana-ui/src/components/Table/TableNG/types';
 
-import {
-  getGroupedFilters,
-  getTimezones,
-  isTooltipScrollable,
-  prepareGraphableFields,
-  setClassicPaletteIdxs,
-} from './utils';
+import { getGroupedFilters, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
 
 describe('prepare timeseries graph', () => {
   it('errors with no time fields', () => {
@@ -391,20 +384,6 @@ describe('getTimezones', () => {
 
   it('returns all provided timezones unchanged when non-empty', () => {
     expect(getTimezones(['UTC', 'America/New_York'], 'browser')).toEqual(['UTC', 'America/New_York']);
-  });
-});
-
-describe('isTooltipScrollable', () => {
-  it('returns false when mode is Single', () => {
-    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Single, maxHeight: 200 })).toBe(false);
-  });
-
-  it('returns false when mode is Multi but maxHeight is undefined', () => {
-    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi })).toBe(false);
-  });
-
-  it('returns true when mode is Multi and maxHeight is set', () => {
-    expect(isTooltipScrollable({ mode: TooltipDisplayMode.Multi, maxHeight: 200 })).toBe(true);
   });
 });
 

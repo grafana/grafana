@@ -156,6 +156,16 @@ type ReaderWriter interface {
 	Writer
 }
 
+// SizeLimitedReader is an optional interface implemented by concrete repository
+// types that support per-read file size enforcement. WithMaxFileSize stores the
+// limit atomically so the next Read rejects payloads exceeding maxBytes.
+// Because it mutates in place, the caller keeps the same concrete type and all
+// optional interface assertions (Versioned, StageableRepository, …) stay valid.
+type SizeLimitedReader interface {
+	Reader
+	WithMaxFileSize(maxBytes int64)
+}
+
 //go:generate mockery --name RepositoryWithURLs --structname MockRepositoryWithURLs --inpackage --filename repository_with_urls_mock.go --with-expecter
 type RepositoryWithURLs interface {
 	Repository

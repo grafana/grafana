@@ -95,6 +95,6 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
   if (!scene.state.isEditing) {
-    scene.onEnterEditMode();
+    scene.onEnterEditMode('assistant');
   }
 }

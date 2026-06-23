@@ -15,7 +15,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { serializeResultLayoutItem } from './panelSerialization';
@@ -196,7 +196,11 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       }
       currentLayout.removePanel(vizPanel);
 
+      // TODO: share id-preserving logic with movePanelsHelper.ts.
       targetLayout.addPanel(panelClone);
+
+      panelClone.setState({ key: getVizPanelKeyForPanelId(panelId) });
+      panelClone.parent?.setState({ key: getGridItemKeyForPanelId(panelId) });
 
       if (effectivePosition) {
         if (isTargetAutoGrid) {

@@ -285,6 +285,10 @@
         window.__grafanaAssetSriChecksEnabled = true;
       [[end]]
 
+      [[if .NewPreferencesPage]]
+        window.__grafanaNewPreferencesPage = true;
+      [[end]]
+
       // FEMT index.html uses this, and we want to keep the index.ts the same for both
       window.__grafana_boot_data_promise = Promise.resolve();
 

@@ -192,6 +192,13 @@ type ExportJobOptions struct {
 	// are exported — the folder hierarchy is still emitted so parent paths resolve.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. Use this to produce a portable export that creates
+	// new folders on a subsequent sync rather than taking over the originals.
+	// Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -211,6 +218,12 @@ type MigrateJobOptions struct {
 	// of those resources.
 	// Currently only unmanaged Dashboards are supported.
 	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. The subsequent pull creates new folders rather than
+	// taking over the originals. Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

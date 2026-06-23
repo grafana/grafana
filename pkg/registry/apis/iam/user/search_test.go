@@ -16,6 +16,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -176,13 +177,85 @@ func mockClientWithHits() *MockClient {
 	}
 }
 
+func TestSearchSort(t *testing.T) {
+	loginField := resource.SEARCH_FIELD_PREFIX + builders.USER_LOGIN
+	emailField := resource.SEARCH_FIELD_PREFIX + builders.USER_EMAIL
+
+	tests := []struct {
+		name     string
+		url      string
+		expected []*resourcepb.ResourceSearchRequest_Sort
+	}{
+		{
+			name:     "no sort param defaults to login ascending",
+			url:      "/searchUsers",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: false}},
+		},
+		{
+			name:     "explicit ascending sort is respected",
+			url:      "/searchUsers?sort=email",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: emailField, Desc: false}},
+		},
+		{
+			name:     "explicit descending sort is respected",
+			url:      "/searchUsers?sort=-login",
+			expected: []*resourcepb.ResourceSearchRequest_Sort{{Field: loginField, Desc: true}},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockClient := mockClientWithHits()
+			searchHandler := NewSearchHandler(
+				tracing.NewNoopTracerService(),
+				mockClient,
+				featuremgmt.WithFeatures(),
+				&setting.Cfg{},
+				authlib.FixedAccessClient(true),
+			)
+
+			rr := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", tc.url, nil)
+			req.Header.Add("content-type", "application/json")
+			req = req.WithContext(identity.WithRequester(req.Context(), &legacyuser.SignedInUser{Namespace: "default"}))
+
+			searchHandler.DoSearch(rr, req)
+
+			require.Equal(t, 200, rr.Code)
+			require.NotNil(t, mockClient.LastSearchRequest)
+			require.Equal(t, tc.expected, mockClient.LastSearchRequest.SortBy)
+		})
+	}
+}
+
+// The authz model's "user" type defines only get/update/delete relations
+// (schema_core.fga). A check whose verb maps to any other relation fails the
+// whole batch check at the authz server, blanking out all metadata, so guard
+// against re-adding one for the "users" resource.
+func TestUserAccessControlChecksUseSupportedVerbs(t *testing.T) {
+	supportedUserVerbs := map[string]bool{
+		utils.VerbGet:    true,
+		utils.VerbList:   true,
+		utils.VerbWatch:  true,
+		utils.VerbUpdate: true,
+		utils.VerbPatch:  true,
+		utils.VerbDelete: true,
+	}
+	for _, c := range userAccessControlChecks {
+		if c.resource != "users" {
+			continue
+		}
+		assert.True(t, supportedUserVerbs[c.verb],
+			"check %q uses verb %q whose relation is not defined on the authz \"user\" type", c.action, c.verb)
+	}
+}
+
 func TestAccessControl(t *testing.T) {
 	partialClient := &mockAccessClient{
 		batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 			allowed := map[string]bool{
-				"org.users:read":         true,
-				"users.permissions:read": true,
-				"users.roles:read":       true,
+				"org.users:read":   true,
+				"users.roles:read": true,
 			}
 			results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 			for _, check := range req.Checks {
@@ -284,9 +357,7 @@ func TestAccessControl(t *testing.T) {
 				for _, hit := range hits {
 					require.NotNil(t, hit.AccessControl)
 					assert.True(t, hit.AccessControl["org.users:read"])
-					assert.True(t, hit.AccessControl["users.permissions:read"])
 					assert.True(t, hit.AccessControl["users.roles:read"])
-					assert.False(t, hit.AccessControl["org.users:add"])
 					assert.False(t, hit.AccessControl["org.users:remove"])
 					assert.False(t, hit.AccessControl["org.users:write"])
 				}

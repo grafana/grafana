@@ -124,6 +124,7 @@ func NewAppInstaller(
 		folderResolver: folderResolver,
 		installer:      installer,
 		snowflakeNode:  sfNode,
+		maxScopeCount:  cfg.MaxScopeCount,
 		tracer:         installer.tracer,
 		metrics:        installer.metrics,
 		logger:         logger,

@@ -23,6 +23,7 @@ type Source = string
 const (
 	SourceUnknown     Source = "unknown"
 	SourcePluginStore Source = "plugin-store"
+	SourceChildPlugin Source = "child-plugin"
 )
 
 // Registrar is an interface for registering plugin installations.
