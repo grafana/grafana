@@ -107,7 +107,6 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'palette-classic';
     case FieldColorModeIdV1.PaletteClassicByName:
       return 'palette-classic-by-name';
-    // PaletteColorblind is defined in @grafana/data but not in the @grafana/schema enum, so match the literal value.
     case 'palette-colorblind':
       return 'palette-colorblind';
     case FieldColorModeIdV1.ContinuousGrYlRd:
@@ -144,6 +143,8 @@ export function colorIdEnumToColorIdV2(colorId: FieldColorModeIdV1 | string): Fi
       return 'fixed';
     case FieldColorModeIdV1.Shades:
       return 'shades';
+    case 'gradient':
+      return 'gradient';
     default:
       return undefined;
   }

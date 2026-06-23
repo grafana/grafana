@@ -65,10 +65,15 @@ describe('transformToV2TypesUtils', () => {
       expect(colorIdEnumToColorIdV2(FieldColorModeId.Fixed)).toBe('fixed');
     });
 
-    // Regression: the colorblind-safe palette was silently dropped on save because it
-    // had no mapping here, so the converted mode was undefined and the color was removed.
+    // Regression: the colorblind-safe palette and gradient mode were silently dropped on
+    // save because they had no mapping here, so the converted mode was undefined and the
+    // color was removed.
     it('should preserve the colorblind-safe palette', () => {
       expect(colorIdEnumToColorIdV2('palette-colorblind')).toBe('palette-colorblind');
+    });
+
+    it('should preserve the gradient color mode', () => {
+      expect(colorIdEnumToColorIdV2('gradient')).toBe('gradient');
     });
 
     it('should return undefined for unknown color modes', () => {
