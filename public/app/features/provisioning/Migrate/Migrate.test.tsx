@@ -458,7 +458,7 @@ describe('Migrate', () => {
 
     render(<Migrate />);
 
-    expect(await screen.findByText('All resources are already managed by Git.')).toBeInTheDocument();
+    expect(await screen.findByText('All supported resources are already managed by Git.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /migrate (selected|all)/i })).not.toBeInTheDocument();
   });
 });

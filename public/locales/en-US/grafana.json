@@ -13386,7 +13386,7 @@
       "resources-sort-count-desc": "Most resources",
       "resources-sort-title-asc": "Name (A–Z)",
       "resources-sort-title-desc": "Name (Z–A)",
-      "resources-to-migrate-all-managed": "All resources are already managed by Git.",
+      "resources-to-migrate-all-managed": "All supported resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
       "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
       "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",

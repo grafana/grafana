@@ -226,7 +226,10 @@ export function ResourcesToMigrate({
           variant="not-found"
           message={
             folders.length === 0 && playlists.length === 0
-              ? t('provisioning.migrate.resources-to-migrate-all-managed', 'All resources are already managed by Git.')
+              ? t(
+                  'provisioning.migrate.resources-to-migrate-all-managed',
+                  'All supported resources are already managed by Git.'
+                )
               : t(
                   'provisioning.migrate.resources-to-migrate-empty',
                   'No folders or resources match the current search.'

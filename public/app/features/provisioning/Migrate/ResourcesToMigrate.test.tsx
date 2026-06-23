@@ -117,7 +117,7 @@ describe('ResourcesToMigrate', () => {
   it('renders the all-managed empty state when there are no folders to migrate', () => {
     setup({ folders: [] });
 
-    expect(screen.getByText('All resources are already managed by Git.')).toBeInTheDocument();
+    expect(screen.getByText('All supported resources are already managed by Git.')).toBeInTheDocument();
   });
 
   describe('playlists', () => {
@@ -160,7 +160,7 @@ describe('ResourcesToMigrate', () => {
     it('shows the migrate action for a playlist-only instance', () => {
       setup({ folders: [], playlists, selectedCount: 1 });
 
-      expect(screen.queryByText('All resources are already managed by Git.')).not.toBeInTheDocument();
+      expect(screen.queryByText('All supported resources are already managed by Git.')).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: /migrate selected \(1\)/i })).toBeInTheDocument();
     });
 
