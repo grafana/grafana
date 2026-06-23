@@ -2,7 +2,7 @@
 // from core and moved to an external repo, but the core trace download utility still needs to support
 // converting DataFrames to OTLP format for existing traces tagged with traceFormat: 'otlp'.
 import { type SpanStatus } from '@opentelemetry/api';
-import { type collectorTypes } from '@opentelemetry/exporter-collector';
+import { collectorTypes } from '@opentelemetry/exporter-collector';
 
 import {
   type MutableDataFrame,
@@ -64,8 +64,7 @@ export function transformToOTLP(data: MutableDataFrame): {
       parentSpanId: span.parentSpanID || '',
       traceState: span.traceState || '',
       name: span.operationName,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      kind: getOTLPSpanKind(span.kind) as any,
+      kind: getOTLPSpanKind(span.kind),
       startTimeUnixNano: span.startTime * 1000000,
       endTimeUnixNano: (span.startTime + span.duration) * 1000000,
       attributes: span.tags ? tagsToAttributes(span.tags) : [],
@@ -81,28 +80,25 @@ export function transformToOTLP(data: MutableDataFrame): {
   return result;
 }
 
-function getOTLPSpanKind(kind: string): string | undefined {
-  let spanKind = undefined;
-  if (kind) {
-    switch (kind) {
-      case 'server':
-        spanKind = 'SPAN_KIND_SERVER';
-        break;
-      case 'client':
-        spanKind = 'SPAN_KIND_CLIENT';
-        break;
-      case 'producer':
-        spanKind = 'SPAN_KIND_PRODUCER';
-        break;
-      case 'consumer':
-        spanKind = 'SPAN_KIND_CONSUMER';
-        break;
-      case 'internal':
-        spanKind = 'SPAN_KIND_INTERNAL';
-        break;
-    }
+function getOTLPSpanKind(kind: string): collectorTypes.opentelemetryProto.trace.v1.Span.SpanKind | undefined {
+  if (!kind) {
+    return undefined;
   }
-  return spanKind;
+  const { SpanKind } = collectorTypes.opentelemetryProto.trace.v1.Span;
+  switch (kind) {
+    case 'server':
+      return SpanKind.SPAN_KIND_SERVER;
+    case 'client':
+      return SpanKind.SPAN_KIND_CLIENT;
+    case 'producer':
+      return SpanKind.SPAN_KIND_PRODUCER;
+    case 'consumer':
+      return SpanKind.SPAN_KIND_CONSUMER;
+    case 'internal':
+      return SpanKind.SPAN_KIND_INTERNAL;
+    default:
+      return undefined;
+  }
 }
 
 function tagsToAttributes(tags: TraceKeyValuePair[]): collectorTypes.opentelemetryProto.common.v1.KeyValue[] {
