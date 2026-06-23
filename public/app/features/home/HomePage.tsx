@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { PageLayoutType, PluginExtensionPoints } from '@grafana/data';
+import { PageLayoutType, PluginExtensionPoints, type GrafanaTheme2 } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
@@ -59,7 +59,7 @@ export default function HomePage() {
             })}
             <DashboardTabs />
           </HomeSection>
-          <Stack direction="row" gap={2}>
+          <Stack direction="row" wrap="wrap" gap={2}>
             <div className={styles.card}>
               <FiringAlertsCard />
             </div>
@@ -84,7 +84,7 @@ export default function HomePage() {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   extra: css({
     display: 'contents',
 
@@ -97,7 +97,10 @@ const getStyles = () => ({
   card: css({
     display: 'flex',
     flexDirection: 'column',
-    flex: '1 1 0',
+    flex: '1 1 100%',
+    [theme.breakpoints.up('md')]: {
+      flex: `1 1 calc(50% - ${theme.spacing(1)})`,
+    },
     minWidth: 0,
     // A card renders null when unavailable (no alerting permission / no incident plugin);
     // its empty wrapper then collapses so the remaining card spans the full row.

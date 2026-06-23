@@ -7,9 +7,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
 import { Alert, Badge, type BadgeColor, Button, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HomeSection } from '../HomeSection';
@@ -29,7 +29,7 @@ function severityColor(severityLabel: string): BadgeColor {
 }
 
 export function IncidentsCard() {
-  const { pluginId, installed, loading } = useIrmPlugin(SupportedPlugin.Incident);
+  const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
 
   // Hide the card whenever the Incident/IRM plugin isn't available — including while the
   // settings probe is in flight, so the card never flashes in before disappearing.
@@ -37,14 +37,18 @@ export function IncidentsCard() {
     return null;
   }
 
-  return <IncidentsCardInner pluginId={pluginId} />;
+  // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
+  // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.
+  const canAccess = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents')) : false;
+
+  return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} />;
 }
 
 /**
  * Inner component avoids calling hooks conditionally —
  * the availability gate lives in the parent wrapper.
  */
-function IncidentsCardInner({ pluginId }: { pluginId: string }) {
+function IncidentsCardInner({ pluginId, canAccess }: { pluginId: string; canAccess: boolean }) {
   const styles = useStyles2(getStyles);
 
   const { data: incidents, isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
@@ -71,7 +75,16 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
           <Text element="h2" variant="h5">
             <Trans i18nKey="home.incidents-card.title">Active incidents</Trans>
           </Text>
-          {!isLoading && !!incidents?.length && <Badge text={String(incidents.length)} color="red" />}
+          {!isLoading && !!incidents?.length && (
+            <Badge
+              text={
+                incidents.length >= ACTIVE_INCIDENTS_QUERY_LIMIT
+                  ? `${ACTIVE_INCIDENTS_QUERY_LIMIT}+`
+                  : String(incidents.length)
+              }
+              color="red"
+            />
+          )}
         </Stack>
 
         {isLoading && (
@@ -107,13 +120,17 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
             {displayed.map((incident) => (
               <li key={incident.incidentID} className={styles.row}>
                 <Badge text={incident.severityLabel} color={severityColor(incident.severityLabel)} />
-                <TextLink
-                  href={createBridgeURL(pluginId, `/incidents/${incident.incidentID}`)}
-                  inline={false}
-                  className={styles.incidentTitle}
-                >
-                  {incident.title}
-                </TextLink>
+                {canAccess ? (
+                  <TextLink
+                    href={createBridgeURL(pluginId, `/incidents/${incident.incidentID}`)}
+                    inline={false}
+                    className={styles.incidentTitle}
+                  >
+                    {incident.title}
+                  </TextLink>
+                ) : (
+                  <Text truncate>{incident.title}</Text>
+                )}
                 <span className={styles.age}>
                   <Text color="secondary" variant="bodySmall">
                     {formatDistanceToNowStrict(new Date(incident.createdTime), { addSuffix: true })}
@@ -125,7 +142,7 @@ function IncidentsCardInner({ pluginId }: { pluginId: string }) {
         )}
 
         {/* Footer */}
-        {!isLoading && !loadError && (
+        {!isLoading && !loadError && canAccess && (
           <Stack direction="row" justifyContent="flex-end">
             <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
               <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>

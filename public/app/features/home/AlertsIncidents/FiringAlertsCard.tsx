@@ -25,6 +25,10 @@ import { type Team } from 'app/types/teams';
 
 import { HomeSection } from '../HomeSection';
 
+// Cap rendered rows so a large org's full firing-alert set can't put hundreds of DOM nodes on the
+// homepage; the count/severity badges still reflect the true total and the footer links to the full list.
+export const MAX_FIRING_ALERTS = 50;
+
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
 function alertDetailHref(alert: AlertmanagerAlert) {
   const raw = alert.generatorURL;
@@ -115,7 +119,7 @@ function FiringAlertsCardInner() {
 
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.
-  const { sorted, criticalCount, highCount } = useMemo(() => {
+  const { displayed, criticalCount, highCount } = useMemo(() => {
     let criticalCount = 0;
     let highCount = 0;
     const decorated = (alerts ?? []).map((alert) => {
@@ -129,10 +133,9 @@ function FiringAlertsCardInner() {
     });
     // Most severe first, most recent first within the same severity
     decorated.sort((a, b) => b.rank - a.rank || b.startedAt - a.startedAt);
-    return { sorted: decorated, criticalCount, highCount };
+    // Cap the rendered rows; counts above are over every alert so the badges stay accurate.
+    return { displayed: decorated.slice(0, MAX_FIRING_ALERTS), criticalCount, highCount };
   }, [alerts]);
-
-  const displayed = sorted;
 
   return (
     <HomeSection>
@@ -275,6 +278,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     // Show roughly five rows; scroll the rest so every team-relevant alert stays reachable.
     maxHeight: theme.spacing(22),
     overflowY: 'auto',
+    // Negative margin + matching padding gives the scrollbar a gutter clear of the age column
+    // while keeping that column's right edge aligned with the sibling cards.
+    marginRight: theme.spacing(-2),
+    paddingRight: theme.spacing(2),
   }),
   row: css({
     display: 'flex',

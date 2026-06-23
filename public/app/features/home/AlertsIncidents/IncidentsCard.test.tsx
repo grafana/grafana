@@ -1,16 +1,22 @@
 import { http, HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
+import { PluginIncludeType } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
+import { contextSrv } from 'app/core/services/context_srv';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
 import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { IncidentsCard } from './IncidentsCard';
 
-jest.mock('app/features/alerting/unified/hooks/usePluginBridge');
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  useIrmPlugin: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -23,22 +29,14 @@ const activeIncidents: IncidentPreview[] = [
   {
     incidentID: '101',
     title: 'Database outage',
-    slug: 'database-outage',
-    status: 'active',
     severityLabel: 'Critical',
-    isDrill: false,
     createdTime: '2024-01-02T10:00:00Z',
-    incidentStart: '2024-01-02T10:00:00Z',
   },
   {
     incidentID: '102',
     title: 'Elevated latency',
-    slug: 'elevated-latency',
-    status: 'active',
     severityLabel: 'Pending',
-    isDrill: false,
     createdTime: '2024-01-01T09:00:00Z',
-    incidentStart: '2024-01-01T09:00:00Z',
   },
 ];
 
@@ -49,7 +47,12 @@ function mockIncidents(incidents: IncidentPreview[]) {
 beforeEach(() => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Default: plugin installed. Individual tests override availability as needed.
-  mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: true, loading: false });
+  mockUseIrmPlugin.mockReturnValue({
+    pluginId: SupportedPlugin.Incident,
+    installed: true,
+    loading: false,
+    settings: { ...pluginMeta[SupportedPlugin.Incident], includes: [] },
+  });
 });
 
 afterEach(() => {
@@ -119,5 +122,46 @@ describe('IncidentsCard', () => {
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+  });
+
+  it('renders incident titles as plain text when the user cannot access the incidents page', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockUseIrmPlugin.mockReturnValue({
+      pluginId: SupportedPlugin.Incident,
+      installed: true,
+      loading: false,
+      settings: {
+        ...pluginMeta[SupportedPlugin.Incident],
+        includes: [
+          {
+            type: PluginIncludeType.page,
+            name: 'Incidents',
+            path: '/a/grafana-incident-app/incidents',
+            action: 'grafana-incident-app.incidents:read',
+          },
+        ],
+      },
+    });
+    mockIncidents(activeIncidents);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
+  });
+
+  it("count badge reads '50+' when active incidents hit the query limit", async () => {
+    const many: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(many);
+
+    render(<IncidentsCard />);
+
+    expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
   });
 });

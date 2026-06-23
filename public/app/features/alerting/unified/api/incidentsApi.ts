@@ -1,21 +1,19 @@
 import { alertingApi } from './alertingApi';
 
+export const ACTIVE_INCIDENTS_QUERY_LIMIT = 50;
+
 interface IncidentsPluginConfigDto {
   isChatOpsInstalled: boolean;
   isIncidentCreated: boolean;
 }
 
-// Subset of IncidentPreview (Grafana Incident API) modelled for the home-page card; the full type has ~20 fields we don't use.
+// Subset of the Grafana Incident API's IncidentPreview — only the fields the home-page card consumes.
 export interface IncidentPreview {
   incidentID: string;
   title: string;
-  slug: string;
-  status: 'active' | 'resolved';
   // Org-configurable label (e.g. "critical" | "major" | "minor" | "pending"), so it stays a free string.
   severityLabel: string;
-  isDrill: boolean;
   createdTime: string; // RFC 3339
-  incidentStart: string; // RFC 3339
 }
 
 interface QueryIncidentPreviewsResponse {
@@ -43,7 +41,7 @@ export const incidentsApi = alertingApi.injectEndpoints({
             queryString: 'isdrill:false status:active',
             orderField: 'createdTime',
             orderDirection: 'DESC',
-            limit: 50,
+            limit: ACTIVE_INCIDENTS_QUERY_LIMIT,
           },
         },
         method: 'POST',
