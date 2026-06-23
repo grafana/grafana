@@ -322,6 +322,20 @@ describe('buildTree', () => {
     expect(result[2].title).toBe('zebra.json');
   });
 
+  it('should treat a nested item as a root when its parent folder is absent', () => {
+    // buildTree does not infer parent folders (mergeFilesAndResources does); given a nested
+    // path whose parent is not in the merged set, the node falls back to a root.
+    const mergedItems = [
+      { path: 'orphans/dashboard.json', file: { path: 'orphans/dashboard.json', size: '100', hash: 'h1' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('orphans/dashboard.json');
+    expect(result[0].children).toHaveLength(0);
+  });
+
   it('should handle root-level items', () => {
     const mergedItems = [{ path: 'root-file.txt', file: { path: 'root-file.txt', size: '100', hash: 'h1' } }];
 
