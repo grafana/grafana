@@ -1306,11 +1306,6 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
-  * Run queries through the data source backend
-  * @default false
-  */
-  opentsdbBackendMigration?: boolean;
-  /**
   * Enable TTL plugin instance manager
   * @default false
   */

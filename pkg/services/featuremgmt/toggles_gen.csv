@@ -275,7 +275,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,elasticsearchESQLQuery,experimental,@grafana/data-sources-plugins,false,false,false
 2025-11-12,awsDatasourcesHttpProxy,experimental,@grafana/data-sources-plugins,false,false,false
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
-2025-12-04,opentsdbBackendMigration,GA,@grafana/data-sources-plugins,false,true,false
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
