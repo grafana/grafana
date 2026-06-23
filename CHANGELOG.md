@@ -1,3 +1,22 @@
+<!-- 13.0.3 START -->
+
+# 13.0.3 (2026-06-23)
+
+### Features and enhancements
+
+- **Docker:** Bump Alpine-based images to 3.24.1 [#126548](https://github.com/grafana/grafana/pull/126548), [@macabu](https://github.com/macabu)
+- **Provisioning:** Write `_folder.json` when creating dashboards in new folders [#126323](https://github.com/grafana/grafana/pull/126323), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Write `_folder.json` when moving dashboards into new folders [#126676](https://github.com/grafana/grafana/pull/126676), [@ferruvich](https://github.com/ferruvich)
+
+### Bug fixes
+
+- **Datasources:** return 400 when payload UID does not match URL UID in PUT /api/datasources/uid/:uid [#125771](https://github.com/grafana/grafana/pull/125771), [@papagian](https://github.com/papagian)
+- **Provisioning:** Fix PR comments on multi-org Grafana instances [#126887](https://github.com/grafana/grafana/pull/126887), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Fix PR links when folder is renamed via UI [#126858](https://github.com/grafana/grafana/pull/126858), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **fix(provisioning):** ignore terminating repositories when validating connection delete [#126862](https://github.com/grafana/grafana/pull/126862), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+- **fix:** bad MySQL query in datasource_type column migration [#126897](https://github.com/grafana/grafana/pull/126897), [@grafana-writer[bot]](https://github.com/grafana-writer[bot])
+
+<!-- 13.0.3 END -->
 <!-- 13.0.2 START -->
 
 # 13.0.2 (2026-06-09)
