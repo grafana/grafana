@@ -3713,7 +3713,8 @@
       "metadata": {
         "name": "opentsdbBackendMigration",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-12-04T08:11:33Z"
+        "creationTimestamp": "2025-12-04T08:11:33Z",
+        "deletionTimestamp": "2026-06-18T19:53:42Z"
       },
       "spec": {
         "description": "Run queries through the data source backend",
@@ -4524,7 +4525,8 @@
       "metadata": {
         "name": "refactorVariablesTimeRange",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2023-06-06T13:12:09Z"
+        "creationTimestamp": "2023-06-06T13:12:09Z",
+        "deletionTimestamp": "2026-06-18T12:12:56Z"
       },
       "spec": {
         "description": "Refactor time range variables flow to reduce number of API calls made when query variables are chained",

@@ -115,7 +115,10 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   for (const item of mergedItems) {
     const type = getItemType(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
-    const showStatus = type === 'Dashboard' || type === 'Folder' || item.path.endsWith('.json');
+    // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
+    // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for
+    // paths that don't map to a kind in the resource registry.
+    const showStatus = type !== 'File' || item.path.endsWith('.json');
     const resourceHash = isFolderMetadata
       ? getParentFolderResourceHash(item.path, lookupResourceHash)
       : item.resource?.hash;
