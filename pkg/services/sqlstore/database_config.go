@@ -132,6 +132,14 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	return nil
 }
 
+// ConfigurePostgresAuth is an optional hook for builds that add authentication
+// mechanisms to the core Postgres connection beyond password/TLS (e.g. enterprise
+// GSSAPI/Kerberos support). It returns extra connection-string parameters to
+// append and may register process-global driver state (such as a GSSAPI
+// provider) before the connection is opened. It is nil in OSS builds, where the
+// feature is absent.
+var ConfigurePostgresAuth func(cfg *setting.Cfg, dbCfg *DatabaseConfig) (string, error)
+
 func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	if dbCfg.ConnectionString != "" {
 		return nil
@@ -188,6 +196,14 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features fe
 		}
 		if dbCfg.Pwd != "" {
 			cnnstr += fmt.Sprintf(" password=%s", dbCfg.Pwd)
+		}
+
+		if ConfigurePostgresAuth != nil {
+			extra, err := ConfigurePostgresAuth(cfg, dbCfg)
+			if err != nil {
+				return fmt.Errorf("failed to configure postgres authentication: %w", err)
+			}
+			cnnstr += extra
 		}
 
 		cnnstr += buildExtraConnectionString(' ', dbCfg.UrlQueryParams)
