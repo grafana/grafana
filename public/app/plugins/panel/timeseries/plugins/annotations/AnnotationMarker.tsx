@@ -18,9 +18,9 @@ import { type TimeZone } from '@grafana/schema';
 import { ClickOutsideWrapper, floatingUtils, getFieldDisplayLinks, useStyles2 } from '@grafana/ui';
 import { getFieldActions } from 'app/plugins/panel/status-history/utils';
 
-import { AnnotationEditor2 } from './AnnotationEditor2';
-import { AnnotationTooltip2 } from './AnnotationTooltip2';
-import { AnnotationTooltip2Cluster } from './AnnotationTooltip2Cluster';
+import { AnnotationEditor } from './AnnotationEditor';
+import { AnnotationTooltip } from './AnnotationTooltip';
+import { AnnotationTooltipCluster } from './AnnotationTooltipCluster';
 import { type AnnotationVals } from './types';
 
 interface AnnotationMarkerProps {
@@ -47,7 +47,7 @@ interface AnnotationMarkerProps {
   replaceVariables: InterpolateFunction;
 }
 
-export const AnnotationMarker2 = ({
+export const AnnotationMarker = ({
   frame,
   annoVals,
   annoIdx,
@@ -112,7 +112,7 @@ export const AnnotationMarker2 = ({
   let contents: ReactNode | null = null;
   if (!isEditing && showTooltip && isClustering) {
     contents = (
-      <AnnotationTooltip2Cluster
+      <AnnotationTooltipCluster
         actions={actions}
         links={links}
         onClose={onClose}
@@ -125,7 +125,7 @@ export const AnnotationMarker2 = ({
     );
   } else if (showTooltip) {
     contents = (
-      <AnnotationTooltip2
+      <AnnotationTooltip
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
@@ -138,7 +138,7 @@ export const AnnotationMarker2 = ({
     );
   } else if (isEditing) {
     contents = (
-      <AnnotationEditor2
+      <AnnotationEditor
         annoIdx={editIdx}
         annoVals={annoVals}
         timeZone={timeZone}

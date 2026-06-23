@@ -14,7 +14,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
-import { AnnotationMarker2 } from 'app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker2';
+import { AnnotationMarker } from 'app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker';
 import { type AnnotationVals, type XYAnnoVals } from 'app/plugins/panel/timeseries/plugins/annotations/types';
 import {
   ClusteringMode,
@@ -326,7 +326,7 @@ export const AnnotationsPlugin = ({
           const isPinned = pinnedAnnotationId === annotationKey;
 
           markers.push(
-            <AnnotationMarker2
+            <AnnotationMarker
               key={annotationKey}
               setPinned={setPinned}
               isPinned={isPinned}

@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { ScrollContainer, usePanelContext, useStyles2, VizTooltipFooter } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 
-import { type AnnotationTooltipProps } from './AnnotationTooltip2';
+import { type AnnotationTooltipProps } from './AnnotationTooltip';
 import { AnnotationTooltipBody } from './AnnotationTooltipBody';
 import { AnnotationTooltipHeader } from './AnnotationTooltipHeader';
 import { getAnnotationTooltip } from './getAnnotationTooltip';
@@ -19,7 +19,7 @@ export interface AnnotationClusterTooltipProps extends Omit<AnnotationTooltipPro
   onEdit: (annotationId: number) => void;
 }
 
-export const AnnotationTooltip2Cluster = ({
+export const AnnotationTooltipCluster = ({
   annoVals,
   annoIdx,
   timeZone,

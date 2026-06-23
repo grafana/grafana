@@ -25,7 +25,7 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
+export const AnnotationEditor = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
   const focusRef = useRef<HTMLButtonElement | null>(null);
