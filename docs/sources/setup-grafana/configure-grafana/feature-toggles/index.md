@@ -80,6 +80,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingMultiplePolicies`                   | Enables the ability to create multiple notification policies in alerting                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
 
 ## Public preview feature toggles
 

@@ -2505,6 +2505,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.queryVarEditorRedesign",
+        "resourceVersion": "1781718345897",
+        "creationTimestamp": "2026-06-17T17:45:45Z"
+      },
+      "spec": {
+        "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
+        "stage": "GA",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.scenesFlickeringFix",
         "resourceVersion": "1778737357419",
         "creationTimestamp": "2026-05-06T09:26:24Z",
