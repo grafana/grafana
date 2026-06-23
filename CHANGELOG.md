@@ -1,3 +1,16 @@
+<!-- 11.6.16 START -->
+
+# 11.6.16 (2026-06-23)
+
+### Features and enhancements
+
+- **Docker:** Bump Alpine-based images to 3.24.1 [#126547](https://github.com/grafana/grafana/pull/126547), [@macabu](https://github.com/macabu)
+
+### Bug fixes
+
+- **Datasources:** return 400 when payload UID does not match URL UID in PUT /api/datasources/uid/:uid [#125516](https://github.com/grafana/grafana/pull/125516), [@papagian](https://github.com/papagian)
+
+<!-- 11.6.16 END -->
 <!-- 11.6.15 START -->
 
 # 11.6.15 (2026-06-09)
