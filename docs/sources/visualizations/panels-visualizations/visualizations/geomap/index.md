@@ -235,7 +235,7 @@ Geomap has nine data layer types and five basemap layer types.
 - [Route](#route-layer) render data points as a route.
 - [Photos](#photos-layer) renders a photo at each data point.
 - [Network](#network-layer) visualizes a network graph from the data.
-- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [OpenStreetMap](#openstreetmap-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
@@ -463,16 +463,16 @@ You can convert node graph data to a network layer:
 | Text label | Configures a text label for each edge. |
 <!-- prettier-ignore-end -->
 
-#### Open Street Map layer
+#### OpenStreetMap layer
 
 A map from a collaborative free geographic world database.
 
-{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="600px" alt="Geomap panel Open Street Map" >}}
+{{< figure src="/static/img/docs/geomap-panel/geomap-osm-9-1-0.png" max-width="600px" alt="Geomap panel OpenStreetMap" >}}
 
 - **Opacity** from 0 (transparent) to 1 (opaque)
 - **Display tooltip** - allows you to toggle tooltips for the layer.
 
-[About Open Street Map](https://www.openstreetmap.org/about)
+[About OpenStreetMap](https://www.openstreetmap.org/about)
 
 #### CARTO basemap layer
 

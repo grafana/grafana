@@ -70,7 +70,7 @@ Use the following options to refine your dashboard list visualization.
 | Include current template variable values | Include template variables that are being used as query parameters in the dashboard list link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables). |
 | Starred | Display starred dashboards in alphabetical order. |
 | Recently viewed | Display recently viewed dashboards in view order, with the most recently viewed dashboards first. |
-| Search | Display dashboards returned by search. Results use the **Query**, **Tags**, and **Folder** filters. An empty **Query** matches all dashboard names. Variable interpolation is supported for **Query** and **Tags**. For example, `$my_var` or `${my_var}`. |
+| Search | Display dashboards returned by search. Results use the **Query**, **Folder**, and **Tags** filters. An empty **Query** matches all dashboard names. Variable interpolation is supported for **Query** and **Tags**. For example, `$my_var` or `${my_var}`. |
 | Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred dashboards**</li><li>**Recently viewed dashboards**</li><li>**Search**</li> |
 | Show folder names | Display the name of the folder where the dashboard is located. |
 | Max items | Set the maximum number of items to list per section. If you enter "10" and enable **Starred** and **Recently viewed** dashboards, the panel displays up to 20 total dashboards, 10 in each section. |
