@@ -87,13 +87,17 @@ const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
 /**
  * Builds the in-app route to view a repository's resources of the given kind.
- * Folder-scoped kinds resolve to the repository's own folder for folder-target
- * repos (and to their collection page otherwise); other kinds always resolve to
- * their collection page.
+ * Folder-scoped kinds resolve to the repository's own folder (named after the
+ * repository) for folder-target repos; everything else — non-folder targets, a
+ * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
+ * collection page.
  */
 export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
-  if (info.folderScoped && repo.spec?.sync.target === 'folder') {
-    return `/dashboards/f/${repo.metadata?.name}`;
+  const repoName = repo.metadata?.name;
+  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
+    // The repository's folder is named after the repo, so reuse the folder kind's
+    // route rather than duplicating the `/dashboards/f/...` shape here.
+    return resourceKindInfos.folder.getRoute(repoName);
   }
   return info.listRoute;
 }

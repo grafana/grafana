@@ -107,14 +107,15 @@ describe('getRepositoryRoute', () => {
     expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('instance'))).toBe('/playlists');
   });
 
-  it('tolerates a repository missing spec or metadata', () => {
+  it('falls back to the collection page when the repository name or spec is missing', () => {
     // No spec → not a folder target → collection page.
     expect(getRepositoryRoute(resourceKindInfos.dashboard, {})).toBe('/dashboards');
-    // Folder target but no metadata → folder route with an empty name segment.
+    // Folder target but no metadata → no folder to scope to → collection page
+    // (rather than a broken `/dashboards/f/undefined`).
     const noMetadata: Repository = {
       spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
     };
-    expect(getRepositoryRoute(resourceKindInfos.folder, noMetadata)).toBe('/dashboards/f/undefined');
+    expect(getRepositoryRoute(resourceKindInfos.folder, noMetadata)).toBe('/dashboards');
   });
 });
 
