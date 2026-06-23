@@ -1293,15 +1293,6 @@ var (
 		},
 
 		{
-			Name:            "dataplaneAggregator",
-			Description:     "Enable grafana dataplane aggregator",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "vizActionsAuth",
 			Description:  "Allows authenticated API calls in actions",
 			Stage:        FeatureStagePublicPreview,

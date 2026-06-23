@@ -1629,20 +1629,6 @@
     },
     {
       "metadata": {
-        "name": "dataplaneAggregator",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-08-09T08:41:07Z"
-      },
-      "spec": {
-        "description": "Enable grafana dataplane aggregator",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "requiresRestart": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
