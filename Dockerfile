@@ -387,7 +387,12 @@ EXPOSE 3000
 
 USER $GF_UID
 
-ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker", "cfg:default.log.mode=console"]
+# ENTRYPOINT holds the invariant invocation; CMD holds the overridable default
+# args. Splitting them follows the conventional Docker pattern so runtime args
+# (docker run <img> <args> / Kubernetes args:) replace the defaults instead of
+# being permanently pinned after a fully-baked ENTRYPOINT.
+ENTRYPOINT ["/usr/share/grafana/bin/grafana", "server", "--homepath=/usr/share/grafana", "--config=/etc/grafana/grafana.ini", "--packaging=docker"]
+CMD ["cfg:default.log.mode=console"]
 
 # Default stage — alpine. Builds without --target produce an alpine image.
 # Use --target=final-ubuntu to build the ubuntu variant instead.
