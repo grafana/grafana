@@ -1871,6 +1871,49 @@ func TestGithubClient_GetRulesets(t *testing.T) {
 			wantErr:      nil,
 		},
 		{
+			name: "org-level pull request rule with bypass mode always returns no block",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						rules := []map[string]interface{}{
+							{
+								"type":                "pull_request",
+								"ruleset_source_type": "Organization",
+								"ruleset_source":      "test-org",
+								"ruleset_id":          1,
+								"parameters":          map[string]interface{}{},
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(rules))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposRulesetsByOwnerByRepoByRulesetId,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify includes_parents=true is set (required to fetch org-level rulesets)
+						require.Equal(t, "true", r.URL.Query().Get("includes_parents"),
+							"GetRuleset must set includes_parents=true to resolve org-level rulesets")
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]interface{}{
+							"id":                      1,
+							"name":                    "org-branch-protection",
+							"source_type":             "Organization",
+							"source":                  "test-org",
+							"enforcement":             "active",
+							"current_user_can_bypass": "always",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			branch:       "main",
+			wantRulesets: nil,
+			wantErr:      nil,
+		},
+		{
 			name: "pull request rule with bypass mode exempt returns no block",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
