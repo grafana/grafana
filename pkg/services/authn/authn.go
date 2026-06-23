@@ -27,6 +27,7 @@ const (
 	ClientRender       = "auth.client.render"
 	ClientSession      = "auth.client.session"
 	ClientForm         = "auth.client.form"
+	ClientPasskey      = "auth.client.passkey"
 	ClientProxy        = "auth.client.proxy"
 	ClientSAML         = "auth.client.saml"
 	ClientLDAP         = "ldap"
