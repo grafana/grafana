@@ -1,3 +1,5 @@
+import { type ComponentProps } from 'react';
+
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
@@ -11,6 +13,8 @@ interface SourceLinkProps {
   repositoryName?: string;
   /** Path of the resource's source file within the repository (`grafana.app/sourcePath`). */
   sourcePath?: string;
+  /** Button size, to match the surrounding actions. Defaults to `sm`. */
+  size?: ComponentProps<typeof LinkButton>['size'];
 }
 
 /**
@@ -18,7 +22,7 @@ interface SourceLinkProps {
  * like the external links shown on dashboards. Renders nothing when there is no resolvable git
  * source (not repository-managed, local/generic-git provisioning, or no source path).
  */
-export function SourceLink({ repositoryName, sourcePath }: SourceLinkProps) {
+export function SourceLink({ repositoryName, sourcePath, size = 'sm' }: SourceLinkProps) {
   const skipQuery = !config.featureToggles.provisioning || !repositoryName || !sourcePath;
   const { repository } = useGetResourceRepositoryView({ name: skipQuery ? undefined : repositoryName, skipQuery });
 
@@ -48,7 +52,7 @@ export function SourceLink({ repositoryName, sourcePath }: SourceLinkProps) {
       rel="noopener noreferrer"
       icon="external-link-alt"
       variant="secondary"
-      size="sm"
+      size={size}
     >
       <Trans i18nKey="provisioning.source-link.title" values={{ provider: RepoTypeDisplay[repoType] }}>
         Source ({'{{provider}}'})
