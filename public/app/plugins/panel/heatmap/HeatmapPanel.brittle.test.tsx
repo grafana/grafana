@@ -44,7 +44,7 @@ let tooltipRenderParamsForTest: {
 /** Captures the last props passed to AnnotationsPlugin for assertion in tests. */
 let lastAnnotationsPluginProps: React.ComponentProps<typeof AnnotationsPlugin> | null = null;
 
-jest.mock('../timeseries/plugins/AnnotationPluginWrap', () => ({
+jest.mock('../timeseries/plugins/AnnotationsPlugin', () => ({
   AnnotationsPlugin: (props: React.ComponentProps<typeof AnnotationsPlugin>) => {
     lastAnnotationsPluginProps = props;
     return props.annotations?.length ? (
