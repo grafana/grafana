@@ -20,12 +20,7 @@ import (
 // newGraphiteHandler creates the handler for the POST /graphite custom route. It
 // translates the Graphite event format into an Annotation and delegates to the
 // REST creator so it shares authorization, scope validation, createdBy stamping
-// and legacy-ID handling with the standard create path.
-//
-// Errors are returned as-is, which the app-sdk renders as HTTP 500 for namespaced
-// custom routes (it does not map apierror codes); this mirrors the search and tags
-// handlers. The apierror types are still used so the telemetry records an accurate
-// status label.
+// and legacy-ID handling with the standard Create path.
 func newGraphiteHandler(
 	creator rest.Creater,
 	tracer trace.Tracer,
@@ -59,25 +54,18 @@ func newGraphiteHandler(
 			},
 			Spec: annotationV0.AnnotationSpec{
 				Text: FormatGraphiteText(cmd.What, cmd.Data),
-				// Graphite reports `when` in seconds; annotations store milliseconds.
-				// A zero value is left as-is so the store applies its "now" default,
-				// matching the legacy endpoint.
 				Time: cmd.When * 1000,
 				Tags: tags,
 			},
 		}
 
-		// Create reads the namespace from the context, so set it from the request
-		// identifier to keep the handler correct outside the apiserver request flow.
 		ctx = k8srequest.WithNamespace(ctx, namespace)
 		created, err := creator.Create(ctx, anno, nil, &metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
 
-		// Return the created annotation. Set the GVK explicitly so the encoded body
-		// carries apiVersion/kind: the apiserver stamps these on the standard create
-		// path, but a custom route writes its own response.
+		// custom route needs to write GVK in its own response.
 		created.GetObjectKind().SetGroupVersionKind(annotationV0.AnnotationKind().GroupVersionKind())
 
 		writer.Header().Set("Content-Type", "application/json")
