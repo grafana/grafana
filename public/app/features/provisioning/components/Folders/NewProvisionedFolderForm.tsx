@@ -13,6 +13,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
@@ -65,6 +66,15 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     comment: watch('comment') ?? '',
     isCommentDirty: Boolean(formState.dirtyFields.comment),
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
+
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    branch: watch('ref') ?? '',
+    isBranchDirty: Boolean(formState.dirtyFields.ref),
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
@@ -217,6 +227,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             hiddenFields={['path']}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {prURL && (

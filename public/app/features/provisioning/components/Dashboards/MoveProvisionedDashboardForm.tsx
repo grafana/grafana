@@ -20,6 +20,7 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type StatusInfo } from '../../types';
@@ -80,6 +81,15 @@ export function MoveProvisionedDashboardForm({
     comment: watch('comment') ?? '',
     isCommentDirty: Boolean(methods.formState.dirtyFields.comment),
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
+
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    branch: ref ?? '',
+    isBranchDirty: Boolean(methods.formState.dirtyFields.ref),
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
   const { data: currentFileData, isLoading: isLoadingFileData } = useGetRepositoryFilesWithPathQuery({
@@ -339,6 +349,7 @@ export function MoveProvisionedDashboardForm({
                 repository={repository}
                 lockComment={locked}
                 commitMessage={message}
+                lockBranch={lockBranch}
               />
 
               <Stack gap={2}>

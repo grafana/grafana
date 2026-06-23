@@ -12857,6 +12857,7 @@
       "comment-placeholder-describe-changes-optional": "Add a note to describe your changes (optional)",
       "custom-value-description": "Press Enter to create new branch",
       "description-branch": "Select an existing branch or enter a new branch name to create a branch",
+      "description-branch-enforced": "The branch name is set by the repository's branch naming template and can't be changed",
       "description-branch-restricted": "This repository is restricted to the configured branch only",
       "description-file-path": "File path inside the repository (.json or .yaml)",
       "description-filename": "File name for the dashboard (.json or .yaml)",

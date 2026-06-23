@@ -23,6 +23,7 @@ import {
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
@@ -110,6 +111,15 @@ export function SaveProvisionedDashboardForm({
     comment: watch('comment') ?? '',
     isCommentDirty: Boolean(dirtyFields.comment),
     setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+  });
+
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    branch: ref ?? '',
+    isBranchDirty: Boolean(dirtyFields.ref),
+    setBranch: (value) => setValue('ref', value, { shouldDirty: false }),
   });
 
   // Sync filename from title for new dashboards.
@@ -365,6 +375,7 @@ export function SaveProvisionedDashboardForm({
             allowPathEdit={!isNew && !readOnly}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {saveAsCopy && (
