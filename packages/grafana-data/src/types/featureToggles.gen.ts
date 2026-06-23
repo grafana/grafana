@@ -1241,11 +1241,6 @@ export interface FeatureToggles {
   */
   vizLegendFacetedFilter?: boolean;
   /**
-  * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default true
-  */
-  heatmapRowsAxisOptions?: boolean;
-  /**
   * Enable gradient color scheme option for the pie chart panel
   * @default false
   */

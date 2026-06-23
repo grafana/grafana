@@ -2244,14 +2244,6 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:        "heatmapRowsAxisOptions",
-			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "pieChartGradientColorScheme",
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,

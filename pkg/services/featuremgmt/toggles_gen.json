@@ -2703,6 +2703,7 @@
         "name": "heatmapRowsAxisOptions",
         "resourceVersion": "1782152165311",
         "creationTimestamp": "2025-12-18T22:45:00Z",
+        "deletionTimestamp": "2026-06-22T00:00:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-06-22 18:16:05.311396 +0000 UTC"
         }
