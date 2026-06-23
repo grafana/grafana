@@ -1234,6 +1234,7 @@ func (s *Service) listPermissionWithFolderAuthz(ctx context.Context, scopeMap ma
 	// via managed roles like "folders:edit" are matched.
 	folderAction, folderActionSets := dualCheckFolderAuthz(req.Verb)
 	folderScopeMap, err := s.getCachedIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, folderAction)
+	permsFromCache := err == nil
 	if err != nil {
 		folderScopeMap, err = s.getIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, folderAction, folderActionSets)
 		if err != nil {
@@ -1243,9 +1244,13 @@ func (s *Service) listPermissionWithFolderAuthz(ctx context.Context, scopeMap ma
 
 	// Wildcard folder grant (Folder admin / folders:read scope=*) → allow all.
 	if folderScopeMap["*"] {
+		timestamp := time.Now()
+		if permsFromCache {
+			timestamp = timestamp.Add(-s.settings.CacheTTL)
+		}
 		return &authzv1.ListResponse{
 			All:    true,
-			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},
+			Zookie: &authzv1.Zookie{Timestamp: timestamp.Unix()},
 		}, nil
 	}
 
