@@ -533,7 +533,7 @@ The XYZ Tile layer is a map from a generic tile layer.
 ##### More information
 
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
-- [List of Open Street Map Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
+- [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
 #### MapLibre Style layer
 
@@ -551,7 +551,7 @@ Basemap layer types can also be added as layers. You can specify an opacity.
 
 There are five basemap layer types to choose from in a geomap.
 
-- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [OpenStreetMap](#openstreetmap-layer) adds a map from a collaborative free geographic world database.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
@@ -628,7 +628,7 @@ default_baselayer_config = `{
 default_baselayer_config = `{
   "type": "xyz",
   "config": {
-    "attribution": "Open street map",
+    "attribution": "Openstreetmap",
     "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 }`
