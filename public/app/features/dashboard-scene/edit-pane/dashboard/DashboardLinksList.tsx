@@ -2,16 +2,23 @@ import { DragDropContext, type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema/dist/esm/index.gen';
-import { Box, Button } from '@grafana/ui';
+import { IconButton } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddLinkPane, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
+import {
+  LinkEdit,
+  LinkEditEditableElement,
+  linkSelectionId,
+  openAddLinkPane,
+  openLinkEditPane,
+} from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
 
 const ID_VISIBLE_LIST = 'links-list-visible';
 const ID_CONTROLS_MENU_LIST = 'links-list-controls-menu';
@@ -30,6 +37,29 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       openLinkEditPane(dashboard, Number(link.state.key));
     },
     [dashboard]
+  );
+
+  const getLinkEditableElement = useCallback(
+    (link: PseudoSceneLink) => {
+      const linkIndex = Number(link.state.key);
+      const linkEdit = new LinkEdit({ dashboardRef: dashboard.getRef(), linkIndex, key: linkSelectionId(linkIndex) });
+      return new LinkEditEditableElement(linkEdit);
+    },
+    [dashboard]
+  );
+
+  const onDuplicateLink = useCallback(
+    (link: PseudoSceneLink) => {
+      getLinkEditableElement(link).onDuplicate();
+    },
+    [getLinkEditableElement]
+  );
+
+  const onDeleteLink = useCallback(
+    (link: PseudoSceneLink) => {
+      getLinkEditableElement(link).onConfirmDelete();
+    },
+    [getLinkEditableElement]
   );
 
   const onDragEnd = useCallback(
@@ -82,23 +112,19 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.links-list.title-above-dashboard', '', {
-          count: visible.length,
-          defaultValue_one: 'Above dashboard ({{count}})',
-          defaultValue_other: 'Above dashboard ({{count}})',
-        })}
-        onClickItem={onClickLink}
+        title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard')}
+        onEditItem={onClickLink}
+        onDuplicateItem={onDuplicateLink}
+        onDeleteItem={onDeleteLink}
         renderItemLabel={renderItemLabel}
       />
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.links-list.title-controls-menu', '', {
-          count: controlsMenu.length,
-          defaultValue_one: 'Controls menu ({{count}})',
-          defaultValue_other: 'Controls menu ({{count}})',
-        })}
-        onClickItem={onClickLink}
+        title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu')}
+        onEditItem={onClickLink}
+        onDuplicateItem={onDuplicateLink}
+        onDeleteItem={onDeleteLink}
         renderItemLabel={renderItemLabel}
       />
     </DragDropContext>
@@ -114,18 +140,11 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
   }, [dashboard]);
 
   return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button
-        fullWidth
-        icon="plus"
-        size="sm"
-        variant="secondary"
-        onClick={onAddLink}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
-      >
-        <Trans i18nKey="dashboard-scene.dashboard-links-list.add-link">Add link</Trans>
-      </Button>
-    </Box>
+    <SidebarAddButton
+      onAdd={onAddLink}
+      tooltip={t('dashboard-scene.dashboard-links-list.add-link', 'Add link')}
+      dataTestId={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
+    />
   );
 }
 

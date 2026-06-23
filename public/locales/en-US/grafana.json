@@ -6961,12 +6961,9 @@
     },
     "dashboard-annotations-list": {
       "add-annotation-query": "Add annotation query",
-      "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-      "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-      "title-controls-menu-count_one": "Controls menu ({{count}})",
-      "title-controls-menu-count_other": "Controls menu ({{count}})",
-      "title-hidden-count_one": "Hidden ({{count}})",
-      "title-hidden-count_other": "Hidden ({{count}})"
+      "title-above-dashboard": "Above dashboard",
+      "title-controls-menu": "Controls menu",
+      "title-hidden": "Hidden"
     },
     "dashboard-edit-pane-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
@@ -7076,11 +7073,10 @@
     "description-label": {
       "description": "Description"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Drag to reorder"
-    },
     "draggable-items-list": {
-      "select": "Select"
+      "delete": "Delete",
+      "duplicate": "Duplicate",
+      "edit": "Edit"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
@@ -7108,12 +7104,9 @@
     "filters-list": {
       "add-filter": "Add filter",
       "reorder-description": "Reorder filters list",
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})",
-      "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})"
+      "title-above-dashboard": "Above dashboard",
+      "title-controls-menu": "Controls menu",
+      "title-hidden": "Hidden"
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7310,10 +7303,8 @@
     },
     "links-list": {
       "drag-end-description": "Reorder links list",
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})"
+      "title-above-dashboard": "Above dashboard",
+      "title-controls-menu": "Controls menu"
     },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
@@ -7832,12 +7823,8 @@
           "reorder-variables-list": "Reorder variables list"
         }
       },
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})",
-      "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})",
-      "title-top-placement_one": "{{placement}} ({{count}})",
-      "title-top-placement_other": "{{placement}} ({{count}})",
+      "title-controls-menu": "Controls menu",
+      "title-hidden": "Hidden",
       "top-placement": {
         "default": "Above dashboard"
       }

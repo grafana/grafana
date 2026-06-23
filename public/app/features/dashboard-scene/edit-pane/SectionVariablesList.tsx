@@ -64,6 +64,7 @@ function SectionVariablesListInner({ sectionOwner, variableSet }: SectionVariabl
         sourceVariableSet={variableSet}
         renderVariables={variables}
         topPlacementLabel={topPlacementLabel}
+        hideControlsMenuList
       />
       <Box display="flex" paddingTop={visibleCount > 0 ? 1 : 0} paddingBottom={2}>
         <AddVariableButton sectionOwner={sectionOwner} />

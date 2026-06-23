@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { Button, Text, useStyles2 } from '@grafana/ui';
+import { t } from '@grafana/i18n';
+import { IconButton, Text, useStyles2 } from '@grafana/ui';
 
 import { DraggableListItem } from './DraggableListItem';
 import { DroppableCategory } from './DroppableCategory';
@@ -12,7 +12,9 @@ interface DraggableListProps<T extends { state: { key?: string; name: string } }
   items: T[];
   droppableId: string;
   title: string;
-  onClickItem: (item: T) => void;
+  onEditItem: (item: T) => void;
+  onDuplicateItem: (item: T) => void;
+  onDeleteItem: (item: T) => void;
   renderItemLabel: (item: T) => NonNullable<ReactNode>;
 }
 
@@ -20,7 +22,9 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   items,
   droppableId,
   title,
-  onClickItem,
+  onEditItem,
+  onDuplicateItem,
+  onDeleteItem,
   renderItemLabel,
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
@@ -34,22 +38,29 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
             draggableId={item.state.key ?? item.state.name}
             index={index}
           >
-            <div
-              className={styles.itemButton}
-              role="button"
-              tabIndex={0}
-              onClick={() => onClickItem(item)}
-              onKeyDown={(event: React.KeyboardEvent) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  onClickItem(item);
-                }
-              }}
-            >
+            <div className={styles.itemLabel}>
               <Text truncate>{renderItemLabel(item)}</Text>
-              <Button variant="primary" size="sm" fill="outline">
-                <Trans i18nKey="dashboard-scene.draggable-items-list.select">Select</Trans>
-              </Button>
+            </div>
+            <div className={styles.itemButtons}>
+              <IconButton
+                tooltip={t('dashboard-scene.draggable-items-list.edit', 'Edit')}
+                onClick={() => onEditItem(item)}
+                name="pen"
+                variant="secondary"
+              />
+              <IconButton
+                tooltip={t('dashboard-scene.draggable-items-list.duplicate', 'Duplicate')}
+                onClick={() => onDuplicateItem(item)}
+                name="copy"
+                variant="secondary"
+              />
+              <IconButton
+                tooltip={t('dashboard-scene.draggable-items-list.delete', 'Delete')}
+                className={styles.destructiveButton}
+                onClick={() => onDeleteItem(item)}
+                name="trash-alt"
+                variant="secondary"
+              />
             </div>
           </DraggableListItem>
         ))}
@@ -65,27 +76,22 @@ function getStyles(theme: GrafanaTheme2) {
       margin: 0,
       padding: 0,
     }),
-    itemButton: css({
+    itemLabel: css({
+      flexGrow: 1,
+      overflow: 'hidden',
+    }),
+    itemButtons: css({
+      visibility: 'hidden',
       display: 'flex',
       flexDirection: 'row',
       gap: theme.spacing(0.5),
       alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-      cursor: 'pointer',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['color'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-      button: {
-        visibility: 'hidden',
-      },
-      '&:hover': {
-        color: theme.colors.text.link,
-        button: {
-          visibility: 'visible',
-        },
+      justifyContent: 'flex-end',
+      flexShrink: 0,
+    }),
+    destructiveButton: css({
+      '&:hover, &:focus-within': {
+        color: theme.colors.error.text,
       },
     }),
   };

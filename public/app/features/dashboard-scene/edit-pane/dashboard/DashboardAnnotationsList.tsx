@@ -6,15 +6,17 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type SceneDataLayerProvider } from '@grafana/scenes';
-import { Box, Button, useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { useBuildAddAnnotation } from '../add-new/AddAnnotationQuery';
 import { dashboardEditActions } from '../shared';
 
 import { DraggableList } from './DraggableList';
+import { SidebarAddButton } from './SidebarAddButton';
 import { partitionSceneObjects } from './helpers';
 
 const ID_VISIBLE_LIST = 'annotations-list-visible';
@@ -37,6 +39,14 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
     const { editPane } = getDashboardSceneFor(a).state;
     editPane.selectObject(a);
+  }, []);
+
+  const onDuplicateAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
+    new AnnotationEditableElement(a).onDuplicate();
+  }, []);
+
+  const onDeleteAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
+    new AnnotationEditableElement(a).onConfirmDelete();
   }, []);
 
   const onDragEnd = useCallback(
@@ -101,38 +111,31 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-above-dashboard-count', '', {
-            count: visible.length,
-            defaultValue_one: 'Above dashboard ({{count}})',
-            defaultValue_other: 'Above dashboard ({{count}})',
-          })}
-          onClickItem={onClickAnnotation}
+          title={t('dashboard-scene.dashboard-annotations-list.title-above-dashboard', 'Above dashboard')}
+          onEditItem={onClickAnnotation}
+          onDuplicateItem={onDuplicateAnnotation}
+          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu-count', '', {
-            count: controlsMenu.length,
-            defaultValue_one: 'Controls menu ({{count}})',
-            defaultValue_other: 'Controls menu ({{count}})',
-          })}
-          onClickItem={onClickAnnotation}
+          title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu', 'Controls menu')}
+          onEditItem={onClickAnnotation}
+          onDuplicateItem={onDuplicateAnnotation}
+          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
         />
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-hidden-count', '', {
-            count: hidden.length,
-            defaultValue_one: 'Hidden ({{count}})',
-            defaultValue_other: 'Hidden ({{count}})',
-          })}
-          onClickItem={onClickAnnotation}
+          title={t('dashboard-scene.dashboard-annotations-list.title-hidden', 'Hidden')}
+          onEditItem={onClickAnnotation}
+          onDuplicateItem={onDuplicateAnnotation}
+          onDeleteItem={onDeleteAnnotation}
           renderItemLabel={renderItemLabel}
         />
       </DragDropContext>
-      <AddAnnotationButton dataLayerSet={dataLayerSet} />
     </>
   );
 }
@@ -179,22 +182,15 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
   );
 }
 
-function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
+export function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardDataLayerSet }) {
   const onClickAddAnnotation = useBuildAddAnnotation(dataLayerSet);
 
   return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button
-        fullWidth
-        icon="plus"
-        size="sm"
-        variant="secondary"
-        onClick={onClickAddAnnotation}
-        data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
-      >
-        <Trans i18nKey="dashboard-scene.dashboard-annotations-list.add-annotation-query">Add annotation query</Trans>
-      </Button>
-    </Box>
+    <SidebarAddButton
+      onAdd={onClickAddAnnotation}
+      tooltip={t('dashboard-scene.dashboard-annotations-list.add-annotation-query', 'Add annotation query')}
+      dataTestId={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
+    />
   );
 }
 
