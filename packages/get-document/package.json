@@ -1,6 +1,6 @@
 {
   "name": "get-document",
-  "version": "13.1.0",
+  "version": "13.1.1",
   "description": "Vendored fork of get-document — see VENDORED.md",
   "license": "MIT",
   "private": true,
