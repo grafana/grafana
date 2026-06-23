@@ -102,7 +102,36 @@ func validateTerminatingLabelUnchanged(ctx context.Context, f *folders.Folder, o
 		fmt.Errorf("the %q label is managed by folder cascade deletion and cannot be set or modified", TerminatingLabel))
 }
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+// folderIsTerminating reports whether a folder is being cascade-deleted: it has a deletion timestamp,
+// or carries the terminating label. The label is stamped before the timestamp and is admission-
+// protected, so it only ever reflects a real, in-progress delete -- which is why checking it (not
+// just the timestamp) closes the window between marking and the timestamp being persisted.
+func folderIsTerminating(f *folders.Folder) bool {
+	if ts := f.GetDeletionTimestamp(); ts != nil && !ts.IsZero() {
+		return true
+	}
+	return f.GetLabels()[TerminatingLabel] == TerminatingLabelValue
+}
+
+// rejectChildIntoTerminatingParent refuses to place childName under parentName when the parent is
+// being deleted. Otherwise the cascade could list the parent's children, then this new child is
+// added, and the parent gets finalized and removed while the child was never marked terminating --
+// orphaning a live folder. Mirrors the apiserver refusing to create objects in a terminating
+// namespace. A parent that cannot be fetched is left to the caller's existing parent-resolution.
+func rejectChildIntoTerminatingParent(ctx context.Context, getter rest.Getter, parentName, childName string) error {
+	parentObj, err := getter.Get(ctx, parentName, &metav1.GetOptions{})
+	if err != nil {
+		return nil
+	}
+	parent, ok := parentObj.(*folders.Folder)
+	if !ok || !folderIsTerminating(parent) {
+		return nil
+	}
+	return apierrors.NewForbidden(folders.FolderResourceInfo.GroupVersionResource().GroupResource(), childName,
+		fmt.Errorf("folder %q is being deleted and cannot accept new child folders", parentName))
+}
+
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter rest.Getter, parents parentsGetter, maxDepth int) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -147,15 +176,19 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return folder.ErrAPIFolderCannotBeParentOfItself
 	}
 
-	// note: `parents` will include itself as the last item
-	parents, err := getter(ctx, f)
+	if err := rejectChildIntoTerminatingParent(ctx, getter, parentName, f.Name); err != nil {
+		return err
+	}
+
+	// note: the parent chain will include the folder itself as the last item
+	chain, err := parents(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
 	// Can not create a folder that will be too deep.
 	// We need to add +1 as we also have the root folder as part of the parents.
-	if len(parents.Items) > maxDepth+1 {
+	if len(chain.Items) > maxDepth+1 {
 		return folder.ErrMaximumDepthReached.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
 	}
 
@@ -231,6 +264,10 @@ func validateOnUpdate(ctx context.Context,
 	parent, ok := parentObj.(*folders.Folder)
 	if !ok {
 		return fmt.Errorf("expected folder, found %T", parentObj)
+	}
+	if folderIsTerminating(parent) {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupVersionResource().GroupResource(), obj.Name,
+			fmt.Errorf("folder %q is being deleted and cannot accept moved folders", newParent))
 	}
 	info, err := parents(ctx, parent)
 	if err != nil {

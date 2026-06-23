@@ -350,7 +350,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(context.Background(), tt.folder, mockStorage, getter, maxDepth)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -1136,6 +1136,41 @@ func TestValidateTerminatingLabelUnchanged(t *testing.T) {
 	t.Run("service identity may set or strip the label", func(t *testing.T) {
 		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(withLabel), folder(nil)))
 		require.NoError(t, validateTerminatingLabelUnchanged(svcCtx, folder(nil), folder(withLabel)))
+	})
+}
+
+func TestValidateRejectsChildrenUnderTerminatingParent(t *testing.T) {
+	ctx := context.Background()
+	terminatingParent := &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+		Name:   "parent",
+		Labels: map[string]string{TerminatingLabel: TerminatingLabelValue},
+	}}
+
+	t.Run("create under a terminating parent is forbidden", func(t *testing.T) {
+		store := grafanarest.NewMockStorage(t)
+		store.On("Get", ctx, "parent", &metav1.GetOptions{}).Return(terminatingParent, nil)
+		child := &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{Name: "child", Annotations: map[string]string{"grafana.app/folder": "parent"}},
+			Spec:       folders.FolderSpec{Title: "child"},
+		}
+
+		err := validateOnCreate(ctx, child, store, newParentsGetter(store, 5), 5)
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
+	})
+
+	t.Run("move under a terminating parent is forbidden", func(t *testing.T) {
+		store := grafanarest.NewMockStorage(t)
+		store.On("Get", ctx, "parent", &metav1.GetOptions{}).Return(terminatingParent, nil)
+		old := &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "child"}, Spec: folders.FolderSpec{Title: "child"}}
+		moved := &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{Name: "child", Annotations: map[string]string{"grafana.app/folder": "parent"}},
+			Spec:       folders.FolderSpec{Title: "child"},
+		}
+
+		// nil accessClient -> checkMoveAccess is a no-op; the terminating-parent check runs before
+		// the searcher-backed depth check, so a nil searcher is fine.
+		err := validateOnUpdate(ctx, moved, old, store, newParentsGetter(store, 5), nil, nil, 5)
+		require.True(t, apierrors.IsForbidden(err), "got: %v", err)
 	})
 }
 

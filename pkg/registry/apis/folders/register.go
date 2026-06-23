@@ -526,7 +526,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateTerminatingLabelUnchanged(ctx, f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, b.storage, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
 		return validateOnDelete(ctx, f, b.searcher, deleteOptions, b.forceDeleteEnabled, b.cascadeDeleteEnabled)
