@@ -471,7 +471,7 @@ Because calendar months vary in length, a plain `1M` shift can produce inconsist
 For example, shifting from a 30-day month might truncate the end date unexpectedly.
 
 Use `1M/M` instead to snap the shifted range to true calendar month boundaries.
-The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the length of the current month.
+The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the current month's length.
 {{< /admonition >}}
 
 ### Cache timeout
