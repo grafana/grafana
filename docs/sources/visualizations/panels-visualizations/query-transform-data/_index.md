@@ -469,7 +469,7 @@ Panel time overrides have no effect when the dashboard's time range is absolute.
 Avoid using bare month offsets such as `1M` without a rounding suffix.
 Because calendar months vary in length, a plain `1M` shift can produce inconsistent results&mdash;for example, shifting from a 30-day month may truncate the end date unexpectedly.
 
-Use `1M/M` instead to snap the shifted range to clean calendar-month boundaries.
+Use `1M/M` instead to snap the shifted range to clean calendar month boundaries.
 The `/M` suffix rounds the start and end of the shifted range down to the beginning of the month, ensuring consistent behavior regardless of the current month's length.
 {{< /admonition >}}
 
