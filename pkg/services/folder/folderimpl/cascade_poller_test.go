@@ -534,6 +534,23 @@ func TestDynamicFolderMutator_StripCascadeMetadata(t *testing.T) {
 		require.Empty(t, got.GetFinalizers())
 		require.NotContains(t, got.GetLabels(), folders.TerminatingLabel)
 	})
+
+	t.Run("leaves an in-flight cascade finalized (deletion timestamp set)", func(t *testing.T) {
+		// A folder accepted for delete while the feature was on must not be stripped here: the drain
+		// never deletes its contents or marks its children, so removing the finalizer would orphan
+		// them. It keeps both the finalizer and the label so the re-enabled poller can complete it.
+		obj := terminatingFolder("f", folders.CascadeDeleteFinalizer, "other.io/keep")
+		obj.SetLabels(map[string]string{folders.TerminatingLabel: folders.TerminatingLabelValue})
+		client := newFakeFolderClient(t, obj)
+		mut := &dynamicFolderMutator{client: client}
+
+		require.NoError(t, mut.StripCascadeMetadata(context.Background(), "org-12", "f"))
+
+		got, err := client.Namespace("org-12").Get(context.Background(), "f", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, []string{folders.CascadeDeleteFinalizer, "other.io/keep"}, got.GetFinalizers())
+		require.Equal(t, folders.TerminatingLabelValue, got.GetLabels()[folders.TerminatingLabel])
+	})
 }
 
 func TestDynamicFolderMutator_Delete(t *testing.T) {

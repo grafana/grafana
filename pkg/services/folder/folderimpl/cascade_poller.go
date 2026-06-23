@@ -65,10 +65,12 @@ type folderMutator interface {
 	// label but never had its deletion timestamp set (a crashed/interrupted delete), and removing the
 	// finalizer would strand it alive forever. The caller resumes the delete instead.
 	RemoveCascadeFinalizer(ctx context.Context, namespace, name string) (terminating bool, err error)
-	// StripCascadeMetadata unconditionally removes the cascade finalizer and terminating label. It is
-	// used by the flag-off drain: a terminating folder is then garbage-collected, and a folder left
-	// only labeled (no deletion timestamp) becomes an ordinary folder again with no stray label to
-	// mislead the poller if the feature is re-enabled.
+	// StripCascadeMetadata reverts a folder that carries the terminating label but has no deletion
+	// timestamp -- a stray label from an interrupted delete -- back to an ordinary folder by removing
+	// the cascade finalizer and the label, so nothing misleads the poller if the feature is later
+	// re-enabled. A folder that is actually terminating (deletion timestamp set) is an in-flight
+	// cascade and is left finalized: the flag-off drain does not delete folder contents or mark child
+	// folders, so stripping its finalizer would orphan them.
 	StripCascadeMetadata(ctx context.Context, namespace, name string) error
 }
 
@@ -211,11 +213,14 @@ func (w *CascadePoller) Run(ctx context.Context) error {
 	}
 }
 
-// drainTerminatingFolders strips the cascade finalizer and terminating label from folders carrying
-// the terminating label when the feature is disabled. A genuinely terminating folder (with a
-// deletion timestamp) is then garbage-collected; a folder left only labeled becomes an ordinary
-// folder again, so no stray label remains to make the poller cascade it if the feature is later
-// re-enabled. This runs once at startup: with the feature off no new terminating folders appear.
+// drainTerminatingFolders cleans up folders left labeled terminating when the feature is disabled.
+// A folder that carries the label but never got a deletion timestamp (an interrupted delete) is
+// reverted to an ordinary folder, so no stray label remains to make the poller cascade it if the
+// feature is later re-enabled. A folder that is actually terminating (deletion timestamp set) is an
+// in-flight cascade and is left finalized rather than stripped: this drain does not delete folder
+// contents or mark child folders, so stripping its finalizer would orphan them -- it stays
+// Terminating until the feature is re-enabled and the poller completes it. This runs once at
+// startup: with the feature off no new terminating folders appear.
 func (w *CascadePoller) drainTerminatingFolders(ctx context.Context) {
 	if w.folderMutator == nil {
 		return
@@ -517,6 +522,16 @@ func (d *dynamicFolderMutator) StripCascadeMetadata(ctx context.Context, namespa
 		obj, err := d.client.Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
 			return err
+		}
+
+		// Leave an in-flight cascade finalized rather than stripping it. A folder with a deletion
+		// timestamp was already accepted for delete while the feature was on; removing its finalizer
+		// here lets storage delete it at once, but the flag-off drain never deletes the folder's
+		// contents or marks its child folders, so dashboards, alert rules, library elements, and
+		// children would be orphaned. It stays Terminating until the feature is re-enabled and the
+		// poller completes it.
+		if ts := obj.GetDeletionTimestamp(); ts != nil && !ts.IsZero() {
+			return nil
 		}
 
 		finalizers := obj.GetFinalizers()
