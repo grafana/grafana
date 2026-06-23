@@ -13,6 +13,13 @@ export const MAX_SNIPPETS_PER_DASHBOARD = 3;
 // longer before firing — the deep column loads independently anyway
 const DEEP_SEARCH_DEBOUNCE_MS = 500;
 
+/** A single matched panel shown under a dashboard card. */
+export interface DeepSearchSnippet {
+  text: string;
+  /** Cosine distance for this panel match (lower = closer). */
+  score: number;
+}
+
 /** One dashboard in the deep search column, aggregated from its panel-level matches. */
 export interface DeepSearchDashboardResult {
   dashboardUid: string;
@@ -21,8 +28,8 @@ export interface DeepSearchDashboardResult {
   folderTitle?: string;
   /** Dashboard tags, parsed from the matched panel snippet. */
   tags: string[];
-  /** Up to MAX_SNIPPETS_PER_DASHBOARD matched panel texts, best match first. */
-  snippets: string[];
+  /** Up to MAX_SNIPPETS_PER_DASHBOARD matched panel snippets, best match first. */
+  snippets: DeepSearchSnippet[];
   /** Total panel-level matches for this dashboard (can exceed snippets shown). */
   matchedPanelCount: number;
   /** Lowest cosine distance among this dashboard's matches (lower = closer). */
@@ -49,22 +56,20 @@ function parseSnippetTags(content: string): string[] {
 }
 
 /**
- * Cleans a snippet for display. Drops the "Tags:" line (tags are rendered as
- * pills on the card) and the leading folder/dashboard-title breadcrumb segments
- * (already shown as the card header + subtitle, so repeating them is noise).
- * Titles can contain " — " but never the " → " breadcrumb separator, so each is
- * exactly one segment: the folder segment equals the resolved folder title, and
- * the dashboard segment is the prefix of the card title (which is
- * `dashboardTitle — panelTitle`). Row name, panel title and queries are kept.
- * Snippets that don't match (e.g. the mock) are returned unchanged.
+ * Cleans a snippet for display. The backend content is a breadcrumb line
+ * (folder → dashboard → row → panel → description) followed by a "Tags:" line
+ * and the raw query expressions. We keep only the breadcrumb — tags render as
+ * pills, and raw queries add little value in the palette — and drop the leading
+ * folder/dashboard-title segments from it (already shown as the card header +
+ * subtitle, so repeating them is noise). Titles can contain " — " but never the
+ * " → " breadcrumb separator, so each is exactly one segment: the folder segment
+ * equals the resolved folder title, and the dashboard segment is the prefix of
+ * the card title (which is `dashboardTitle — panelTitle`). Row name and panel
+ * title are kept. Snippets without a breadcrumb (e.g. the mock) pass through.
  */
 function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string): string {
-  const lines = snippet.split('\n').filter((line) => !line.startsWith(TAGS_LINE_PREFIX));
-  if (lines.length === 0) {
-    return '';
-  }
+  const segments = snippet.split('\n')[0].split(BREADCRUMB_SEPARATOR);
 
-  const segments = lines[0].split(BREADCRUMB_SEPARATOR);
   let start = 0;
   while (start < segments.length) {
     const segment = segments[start];
@@ -76,18 +81,28 @@ function formatSnippet(snippet: string, cardTitle: string, folderTitle?: string)
     start++;
   }
 
-  if (start > 0) {
-    lines[0] = segments.slice(start).join(BREADCRUMB_SEPARATOR);
-  }
-  // If the whole breadcrumb was redundant, drop the now-empty first line
-  return (lines[0] === '' ? lines.slice(1) : lines).join('\n');
+  return segments.slice(start).join(BREADCRUMB_SEPARATOR);
+}
+
+/**
+ * Extracts the bare dashboard title from a hit. The hit title is
+ * `dashboardTitle — panelTitle`, but the card only wants the dashboard name.
+ * The breadcrumb's first line holds each title as its own " → " segment, and
+ * the dashboard title is the one segment that is a prefix of the hit title
+ * (folder/row/panel/description segments are not). Falls back to the hit title
+ * when there's no breadcrumb to parse (e.g. the mock).
+ */
+function extractDashboardTitle(content: string, hitTitle: string): string {
+  const segments = content.split('\n')[0].split(BREADCRUMB_SEPARATOR);
+  const dashboardSegment = segments.find((segment) => segment === hitTitle || hitTitle.startsWith(segment + ' — '));
+  return dashboardSegment ?? hitTitle;
 }
 
 /**
  * Groups panel-level search results into one entry per dashboard, ranked by
- * number of matched panels (desc), then by best score (asc). Results arrive
- * ordered by ascending distance, so the first hits per dashboard are its best
- * ones — snippet order relies on that.
+ * number of matched panels (desc), then by best score (asc). The panel snippets
+ * within each dashboard are sorted by score (best first) and capped at
+ * MAX_SNIPPETS_PER_DASHBOARD.
  */
 export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
   const byDashboard = new Map<string, DeepSearchDashboardResult>();
@@ -101,7 +116,7 @@ export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSe
     if (!group) {
       group = {
         dashboardUid: result.dashboardUid,
-        title: result.dashboardTitle,
+        title: extractDashboardTitle(result.content, result.dashboardTitle),
         url: `/d/${result.dashboardUid}`,
         folderTitle: result.folderTitle,
         // Tags are dashboard-level, so the same on every panel snippet — take the first
@@ -115,17 +130,22 @@ export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSe
 
     group.matchedPanelCount += 1;
     group.bestScore = Math.min(group.bestScore, result.score);
-    if (group.snippets.length < MAX_SNIPPETS_PER_DASHBOARD && result.content) {
+    if (result.content) {
       const text = formatSnippet(result.content, result.dashboardTitle, result.folderTitle);
       if (text) {
-        group.snippets.push(text);
+        group.snippets.push({ text, score: result.score });
       }
     }
   }
 
-  return [...byDashboard.values()].sort(
-    (a, b) => b.matchedPanelCount - a.matchedPanelCount || a.bestScore - b.bestScore
-  );
+  const groups = [...byDashboard.values()];
+  for (const group of groups) {
+    // Show the best-scoring panels first (lower distance = closer match)
+    group.snippets.sort((a, b) => a.score - b.score);
+    group.snippets = group.snippets.slice(0, MAX_SNIPPETS_PER_DASHBOARD);
+  }
+
+  return groups.sort((a, b) => b.matchedPanelCount - a.matchedPanelCount || a.bestScore - b.bestScore);
 }
 
 /**

@@ -494,7 +494,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       minWidth: 0,
     }),
     deepSearchColumn: css({
-      flex: '0 0 40%',
+      flex: '0 0 50%',
       minWidth: 0,
       display: 'flex',
       flexDirection: 'column',

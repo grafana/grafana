@@ -87,13 +87,14 @@ export const DeepSearchResultItem = React.forwardRef<HTMLAnchorElement, DeepSear
 
     return (
       <a ref={ref} className={styles.card} href={locationUtil.assureBaseUrl(result.url)} onClick={onClick}>
+        {result.folderTitle && <div className={styles.folder}>{result.folderTitle} /</div>}
         <div className={styles.titleRow}>
           <span className={styles.title}>{result.title}</span>
         </div>
-        {result.folderTitle && <div className={styles.folder}>{result.folderTitle}</div>}
         {result.snippets.map((snippet, index) => (
-          <div key={index} className={styles.snippet} title={snippet}>
-            {snippet}
+          <div key={index} className={styles.snippet} title={snippet.text}>
+            <span className={styles.score}>{snippet.score.toFixed(2)}</span>
+            {snippet.text}
           </div>
         ))}
         {result.tags.length > 0 && <TagList tags={result.tags} className={styles.tagList} displayMax={5} />}
@@ -195,6 +196,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
+    }),
+    score: css({
+      display: 'inline-block',
+      marginRight: theme.spacing(1),
+      fontFamily: theme.typography.fontFamilyMonospace,
+      color: theme.colors.text.disabled,
     }),
     tagList: css({
       // TagList centers by default; left-align under the snippets

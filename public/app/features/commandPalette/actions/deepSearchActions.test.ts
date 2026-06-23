@@ -70,8 +70,27 @@ describe('groupDeepSearchResults', () => {
       panelResult({ content: 'fourth', score: 0.4 }),
     ]);
 
-    expect(grouped[0].snippets).toEqual(['first', 'second', 'third']);
+    expect(grouped[0].snippets).toEqual([
+      { text: 'first', score: 0.1 },
+      { text: 'second', score: 0.2 },
+      { text: 'third', score: 0.3 },
+    ]);
     expect(grouped[0].matchedPanelCount).toBe(4);
+  });
+
+  it('sorts panel snippets by score (best first) and caps at 3', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({ content: 'third', score: 0.3 }),
+      panelResult({ content: 'first', score: 0.1 }),
+      panelResult({ content: 'fourth', score: 0.4 }),
+      panelResult({ content: 'second', score: 0.2 }),
+    ]);
+
+    expect(grouped[0].snippets).toEqual([
+      { text: 'first', score: 0.1 },
+      { text: 'second', score: 0.2 },
+      { text: 'third', score: 0.3 },
+    ]);
   });
 
   it('strips the redundant folder and dashboard title from snippet breadcrumbs and hoists tags', () => {
@@ -86,11 +105,32 @@ describe('groupDeepSearchResults', () => {
       }),
     ]);
 
+    // The card title is the bare dashboard name, with the panel suffix dropped
+    expect(grouped[0].title).toBe('Kafka — Broker & Consumer Lag');
     // Folder ("Streaming") and dashboard ("Kafka — Broker & Consumer Lag") segments are dropped;
     // panel title and description are kept, and the "Tags:" line is removed from the snippet text
-    expect(grouped[0].snippets).toEqual(['Consumer group lag → Offset lag per group.']);
+    expect(grouped[0].snippets).toEqual([{ text: 'Consumer group lag → Offset lag per group.', score: 0.2 }]);
     // Tags are parsed out and surfaced at the dashboard level (rendered as pills)
     expect(grouped[0].tags).toEqual(['infra', 'prod']);
+  });
+
+  it('drops the trailing query expression lines from the snippet', () => {
+    const grouped = groupDeepSearchResults([
+      panelResult({
+        dashboardTitle: 'Prometheus — Node & Service Metrics — Node CPU utilization',
+        folderTitle: 'Infrastructure',
+        content:
+          'Prometheus — Node & Service Metrics → Node CPU utilization → Per-instance CPU busy percentage.\n' +
+          'Tags: prometheus\n' +
+          '100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
+      }),
+    ]);
+
+    // Only the breadcrumb (minus the dashboard prefix) survives — the Tags and PromQL lines are gone
+    expect(grouped[0].snippets).toEqual([
+      { text: 'Node CPU utilization → Per-instance CPU busy percentage.', score: 0.2 },
+    ]);
+    expect(grouped[0].tags).toEqual(['prometheus']);
   });
 
   it('keeps a snippet unchanged when it has no redundant breadcrumb prefix and reports no tags', () => {
@@ -98,7 +138,7 @@ describe('groupDeepSearchResults', () => {
       panelResult({ dashboardTitle: 'API latency', folderTitle: 'Observability', content: 'p99 latency by region' }),
     ]);
 
-    expect(grouped[0].snippets).toEqual(['p99 latency by region']);
+    expect(grouped[0].snippets).toEqual([{ text: 'p99 latency by region', score: 0.2 }]);
     expect(grouped[0].tags).toEqual([]);
   });
 
@@ -110,7 +150,7 @@ describe('groupDeepSearchResults', () => {
     ]);
 
     expect(grouped).toHaveLength(1);
-    expect(grouped[0].snippets).toEqual(['real content']);
+    expect(grouped[0].snippets).toEqual([{ text: 'real content', score: 0.2 }]);
     expect(grouped[0].matchedPanelCount).toBe(2);
   });
 });
