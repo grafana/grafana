@@ -1,7 +1,9 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { type Decorator } from '@storybook/react';
 import * as React from 'react';
 
 import { getThemeById, type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { GlobalStyles } from '../../themes/GlobalStyles/GlobalStyles';
 
@@ -27,10 +29,12 @@ const ThemeableStory = ({ children, handleSassThemeChange, themeId }: React.Prop
 
   return (
     <ThemeContext.Provider value={theme}>
-      <GlobalStyles />
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <GlobalStyles />
 
-      <style>{css}</style>
-      {children}
+        <style>{css}</style>
+        {children}
+      </OpenFeatureProvider>
     </ThemeContext.Provider>
   );
 };
