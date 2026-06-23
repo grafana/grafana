@@ -69,7 +69,13 @@ func (r *migrationRepository) search(ctx context.Context, query *annotations.Ite
 
 	newItems, err := r.proxy.List(ctx, query.OrgID, query)
 	if err != nil {
-		return nil, err
+		// In proxy-all the new store is authoritative; a silent legacy fallback would
+		// hide annotations behind a 200. Only degrade while legacy still holds everything.
+		if r.cfg.AnnotationAppPlatform.ProxyAll() {
+			return nil, err
+		}
+		r.logger.Warn("new store list failed, returning legacy results only", "err", err)
+		newItems = nil
 	}
 
 	legacyItems, err := r.legacyToMerge(ctx, query)

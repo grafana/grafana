@@ -199,6 +199,26 @@ func TestMigrationRepository_Find(t *testing.T) {
 		assert.Len(t, legacy.findCalls, 1)
 	})
 
+	t.Run("proxy-writes falls back to legacy when the new store errors", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{item(2, 20)}}
+		proxy := &fakeProxy{listErr: errors.New("new store down")}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		got, err := repo.Find(context.Background(), &annotations.ItemQuery{Limit: 10})
+		require.NoError(t, err)
+		assert.Equal(t, []*annotations.ItemDTO{item(2, 20)}, got)
+	})
+
+	t.Run("proxy-all returns the error when the new store errors", func(t *testing.T) {
+		legacy := &fakeLegacy{findResult: []*annotations.ItemDTO{item(2, 20)}}
+		proxy := &fakeProxy{listErr: errors.New("new store down")}
+		repo := newTestRepo(t, "proxy-all", legacy, proxy, usertest.NewUserServiceFake())
+
+		_, err := repo.Find(context.Background(), &annotations.ItemQuery{Limit: 10})
+		require.Error(t, err)
+		assert.Empty(t, legacy.findCalls)
+	})
+
 	t.Run("proxy-all with type=annotation reads new store only", func(t *testing.T) {
 		legacy := &fakeLegacy{}
 		proxy := &fakeProxy{listResult: []*annotations.ItemDTO{item(1, 10)}}

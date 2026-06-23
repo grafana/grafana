@@ -28,13 +28,18 @@ type MigrationProxy struct {
 
 func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service) (*MigrationProxy, error) {
 	phase := cfg.AnnotationAppPlatform.APIMigrationPhase
+
+	if phase == "off" {
+		return nil, nil
+	}
+
 	switch phase {
-	case "off", "proxy-writes", "proxy-all":
+	case "proxy-writes", "proxy-all":
 	default:
 		return nil, fmt.Errorf("annotation proxy: unknown api_migration_phase %q: must be one of off, proxy-writes, proxy-all", phase)
 	}
 
-	if phase != "off" && strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
+	if strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL) == "" {
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
