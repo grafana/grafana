@@ -174,6 +174,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		Analytics: dtos.FrontendSettingsAnalyticsDTO{
 			Enabled: cfg.SectionWithEnvOverrides("analytics").Key("enabled").MustBool(true),
 		},
+		Passkey: passkeyFrontendSettings(cfg),
 
 		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
 			MinInterval: cfg.UnifiedAlerting.MinInterval.String(),
@@ -240,6 +241,16 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 
 func isSupportBundlesEnabled(cfg *setting.Cfg) bool {
 	return cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
+}
+
+// passkeyFrontendSettings returns the passkey block for bootData, or nil when the
+// feature is off. Returning nil keeps the field out of the JSON entirely so the
+// frontend's `config.passkey?.enabled` check resolves to false without ambiguity.
+func passkeyFrontendSettings(cfg *setting.Cfg) *dtos.FrontendSettingsPasskeyDTO {
+	if !cfg.Passkey.Enabled {
+		return nil
+	}
+	return &dtos.FrontendSettingsPasskeyDTO{Enabled: true}
 }
 
 func getShortCommitHash(commitHash string, maxLength int) string {

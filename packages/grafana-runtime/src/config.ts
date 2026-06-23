@@ -224,6 +224,9 @@ export class GrafanaBootConfig {
     enabled: true,
     presenceIndicatorsDisabled: false,
   };
+  passkey?: {
+    enabled: boolean;
+  };
   googleAnalyticsId?: string;
   googleAnalytics4Id?: string;
   googleAnalytics4SendManualPageViews = false;

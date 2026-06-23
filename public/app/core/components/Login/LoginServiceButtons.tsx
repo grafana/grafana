@@ -6,6 +6,13 @@ import { Trans } from '@grafana/i18n';
 import { Icon, type IconName, LinkButton, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 
+import { PasskeyLoginButton } from './PasskeyLoginButton';
+
+const PASSKEY_KEY = 'passkey';
+
+const isPasskeyEnabled = () =>
+  Boolean(config.passkey?.enabled) && typeof window !== 'undefined' && 'PublicKeyCredential' in window;
+
 export interface LoginService {
   bgColor: string;
   enabled: boolean;
@@ -71,6 +78,15 @@ const loginServices: () => LoginServices = () => {
       name: config.oauth?.generic_oauth?.name || 'OAuth',
       icon: config.oauth?.generic_oauth?.icon || ('signin' as const),
       hrefName: 'generic_oauth',
+    },
+    // Passkey is rendered as an action button (LinkButton replacement) in the
+    // map below — the descriptor only carries `enabled`, the other fields are
+    // unused for this entry.
+    [PASSKEY_KEY]: {
+      bgColor: '#262628',
+      enabled: isPasskeyEnabled(),
+      name: 'Passkey',
+      icon: 'key-skeleton-alt' as const,
     },
   };
 };
@@ -148,6 +164,9 @@ export const LoginServiceButtons = () => {
       <Stack direction={'column'} width={'100%'}>
         <LoginDivider />
         {Object.entries(enabledServices).map(([key, service]) => {
+          if (key === PASSKEY_KEY) {
+            return <PasskeyLoginButton key={key} />;
+          }
           const serviceName = service.name;
           return (
             <LinkButton

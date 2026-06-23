@@ -95,6 +95,10 @@ type FrontendSettingsAnalyticsDTO struct {
 	PresenceIndicatorsDisabled bool `json:"presenceIndicatorsDisabled,omitempty"`
 }
 
+type FrontendSettingsPasskeyDTO struct {
+	Enabled bool `json:"enabled"`
+}
+
 type FrontendSettingsUnifiedAlertingStateHistoryDTO struct {
 	Backend                       string `json:"backend,omitempty"`
 	Primary                       string `json:"primary,omitempty"`
@@ -282,6 +286,7 @@ type FrontendSettingsDTO struct {
 	RecordedQueries         FrontendSettingsRecordedQueriesDTO `json:"recordedQueries"`
 	Reporting               FrontendSettingsReportingDTO       `json:"reporting"`
 	Analytics               FrontendSettingsAnalyticsDTO       `json:"analytics"`
+	Passkey                 *FrontendSettingsPasskeyDTO        `json:"passkey,omitempty"`
 	UnifiedAlertingEnabled  bool                               `json:"unifiedAlertingEnabled"`
 	UnifiedAlerting         FrontendSettingsUnifiedAlertingDTO `json:"unifiedAlerting"`
 	Oauth                   map[string]any                     `json:"oauth"`

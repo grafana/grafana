@@ -10983,6 +10983,16 @@
     "layout": {
       "update-password": "Update your password"
     },
+    "passkey": {
+      "error": {
+        "credential-not-found": "No passkey was found for this site. Sign in with your password to register one.",
+        "expired": "That took too long. Please try again.",
+        "title": "Passkey sign-in failed",
+        "unknown": "Could not sign in with passkey. Please try again."
+      },
+      "sign-in": "Sign in with a passkey",
+      "signing-in": "Signing in…"
+    },
     "services": {
       "sing-in-with-prefix": "Sign in with {{serviceName}}"
     },
@@ -16428,6 +16438,50 @@
     "role-column": "Role",
     "select-org-button": "Select organisation",
     "title": "Organizations"
+  },
+  "user-passkeys": {
+    "cancel": "Cancel",
+    "created-column": "Registered",
+    "delete": "Delete passkey",
+    "delete-modal": {
+      "body": "You will not be able to sign in with \"{{name}}\" again. This cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "confirmation": "Delete",
+      "title": "Delete passkey?"
+    },
+    "empty": "You haven't registered any passkeys yet.",
+    "enroll": {
+      "button": "Add passkey",
+      "error": {
+        "duplicate": "This passkey is already registered to your account.",
+        "expired": "That took too long. Please try again.",
+        "name-required": "Please enter a name for your passkey.",
+        "title": "Could not register passkey",
+        "unknown": "Could not register passkey. Please try again."
+      },
+      "modal": {
+        "cancel": "Cancel",
+        "continue": "Continue",
+        "in-progress": "Waiting for device…",
+        "name-description": "A label to help you recognise this passkey later, e.g. \"Work laptop\" or \"Yubikey\".",
+        "name-input": "Passkey name",
+        "name-label": "Name",
+        "title": "Add a passkey"
+      }
+    },
+    "error": {
+      "delete": "Could not delete passkey.",
+      "rename": "Could not rename passkey."
+    },
+    "heading": "Passkeys",
+    "last-used-column": "Last used",
+    "loading": "Loading passkeys...",
+    "name-column": "Name",
+    "name-input": "Passkey name",
+    "never-used": "Never",
+    "rename": "Rename passkey",
+    "save": "Save"
   },
   "user-picker": {
     "noOptionsMessage-no-users-found": "No users found",
