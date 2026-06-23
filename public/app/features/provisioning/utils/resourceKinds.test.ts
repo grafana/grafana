@@ -124,4 +124,12 @@ describe('getAvailableResourceKinds', () => {
   it('returns no kinds when none are declared', () => {
     expect(getAvailableResourceKinds([])).toEqual([]);
   });
+
+  it('matches on group/kind, not object identity', () => {
+    const available: SupportedResource[] = [{ group: 'dashboard.grafana.app', kind: 'Dashboard' }];
+    // A separate object with the same group/kind as the registry entry.
+    const equivalent = { ...resourceKindInfos.dashboard };
+
+    expect(isResourceKindAvailable(equivalent, available)).toBe(true);
+  });
 });

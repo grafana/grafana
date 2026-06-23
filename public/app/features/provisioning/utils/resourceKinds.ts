@@ -117,7 +117,9 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
  * kinds (declared but not acted on) are excluded.
  *
  * When `availableResources` is unset (e.g. settings not loaded yet) we fall back
- * to the full registry so the UI keeps working for the always-on kinds.
+ * to the full registry as a best-effort default — this can include kinds the
+ * backend currently ships disabled (e.g. playlists), so callers that must respect
+ * the disabled state should wait for `availableResources` to be populated.
  */
 export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   if (!availableResources) {
@@ -130,5 +132,9 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
 
 /** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
 export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
-  return getAvailableResourceKinds(availableResources).includes(info);
+  // Compare on group/kind rather than object identity so callers can pass an
+  // equivalent descriptor that isn't the exact registry instance.
+  return getAvailableResourceKinds(availableResources).some(
+    (available) => available.group === info.group && available.kind === info.kind
+  );
 }

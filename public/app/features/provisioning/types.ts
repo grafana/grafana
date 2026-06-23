@@ -92,8 +92,10 @@ export interface StatusInfo {
 }
 
 // Tree view types for combined Resources/Files view.
-// `Folder`/`Dashboard`/`Playlist` are resource-backed (see resourceKinds.ts);
-// `File` is the non-resource fallback for plain files that don't map to a kind.
+// `Dashboard`/`Playlist` map to a provisioning resource kind (see resourceKinds.ts).
+// `Folder` usually does too, but getItemType also infers it from plain directory
+// paths that have no backing resource. `File` is the fallback for plain files
+// that don't map to a known kind.
 export type ItemType = 'Folder' | 'Dashboard' | 'Playlist' | 'File';
 export type SyncStatus = 'synced' | 'pending';
 
