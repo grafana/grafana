@@ -106,4 +106,22 @@ describe('SourceLink', () => {
     await waitFor(() => expect(wasRequested()).toBe(true));
     expect(screen.queryByRole('link', { name: /source/i })).not.toBeInTheDocument();
   });
+
+  it('renders nothing for generic git providers', async () => {
+    const wasRequested = mockRepositories([
+      makeRepository({ type: 'git', url: 'https://example.com/grafana/repo', branch: 'main' }),
+    ]);
+
+    render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
+
+    await waitFor(() => expect(wasRequested()).toBe(true));
+    expect(screen.queryByRole('link', { name: /source/i })).not.toBeInTheDocument();
+  });
+
+  it('renders nothing when the provisioning feature toggle is off', () => {
+    // Toggle off skips the query entirely, so the component resolves synchronously.
+    config.featureToggles.provisioning = false;
+    const { container } = render(<SourceLink repositoryName="my-repo" sourcePath="playlists/foo.json" />);
+    expect(container).toBeEmptyDOMElement();
+  });
 });

@@ -1,6 +1,6 @@
 import { type RepositorySpec } from 'app/api/clients/provisioning/v0alpha1';
 
-import { type EnhancedGitProvider, type InstructionAvailability, type RepoType } from '../Wizard/types';
+import { type InstructionAvailability, type RepoType } from '../Wizard/types';
 
 /**
  * Validates a Git branch name according to the following rules:
@@ -112,15 +112,6 @@ export const getRepoHrefForProvider = (spec?: RepositorySpec) => {
 
 export function getHasTokenInstructions(type: RepoType): type is InstructionAvailability {
   return type === 'github' || type === 'gitlab' || type === 'bitbucket';
-}
-
-/**
- * Whether the provider has a hosted web UI we can deep-link a file into (i.e. `getRepoFileUrl` can
- * build a URL for it). True for GitHub, GitHub Enterprise, GitLab and Bitbucket; false for generic
- * `git` and `local`, which have no browsable UI.
- */
-export function isEnhancedGitProvider(type: string | undefined): type is EnhancedGitProvider {
-  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 }
 
 type GetRepoFileUrlParams = {
