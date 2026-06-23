@@ -4,6 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
+import { getKindInfoByItemType, getKindInfoByResource } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -57,11 +58,9 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 }
 
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
-  if (resource?.resource === 'dashboards') {
-    return 'Dashboard';
-  }
-  if (resource?.resource === 'folders') {
-    return 'Folder';
+  const kindInfo = getKindInfoByResource(resource?.resource);
+  if (kindInfo) {
+    return kindInfo.itemType;
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
@@ -79,15 +78,7 @@ function getDisplayTitle(path: string, resource?: ResourceListItem): string {
 }
 
 export function getIconName(type: ItemType): IconName {
-  switch (type) {
-    case 'Folder':
-      return 'folder';
-    case 'Dashboard':
-      return 'apps';
-    case 'File':
-    default:
-      return 'file-alt';
-  }
+  return getKindInfoByItemType(type)?.icon ?? 'file-alt';
 }
 
 export function getStatus(fileHash?: string, resourceHash?: string): SyncStatus {
