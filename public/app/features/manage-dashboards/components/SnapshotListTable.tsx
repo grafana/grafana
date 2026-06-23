@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
-import useAsync from 'react-use/lib/useAsync';
+import { useCallback, useState } from 'react';
+import { useAsyncRetry } from 'react-use';
 
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Box, Button, ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
+import { Alert, Box, Button, ConfirmModal, EmptyState, ScrollContainer, TextLink } from '@grafana/ui';
 import {
   getDashboardSnapshotSrv,
   type Snapshot,
@@ -27,17 +27,17 @@ export async function getSnapshots(opts?: SnapshotListOptions): Promise<Snapshot
 export const SnapshotListTable = () => {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [continueToken, setContinueToken] = useState<string | undefined>();
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [removeSnapshot, setRemoveSnapshot] = useState<Snapshot | undefined>();
 
-  useAsync(async () => {
+  const {
+    loading: isInitialLoading,
+    error: initialError,
+    retry: loadInitial,
+  } = useAsyncRetry(async () => {
     const page = await getSnapshots();
     setSnapshots(page.items);
     setContinueToken(page.continueToken);
-    setIsInitialLoading(false);
-    setHasLoadedOnce(true);
   }, []);
 
   const loadMore = useCallback(async () => {
@@ -67,7 +67,23 @@ export const SnapshotListTable = () => {
     [snapshots]
   );
 
-  if (hasLoadedOnce && snapshots.length === 0 && !continueToken) {
+  if (initialError && !isInitialLoading) {
+    return (
+      <Alert
+        severity="error"
+        title={t('snapshot.load-error.title', 'Failed to load snapshots')}
+        action={
+          <Button variant="secondary" onClick={loadInitial}>
+            <Trans i18nKey="snapshot.load-error.retry">Retry</Trans>
+          </Button>
+        }
+      >
+        {initialError.message}
+      </Alert>
+    );
+  }
+
+  if (!isInitialLoading && snapshots.length === 0 && !continueToken) {
     return (
       <EmptyState
         variant="call-to-action"

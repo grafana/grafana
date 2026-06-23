@@ -203,4 +203,21 @@ describe('SnapshotListTable', () => {
 
     await waitFor(() => expect(screen.getByText("You haven't created any snapshots yet")).toBeInTheDocument());
   });
+
+  test('shows a Retry button when the initial fetch fails and recovers on click', async () => {
+    config.featureToggles.kubernetesSnapshots = true;
+    get.mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(k8sFirstPage);
+
+    const { user } = render(<SnapshotListTable />);
+
+    await waitFor(() => expect(screen.getByText('Failed to load snapshots')).toBeInTheDocument());
+    expect(screen.getByText('boom')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    await waitFor(() => expect(screen.getByText('K8s Snap 1')).toBeInTheDocument());
+    expect(screen.getByText('K8s Snap 2')).toBeInTheDocument();
+    // error UI must be gone after a successful retry
+    expect(screen.queryByText('Failed to load snapshots')).not.toBeInTheDocument();
+  });
 });
