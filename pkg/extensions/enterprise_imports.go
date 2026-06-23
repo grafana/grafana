@@ -552,7 +552,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/loki"
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
-	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/parca"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/tempo"
