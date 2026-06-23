@@ -254,6 +254,8 @@ cloud.google.com/go/storage v1.50.0/go.mod h1:l7XeiD//vx5lfqE3RavfmU9yvk5Pp0Zhcv
 cloud.google.com/go/storage v1.56.0/go.mod h1:Tpuj6t4NweCLzlNbw9Z9iwxEkrSem20AetIeH/shgVU=
 cloud.google.com/go/storage v1.59.0/go.mod h1:cMWbtM+anpC74gn6qjLh+exqYcfmB9Hqe5z6adx+CLI=
 cloud.google.com/go/storage v1.61.3/go.mod h1:JtqK8BBB7TWv0HVGHubtUdzYYrakOQIsMLffZ2Z/HWk=
+cloud.google.com/go/storage v1.62.3 h1:SZq1t23NCI+e96dH77Dg3PEfsNNEjqO8zE5AnD8gVD0=
+cloud.google.com/go/storage v1.62.3/go.mod h1:cpYz/kRVZ+UQAF1uHeea10/9ewcRbxGoGNKsS9daSXA=
 cloud.google.com/go/storagetransfer v1.13.1 h1:Sjukr1LtUt7vLTHNvGc2gaAqlXNFeDFRIRmWGrFaJlY=
 cloud.google.com/go/storagetransfer v1.13.1/go.mod h1:S858w5l383ffkdqAqrAA+BC7KlhCqeNieK3sFf5Bj4Y=
 cloud.google.com/go/talent v1.8.4 h1:1kJJ+WCY5LZ1A4rCa32zKh3N2xT3I8koiS63+vV0WC4=
@@ -340,6 +342,8 @@ github.com/ClickHouse/ch-go v0.71.0 h1:bUdZ/EZj/LcVHsMqaRUP2holqygrPWQKeMjc6nZoy
 github.com/ClickHouse/ch-go v0.71.0/go.mod h1:NwbNc+7jaqfY58dmdDUbG4Jl22vThgx1cYjBw0vtgXw=
 github.com/ClickHouse/clickhouse-go/v2 v2.43.0 h1:fUR05TrF1GyvLDa/mAQjkx7KbgwdLRffs2n9O3WobtE=
 github.com/ClickHouse/clickhouse-go/v2 v2.43.0/go.mod h1:o6jf7JM/zveWC/PP277BLxjHy5KjnGX/jfljhM4s34g=
+github.com/ClickHouse/clickhouse-go/v2 v2.45.0 h1:iHt15nA4iYhfde5bDQAcLAat9BAh7B5ksPRNRa4UI7s=
+github.com/ClickHouse/clickhouse-go/v2 v2.45.0/go.mod h1:giJfUVlMkcfUEPVfRpt51zZaGEx9i17gCos8gBl392c=
 github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53 h1:sR+/8Yb4slttB4vD+b9btVEnWgL3Q00OBTzVT8B9C0c=
 github.com/CloudyKit/fastprinter v0.0.0-20200109182630-33d98a066a53/go.mod h1:+3IMCy2vIlbG1XG/0ggNQv0SvxCAIpPM5b1nCz56Xno=
 github.com/CloudyKit/jet/v6 v6.2.0 h1:EpcZ6SR9n28BUGtNJSvlBqf90IpjeFr36Tizxhn/oME=
@@ -1389,6 +1393,8 @@ github.com/parquet-go/parquet-go v0.29.0 h1:xXlPtFVR51jpSVzf+cgHnNIcb7Xet+iuvkbe
 github.com/parquet-go/parquet-go v0.29.0/go.mod h1:navtkAYr2LGoJVp141oXPlO/sxLvaOe3la2JEoD8+rg=
 github.com/paulmach/orb v0.12.0 h1:z+zOwjmG3MyEEqzv92UN49Lg1JFYx0L9GpGKNVDKk1s=
 github.com/paulmach/orb v0.12.0/go.mod h1:5mULz1xQfs3bmQm63QEJA6lNGujuRafwA5S/EnuLaLU=
+github.com/paulmach/orb v0.13.0 h1:r7n7mQGGF+cj/CbcivEj9J3HGK+XR+yXnvzRdq9saIw=
+github.com/paulmach/orb v0.13.0/go.mod h1:6scRWINywA2Jf05dcjOfLfxrUIMECvTSG2MVbRLxu/k=
 github.com/pb33f/jsonpath v0.8.1 h1:84C6QRyx6HcSm6PZnsMpcqYot3IsZ+m0n95+0NbBbvs=
 github.com/pb33f/jsonpath v0.8.1/go.mod h1:zBV5LJW4OQOPatmQE2QdKpGQJvhDTlE5IEj6ASaRNTo=
 github.com/pb33f/jsonpath v0.8.2 h1:Ou4C7zjYClBm97dfZjDCjdZGusJoynv/vrtiEKNfj2Y=
@@ -1607,6 +1613,8 @@ github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQ
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/vertica/vertica-sql-go v1.3.5 h1:IrfH2WIgzZ45yDHyjVFrXU2LuKNIjF5Nwi90a6cfgUI=
 github.com/vertica/vertica-sql-go v1.3.5/go.mod h1:jnn2GFuv+O2Jcjktb7zyc4Utlbu9YVqpHH/lx63+1M4=
+github.com/vertica/vertica-sql-go v1.3.6 h1:uDJPdBivsI5EwfX3NMDWZaQlVs9zTnVyxE/nYhr3bY0=
+github.com/vertica/vertica-sql-go v1.3.6/go.mod h1:jnn2GFuv+O2Jcjktb7zyc4Utlbu9YVqpHH/lx63+1M4=
 github.com/vmihailenco/msgpack/v5 v5.3.5/go.mod h1:7xyJ9e+0+9SaZT0Wt1RGleJXzli6Q/V5KbhBonMG9jc=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
 github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
@@ -1633,8 +1641,12 @@ github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342 h1:FnBeRrxr7OU4VvAz
 github.com/xrash/smetrics v0.0.0-20250705151800-55b8f293f342/go.mod h1:Ohn+xnUBiLI6FVj/9LpzZWtj1/D6lUovWYBkxHVV3aM=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20260128080146-c4ed16b24b37 h1:kUXMT/fM/DpDT66WQgRUf3I8VOAWjypkMf52W5PChwA=
 github.com/ydb-platform/ydb-go-genproto v0.0.0-20260128080146-c4ed16b24b37/go.mod h1:Er+FePu1dNUieD+XTMDduGpQuCPssK5Q4BjF+IIXJ3I=
+github.com/ydb-platform/ydb-go-genproto v0.0.0-20260311095541-ebbf792c1180 h1:avIdi8eGXjKbn1WLokNR1Ofnz1k8t7tJ88YQLD/iCi8=
+github.com/ydb-platform/ydb-go-genproto v0.0.0-20260311095541-ebbf792c1180/go.mod h1:Er+FePu1dNUieD+XTMDduGpQuCPssK5Q4BjF+IIXJ3I=
 github.com/ydb-platform/ydb-go-sdk/v3 v3.127.0 h1:OfHS9ZkZgCy6y/CJ9N8123DXrgaY2BPxWsQiQ8e3wC8=
 github.com/ydb-platform/ydb-go-sdk/v3 v3.127.0/go.mod h1:stS1mQYjbJvwwYaYzKyFY9eMiuVXWWXQA6T+SpOLg9c=
+github.com/ydb-platform/ydb-go-sdk/v3 v3.135.0 h1:8c/M2B5W5xJd968DCedPv7DvQHuKzzhGGsO6J9x2+5U=
+github.com/ydb-platform/ydb-go-sdk/v3 v3.135.0/go.mod h1:VYUUkRJkKuQPkIpgtZJj6+58Fa2g8ccAqdmaaK6HP5k=
 github.com/yosida95/uritemplate/v3 v3.0.2 h1:Ed3Oyj9yrmi9087+NczuL5BwkIc4wvTb5zIM+UJPGz4=
 github.com/yosida95/uritemplate/v3 v3.0.2/go.mod h1:ILOh0sOhIJR3+L/8afwt/kE++YT040gmv5BQTMR2HP4=
 github.com/yosssi/ace v0.0.5 h1:tUkIP/BLdKqrlrPwcmH0shwEEhTRHoGnc1wFIWmaBUA=
@@ -1901,6 +1913,7 @@ go.opentelemetry.io/otel v1.39.0/go.mod h1:kLlFTywNWrFyEdH0oj2xK0bFYZtHRYUdv1Nkl
 go.opentelemetry.io/otel v1.40.0/go.mod h1:IMb+uXZUKkMXdPddhwAHm6UfOwJyh4ct1ybIlV14J0g=
 go.opentelemetry.io/otel v1.41.0/go.mod h1:Yt4UwgEKeT05QbLwbyHXEwhnjxNO6D8L5PQP51/46dE=
 go.opentelemetry.io/otel v1.42.0/go.mod h1:lJNsdRMxCUIWuMlVJWzecSMuNjE7dOYyWlqOXWkdqCc=
+go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
 go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2/go.mod h1:DvPtKE63knkDVP88qpatBj81JxN+w1bqfVbsbCbj1WY=
 go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.18.0/go.mod h1:PFx9NgpNUKXdf7J4Q3agRxMs3Y07QhTCVipKmLsMKnU=
 go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.12.2/go.mod h1:QTnxBwT/1rBIgAG1goq6xMydfYOBKU6KTiYF4fp5zL8=
@@ -1968,6 +1981,7 @@ go.opentelemetry.io/otel/trace v1.39.0/go.mod h1:88w4/PnZSazkGzz/w84VHpQafiU4Etq
 go.opentelemetry.io/otel/trace v1.40.0/go.mod h1:zeAhriXecNGP/s2SEG3+Y8X9ujcJOTqQ5RgdEJcawiA=
 go.opentelemetry.io/otel/trace v1.41.0/go.mod h1:U1NU4ULCoxeDKc09yCWdWe+3QoyweJcISEVa1RBzOis=
 go.opentelemetry.io/otel/trace v1.42.0/go.mod h1:f3K9S+IFqnumBkKhRJMeaZeNk9epyhnCmQh/EysQCdc=
+go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
 go.opentelemetry.io/proto/otlp v1.6.0/go.mod h1:cicgGehlFuNdgZkcALOCh3VE6K/u2tAjzlRhDwmVpZc=
 go.opentelemetry.io/proto/otlp v1.9.0/go.mod h1:xE+Cx5E/eEHw+ISFkwPLwCZefwVjY+pqKg1qcK03+/4=
 go.uber.org/atomic v1.9.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
@@ -2070,6 +2084,7 @@ golang.org/x/sync v0.12.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/sync v0.16.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/sync v0.17.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
 golang.org/x/sync v0.19.0/go.mod h1:9KTHXmSnoGruLpwFjVSX0lNNA75CykiMECbovNTZqGI=
+golang.org/x/sync v0.20.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
 golang.org/x/sys v0.0.0-20191112214154-59a1497f0cea/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210616045830-e2b7044e8c71/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

@@ -15,8 +15,8 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TimeZone } from '@grafana/schema';
-import { ClickOutsideWrapper, floatingUtils, useStyles2 } from '@grafana/ui';
-import { getDataLinks, getFieldActions } from 'app/plugins/panel/status-history/utils';
+import { ClickOutsideWrapper, floatingUtils, getFieldDisplayLinks, useStyles2 } from '@grafana/ui';
+import { getFieldActions } from 'app/plugins/panel/status-history/utils';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -92,7 +92,7 @@ export const AnnotationMarker2 = ({
       const annotationIndexForLinks = isClustering ? 0 : annoIdx;
 
       // @todo https://github.com/grafana/grafana/issues/119619, need to set getLinks on field, or applyFieldOverrides on dataframe
-      links.push(...getDataLinks(field, annotationIndexForLinks));
+      links.push(...getFieldDisplayLinks(field, annotationIndexForLinks));
 
       if (canExecuteActions) {
         actions.push(...getFieldActions(frame, field, replaceVariables, annotationIndexForLinks));

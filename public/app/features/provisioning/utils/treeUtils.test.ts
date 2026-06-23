@@ -2,7 +2,15 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type TreeItem } from '../types';
 
-import { buildTree, filterTree, flattenTree, getItemType, getStatus, mergeFilesAndResources } from './treeUtils';
+import {
+  buildTree,
+  filterTree,
+  flattenTree,
+  getIconName,
+  getItemType,
+  getStatus,
+  mergeFilesAndResources,
+} from './treeUtils';
 
 // Mock data
 const mockFileDetails = {
@@ -185,6 +193,17 @@ describe('getItemType', () => {
     const result = getItemType('some/path', unknownResource);
 
     expect(result).toBe('File');
+  });
+});
+
+describe('getIconName', () => {
+  it('should return the icon for a known resource-backed item type', () => {
+    expect(getIconName('Dashboard')).toBe('apps');
+    expect(getIconName('Folder')).toBe('folder');
+  });
+
+  it('should fall back to the file icon for the non-resource File type', () => {
+    expect(getIconName('File')).toBe('file-alt');
   });
 });
 

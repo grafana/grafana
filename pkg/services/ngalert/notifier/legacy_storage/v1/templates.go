@@ -119,6 +119,35 @@ func TemplatesToTemplateFiles(templates map[ResourceUID]TemplateGroup) map[strin
 	return templateFiles
 }
 
+// ManagedTemplatesToTemplates converts a ManagedTemplates map (keyed by UID) to the internal TemplateGroup map.
+func ManagedTemplatesToTemplates(managed map[string]definition.PostableApiTemplate) map[ResourceUID]TemplateGroup {
+	if managed == nil {
+		return nil
+	}
+	out := make(map[ResourceUID]TemplateGroup, len(managed))
+	for uid, t := range managed {
+		tmpl := NewTemplateGroup(ResourceUID(uid), t.Name, t.Content, TemplateKind(t.Kind), models.ProvenanceNone)
+		out[ResourceUID(uid)] = tmpl
+	}
+	return out
+}
+
+// TemplatesToManagedTemplates converts the internal TemplateGroup map to a ManagedTemplates map keyed by UID.
+func TemplatesToManagedTemplates(templates map[ResourceUID]TemplateGroup) map[string]definition.PostableApiTemplate {
+	if templates == nil {
+		return nil
+	}
+	out := make(map[string]definition.PostableApiTemplate, len(templates))
+	for uid, tg := range templates {
+		out[string(uid)] = definition.PostableApiTemplate{
+			Name:    tg.Title,
+			Content: tg.Content,
+			Kind:    definition.TemplateKind(tg.Kind),
+		}
+	}
+	return out
+}
+
 // TemplateUID generates a deterministic UID for a template based on its name.
 func TemplateUID(kind TemplateKind, name string) ResourceUID {
 	return ResourceUID(models.NameToUid(fmt.Sprintf("%s|%s", string(kind), name)))

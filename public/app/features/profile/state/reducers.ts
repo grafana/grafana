@@ -1,8 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isEmpty, isString, set } from 'lodash';
 
-import { dateTimeFormatTimeAgo, setWeekStart, type TimeZone } from '@grafana/data';
-import { getWeekStart, type WeekStart } from '@grafana/ui';
+import { dateTimeFormatTimeAgo, type TimeZone } from '@grafana/data';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ThunkResult } from 'app/types/store';
@@ -116,18 +115,6 @@ export const updateTimeZoneForSession = (timeZone: TimeZone): ThunkResult<void> 
 
     set(contextSrv, 'user.timezone', timeZone);
     dispatch(updateTimeZone({ timeZone }));
-  };
-};
-
-export const updateWeekStartForSession = (weekStart?: WeekStart): ThunkResult<void> => {
-  return async (dispatch) => {
-    if (!weekStart) {
-      weekStart = getWeekStart();
-    }
-
-    set(contextSrv, 'user.weekStart', weekStart);
-    dispatch(updateWeekStart({ weekStart }));
-    setWeekStart(weekStart);
   };
 };
 

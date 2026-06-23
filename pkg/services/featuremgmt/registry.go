@@ -177,14 +177,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "refactorVariablesTimeRange",
-			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "faroDatasourceSelector",
 			Description: "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:       FeatureStagePublicPreview,
@@ -746,15 +738,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
-		},
-		{
-			Name:         "panelFilterVariable",
-			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
-			Stage:        FeatureStageExperimental,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:        "pdfTables",
@@ -2272,10 +2255,10 @@ var (
 		{
 			Name:        "heatmapRowsAxisOptions",
 			Description: "Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "pieChartGradientColorScheme",
@@ -2379,15 +2362,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "opentsdbBackendMigration",
-			Description:     "Run queries through the data source backend",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDataSourcesPlugins,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "ttlPluginInstanceManager",
 			Description: "Enable TTL plugin instance manager",
 			Stage:       FeatureStageExperimental,
@@ -2433,8 +2407,8 @@ var (
 		},
 		{
 			Name:        "multiPropsVariables",
-			Description: "Enables support for variables whose values can have multiple properties",
-			Stage:       FeatureStageGeneralAvailability,
+			Description: "Deprecated. Enables support for variables whose values can have multiple properties",
+			Stage:       FeatureStageDeprecated,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default
@@ -2510,7 +2484,7 @@ var (
 		{
 			Name:        "queryEditorNext",
 			Description: "Enables next generation query editor experience",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
@@ -2971,7 +2945,7 @@ var (
 			Name:        "grafana.newPreferencesPage",
 			Description: "Whether to use the new SharedPreferences functional component",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
+			Generate:    Generate{React: true, Go: true},
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",
 		},
@@ -3170,6 +3144,24 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true},
+		},
+		{
+			Name:         "splunk.useLegacyResultsApi",
+			Description:  "Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "table.protoRowParser",
+			Description:  "Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -104,11 +104,6 @@ export interface FeatureToggles {
   */
   renderAuthJWT?: boolean;
   /**
-  * Refactor time range variables flow to reduce number of API calls made when query variables are chained
-  * @default false
-  */
-  refactorVariablesTimeRange?: boolean;
-  /**
   * Enable the data source selector within the Frontend Apps section of the Frontend Observability
   * @default false
   */
@@ -383,11 +378,6 @@ export interface FeatureToggles {
   * @default true
   */
   feedbackButton?: boolean;
-  /**
-  * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
-  * @default false
-  */
-  panelFilterVariable?: boolean;
   /**
   * Enables generating table data as PDF in reporting
   * @default false
@@ -1257,7 +1247,7 @@ export interface FeatureToggles {
   vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
-  * @default false
+  * @default true
   */
   heatmapRowsAxisOptions?: boolean;
   /**
@@ -1316,11 +1306,6 @@ export interface FeatureToggles {
   */
   transformationsEmptyPlaceholder?: boolean;
   /**
-  * Run queries through the data source backend
-  * @default false
-  */
-  opentsdbBackendMigration?: boolean;
-  /**
   * Enable TTL plugin instance manager
   * @default false
   */
@@ -1341,7 +1326,8 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for variables whose values can have multiple properties
+  * Deprecated. Enables support for variables whose values can have multiple properties
+  * @deprecated
   * @default true
   */
   multiPropsVariables?: boolean;
