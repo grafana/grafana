@@ -51,6 +51,8 @@ export const FlagKeys = {
   GrafanaOrgDashboardTemplates: "grafana.orgDashboardTemplates",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Enables passkey (WebAuthn) login */
+  GrafanaPasskeyAuthn: "grafana.passkeyAuthn",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
   /** Replaces the bundled home dashboard with the unified homepage React page */
@@ -314,6 +316,17 @@ export const useFlagGrafanaOrgDashboardTemplates = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Enables passkey (WebAuthn) login
+ *
+ * **Details:**
+ * - flag key: `grafana.passkeyAuthn`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPasskeyAuthn = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.passkeyAuthn", false, options).value;
 };
 
 /**

@@ -35,6 +35,7 @@ const (
 	JWTModule           = "jwt"
 	ExtendedJWTModule   = "extendedjwt"
 	RenderModule        = "render"
+	PasskeyAuthModule   = "passkey"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
 	GoogleAuthModule     = "oauth_google"
@@ -46,9 +47,10 @@ const (
 	OktaAuthModule       = "oauth_okta"
 
 	// labels
-	SAMLLabel = "SAML"
-	LDAPLabel = "LDAP"
-	JWTLabel  = "JWT"
+	SAMLLabel    = "SAML"
+	LDAPLabel    = "LDAP"
+	JWTLabel     = "JWT"
+	PasskeyLabel = "Passkey"
 	// OAuth provider labels
 	AuthProxyLabel    = "Auth Proxy"
 	AzureADLabel      = "AzureAD"
@@ -82,6 +84,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return LDAPLabel
 	case JWTModule:
 		return JWTLabel
+	case PasskeyAuthModule:
+		return PasskeyLabel
 	case AuthProxyAuthModule:
 		return AuthProxyLabel
 	case GenericOAuthModule, strings.TrimPrefix(GenericOAuthModule, "oauth_"):
