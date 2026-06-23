@@ -44,7 +44,8 @@ import {
   buildCellHeightMeasurers,
   IS_SAFARI_26,
   applyFilter,
-  compileFrameToRecords,
+  compileFrameToRecordsV1,
+  compileFrameToRecordsV2,
 } from './utils';
 
 export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
@@ -280,14 +281,17 @@ export const useNestedRows = (
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
   filter: FilterType,
-  sortColumns: SortColumn[]
+  sortColumns: SortColumn[],
+  protoParserEnabled = false
 ): NestedRowEntry[] => {
   const frameToRecords = useMemo(() => {
     if (!hasNestedFrames || !nestedFramesFieldName || !nestedData?.[0]) {
       return;
     }
-    return compileFrameToRecords(nestedData[0]);
-  }, [hasNestedFrames, nestedFramesFieldName, nestedData]);
+    return protoParserEnabled
+      ? compileFrameToRecordsV2(nestedData[0])
+      : compileFrameToRecordsV1(nestedData[0], nestedFramesFieldName);
+  }, [hasNestedFrames, nestedFramesFieldName, nestedData, protoParserEnabled]);
 
   return useMemo(() => {
     const result: NestedRowEntry[] = [];

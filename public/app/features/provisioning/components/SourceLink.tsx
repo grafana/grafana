@@ -1,11 +1,10 @@
-import { t } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 
 import { RepoTypeDisplay } from '../Wizard/types';
-import { isValidRepoType } from '../guards';
 import { useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
-import { getHasTokenInstructions, getRepoFileUrl } from '../utils/git';
+import { getRepoFileUrl } from '../utils/git';
 
 interface SourceLinkProps {
   /** The managing repository name (`grafana.app/managerId`). */
@@ -28,11 +27,8 @@ export function SourceLink({ repositoryName, sourcePath }: SourceLinkProps) {
   }
 
   const repoType = repository.type;
-  // Only git providers with a web UI expose a linkable file URL.
-  if (!isValidRepoType(repoType) || !getHasTokenInstructions(repoType)) {
-    return null;
-  }
-
+  // getRepoFileUrl only builds a URL for git providers with a browsable web UI
+  // (GitHub, GitHub Enterprise, GitLab, Bitbucket); local/generic-git resolve to undefined.
   const url = getRepoFileUrl({
     repoType,
     url: repository.url,
@@ -54,7 +50,9 @@ export function SourceLink({ repositoryName, sourcePath }: SourceLinkProps) {
       variant="secondary"
       size="sm"
     >
-      {t('provisioning.source-link.title', 'Source ({{provider}})', { provider: RepoTypeDisplay[repoType] })}
+      <Trans i18nKey="provisioning.source-link.title" values={{ provider: RepoTypeDisplay[repoType] }}>
+        Source ({'{{provider}}'})
+      </Trans>
     </LinkButton>
   );
 }

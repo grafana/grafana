@@ -7,15 +7,7 @@ import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
-import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
-import { SourceLink } from 'app/features/provisioning/components/SourceLink';
-import {
-  getManagerIdentity,
-  getManagerKind,
-  getSourcePath,
-  isManaged,
-  isManagedResourceReadOnly,
-} from 'app/features/provisioning/utils/managedResource';
+import { getManagerIdentity, getManagerKind, isManaged } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
@@ -29,17 +21,13 @@ interface Props {
 }
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
-  const isReadOnly = isManagedResourceReadOnly(playlist);
   return (
     <Card noMargin>
       <Card.Heading>
-        <Stack direction="row" gap={1} alignItems="center">
+        <Stack direction="row" gap={1} alignItems="center" wrap>
           {playlist.spec?.title}
           {isManaged(playlist) && (
-            <>
-              {isManagedResourceReadOnly(playlist) && <ReadOnlyBadge />}
-              <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
-            </>
+            <ManagedBadge managerKind={getManagerKind(playlist)} name={getManagerIdentity(playlist)} />
           )}
         </Stack>
       </Card.Heading>
@@ -49,17 +37,11 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Button>
         {canWritePlaylists() && (
           <>
-            <LinkButton
-              key="edit"
-              variant="secondary"
-              href={`/playlists/edit/${playlist.metadata?.name}`}
-              icon="cog"
-              disabled={isReadOnly}
-            >
+            <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
               <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
             </LinkButton>
             <Button
-              disabled={isReadOnly}
+              disabled={false}
               onClick={() => setPlaylistToDelete(playlist)}
               icon="trash-alt"
               variant="destructive"
@@ -68,7 +50,6 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
             </Button>
           </>
         )}
-        <SourceLink repositoryName={getManagerIdentity(playlist)} sourcePath={getSourcePath(playlist)} />
       </Card.Actions>
       <Card.SecondaryActions>
         <ModalsController key="button-share">

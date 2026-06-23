@@ -97,6 +97,12 @@ To update or delete your repository configuration after you complete setup:
 - To modify your configuration, update any of the settings and select **Save**.
 - To delete the repository, click **Delete**. You can either keep the synced resources or delete them.
 
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
+
 ## Manage folder permissions
 
 By default, users keep their roles in folders provisioned with Git Sync.

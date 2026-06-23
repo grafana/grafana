@@ -3364,68 +3364,6 @@ export const v0alpha1Response: PluginMetasResponse = structuredClone({
       kind: 'Meta',
       apiVersion: 'plugins.grafana.app/v0alpha1',
       metadata: {
-        name: 'opentsdb',
-        namespace: 'default',
-      },
-      spec: {
-        pluginJson: {
-          id: 'opentsdb',
-          type: 'datasource',
-          name: 'OpenTSDB',
-          info: {
-            keywords: [],
-            logos: {
-              small: 'app/plugins/datasource/opentsdb/dist/img/opentsdb_logo.png',
-              large: 'app/plugins/datasource/opentsdb/dist/img/opentsdb_logo.png',
-            },
-            updated: '',
-            version: '12.4.0-pre',
-            author: {
-              name: 'Grafana Labs',
-              url: 'https://grafana.com',
-            },
-            description: 'Open source time series database',
-            links: [
-              {
-                name: 'Raise issue',
-                url: 'https://github.com/grafana/grafana/issues/new',
-              },
-              {
-                name: 'Documentation',
-                url: 'https://grafana.com/docs/grafana/latest/datasources/opentsdb/',
-              },
-            ],
-          },
-          dependencies: {
-            grafanaDependency: '>=10.3.0-0',
-            grafanaVersion: '*',
-          },
-          alerting: true,
-          annotations: true,
-          backend: true,
-          category: 'tsdb',
-          executable: 'gpx_opentsdb',
-          metrics: true,
-        },
-        class: 'core',
-        module: {
-          path: 'app/plugins/datasource/opentsdb/dist/module.js',
-          loadingStrategy: 'script',
-        },
-        baseURL: 'app/plugins/datasource/opentsdb/dist',
-        signature: {
-          status: 'internal',
-        },
-        angular: {
-          detected: false,
-        },
-      },
-      status: {},
-    },
-    {
-      kind: 'Meta',
-      apiVersion: 'plugins.grafana.app/v0alpha1',
-      metadata: {
         name: 'parca',
         namespace: 'default',
       },

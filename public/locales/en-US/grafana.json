@@ -5248,34 +5248,6 @@
       "redirect-link": "List in Grafana Alerting",
       "subtitle": "Alert rules related to this dashboard"
     },
-    "annotation-settings-edit": {
-      "apply": "Apply",
-      "delete": "Delete",
-      "description-color-annotation-event-markers": "Color to use for the annotation event markers",
-      "description-enabled-annotation-query-issued-every-dashboard": "When enabled the annotation query is issued every dashboard refresh",
-      "description-hidden": "Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden.",
-      "error-loading-panels": "Failed to load panel plugins",
-      "label-color": "Color",
-      "label-data-source": "Data source",
-      "label-enabled": "Enabled",
-      "label-hidden": "Hidden",
-      "label-name": "Name",
-      "label-show-in": "Show in",
-      "placeholder-choose-panels": "Choose panels",
-      "preview-in-dashboard": "Preview in dashboard",
-      "query": "Query",
-      "title-annotation-support-source": "No annotation support for this data source"
-    },
-    "annotation-settings-list": {
-      "aria-label-delete": "Delete query with title \"{{title}}\"",
-      "built-in": "{{name}} (Built-in)",
-      "data-source": "Data source",
-      "disabled": "(Disabled) {{name}}",
-      "new-query": "New query",
-      "query-name": "Query name",
-      "tooltip-move-down": "Move down",
-      "tooltip-move-up": "Move up"
-    },
     "auto-grid": {
       "description": "Panels resize to fit and form uniform grids",
       "item-options": {
@@ -5441,11 +5413,6 @@
       "provisioning-title": "Dashboard preview",
       "text": {
         "not-found": "Not found"
-      }
-    },
-    "dashboard-settings": {
-      "actions": {
-        "close": "Close"
       }
     },
     "dashboard-slice": {
@@ -5629,7 +5596,6 @@
         "change-type-aria-label": "Change variable type",
         "custom-options": {
           "apply": "Apply",
-          "change-value": "Change variable value",
           "discard": "Discard",
           "modal-title": "Custom options"
         },
@@ -5736,21 +5702,6 @@
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
       "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
     },
-    "general-settings-unconnected": {
-      "editable-options": {
-        "label": {
-          "editable": "Editable",
-          "readonly": "Read-only"
-        }
-      },
-      "graph_tooltip_options": {
-        "label": {
-          "default": "Default",
-          "shared-crosshair": "Shared crosshair",
-          "shared-tooltip": "Shared tooltip"
-        }
-      }
-    },
     "get-debug-dashboard": {
       "title": {
         "annotations": "Annotations"
@@ -5791,18 +5742,6 @@
         "alert": "Alert",
         "query": "Query",
         "transform-data": "Transform data"
-      }
-    },
-    "get-panel-filters": {
-      "description": {
-        "annotation-following-panels": "Do not send annotation data to the following panels",
-        "annotation-panels-support-annotations": "Send the annotation data to all panels that support annotations",
-        "annotations-explicitly-listed-panels": "Send the annotations to the explicitly listed panels"
-      },
-      "label": {
-        "all-panels": "All panels",
-        "all-panels-except": "All panels except",
-        "selected-panels": "Selected panels"
       }
     },
     "get-panel-frame-category": {
@@ -5937,10 +5876,6 @@
       "ungroup-nested-text": "This will ungroup all nested groups.",
       "ungroup-nested-title": "Ungroup nested groups?"
     },
-    "make-editable": {
-      "dashboard-not-editable": "Dashboard not editable",
-      "make-editable": "Make editable"
-    },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
       "tooltip-next": "Next",
@@ -5990,6 +5925,9 @@
     "outline": {
       "pane-header": "Content outline",
       "repeated-item": "Repeat",
+      "search": {
+        "no-results": "No results found for your query"
+      },
       "tree-item": {
         "empty": "(empty)",
         "no-title": "<no title>"
@@ -6063,11 +6001,6 @@
         }
       }
     },
-    "revert-dashboard-modal": {
-      "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
-      "confirmText-restore-version": "Yes, restore to version {{version}}",
-      "title-restore-version": "Restore version"
-    },
     "rows-layout": {
       "cancel": "Cancel",
       "convert-to": "Convert to {{name}}",
@@ -6135,9 +6068,6 @@
       "save": "Save",
       "saving": "Saving...",
       "title": "Title"
-    },
-    "save-dashboard-button": {
-      "save-dashboard": "Save dashboard"
     },
     "save-dashboard-diff": {
       "full-json-diff": "Full JSON diff",
@@ -6432,12 +6362,6 @@
       "tooltip-clear-search": "Clear search",
       "tooltip-close-picker": "Close picker"
     },
-    "unsaved-changes-modal": {
-      "cancel": "Cancel",
-      "changes": "Do you want to save your changes?",
-      "discard": "Discard",
-      "title-unsaved-changes": "Unsaved changes"
-    },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
       "invalid-json": "Not valid JSON",
@@ -6462,21 +6386,6 @@
       "type": {
         "action": "Change variable type"
       }
-    },
-    "version-history-comparison": {
-      "button-restore": "Restore to version {{version}}",
-      "label-view-json-diff": "View JSON diff",
-      "new-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}",
-      "old-updated-by": "<strong>Version {{version}}</strong> updated by {{editor}} {{timeAgo}}"
-    },
-    "version-history-table": {
-      "aria-label-toggle-selection": "Toggle selection of version {{version}}",
-      "date": "Date",
-      "name-latest": "Latest",
-      "notes": "Notes",
-      "restore": "Restore",
-      "updated-by": "Updated by",
-      "version": "Version"
     },
     "view-json-modal": {
       "title-json": "JSON"
@@ -6795,7 +6704,6 @@
       "json-values-tooltip": "Provide a JSON representing an array of objects, where each object can have any number of properties.<br/>Check <4>our docs</4> for more information.",
       "name-csv-values": "CSV",
       "name-json-values": "JSON",
-      "name-values-separated-comma": "Values separated by comma",
       "selection-options": "Selection options"
     },
     "dashboard-annotations-list": {
@@ -7626,16 +7534,6 @@
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
-    "variable-hide-select": {
-      "hide_options": {
-        "label": {
-          "label": "Label",
-          "nothing": "Nothing",
-          "variable": "Variable"
-        }
-      },
-      "label": "Hide"
-    },
     "variable-list": {
       "create-drag-end-handler": {
         "description": {
@@ -7766,17 +7664,6 @@
     },
     "permissions": {
       "title": "Permissions"
-    },
-    "provisioned-delete-modal": {
-      "confirm-button": "OK",
-      "text-1": "This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config file to delete it.",
-      "text-2": "See grafana documentation for more information about provisioning. ",
-      "text-3": "File path: {{provisionedId}}",
-      "text-link": "Go to docs page",
-      "title": "Cannot delete provisioned dashboard"
-    },
-    "settings": {
-      "title": "Settings"
     },
     "time-picker": {
       "hide-time-picker": "Hide time picker",
@@ -10701,7 +10588,8 @@
       "severity-minor": "Minor",
       "severity-unknown": "Unknown severity",
       "title": "Firing alerts",
-      "view-all": "View all firing alerts"
+      "view-all": "View all firing alerts",
+      "view-rules": "View all alert rules"
     },
     "home-page": {
       "edition": {
@@ -11015,17 +10903,6 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
-    },
-    "save-library-panel-modal": {
-      "affected-dashboards": "The following dashboards using the panel will be affected:",
-      "cancel": "Cancel",
-      "dashboard-name": "Dashboard name",
-      "discard": "Discard",
-      "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
-      "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
-      "placeholder-search-affected-dashboards": "Search affected dashboards",
-      "update-all": "Update all"
     },
     "search-controls": {
       "label": {
@@ -13044,8 +12921,6 @@
       "url-required": "Repository URL is required"
     },
     "bootstrap-step": {
-      "dashboards-count_one": "{{count}} dashboard",
-      "dashboards-count_other": "{{count}} dashboards",
       "description-clear-repository-connection": "This name will be used for the repository connection and the folder displayed in the UI",
       "empty": "Empty",
       "error-field-required": "This field is required.",
@@ -13054,10 +12929,10 @@
       "external-storage-label": "External storage",
       "files-count_one": "{{count}} file",
       "files-count_other": "{{count}} files",
-      "folders-count_one": "{{count}} folder",
-      "folders-count_other": "{{count}} folders",
       "label-display-name": "Display name",
       "placeholder-my-repository-connection": "My repository connection",
+      "resources-count_one": "{{count}} resource",
+      "resources-count_other": "{{count}} resources",
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
@@ -13465,26 +13340,55 @@
       "truncated": "Message truncated"
     },
     "migrate": {
-      "all-managed": "All of your dashboards and folders are already managed in Git.",
-      "all-resources": "All resources",
       "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
-      "drawer-description": "All dashboards and folders will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-description-selective_one": "{{count}} selected resource (and the folder that contains it) will be migrated into the selected repository. This is a one-time operation.",
+      "drawer-description-selective_other": "{{count}} selected resources (and the folders that contain them) will be migrated into the selected repository. This is a one-time operation.",
       "drawer-title": "Migrate to GitOps",
       "empty": "No provisioned resources yet",
       "error-title": "Failed to load provisioning stats",
-      "folders": "Folders",
+      "folders-error-body": "The overview above is still accurate. You can still migrate everything now, or refresh the page to load the list and pick individual resources.",
+      "folders-error-title": "Could not load the list of resources to migrate",
+      "general-folder-title": "General (root resources)",
       "header-subtitle": "Manage your Grafana resources like code — every change tracked, every update reviewed, every environment reproducible. Connect a Git repository to get started.",
       "header-title": "Migrate to GitOps",
       "loading": "Loading stats...",
+      "loading-resources": "Loading resources...",
       "migrate-button": "Migrate everything",
+      "migrate-button-blocked-tooltip": "This repository can’t push to its configured branch",
       "migrate-button-disabled-tooltip": "Select a target repository first",
+      "migrate-button-empty-tooltip": "Select at least one resource to migrate",
+      "migrate-button-selected": "Migrate selected",
+      "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
-      "repo-description": "The repository your dashboards and folders will be migrated into.",
+      "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
+      "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
+      "repo-no-push-title": "This repository can’t be used for migration",
       "repo-placeholder": "Select a repository",
-      "selective-coming-soon": "Migrating only selected dashboards and folders is coming soon.",
-      "start-button": "Start migration"
+      "resources-collapse": "Collapse {{folder}}",
+      "resources-expand": "Expand {{folder}}",
+      "resources-folder-summary_one": "{{count}} resource",
+      "resources-folder-summary_other": "{{count}} resources",
+      "resources-select-all": "Select all",
+      "resources-select-folder": "Select folder {{folder}}",
+      "resources-sort-aria": "Sort folders",
+      "resources-sort-count-asc": "Fewest resources",
+      "resources-sort-count-desc": "Most resources",
+      "resources-sort-title-asc": "Name (A–Z)",
+      "resources-sort-title-desc": "Name (Z–A)",
+      "resources-to-migrate-all-managed": "All dashboards are already managed by Git.",
+      "resources-to-migrate-empty": "No folders or resources match the current search.",
+      "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
+      "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
+      "resources-to-migrate-heading": "Resources to migrate",
+      "resources-to-migrate-migrate-all_one": "Migrate all ({{count}})",
+      "resources-to-migrate-migrate-all_other": "Migrate all ({{count}})",
+      "resources-to-migrate-migrate-selected_one": "Migrate selected ({{count}})",
+      "resources-to-migrate-migrate-selected_other": "Migrate selected ({{count}})",
+      "resources-to-migrate-search": "Search folders and resources",
+      "resources-to-migrate-subtitle": "Pick whole folders, or individual dashboards within them. Selecting a folder migrates only the resources directly inside it — anything in subfolders migrates through its own folder."
     },
     "missing-folder-metadata-banner": {
       "error-message": "Could not verify whether this folder has a metadata file. Please try again later.",
@@ -16580,11 +16484,6 @@
       "shared-dashboard-users-tab-title": "Shared dashboard users"
     }
   },
-  "variabels": {
-    "variable-usages-button": {
-      "usage-title": "Showing usages for: {{variableId}}"
-    }
-  },
   "variable": {
     "adhoc": {
       "placeholder": "Select value"
@@ -16610,11 +16509,6 @@
       "plus-segment": {
         "aria-label-add-filter": "Add Filter"
       }
-    },
-    "confirm-delete-modal": {
-      "body-delete-variable": "Are you sure you want to delete variable \"{{variableToDelete}}\"?",
-      "confirmText-delete": "Delete",
-      "title-delete-variable": "Delete variable"
     },
     "create-ad-hoc-variable-adapter": {
       "description": {
@@ -16685,13 +16579,7 @@
       "description-values-variable": "How to sort static options with query results"
     },
     "static-options": {
-      "add-option-button-label": "Add new option",
-      "drag-and-drop": "Drag and drop to reorder",
-      "label-header": "Display text",
-      "label-placeholder": "Defaults to value",
-      "remove-option-button-label": "Remove option",
-      "value-header": "Value",
-      "value-placeholder": "Value"
+      "add-option-button-label": "Add new option"
     },
     "text-box-variable-editor": {
       "name-default-value": "Default value",
@@ -16712,49 +16600,8 @@
       "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
     },
-    "variable-check-indicator": {
-      "title-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
-      "title-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
-    },
-    "variable-editor-editor-un-connected": {
-      "apply": "Apply",
-      "aria-label-variable-editor-form": "Variable editor Form",
-      "delete": "Delete",
-      "description-optional-display-name": "Optional display name",
-      "description-template-variable-characters": "The name of the template variable. (Max. 50 characters)",
-      "general": "General",
-      "name-label": "Label",
-      "name-name": "Name",
-      "placeholder-descriptive-text": "Descriptive text",
-      "placeholder-label-name": "Label name",
-      "placeholder-variable-name": "Variable name",
-      "run-query": "Run query"
-    },
-    "variable-editor-list": {
-      "definition": "Definition",
-      "new-variable": "New variable",
-      "variable": "Variable"
-    },
-    "variable-editor-list-row": {
-      "drag-handle-label": "Reorder variable {{variableName}}",
-      "tooltip-duplicate-variable": "Duplicate variable",
-      "tooltip-remove-variable": "Remove variable"
-    },
-    "variable-editor-un-connected": {
-      "name-description": "Description"
-    },
     "variable-options": {
       "aria-label-toggle-all-values": "Toggle all values"
-    },
-    "variable-type-select": {
-      "name-select-variable-type": "Select variable type"
-    },
-    "variable-usages-button": {
-      "tooltip-show-usages": "Show usages"
-    },
-    "variables-dependencies-button": {
-      "show-dependencies": "Show dependencies",
-      "title-dependencies": "Dependencies"
     },
     "variables-unknown-button": {
       "usage-title": "Showing usages for: {{variableId}}",

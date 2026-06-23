@@ -5,7 +5,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { AnnoKeyManagerAllowsEdits, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 
@@ -22,7 +21,7 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   },
 }));
 
-async function getTestContext() {
+async function getTestContext(annotations?: Record<string, string>) {
   jest.clearAllMocks();
 
   const backendSrvMock = jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
@@ -35,6 +34,7 @@ async function getTestContext() {
         },
         metadata: {
           name: 'foo',
+          ...(annotations ? { annotations } : {}),
         },
       })
     )
@@ -48,28 +48,6 @@ async function getTestContext() {
   return { rerender, backendSrvMock };
 }
 
-function renderWithMetadata(metadata: object) {
-  jest.clearAllMocks();
-  jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
-    of(
-      createFetchResponse({
-        spec: {
-          title: 'Test Playlist',
-          interval: '5s',
-          items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
-        },
-        metadata,
-      })
-    )
-  );
-
-  return render(
-    <TestProvider>
-      <PlaylistEditPage />
-    </TestProvider>
-  );
-}
-
 describe('PlaylistEditPage', () => {
   describe('when mounted', () => {
     it('then it should load playlist and header should be correct', async () => {
@@ -79,6 +57,23 @@ describe('PlaylistEditPage', () => {
       expect(await screen.findByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
       expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('5s');
       expect(screen.getAllByRole('row')).toHaveLength(1);
+    });
+
+    it('then it should not render the provisioned badge for an unmanaged playlist', async () => {
+      await getTestContext();
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+    });
+
+    it('then it should render the provisioned badge for a managed playlist', async () => {
+      await getTestContext({
+        'grafana.app/managedBy': 'repo',
+        'grafana.app/managerId': 'foo-repo',
+      });
+
+      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
+      expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
   });
 
@@ -111,40 +106,6 @@ describe('PlaylistEditPage', () => {
         )
       );
       expect(locationService.getLocation().pathname).toEqual('/playlists');
-    });
-  });
-
-  describe('managed badges', () => {
-    it('does not show managed badges for an unmanaged playlist', async () => {
-      renderWithMetadata({ name: 'foo' });
-
-      expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
-      expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
-      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    });
-
-    it('shows the managed badge for a managed playlist', async () => {
-      renderWithMetadata({ name: 'foo', annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } });
-
-      expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
-      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
-    });
-
-    it('shows the read-only badge for a managed playlist that does not allow edits', async () => {
-      renderWithMetadata({ name: 'foo', annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } });
-
-      expect(await screen.findByText('Read only')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
-    });
-
-    it('does not show the read-only badge when the manager allows edits', async () => {
-      renderWithMetadata({
-        name: 'foo',
-        annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform, [AnnoKeyManagerAllowsEdits]: 'true' },
-      });
-
-      expect(await screen.findByTestId('icon-exchange-alt')).toBeInTheDocument();
-      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
   });
 });
