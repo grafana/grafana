@@ -1,13 +1,18 @@
 import { API_GROUP as DASHBOARD_BUCKET } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_BUCKET } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { API_GROUP as PLAYLIST_BUCKET } from '@grafana/api-clients/rtkq/playlist/v1';
 import { type ManagerStats, type ResourceStats } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
+import { resourceKindInfos } from '../utils/resourceKinds';
+
+// The playlist group comes from the kind registry (its single source of truth)
+// rather than re-importing the playlist API client here.
+const PLAYLIST_BUCKET = resourceKindInfos.playlist.group;
+
 // `folders` is the legacy storage group; the app-platform group is FOLDER_BUCKET.
 const FOLDER_GROUPS: string[] = [FOLDER_BUCKET, 'folders'];
-export const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
-export const PLAYLIST_GROUPS: string[] = [PLAYLIST_BUCKET];
+const DASHBOARD_GROUPS: string[] = [DASHBOARD_BUCKET];
+const PLAYLIST_GROUPS: string[] = [PLAYLIST_BUCKET];
 
 type BucketKey = typeof DASHBOARD_BUCKET | typeof FOLDER_BUCKET | typeof PLAYLIST_BUCKET;
 
@@ -104,7 +109,7 @@ export function computeBreakdowns(data?: ResourceStats): GroupBreakdown[] {
  * `groups`. Managed means anything already owned by a manager (Git Sync or
  * another tool), so it isn't a migration candidate.
  */
-export function aggregateTotals(breakdowns: GroupBreakdown[], groups: string[]): MigrationTotals {
+function aggregateTotals(breakdowns: GroupBreakdown[], groups: string[]): MigrationTotals {
   let instanceTotal = 0;
   let managed = 0;
   breakdowns

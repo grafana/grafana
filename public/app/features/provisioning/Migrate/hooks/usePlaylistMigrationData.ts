@@ -4,7 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useListPlaylistQuery } from 'app/api/clients/playlist/v1';
 import { AnnoKeyManagerKind } from 'app/features/apiserver/types';
 
-export interface PlaylistRow {
+interface PlaylistRow {
   uid: string;
   title: string;
 }
