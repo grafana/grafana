@@ -94,27 +94,7 @@ Panel styles merge their settings with the panel's existing defaults as follows:
 
 You can further customize the panel after applying a style.
 
-Panel styles are available for the following visualizations: time series, stat, gauge, bar gauge, and bar chart. However, plugin authors can add panel styles support to their own panel plugins as well.
-
-### Copy and paste panel styles
-
-You can duplicate the styles of one panel in another panel with the same visualization type.
-Use the **Copy styles** and **Paste styles** options to do so:
-
-{{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-copy-paste-styles.mp4" >}}
-
-To copy and paste a panel style, follow these steps:
-
-1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
-1. Navigate to the panel with the style you want to copy.
-1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
-1. Click the menu and select **Styles > Copy styles**.
-1. Navigate to the panel on which you want to copy the style.
-1. Click the panel menu and select **Styles > Paste styles**.
-1. Save your changes.
-
-This option is available for the following visualizations:
+Panel styles are available for the following visualizations:
 
 {{< column-list >}}
 
@@ -133,3 +113,23 @@ This option is available for the following visualizations:
 - XY chart
 
 {{< /column-list >}}
+
+However, plugin authors can add panel styles support to their own panel plugins as well.
+
+#### Copy and paste panel styles
+
+You can duplicate the styles of one panel in another panel with the same visualization type.
+Use the **Copy styles** and **Paste styles** options to do so:
+
+{{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-copy-paste-styles.mp4" >}}
+
+To copy and paste a panel style, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Navigate to the panel with the style you want to copy.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Styles > Copy styles**.
+1. Navigate to the panel on which you want to copy the style.
+1. Click the panel menu and select **Styles > Paste styles**.
+1. Save your changes.
