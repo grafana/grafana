@@ -34,6 +34,24 @@ v0alpha1: {
 					}
 				}
 			}
+			"/graphite": {
+				"POST": {
+					name: "createGraphite"
+					request: {
+						body: {
+							what:  string
+							when?: int64
+							data?: string
+							// tags accepts either an array of strings or a single space-separated string
+							tags: string | [...string]
+						}
+					}
+					response: {
+						spec: {...}
+					}
+					responseMetadata: objectMeta: true
+				}
+			}
 		}
 	}
 	codegen: {

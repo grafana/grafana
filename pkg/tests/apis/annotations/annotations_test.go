@@ -254,3 +254,39 @@ func TestIntegrationAnnotationTags(t *testing.T) {
 		require.Contains(t, tag.Tag, "env")
 	}
 }
+
+func TestIntegrationAnnotationGraphite(t *testing.T) {
+	helper, client := setupTest(t)
+	ctx := t.Context()
+
+	namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	path := fmt.Sprintf("/apis/annotation.grafana.app/v0alpha1/namespaces/%s/graphite", namespace)
+
+	// Post a Graphite-format event with array tags and a data field; the response is the created Annotation resource.
+	rsp := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   path,
+		Body:   []byte(`{"what":"deployment","when":1700000000,"data":"v1.2.3","tags":["release","prod"]}`),
+	}, &annotationV0.Annotation{})
+	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+	require.NotEmpty(t, rsp.Result.GetName())
+	// `what` and `data` are joined into the text and the tags are preserved.
+	require.Equal(t, "deployment\nv1.2.3", rsp.Result.Spec.Text)
+	require.ElementsMatch(t, []string{"release", "prod"}, rsp.Result.Spec.Tags)
+
+	// The created annotation is retrievable by the returned name.
+	fetched, err := client.Resource.Get(ctx, rsp.Result.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
+	text, _, _ := unstructured.NestedString(fetched.Object, "spec", "text")
+	require.Equal(t, "deployment\nv1.2.3", text)
+
+	// An empty `what` is rejected.
+	rsp = apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   path,
+		Body:   []byte(`{"what":""}`),
+	}, &annotationV0.Annotation{})
+	require.Equal(t, http.StatusInternalServerError, rsp.Response.StatusCode)
+}
