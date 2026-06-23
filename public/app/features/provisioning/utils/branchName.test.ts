@@ -23,9 +23,10 @@ describe('renderBranchName', () => {
   });
 
   it('leaves unrecognised variables as literal text and sanitises them', () => {
-    // {{nope}} is not a known key, so it is left as literal text and then collapsed to dashes.
+    // {{nope}} is not a known key, so it is left as literal text and then sanitised; the '/{{' run
+    // collapses to a single '/', so no segment is left starting with a dash.
     const result = renderBranchName('feat/{{action}}/{{nope}}', vars);
-    expect(result).toBe('feat/create/-nope');
+    expect(result).toBe('feat/create/nope');
     expect(validateBranchName(result)).toBeTruthy();
   });
 });
@@ -40,6 +41,9 @@ describe('sanitizeBranchName', () => {
     ['-dash-wrapped-', 'dash-wrapped'],
     ['UPPER_Case-123', 'upper_case-123'],
     ['weird@{name}', 'weird-name'],
+    ['foo/-/bar', 'foo/bar'],
+    ['foo-/bar', 'foo/bar'],
+    ['foo/-bar', 'foo/bar'],
   ])('sanitises %p to %p', (input, expected) => {
     const result = sanitizeBranchName(input);
     expect(result).toBe(expected);

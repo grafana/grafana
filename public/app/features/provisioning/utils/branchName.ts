@@ -20,14 +20,16 @@ export function generateBranchToken(length = 6): string {
 
 /**
  * Sanitises a rendered branch name into a valid git ref: lowercase, only [a-z0-9/_-],
- * disallowed characters (including '.') collapsed to '-', no consecutive '/' or '-',
- * no leading/trailing '/' or '-', max 100 chars. Returns '' when nothing valid remains.
- * The output always satisfies utils/git.ts `validateBranchName`.
+ * disallowed characters (including '.') collapsed to '-', adjacent separators collapsed (a run
+ * containing '/' becomes a single '/', otherwise a single '-'), no leading/trailing '/' or '-',
+ * max 100 chars. Returns '' when nothing valid remains. The output always satisfies
+ * utils/git.ts `validateBranchName`.
  */
 export function sanitizeBranchName(name: string): string {
   let s = name.trim().toLowerCase();
   s = s.replace(/[^a-z0-9/_-]+/g, '-');
-  s = s.replace(/\/{2,}/g, '/');
+  // Collapse a run of separators: any run containing a '/' becomes a single '/', otherwise a '-'.
+  s = s.replace(/[-/]*\/[-/]*/g, '/');
   s = s.replace(/-{2,}/g, '-');
   s = s.replace(/^[/-]+|[/-]+$/g, '');
   s = s.slice(0, 100);

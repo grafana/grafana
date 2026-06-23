@@ -32,12 +32,14 @@ function Host({
   repository,
   vars,
   workflow = 'branch',
+  defaultRef = '',
 }: {
   repository?: RepositoryView;
   vars: BranchTemplateVars;
   workflow?: WorkflowOption;
+  defaultRef?: string;
 }) {
-  const methods = useForm<{ ref?: string }>({ defaultValues: { ref: '' } });
+  const methods = useForm<{ ref?: string }>({ defaultValues: { ref: defaultRef } });
   const { dirtyFields } = useFormState({ control: methods.control });
   const { locked } = useBranchTemplate({
     repository,
@@ -150,5 +152,34 @@ describe('useBranchTemplate', () => {
 
     expect(screen.getByTestId('locked')).toHaveTextContent('false');
     expect(screen.getByRole('textbox', { name: /branch/i })).not.toHaveAttribute('readonly');
+  });
+
+  it('does not lock when enforcement is set but no template is configured', async () => {
+    // Nothing to enforce without a template, so the field stays editable on its existing value
+    // rather than freezing read-only on an auto-generated ref.
+    render(
+      <Host repository={makeRepo({ enforceTemplate: true })} vars={dashboardVars} defaultRef="dashboard/2023-abc" />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    expect(screen.getByTestId('locked')).toHaveTextContent('false');
+    expect(input).not.toHaveAttribute('readonly');
+    expect(input).toHaveValue('dashboard/2023-abc');
+  });
+
+  it('leaves the existing ref untouched when the rendered name sanitises to empty', async () => {
+    // A title made up entirely of punctuation sanitises away; the field must keep its valid default
+    // rather than being wiped to an empty (invalid) ref.
+    render(
+      <Host
+        repository={makeRepo({ nameTemplate: '{{title}}' })}
+        vars={{ ...dashboardVars, title: '!!!' }}
+        defaultRef="dashboard/2023-abc"
+      />
+    );
+
+    const input = screen.getByRole('textbox', { name: /branch/i });
+    // Give the autofill effect a chance to run; it must be a no-op here.
+    await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
   });
 });

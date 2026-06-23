@@ -41,7 +41,9 @@ export function useBranchTemplate({
   const hasTemplate = Boolean(template?.trim());
 
   const active = flagEnabled && isBranchWorkflow && hasTemplate;
-  const locked = flagEnabled && isBranchWorkflow && enforce;
+  // Enforcement requires an actual template: with no template there is nothing to enforce, so the
+  // field stays editable rather than freezing read-only on the auto-generated ref.
+  const locked = active && enforce;
   const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
 
   // No `!locked` here (unlike commit): when locked the value still lives in the form `ref`, so the
