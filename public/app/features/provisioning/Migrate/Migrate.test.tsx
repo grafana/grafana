@@ -70,6 +70,36 @@ function respondWithStats(response: ResourceStats) {
   server.use(http.get(`${BASE}/stats`, () => HttpResponse.json(response)));
 }
 
+const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
+
+// Enable the playlist kind in the settings endpoint's `availableResources` and
+// serve the playlist list. Without this the Migrate page stays dashboard-only.
+function enablePlaylists(playlistTitles: Array<{ name: string; title: string }> = []) {
+  server.use(
+    http.get(`${BASE}/settings`, () =>
+      HttpResponse.json({
+        items: [],
+        allowImageRendering: true,
+        availableResources: [
+          { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+          { group: 'playlist.grafana.app', kind: 'Playlist' },
+        ],
+      })
+    )
+  );
+  server.use(
+    http.get(PLAYLISTS_ROUTE, () =>
+      HttpResponse.json({
+        items: playlistTitles.map(({ name, title }) => ({
+          metadata: { name },
+          spec: { title, interval: '5m', items: [] },
+        })),
+        metadata: {},
+      })
+    )
+  );
+}
+
 describe('Migrate', () => {
   it('renders a loading spinner while stats are loading', () => {
     server.use(
@@ -329,6 +359,84 @@ describe('Migrate', () => {
     });
   });
 
+  describe('with playlists enabled', () => {
+    // Dashboards + playlists both reported by stats, both with unmanaged items.
+    const withPlaylists: ResourceStats = {
+      instance: [
+        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 100 },
+        { group: 'folder.grafana.app', resource: 'folders', count: 8 },
+        { group: 'playlist.grafana.app', resource: 'playlists', count: 20 },
+      ],
+      managed: [
+        {
+          kind: 'repo',
+          stats: [
+            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 40 },
+            { group: 'playlist.grafana.app', resource: 'playlists', count: 5 },
+          ],
+        },
+      ],
+    };
+
+    it('shows the playlists and combined cards plus the playlist rows', async () => {
+      respondWithStats(withPlaylists);
+      enablePlaylists([
+        { name: 'p1', title: 'Morning rotation' },
+        { name: 'p2', title: 'Ops wall' },
+      ]);
+
+      render(<Migrate />);
+
+      // Per-kind cards plus the combined "All resources" card.
+      expect(await screen.findByText('Dashboards')).toBeInTheDocument();
+      expect(screen.getByText('Playlists')).toBeInTheDocument();
+      expect(screen.getByText('All resources')).toBeInTheDocument();
+
+      // The playlists surface as selectable rows in the table.
+      expect(await screen.findByText('Morning rotation')).toBeInTheDocument();
+      expect(screen.getByText('Ops wall')).toBeInTheDocument();
+    });
+
+    it('migrates a selected playlist via a selective job', async () => {
+      respondWithStats(withPlaylists);
+      // Two playlists so ticking one is a partial (selective) selection rather
+      // than "select everything".
+      enablePlaylists([
+        { name: 'p1', title: 'Morning rotation' },
+        { name: 'p2', title: 'Ops wall' },
+      ]);
+
+      let postedBody = '';
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, async ({ request }) => {
+          postedBody = await request.text();
+          return HttpResponse.json(createJob());
+        })
+      );
+      server.use(
+        http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [createJob()], metadata: { resourceVersion: '1' } }))
+      );
+
+      const { user } = render(<Migrate />);
+
+      await user.click(await screen.findByRole('checkbox', { name: 'Morning rotation' }));
+      const migrateSelected = await screen.findByRole('button', { name: /migrate selected \(1\)/i });
+      await waitFor(() => expect(migrateSelected).toBeEnabled());
+      await user.click(migrateSelected);
+
+      // The table footer button reads "Migrate selected (1)"; match the drawer's
+      // confirm button, whose label has no count.
+      const confirm = await screen.findByRole('button', { name: /^migrate selected$/i });
+      await waitFor(() => expect(confirm).toBeEnabled());
+      await user.click(confirm);
+
+      await screen.findByText('Pulling...');
+      expect(postedBody).toContain('"action":"migrate"');
+      expect(postedBody).toContain('"kind":"Playlist"');
+      expect(postedBody).toContain('p1');
+    });
+  });
+
   it('shows the all-managed empty state and no migrate action when nothing is unmanaged', async () => {
     respondWithStats({
       instance: [
@@ -350,7 +458,7 @@ describe('Migrate', () => {
 
     render(<Migrate />);
 
-    expect(await screen.findByText('All dashboards are already managed by Git.')).toBeInTheDocument();
+    expect(await screen.findByText('All resources are already managed by Git.')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /migrate (selected|all)/i })).not.toBeInTheDocument();
   });
 });

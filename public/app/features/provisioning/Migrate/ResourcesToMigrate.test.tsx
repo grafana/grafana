@@ -22,6 +22,9 @@ function setup(overrides: Partial<React.ComponentProps<typeof ResourcesToMigrate
     selectedDashboardUids: new Set<string>(),
     onToggleFolder: jest.fn(),
     onToggleDashboard: jest.fn(),
+    selectedPlaylistUids: new Set<string>(),
+    onTogglePlaylist: jest.fn(),
+    onSetPlaylistsSelected: jest.fn(),
     selectedCount: 0,
     allSelected: false,
     onSetFoldersSelected: jest.fn(),
@@ -114,7 +117,61 @@ describe('ResourcesToMigrate', () => {
   it('renders the all-managed empty state when there are no folders to migrate', () => {
     setup({ folders: [] });
 
-    expect(screen.getByText('All dashboards are already managed by Git.')).toBeInTheDocument();
+    expect(screen.getByText('All resources are already managed by Git.')).toBeInTheDocument();
+  });
+
+  describe('playlists', () => {
+    const playlists = [
+      { uid: 'p1', title: 'Morning rotation' },
+      { uid: 'p2', title: 'Ops wall' },
+    ];
+
+    it('lists playlists as their own selectable rows', () => {
+      setup({ playlists });
+
+      expect(screen.getByText('Morning rotation')).toBeInTheDocument();
+      expect(screen.getByText('Ops wall')).toBeInTheDocument();
+    });
+
+    it('toggles a playlist selection through the callback', async () => {
+      const { props, user } = setup({ playlists });
+
+      await user.click(screen.getByRole('checkbox', { name: 'Morning rotation' }));
+
+      expect(props.onTogglePlaylist).toHaveBeenCalledWith('p1');
+    });
+
+    it('select-all spans both folders and playlists', async () => {
+      const { props, user } = setup({ playlists });
+
+      await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+
+      expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['team-a'], true);
+      expect(props.onSetPlaylistsSelected).toHaveBeenCalledWith(['p1', 'p2'], true);
+    });
+
+    it('labels the folders and playlists sections when both are present', () => {
+      setup({ playlists });
+
+      expect(screen.getByText('Playlists')).toBeInTheDocument();
+      expect(screen.getByText('Folders')).toBeInTheDocument();
+    });
+
+    it('shows the migrate action for a playlist-only instance', () => {
+      setup({ folders: [], playlists, selectedCount: 1 });
+
+      expect(screen.queryByText('All resources are already managed by Git.')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /migrate selected \(1\)/i })).toBeInTheDocument();
+    });
+
+    it('filters playlists by title', async () => {
+      const { user } = setup({ folders: [], playlists });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'Ops');
+
+      expect(screen.getByText('Ops wall')).toBeInTheDocument();
+      expect(screen.queryByText('Morning rotation')).not.toBeInTheDocument();
+    });
   });
 
   describe('search, sort and expansion', () => {

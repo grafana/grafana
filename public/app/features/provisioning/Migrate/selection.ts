@@ -1,23 +1,27 @@
 import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
+import { resourceKindInfos } from '../utils/resourceKinds';
+
 import { type FolderRow } from './hooks/useFolderMigrationData';
+import { type PlaylistRow } from './hooks/usePlaylistMigrationData';
 
 /**
  * Summary of what the user has picked in the Resources to migrate table.
- * `items` counts the user's ticks (folders + dashboards selected on their own)
- * for the button label; `dashboards` is the resolved set of dashboard refs the
+ * `items` counts the user's ticks (folders + resources selected on their own)
+ * for the button label; `resources` is the resolved set of resource refs the
  * migrate job actually receives.
  */
 export interface MigrationSelection {
   /** Folders explicitly ticked. */
   folders: number;
-  /** Dashboards that end up in the migrate payload. */
-  dashboards: number;
-  /** Folders + independently-ticked dashboards, for the "Migrate selected (N)" label. */
+  /** Folders + independently-ticked resources, for the "Migrate selected (N)" label. */
   items: number;
-  /** The dashboard refs to send to the migrate job. */
+  /** The resource refs to send to the migrate job (dashboards and playlists). */
   resources: ResourceRef[];
 }
+
+const DASHBOARD = resourceKindInfos.dashboard;
+const PLAYLIST = resourceKindInfos.playlist;
 
 /**
  * Resolves the table selection into the migrate job payload.
@@ -27,21 +31,24 @@ export interface MigrationSelection {
  * directly inside it (`directDashboards`, already filtered to unmanaged ones).
  * Individually-ticked dashboards are added on top, de-duplicated against the
  * ones a selected folder already covers — so picking a folder *and* a dashboard
- * inside it counts that dashboard once.
+ * inside it counts that dashboard once. Playlists aren't folder-scoped, so each
+ * ticked playlist maps directly to a ref.
  */
 export function resolveSelection(
   folders: FolderRow[],
   selectedFolderUids: Set<string>,
-  selectedDashboardUids: Set<string>
+  selectedDashboardUids: Set<string>,
+  selectedPlaylistUids: Set<string> = new Set()
 ): MigrationSelection {
-  const seen = new Set<string>();
   const resources: ResourceRef[] = [];
+
+  const seenDashboards = new Set<string>();
   const addDashboard = (uid: string) => {
-    if (seen.has(uid)) {
+    if (seenDashboards.has(uid)) {
       return;
     }
-    seen.add(uid);
-    resources.push({ name: uid, group: 'dashboard.grafana.app', kind: 'Dashboard' });
+    seenDashboards.add(uid);
+    resources.push({ name: uid, group: DASHBOARD.group, kind: DASHBOARD.kind });
   };
 
   // Dashboards covered by a selected folder are tracked separately so we don't
@@ -56,14 +63,17 @@ export function resolveSelection(
   folderCoveredDashboardUids.forEach(addDashboard);
   selectedDashboardUids.forEach(addDashboard);
 
+  selectedPlaylistUids.forEach((uid) => {
+    resources.push({ name: uid, group: PLAYLIST.group, kind: PLAYLIST.kind });
+  });
+
   const independentDashboards = Array.from(selectedDashboardUids).filter(
     (uid) => !folderCoveredDashboardUids.has(uid)
   ).length;
 
   return {
     folders: selectedFolderUids.size,
-    dashboards: resources.length,
-    items: selectedFolderUids.size + independentDashboards,
+    items: selectedFolderUids.size + independentDashboards + selectedPlaylistUids.size,
     resources,
   };
 }

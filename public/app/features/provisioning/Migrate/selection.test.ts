@@ -25,7 +25,7 @@ describe('resolveSelection', () => {
 
     expect(result.folders).toBe(1);
     expect(result.items).toBe(1);
-    expect(result.dashboards).toBe(2);
+    expect(result.resources).toHaveLength(2);
     expect(result.resources.map((r) => r.name).sort()).toEqual(['a1', 'a2']);
     expect(result.resources[0]).toMatchObject({ group: 'dashboard.grafana.app', kind: 'Dashboard' });
   });
@@ -35,7 +35,7 @@ describe('resolveSelection', () => {
 
     // 1 folder + 1 independent dashboard = 2 items; 3 dashboards in the payload.
     expect(result.items).toBe(2);
-    expect(result.dashboards).toBe(3);
+    expect(result.resources).toHaveLength(3);
     expect(result.resources.map((r) => r.name).sort()).toEqual(['a1', 'a2', 'b1']);
   });
 
@@ -45,7 +45,27 @@ describe('resolveSelection', () => {
     // The folder already covers a1, so the explicit tick adds no extra item
     // and no duplicate resource.
     expect(result.items).toBe(1);
-    expect(result.dashboards).toBe(2);
+    expect(result.resources).toHaveLength(2);
     expect(result.resources.map((r) => r.name).sort()).toEqual(['a1', 'a2']);
+  });
+
+  it('adds selected playlists as their own resource refs', () => {
+    const result = resolveSelection(folders, new Set(['a']), new Set(), new Set(['p1', 'p2']));
+
+    // 1 folder + 2 playlists = 3 items; payload carries the folder's 2
+    // dashboards plus the 2 playlists.
+    expect(result.items).toBe(3);
+    expect(result.resources).toHaveLength(4);
+    const playlistRefs = result.resources.filter((r) => r.kind === 'Playlist');
+    expect(playlistRefs.map((r) => r.name).sort()).toEqual(['p1', 'p2']);
+    expect(playlistRefs[0]).toMatchObject({ group: 'playlist.grafana.app', kind: 'Playlist' });
+  });
+
+  it('resolves a playlist-only selection', () => {
+    const result = resolveSelection(folders, new Set(), new Set(), new Set(['p1']));
+
+    expect(result.folders).toBe(0);
+    expect(result.items).toBe(1);
+    expect(result.resources).toEqual([{ name: 'p1', group: 'playlist.grafana.app', kind: 'Playlist' }]);
   });
 });

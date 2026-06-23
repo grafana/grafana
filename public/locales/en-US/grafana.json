@@ -13344,6 +13344,7 @@
       "truncated": "Message truncated"
     },
     "migrate": {
+      "all-resources": "All resources",
       "dashboards": "Dashboards",
       "drawer-cancel": "Cancel",
       "drawer-description": "All resources not yet managed by Git will be migrated into the selected repository. This is a one-time operation.",
@@ -13366,6 +13367,7 @@
       "migrate-button-selected": "Migrate selected",
       "migrate-everything": "Migrate everything",
       "n-of-m-managed": "{{managed}} of {{total}} managed",
+      "playlists": "Playlists",
       "repo-description": "The repository your resources will be migrated into.",
       "repo-label": "Target repository",
       "repo-no-push-body": "Migration pushes directly to the repository’s configured branch, but this repository isn’t set up to allow that. Choose a repository that can push to its configured branch, or update this repository’s workflow.",
@@ -13375,6 +13377,8 @@
       "resources-expand": "Expand {{folder}}",
       "resources-folder-summary_one": "{{count}} resource",
       "resources-folder-summary_other": "{{count}} resources",
+      "resources-folders-section": "Folders",
+      "resources-playlists-section": "Playlists",
       "resources-select-all": "Select all",
       "resources-select-folder": "Select folder {{folder}}",
       "resources-sort-aria": "Sort folders",
@@ -13382,7 +13386,7 @@
       "resources-sort-count-desc": "Most resources",
       "resources-sort-title-asc": "Name (A–Z)",
       "resources-sort-title-desc": "Name (Z–A)",
-      "resources-to-migrate-all-managed": "All dashboards are already managed by Git.",
+      "resources-to-migrate-all-managed": "All resources are already managed by Git.",
       "resources-to-migrate-empty": "No folders or resources match the current search.",
       "resources-to-migrate-footer_one": "Showing {{shown}} of {{count}} folder",
       "resources-to-migrate-footer_other": "Showing {{shown}} of {{count}} folders",
