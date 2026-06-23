@@ -30,11 +30,10 @@ import {
   transformDataFrame,
   store,
 } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
@@ -496,25 +495,14 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
 
   return (
     <>
-      {!config.featureToggles.newLogContext && contextRow && (
-        <LogRowContextModal
-          open={contextRow !== null}
-          row={contextRow}
-          onClose={onCloseContext}
-          getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
-          logsSortOrder={sortOrder}
-          timeZone={timeZone}
-          getLogRowContextUi={getLogRowContextUi}
-        />
-      )}
-      {config.featureToggles.newLogContext && getLogRowContext && contextRow && (
+      {getLogRowContext && contextRow && (
         <LogLineContext
           open={contextRow !== null}
           log={contextRow}
           onClose={onCloseContext}
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           getLogRowContextUi={getLogRowContextUi}
-          logOptionsStorageKey={controlsStorageKey}
+          logOptionsStorageKey={storageKey}
           logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}

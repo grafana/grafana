@@ -2080,14 +2080,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "newLogContext",
-			Description: "New Log Context component",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaObservabilityLogsSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",
-		},
-		{
 			Name:        "newClickhouseConfigPageDesign",
 			Description: "Enables new design for the Clickhouse data source configuration page",
 			Stage:       FeatureStageGeneralAvailability,
