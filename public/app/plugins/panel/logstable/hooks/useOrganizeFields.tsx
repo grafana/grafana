@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import { useEffect, useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 import { lastValueFrom } from 'rxjs';
@@ -10,7 +11,6 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/f
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
 import { getTimeFieldWidth } from '../fields/getFieldWidth';
-import { normalizeLogLevelFieldInPlace } from '../fields/normalizeLogLevelField';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
@@ -124,16 +124,13 @@ const organizeFields = async (
     const levelField = frame.fields.find((f) => f.name === levelFieldName);
     let isLevelFirstField = false;
     if (levelField) {
-      normalizeLogLevelFieldInPlace(levelField);
       isLevelFirstField = frame.fields.indexOf(levelField) === 0;
     }
 
     for (const [fieldIndex, field] of frame.fields.entries()) {
       const isFirstField = (!isLevelFirstField && fieldIndex === 0) || (isLevelFirstField && fieldIndex === 1);
-      const baseConfig = {
-        ...fieldConfig.defaults,
-        ...field.config,
-      };
+      // Deep-merge so panel defaults (e.g. custom.filterable) survive when the field already has custom.* from applyFieldOverrides.
+      const baseConfig = merge({}, fieldConfig.defaults, field.config);
 
       const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig);
 
@@ -163,7 +160,7 @@ const organizeFields = async (
               : configAfterLevel.custom?.width,
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
-            isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
+            isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)
               ? {
                   type: TableCellDisplayMode.Custom,
                   cellComponent: (cellProps: CustomCellRendererProps) => (

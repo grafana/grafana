@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -23,12 +24,13 @@ import (
 
 func TestCalculateChanges(t *testing.T) {
 	tests := []struct {
-		name           string
-		setupMocks     func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
-		changes        []repository.VersionedFileChange
-		expectedInfo   changeInfo
-		expectedError  string
-		grafanaBaseURL string
+		name              string
+		setupMocks        func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory)
+		changes           []repository.VersionedFileChange
+		expectedInfo      changeInfo
+		expectedError     string
+		grafanaBaseURL    string
+		screenshotBaseURL string
 	}{
 		{
 			name: "with screenshot",
@@ -54,6 +56,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -104,6 +107,313 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
+			name: "non-default org strips orgId from render callback but keeps it on comment links",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "org-2",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "org-2",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				// The render callback must NOT carry orgId: it would make
+				// OrgRedirect try to switch the render user's org. orgId stays
+				// only on the comment-facing links below.
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything,
+					mock.MatchedBy(func(v url.Values) bool { return !v.Has("orgId") })).
+					Return(getDummyRenderedURL("x"), nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world?orgId=2",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?orgId=2&pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+					PreviewScreenshotURL: "https://cdn2.thecatapi.com/images/9e2.jpg",
+				}},
+			},
+		},
+		{
+			name:              "screenshot uses ProvisioningPublicRootURL when set",
+			screenshotBaseURL: "https://public.example.com",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "https://public.example.com/screenshots/abc.png",
+					PreviewScreenshotURL: "https://public.example.com/screenshots/abc.png",
+				}},
+			},
+		},
+		{
+			name: "screenshot falls back to grafana base url when ProvisioningPublicRootURL empty",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "http://host/screenshots/abc.png",
+					PreviewScreenshotURL: "http://host/screenshots/abc.png",
+				}},
+			},
+		},
+		{
+			// Proves the screenshot path does not silently inherit spec.webhook.baseUrl.
+			// The repo has webhook.baseUrl set, but ProvisioningPublicRootURL is empty,
+			// so screenshots must use the grafana base URL — not the webhook URL.
+			name: "screenshot ignores spec.webhook.baseUrl when ProvisioningPublicRootURL empty",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+						Webhook: &provisioning.WebhookConfig{
+							BaseURL: "https://webhook-only.example.com",
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
+				renderer.On("RenderScreenshot", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("screenshots/abc.png", nil)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "http://host/screenshots/abc.png",
+					PreviewScreenshotURL: "http://host/screenshots/abc.png",
+				}},
+			},
+		},
+		{
 			name: "without screenshot",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
@@ -127,6 +437,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -175,6 +486,78 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
+			name: "non-default org pins orgId on links",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "org-2",
+					},
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							GenerateDashboardPreviews: true,
+						},
+					},
+				})
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "org-2",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:            obj,
+					Existing:       obj,
+					Meta:           meta,
+					DryRunResponse: obj,
+				}, nil)
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action: repository.FileActionCreated,
+				Path:   "path/to/file.json",
+				Ref:    "ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   "path/to/file.json",
+						Ref:    "ref",
+					},
+					GrafanaURL:           "http://host/d/the-uid/hello-world?orgId=2",
+					PreviewURL:           "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?orgId=2&pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
+					GrafanaScreenshotURL: "",
+					PreviewScreenshotURL: "",
+				}},
+			},
+		},
+		{
 			name: "process first 10 files",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				finfo := &repository.FileInfo{
@@ -198,6 +581,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -323,6 +707,7 @@ func TestCalculateChanges(t *testing.T) {
 					Data: []byte("invalid json"),
 				}
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				parser.On("Parse", mock.Anything, finfo).Return(nil, fmt.Errorf("parse error"))
 			},
 			changes: []repository.VersionedFileChange{{
@@ -374,6 +759,7 @@ func TestCalculateChanges(t *testing.T) {
 				meta, _ := utils.MetaAccessor(obj)
 
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				parsed := &resources.ParsedResource{
 					Info: finfo,
 					Repo: provisioning.ResourceRepositoryInfo{
@@ -402,8 +788,10 @@ func TestCalculateChanges(t *testing.T) {
 						Path:   "path/to/file.json",
 						Ref:    "ref",
 					},
-					Error: "no client configured",
-					Title: "hello world",
+					Error:      "no client configured",
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+					PreviewURL: "http://host/admin/provisioning/y/dashboard/preview/path/to/file.json?pull_request_url=http%253A%252F%252Fgithub.com%252Fpr%252F&ref=ref",
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
 							Path: "path/to/file.json",
@@ -442,6 +830,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -515,6 +904,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -564,7 +954,137 @@ func TestCalculateChanges(t *testing.T) {
 			},
 		},
 		{
-			name: "deleted file",
+			name: "deleted file reads from previous ref",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "base-ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "base-ref").Return(finfo, nil)
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "x",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:      obj,
+					Existing: obj,
+					Meta:     meta,
+				}, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "base-ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "base-ref",
+					},
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world",
+				}},
+			},
+		},
+		{
+			name: "deleted file pins orgId on links for non-default org",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				finfo := &repository.FileInfo{
+					Path: "path/to/file.json",
+					Ref:  "base-ref",
+					Data: []byte("xxxx"),
+				}
+				obj := &unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"apiVersion": resources.DashboardResource.GroupVersion().String(),
+						"kind":       dashboardKind,
+						"metadata": map[string]interface{}{
+							"name": "the-uid",
+						},
+						"spec": map[string]interface{}{
+							"title": "hello world",
+						},
+					},
+				}
+				meta, _ := utils.MetaAccessor(obj)
+
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "org-2",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "base-ref").Return(finfo, nil)
+				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
+					Info: finfo,
+					Repo: provisioning.ResourceRepositoryInfo{
+						Namespace: "org-2",
+						Name:      "y",
+					},
+					GVK: schema.GroupVersionKind{
+						Kind: dashboardKind,
+					},
+					Obj:      obj,
+					Existing: obj,
+					Meta:     meta,
+				}, nil)
+			},
+			changes: []repository.VersionedFileChange{{
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "base-ref",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "base-ref",
+					},
+					Title:      "hello world",
+					GrafanaURL: "http://host/d/the-uid/hello-world?orgId=2",
+				}},
+			},
+		},
+		{
+			name: "deleted file with read error degrades gracefully",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -575,20 +1095,53 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "base-ref").Return(nil, fmt.Errorf("file not found"))
 			},
 			changes: []repository.VersionedFileChange{{
-				Action: repository.FileActionDeleted,
-				Path:   "path/to/file.json",
-				Ref:    "ref",
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "base-ref",
 			}},
 			expectedInfo: changeInfo{
 				Changes: []fileChangeInfo{{
 					Change: repository.VersionedFileChange{
-						Action: repository.FileActionDeleted,
-						Path:   "path/to/file.json",
-						Ref:    "ref",
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "base-ref",
 					},
-					Error: "delete feedback not yet implemented",
+				}},
+			},
+		},
+		{
+			name: "deleted file with empty previous ref degrades gracefully",
+			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
+				reader.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-repo",
+						Namespace: "x",
+					},
+				})
+				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
+				parserFactory.On("GetParser", mock.Anything, mock.Anything).Return(parser, nil)
+				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Return(nil, fmt.Errorf("ref not found"))
+			},
+			changes: []repository.VersionedFileChange{{
+				Action:      repository.FileActionDeleted,
+				Path:        "path/to/file.json",
+				Ref:         "ref",
+				PreviousRef: "",
+			}},
+			expectedInfo: changeInfo{
+				Changes: []fileChangeInfo{{
+					Change: repository.VersionedFileChange{
+						Action:      repository.FileActionDeleted,
+						Path:        "path/to/file.json",
+						Ref:         "ref",
+						PreviousRef: "",
+					},
 				}},
 			},
 		},
@@ -624,6 +1177,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -696,6 +1250,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -765,6 +1320,7 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file with spaces.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file with spaces.json", "ref").Return(finfo, nil)
+				reader.On("Read", mock.Anything, "path/to/file with spaces.json", "").Maybe().Return(nil, repository.ErrFileNotFound)
 				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
@@ -824,12 +1380,17 @@ func TestCalculateChanges(t *testing.T) {
 
 			tt.setupMocks(parser, reader, progress, renderer, parserFactory)
 
-			evaluator := NewEvaluator(renderer, parserFactory, func(_ context.Context, _ string) string {
-				if tt.grafanaBaseURL != "" {
-					return tt.grafanaBaseURL
-				}
-
-				return "http://host/"
+			screenshotBaseURL := tt.screenshotBaseURL
+			if screenshotBaseURL == "" {
+				screenshotBaseURL = "http://host/"
+			}
+			internalURL := "http://host/"
+			if tt.grafanaBaseURL != "" {
+				internalURL = tt.grafanaBaseURL
+			}
+			evaluator := NewEvaluator(renderer, parserFactory, URLProvider{
+				Internal: func(_ context.Context, _ string) string { return internalURL },
+				Public:   func(_ context.Context, _ string) string { return screenshotBaseURL },
 			}, prometheus.NewPedanticRegistry())
 
 			pullRequest := provisioning.PullRequestJobOptions{
@@ -981,6 +1542,178 @@ func TestRenderScreenshotFromGrafanaURL(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tt.wantSnap, got)
+		})
+	}
+}
+
+func TestHasStrippedMetadata(t *testing.T) {
+	t.Run("original has extra metadata, parsed has only name", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"namespace":   "default",
+				"labels":      map[string]any{"team": "platform"},
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original and parsed have same metadata", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original has labels, parsed lost them", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original has empty labels, not counted", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"labels":      map[string]any{},
+				"annotations": map[string]any{},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("parsed has more annotations than original, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name": "my-dash",
+				"annotations": map[string]any{
+					"custom/note":         "important",
+					"grafana.app/managed": "repo",
+				},
+			},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("original annotation key removed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important", "old/key": "value"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":        "my-dash",
+				"annotations": map[string]any{"custom/note": "important"},
+			},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("namespace changed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "custom-ns"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("namespace same in both, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": "default"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("empty namespace in original is not counted", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash", "namespace": ""},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "my-dash"},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("label value changed but key still present, not stripped", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "other"},
+			},
+		}}
+		require.False(t, hasRemovedMetadata(original, parsed))
+	})
+
+	t.Run("label key removed by parser", func(t *testing.T) {
+		original := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform", "env": "prod"},
+			},
+		}}
+		parsed := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{
+				"name":   "my-dash",
+				"labels": map[string]any{"team": "platform"},
+			},
+		}}
+		require.True(t, hasRemovedMetadata(original, parsed))
+	})
+}
+
+func TestOrgIDForLinks(t *testing.T) {
+	tests := []struct {
+		name      string
+		namespace string
+		want      int64
+	}{
+		{"on-prem non-default org", "org-2", 2},
+		{"on-prem high org id", "org-7", 7},
+		{"main org default namespace", "default", 0},
+		{"cloud stack maps to org 1", "stacks-9", 0},
+		{"org-1 is rejected by parser", "org-1", 0},
+		{"empty namespace", "", 0},
+		{"unparseable namespace", "x", 0},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, orgIDForLinks(tt.namespace))
 		})
 	}
 }

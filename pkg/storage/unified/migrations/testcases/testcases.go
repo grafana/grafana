@@ -3,7 +3,9 @@ package testcases
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,38 +35,51 @@ type ResourceMigratorTestCase interface {
 	Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
 
-// verifyResourceCount verifies that the expected number of resources exist in K8s storage
+// verifyResourceCount verifies that the expected number of resources exist in K8s storage.
 func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
 	t.Helper()
 
-	var total int
-	continueToken := ""
-	for {
-		l, err := client.Resource.List(context.Background(), metav1.ListOptions{
-			Continue: continueToken,
-		})
-		require.NoError(t, err)
+	// Retry: under SQLite write contention the authz role lookup (a non-lock-retried read)
+	// can hit SQLITE_BUSY, which fails open to "deny all" and returns an empty list with no
+	// error even though the rows exist. The contention is a bounded startup burst.
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		var total int
+		continueToken := ""
+		for {
+			l, err := client.Resource.List(context.Background(), metav1.ListOptions{
+				Continue: continueToken,
+			})
+			if !assert.NoError(c, err) {
+				return
+			}
 
-		resources, err := meta.ExtractList(l)
-		require.NoError(t, err)
-		total += len(resources)
+			resources, err := meta.ExtractList(l)
+			if !assert.NoError(c, err) {
+				return
+			}
+			total += len(resources)
 
-		continueToken = l.GetContinue()
-		if continueToken == "" {
-			break
+			continueToken = l.GetContinue()
+			if continueToken == "" {
+				break
+			}
 		}
-	}
-	require.Equal(t, expectedCount, total)
+		assert.Equal(c, expectedCount, total)
+	}, 5*time.Second, 100*time.Millisecond)
 }
 
 // verifyResource verifies that a resource with the given UID exists in K8s storage
 func verifyResource(t *testing.T, client *apis.K8sResourceClient, uid string, shouldExist bool) {
 	t.Helper()
 
-	_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
 	if shouldExist {
-		require.NoError(t, err)
-	} else {
-		require.Error(t, err)
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			_, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+			assert.NoError(c, err, "expecting to find: "+uid)
+		}, 5*time.Second, 100*time.Millisecond)
+		return
 	}
+
+	v, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	require.Error(t, err, "should not find: %+v", v)
 }

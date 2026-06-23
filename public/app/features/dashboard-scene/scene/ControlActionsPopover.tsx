@@ -1,10 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, safePolygon, useFloating, useHover, useInteractions } from '@floating-ui/react';
-import React, { cloneElement, useCallback, useState } from 'react';
+import React, { cloneElement, useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { isDataLayer, isSceneObject, type SceneVariable, SceneVariableSet, type SceneObject } from '@grafana/scenes';
 import { IconButton, Portal, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 export function ControlActionsPopover({
   isEditable,
@@ -48,13 +51,32 @@ export function ControlActionsPopover({
 }
 
 export function ControlEditActions({
+  element,
   onClickEdit,
   onClickDelete,
 }: {
+  element: SceneObject | { name: string; type: string };
   onClickEdit: () => void;
   onClickDelete: () => void;
 }) {
   const styles = useStyles2(getStyles);
+
+  const { name, type } = useMemo(() => {
+    if (!isSceneObject(element)) {
+      return { name: element.name, type: element.type };
+    }
+
+    if (isDataLayer(element)) {
+      return { name: element.state.name, type: 'annotation query' };
+    }
+
+    if (element.parent instanceof SceneVariableSet) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return { name: (element as SceneVariable).state.name, type: 'variable' };
+    }
+
+    return { name: '', type: 'unknown type' };
+  }, [element]);
 
   const onClickEditInternal = useCallback(
     (event: React.MouseEvent) => {
@@ -66,9 +88,18 @@ export function ControlEditActions({
   const onClickDeleteInternal = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
-      onClickDelete();
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type }),
+          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
+            name,
+          }),
+          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type }),
+          onConfirm: onClickDelete,
+        })
+      );
     },
-    [onClickDelete]
+    [name, type, onClickDelete]
   );
 
   return (

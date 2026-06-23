@@ -43,10 +43,6 @@ func (s *Service) Delete(ctx context.Context, cmd *star.UnstarDashboardCommand) 
 	return s.store.Delete(ctx, cmd)
 }
 
-func (s *Service) IsStarredByUser(ctx context.Context, query *star.IsStarredByUserQuery) (bool, error) {
-	return s.store.Get(ctx, query)
-}
-
 func (s *Service) GetByUser(ctx context.Context, cmd *star.GetUserStarsQuery) (*star.GetUserStarsResult, error) {
 	return s.store.List(ctx, cmd)
 }

@@ -7,6 +7,7 @@ import {
   type DataFrame,
   EventBusSrv,
   type ExplorePanelsState,
+  FieldType,
   LoadingState,
   LogLevel,
   type LogRowModel,
@@ -195,6 +196,18 @@ describe('Logs', () => {
     ).toBeInTheDocument();
   });
 
+  it('should render an actionable message when frames have rows but no time field', () => {
+    const frameWithoutTime = createDataFrame({
+      fields: [{ name: 'message', type: FieldType.string, values: ['log message 1', 'log message 2'] }],
+    });
+    setup({}, frameWithoutTime, []);
+
+    expect(
+      screen.getByText('The Logs visualization requires a time field. Add a time-typed column to your query.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/no logs found\./i)).not.toBeInTheDocument();
+  });
+
   it('should render a load more button', () => {
     const scanningStarted = jest.fn();
     const store = configureStore({
@@ -349,8 +362,9 @@ describe('Logs', () => {
 
   it('should flip the order', async () => {
     setup();
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    // Sort toggle is an IconButton; aria-label comes from the tooltip (newest-first → click for oldest-first).
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     const logsSection = screen.getByTestId('logRows');
     let logRows = logsSection.querySelectorAll('tr');
     expect(logRows.length).toBe(3);
@@ -362,8 +376,8 @@ describe('Logs', () => {
   it('should sync the query direction when changing the order of loki queries', async () => {
     const query = { expr: '{a="b"}', refId: 'A', datasource: { type: 'loki' } };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).toHaveBeenCalledWith({
       exploreId: 'left',
       queries: [{ ...query, direction: LokiQueryDirection.Forward }],
@@ -375,8 +389,8 @@ describe('Logs', () => {
     fakeChangeQueries.mockClear();
     const query = { refId: 'B' };
     setup({ logsQueries: [query] });
-    const oldestFirstSelection = screen.getByLabelText('Oldest first');
-    await userEvent.click(oldestFirstSelection);
+    const sortOrderToggle = screen.getByRole('button', { name: /sorted by newest logs first/i });
+    await userEvent.click(sortOrderToggle);
     expect(fakeChangeQueries).not.toHaveBeenCalled();
   });
 
@@ -489,13 +503,13 @@ describe('Logs', () => {
 
     it('should show visualisation type radio group', () => {
       setup();
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       expect(logsSection).toBeInTheDocument();
     });
 
     it('should change visualisation to table on toggle (loki)', async () => {
       setup({});
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');
@@ -518,7 +532,7 @@ describe('Logs', () => {
 
     it('should change visualisation to table on toggle (elastic)', async () => {
       setup({}, getMockElasticFrame());
-      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      const logsSection = screen.getByRole('radio', { name: 'Table' });
       await userEvent.click(logsSection);
 
       const table = screen.getByTestId('logRowsTable');

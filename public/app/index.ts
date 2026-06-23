@@ -2,6 +2,8 @@
 // Since much of Grafana depends on it in includes side effects at import time,
 // we delay loading the rest of the app using import() until the boot data is ready.
 
+import { initPreferences } from './initPreferences';
+
 // Check if we are hosting files on cdn and set webpack public path
 if (window.public_cdn_path) {
   __webpack_public_path__ = window.public_cdn_path;
@@ -21,7 +23,13 @@ window.__grafana_app_bundle_loaded = true;
 async function bootstrapWindowData() {
   // Wait for window.grafanaBootData is ready. The new index.html loads it from
   // an API call, but the old one just sets an immediately resolving promise.
+  //
+  // Must be first because initPreferences depends on bootdata
   await window.__grafana_boot_data_promise;
+
+  if (window.__grafanaNewPreferencesPage) {
+    await initPreferences();
+  }
 
   // Use eager to ensure the app is included in the initial chunk and does not
   // require additional network requests to load.
@@ -33,6 +41,6 @@ bootstrapWindowData().catch((error) => {
   // If a redirect was thrown, just ignore this. The index.html will handle the redirect
   if (!isRedirect) {
     console.error('Error bootstrapping Grafana', error);
-    window.__grafana_load_failed();
+    window.__grafana_load_failed(error);
   }
 });

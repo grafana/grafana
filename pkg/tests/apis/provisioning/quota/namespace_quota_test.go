@@ -32,17 +32,17 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 1: create 2 repos with unlimited quota  ---------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo1Name,
-		Path:                   repo1Path,
-		Target:                 "folder",
+		LocalPath:              repo1Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
-	helper.CreateRepo(t, common.TestRepo{
+	helper.CreateLocalRepo(t, common.TestRepo{
 		Name:                   repo2Name,
-		Path:                   repo2Path,
-		Target:                 "folder",
+		LocalPath:              repo2Path,
+		SyncTarget:             "folder",
 		SkipSync:               true,
 		SkipResourceAssertions: true,
 	})
@@ -82,7 +82,7 @@ func waitForUnhealthyWithNamespaceQuota(t *testing.T, helper *common.Provisionin
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.False(collect, repo.Status.Health.Healthy, "repo %s should be unhealthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -102,7 +102,7 @@ func waitForHealthyWithNamespaceQuota(t *testing.T, helper *common.ProvisioningT
 		if !assert.NoError(collect, err) {
 			return
 		}
-		repo := common.UnstructuredToRepository(t, repoObj)
+		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
 		assert.True(collect, repo.Status.Health.Healthy, "repo %s should be healthy", repoName)
 		cond := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)
 		if !assert.NotNil(collect, cond, "NamespaceQuota condition not found on %s", repoName) {
@@ -158,7 +158,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		if !assert.NoError(c, err) {
 			return
 		}
-		connObj := common.UnstructuredToConnection(t, obj)
+		connObj := common.MustFromUnstructured[provisioning.Connection](t, obj)
 		assert.NotEqual(c, int64(0), connObj.Status.ObservedGeneration,
 			"connection should be reconciled at least once")
 		assert.False(c, connObj.Secure.Token.IsZero(),
@@ -208,7 +208,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 			if !assert.NoError(c, err) {
 				return
 			}
-			r := common.UnstructuredToRepository(t, obj)
+			r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 			assert.False(c, r.Secure.Token.IsZero(),
 				"repo %s should have a token after initial reconciliation", name)
 		}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
@@ -262,7 +262,7 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 		if !assert.NoError(c, err) {
 			return
 		}
-		r := common.UnstructuredToRepository(t, obj)
+		r := common.MustFromUnstructured[provisioning.Repository](t, obj)
 
 		// Repository must still be blocked by the namespace quota.
 		cond := common.FindCondition(r.Status.Conditions, provisioning.ConditionTypeNamespaceQuota)

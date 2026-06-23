@@ -1,22 +1,21 @@
 import { getBuiltInThemes } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { getFeatureFlagClient, FlagKeys } from '@grafana/runtime/internal';
 
 export function getSelectableThemes() {
-  const allowedExtraThemes = [];
+  const allowedExtraThemes = [
+    'deut_prot_dark',
+    'deut_prot_light',
+    'tritanopia_dark',
+    'tritanopia_light',
+    'desertbloom',
+    'gildedgrove',
+    'sapphiredusk',
+    'tron',
+    'gloom',
+  ];
 
-  if (config.featureToggles.colorblindThemes) {
-    allowedExtraThemes.push('deuteranopia_protanopia_dark');
-    allowedExtraThemes.push('deuteranopia_protanopia_light');
-    allowedExtraThemes.push('tritanopia_dark');
-    allowedExtraThemes.push('tritanopia_light');
-  }
-
-  if (config.featureToggles.grafanaconThemes) {
-    allowedExtraThemes.push('desertbloom');
-    allowedExtraThemes.push('gildedgrove');
-    allowedExtraThemes.push('sapphiredusk');
-    allowedExtraThemes.push('tron');
-    allowedExtraThemes.push('gloom');
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaVisualDesignRefresh, false)) {
+    allowedExtraThemes.push('visual_refresh_dark', 'visual_refresh_light');
   }
 
   return getBuiltInThemes(allowedExtraThemes);

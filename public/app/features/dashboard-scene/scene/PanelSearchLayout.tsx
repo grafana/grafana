@@ -6,8 +6,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
 
+import { SoloPanelContextProvider } from '../solo/SoloPanelContext';
+
 import { type DashboardScene } from './DashboardScene';
-import { SoloPanelContextProvider } from './SoloPanelContext';
 
 export interface Props {
   dashboard: DashboardScene;

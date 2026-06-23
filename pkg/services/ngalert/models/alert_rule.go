@@ -174,6 +174,17 @@ const (
 
 	// PluginGrafanaOriginLabel is a label that indicates that the alert rule originated from a plugin.
 	PluginGrafanaOriginLabel = "__grafana_origin"
+	// PluginGrafanaOriginUIDLabel is an optional label carrying the UID of the resource within the
+	// origin plugin that owns this rule. When present it is appended to the X-Rule-Origin header
+	// as "<origin>|<uid>". Plugins that cannot set this label may use a plugin-specific fallback
+	// (see PluginGrafanaSLOUUIDLabel).
+	PluginGrafanaOriginUIDLabel = "__grafana_origin_uid"
+
+	// PluginGrafanaSLOOrigin is the __grafana_origin value set by the Grafana SLO plugin.
+	PluginGrafanaSLOOrigin = "plugin/grafana-slo-app"
+	// PluginGrafanaSLOUUIDLabel is the SLO-specific label used as a fallback source for the
+	// resource UID when PluginGrafanaOriginUIDLabel is absent.
+	PluginGrafanaSLOUUIDLabel = "grafana_slo_uuid"
 )
 
 const (
@@ -582,6 +593,17 @@ func (alertRule *AlertRule) GetEvalCondition() Condition {
 		"Type":    string(alertRule.Type()),
 		"Version": strconv.FormatInt(alertRule.Version, 10),
 	}
+	if origin := alertRule.Labels[PluginGrafanaOriginLabel]; origin != "" {
+		uid := alertRule.Labels[PluginGrafanaOriginUIDLabel]
+		if uid == "" && origin == PluginGrafanaSLOOrigin {
+			uid = alertRule.Labels[PluginGrafanaSLOUUIDLabel]
+		}
+		if uid != "" {
+			meta["Origin"] = origin + "|" + uid
+		} else {
+			meta["Origin"] = origin
+		}
+	}
 	if alertRule.Type() == RuleTypeRecording {
 		return Condition{
 			Metadata:  meta,
@@ -670,7 +692,8 @@ type AlertRuleKeyWithGroup struct {
 
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
-	ID int64
+	ID   int64
+	GUID string
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
@@ -965,7 +988,7 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 	}
 
 	if alertRule.NotificationSettings != nil {
-		result.NotificationSettings = util.Pointer(CopyNotificationSettings(*alertRule.NotificationSettings))
+		result.NotificationSettings = new(CopyNotificationSettings(*alertRule.NotificationSettings))
 	}
 
 	return &result
@@ -1045,16 +1068,61 @@ type ListAlertRulesQuery struct {
 	OrgID         int64
 	RuleUIDs      []string
 	NamespaceUIDs []string
-	ExcludeOrgs   []int64
-	RuleGroups    []string
+	// ExcludeNamespaceUIDs excludes rules in these namespace (folder) UIDs.
+	ExcludeNamespaceUIDs []string
+	ExcludeOrgs          []int64
+	RuleGroups           []string
+	// ExcludeRuleGroups excludes rules belonging to these rule groups.
+	ExcludeRuleGroups []string
+	// RuleGroupExists filters rules by whether they have a non-empty rule group set.
+	// true: only rules with a non-empty rule_group; false: only rules with an empty rule_group.
+	RuleGroupExists *bool
 
 	// DashboardUID and PanelID are optional and allow filtering rules
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
+	// ExcludeDashboardUID, when non-empty, excludes rules whose dashboard UID matches.
+	ExcludeDashboardUID string
+	// ExcludePanelID, when non-zero, excludes rules whose panel ID matches.
+	ExcludePanelID int64
 
-	ReceiverName     string
-	TimeIntervalName string
+	// IsPaused filters rules by their paused state.
+	// nil means no filter; true means only paused rules; false means only non-paused rules.
+	IsPaused *bool
+	// TitleExact filters rules to those with an exact title match (case-sensitive).
+	// Empty string means no filter.
+	TitleExact string
+	// ExcludeTitle, when non-empty, excludes rules whose title matches exactly.
+	ExcludeTitle string
+
+	// NotificationSettingsType filters rules by the type of notification settings configured.
+	// Empty string means no filter.
+	NotificationSettingsType NotificationSettingsType
+	// ExcludeNotificationSettingsType, when set, excludes rules whose notification settings type
+	// matches the given enum value.
+	ExcludeNotificationSettingsType NotificationSettingsType
+	// RoutingPolicyExact filters rules to those whose named routing policy matches exactly.
+	// Empty string means no filter.
+	RoutingPolicyExact string
+	// ExcludeRoutingPolicy, when non-empty, excludes rules whose named routing policy matches.
+	ExcludeRoutingPolicy string
+	// RecordMetricExact filters recording rules by their target metric name (exact match).
+	// Empty string means no filter.
+	RecordMetricExact string
+	// ExcludeRecordMetric, when non-empty, excludes recording rules whose target metric name matches.
+	ExcludeRecordMetric string
+	// RecordTargetDatasourceUIDExact filters recording rules by their target data source UID (exact match).
+	// Empty string means no filter.
+	RecordTargetDatasourceUIDExact string
+	// ExcludeRecordTargetDatasourceUID, when non-empty, excludes recording rules whose target
+	// data source UID matches.
+	ExcludeRecordTargetDatasourceUID string
+
+	ReceiverName string
+	// ExcludeReceiverName, when non-empty, excludes rules whose contact-point receiver name matches.
+	ExcludeReceiverName string
+	TimeIntervalName    string
 
 	// DataSourceUIDs allows searching for alert rules using data sources
 	// that match any of the given UIDs exactly (case sensitive).

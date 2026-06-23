@@ -1,8 +1,10 @@
 import { type Folder } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { type WorkflowOption } from 'app/features/provisioning/types';
 
+import { getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { joinPath } from '../utils/path';
 
 export type BulkActionFormData = {
@@ -17,6 +19,17 @@ export interface BulkActionProvisionResourceProps {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
   onActionComplete?: () => void;
   onDismiss?: () => void;
+}
+
+export function getBulkActionInitialValues(
+  repository: RepositoryView | undefined,
+  branchPrefix: string
+): BulkActionFormData {
+  return {
+    comment: '',
+    ref: getDefaultRef(repository, branchPrefix),
+    workflow: getDefaultWorkflow(repository),
+  };
 }
 
 /**
@@ -93,4 +106,16 @@ export function getResourceTargetPath(currentPath: string, targetFolderPath: str
   const isFolder = currentPath.endsWith('/');
   const basePath = joinPath(targetFolderPath, filename);
   return isFolder ? `${basePath}/` : basePath;
+}
+
+function normalizeRepoPath(path: string): string {
+  return path.replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+export function isResourceAlreadyInTarget(currentPath: string, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentPath) === normalizeRepoPath(getResourceTargetPath(currentPath, targetFolderPath));
+}
+
+export function isSameFolderPath(currentFolderPath: string | undefined, targetFolderPath: string): boolean {
+  return normalizeRepoPath(currentFolderPath || '') === normalizeRepoPath(targetFolderPath);
 }

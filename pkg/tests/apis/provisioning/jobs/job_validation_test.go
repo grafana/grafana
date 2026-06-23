@@ -22,12 +22,21 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 	const repo = "job-validation-test-repo"
 	testRepo := common.TestRepo{
 		Name:               repo,
-		Target:             "folder",
+		SyncTarget:         "folder",
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1, // folder sync creates a folder
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
+
+	// Build a resource list that exceeds the selective-export cap (100).
+	overLimitResources := make([]map[string]interface{}, 101)
+	for i := range overLimitResources {
+		overLimitResources[i] = map[string]interface{}{
+			"name": fmt.Sprintf("dash-%d", i),
+			"kind": "Dashboard",
+		}
+	}
 
 	tests := []struct {
 		name        string
@@ -150,6 +159,137 @@ func TestIntegrationProvisioning_JobValidation(t *testing.T) {
 				"repository": repo,
 			},
 			expectedErr: "spec.migrate: Required value: migrate options required for migrate action",
+		},
+		{
+			// Playlist is declared but disabled in the default config, so it is not part of
+			// the active supported set and must be rejected for export.
+			name: "push job with disabled resource kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "playlist-1", "kind": "Playlist"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"Playlist\": kind is not supported for export",
+		},
+		{
+			name: "push job with wrong group for supported kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "Dashboard", "group": "folder.grafana.app"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].group: Invalid value: \"folder.grafana.app\": group \"folder.grafana.app\" is not supported for kind Dashboard",
+		},
+		{
+			name: "push job with resource missing name",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"kind": "Dashboard"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].name: Required value: resource name is required",
+		},
+		{
+			name: "push job with resource missing kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Required value: resource kind is required",
+		},
+		{
+			name: "push job with empty resource ref",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].name: Required value",
+		},
+		{
+			name: "push job reports index of bad resource in a mixed list",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "Dashboard"},
+						{"name": "playlist-1", "kind": "Playlist"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[1].kind: Invalid value: \"Playlist\": kind is not supported for export",
+		},
+		{
+			// Kind matching is case-sensitive: "dashboard" does not match the supported "Dashboard".
+			name: "push job with lowercase dashboard kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "dash-1", "kind": "dashboard"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"dashboard\": kind is not supported for export",
+		},
+		{
+			// LibraryPanel is declared but disabled in the default config.
+			name: "push job with LibraryPanel kind",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": []map[string]interface{}{
+						{"name": "panel-1", "kind": "LibraryPanel"},
+					},
+				},
+			},
+			expectedErr: "spec.push.resources[0].kind: Invalid value: \"LibraryPanel\": kind is not supported for export",
+		},
+		{
+			name: "push job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionPush),
+				"repository": repo,
+				"push": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.push.resources: Too many: 101: must have at most 100 items",
+		},
+		{
+			name: "migrate job exceeding the selective export resource limit",
+			jobSpec: map[string]interface{}{
+				"action":     string(provisioning.JobActionMigrate),
+				"repository": repo,
+				"migrate": map[string]interface{}{
+					"resources": overLimitResources,
+				},
+			},
+			expectedErr: "spec.migrate.resources: Too many: 101: must have at most 100 items",
 		},
 	}
 

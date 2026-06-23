@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 
 import { useSelectedQueryDatasource } from './useSelectedQueryDatasource';
@@ -305,8 +306,9 @@ describe('useSelectedQueryDatasource', () => {
     });
 
     it('should return null when the datasource cannot be loaded', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
+      // `useQueryDatasource` throws on lookup failure and routes the error through useAsync's
+      // `error` state — no console.error side effect. The wrapper hook intentionally does not
+      // surface the error (see useSelectedQueryDatasource), so consumers see `data: null` here.
       const query: DataQuery = { refId: 'A', datasource: { uid: 'unknown-uid', type: 'unknown' } };
 
       const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings));
@@ -314,8 +316,63 @@ describe('useSelectedQueryDatasource', () => {
       await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
 
       expect(result.current.selectedQueryDsData).toBeNull();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('section (row/tab) scoped datasource variables', () => {
+    // A row/tab-scoped variable only resolves through the panel's scene scope. The hook must
+    // forward the panel; without it resolution fails ("Datasource ${metrics_source} was not found").
+    const variableDatasourceRef = { uid: '${metrics_source}', type: 'prometheus' };
+
+    // The panel the hook forwards as scene scope; its contents are irrelevant to this wiring.
+    const panel = new VizPanel({ key: 'panel-1' });
+
+    /** Resolves the variable only when the lookup receives the panel scene scope (`__sceneObject`). */
+    function createSectionScopedDataSourceSrv() {
+      const resolvableWithSceneScope = (ref: unknown, scopedVars: unknown) => {
+        const uid = typeof ref === 'string' ? ref : (ref as { uid?: string })?.uid;
+        const hasSceneScope = Boolean((scopedVars as { __sceneObject?: unknown } | undefined)?.__sceneObject);
+        return uid === '${metrics_source}' && hasSceneScope;
+      };
+
+      return createMockDataSourceSrv({
+        get: jest.fn().mockImplementation((ref: unknown, scopedVars: unknown) => {
+          if (resolvableWithSceneScope(ref, scopedVars)) {
+            return Promise.resolve(mockPrometheusDatasource as DataSourceApi);
+          }
+          return Promise.reject(new Error('Unknown datasource'));
+        }),
+        getInstanceSettings: jest.fn().mockImplementation((ref: unknown, scopedVars: unknown) => {
+          if (resolvableWithSceneScope(ref, scopedVars)) {
+            return mockPrometheusSettings;
+          }
+          return undefined;
+        }),
+      });
+    }
+
+    it('resolves a section-scoped datasource variable when the panel scene scope is provided', async () => {
+      mockGetDataSourceSrv.mockReturnValue(createSectionScopedDataSourceSrv());
+      const query: DataQuery = { refId: 'A', datasource: variableDatasourceRef };
+
+      const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings, panel));
+
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+
+      expect(result.current.selectedQueryDsData?.datasource).toBe(mockPrometheusDatasource);
+      expect(result.current.selectedQueryDsData?.dsSettings.uid).toBe('prometheus-uid');
+    });
+
+    it('fails to resolve a section-scoped datasource variable without the panel scene scope (regression guard)', async () => {
+      mockGetDataSourceSrv.mockReturnValue(createSectionScopedDataSourceSrv());
+      const query: DataQuery = { refId: 'A', datasource: variableDatasourceRef };
+
+      // No panel → no scene scope → the variable can't be interpolated (the original failure).
+      const { result } = renderHook(() => useSelectedQueryDatasource(query, mockTestDataSettings));
+
+      await waitFor(() => expect(result.current.selectedQueryDsLoading).toBe(false));
+
+      expect(result.current.selectedQueryDsData).toBeNull();
     });
   });
 });

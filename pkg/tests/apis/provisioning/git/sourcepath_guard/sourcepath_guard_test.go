@@ -27,7 +27,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *test
 		"dashboard_b.json": common.DashboardJSON("takeover-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"takeover-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"takeover-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
@@ -81,7 +81,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.
 		"dashboard_b.json": common.DashboardJSON("swap-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"swap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"swap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
@@ -132,7 +132,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 		"dashboard_b.json": common.DashboardJSON("full-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"full-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"full-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
@@ -157,7 +157,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 	// A second full sync compares the git tree against the current Grafana
 	// state and re-creates any resources that went missing in the first sync.
 	// After this, the state must converge to the correct result.
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"full-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
@@ -189,7 +189,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T
 		"dashboard_b.json": common.DashboardJSON("fswap-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"fswap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
 		"fswap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
@@ -212,7 +212,7 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T
 
 	// A second full sync re-compares the git tree and recovers any missing
 	// resources, converging to the correct state.
-	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"fswap-uid-a": {Title: "Dashboard B Swapped", SourcePath: "dashboard_b.json"},

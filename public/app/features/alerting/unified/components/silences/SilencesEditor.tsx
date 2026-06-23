@@ -33,7 +33,8 @@ import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/ale
 import { MatcherOperator, type SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
-import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
+import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
+import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
@@ -144,10 +145,7 @@ export const SilencesEditor = ({
   onCancel,
   ruleUid,
 }: SilencesEditorProps) => {
-  const [previewAlertsSupported, previewAlertsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.PreviewSilencedInstances
-  );
-  const canPreview = previewAlertsSupported && previewAlertsAllowed;
+  const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });

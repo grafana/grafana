@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
+	schemas "github.com/grafana/schemads"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azmoncredentials"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
@@ -50,7 +52,16 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	}
 
 	s.queryMux = s.newQueryMux()
-	s.resourceHandler = httpadapter.New(s.newResourceMux())
+	muxHandler := httpadapter.New(s.newResourceMux())
+	schemaProvider := newMetricsSchema(s, logger)
+	s.resourceHandler = schemas.NewSchemaDatasource(
+		schemaProvider,
+		schemaProvider,
+		schemaProvider,
+		schemaProvider,
+		schemaProvider,
+		muxHandler,
+	)
 
 	return s
 }
@@ -79,7 +90,24 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return responses, nil
 	}
 
-	return s.queryMux.QueryData(azusercontext.WithUserFromQueryReq(ctx, req), req)
+	ctxWithUser := azusercontext.WithUserFromQueryReq(ctx, req)
+	req, sqlErrs := s.normalizeGrafanaSQLRequest(ctxWithUser, req)
+	resp, err := s.queryMux.QueryData(ctxWithUser, req)
+	if err != nil {
+		return nil, err
+	}
+	if len(sqlErrs) > 0 {
+		if resp.Responses == nil {
+			resp.Responses = make(map[string]backend.DataResponse, len(sqlErrs))
+		}
+		for refID, e := range sqlErrs {
+			resp.Responses[refID] = backend.DataResponse{
+				Error:       e,
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
+		}
+	}
+	return resp, nil
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -140,7 +168,7 @@ func NewInstanceSettings(clientProvider *httpclient.Provider, executors map[stri
 			return nil, err
 		}
 
-		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
+		if credentials.AzureAuthType() == azcredentials.AzureAuthCurrentUserIdentity && !config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorEnableUserAuth") {
 			return nil, backend.DownstreamError(errors.New("current user authentication is not enabled for azure monitor"))
 		}
 

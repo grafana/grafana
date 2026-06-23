@@ -11,13 +11,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -31,6 +36,7 @@ type MockResourceIndex struct {
 	updateIndexCalls int
 
 	buildInfo IndexBuildInfo
+	docCount  int64
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -50,7 +56,7 @@ func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStat
 }
 
 func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats) (int64, error) {
-	return 0, nil
+	return m.docCount, nil
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -77,9 +83,11 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 type mockStorageBackend struct {
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
+	statsCalls      atomic.Int32
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
+	m.statsCalls.Add(1)
 	var result []ResourceStats
 	for _, stat := range m.resourceStats {
 		// Apply the minCount filter like the real implementation does
@@ -135,6 +143,7 @@ type mockSearchBackend struct {
 	mu              sync.Mutex
 	buildIndexCalls []buildIndexCall
 	cache           map[NamespacedResource]ResourceIndex
+	stopCalls       atomic.Int32
 }
 
 type buildIndexCall struct {
@@ -143,13 +152,21 @@ type buildIndexCall struct {
 	fields SearchableDocumentFields
 }
 
+func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
+	return nil, nil
+}
+
+func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {
+	return nil
+}
+
 func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 
 	// Call the builder function (required by the contract)
@@ -185,6 +202,133 @@ func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
 	return m.openIndexes
 }
 
+func (m *mockSearchBackend) Stop() {
+	m.stopCalls.Add(1)
+}
+
+type manifestSearchBackend struct {
+	mockSearchBackend
+
+	stats    []ResourceStats
+	ok       bool
+	loadErr  error
+	loadCall atomic.Int32
+}
+
+func (m *manifestSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
+	m.loadCall.Add(1)
+	if !m.ok {
+		return nil, m.loadErr
+	}
+	return append([]ResourceStats(nil), m.stats...), m.loadErr
+}
+
+func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{{NamespacedResource: NamespacedResource{Namespace: "fallback", Group: "group", Resource: "resource"}, Count: 50}},
+	}
+	search := &manifestSearchBackend{
+		stats: []ResourceStats{{NamespacedResource: key, Count: 5}},
+		ok:    true,
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 10,
+	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Equal(t, int32(1), search.loadCall.Load())
+	require.Zero(t, storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, key, search.buildIndexCalls[0].key)
+	require.Equal(t, int64(5), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{{NamespacedResource: key, Count: 50}},
+	}
+	search := &manifestSearchBackend{ok: false}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:      search,
+		Resources:    supplier,
+		InitMinCount: 10,
+	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Equal(t, int32(1), search.loadCall.Load())
+	require.Equal(t, int32(1), storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, key, search.buildIndexCalls[0].key)
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+}
+
+func TestBuildIndexesAppliesOwnershipToOpenIndexStats(t *testing.T) {
+	owned := NamespacedResource{Namespace: "owned", Group: "group", Resource: "resource"}
+	unowned := NamespacedResource{Namespace: "unowned", Group: "group", Resource: "resource"}
+	storage := &mockStorageBackend{}
+	search := &manifestSearchBackend{
+		stats: []ResourceStats{
+			{NamespacedResource: owned, Count: 10},
+			{NamespacedResource: unowned, Count: 10},
+		},
+		ok: true,
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+	ownsIndexFn := func(key NamespacedResource) (bool, error) {
+		return key != unowned, nil
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+	}, storage, nil, nil, nil, nil, nil, nil, ownsIndexFn)
+	require.NoError(t, err)
+
+	built, err := support.buildIndexes(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, 1, built)
+	require.Zero(t, storage.statsCalls.Load())
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, owned, search.buildIndexCalls[0].key)
+}
+
+func TestSearchServerStopStopsBackend(t *testing.T) {
+	search := &mockSearchBackend{}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: supplier,
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	support.bgTaskCancel = func() {}
+
+	support.stop()
+	require.Equal(t, int32(1), search.stopCalls.Load())
+}
+
 func TestSearchGetOrCreateIndex(t *testing.T) {
 	// Setup mock implementations
 	storage := &mockStorageBackend{
@@ -205,7 +349,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -230,7 +374,8 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 
 	require.NotEmpty(t, search.buildIndexCalls)
 	require.Less(t, len(search.buildIndexCalls), concurrency, "Should not have built index more than a few times (ideally once)")
-	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Equal(t, unknownBuildSize, search.buildIndexCalls[0].size)
+	require.Zero(t, storage.statsCalls.Load(), "lazy index build should not call GetResourceStats for a size hint")
 }
 
 func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
@@ -261,7 +406,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -295,9 +440,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
 		},
 	}
-	search := &slowSearchBackendWithCache{
-		mockSearchBackend: mockSearchBackend{},
-	}
+	search := newBlockingSearchBackend(nil)
 
 	supplier := &TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
@@ -311,7 +454,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -321,54 +464,27 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	defer cancel()
 
 	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
-	// Make sure we get context deadline error
+	// Make sure we get context deadline error.
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 
-	// Wait until indexing is finished. We need to wait 2 seconds here,
-	// because BuildIndex simulates a 1 second build time, and we want
-	// to be sure it has started before we check the calls.
+	// BuildIndex started despite the cancellation: getOrCreateIndex's singleflight
+	// uses context.WithoutCancel so the underlying build runs to completion.
+	select {
+	case <-search.onStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("BuildIndex never started")
+	}
+
+	// Release the in-flight build; the index should land in the cache.
+	close(search.proceed)
 	require.Eventually(t, func() bool {
-		return search.slowBuildCalls.Load() > 0
-	}, 2*time.Second, 100*time.Millisecond, "BuildIndex never started")
+		return support.search.GetIndex(key) != nil
+	}, 1*time.Second, 100*time.Millisecond, "index not cached after build finished")
 
-	require.NotEmpty(t, search.buildIndexCalls)
-
-	// Wait until new index is put into cache.
-	require.Eventually(t, func() bool {
-		idx := support.search.GetIndex(key)
-		return idx != nil
-	}, 1*time.Second, 100*time.Millisecond, "Indexing finishes despite context cancellation")
-
-	// Second call to getOrCreateIndex returns index immediately, even if context is canceled, as the index is now ready and cached.
+	// Second call to getOrCreateIndex returns the cached index immediately, even
+	// though ctx is already done.
 	_, err = support.getOrCreateIndex(ctx, nil, key, "test")
 	require.NoError(t, err)
-}
-
-type slowSearchBackendWithCache struct {
-	mockSearchBackend
-	slowBuildCalls atomic.Int64
-}
-
-func (m *slowSearchBackendWithCache) GetIndex(key NamespacedResource) ResourceIndex {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	return m.cache[key]
-}
-
-func (m *slowSearchBackendWithCache) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
-	defer m.slowBuildCalls.Add(1)
-
-	time.Sleep(1 * time.Second)
-
-	// Simulate erroring out when context is cancelled.
-	if ctx.Err() != nil {
-		return nil, ctx.Err()
-	}
-	idx, err := m.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime)
-	if err != nil {
-		return nil, err
-	}
-	return idx, nil
 }
 
 func TestCombineBuildRequests(t *testing.T) {
@@ -441,11 +557,13 @@ func TestCombineBuildRequests(t *testing.T) {
 
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
-		buildInfo        IndexBuildInfo
-		minTime          time.Time
-		lastImportTime   time.Time
-		minBuildVersion  *semver.Version
-		selectableFields []string
+		buildInfo                IndexBuildInfo
+		minTime                  time.Time
+		lastImportTime           time.Time
+		minBuildVersion          *semver.Version
+		maxBuildVersion          *semver.Version
+		selectableFields         []string
+		expectedSearchFieldsHash string
 
 		expected bool
 	}
@@ -502,6 +620,26 @@ func TestShouldRebuildIndex(t *testing.T) {
 			minBuildVersion: semver.MustParse("10.15.20"),
 			expected:        false,
 		},
+		"build version newer than running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("12.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        true,
+		},
+		"build version same as running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
+		"build version older than running version": {
+			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.0.0")},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
+		"no index build version with maxBuildVersion set": {
+			buildInfo:       IndexBuildInfo{},
+			maxBuildVersion: semver.MustParse("11.0.0"),
+			expected:        false,
+		},
 		"index with no previous selectable fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: nil,
@@ -537,9 +675,33 @@ func TestShouldRebuildIndex(t *testing.T) {
 			selectableFields: []string{"title", "team", "new.field"},
 			expected:         true,
 		},
+		"no expected hash, no stored hash": {
+			buildInfo: IndexBuildInfo{},
+			expected:  false,
+		},
+		"no expected hash, stored hash present": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "",
+			expected:                 false,
+		},
+		"expected hash present, no stored hash": {
+			buildInfo:                IndexBuildInfo{},
+			expectedSearchFieldsHash: "abc",
+			expected:                 true,
+		},
+		"expected hash matches stored hash": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "abc",
+			expected:                 false,
+		},
+		"expected hash differs from stored hash": {
+			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
+			expectedSearchFieldsHash: "def",
+			expected:                 true,
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, nil)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, nil)
 			require.Equal(t, tc.expected, res)
 		})
 	}
@@ -565,6 +727,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE},
+			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"},
 
 			// We report this index as open, but it's really not. This can happen if index expires between the call
 			// to GetOpenIndexes and the call to GetIndex.
@@ -616,6 +779,11 @@ func TestFindIndexesForRebuild(t *testing.T) {
 			{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: &MockResourceIndex{
 				buildInfo: IndexBuildInfo{BuildTime: now.Add(-30 * time.Minute), BuildVersion: semver.MustParse("6.0.0")},
 			},
+
+			// To be rebuilt because of version newer than running (7.0.0 > 6.5.0)
+			{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}: &MockResourceIndex{
+				buildInfo: IndexBuildInfo{BuildTime: now, BuildVersion: semver.MustParse("7.0.0")},
+			},
 		},
 	}
 
@@ -632,9 +800,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		DashboardIndexMaxAge: 1 * time.Hour,
 		MaxIndexAge:          5 * time.Hour,
 		MinBuildVersion:      semver.MustParse("5.5.5"),
+		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -647,14 +816,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	}
 
 	support.findIndexesToRebuild(importTimes, nil, now, false)
-	require.Equal(t, 7, support.rebuildQueue.Len())
+	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
 	support.findIndexesToRebuild(importTimes, nil, now5m, false)
-	require.Equal(t, 7, support.rebuildQueue.Len())
+	require.Equal(t, 8, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
 	minBuildVersion := semver.MustParse("5.5.5")
@@ -672,6 +841,9 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 
 		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
+
+		// Index built by newer version than running (7.0.0 > 6.5.0)
+		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
@@ -708,7 +880,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -800,7 +972,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -913,7 +1085,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -994,7 +1166,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1103,7 +1275,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1114,11 +1286,314 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
 	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
 	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
 	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
+}
+
+// blockingSearchBackend wraps mockSearchBackend so a test can pause inside
+// BuildIndex. onStarted is closed when the first build enters; the test
+// closes proceed to release any blocked builds.
+type blockingSearchBackend struct {
+	mockSearchBackend
+
+	onStarted chan struct{}
+	proceed   chan struct{}
+
+	startedOnce sync.Once
+	buildCalls  atomic.Int32
+}
+
+func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *blockingSearchBackend {
+	return &blockingSearchBackend{
+		mockSearchBackend: mockSearchBackend{cache: cache},
+		onStarted:         make(chan struct{}),
+		proceed:           make(chan struct{}),
+	}
+}
+
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+	b.buildCalls.Add(1)
+	b.startedOnce.Do(func() { close(b.onStarted) })
+	<-b.proceed
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+}
+
+// TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the
+// in-flight tracker added by rebuildIndex: while a rebuild is running for a
+// key, additional rebuild requests for the same key do not call BuildIndex
+// and instead get stashed as a single follow-up that is re-enqueued when the
+// in-flight rebuild finishes.
+func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	initialBuildTime := time.Now().Add(-2 * time.Hour)
+	search := newBlockingSearchBackend(map[NamespacedResource]ResourceIndex{
+		key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: initialBuildTime}},
+	})
+
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "res"},
+	}
+
+	opts := SearchOptions{Backend: search, Resources: supplier}
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	// Fire the first rebuild. It will claim the in-flight slot and block
+	// inside BuildIndex.
+	firstDone := make(chan struct{})
+	firstReq := rebuildRequest{
+		NamespacedResource: key,
+		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		completeChannels:   []chan<- struct{}{firstDone},
+	}
+	firstReturned := make(chan struct{})
+	go func() {
+		defer close(firstReturned)
+		support.rebuildIndex(t.Context(), firstReq)
+	}()
+
+	// Wait for the first rebuild to be in flight.
+	select {
+	case <-search.onStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuild did not enter BuildIndex")
+	}
+
+	support.inFlightRebuildsMu.Lock()
+	_, inFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.True(t, inFlight, "rebuild for key should be marked in flight")
+
+	// Fire 4 more rebuild requests for the same key with varying conditions.
+	// Each should return promptly (deferred) without calling BuildIndex; the
+	// strictest minBuildTime should win when the requests get merged.
+	latestMinBuildTime := time.Now() // strictest condition
+	laterTimes := []time.Time{
+		time.Now().Add(-50 * time.Minute),
+		latestMinBuildTime,
+		time.Now().Add(-40 * time.Minute),
+		time.Now().Add(-30 * time.Minute),
+	}
+	deferredChans := make([]chan struct{}, len(laterTimes))
+	for i, mbt := range laterTimes {
+		deferredChans[i] = make(chan struct{})
+		req := rebuildRequest{
+			NamespacedResource: key,
+			minBuildTime:       mbt,
+			completeChannels:   []chan<- struct{}{deferredChans[i]},
+		}
+		returned := make(chan struct{})
+		go func() {
+			defer close(returned)
+			support.rebuildIndex(t.Context(), req)
+		}()
+		select {
+		case <-returned:
+		case <-time.After(2 * time.Second):
+			t.Fatalf("rebuildIndex %d did not return; expected to be deferred", i)
+		}
+	}
+
+	// None of the deferred completion channels should be closed yet — they
+	// are owned by the follow-up rebuild that hasn't run.
+	for i, ch := range deferredChans {
+		select {
+		case <-ch:
+			t.Fatalf("deferred completion channel %d closed prematurely", i)
+		default:
+		}
+	}
+
+	// Queue is empty: deferred requests live on rebuildState.deferred until
+	// the in-flight rebuild's defer re-enqueues them.
+	require.Equal(t, 0, support.rebuildQueue.Len())
+
+	// Only one BuildIndex call should be in progress so far.
+	require.Equal(t, int32(1), search.buildCalls.Load())
+
+	// Release the first rebuild and wait for it to finish.
+	close(search.proceed)
+	select {
+	case <-firstReturned:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuildIndex did not return after unblocking")
+	}
+	select {
+	case <-firstDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("first rebuild's completion channel was not closed")
+	}
+
+	// In-flight tracker should be cleared.
+	support.inFlightRebuildsMu.Lock()
+	_, stillInFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.False(t, stillInFlight, "in-flight tracker should be cleared after rebuild finishes")
+
+	// The deferred follow-up should have been re-enqueued as a single item
+	// carrying all 4 deferred completion channels and the strictest
+	// minBuildTime among the deferred requests.
+	require.Equal(t, 1, support.rebuildQueue.Len())
+	items := support.rebuildQueue.Elements()
+	require.Len(t, items, 1)
+	req := items[0]
+	require.Equal(t, key, req.NamespacedResource)
+	require.Len(t, req.completeChannels, len(deferredChans))
+	require.True(t, req.minBuildTime.Equal(latestMinBuildTime),
+		"follow-up should carry the strictest minBuildTime; got %v want %v",
+		req.minBuildTime, latestMinBuildTime)
+
+	// Still only one BuildIndex call: the deferred follow-up has been
+	// enqueued but no worker is running in this test to pick it up.
+	require.Equal(t, int32(1), search.buildCalls.Load())
+}
+
+// TestRebuildIndexNoFollowUpWhenNotInFlight verifies the happy path: a single
+// rebuild request for a key runs to completion, clears the in-flight tracker,
+// and does not re-enqueue anything.
+func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+
+	search := &mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: time.Now().Add(-2 * time.Hour)}, docCount: 50},
+		},
+	}
+	storage := &mockStorageBackend{
+		resourceStats: []ResourceStats{
+			{NamespacedResource: key, Count: 50, ResourceVersion: 11111111},
+		},
+	}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "res"},
+	}
+	opts := SearchOptions{Backend: search, Resources: supplier}
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	done := make(chan struct{})
+	support.rebuildIndex(t.Context(), rebuildRequest{
+		NamespacedResource: key,
+		minBuildTime:       time.Now().Add(-1 * time.Hour),
+		completeChannels:   []chan<- struct{}{done},
+	})
+
+	select {
+	case <-done:
+	default:
+		t.Fatal("completion channel should be closed after rebuildIndex returns")
+	}
+
+	support.inFlightRebuildsMu.Lock()
+	_, inFlight := support.inFlightRebuilds[key]
+	support.inFlightRebuildsMu.Unlock()
+	require.False(t, inFlight, "in-flight tracker should be cleared")
+	require.Equal(t, 0, support.rebuildQueue.Len(), "no follow-up should be re-enqueued")
+	require.Len(t, search.buildIndexCalls, 1)
+	require.Equal(t, int64(50), search.buildIndexCalls[0].size)
+	require.Zero(t, storage.statsCalls.Load(), "rebuild should use the current index doc count instead of GetResourceStats")
+}
+
+// TestSearchServer_VectorSearch_ObservesDuration verifies the RPC histogram
+// fires when VectorSearch returns. The Unimplemented path is the cheapest
+// reachable code path (no embedder/vectorBackend needed), and is enough to
+// confirm the wiring between VectorSearch and VectorMetrics is intact.
+func TestSearchServer_VectorSearch_ObservesDuration(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := ProvideVectorMetrics(reg)
+	s := &searchServer{
+		log:           log.New("test-vector-search"),
+		vectorMetrics: m,
+	}
+
+	_, err := s.VectorSearch(context.Background(), &resourcepb.VectorSearchRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "stack-1",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+		},
+		Query: "test",
+	})
+	require.Error(t, err)
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+
+	require.Equal(t, 1, testutil.CollectAndCount(m.SearchDuration, "vector_storage_search_duration_seconds"))
+}
+
+func TestFolderFilterSet(t *testing.T) {
+	cases := []struct {
+		name     string
+		req      *resourcepb.ResourceStatsRequest
+		expected []string
+	}{
+		{
+			name:     "no filter",
+			req:      &resourcepb.ResourceStatsRequest{},
+			expected: nil,
+		},
+		{
+			name:     "single folder",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"root"}},
+			expected: []string{"root"},
+		},
+		{
+			name:     "multiple folders",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "b"}},
+			expected: []string{"a", "b"},
+		},
+		{
+			name:     "dedupes overlap and drops empties",
+			req:      &resourcepb.ResourceStatsRequest{Folder: []string{"a", "", "b", "b", "a"}},
+			expected: []string{"a", "b"},
+		},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.expected, folderFilterSet(tt.req))
+		})
+	}
+}
+
+// countingIndex records each DocCount call for use by TestSumDocCount.
+type countingIndex struct {
+	MockResourceIndex
+	counts map[string]int64
+	calls  []string
+}
+
+func (c *countingIndex) DocCount(_ context.Context, folder string, _ *SearchStats) (int64, error) {
+	c.calls = append(c.calls, folder)
+	return c.counts[folder], nil
+}
+
+func TestSumDocCount(t *testing.T) {
+	idx := &countingIndex{counts: map[string]int64{
+		"":     7, // total of the index when no filter applied
+		"root": 3,
+		"a":    5,
+		"b":    2,
+	}}
+
+	// Empty folder set means "count the whole index".
+	got, err := sumDocCount(t.Context(), idx, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(7), got)
+	require.Equal(t, []string{""}, idx.calls)
+
+	idx.calls = nil
+	got, err = sumDocCount(t.Context(), idx, []string{"root", "a", "b"}, nil)
+	require.NoError(t, err)
+	require.Equal(t, int64(10), got)
+	require.Equal(t, []string{"root", "a", "b"}, idx.calls)
 }

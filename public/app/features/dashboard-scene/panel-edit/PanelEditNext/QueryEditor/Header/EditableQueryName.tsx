@@ -6,15 +6,17 @@ import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2, Input, FieldValidationMessage, Icon, Text } from '@grafana/ui';
 
+import { SIDEBAR_CARD_DATA_ATTR } from '../../constants';
 import { trackRenameInitiated } from '../../tracking';
 
 interface EditableQueryNameProps {
   query: DataQuery;
   queries: DataQuery[];
   onQueryUpdate: (updatedQuery: DataQuery, originalRefId: string) => void;
+  readOnly?: boolean;
 }
 
-export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQueryNameProps) {
+export function EditableQueryName({ query, queries, onQueryUpdate, readOnly }: EditableQueryNameProps) {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -102,6 +104,16 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
     event.target.select();
   };
 
+  if (readOnly) {
+    return (
+      <span className={styles.queryNameText}>
+        <Text color="primary" truncate variant="code">
+          {query.refId}
+        </Text>
+      </span>
+    );
+  }
+
   if (isEditing) {
     return (
       <div className={styles.inputRow}>
@@ -143,7 +155,7 @@ export function EditableQueryName({ query, queries, onQueryUpdate }: EditableQue
 }
 
 function isSidebarCardElement(target: EventTarget | null) {
-  return target instanceof HTMLElement && target.closest('[data-query-sidebar-card]') !== null;
+  return target instanceof HTMLElement && target.closest(`[${SIDEBAR_CARD_DATA_ATTR}]`) !== null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

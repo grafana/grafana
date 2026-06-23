@@ -31,9 +31,9 @@ refs:
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
   global-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/add-template-variables/#__from-and-__to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/global-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
@@ -214,13 +214,15 @@ You can also use template variables in your data links or actions URLs. For more
 
 These variables allow you to include the current time range in the data link or action URL:
 
-| Variable           | Description                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`)      |
-| `__from`           | For more information, refer to [Global variables](ref:global-variables). |
-| `__to`             | For more information, refer to [Global variables](ref:global-variables). |
+| Variable           | Description                                                          |
+| ------------------ | -------------------------------------------------------------------- |
+| `__url_time_range` | Current dashboard's time range (for example, `?from=now-6h&to=now`). |
+| `__from`           | A specific start time.                                               |
+| `__to`             | A specific end time.                                                 |
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
+
+For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
 
 ### Series variables
 
@@ -316,7 +318,8 @@ To add a data link, follow these steps:
    Only one data link can have **One click** enabled at a time. **One click** is only supported for some visualizations.
 
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
 
    {{< /tab-content >}}
@@ -348,7 +351,8 @@ To add a data link, follow these steps:
    | Body                 | The body of the request.                                                                                                                                                                                                                    |
 
 1. Click **Save** to save changes and close the dialog box.
-1. Click **Save dashboard**.
+1. Click **Save** in the top-right corner.
+1. Enter an optional description of your changes and click **Save**.
 1. Click **Back to dashboard** and then **Exit edit**.
    {{< /tab-content >}}
    {{< /tabs >}}

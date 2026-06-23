@@ -75,7 +75,13 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 	// Try cache first
 	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit)
 	if cached, ok := s.tagCache.get(cacheKey); ok {
+		if s.metrics != nil {
+			s.metrics.TagCacheHits.Inc()
+		}
 		return cached, nil
+	}
+	if s.metrics != nil {
+		s.metrics.TagCacheMisses.Inc()
 	}
 
 	// Build query

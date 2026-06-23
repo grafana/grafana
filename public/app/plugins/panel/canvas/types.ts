@@ -56,3 +56,13 @@ export enum StrokeDasharray {
   Dashed = '8 8',
   Dotted = '3',
 }
+
+export interface ElementTransformAndDimensions {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  rotation: number;
+}

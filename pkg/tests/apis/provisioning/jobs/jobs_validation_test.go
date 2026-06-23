@@ -19,13 +19,13 @@ func TestIntegrationProvisioning_WritePermissionValidation(t *testing.T) {
 	const repoReadOnly = "job-validation-readonly"
 	testRepo := common.TestRepo{
 		Name:               repoReadOnly,
-		Template:           "../testdata/local-readonly.json.tmpl",
-		Target:             "folder",
+		SyncTarget:         "folder",
+		Workflows:          []string{},
 		Copies:             map[string]string{},
 		ExpectedDashboards: 0,
 		ExpectedFolders:    1,
 	}
-	helper.CreateRepo(t, testRepo)
+	helper.CreateLocalRepo(t, testRepo)
 
 	t.Run("write jobs should be rejected for read-only repositories", func(t *testing.T) {
 		writeJobs := []struct {

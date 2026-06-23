@@ -15,9 +15,12 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useStyles2, useTheme2, Field, RadioButtonGroup, Select } from '@grafana/ui';
+import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
+
+const GRADIENT_DEFAULT_FROM = '#73BF69';
+const GRADIENT_DEFAULT_TO = '#F2495C';
 
 type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
 
@@ -33,7 +36,9 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const filteredOptions = availableOptions.filter(
     (option) =>
       !option.excludeFromPicker &&
-      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions)
+      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions) &&
+      (option.id !== FieldColorModeId.Gradient ||
+        (item.settings?.gradientSupport && config.featureToggles.pieChartGradientColorScheme))
   );
 
   const options: Array<SelectableValue<string>> = [];
@@ -69,10 +74,13 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   }
 
   const onModeChange = (newMode: SelectableValue<string>) => {
-    onChange({
-      ...value,
-      mode: newMode.value!,
-    });
+    const update: FieldColor = { ...value, mode: newMode.value! };
+    // Seed gradient defaults so the pickers are never empty when first selected.
+    if (newMode.value === FieldColorModeId.Gradient) {
+      update.fixedColor = value?.fixedColor ?? GRADIENT_DEFAULT_FROM;
+      update.gradientColorTo = value?.gradientColorTo ?? GRADIENT_DEFAULT_TO;
+    }
+    onChange(update);
   };
 
   const onColorChange = (color?: string) => {
@@ -80,6 +88,14 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
       ...value,
       mode,
       fixedColor: color,
+    });
+  };
+
+  const onGradientColorToChange = (color?: string) => {
+    onChange({
+      ...value,
+      mode,
+      gradientColorTo: color,
     });
   };
 
@@ -105,6 +121,25 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
           inputId={id}
         />
         <ColorValueEditor value={value?.fixedColor} onChange={onColorChange} />
+      </div>
+    );
+  }
+
+  if (mode === FieldColorModeId.Gradient) {
+    return (
+      <div className={styles.group}>
+        <Select
+          minMenuHeight={200}
+          options={options}
+          value={mode}
+          onChange={onModeChange}
+          className={styles.select}
+          inputId={id}
+        />
+        <Stack gap={0.5}>
+          <ColorValueEditor value={value?.fixedColor ?? GRADIENT_DEFAULT_FROM} onChange={onColorChange} />
+          <ColorValueEditor value={value?.gradientColorTo ?? GRADIENT_DEFAULT_TO} onChange={onGradientColorToChange} />
+        </Stack>
       </div>
     );
   }

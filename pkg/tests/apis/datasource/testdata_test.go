@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"maps"
@@ -12,12 +13,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0alpha1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -43,9 +44,10 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,       // Required to start the datasource api servers
-			featuremgmt.FlagQueryServiceWithConnections,                // enables CRUD endpoints
+			featuremgmt.FlagDatasourceUseNewCRUDAPIs,                   // enables CRUD endpoints
 			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint, // enables resource endpoint
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,   // enables health endpoint
+			featuremgmt.FlagDatasourcesChunkedQueryStreaming,           // enable chunked streaming responses for queries
 		},
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"datasources.grafana-testdata-datasource.datasource.grafana.app": {
@@ -83,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -103,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -129,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
@@ -234,7 +239,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		  { "refId": "A",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
-			},{ 
+			},{
 			  "refId": "B",
 				"scenarioId": "csv_content",
 				"csvContent": "f1,f2,f3\n1,\"two\",false"
@@ -254,9 +259,9 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			require.Equal(t, 1, frame.Fields[1].Len())
 			require.Equal(t, 1, frame.Fields[2].Len())
 
-			require.Equal(t, ptr.To(int64(1)), frame.Fields[0].At(0))
-			require.Equal(t, ptr.To("two"), frame.Fields[1].At(0))
-			require.Equal(t, ptr.To(false), frame.Fields[2].At(0))
+			require.Equal(t, new(int64(1)), frame.Fields[0].At(0))
+			require.Equal(t, new("two"), frame.Fields[1].At(0))
+			require.Equal(t, new(false), frame.Fields[2].At(0))
 		}
 
 		// The standard JSON request/response
@@ -278,6 +283,31 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			qdr := &backend.QueryDataResponse{}
 			err = json.Unmarshal(raw, qdr)
+
+			checkCSVResult(qdr.Responses["A"])
+			checkCSVResult(qdr.Responses["B"])
+		})
+
+		t.Run("chunked", func(t *testing.T) {
+			var statusCode int
+			result := adminClient.Post().
+				Namespace("default").
+				Resource("datasources").
+				Name("test"). // datasource UID
+				SubResource("query").
+				SetHeader("Content-type", "application/json").
+				SetHeader("Accept", chunked.CONTENT_TYPE). // <<< get a chunked response
+				Body(body).
+				Do(ctx).
+				StatusCode(&statusCode)
+
+			require.Equal(t, int(http.StatusOK), statusCode) // query success
+			raw, _ := result.Raw()
+			require.NotNil(t, raw)
+
+			// Read JSON lines
+			qdr, err := chunked.AccumulateJSONLines(bytes.NewReader(raw))
+			require.NoError(t, err)
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
@@ -306,6 +336,51 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
+		})
+	})
+
+	t.Run("resources", func(t *testing.T) {
+		const base = "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resources/"
+
+		// The testdata plugin's /test/json route echoes the request back, so we
+		// can confirm the method, path and body are forwarded to the plugin.
+		t.Run("echo endpoint reflects the forwarded request", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   base + "test/json",
+				Body:   []byte(`{"hello":"world"}`),
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+
+			body := string(raw.Body)
+			require.Contains(t, body, `"method":"POST"`, "echoed method")
+			require.Contains(t, body, "test/json", "echoed forwarded path")
+			require.Contains(t, body, `"hello":"world"`, "echoed request body")
+		})
+
+		// A forwarded sub path that itself contains "/resources" must be passed
+		// through intact (it falls through to the catch-all handler).
+		t.Run("forwards a sub path containing /resources", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   base + "nested/resources/path",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+			require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		})
+
+		t.Run("returns 404 for an unknown datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources/test/json",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode)
 		})
 	})
 

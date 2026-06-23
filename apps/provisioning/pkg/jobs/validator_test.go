@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -16,10 +17,11 @@ import (
 
 func TestValidateJob(t *testing.T) {
 	tests := []struct {
-		name          string
-		job           *provisioning.Job
-		wantErr       bool
-		validateError func(t *testing.T, err error)
+		name               string
+		job                *provisioning.Job
+		supportedResources []provisioning.SupportedResource
+		wantErr            bool
+		validateError      func(t *testing.T, err error)
 	}{
 		{
 			name: "valid pull job",
@@ -396,6 +398,92 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid migrate job with resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "dash-1", Kind: "Dashboard"},
+							{Name: "dash-2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate action with resource missing name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Kind: "Dashboard"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].name")
+			},
+		},
+		{
+			name: "migrate action with resource missing kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].kind")
+			},
+		},
+		{
+			name: "migrate action with non-Dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].kind")
+				require.Contains(t, err.Error(), "kind is not supported for export")
+			},
+		},
+		{
+			name: "migrate action with non-dashboard group",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: "folder.grafana.app"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].group")
+			},
+		},
+		{
 			name: "migrate action without migrate options",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{
@@ -563,6 +651,190 @@ func TestValidateJob(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid push job with resources",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "dash-1", Kind: "Dashboard"},
+							{Name: "dash-2", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with resource missing name",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Kind: "Dashboard"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].name")
+			},
+		},
+		{
+			name: "push action with resource missing kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+			},
+		},
+		{
+			name: "push action with non-Dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "folder-1", Kind: "Folder"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "kind is not supported for export")
+			},
+		},
+		{
+			name: "push action with non-dashboard group",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1", Kind: "Dashboard", Group: "folder.grafana.app"}},
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+			},
+		},
+		{
+			name: "push action with configured non-dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "pl-1", Kind: "Playlist"},
+							{Name: "pl-2", Kind: "Playlist", Group: "playlist.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "migrate action with configured non-dashboard kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist", Group: "playlist.grafana.app"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action with kind absent from configured set",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "dash-1", Kind: "Dashboard"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+				require.Contains(t, err.Error(), "kind is not supported for export")
+			},
+		},
+		{
+			name: "push action with disabled supported kind is rejected",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist", Disabled: true},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].kind")
+			},
+		},
+		{
+			name: "migrate action with wrong group for configured kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "pl-1", Kind: "Playlist", Group: "wrong.grafana.app"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "playlist.grafana.app", Kind: "Playlist"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources[0].group")
+			},
+		},
+		{
 			name: "push action with valid path",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{
@@ -632,11 +904,61 @@ func TestValidateJob(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "push action at the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources),
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
+		{
+			name: "migrate action over the selective export limit",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionMigrate,
+					Repository: "test-repo",
+					Migrate: &provisioning.MigrateJobOptions{
+						Resources: makeDashboardRefs(MaxSelectiveExportResources + 1),
+					},
+				},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.migrate.resources")
+				require.Contains(t, err.Error(), "must have at most 100 items")
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateJob(tt.job)
+			err := ValidateJob(tt.job, tt.supportedResources)
 			if tt.wantErr {
 				require.Error(t, err)
 				if tt.validateError != nil {
@@ -715,7 +1037,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := NewAdmissionValidator()
+			v := NewAdmissionValidator(nil)
 
 			var obj runtime.Object
 			if tt.obj != nil {
@@ -853,6 +1175,15 @@ func TestHistoricJobAdmissionValidator_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+// makeDashboardRefs builds n valid dashboard resource refs for limit tests.
+func makeDashboardRefs(n int) []provisioning.ResourceRef {
+	refs := make([]provisioning.ResourceRef, n)
+	for i := range refs {
+		refs[i] = provisioning.ResourceRef{Name: fmt.Sprintf("dash-%d", i), Kind: "Dashboard"}
+	}
+	return refs
 }
 
 func newHistoricJobAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {

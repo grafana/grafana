@@ -46,12 +46,14 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.error,
   LogLevel.critical,
   LogLevel.unknown,
+  LogLevel.unspecified,
 ];
 
 export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisationType = 'logs' }: Props) => {
   const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const {
     app,
+    allowDownload,
     controlsExpanded,
     dedupStrategy,
     downloadLogs,
@@ -227,9 +229,9 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
         />
         {logLevels.map((level) => (
           <Menu.Item
-            key={level}
+            key={level ?? 'Unspecified'}
             className={filterLevels.includes(level) ? styles.menuItemActive : undefined}
-            label={capitalize(level)}
+            label={level ? capitalize(level) : t('logs.logs-controls.level.unspecified', 'Unspecified')}
             onClick={() => onFilterLevelClick(level)}
           />
         ))}
@@ -598,6 +600,21 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
               }
               size="lg"
             />
+          )}
+          {allowDownload === true && (
+            <>
+              <div className={styles.divider} />
+              <Dropdown overlay={downloadMenu} placement="auto-end">
+                <LogListControlsOption
+                  expanded={controlsExpanded}
+                  name="download-alt"
+                  className={styles.controlButton}
+                  label={t('logs.logs-controls.download', 'Download logs')}
+                  tooltip={t('logs.logs-controls.tooltip.download', 'Download')}
+                  size="lg"
+                />
+              </Dropdown>
+            </>
           )}
         </>
       )}

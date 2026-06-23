@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { textUtil, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   type CellProps,
@@ -25,6 +25,7 @@ import {
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
+import { getKindInfoByItemType } from '../utils/resourceKinds';
 import { buildTree, filterTree, flattenTree, getIconName, mergeFilesAndResources } from '../utils/treeUtils';
 
 interface ResourceTreeViewProps {
@@ -35,12 +36,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    if (item.type === 'Dashboard') {
-      return `/d/${item.resourceName}`;
-    }
-    if (item.type === 'Folder') {
-      return `/dashboards/f/${item.resourceName}`;
-    }
+    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
   }
   return undefined;
 }
@@ -161,13 +157,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
             const spec = repo.spec;
             const config = spec.github || spec.gitlab || spec.bitbucket;
             if (config) {
-              sourceLink = getRepoFileUrl({
+              const rawSourceLink = getRepoFileUrl({
                 repoType: spec.type,
                 url: config.url,
                 branch: config.branch,
                 filePath: item.path,
                 pathPrefix: config.path,
               });
+              sourceLink = rawSourceLink ? textUtil.sanitizeUrl(rawSourceLink) : undefined;
             }
           }
 

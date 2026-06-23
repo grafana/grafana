@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -233,9 +233,10 @@ func Auth(options *AuthOptions) web.Handler {
 	}
 }
 
-// SnapshotPublicModeOrCreate creates a middleware that allows access
-// if snapshot public mode is enabled or if user has creation permission.
-func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+// snapshotPublicModeOrPermission allows access when snapshot public mode is enabled,
+// otherwise requires the user to be signed in and have the given permission.
+func snapshotPublicModeOrPermission(cfg *setting.Cfg, ac2 ac.AccessControl, action string) web.Handler {
+	evaluator := ac.EvalPermission(action)
 	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
@@ -246,25 +247,28 @@ func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Hand
 			return
 		}
 
-		ac.Middleware(ac2)(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsCreate))
+		hasAccess, err := ac2.Evaluate(c.Req.Context(), c.SignedInUser, evaluator)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, "Internal server error", err)
+			return
+		}
+		if !hasAccess {
+			c.JsonApiErr(http.StatusForbidden, "forbidden", nil)
+			return
+		}
 	}
+}
+
+// SnapshotPublicModeOrCreate creates a middleware that allows access
+// if snapshot public mode is enabled or if user has creation permission.
+func SnapshotPublicModeOrCreate(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
+	return snapshotPublicModeOrPermission(cfg, ac2, dashboards.ActionSnapshotsCreate)
 }
 
 // SnapshotPublicModeOrDelete creates a middleware that allows access
 // if snapshot public mode is enabled or if user has delete permission.
 func SnapshotPublicModeOrDelete(cfg *setting.Cfg, ac2 ac.AccessControl) web.Handler {
-	return func(c *contextmodel.ReqContext) {
-		if cfg.SnapshotPublicMode {
-			return
-		}
-
-		if !c.IsSignedIn {
-			notAuthorized(c)
-			return
-		}
-
-		ac.Middleware(ac2)(ac.EvalPermission(dashboardsnapshots.ActionSnapshotsDelete))
-	}
+	return snapshotPublicModeOrPermission(cfg, ac2, dashboards.ActionSnapshotsDelete)
 }
 
 func ReqNotSignedIn(c *contextmodel.ReqContext) {

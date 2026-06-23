@@ -1,12 +1,16 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Box, Button, Stack } from '@grafana/ui';
 
 import { openAddSectionVariablePane } from '../settings/variables/VariableTypeSelectionPane';
+import { getTopPlacementLabel } from '../utils/getTopPlacementLabel';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
+
+import { DashboardVariablesList } from './dashboard/DashboardVariablesList';
 
 export interface SectionVariablesCategoryTitleProps {
   /** Scene object that owns section-local variables */
@@ -14,32 +18,10 @@ export interface SectionVariablesCategoryTitleProps {
   isExpanded: boolean;
 }
 
-export function SectionVariablesCategoryTitle({ sectionOwner, isExpanded }: SectionVariablesCategoryTitleProps) {
-  const variableSet = sectionOwner.state.$variables;
-  const variableCount =
-    variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.state.variables, variableSet).length
-      : 0;
-  const dashboard = getDashboardSceneFor(sectionOwner);
-
+export function SectionVariablesCategoryTitle(_: SectionVariablesCategoryTitleProps) {
   return (
     <Stack direction="row" alignItems="center" gap={1} flex={1}>
-      <span style={{ flexGrow: 1 }}>
-        {isExpanded || variableCount === 0
-          ? t('dashboard.edit-pane.section-variables.title', 'Variables')
-          : `${t('dashboard.edit-pane.section-variables.title', 'Variables')} (${variableCount})`}
-      </span>
-      <Button
-        icon="plus"
-        variant="secondary"
-        size="sm"
-        fill="text"
-        onClick={(e) => {
-          e.stopPropagation();
-          openAddSectionVariablePane(dashboard, sectionOwner);
-        }}
-        tooltip={t('dashboard.edit-pane.section-variables.add-tooltip', 'Add variable')}
-      />
+      <span style={{ flexGrow: 1 }}>{t('dashboard.edit-pane.section-variables.title', 'Variables')}</span>
     </Stack>
   );
 }
@@ -51,45 +33,65 @@ export interface SectionVariablesListProps {
 
 export function SectionVariablesList({ sectionOwner }: SectionVariablesListProps) {
   const variableSet = sectionOwner.state.$variables;
-  const variables =
-    variableSet instanceof SceneVariableSet
-      ? filterSectionRepeatLocalVariables(variableSet.useState().variables, variableSet)
-      : [];
-  const dashboard = getDashboardSceneFor(sectionOwner);
 
-  if (variables.length === 0) {
+  if (!(variableSet instanceof SceneVariableSet)) {
     return (
-      <Box display="flex" paddingTop={0} paddingBottom={2}>
-        <Button
-          fullWidth
-          icon="plus"
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            openAddSectionVariablePane(dashboard, sectionOwner);
-            DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
-          }}
-          data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
-        >
-          <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
-        </Button>
+      <Box display="flex" paddingBottom={2}>
+        <AddVariableButton sectionOwner={sectionOwner} />
       </Box>
     );
   }
 
+  return <SectionVariablesListInner sectionOwner={sectionOwner} variableSet={variableSet} />;
+}
+
+interface SectionVariablesListInnerProps {
+  sectionOwner: SceneObject;
+  variableSet: SceneVariableSet;
+}
+
+function SectionVariablesListInner({ sectionOwner, variableSet }: SectionVariablesListInnerProps) {
+  const { variables: rawVariables } = variableSet.useState();
+  const variables = filterSectionRepeatLocalVariables(rawVariables, variableSet);
+  const topPlacementLabel = getTopPlacementLabel(sectionOwner);
+  const visibleCount = config.featureToggles.dashboardUnifiedDrilldownControls
+    ? variables.filter((v) => !sceneUtils.isAdHocVariable(v)).length
+    : variables.length;
+
   return (
-    <Stack direction="column" gap={0}>
-      {variables.map((variable) => (
-        <Button
-          key={variable.state.key!}
-          variant="secondary"
-          size="sm"
-          fill="text"
-          onClick={() => dashboard.state.editPane.selectObject(variable, { force: true })}
-        >
-          {variable.state.name}
-        </Button>
-      ))}
-    </Stack>
+    <>
+      <DashboardVariablesList
+        sourceVariableSet={variableSet}
+        renderVariables={variables}
+        topPlacementLabel={topPlacementLabel}
+      />
+      <Box display="flex" paddingTop={visibleCount > 0 ? 1 : 0} paddingBottom={2}>
+        <AddVariableButton sectionOwner={sectionOwner} />
+      </Box>
+    </>
+  );
+}
+
+interface AddVariableButtonProps {
+  sectionOwner: SceneObject;
+}
+
+function AddVariableButton({ sectionOwner }: AddVariableButtonProps) {
+  const dashboard = getDashboardSceneFor(sectionOwner);
+
+  return (
+    <Button
+      fullWidth
+      icon="plus"
+      size="sm"
+      variant="secondary"
+      onClick={() => {
+        openAddSectionVariablePane(dashboard, sectionOwner);
+        DashboardInteractions.addVariableButtonClicked({ source: 'edit_pane' });
+      }}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+    >
+      <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
+    </Button>
   );
 }

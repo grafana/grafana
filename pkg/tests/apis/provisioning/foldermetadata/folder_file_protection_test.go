@@ -15,12 +15,12 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
-	helper.CreateRepo(t, common.TestRepo{Name: repo, Target: "instance", SkipResourceAssertions: true})
+	helper.CreateLocalRepo(t, common.TestRepo{Name: repo, SyncTarget: "instance", Workflows: []string{"write"}, SkipResourceAssertions: true})
 
 	files := helper.NewFilesClient(repo)
 
 	// Create a managed folder so its _folder.json exists for PUT/DELETE tests.
-	resp := files.Post(t, "protected-folder/")
+	resp := files.Post(t, "protected-folder/", nil)
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating protected-folder should succeed")
 
 	t.Run("POST to _folder.json is blocked", func(t *testing.T) {

@@ -6,13 +6,19 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
+import {
+  deserializeSectionVariables,
+  serializeSectionVariables,
+} from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { isSectionVariablesFeatureEnabled } from './variableScope';
 
-export const updateTabPayloadSchema = payloads.updateTab;
+const updateTabPayloadSchema = payloads.updateTab;
 
 export type UpdateTabPayload = z.infer<typeof updateTabPayloadSchema>;
 
@@ -37,7 +43,11 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
       }
 
       const tab = resolved.item;
-      const previousValue = { title: tab.state.title };
+      const previousValue = {
+        title: tab.state.title,
+        conditionalRendering: tab.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(tab.state.$variables),
+      };
 
       const updates: Record<string, unknown> = {};
       if (spec.title !== undefined) {
@@ -50,7 +60,20 @@ export const updateTabCommand: MutationCommand<UpdateTabPayload> = {
         tab.onChangeRepeat(spec.repeat?.value || undefined);
       }
 
-      const currentSpec = { title: tab.state.title };
+      if (spec.conditionalRendering !== undefined) {
+        const group = ConditionalRenderingGroup.deserialize(spec.conditionalRendering);
+        tab.setState({ conditionalRendering: group });
+      }
+
+      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
+        tab.setState({ $variables: deserializeSectionVariables(spec.variables) });
+      }
+
+      const currentSpec = {
+        title: tab.state.title,
+        conditionalRendering: tab.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(tab.state.$variables),
+      };
 
       return {
         success: true,

@@ -1,4 +1,4 @@
-import { Preview } from '@storybook/react';
+import { Preview } from '@storybook/react-webpack5';
 import { initialize, mswLoader } from 'msw-storybook-addon';
 
 import 'jquery';
@@ -33,12 +33,7 @@ const handleThemeChange = (theme: GrafanaTheme2) => {
   }
 };
 
-const allowedExtraThemes: string[] = [
-  'deuteranopia_protanopia_dark',
-  'deuteranopia_protanopia_light',
-  'tritanopia_dark',
-  'tritanopia_light',
-];
+const allowedExtraThemes: string[] = ['deut_prot_dark', 'deut_prot_light', 'tritanopia_dark', 'tritanopia_light'];
 
 if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('debug');
@@ -47,6 +42,7 @@ if (process.env.NODE_ENV === 'development') {
   allowedExtraThemes.push('gloom');
   allowedExtraThemes.push('sapphiredusk');
   allowedExtraThemes.push('tron');
+  allowedExtraThemes.push('visual_refresh_dark');
 }
 
 /*
@@ -68,6 +64,7 @@ const preview: Preview = {
     actions: { argTypesRegex: '^on[A-Z].*' },
     docs: {
       container: ThemedDocsContainer,
+      codePanel: true,
     },
     a11y: {
       test: 'error',

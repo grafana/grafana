@@ -5,8 +5,17 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
-import { ElementSelectionContext, useSidebar, useStyles2, useTheme2, Sidebar } from '@grafana/ui';
+import {
+  ElementSelectionContext,
+  useSidebar,
+  useStyles2,
+  useTheme2,
+  Sidebar,
+  type SidebarContextValue,
+} from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -25,8 +34,8 @@ import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboa
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { type DashboardSidebarPaneName } from './DashboardEditPane';
 import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { type DashboardSidebarPane } from './types';
 
 interface Props {
   dashboard: DashboardScene;
@@ -44,8 +53,9 @@ export function DashboardEditPaneSplitter(props: Props) {
 }
 
 function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
 
   return (
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
@@ -60,8 +70,9 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const headerHeight = useChromeHeaderHeight();
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -71,7 +82,9 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
+    shouldActivateOrKeepAlive: true,
+  });
 
   const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
     dashboard,
@@ -119,10 +132,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     []
   );
 
-  const CODE_PANE_MIN_WIDTH = 700;
-  const originalPaneWidthRef = useRef<number | null>(null);
-  const previousPaneRef = useRef<DashboardSidebarPaneName | undefined>(undefined);
-
   // Selection is only needed in edit mode — the assistant popover is triggered
   // exclusively via the sparkle button, not through the selection system.
   useEffect(() => {
@@ -139,31 +148,16 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
-    persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
+    hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    onGoBack: () => editPane.goBackToPrevious(),
+    canGoBack: previousState !== undefined,
     defaultIsHidden: isEditing ? false : isMobile,
   });
 
-  useEffect(() => {
-    const wasCodePane = previousPaneRef.current === 'code';
-    const isCodePane = openPane === 'code';
-    previousPaneRef.current = openPane;
-
-    if (isCodePane && !wasCodePane) {
-      // Opening code pane - store original width and expand if needed
-      if (sidebarContext.paneWidth < CODE_PANE_MIN_WIDTH) {
-        originalPaneWidthRef.current = sidebarContext.paneWidth;
-        const diff = CODE_PANE_MIN_WIDTH - sidebarContext.paneWidth;
-        sidebarContext.onResize(diff);
-      }
-    } else if (wasCodePane && !isCodePane && originalPaneWidthRef.current !== null) {
-      // Leaving code pane - restore original width
-      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
-      sidebarContext.onResize(diff);
-      originalPaneWidthRef.current = null;
-    }
-  }, [openPane, sidebarContext]);
+  useSidebarPaneMinWidth(openPane, sidebarContext);
 
   /**
    * Sync docked state to editPane state
@@ -208,7 +202,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={styles.scrollContainer}
+          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
@@ -238,6 +232,28 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
       </div>
     </AssistantPopoverContext.Provider>
   );
+}
+
+function useSidebarPaneMinWidth(openPane: DashboardSidebarPane | undefined, sidebarContext: SidebarContextValue) {
+  const originalPaneWidthRef = useRef<number | null>(null);
+  const previousPaneRef = useRef<DashboardSidebarPane | undefined>(undefined);
+
+  useEffect(() => {
+    previousPaneRef.current = openPane;
+
+    if (openPane?.minWidth && sidebarContext.paneWidth < openPane.minWidth) {
+      originalPaneWidthRef.current = sidebarContext.paneWidth;
+      const diff = openPane.minWidth - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+    }
+
+    // If we are switching to a different openPane without minWidth
+    if (openPane && !openPane.minWidth && originalPaneWidthRef.current !== null) {
+      const diff = originalPaneWidthRef.current - sidebarContext.paneWidth;
+      sidebarContext.onResize(diff);
+      originalPaneWidthRef.current = null;
+    }
+  }, [openPane, sidebarContext]);
 }
 
 function useUpdateAppChromeActions(dashboard: DashboardScene) {
@@ -276,7 +292,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -348,13 +364,24 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
     }),
-    controlsWrapperSticky: css({
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        zIndex: theme.zIndex.activePanel,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
+    controlsWrapperSticky: css(
+      {
+        [theme.breakpoints.up('md')]: {
+          position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
+          background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
+          top: headerHeight,
+        },
       },
-    }),
+      visualRefreshEnabled && {
+        borderTopLeftRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+        borderTopRightRadius: getInternalRadius(theme, 0, {
+          parentBorderRadius: 'lg',
+        }),
+      }
+    ),
   };
 }

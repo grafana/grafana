@@ -1,22 +1,31 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import {
-  AdHocFiltersVariable,
-  GroupByVariable,
+  CustomVariable,
+  LocalValueVariable,
+  SceneGridLayout,
+  type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
   TextBoxVariable,
+  VizPanel,
 } from '@grafana/scenes';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { buildPanelEditScene, type PanelEditor } from '../panel-edit/PanelEditor';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardControls, type DashboardControlsState } from './DashboardControls';
@@ -26,6 +35,10 @@ jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     hasEditPermissionInFolders: false,
   },
+}));
+
+jest.mock('../panel-edit/PanelEditControls', () => ({
+  PanelEditControls: () => <div data-testid="mock-panel-edit-controls">Table view toggle</div>,
 }));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -52,10 +65,26 @@ function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   if (kioskMode !== undefined) {
     context.chrome.update({ kioskMode: KioskMode.Full });
   }
-  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>
+    </OpenFeatureProvider>
+  );
 }
 
 describe('DashboardControls', () => {
+  beforeEach(() => {
+    setTestFlags({});
+  });
+
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   describe('Given a standard scene', () => {
     it('should initialize with default values', () => {
       const scene = buildTestScene();
@@ -120,13 +149,13 @@ describe('DashboardControls', () => {
     it('should render', () => {
       const scene = buildTestScene();
       expect(() => {
-        render(<scene.Component model={scene} />);
+        renderInGrafanaContext(<scene.Component model={scene} />);
       }).not.toThrow();
     });
 
     it('should render visible controls', async () => {
       const scene = buildTestScene({});
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(await renderer.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
       expect(await renderer.findByTestId(selectors.components.DashboardLinks.container)).toBeInTheDocument();
@@ -142,9 +171,73 @@ describe('DashboardControls', () => {
         hideLinksControls: true,
         hideDashboardControls: true,
       });
-      const renderer = render(<scene.Component model={scene} />);
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
 
       expect(renderer.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+    });
+
+    it('should not render an empty controls container in kiosk mode when controls are hidden', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const scene = buildTestScene({
+          hideTimeControls: true,
+          hideVariableControls: true,
+          hideLinksControls: true,
+          hideDashboardControls: true,
+        });
+
+        renderInGrafanaContext(<scene.Component model={scene} />, KioskMode.Full);
+
+        expect(screen.queryByTestId(selectors.pages.Dashboard.Controls)).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('in edit mode, should render the "Add variable" button when hasControls returns false and time controls are hidden', async () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.dashboardNewLayouts = true;
+
+        const controls = buildTestSceneWithEditable({
+          editable: true,
+          canEdit: true,
+          isEditing: true,
+        });
+        controls.setState({ hideTimeControls: true });
+
+        const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
+
+        expect(renderer.getByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+        expect(renderer.queryByTestId(selectors.components.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+        expect(renderer.getByRole('button', { name: /add variable/i })).toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('should render Table view toggle in panel edit mode even when all other controls are hidden', () => {
+      const controls = new DashboardControls({
+        hideTimeControls: true,
+        hideVariableControls: true,
+        hideLinksControls: true,
+        hideDashboardControls: true,
+      });
+
+      const dashboard = new DashboardScene({
+        uid: 'test-dashboard',
+        controls,
+        editPanel: { state: { useQueryExperienceNext: false } } as unknown as PanelEditor,
+      });
+
+      dashboard.activate();
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.getByTestId('mock-panel-edit-controls')).toBeInTheDocument();
     });
 
     it('should render ScopesVariable Component even when hidden', () => {
@@ -176,7 +269,7 @@ describe('DashboardControls', () => {
         return <div>Mocked Component</div>;
       });
 
-      const renderer = render(<controls.Component model={controls} />);
+      const renderer = renderInGrafanaContext(<controls.Component model={controls} />);
 
       // Verify UNSAFE_renderAsHidden is set (required for renderHiddenVariables to include it)
       expect(scopeVariable.UNSAFE_renderAsHidden).toBe(true);
@@ -193,7 +286,7 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: true });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
     });
 
@@ -202,59 +295,76 @@ describe('DashboardControls', () => {
       const dashboard = getDashboard(scene);
       dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
 
-      const { container } = render(<scene.Component model={scene} />);
+      const { container } = renderInGrafanaContext(<scene.Component model={scene} />);
       expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
     });
 
-    describe('drilldown wrapper hidden variables', () => {
-      const originalFeatureToggles = { ...config.featureToggles };
-
-      beforeEach(() => {
-        config.featureToggles = {
-          dashboardNewLayouts: true,
-          dashboardAdHocAndGroupByWrapper: true,
-        };
+    it.each([
+      {
+        title: 'should include only viewed panel ancestor section variables in panel view mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelViewVariablesScene,
+        expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
+        expectedHidden: ['otherSectionVar'],
+      },
+      {
+        title: 'should include only edited panel ancestor section variables in panel edit mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelEditVariablesScene,
+        expectedVisible: ['ancestorVar', 'dashboardVar', 'dupVar'],
+        expectedHidden: ['otherSectionVar'],
+      },
+      {
+        title: 'should not include section variables in panel edit mode when section feature is disabled',
+        sceneBuilder: buildPanelEditVariablesScene,
+        expectedVisible: ['dashboardVar'],
+        expectedHidden: ['ancestorVar', 'otherSectionVar'],
+      },
+      {
+        title: 'should hide repeat local section variables in panel edit mode',
+        featureFlags: { dashboardSectionVariables: true },
+        sceneBuilder: buildPanelEditSceneWithRepeatVariable,
+        expectedVisible: ['repeatSource'],
+        expectedUnique: ['repeatSource'],
+      },
+    ])('$title', async ({ featureFlags, sceneBuilder, expectedVisible, expectedHidden, expectedUnique }) => {
+      await assertPanelEditVariableVisibility({
+        sceneBuilder,
+        featureFlags,
+        expectedVisible,
+        expectedHidden,
+        expectedUnique,
       });
+    });
 
-      afterEach(() => {
-        config.featureToggles = originalFeatureToggles;
-      });
+    it('still mounts ScopesVariable.Component when panel edit variables override is active', async () => {
+      setTestFlags({ dashboardSectionVariables: true });
 
-      it('should render hidden group-by variable in edit mode when drilldown wrapper is enabled', async () => {
-        const adHocVar = new AdHocFiltersVariable({
-          name: 'filters',
-          label: 'filters',
-          filters: [],
-          datasource: { uid: 'devscopes' },
-          applicabilityEnabled: false,
-        });
-        const groupByVar = new GroupByVariable({
-          name: 'query0',
-          value: ['instance'],
-          text: ['instance'],
-          options: [],
-          datasource: { uid: 'devscopes' },
-          hide: VariableHide.hideVariable,
-          applicabilityEnabled: false,
-        });
+      const scopeVariable = new ScopesVariable({ enable: true });
 
-        const dashboard = new DashboardScene({
-          uid: 'test-dashboard',
-          $variables: new SceneVariableSet({
-            variables: [adHocVar, groupByVar],
+      jest
+        .spyOn(scopeVariable as unknown as { Component: unknown }, 'Component', 'get')
+        .mockReturnValue(() => <div data-testid="scopes-variable-mounted-for-sync">scopes-sync</div>);
+
+      const { controls } = buildPanelEditControlsScene({
+        uid: 'panel-edit-scopes-sync',
+        editedPanelKey: 'edited-panel',
+        rows: [
+          new RowItem({
+            title: 'Ancestor row',
+            $variables: new SceneVariableSet({
+              variables: [new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' })],
+            }),
           }),
-          controls: new DashboardControls({}),
-        });
-
-        dashboard.activate();
-        dashboard.setState({ isEditing: true });
-
-        const controls = dashboard.state.controls as DashboardControls;
-        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-        // Hidden variables should still be visible in edit mode.
-        expect(await screen.findByText('query0')).toBeInTheDocument();
+        ],
+        dashboardVariables: [new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }), scopeVariable],
       });
+
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId('scopes-variable-mounted-for-sync')).toBeInTheDocument();
+
+      jest.restoreAllMocks();
     });
   });
 
@@ -404,6 +514,14 @@ describe('DashboardControls', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.next)).toBeInTheDocument();
     });
 
+    it('should not show EditDashboardSwitch when dashboard has no uid (new dashboard)', async () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -499,6 +617,7 @@ describe('DashboardControls', () => {
 });
 
 function buildTestSceneWithEditable(options: {
+  hasUid?: boolean;
   editable?: boolean;
   isEditing?: boolean;
   canEdit?: boolean;
@@ -506,10 +625,18 @@ function buildTestSceneWithEditable(options: {
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
 }): DashboardControls {
-  const { editable = true, isEditing, canEdit = true, canSave, canMakeEditable = false, isSnapshot = false } = options;
+  const {
+    editable = true,
+    isEditing,
+    canEdit = true,
+    canSave,
+    canMakeEditable = false,
+    isSnapshot = false,
+    hasUid = true,
+  } = options;
 
   const dashboard = new DashboardScene({
-    uid: 'test-uid',
+    uid: hasUid ? 'test-uid' : undefined,
     editable,
     isEditing,
     meta: {
@@ -579,4 +706,155 @@ function buildTestScene(state?: Partial<DashboardControlsState>): DashboardContr
   variable.activate();
 
   return dashboard.state.controls as DashboardControls;
+}
+
+async function assertPanelEditVariableVisibility({
+  sceneBuilder,
+  featureFlags,
+  expectedVisible = [],
+  expectedHidden = [],
+  expectedUnique = [],
+}: {
+  sceneBuilder: () => { controls: DashboardControls };
+  featureFlags?: Record<string, boolean>;
+  expectedVisible?: string[];
+  expectedHidden?: string[];
+  expectedUnique?: string[];
+}) {
+  setTestFlags(featureFlags ?? {});
+  const { controls } = sceneBuilder();
+  renderInGrafanaContext(<controls.Component model={controls} />);
+
+  for (const variableName of expectedVisible) {
+    expect(await screen.findByText(variableName)).toBeInTheDocument();
+  }
+
+  for (const variableName of expectedHidden) {
+    expect(screen.queryByText(variableName)).not.toBeInTheDocument();
+  }
+
+  for (const variableName of expectedUnique) {
+    expect(screen.queryAllByText(variableName)).toHaveLength(1);
+  }
+}
+
+function buildPanelEditVariablesScene() {
+  return buildPanelEditControlsScene({
+    uid: 'panel-edit-variables',
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $variables: new SceneVariableSet({
+          variables: [
+            new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' }),
+            new TextBoxVariable({ name: 'dupVar', value: 'from-ancestor' }),
+          ],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $variables: new SceneVariableSet({
+          variables: [new TextBoxVariable({ name: 'otherSectionVar', value: 'other' })],
+        }),
+      }),
+    ],
+    dashboardVariables: [
+      new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }),
+      new TextBoxVariable({ name: 'dupVar', value: 'from-dashboard' }),
+    ],
+  });
+}
+
+function buildPanelViewVariablesScene() {
+  const { dashboard, controls, editedPanel } = buildPanelEditControlsScene({
+    uid: 'panel-view-variables',
+    editedPanelKey: 'edited-panel',
+    rows: [
+      new RowItem({
+        title: 'Ancestor row',
+        $variables: new SceneVariableSet({
+          variables: [
+            new TextBoxVariable({ name: 'ancestorVar', value: 'from-ancestor' }),
+            new TextBoxVariable({ name: 'dupVar', value: 'from-ancestor' }),
+          ],
+        }),
+      }),
+      new RowItem({
+        title: 'Other row',
+        $variables: new SceneVariableSet({
+          variables: [new TextBoxVariable({ name: 'otherSectionVar', value: 'other' })],
+        }),
+      }),
+    ],
+    dashboardVariables: [
+      new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' }),
+      new TextBoxVariable({ name: 'dupVar', value: 'from-dashboard' }),
+    ],
+  });
+
+  dashboard.setState({ editPanel: undefined, viewPanel: editedPanel.getPathId() });
+
+  return { controls };
+}
+
+function buildPanelEditSceneWithRepeatVariable() {
+  return buildPanelEditControlsScene({
+    uid: 'panel-edit-repeat',
+    editedPanelKey: 'repeat-panel',
+    rows: [
+      new RowItem({
+        title: 'Repeat row',
+        repeatByVariable: 'repeatSource',
+        $variables: new SceneVariableSet({
+          variables: [
+            new LocalValueVariable({ name: 'repeatSource', value: 'local-repeat-value', text: 'local-repeat-value' }),
+            new CustomVariable({ name: 'repeatSource', query: 'sec1,sec2', value: ['sec1'], text: ['sec1'] }),
+          ],
+        }),
+      }),
+    ],
+    dashboardVariables: [new TextBoxVariable({ name: 'dashboardVar', value: 'from-dashboard' })],
+  });
+}
+
+function buildPanelEditControlsScene({
+  uid,
+  editedPanelKey,
+  rows,
+  dashboardVariables,
+}: {
+  uid: string;
+  editedPanelKey: string;
+  rows: RowItem[];
+  dashboardVariables: SceneVariable[];
+}) {
+  const editedPanel = new VizPanel({ key: editedPanelKey, pluginId: 'text' });
+  const rowItems = rows.map((row, index) => {
+    const isEditedPanelRow = index === 0;
+    const panel = isEditedPanelRow ? editedPanel : new VizPanel({ key: `other-panel-${index}`, pluginId: 'text' });
+    const gridItem = new DashboardGridItem({ body: panel });
+
+    row.setState({
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({ children: [gridItem] }),
+      }),
+    });
+
+    return row;
+  });
+
+  const dashboard = new DashboardScene({
+    uid,
+    $variables: new SceneVariableSet({
+      variables: dashboardVariables,
+    }),
+    body: new RowsLayoutManager({ rows: rowItems }),
+    controls: new DashboardControls({}),
+  });
+
+  dashboard.setState({ editPanel: buildPanelEditScene(editedPanel) });
+  dashboard.activate();
+
+  return { dashboard, controls: dashboard.state.controls as DashboardControls, editedPanel };
 }

@@ -13,6 +13,11 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
+# A cold build (yarn install + serial plugin builds + main webpack compile) can take
+# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
+# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+ci_settings(readiness_timeout='15m')
+
 # --- Frontend processes
 local_resource(
   'yarn install',
@@ -25,7 +30,7 @@ local_resource(
 
 local_resource(
   'yarn start',
-  cmd='rm -rf public/build/assets-manifest.json',
+  cmd='rm -rf public/build/assets-manifest-react19.json',
   serve_cmd='yarn start:noLint',
   resource_deps=['yarn install'],
 
@@ -34,7 +39,7 @@ local_resource(
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
-    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest.json"]),
+    exec=exec_action(["bash", "-c", "stat public/build/assets-manifest-react19.json"]),
   ),
   allow_parallel=True,
   labels=["local"]
@@ -47,7 +52,6 @@ local_resource(
     '../../pkg',
     '../../apps',
     '../../kinds',
-    '../../kindsv2',
     '../../local',
     '../../scripts',
     '../../conf',
@@ -125,6 +129,7 @@ dc_resource("tempo", labels=["observability"])
 dc_resource("postgres", labels=["misc"])
 dc_resource("tempo-init", labels=["misc"])
 dc_resource("goff", labels=["misc"])
+dc_resource("maildev", labels=["misc"])
 
 # paths in tilt files are confusing....
 # - if tilt is dealing with the path, it is relative to the Tiltfile
@@ -145,7 +150,8 @@ docker_build('grafana-fs-dev',
     'public/views',
     'public/dashboards',
     'public/app/plugins',
-    'public/build/assets-manifest.json',
+    'public/build/assets-manifest-react19.json',
+    'public/build/boot.js',
     'public/gazetteer',
     'public/maps',
     'public/img/bg',
@@ -160,7 +166,8 @@ docker_build('grafana-fs-dev',
     sync('../../public/views', '/grafana/public/views'),
     sync('../../public/dashboards', '/grafana/public/dashboards'),
     sync('../../public/app/plugins', '/grafana/public/app/plugins'),
-    sync('../../public/build/assets-manifest.json', '/grafana/public/build/assets-manifest.json'),
+    sync('../../public/build/assets-manifest-react19.json', '/grafana/public/build/assets-manifest-react19.json'),
+    sync('../../public/build/boot.js', '/grafana/public/build/boot.js'),
     sync('./provisioning', '/ignore/provisioning'),  # Just to trigger a restart instead of rebuild
     sync('./configs/grafana-api.local.ini', '/ignore/grafana-api.local.ini'),  # Just to trigger a restart instead of rebuild
     sync('./configs/frontend-service.local.ini', '/ignore/frontend-service.local.ini'),  # Just to trigger a restart instead of rebuild

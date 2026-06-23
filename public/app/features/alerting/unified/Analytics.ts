@@ -1,6 +1,8 @@
 import { pickBy } from 'lodash';
 
-import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
+import { type LogContext } from '@grafana/faro-web-sdk';
+import { config, reportInteraction } from '@grafana/runtime';
+import { getLogger } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type RuleNamespace } from '../../../types/unified-alerting';
@@ -8,7 +10,6 @@ import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
-import { type AdvancedFilters } from './rule-list/filter/types';
 import { type RulesFilter } from './search/rulesSearchParser';
 import { type RuleFormType } from './types/rule-form';
 
@@ -29,11 +30,17 @@ export const LogMessages = {
   noAlertRuleVersionsFound: 'no alert rule versions found',
 };
 
-const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger('features.alerting', {
-  module: 'Alerting',
-});
+export const logInfo = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logInfo(message, contexts);
 
-export { logError, logInfo, logMeasurement, logWarning };
+export const logWarning = (message: string, contexts?: LogContext) =>
+  getLogger('features.alerting').logWarning(message, contexts);
+
+export const logError = (error: Error, contexts?: LogContext) =>
+  getLogger('features.alerting').logError(error, contexts);
+
+export const logMeasurement = (type: string, measurement: Record<string, number>, contexts?: LogContext) =>
+  getLogger('features.alerting').logMeasurement(type, measurement, contexts);
 
 /**
  * Utility function to measure performance of async operations
@@ -340,10 +347,6 @@ export function trackFolderBulkActionsUnpauseFail() {
   reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
 }
 
-export function trackFilterButtonClick() {
-  reportInteraction('grafana_alerting_filter_button_click');
-}
-
 export function trackAlertRuleFilterEvent(
   payload:
     | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' }
@@ -373,17 +376,6 @@ export function trackRulesSearchInputCleared(prev: string, next: string) {
   }
 }
 
-export function trackFilterButtonApplyClick(payload: AdvancedFilters, pluginsFilterEnabled: boolean) {
-  // Filter out empty/default values before tracking
-  const meaningfulValues = filterMeaningfulValues(payload, { pluginsFilterEnabled });
-
-  reportInteraction('grafana_alerting_rules_filter', {
-    ...meaningfulValues,
-    filter_method: 'filter-component',
-    filter_variant: 'v2',
-  });
-}
-
 function filterMeaningfulValues(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   obj: Record<string, any>,
@@ -407,12 +399,6 @@ function filterMeaningfulValues(
       return false;
     }
     return true;
-  });
-}
-
-export function trackFilterButtonClearClick() {
-  reportInteraction('grafana_alerting_rules_filter_cleared', {
-    filter_method: 'filter-component',
   });
 }
 

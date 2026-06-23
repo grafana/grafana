@@ -40,25 +40,12 @@ export interface FeatureRequest {
   comments: number;
 }
 
-export interface PullRequest {
-  number: number;
-  title: string;
-  author: { login: string };
-  createdAt: string;
-  updatedAt: string;
-  additions: number;
-  deletions: number;
-  files: { path: string }[];
-  labels: { name: string }[];
-  reviewDecision: string | null;
-}
-
-export interface Cluster {
+interface Cluster {
   name: string;
   issue_numbers: number[];
 }
 
-export interface PRCluster {
+interface PRCluster {
   name: string;
   pr_numbers: number[];
 }
@@ -127,7 +114,7 @@ export function setOutput(key: string, value: string): void {
   console.log(`Output: ${key}=${safeValue}`);
 }
 
-export function setOutputMultiline(key: string, value: string): void {
+function setOutputMultiline(key: string, value: string): void {
   const outputFile = process.env.GITHUB_OUTPUT;
   if (outputFile) {
     const delimiter = `ghadelim_${crypto.randomUUID().replace(/-/g, '')}`;
@@ -271,7 +258,7 @@ export function validatePRClusterResponse(response: string): PRClusterResult {
 // =============================================================================
 // GITHUB CLI HELPERS
 // =============================================================================
-export function ghExec(args: string[], timeoutMs: number = 30_000): string {
+function ghExec(args: string[], timeoutMs: number = 30_000): string {
   return execFileSync('gh', args, { encoding: 'utf-8', timeout: timeoutMs });
 }
 
@@ -290,7 +277,7 @@ export function ghGraphQL(query: string, variables: Record<string, string | numb
 // =============================================================================
 // GLOB PATTERN MATCHING
 // =============================================================================
-export function globToRegex(pattern: string): RegExp {
+function globToRegex(pattern: string): RegExp {
   const escaped = pattern
     .replace(/\*\*/g, '<<<GLOBSTAR>>>')
     .replace(/\*/g, '[^/]*')
@@ -347,7 +334,7 @@ export function parseCodeowners(filePath: string = CODEOWNERS_PATH): CodeownersE
  * In CODEOWNERS the last matching rule wins. Returns the owners for a file
  * by scanning all entries and keeping the last match.
  */
-export function getFileOwners(file: string, entries: CodeownersEntry[]): string[] {
+function getFileOwners(file: string, entries: CodeownersEntry[]): string[] {
   let owners: string[] = [];
   for (const entry of entries) {
     if (entry.pattern.test(file)) {

@@ -12,7 +12,7 @@ jest.mock('./hooks/useTransformationInputData', () => ({
 }));
 
 jest.mock('./TransformationFilterDisplay', () => ({
-  TransformationFilterDisplay: () => <div data-testid="transformation-filter-display" />,
+  TransformationFilterEditor: () => <div data-testid="transformation-filter-display" />,
 }));
 
 jest.mock('./TransformationEditor', () => ({
@@ -36,7 +36,7 @@ const mockTransformation: DataTransformerInfo = {
 const mockRegistryItem: TransformerRegistryItem = {
   id: 'test-transform',
   name: 'Test Transform',
-  transformation: mockTransformation,
+  transformation: () => Promise.resolve(mockTransformation),
   editor: () => null,
   imageDark: '',
   imageLight: '',

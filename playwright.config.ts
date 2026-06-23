@@ -133,10 +133,6 @@ export default defineConfig<PluginOptions>({
       testDir: path.join(pluginDirRoot, '/influxdb'),
     }),
     withAuth({
-      name: 'opentsdb',
-      testDir: path.join(pluginDirRoot, '/opentsdb'),
-    }),
-    withAuth({
       name: 'jaeger',
       testDir: path.join(pluginDirRoot, '/jaeger'),
     }),
@@ -147,10 +143,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'canvas',
       testDir: path.join(testDirRoot, '/canvas'),
-    }),
-    withAuth({
-      name: 'zipkin',
-      testDir: path.join(pluginDirRoot, '/zipkin'),
     }),
     {
       name: 'unauthenticated',

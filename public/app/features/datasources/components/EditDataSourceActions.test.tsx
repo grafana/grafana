@@ -105,8 +105,10 @@ const mockDataSource = getMockDataSource({
 
 // Mock useDataSource hook
 jest.mock('../state/hooks', () => ({
-  useDataSource: (uid: string) => (uid === 'not-found' ? {} : mockDataSource),
+  useDataSource: jest.fn((uid: string) => (uid === 'not-found' ? {} : mockDataSource)),
 }));
+
+const mockUseDataSource = jest.mocked(require('../state/hooks').useDataSource);
 
 describe('EditDataSourceActions', () => {
   beforeEach(() => {
@@ -133,6 +135,9 @@ describe('EditDataSourceActions', () => {
     // Default: feature toggle disabled, so no favorite hook
     mockUseFavoriteDatasources.mockReturnValue({ ...mockFavoriteHook, enabled: false });
     config.featureToggles.favoriteDatasources = false;
+
+    // Reset default hook mocks
+    mockUseDataSource.mockImplementation((uid: string) => (uid === 'not-found' ? {} : mockDataSource));
   });
 
   describe('Core Actions', () => {

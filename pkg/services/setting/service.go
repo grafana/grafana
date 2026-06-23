@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
@@ -27,10 +27,12 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	authlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	logging "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // settingTracer wraps an otel tracer and implements the tracing.Tracer interface.
@@ -78,6 +80,7 @@ type clientMetrics struct {
 	listResultSize           prometheus.Histogram
 	rateLimiterThrottleTotal prometheus.Counter
 	cacheHitTotal            prometheus.Counter
+	cacheMissTotal           prometheus.Counter
 }
 
 // Service retrieves configuration settings from a remote settings service.
@@ -201,7 +204,7 @@ type settingListMetadata struct {
 // New creates a Service from the provided configuration.
 func New(config Config) (Service, error) {
 	log := logging.New(LogPrefix)
-	metrics := initMetrics()
+	metrics := initMetrics(resolveServiceName(config))
 
 	restClient, err := getRestClient(config, log, metrics)
 	if err != nil {
@@ -241,7 +244,7 @@ func New(config Config) (Service, error) {
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -263,7 +266,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 
 func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
 	namespace, ok := request.NamespaceFrom(ctx)
-	ns := semconv.GrafanaNamespaceName(namespace)
+	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
 		trace.WithAttributes(ns))
 	defer span.End()
@@ -322,6 +325,7 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 		}
 	}
 
+	s.metrics.cacheMissTotal.Inc()
 	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
 	if err != nil {
 		oErr = err
@@ -539,15 +543,7 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		burst = config.Burst
 	}
 
-	serviceName := config.ServiceName
-	if serviceName == "" {
-		serviceName = os.Getenv(otelServiceNameEnvVar)
-	}
-
-	if serviceName == "" {
-		serviceName = defaultServiceName
-	}
-	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, serviceName)
+	userAgent := fmt.Sprintf("settings-client %s (%s)", apiVersion, resolveServiceName(config))
 
 	// Add a default scheme to handle K8s API error responses
 	scheme := runtime.NewScheme()
@@ -614,7 +610,19 @@ func (r *instrumentedRateLimiter) Wait(ctx context.Context) error {
 	return err
 }
 
-func initMetrics() clientMetrics {
+func resolveServiceName(config Config) string {
+	serviceName := config.ServiceName
+	if serviceName == "" {
+		serviceName = os.Getenv(otelServiceNameEnvVar)
+	}
+	if serviceName == "" {
+		serviceName = defaultServiceName
+	}
+	return serviceName
+}
+
+func initMetrics(serviceName string) clientMetrics {
+	constLabels := prometheus.Labels{"service": serviceName}
 	metrics := clientMetrics{
 		listDuration: prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
@@ -623,6 +631,8 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_duration_seconds",
 				Help:                        "Duration of remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
+				ConstLabels:                 constLabels,
 			},
 			[]string{"status"}, // status: "success" or "error"
 		),
@@ -633,19 +643,30 @@ func initMetrics() clientMetrics {
 				Name:                        "list_settings_result_size",
 				Help:                        "Number of settings returned by remote settings service List operations",
 				NativeHistogramBucketFactor: 1.1,
+				Buckets:                     instrument.DefBuckets,
+				ConstLabels:                 constLabels,
 			},
 		),
 		rateLimiterThrottleTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "rate_limiter_throttle_total",
-			Help:      "Total number of requests that waited more than 50ms due to client-side rate limiting",
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "rate_limiter_throttle_total",
+			Help:        "Total number of requests that waited more than 50ms due to client-side rate limiting",
+			ConstLabels: constLabels,
 		}),
 		cacheHitTotal: prometheus.NewCounter(prometheus.CounterOpts{
-			Namespace: "settings",
-			Subsystem: "service",
-			Name:      "list_settings_cache_hit_total",
-			Help:      "Total number of List cache hits",
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_hit_total",
+			Help:        "Total number of List cache hits",
+			ConstLabels: constLabels,
+		}),
+		cacheMissTotal: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace:   "settings",
+			Subsystem:   "service",
+			Name:        "list_settings_cache_miss_total",
+			Help:        "Total number of List cache misses",
+			ConstLabels: constLabels,
 		}),
 	}
 	return metrics
@@ -656,6 +677,7 @@ func (s *remoteSettingService) Describe(descs chan<- *prometheus.Desc) {
 	s.metrics.listResultSize.Describe(descs)
 	s.metrics.rateLimiterThrottleTotal.Describe(descs)
 	s.metrics.cacheHitTotal.Describe(descs)
+	s.metrics.cacheMissTotal.Describe(descs)
 }
 
 func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
@@ -663,4 +685,5 @@ func (s *remoteSettingService) Collect(metrics chan<- prometheus.Metric) {
 	s.metrics.listResultSize.Collect(metrics)
 	s.metrics.rateLimiterThrottleTotal.Collect(metrics)
 	s.metrics.cacheHitTotal.Collect(metrics)
+	s.metrics.cacheMissTotal.Collect(metrics)
 }

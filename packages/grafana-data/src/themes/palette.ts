@@ -31,6 +31,8 @@ export const palette = {
   greenDarkText: '#6ccf8e',
   orangeDarkMain: '#ff9900',
   orangeDarkText: '#fbad37',
+  purpleDarkMain: '#C27AFF',
+  purpleDarkText: '#D4A0FF',
 
   blueLightMain: '#3871dc',
   blueLightText: '#1f62e0',
@@ -39,5 +41,7 @@ export const palette = {
   greenLightMain: '#1b855e',
   greenLightText: '#0a764e',
   orangeLightMain: '#ff9900',
-  orangeLightText: '#b5510d',
+  orangeLightText: '#B04E0C',
+  purpleLightMain: '#A24BC8',
+  purpleLightText: '#7c2ea3',
 };

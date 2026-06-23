@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import {
   ControlsLabel,
   type ControlsLayout,
@@ -13,7 +13,6 @@ import {
   type SceneVariables,
   SceneVariableSet,
   type SceneVariableState,
-  SceneVariableValueChangedEvent,
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
@@ -25,22 +24,19 @@ import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopov
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
+import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
-export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
-  const { variables } = sceneGraph.getVariables(dashboard)!.useState();
+export function VariableControls({
+  dashboard,
+  variablesOverride,
+}: {
+  dashboard: DashboardScene;
+  variablesOverride?: SceneVariable[];
+}) {
+  const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
-
-  // Subscribe to variable value changes to track interactions
-  useEffect(() => {
-    const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
-      reportInteraction('grafana_dashboards_variable_changed');
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [dashboard]);
+  const variables = variablesOverride ?? dashboardVariables;
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
@@ -48,20 +44,10 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
       (v.state.hide !== VariableHide.hideVariable || v.UNSAFE_renderAsHidden)
   );
 
-  const adHocVar = visibleVariables.find((v) => sceneUtils.isAdHocVariable(v));
-  const groupByVar = visibleVariables.find((v) => sceneUtils.isGroupByVariable(v));
-
-  const restVariables = visibleVariables.filter(
-    (v) => v.state.name !== adHocVar?.state.name && v.state.name !== groupByVar?.state.name
-  );
-
-  const hasDrilldownControls = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
-  const variablesToRender = hasDrilldownControls ? restVariables : visibleVariables;
-
   return (
     <>
-      {variablesToRender.length > 0 &&
-        variablesToRender.map((variable) => (
+      {visibleVariables.length > 0 &&
+        visibleVariables.map((variable) => (
           <VariableValueSelectWrapper
             key={variable.state.key}
             variable={variable}
@@ -84,6 +70,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   const state = useSceneObjectState<SceneVariableState>(variable, { shouldActivateOrKeepAlive: true });
   const { isSelected, isSelectable } = useElementSelection(variable.state.key);
   const isHidden = state.hide === VariableHide.hideVariable;
+  const { markUserInitiated } = useTrackDashboardVariableValueChange(variable);
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
@@ -98,8 +85,10 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
   }, [variable]);
 
   const editActions = useMemo(
-    () => <ControlEditActions onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />,
-    [onClickDeleteVariable, onClickEditVariable]
+    () => (
+      <ControlEditActions element={variable} onClickEdit={onClickEditVariable} onClickDelete={onClickDeleteVariable} />
+    ),
+    [variable, onClickDeleteVariable, onClickEditVariable]
   );
 
   // UNSAFE_renderAsHidden variables (like ScopesVariable) should always render invisibly
@@ -122,6 +111,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          onPointerDown={markUserInitiated}
         >
           <div className={styles.switchControl}>
             <variable.Component model={variable} />
@@ -146,6 +136,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isSelectable && !isSelected && 'dashboard-selectable-element'
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          onPointerDown={markUserInitiated}
         >
           <VariableLabel
             variable={variable}
@@ -167,6 +158,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        onPointerDown={markUserInitiated}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />
         <variable.Component model={variable} />
@@ -185,7 +177,7 @@ function VariableLabel({
   layout?: ControlsLayout;
 }) {
   const { state } = variable;
-  const elementId = `var-${state.key}`;
+  const elementId = sceneUtils.getVariableControlId(state.type, state.key);
 
   if (variable.state.hide === VariableHide.hideLabel) {
     return null;
@@ -229,7 +221,13 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    <div className={styles.sectionVariables}>
+    // Prevent row selection on click (see RowItemRenderer onPointerUp)
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      className={styles.sectionVariables}
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}

@@ -6,7 +6,8 @@ import { ThresholdsMode, VariableFormatID, type MatcherScope } from '@grafana/sc
 
 import { NullValueMode } from '../../src/types/data';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
-import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
+import { guessFieldTypeForField } from '../dataframe/guessFieldType';
+import { createDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
@@ -121,13 +122,17 @@ export function applyFieldOverrides(
       if ((rule.matcher.scope ?? 'series') !== scope) {
         continue;
       }
-      const info = fieldMatchers.get(rule.matcher.id);
-      if (info) {
-        override.push({
-          match: info.get(rule.matcher.options),
-          properties: rule.properties,
-        });
+      const info = fieldMatchers.getIfExists(rule.matcher.id);
+
+      if (!info) {
+        console.warn(`Unknown field matcher id: "${rule.matcher.id}", skipping override rule`);
+        continue;
       }
+
+      override.push({
+        match: info.get(rule.matcher.options),
+        properties: rule.properties,
+      });
     }
   }
 

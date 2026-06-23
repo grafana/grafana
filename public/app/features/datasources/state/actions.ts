@@ -17,6 +17,8 @@ import {
   isFetchError,
   locationService,
 } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getPluginSettings } from '@grafana/runtime/unstable';
 import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -25,7 +27,6 @@ import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
-import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type DataSourcePluginCategory } from 'app/types/datasources';
 import { type ThunkDispatch, type ThunkResult } from 'app/types/store';
@@ -162,7 +163,7 @@ export const testDataSource = (
 
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: true,
@@ -175,7 +176,7 @@ export const testDataSource = (
         dispatch(testDataSourceFailed({ ...formattedError }));
         trackDataSourceTested({
           grafana_version: config.buildInfo.version,
-          plugin_id: dsApi.type,
+          plugin_id: dsApi.meta.id,
           plugin_version: getPluginVersion(dsApi),
           datasource_uid: dsApi.uid,
           success: false,
@@ -252,7 +253,7 @@ export function addDataSource(
 
     let uid,
       version = '';
-    if (config.featureToggles.useNewAPIsForDatasourceCRUD) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
       const result = await api.createDataSourceWithK8sAPI(newInstance);
       uid = result.metadata.name;
     } else {

@@ -130,6 +130,9 @@ export async function setupAnnotationApiMock(page: Page): Promise<void> {
         }
       }
 
+      // Mock annotation API taking a bit
+      await page.waitForTimeout(50);
+
       return route.fulfill({
         status: 200,
         contentType: 'application/json',

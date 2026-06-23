@@ -111,7 +111,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -154,7 +154,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
 						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
-						LockBranch:                 &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch:                 &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -239,7 +239,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
 						RequiredPullRequestReviews: &github.PullRequestReviewsEnforcement{},
-						LockBranch:                 &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch:                 &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -419,7 +419,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -732,7 +732,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.MustFromUnstructured[provisioning.Repository](t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -741,7 +741,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := common.UnstructuredToRepository(t, repoStatus)
+			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
@@ -776,7 +776,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					protection := &github.Protection{
-						LockBranch: &github.LockBranch{Enabled: github.Ptr(true)},
+						LockBranch: &github.LockBranch{Enabled: new(true)},
 					}
 					_, _ = w.Write(ghmock.MustMarshal(protection))
 				}),
@@ -833,7 +833,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.MustFromUnstructured[provisioning.Repository](t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run and mark repository as unhealthy
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -842,7 +842,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := common.UnstructuredToRepository(t, repoStatus)
+			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)
@@ -933,7 +933,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 		require.NoError(t, err)
 
 		// Convert to repository (verify structure is valid)
-		_ = common.UnstructuredToRepository(t, obj.(*unstructured.Unstructured))
+		_ = common.MustFromUnstructured[provisioning.Repository](t, obj.(*unstructured.Unstructured))
 
 		// Wait for health check to run, then verify no branch protection errors
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -942,7 +942,7 @@ func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
 				return
 			}
 
-			repo := common.UnstructuredToRepository(t, repoStatus)
+			repo := common.MustFromUnstructured[provisioning.Repository](t, repoStatus)
 
 			// Log the actual health status for debugging
 			t.Logf("Health status: Healthy=%v, Error=%q", repo.Status.Health.Healthy, repo.Status.Health.Error)

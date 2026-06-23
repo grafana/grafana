@@ -13,8 +13,105 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// addCapabilityFieldMappings adds bleve field mappings to parent for a single
+// declared search field. The field is placed under parent using def.Name as
+// the local name; this helper does not add any sub-document prefix (callers
+// scope by passing the right parent, e.g. the "fields" sub-document mapper).
+//
+// Mappings emitted are driven by def.Capabilities:
+//
+//   - filter / facet / sort   → keyword mapping at the keyword variant name
+//     (see keywordVariantName). sort enables DocValues.
+//   - text                    → standard-analyzer text mapping at def.Name.
+//   - partial                 → ngram mapping at def.Name + "_ngram".
+//   - retrieve                → Store: true on the canonical field
+//     (def.Name if text is declared, else the keyword variant).
+//
+// Special case: when a field has only [filter] (with or without retrieve) and
+// no text capability, the keyword variant is named def.Name directly, without
+// the "_keyword" suffix. This preserves the on-disk shape of today's
+// Filterable-STRING fields under the "fields." prefix.
+//
+// Special case: when def.Name == resource.SEARCH_FIELD_TITLE, the keyword
+// variant is named resource.SEARCH_FIELD_TITLE_PHRASE rather than
+// "<name>_keyword". In-tree gRPC clients reference "title_phrase" by name.
+//
+// All emitted mappings have IncludeInAll explicitly set to false. The
+// composite "_all" sub-document is disabled at the index level (see
+// getBleveDocMappings), so IncludeInAll has no runtime effect; setting it
+// false keeps the emitted JSON consistent.
+func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
+	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
+	hasText := def.HasCapability(resource.SearchCapabilityText)
+	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
+	hasSort := def.HasCapability(resource.SearchCapabilitySort)
+	hasFacet := def.HasCapability(resource.SearchCapabilityFacet)
+	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
+	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
+
+	needKeyword := hasFilter || hasFacet || hasSort
+	keywordName := keywordVariantName(def.Name, hasText)
+
+	if needKeyword {
+		m := bleve.NewKeywordFieldMapping()
+		m.IncludeTermVectors = false
+		m.SkipFreqNorm = true
+		m.DocValues = hasSort
+		// Canonical field for storage is the keyword variant only when no text
+		// mapping will also be created.
+		m.Store = hasRetrieve && !hasText
+		m.IncludeInAll = false
+		parent.AddFieldMappingsAt(keywordName, m)
+	}
+
+	if hasText {
+		m := bleve.NewTextFieldMapping()
+		m.Analyzer = standard.Name
+		m.IncludeTermVectors = false
+		m.DocValues = false
+		m.Store = hasRetrieve
+		m.IncludeInAll = false
+		m.SkipFreqNorm = hasUnranked
+		parent.AddFieldMappingsAt(def.Name, m)
+	}
+
+	if hasPartial {
+		m := bleve.NewTextFieldMapping()
+		m.Analyzer = TITLE_ANALYZER
+		m.IncludeTermVectors = false
+		m.DocValues = false
+		// ngram variant is never the canonical retrieval target; the keyword
+		// or text variant already stores the value.
+		m.Store = false
+		m.IncludeInAll = false
+		parent.AddFieldMappingsAt(def.Name+"_ngram", m)
+	}
+
+	// retrieve without any other capability has no place to live; today's
+	// translation never produces such a shape. Silently ignored.
+}
+
+// keywordVariantName returns the name the keyword analyzer variant of a field
+// should occupy. Rules:
+//
+//   - name == "title" → "title_phrase" (legacy in-tree client compatibility).
+//   - text capability present → name + "_keyword" so the text variant can
+//     take name.
+//   - otherwise → name itself, so filter-only fields keep today's on-disk
+//     shape (no suffix).
+func keywordVariantName(name string, hasText bool) string {
+	if name == resource.SEARCH_FIELD_TITLE {
+		return resource.SEARCH_FIELD_TITLE_PHRASE
+	}
+	if hasText {
+		return name + "_keyword"
+	}
+	return name
+}
+
 func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
+	mapper.DocValuesDynamic = false // only folder and title_phrase need DocValues
 	mapper.ScoringModel = index.BM25Scoring
 
 	err := RegisterCustomAnalyzers(mapper)
@@ -29,140 +126,19 @@ func GetBleveMappings(fields resource.SearchableDocumentFields, selectableFields
 func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
-	nameMapping := &mapping.FieldMapping{
-		Analyzer: keyword.Name,
-		Type:     "text",
-		Index:    true,
+	// Standard top-level search fields are declared as SearchFieldDefinitions
+	// and emitted through the capability helper.
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		addCapabilityFieldMappings(mapper, def)
 	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_NAME, nameMapping)
 
-	// for sorting by title full phrase
-	titlePhraseMapping := bleve.NewKeywordFieldMapping()
-	titlePhraseMapping.Store = false // already stored in title
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE_PHRASE, titlePhraseMapping)
+	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
+	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())
 
-	// for searching by title - uses an edge ngram token filter
-	titleSearchMapping := bleve.NewTextFieldMapping()
-	titleSearchMapping.Analyzer = TITLE_ANALYZER
-	titleSearchMapping.Store = false // already stored in title
-
-	// mapping for title to search on words/tokens larger than the ngram size
-	titleWordMapping := bleve.NewTextFieldMapping()
-	titleWordMapping.Analyzer = standard.Name
-	titleWordMapping.Store = true
-	// NOTE: this causes 3 title fields in the response
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TITLE, titleWordMapping, titleSearchMapping, titlePhraseMapping)
-
-	descriptionMapping := &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_DESCRIPTION,
-		Type:               "text",
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DESCRIPTION, descriptionMapping)
-
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_TAGS, &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_TAGS,
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-		DocValues:          false,
-	})
-
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_OWNER_REFERENCES, &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_OWNER_REFERENCES,
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
-
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_CREATED_BY, &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_CREATED_BY,
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-		DocValues:          false,
-	})
-
-	folderMapping := &mapping.FieldMapping{
-		Name:               resource.SEARCH_FIELD_FOLDER,
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-		DocValues:          true, // will be needed for authz client
-	}
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_FOLDER, folderMapping)
-
-	// Repositories
-	manager := bleve.NewDocumentStaticMapping()
-	manager.AddFieldMappingsAt("kind", &mapping.FieldMapping{
-		Name:               "kind",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-	})
-	manager.AddFieldMappingsAt("id", &mapping.FieldMapping{
-		Name:               "id",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-	})
-
-	source := bleve.NewDocumentStaticMapping()
-	source.AddFieldMappingsAt("path", &mapping.FieldMapping{
-		Name:               "path",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-	})
-	source.AddFieldMappingsAt("checksum", &mapping.FieldMapping{
-		Name:               "checksum",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Store:              true,
-		Index:              true,
-		IncludeTermVectors: false,
-		IncludeInAll:       true,
-	})
-	source.AddFieldMappingsAt("timestampMillis", mapping.NewNumericFieldMapping())
-
-	mapper.AddSubDocumentMapping("source", source)
-	mapper.AddSubDocumentMapping("manager", manager)
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_MANAGED_BY, &mapping.FieldMapping{
-		Name:               "managedBy",
-		Type:               "text",
-		Analyzer:           keyword.Name,
-		Index:              true, // only used for faceting
-		Store:              false,
-		IncludeTermVectors: false,
-		IncludeInAll:       false,
-	})
-
+	// NOTE: reference and labels use dynamic mappings because their keys aren't
+	// known at mapping time. Bleve auto-creates fields using NewTextFieldMapping()
+	// defaults (IncludeTermVectors:true, SkipFreqNorm:false). There's no way to
+	// override these on a DocumentMapping — only on individual FieldMappings.
 	referenceMapper := bleve.NewDocumentMapping()
 	referenceMapper.DefaultAnalyzer = keyword.Name
 	mapper.AddSubDocumentMapping("reference", referenceMapper)
@@ -172,35 +148,78 @@ func getBleveDocMappings(fields resource.SearchableDocumentFields, selectableFie
 
 	fieldMapper := bleve.NewDocumentMapping()
 	if fields != nil {
-		for _, field := range fields.Fields() {
-			def := fields.Field(field)
-
-			// Filterable should use keyword analyzer for exact matches
-			if def.Properties != nil && def.Properties.Filterable && def.Type == resourcepb.ResourceTableColumnDefinition_STRING {
-				keywordMapping := bleve.NewKeywordFieldMapping()
-				keywordMapping.Store = true
-
-				fieldMapper.AddFieldMappingsAt(def.Name, keywordMapping)
+		// Collect the per-kind column definitions so they can be translated
+		// in one shot. Anything the helper does not emit a mapping for (no
+		// filter/text/partial/facet/sort capability) is left to Bleve's
+		// dynamic mapping at index time, which is the previous behaviour for
+		// non-filterable fields.
+		names := fields.Fields()
+		cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(names))
+		for _, name := range names {
+			if def := fields.Field(name); def != nil {
+				cols = append(cols, def)
 			}
-			// For all other fields, we do nothing.
-			// Bleve will see them at index time and dynamically map them as
-			// numeric, datetime, boolean, or standard text based on their content.
+		}
+		for _, def := range resource.SearchFieldsFromTableColumns(cols) {
+			addCapabilityFieldMappings(fieldMapper, def)
 		}
 	}
 
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, "."), fieldMapper)
 
+	// Disable bleve's internal "_all" composite field. By default bleve merges
+	// terms from all fields with IncludeInAll:true into a synthetic "_all"
+	// field. We never query it (all searches target explicit fields). Disabling
+	// it significantly reduces index size.
+	// https://github.com/blevesearch/bleve/blob/v2.5.7/mapping/index.go#L366-L371
+	mapper.AddSubDocumentMapping("_all", bleve.NewDocumentDisabledMapping())
+
 	selectableFieldsMapper := bleve.NewDocumentStaticMapping()
 	for _, field := range selectableFields {
 		selectableFieldsMapper.AddFieldMappingsAt(field, &mapping.FieldMapping{
-			Name:     field,
-			Type:     "text",
-			Analyzer: keyword.Name,
-			Store:    false,
-			Index:    true,
+			Name:               field,
+			Type:               "text",
+			Analyzer:           keyword.Name,
+			Store:              false,
+			Index:              true,
+			IncludeTermVectors: false,
+			SkipFreqNorm:       true,
 		})
 	}
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
 
 	return mapper
+}
+
+// keywordSubField returns a keyword (exact-match) field mapping for use inside
+// a sub-document. Sub-document fields are not modellable as
+// SearchFieldDefinitions today; this helper centralizes their shared shape.
+func keywordSubField() *mapping.FieldMapping {
+	return &mapping.FieldMapping{
+		Type:               "text",
+		Analyzer:           keyword.Name,
+		Store:              true,
+		Index:              true,
+		IncludeTermVectors: false,
+		IncludeInAll:       false,
+		SkipFreqNorm:       true,
+	}
+}
+
+func managerSubDocumentMapping() *mapping.DocumentMapping {
+	m := bleve.NewDocumentStaticMapping()
+	m.AddFieldMappingsAt("kind", keywordSubField())
+	m.AddFieldMappingsAt("id", keywordSubField())
+	return m
+}
+
+func sourceSubDocumentMapping() *mapping.DocumentMapping {
+	m := bleve.NewDocumentStaticMapping()
+	m.AddFieldMappingsAt("path", keywordSubField())
+	m.AddFieldMappingsAt("checksum", keywordSubField())
+	timestamp := mapping.NewNumericFieldMapping()
+	timestamp.DocValues = false
+	timestamp.SkipFreqNorm = true
+	m.AddFieldMappingsAt("timestampMillis", timestamp)
+	return m
 }

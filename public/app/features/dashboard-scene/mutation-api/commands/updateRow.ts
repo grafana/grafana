@@ -6,13 +6,19 @@
 
 import { type z } from 'zod';
 
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import {
+  deserializeSectionVariables,
+  serializeSectionVariables,
+} from '../../serialization/layoutSerializers/sectionVariables';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { isSectionVariablesFeatureEnabled } from './variableScope';
 
-export const updateRowPayloadSchema = payloads.updateRow;
+const updateRowPayloadSchema = payloads.updateRow;
 
 export type UpdateRowPayload = z.infer<typeof updateRowPayloadSchema>;
 
@@ -42,6 +48,8 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         collapse: row.state.collapse,
         hideHeader: row.state.hideHeader,
         fillScreen: row.state.fillScreen,
+        conditionalRendering: row.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(row.state.$variables),
       };
 
       const updates: Record<string, unknown> = {};
@@ -64,11 +72,22 @@ export const updateRowCommand: MutationCommand<UpdateRowPayload> = {
         row.onChangeRepeat(spec.repeat?.value || undefined);
       }
 
+      if (spec.conditionalRendering !== undefined) {
+        const group = ConditionalRenderingGroup.deserialize(spec.conditionalRendering);
+        row.setState({ conditionalRendering: group });
+      }
+
+      if (spec.variables !== undefined && isSectionVariablesFeatureEnabled()) {
+        row.setState({ $variables: deserializeSectionVariables(spec.variables) });
+      }
+
       const currentSpec = {
         title: row.state.title,
         collapse: row.state.collapse,
         hideHeader: row.state.hideHeader,
         fillScreen: row.state.fillScreen,
+        conditionalRendering: row.state.conditionalRendering?.serialize(),
+        variables: serializeSectionVariables(row.state.$variables),
       };
 
       return {

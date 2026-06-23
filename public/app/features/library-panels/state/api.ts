@@ -105,13 +105,15 @@ export async function getLibraryPanelByName(name: string): Promise<LibraryElemen
 
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
-  folderUid: string
+  folderUid: string,
+  uid?: string
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
     folderUid,
     name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
+    ...(uid ? { uid } : {}),
   });
   return result;
 }
@@ -193,7 +195,7 @@ export function libraryVizPanelToSaveModel(vizPanel: VizPanel) {
   return saveModel;
 }
 
-export async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
+async function updateLibraryVizPanel(vizPanel: VizPanel): Promise<LibraryPanel> {
   const { uid, folderUid, name, model, version, kind } = libraryVizPanelToSaveModel(vizPanel);
 
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {

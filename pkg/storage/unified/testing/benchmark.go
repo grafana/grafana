@@ -377,7 +377,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	size := int64(10000) // force the index to be on disk
 	index, err := backend.BuildIndex(ctx, nr, size, nil, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false, time.Time{})
+	}, nil, false, time.Time{}, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize backend: %w", err)
 	}
@@ -535,7 +535,7 @@ func runStorageAndSearchBenchmark(
 				Query: job.title,
 				QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 					{
-						Name: "title",
+						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
 						Type: resourcepb.QueryFieldType_KEYWORD,
 					},
 				},

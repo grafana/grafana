@@ -20,6 +20,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableRefresh } from '@grafana/schema';
 import {
   type AdhocVariableKind,
   type ConstantVariableKind,
@@ -51,6 +52,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyFolderTitle,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   AnnoKeyDashboardIsSnapshot,
@@ -76,6 +78,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
+import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -160,6 +163,7 @@ export function transformSaveModelSchemaV2ToScene(
     updated: metadata.annotations?.[AnnoKeyUpdatedTimestamp],
     updatedBy: metadata.annotations?.[AnnoKeyUpdatedBy],
     folderUid: metadata.annotations?.[AnnoKeyFolder],
+    folderTitle: metadata.annotations?.[AnnoKeyFolderTitle],
     isSnapshot: Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]),
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
@@ -375,7 +379,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
-      layout: 'combobox',
+      $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
@@ -406,6 +410,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       valuesFormat: variable.spec.valuesFormat || 'csv',
     });
   } else if (variable.kind === defaultQueryVariableKind().kind) {
+    const refresh = config.publicDashboardAccessToken
+      ? VariableRefresh.never
+      : transformVariableRefreshToEnumV1(variable.spec.refresh);
     return new QueryVariable({
       ...commonProperties,
       value: variable.spec.current?.value ?? '',
@@ -413,7 +420,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       query: getDataQueryForVariable(variable),
       datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
-      refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
+      refresh,
       regex: variable.spec.regex,
       regexApplyTo: variable.spec.regexApplyTo,
       allValue: variable.spec.allValue || undefined,
@@ -518,7 +525,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
-      wideInput: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
       drilldownRecommendationsEnabled:
         config.featureToggles.drilldownRecommendations || config.featureToggles.dashboardUnifiedDrilldownControls,
@@ -548,7 +554,7 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
     : variable.spec.query.spec;
 }
 
-export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
+function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
   // Handle missing current object or value
   const currentValue = variable.spec.current?.value;
   const selectedInterval = Array.isArray(currentValue) ? currentValue[0] : currentValue;
@@ -563,8 +569,8 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
     return intervals[0];
   }
 
-  // If the interval is the old auto format, return the new auto interval from scenes.
-  if (selectedInterval.startsWith('$__auto_interval_')) {
+  // If auto is eanbled and value is $__auto or older format $__auto_interval_
+  if (variable.spec.auto && selectedInterval.startsWith('$__auto')) {
     return '$__auto';
   }
 
@@ -577,7 +583,7 @@ export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKin
   return intervals[0];
 }
 
-export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
+function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSet {
   const variableObjects = (dashboard.variables ?? [])
     .map((v) => {
       try {
@@ -605,13 +611,13 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             defaultKeys: v.spec.defaultKeys?.length ? v.spec.defaultKeys : undefined,
             useQueriesAsFilterForOptions: true,
             applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-            layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)
               : false,
+            $behaviors: [new ReportInteractionBehavior({})],
           });
         }
         // for other variable types we are using the SnapshotVariable
@@ -631,7 +637,7 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
 }
 
 /** Snapshots variables are read-only and should not be updated */
-export function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
+function createSnapshotVariable(variable: TypedVariableModelV2): SceneVariable {
   let snapshotVariable: SnapshotVariable;
   let current: { value: string | string[]; text: string | string[] };
   if (variable.kind === 'IntervalVariable') {

@@ -6,7 +6,7 @@ import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
+import { ExportDatasourceName, ExportLabel } from 'app/features/dashboard-scene/scene/export/exporters';
 
 import { type LibraryElementExport } from '../../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../../library-panels/state/api';
@@ -14,6 +14,7 @@ import { LibraryElementKind } from '../../../library-panels/types';
 import {
   type DashboardInput,
   type DashboardInputs,
+  type DashboardJson,
   type DataSourceInput,
   type ImportDashboardDTO,
   type ImportFormDataV2,
@@ -63,10 +64,6 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
   );
 }
 
-function hasUid(query: unknown): query is { uid: string } {
-  return isRecord(query) && typeof query['uid'] === 'string';
-}
-
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
   if (!labels) {
     return undefined;
@@ -75,10 +72,18 @@ function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined
   return labels[ExportLabel];
 }
 
+function getExportDatasourceName(labels?: { [ExportDatasourceName]?: string }): string | undefined {
+  if (!labels) {
+    return undefined;
+  }
+
+  return labels[ExportDatasourceName];
+}
+
 /**
  * Extract library panel inputs from dashboard __elements
  */
-export async function getLibraryPanelInputs(dashboardJson?: {
+async function getLibraryPanelInputs(dashboardJson?: {
   __elements?: Record<string, unknown>;
 }): Promise<LibraryPanelInput[]> {
   if (!dashboardJson || !dashboardJson.__elements) {
@@ -210,21 +215,32 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
   }
 
   const dsTypes: { [label: string]: string } = {};
+  const dsNames: { [label: string]: string } = {};
+
+  const recordDatasource = (
+    exportLabel: string | undefined,
+    dsType: string | undefined,
+    dsName: string | undefined
+  ) => {
+    if (!exportLabel || !dsType) {
+      return;
+    }
+    dsTypes[exportLabel] = dsType;
+    if (dsName && !dsNames[exportLabel]) {
+      dsNames[exportLabel] = dsName;
+    }
+  };
 
   if (dashboard.variables) {
     for (const variable of dashboard.variables) {
       if (variable.kind === 'QueryVariable') {
-        const dsType = variable.spec.query?.group;
-        const exportLabel = getExportLabel(variable.spec.query.labels);
-        if (dsType && exportLabel) {
-          dsTypes[exportLabel] = dsType;
-        }
+        recordDatasource(
+          getExportLabel(variable.spec.query.labels),
+          variable.spec.query?.group,
+          getExportDatasourceName(variable.spec.query.labels)
+        );
       } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
-        const dsType = variable.group;
-        const exportLabel = getExportLabel(variable.labels);
-        if (dsType && exportLabel) {
-          dsTypes[exportLabel] = dsType;
-        }
+        recordDatasource(getExportLabel(variable.labels), variable.group, getExportDatasourceName(variable.labels));
       }
     }
   }
@@ -236,11 +252,11 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
         continue;
       }
 
-      const dsType = annotation.spec.query?.group;
-      const exportLabel = getExportLabel(annotation.spec.query.labels);
-      if (dsType && exportLabel) {
-        dsTypes[exportLabel] = dsType;
-      }
+      recordDatasource(
+        getExportLabel(annotation.spec.query.labels),
+        annotation.spec.query?.group,
+        getExportDatasourceName(annotation.spec.query.labels)
+      );
     }
   }
 
@@ -249,11 +265,11 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
       if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
         for (const query of element.spec.data.spec.queries) {
           if (query.kind === 'PanelQuery') {
-            const dsType = query.spec.query?.group;
-            const exportLabel = getExportLabel(query.spec.query.labels);
-            if (dsType && exportLabel) {
-              dsTypes[exportLabel] = dsType;
-            }
+            recordDatasource(
+              getExportLabel(query.spec.query.labels),
+              query.spec.query?.group,
+              getExportDatasourceName(query.spec.query.labels)
+            );
           }
         }
       }
@@ -271,14 +287,26 @@ export async function extractV2Inputs(dashboard: unknown): Promise<DashboardInpu
     }
 
     const dsInfo = getDataSourceSrv().getList({ pluginId: dsType });
+    const originalName = dsNames[label];
+    const matchedDatasource = originalName ? dsInfo.find((ds) => ds.name === originalName) : undefined;
+    const prompt = dsInfo.length > 0 ? `Select a ${dsType} data source` : `No ${dsType} data sources found`;
     inputs.dataSources.push({
       name: label,
-      label: label,
-      info: dsInfo.length > 0 ? `Select a ${dsType} data source` : `No ${dsType} data sources found`,
-      description: `${dsType} data source`,
+      label: originalName ? `${label} (${originalName})` : label,
+      info: prompt,
+      description: prompt,
       value: '',
       type: InputType.DataSource,
       pluginId: dsType,
+      ...(matchedDatasource
+        ? {
+            matchedDatasource: {
+              uid: matchedDatasource.uid,
+              type: matchedDatasource.type,
+              name: matchedDatasource.name,
+            },
+          }
+        : {}),
     });
   }
 
@@ -294,6 +322,129 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
   }
 
   return `Select a ${pluginId} data source`;
+}
+
+/**
+ * Input mapping shape used by the community dashboard / suggested dashboards flow.
+ * Matches the format previously sent to POST /api/dashboards/interpolate.
+ */
+export interface InterpolateInputMapping {
+  name: string;
+  type: 'datasource' | 'constant';
+  pluginId?: string;
+  value: string;
+}
+
+/**
+ * Interpolate a v1 dashboard in the frontend using applyV1Inputs, replacing the
+ * backend POST /api/dashboards/interpolate round-trip.
+ *
+ * Converts InputMapping[] (the format used by the community/suggested dashboard flow)
+ * into the shape that applyV1Inputs expects and applies the substitution.
+ */
+export function interpolateV1Dashboard(
+  dashboard: DashboardJson,
+  inputMappings: InterpolateInputMapping[]
+): DashboardJson {
+  const rawInputs = dashboard.__inputs;
+  const dsInputs: DataSourceInput[] = (rawInputs ?? [])
+    .filter((input) => input.type === 'datasource' && 'pluginId' in input && typeof input.pluginId === 'string')
+    .map((input) => ({
+      name: String(input.name ?? ''),
+      label: String(input.label ?? ''),
+      info: String(input.description ?? ''),
+      value: String(input.value ?? ''),
+      type: InputType.DataSource,
+      pluginId: String('pluginId' in input ? input.pluginId : ''),
+    }));
+  const constantRawInputs = (rawInputs ?? []).filter((input) => input.type === 'constant');
+
+  const wildcardMapping = inputMappings.find((m) => m.name === '*' && m.type === 'datasource');
+  const effectiveMappings = wildcardMapping
+    ? dsInputs.map((input) => ({
+        name: input.name,
+        type: 'datasource' as const,
+        pluginId: input.pluginId,
+        value: wildcardMapping.value,
+      }))
+    : inputMappings;
+
+  const formDataSources: DataSourceInstanceSettings[] = [];
+  const seenPluginIds = new Set<string>();
+  for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
+    const dsInput = dsInputs.find((i) => i.name === mapping.name);
+    const pluginId = mapping.pluginId ?? dsInput?.pluginId;
+    if (!pluginId || seenPluginIds.has(pluginId)) {
+      continue;
+    }
+
+    // Expression datasources are always forced to __expr__ regardless of user input,
+    // matching the backend behavior:
+    //   if inputDefJson.Get("pluginId").MustString() == expr.DatasourceType {
+    //       input = &dashboardimport.ImportDashboardInput{Value: expr.DatasourceType}
+    //   }
+    if (pluginId === ExpressionDatasourceRef.type) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(pluginId);
+      continue;
+    }
+
+    const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+    if (!settings) {
+      throw new Error(
+        `Dashboard import failed: datasource input "${mapping.name}" references UID "${mapping.value}" which was not found`
+      );
+    }
+    formDataSources.push(settings);
+    seenPluginIds.add(pluginId);
+  }
+  // Ensure expression datasources are included even when not explicitly mapped
+  for (const dsInput of dsInputs) {
+    if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(ExpressionDatasourceRef.type);
+    }
+  }
+
+  const constants: DashboardInput[] = constantRawInputs.map((input) => ({
+    name: String(input.name ?? ''),
+    label: String(input.label ?? ''),
+    info: String(input.description ?? 'Specify a string constant'),
+    value: String(input.value ?? ''),
+    type: InputType.Constant,
+  }));
+  const formConstants: string[] = constants.map((c) => {
+    const mapping = effectiveMappings.find((m) => m.type === 'constant' && m.name === c.name);
+    return mapping ? mapping.value : c.value;
+  });
+
+  const form: ImportDashboardDTO = {
+    title: dashboard.title ?? '',
+    uid: dashboard.uid ?? '',
+    gnetId: '',
+    constants: formConstants,
+    dataSources: formDataSources,
+    elements: [],
+    folder: { uid: '' },
+  };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const interpolated = { ...result } as DashboardJson;
+  delete interpolated.__inputs;
+  delete interpolated.__elements;
+  delete interpolated.__requires;
+  return interpolated;
 }
 
 /**
@@ -400,9 +551,10 @@ function replaceAnnotationDatasources(
       return annotation;
     }
 
-    // remove export label
+    // remove export labels
     if (annotation.spec.query?.labels) {
       delete annotation.spec.query.labels[ExportLabel];
+      delete annotation.spec.query.labels[ExportDatasourceName];
     }
 
     return {
@@ -434,9 +586,10 @@ function replaceVariableDatasources(
         return variable;
       }
 
-      // remove export label
+      // remove export labels
       if (variable.spec.query?.labels) {
         delete variable.spec.query.labels[ExportLabel];
+        delete variable.spec.query.labels[ExportDatasourceName];
       }
 
       return {
@@ -485,9 +638,16 @@ function replaceVariableDatasources(
         return variable;
       }
 
+      // Drop export-only labels.
+      const { labels, ...variableWithoutLabels } = variable;
+      const remainingLabels = { ...labels };
+      delete remainingLabels[ExportLabel];
+      delete remainingLabels[ExportDatasourceName];
+
       return {
-        ...variable,
+        ...variableWithoutLabels,
         datasource: { name: ds.uid },
+        ...(Object.keys(remainingLabels).length > 0 && { labels: remainingLabels }),
       };
     }
 
@@ -518,9 +678,10 @@ function replaceElementDatasources(
               return query;
             }
 
-            // remove export label
+            // remove export labels
             if (query.spec.query?.labels) {
               delete query.spec.query.labels[ExportLabel];
+              delete query.spec.query.labels[ExportDatasourceName];
             }
 
             return {
@@ -550,6 +711,67 @@ function replaceElementDatasources(
   );
 }
 
+/**
+ * Replace ${DS_...} placeholders in a library panel model's datasource references
+ * using the user-selected datasources from the import form.
+ */
+export function interpolateLibraryPanelDatasources(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  model: any,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): any {
+  const result = { ...model };
+
+  const resolvedDs = resolveDatasource(result.datasource, inputs.dataSources, form.dataSources);
+  if (resolvedDs) {
+    result.datasource = resolvedDs;
+  }
+
+  if (Array.isArray(result.targets)) {
+    result.targets = result.targets.map((target: Record<string, unknown>) => {
+      const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+      return resolved ? { ...target, datasource: resolved } : target;
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Extract a ${DS_...} placeholder string from a datasource reference.
+ * Handles both the object form { uid: "${DS_...}" } and legacy string form "${DS_...}".
+ */
+function extractDatasourcePlaceholder(datasource: unknown): string | undefined {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (isRecord(datasource) && typeof datasource.uid === 'string' && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a datasource placeholder to the user-selected datasource.
+ */
+function resolveDatasource(
+  datasource: unknown,
+  datasourceInputs: DataSourceInput[],
+  userDsInputs: DataSourceInstanceSettings[]
+): { uid: string; type: string } | undefined {
+  const placeholder = extractDatasourcePlaceholder(datasource);
+  if (!placeholder) {
+    return undefined;
+  }
+  const userInput = checkUserInputMatch(placeholder, datasourceInputs, userDsInputs);
+  if (!userInput) {
+    return undefined;
+  }
+  return { uid: userInput.uid, type: userInput.type };
+}
+
 function checkUserInputMatch(
   templateizedUid: string,
   datasourceInputs: DataSourceInput[],
@@ -566,49 +788,11 @@ function processAnnotation(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): AnnotationQuery {
-  if (annotation.datasource && annotation.datasource.uid && annotation.datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(annotation.datasource.uid, inputs.dataSources, form.dataSources);
-    if (userInput) {
-      return {
-        ...annotation,
-        datasource: {
-          ...annotation.datasource,
-          uid: userInput.uid,
-        },
-      };
-    }
+  const resolved = resolveDatasource(annotation.datasource, inputs.dataSources, form.dataSources);
+  if (resolved) {
+    return { ...annotation, datasource: resolved };
   }
-
   return annotation;
-}
-
-function getDSUid(datasource: unknown): string | null {
-  if (typeof datasource === 'string' && datasource.startsWith('$')) {
-    return datasource;
-  }
-  if (hasUid(datasource) && datasource.uid.startsWith('$')) {
-    return datasource.uid;
-  }
-  return null;
-}
-
-function resolveInputDatasource(
-  datasource: Panel['datasource'],
-  inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
-): Panel['datasource'] {
-  const dsUid = getDSUid(datasource);
-
-  if (dsUid) {
-    const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
-    if (userInput) {
-      return {
-        ...(isRecord(datasource) ? datasource : {}),
-        uid: userInput.uid,
-      };
-    }
-  }
-  return datasource;
 }
 
 function processPanel(
@@ -616,20 +800,20 @@ function processPanel(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel | RowPanel {
+  const resolvedPanelDs = resolveDatasource(panel.datasource, inputs.dataSources, form.dataSources);
+
   return {
     ...panel,
-    ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    // nested panels of collapsed rows
+    ...(resolvedPanelDs && { datasource: resolvedPanelDs }),
     ...('panels' in panel && {
       panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
     ...('targets' in panel &&
       panel.targets && {
-        targets: panel.targets.map((target) =>
-          target.datasource
-            ? { ...target, datasource: resolveInputDatasource(target.datasource, inputs, form) }
-            : target
-        ),
+        targets: panel.targets.map((target) => {
+          const resolved = resolveDatasource(target.datasource, inputs.dataSources, form.dataSources);
+          return resolved ? { ...target, datasource: resolved } : target;
+        }),
       }),
   };
 }
@@ -662,19 +846,10 @@ function processVariable(
     }
   }
 
-  if (variableType === 'query' && 'datasource' in variable && isRecord(variable.datasource)) {
-    const datasourceUid = variable.datasource.uid;
-    if (typeof datasourceUid === 'string' && datasourceUid.startsWith('$')) {
-      const userInput = checkUserInputMatch(datasourceUid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...variable,
-          datasource: {
-            ...variable.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
+  if (variableType === 'query' && 'datasource' in variable) {
+    const resolved = resolveDatasource(variable.datasource, inputs.dataSources, form.dataSources);
+    if (resolved) {
+      return { ...variable, datasource: resolved };
     }
   }
 

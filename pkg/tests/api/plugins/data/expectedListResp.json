@@ -1049,7 +1049,7 @@
       "keywords": null
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": ">=12.3.0",
       "grafanaVersion": "*",
       "plugins": [],
       "extensions": {
@@ -1173,6 +1173,52 @@
     "defaultNavUrl": "/plugins/logs/",
     "category": "",
     "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Logs Table",
+    "type": "panel",
+    "id": "logstable",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Raise issue",
+          "url": "https://github.com/grafana/grafana/issues/new"
+        }
+      ],
+      "logos": {
+        "small": "public/plugins/logstable/img/icn-logs-panel.svg",
+        "large": "public/plugins/logstable/img/icn-logs-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": "",
+      "keywords": null
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": [],
+      "extensions": {
+        "exposedComponents": []
+      }
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/logstable/",
+    "category": "",
+    "state": "beta",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
@@ -1430,56 +1476,6 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/nodeGraph/",
     "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "OpenTSDB",
-    "type": "datasource",
-    "id": "opentsdb",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Open source time series database",
-      "links": [
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/opentsdb/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/opentsdb/img/opentsdb_logo.png",
-        "large": "public/plugins/opentsdb/img/opentsdb_logo.png"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/opentsdb/",
-    "category": "tsdb",
     "state": "",
     "signature": "internal",
     "signatureType": "",
@@ -2296,60 +2292,6 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/xychart/",
     "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Zipkin",
-    "type": "datasource",
-    "id": "zipkin",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Placeholder for the distributed tracing system.",
-      "links": [
-        {
-          "name": "Learn more",
-          "url": "https://zipkin.io"
-        },
-        {
-          "name": "Raise issue",
-          "url": "https://github.com/grafana/grafana/issues/new"
-        },
-        {
-          "name": "Documentation",
-          "url": "https://grafana.com/docs/grafana/latest/datasources/zipkin/"
-        }
-      ],
-      "logos": {
-        "small": "public/plugins/zipkin/img/zipkin-logo.svg",
-        "large": "public/plugins/zipkin/img/zipkin-logo.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "12.4.0-pre",
-      "updated": "",
-      "keywords": null
-    },
-    "dependencies": {
-      "grafanaDependency": "\u003e=12.3.0",
-      "grafanaVersion": "*",
-      "plugins": [],
-      "extensions": {
-        "exposedComponents": []
-      }
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/zipkin/",
-    "category": "tracing",
     "state": "",
     "signature": "internal",
     "signatureType": "",

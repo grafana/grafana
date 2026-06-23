@@ -8,6 +8,7 @@ keywords:
   - templates
   - variables
   - queries
+  - rate_interval
 labels:
   products:
     - cloud
@@ -16,132 +17,210 @@ labels:
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
+review_date: 2026-05-07
 ---
 
 # Prometheus template variables
 
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the displayed data.
+Template variables let you create dynamic, reusable dashboards by replacing hard-coded values (such as server names, namespaces, or job labels) with selectable variables. Grafana displays these variables as dropdown menus at the top of the dashboard, letting viewers change the displayed data without editing queries.
 
 For an introduction to templating and template variables, refer to [Templating](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) and [Add and manage variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/).
 
-## Use query variables
+## Query variable types
 
-Grafana supports several types of variables, but Query variables are specifically used to query Prometheus. They can return a list of metrics, labels, label values, query results, or series.
+Query variables query Prometheus to populate dropdown values. When creating a query variable, select a Prometheus data source and choose a query type:
 
-Select a Prometheus data source query type and enter the required inputs:
+| Query Type        | Required inputs                         | Description                                                                     | Example                                                                                 |
+| ----------------- | --------------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Label names**   | `metric` (optional)                     | Returns all label names, optionally filtered by metric regular expression.      | Metric: `http_requests_total` → returns `job`, `instance`, `method`, `status`, etc.     |
+| **Label values**  | `label` (required), `metric` (optional) | Returns values for a specific label, optionally filtered by metric.             | Label: `job`, Metric: `http_requests_total` → returns `api-server`, `web`, `worker`     |
+| **Metrics**       | `metric` (optional)                     | Returns metric names matching the specified regular expression.                 | Metric: `node_.*` → returns `node_cpu_seconds_total`, `node_memory_MemFree_bytes`, etc. |
+| **Query result**  | `query` (required)                      | Runs a PromQL query and returns the results as variable values.                 | `query_result(up{job="prometheus"})`                                                    |
+| **Series query**  | `metric`, `label`, or both              | Returns time series matching the specified metric and/or label selectors.       | Metric: `http_requests_total`, Label: `job="api"`                                       |
+| **Classic query** | query string                            | _Deprecated._ Legacy syntax using functions like `label_values(metric, label)`. | `label_values(http_requests_total, job)`                                                |
 
-| Query Type      | Input(\* required)        | Description                                                                                                                                                   | Used API endpoints                             |
-| --------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`   | `metric`                  | Returns a list of all label names matching the specified `metric` regex.                                                                                      | /api/v1/labels                                 |
-| `Label values`  | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric.                                                                         | /api/v1/label/`label`/values or /api/v1/series |
-| `Metrics`       | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                                                                                              | /api/v1/label/\_\_name\_\_/values              |
-| `Query result`  | `query`                   | Returns a list of Prometheus query result for the `query`.                                                                                                    | /api/v1/query                                  |
-| `Series query`  | `metric`, `label` or both | Returns a list of time series associated with the entered data.                                                                                               | /api/v1/series                                 |
-| `Classic query` | classic query string      | Deprecated, classic version of variable query editor. Enter a string with the query type using a syntax like the following: `label_values(<metric>, <label>)` | all                                            |
+For details on metric names, label names, and label values, refer to the [Prometheus data model](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
-For details on `metric names`, `label names`, and `label values`, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+### Query type examples
+
+**Label values — Populate a dropdown with all jobs:**
+
+1. Create a new variable with **Type: Query**.
+1. Select your Prometheus data source.
+1. Set **Query type** to `Label values`.
+1. Set **Label** to `job`.
+1. Leave **Metric** empty to query across all metrics.
+
+The variable dropdown now shows all unique `job` label values.
+
+**Label values — Filtered by metric:**
+
+Set **Label** to `instance` and **Metric** to `node_cpu_seconds_total` to show only instances that report CPU metrics.
+
+**Metrics — Find available metrics by pattern:**
+
+Set **Query type** to `Metrics` and enter `http_.*_total` in the **Metric** field to populate the dropdown with all HTTP counter metrics.
+
+**Query result — Dynamic top-N filtering:**
+
+Set **Query type** to `Query result` and enter:
+
+```promql
+query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
+```
+
+Set **Regex** to `/"([^"]+)"/` to extract the instance values from the result.
+
+Set **Refresh** to `On time range change` so the top 5 instances update as you change the dashboard time range.
 
 ### Query options
 
-With the query variable type, you can set the following query options:
-
-| Option                | Description                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Data source**       | Select your data source from the drop-down list.                                                        |
-| **Select query type** | Options are `default`, `value` and `metric name`. Each query type hits a different Prometheus endpoint. |
-| **Regex**             | Optional, if you want to extract part of a series name or metric node segment.                          |
-| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
-| **Refresh**           | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
+| Option          | Description                                                                                                                                                                                                      |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source** | The Prometheus data source to query.                                                                                                                                                                             |
+| **Regex**       | Optional regular expression to extract a portion of the returned values. Use capture groups — for example, `/.*instance="([^"]+)".*/` extracts the instance label value from a series string.                    |
+| **Sort**        | Sort order for dropdown values: `Disabled`, `Alphabetical (asc)`, `Alphabetical (desc)`, `Numerical (asc)`, `Numerical (desc)`, `Alphabetical (case-insensitive, asc)`, `Alphabetical (case-insensitive, desc)`. |
+| **Refresh**     | When to update values: `On dashboard load` or `On time range change`. Use `On time range change` for variables that depend on `$__range`.                                                                        |
 
 ### Selection options
 
-The following selection options are available:
+- **Multi-value** — Allows selecting multiple values at once. Grafana joins them with a pipe (`|`) for regular expression matching.
+- **Include All option** — Adds an "All" option that selects every value. Combined with multi-value, this generates a regular expression like `value1|value2|value3`.
 
-- **Multi-value** - Check this option to enable multiple values to be selected at the same time.
+{{< admonition type="note" >}}
+When **Multi-value** or **Include All** is enabled, use `=~` (regular expression match) instead of `=` (exact match) in your queries, since the variable value becomes a regex pattern.
+{{< /admonition >}}
 
-- **Include All option** - Check this option to include all variables.
+**Example with multi-value:**
+
+```promql
+rate(http_requests_total{job=~"$job"}[$__rate_interval])
+```
 
 ### Use interval and range variables
 
-You can use global built-in variables in query variables, including the following:
+You can use global built-in variables in query variable definitions:
 
-- `$__interval`
-- `$__interval_ms`
-- `$__range`
-- `$__range_s`
-- `$__range_ms`
+| Variable         | Description                                                       |
+| ---------------- | ----------------------------------------------------------------- |
+| `$__interval`    | Calculated interval based on time range and panel width.          |
+| `$__interval_ms` | Same as `$__interval` in milliseconds.                            |
+| `$__range`       | Duration of the current dashboard time range (for example, `1h`). |
+| `$__range_s`     | Duration in seconds.                                              |
+| `$__range_ms`    | Duration in milliseconds.                                         |
 
 For details, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
-The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
 
-Configure the variable’s `refresh` setting to `On Time Range Change` to ensure it dynamically queries and displays the correct instances when the dashboard time range is modified.
+The `label_values` function (Classic query type) doesn't support these variables. Use `Query result` type with `query_result()` instead:
 
-**Example:**
-
-Populate a variable with the top 5 busiest request instances ranked by average QPS over the dashboard's selected time range:
-
-```
-query_result(topk(5, sum(rate(http_requests_total[$__range])) by (instance)))
-Regex: /"([^"]+)"/
+```promql
+query_result(max_over_time(up{job="$job"}[${__range_s}s]) == 1)
 ```
 
-Populate a variable with the instances having a certain state over the time range shown in the dashboard, using `$__range_s`:
+Set the variable's **Refresh** to `On time range change` to update values when the time range changes.
 
-```
-query_result(max_over_time(<metric>[${__range_s}s]) != <state>)
-Regex:
-```
+<!-- vale Grafana.Spelling = NO -->
 
 ## Use `$__rate_interval`
 
-Grafana recommends using `$__rate_interval` with the `rate` and `increase` functions instead of `$__interval` or a fixed interval value.
-Since `$__rate_interval` is always at least four times the scrape interval, it helps avoid issues specific to Prometheus, such as gaps or inaccuracies in query results.
+<!-- vale Grafana.Spelling = YES -->
 
-For example, instead of using the following:
+`$__rate_interval` is a Grafana-specific variable designed for use with `rate()` and `increase()`. It guarantees a range window large enough to capture at least four scrape samples, preventing gaps or inaccuracies in results.
 
-```
-rate(http_requests_total[5m])
-```
+**Always use `$__rate_interval` instead of a fixed interval or `$__interval`:**
 
-or:
-
-```
-rate(http_requests_total[$__interval])
-```
-
-Use the following:
-
-```
+```promql
 rate(http_requests_total[$__rate_interval])
 ```
 
-<!-- The value of `$__rate_interval` is defined as
-*max(`$__interval` + *Scrape interval*, 4 \* *Scrape interval*)*,
-where _Scrape interval_ is the "Min step" setting (also known as `query*interval`, a setting per PromQL query) if any is set.
-Otherwise, Grafana uses the Prometheus data source's `scrape interval` setting. -->
+Not:
 
-The value of `$__rate_interval` is calculated as:
+```promql
+rate(http_requests_total[5m])       # breaks at different zoom levels
+rate(http_requests_total[$__interval])  # can be too small for rate()
+```
+
+<!-- vale Grafana.Spelling = NO -->
+
+### How `$__rate_interval` is calculated
+
+<!-- vale Grafana.Spelling = YES -->
 
 ```
 max($__interval + scrape_interval, 4 * scrape_interval)
 ```
 
-Here, `scrape_interval` refers to the `min step` setting (also known as `query_interval`) specified per PromQL query, if set. If not, Grafana falls back to the Prometheus data source’s scrape interval setting.
+Where `scrape_interval` is:
 
-The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape interval`.
+1. The per-query **Min step** setting, if set.
+2. Otherwise, the data source's **Scrape interval** setting (under Interval behavior in the data source configuration).
 
-For details, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+The panel-level `min interval` is affected by the resolution setting and doesn't factor into this calculation.
 
-## Choose a variable syntax
+<!-- vale Grafana.Spelling = NO -->
 
-The Prometheus data source supports two variable syntaxes for use in the **Query** field:
+### Configure `$__rate_interval` correctly
 
-- `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
-- `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$_rate_interval])`
+<!-- vale Grafana.Spelling = YES -->
 
-If you've enabled the `Multi-value` or `Include all value` options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.
+For `$__rate_interval` to produce reliable results, the scrape interval must match your actual Prometheus scrape configuration:
 
-## Use the ad hoc filters variable type
+1. Open the Prometheus data source configuration.
+1. Under **Interval behavior**, set the **Scrape interval** to match the `scrape_interval` in your Prometheus configuration file (for example, `30s` or `1m`).
+1. If different targets have different scrape intervals, set the data source scrape interval to the **longest** interval in use, or use the per-query **Min step** to override on specific panels.
 
-Prometheus supports the special [ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, allowing dynamic filtering without modifying individual queries.
+### Common pitfalls
+
+- **Missing or incorrect scrape interval setting:** If the data source scrape interval is left at the default `15s` but your actual Prometheus scrape interval is `60s`, `$__rate_interval` calculates too small a window. This causes `rate()` to return no data because there aren't enough data points in the window.
+
+- **Different values in edit mode versus dashboard:** When editing a query, the panel displays at full width. On the dashboard, the panel may be narrower, which increases `$__interval` and therefore `$__rate_interval`. Queries that work in edit mode may produce different results (or gaps) on the dashboard.
+
+- **LBAC-enabled data sources:** Data sources using Label-Based Access Control (LBAC) may not inherit the scrape interval setting from the parent data source. Set the **Min step** explicitly on each query panel to ensure a correct `$__rate_interval` calculation.
+
+- **Recording rules with fixed intervals:** If you use `$__rate_interval` in a recording rule query, the interval depends on the evaluation context. For recording rules, use a fixed interval (for example, `[5m]`) rather than `$__rate_interval`.
+
+For troubleshooting `$__rate_interval` issues, refer to [`$__rate_interval` returns no data or incorrect values](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#rate_interval-returns-no-data-or-incorrect-values).
+
+For additional background, refer to [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+
+## Variable syntax
+
+The Prometheus data source supports three variable syntaxes:
+
+| Syntax        | Example                                                       | Use case                                                                         |
+| ------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `$varname`    | `rate(http_requests_total{job=~"$job"}[$__rate_interval])`    | Simple, readable. Cannot be used mid-word.                                       |
+| `${varname}`  | `rate(http_requests_total{job=~"${job}"}[$__rate_interval])`  | Use when the variable is adjacent to other text (for example, `${env}-cluster`). |
+| `[[varname]]` | `rate(http_requests_total{job=~"[[job]]"}[$__rate_interval])` | Legacy syntax. Supported for backward compatibility.                             |
+
+{{< admonition type="note" >}}
+If **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern (for example, `value1|value2`). Use `=~` instead of `=` in your label matchers.
+{{< /admonition >}}
+
+## Filters variable
+
+Prometheus supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type (formerly called "ad hoc filters"), which lets dashboard viewers dynamically add label filters without editing queries.
+
+{{< admonition type="note" >}}
+The **Filter and Group by** feature extends the Filters variable by adding grouping support for Prometheus and Loki data sources. For more information, refer to [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
+{{< /admonition >}}
+
+To set up a Filters variable:
+
+1. Create a new variable with **Type: Filters**.
+1. Select your Prometheus data source.
+1. Save the dashboard.
+
+After you add the variable, a filter bar appears at the top of the dashboard. Viewers can add filters by selecting a label, operator (`=`, `!=`, `=~`, `!~`), and value. Grafana automatically applies these filters to **all** Prometheus queries on the dashboard.
+
+**Example:** A viewer adds the filter `namespace = production`. All queries on the dashboard now include `{namespace="production"}` without any query modifications.
+
+{{< admonition type="note" >}}
+Filters are applied to all queries using the selected data source. You cannot selectively apply them to specific panels.
+{{< /admonition >}}
+
+## Related resources
+
+- [Query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/query-editor/) — Use variables in PromQL queries.
+- [Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/annotations/) — Use template variables in annotation queries.
+- [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/) — Resolve variable-related query issues.

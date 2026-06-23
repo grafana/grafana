@@ -3,7 +3,7 @@ import { type AnyAction, combineReducers } from 'redux';
 
 import { generatedAPI as legacyAPI } from '@grafana/api-clients/internal/rtkq/legacy';
 import { generatedAPI as migrateToCloudAPI } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences';
+import { generatedAPI as preferencesUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/preferences/user';
 import { generatedAPI as legacyUserAPI } from '@grafana/api-clients/internal/rtkq/legacy/user';
 import { allReducers as allApiClientReducers } from '@grafana/api-clients/rtkq';
 import { scopeAPIv0alpha1 } from 'app/api/clients/scope/v0alpha1';
@@ -19,7 +19,6 @@ import dashboardReducers from 'app/features/dashboard/state/reducers';
 import dataSourcesReducers from 'app/features/datasources/state/reducers';
 import exploreReducers from 'app/features/explore/state/main';
 import invitesReducers from 'app/features/invites/state/reducers';
-import importDashboardReducers from 'app/features/manage-dashboards/import/legacy/reducers';
 import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
@@ -45,7 +44,6 @@ const rootReducers = {
   ...organizationReducers,
   ...browseDashboardsReducers,
   ...ldapReducers,
-  ...importDashboardReducers,
   ...panelEditorReducers,
   ...panelsReducers,
   ...templatingReducers,

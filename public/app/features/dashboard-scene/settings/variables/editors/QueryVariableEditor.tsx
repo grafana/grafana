@@ -150,7 +150,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
   ];
 }
 
-export function ModalEditor({ variable }: { variable: QueryVariable }) {
+function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onRunQuery = () => {
@@ -177,6 +177,8 @@ export function ModalEditor({ variable }: { variable: QueryVariable }) {
         title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
+        closeOnBackdropClick={false}
+        closeOnEscape={false}
       >
         <Editor variable={variable} />
         <Modal.ButtonRow>

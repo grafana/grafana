@@ -66,7 +66,7 @@ export interface ThemeComponents {
 export function createComponents(colors: ThemeColors, shadows: ThemeShadows): ThemeComponents {
   const panel = {
     padding: 1,
-    headerHeight: 4,
+    headerHeight: 5,
     background: colors.background.primary,
     borderColor: colors.border.weak,
     boxShadow: 'none',
@@ -80,7 +80,7 @@ export function createComponents(colors: ThemeColors, shadows: ThemeShadows): Th
   };
 
   const menu: MenuComponentTokens = {
-    borderRadius: 'default',
+    borderRadius: 'lg',
     padding: 0.5,
   };
 

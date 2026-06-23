@@ -39,9 +39,10 @@ type ResourcePermSqlBackend struct {
 }
 
 func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
+	store := idStore.NewLegacySQLStores(dbProvider)
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
-		identityStore: idStore.NewLegacySQLStores(dbProvider),
+		identityStore: store,
 		logger:        log.New("resourceperm_storage_backend"),
 		mappers:       mappers,
 		subscribers:   make([]chan *resource.WrittenEvent, 0),

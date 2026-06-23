@@ -57,7 +57,7 @@ func GetRequester(ctx context.Context) (Requester, error) {
 }
 
 func checkNilRequester(r Requester) bool {
-	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Ptr && reflect.ValueOf(r).IsNil())
+	return r == nil || (reflect.ValueOf(r).Kind() == reflect.Pointer && reflect.ValueOf(r).IsNil())
 }
 
 const (
@@ -173,30 +173,34 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"playlists:read",        // playlist.ActionPlaylistsRead
+	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
+	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"users:read",           // accesscontrol.ActionUsersRead,
 	"org.users:read",       // accesscontrol.ActionOrgUsersRead,
 	"teams:read",           // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read", // serviceaccounts.ActionRead,
 )
 
-// Note: Any wildcard permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
+// Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
 var serviceIdentityTokenPermissions = []string{
 	"folder.grafana.app:*",
 	"dashboard.grafana.app:*",
+	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
-	"provisioning.grafana.app/repositories:read",
-	"provisioning.grafana.app/repositories:watch",
-	"provisioning.grafana.app/settings:read",
-	"provisioning.grafana.app/settings:watch",
+	"provisioning.grafana.app:*",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
+	"notifications.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
 	"annotation.grafana.app:*",
 

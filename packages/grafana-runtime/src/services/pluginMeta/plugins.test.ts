@@ -1,34 +1,42 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { invalidateCache, setLogger } from '../../utils/getCachedPromise';
-import { type MonitoringLogger } from '../../utils/logging';
+import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { TracedError } from '../../utils/TracedError';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
+import { getLogger, setLogger } from '../logging/registry';
 
-import { initPluginMetas, installPluginMeta, refetchPluginMetas, uninstallPluginMeta } from './plugins';
+import {
+  getPluginMetaFromCache,
+  initPluginMetas,
+  installPluginMeta,
+  refetchPluginMeta,
+  refetchPluginMetas,
+  uninstallPluginMeta,
+} from './plugins';
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
-let loggerMock: MonitoringLogger;
 
 beforeEach(() => {
   jest.clearAllMocks();
-  invalidateCache();
-  loggerMock = {
+  invalidateCachedPromisesCache();
+  // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+  setLogger('grafana/runtime.utils.getCachedPromise', {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
     logMeasurement: jest.fn(),
     logWarning: jest.fn(),
-  };
-  setLogger(loggerMock);
+  });
 });
 
 afterEach(() => {
   global.fetch = originalFetch;
 });
 
-describe('when useMTPlugins flag is enabled', () => {
+describe('when plugins.useMTPlugins flag is enabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: true });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
   });
 
   afterAll(() => {
@@ -105,12 +113,13 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Failed to load plugin metas 500:Internal Server Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
-      });
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Failed to load plugin metas 500:Internal Server Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
     });
 
     it('initPluginMetas should log when fetch rejects', async () => {
@@ -129,12 +138,13 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(global.fetch).toHaveBeenCalledTimes(2); // first + second (because first throws), third is cached
       expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
-      expect(loggerMock.logError).toHaveBeenCalledTimes(1);
-      expect(loggerMock.logError).toHaveBeenCalledWith(new Error(`Something failed while resolving a cached promise`), {
-        message: 'Network Error',
-        stack: expect.any(String),
-        key: 'loadPluginMetas',
-      });
+      const logErrorMock = getLogger('grafana/runtime.utils.getCachedPromise').logError as jest.Mock;
+      expect(logErrorMock).toHaveBeenCalledTimes(1);
+      const [loggedError, context] = logErrorMock.mock.calls[0];
+      expect(loggedError).toBeInstanceOf(TracedError);
+      expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
+      expect(loggedError.cause).toStrictEqual(new Error('Network Error'));
+      expect(context).toEqual({ key: expect.stringMatching(/^loadPluginMetas:-?\d+$/) });
     });
   });
 
@@ -220,11 +230,87 @@ describe('when useMTPlugins flag is enabled', () => {
       await expect(uninstallPluginMeta('myorg-test-panel')).rejects.toThrow('Network Error');
     });
   });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should get meta from cache if that exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should not get meta from cache if that does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await getPluginMetaFromCache('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always refetch meta even if cache exists', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      await initPluginMetas();
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(v0alpha1Meta);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+
+    it('should return null if plugin id does not exist', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+
+      const response = await refetchPluginMeta('grafana-clock-panel');
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(global.fetch).toHaveBeenCalledWith('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+    });
+  });
 });
 
-describe('when useMTPlugins flag is disabled', () => {
+describe('when plugins.useMTPlugins flag is disabled', () => {
   beforeAll(() => {
-    setTestFlags({ useMTPlugins: false });
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: false });
   });
 
   afterAll(() => {
@@ -259,7 +345,7 @@ describe('when useMTPlugins flag is disabled', () => {
   });
 
   describe('installPluginMeta', () => {
-    it('should not call fetch when useMTPlugins is disabled', async () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
@@ -272,7 +358,7 @@ describe('when useMTPlugins flag is disabled', () => {
   });
 
   describe('uninstallPluginMeta', () => {
-    it('should not call fetch when useMTPlugins is disabled', async () => {
+    it('should not call fetch when plugins.useMTPlugins is disabled', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         status: 200,
@@ -280,6 +366,34 @@ describe('when useMTPlugins flag is disabled', () => {
 
       await uninstallPluginMeta('myorg-test-panel');
 
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPluginMetaFromCache', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('refetchPluginMeta', () => {
+    it('should always return null', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+      });
+
+      const response = await refetchPluginMeta(v0alpha1Meta.spec.pluginJson.id);
+
+      expect(response).toStrictEqual(null);
       expect(global.fetch).not.toHaveBeenCalled();
     });
   });

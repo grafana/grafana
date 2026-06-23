@@ -13,13 +13,11 @@ import { t } from '@grafana/i18n';
 
 import { getContrastRatio } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
-import { reduceField } from '../transformations/fieldReducer';
 import { type Field } from '../types/dataFrame';
 import { FALLBACK_COLOR, FieldColorModeId } from '../types/fieldColor';
 import { type Threshold } from '../types/thresholds';
 import { Registry, type RegistryItem } from '../utils/Registry';
 
-import { getScaleCalculator, type ColorScaleValue } from './scale';
 import { fallBackThreshold } from './thresholds';
 
 /**
@@ -70,6 +68,13 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       name: 'Shades of a color',
       description: 'Select shades of a specific color',
       getCalculator: getShadedColor,
+    },
+    {
+      id: FieldColorModeId.Gradient,
+      name: 'Gradient',
+      description:
+        'Interpolate between two colors based on value order. The highest value gets the start color; the lowest gets the end color.',
+      getCalculator: getFixedColor,
     },
     {
       id: FieldColorModeId.Thresholds,
@@ -265,7 +270,7 @@ interface FieldColorSchemeModeGetColors extends BaseFieldColorSchemeModeOptions 
 
 type FieldColorSchemeModeOptions = FieldColorSchemeModeGetColors | FieldColorSchemeModeInterpolator;
 
-export class FieldColorSchemeMode implements FieldColorMode {
+class FieldColorSchemeMode implements FieldColorMode {
   id: FieldColorModeId;
   name: string;
   description?: string;
@@ -353,30 +358,6 @@ export function getFieldColorModeForField(field: Field): FieldColorMode {
 /** @beta */
 export function getFieldColorMode(mode?: FieldColorModeId | string): FieldColorMode {
   return fieldColorModeRegistry.getIfExists(mode) ?? fieldColorModeRegistry.get(FieldColorModeId.Thresholds);
-}
-
-/**
- * @alpha
- * Function that will return a series color for any given color mode. If the color mode is a by value color
- * mode it will use the field.config.color.seriesBy property to figure out which value to use
- */
-export function getFieldSeriesColor(field: Field, theme: GrafanaTheme2): ColorScaleValue {
-  const mode = getFieldColorModeForField(field);
-
-  if (!mode.isByValue) {
-    return {
-      color: mode.getCalculator(field, theme)(0, 0),
-      threshold: fallBackThreshold,
-      percent: 1,
-    };
-  }
-
-  const scale = getScaleCalculator(field, theme);
-  const stat = field.config.color?.seriesBy ?? 'last';
-  const calcs = reduceField({ field, reducers: [stat] });
-  const value = calcs[stat] ?? 0;
-
-  return scale(value);
 }
 
 export function getColorByStringHash(colors: string[], string: string) {

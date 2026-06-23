@@ -14,28 +14,7 @@ import { type AddVariable, type KeyedVariableIdentifier, type VariableIdentifier
 import { toStateKey } from '../toStateKey';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
-import {
-  changeVariableNameFailed,
-  changeVariableNameSucceeded,
-  variableEditorMounted,
-  variableEditorUnMounted,
-} from './reducer';
-
-export const variableEditorMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
-  return async (dispatch) => {
-    const { rootStateKey } = identifier;
-    dispatch(
-      toKeyedAction(rootStateKey, variableEditorMounted({ name: getVariable(identifier).name, id: identifier.id }))
-    );
-  };
-};
-
-export const variableEditorUnMount = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const { rootStateKey } = identifier;
-    dispatch(toKeyedAction(rootStateKey, variableEditorUnMounted(toVariablePayload(identifier))));
-  };
-};
+import { changeVariableNameFailed, changeVariableNameSucceeded } from './reducer';
 
 export const changeVariableName = (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> => {
   return (dispatch, getState) => {
@@ -65,7 +44,7 @@ export const changeVariableName = (identifier: KeyedVariableIdentifier, newName:
   };
 };
 
-export const completeChangeVariableName =
+const completeChangeVariableName =
   (identifier: KeyedVariableIdentifier, newName: string): ThunkResult<void> =>
   (dispatch, getState) => {
     const { rootStateKey } = identifier;

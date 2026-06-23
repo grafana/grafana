@@ -13,8 +13,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
+	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -23,7 +25,7 @@ import (
 
 const (
 	TeamResource      = "teams"
-	TeamResourceGroup = "iam.grafana.com"
+	TeamResourceGroup = "iam.grafana.app"
 )
 
 // TeamSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
@@ -62,11 +64,11 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	if req.Limit > 100 {
-		req.Limit = 100
+	if req.Limit > common.MaxListLimit {
+		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
 	}
-	if req.Limit <= 0 {
-		req.Limit = 1
+	if req.Limit < 1 {
+		req.Limit = common.DefaultListLimit
 	}
 
 	if req.Page > math.MaxInt32 || req.Page < 0 {
@@ -138,6 +140,13 @@ func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	columns := getDefaultColumns()
 
 	for _, field := range fields {
+		if field == teamsearch.LegacyIDField {
+			columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
+				Name: teamsearch.LegacyIDField,
+				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			})
+			continue
+		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		if col, ok := builders.TeamSearchTableColumnDefinitions[fieldName]; ok {
 			columns = append(columns, col)
@@ -158,6 +167,10 @@ func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
 func createCells(t *team.TeamDTO, fields []string) [][]byte {
 	cells := createDefaultCells(t)
 	for _, field := range fields {
+		if field == teamsearch.LegacyIDField {
+			cells = append(cells, []byte(strconv.FormatInt(t.ID, 10)))
+			continue
+		}
 		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
 		switch fieldName {
 		case builders.TEAM_SEARCH_EMAIL:

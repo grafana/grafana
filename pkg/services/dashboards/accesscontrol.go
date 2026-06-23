@@ -11,6 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
+// TODO: move to dashboardsnapshots package
+const (
+	ActionSnapshotsCreate = "snapshots:create"
+	ActionSnapshotsDelete = "snapshots:delete"
+	ActionSnapshotsRead   = "snapshots:read"
+)
+
 const (
 	ScopeDashboardsRoot   = "dashboards"
 	ScopeDashboardsPrefix = "dashboards:uid:"

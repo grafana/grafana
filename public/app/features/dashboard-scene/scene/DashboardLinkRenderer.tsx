@@ -21,7 +21,7 @@ import { type DashboardScene } from './DashboardScene';
 
 export interface Props {
   link: DashboardLink;
-  dashboardUID: string;
+  dashboardUID?: string;
   inMenu?: boolean;
   linkIndex: number;
   dashboard: DashboardScene;
@@ -42,8 +42,14 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   }, [dashboard, linkIndex]);
 
   const editActions = useMemo(
-    () => <ControlEditActions onClickEdit={onClickEditLink} onClickDelete={onClickDeleteLink} />,
-    [onClickEditLink, onClickDeleteLink]
+    () => (
+      <ControlEditActions
+        element={{ name: link.title, type: 'link' }}
+        onClickEdit={onClickEditLink}
+        onClickDelete={onClickDeleteLink}
+      />
+    ),
+    [link.title, onClickEditLink, onClickDeleteLink]
   );
 
   let content: React.ReactNode;

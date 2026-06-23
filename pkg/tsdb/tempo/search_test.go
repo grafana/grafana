@@ -175,6 +175,72 @@ func TestTransformTraceSearchResponse_UsesSpanSetsWhenSpanSetMissing(t *testing.
 	assert.Len(t, nestedFrames, 2)
 }
 
+func TestTransformTraceSearchResponse_SingularSpanSet(t *testing.T) {
+	// A single (singular) trace.SpanSet must still drive the unified-schema path:
+	// it produces exactly one nested frame whose dynamic-attribute columns carry
+	// the span's values. The plural trace.SpanSets case is covered separately.
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "test-service-name",
+		RootTraceName:     "test-root-trace-name",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+		SpanSet: &tempopb.SpanSet{
+			Spans: []*tempopb.Span{{
+				SpanID:            "span1",
+				Name:              "op1",
+				StartTimeUnixNano: 1000000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}},
+				},
+			}},
+		},
+	}}}
+
+	frames, err := transformTraceSearchResponse(pCtx, resp)
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.Equal(t, 1, frames[0].Rows())
+
+	var nestedFrames []json.RawMessage
+	require.NoError(t, json.Unmarshal(frames[0].Fields[5].At(0).(json.RawMessage), &nestedFrames))
+	require.Len(t, nestedFrames, 1)
+
+	type schemaField struct {
+		Name string `json:"name"`
+	}
+	type frameEnvelope struct {
+		Schema struct {
+			Fields []schemaField `json:"fields"`
+		} `json:"schema"`
+		Data struct {
+			Values [][]any `json:"values"`
+		} `json:"data"`
+	}
+
+	var env frameEnvelope
+	require.NoError(t, json.Unmarshal(nestedFrames[0], &env))
+
+	names := make([]string, 0, len(env.Schema.Fields))
+	for _, f := range env.Schema.Fields {
+		names = append(names, f.Name)
+	}
+	require.Contains(t, names, "http.method")
+
+	methodIdx := -1
+	for i, n := range names {
+		if n == "http.method" {
+			methodIdx = i
+			break
+		}
+	}
+	require.GreaterOrEqual(t, methodIdx, 0)
+	require.Len(t, env.Data.Values[methodIdx], 1)
+	assert.Equal(t, "GET", env.Data.Values[methodIdx][0])
+}
+
 func TestTransformTraceSearchResponseSubFrame_MissingDynamicAttributeUsesNil(t *testing.T) {
 	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
 	trace := &tempopb.TraceSearchMetadata{
@@ -207,7 +273,8 @@ func TestTransformTraceSearchResponseSubFrame_MissingDynamicAttributeUsesNil(t *
 		},
 	}
 
-	frame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx)
+	spanDynamicAttributes, spanAttributeNames, hasNameAttribute := collectSpanSetsSchema([]*tempopb.SpanSet{spanSet})
+	frame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx, spanAttributeNames, spanDynamicAttributes, hasNameAttribute)
 	require.NotNil(t, frame)
 	require.Equal(t, 2, frame.Rows())
 	require.GreaterOrEqual(t, len(frame.Fields), 6)
@@ -254,6 +321,167 @@ func TestTransformSpanSearchResponse_MissingDynamicAttributeUsesNil(t *testing.T
 
 	assert.Equal(t, "GET", *(frames[0].Fields[6].At(0).(*string)))
 	assert.True(t, frames[0].Fields[6].NilAt(1))
+}
+
+func TestTransformTraceSearchResponseSubFrame_SameNumericKeyIntAndDouble(t *testing.T) {
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	trace := &tempopb.TraceSearchMetadata{
+		TraceID:           "t1",
+		RootServiceName:   "svc",
+		RootTraceName:     "op",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+	}
+	// Last attribute seen for "count" during schema scan is int; first span row has double — must not panic on Append.
+	spanSet := &tempopb.SpanSet{
+		Spans: []*tempopb.Span{
+			{
+				SpanID:            "s1",
+				Name:              "a",
+				StartTimeUnixNano: 1000000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "count", Value: &v1.AnyValue{Value: &v1.AnyValue_DoubleValue{DoubleValue: 1.5}}},
+				},
+			},
+			{
+				SpanID:            "s2",
+				Name:              "b",
+				StartTimeUnixNano: 1001000,
+				DurationNanos:     1000,
+				Attributes: []*v1.KeyValue{
+					{Key: "count", Value: &v1.AnyValue{Value: &v1.AnyValue_IntValue{IntValue: 2}}},
+				},
+			},
+		},
+	}
+
+	spanDynamicAttributes, spanAttributeNames, hasNameAttribute := collectSpanSetsSchema([]*tempopb.SpanSet{spanSet})
+	frame := transformTraceSearchResponseSubFrame(trace, spanSet, pCtx, spanAttributeNames, spanDynamicAttributes, hasNameAttribute)
+	require.NotNil(t, frame)
+	require.Equal(t, 2, frame.Rows())
+	idx := -1
+	for i, f := range frame.Fields {
+		if f.Name == "count" {
+			idx = i
+			break
+		}
+	}
+	require.GreaterOrEqual(t, idx, 0, "expected dynamic field count")
+	assert.Equal(t, 1.5, *(frame.Fields[idx].At(0).(*float64)))
+	assert.Equal(t, 2.0, *(frame.Fields[idx].At(1).(*float64)))
+}
+
+func TestTransformTraceSearchResponse_NestedFramesShareUnifiedSchema(t *testing.T) {
+	// Regression for grafana/grafana#121740: when a trace has multiple SpanSets
+	// whose dynamic attributes differ, every nested frame stored under the same
+	// nestedFrames cell must declare the same fields in the same order. The Table
+	// visualization (and other consumers) assumes a single schema per nestedFrames
+	// cell and drops cells that don't match.
+	pCtx := backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{UID: "u", Name: "n"}}
+	resp := &tempopb.SearchResponse{Traces: []*tempopb.TraceSearchMetadata{{
+		TraceID:           "test-trace-id",
+		RootServiceName:   "test-service-name",
+		RootTraceName:     "test-root-trace-name",
+		StartTimeUnixNano: 1000000,
+		DurationMs:        10,
+		SpanSets: []*tempopb.SpanSet{
+			{
+				Spans: []*tempopb.Span{{
+					SpanID:            "span1",
+					Name:              "op1",
+					StartTimeUnixNano: 1000000,
+					DurationNanos:     1000,
+					Attributes: []*v1.KeyValue{
+						{Key: "http.method", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "GET"}}},
+					},
+				}},
+			},
+			{
+				Spans: []*tempopb.Span{{
+					SpanID:            "span2",
+					Name:              "op2",
+					StartTimeUnixNano: 1001000,
+					DurationNanos:     1000,
+					Attributes: []*v1.KeyValue{
+						{Key: "db.system", Value: &v1.AnyValue{Value: &v1.AnyValue_StringValue{StringValue: "postgres"}}},
+					},
+				}},
+			},
+		},
+	}}}
+
+	frames, err := transformTraceSearchResponse(pCtx, resp)
+	require.NoError(t, err)
+	require.Len(t, frames, 1)
+	require.Equal(t, 1, frames[0].Rows())
+
+	var nestedFrames []json.RawMessage
+	require.NoError(t, json.Unmarshal(frames[0].Fields[5].At(0).(json.RawMessage), &nestedFrames))
+	require.Len(t, nestedFrames, 2)
+
+	// Decode each nested frame just enough to inspect its schema and the first-row
+	// value of every column. data.values is column-major: values[col][row].
+	type schemaField struct {
+		Name string `json:"name"`
+	}
+	type frameSchema struct {
+		Fields []schemaField `json:"fields"`
+	}
+	type frameData struct {
+		Values [][]any `json:"values"`
+	}
+	type frameEnvelope struct {
+		Schema frameSchema `json:"schema"`
+		Data   frameData   `json:"data"`
+	}
+
+	decode := func(raw json.RawMessage) frameEnvelope {
+		var env frameEnvelope
+		require.NoError(t, json.Unmarshal(raw, &env))
+		return env
+	}
+	schemaNames := func(env frameEnvelope) []string {
+		names := make([]string, 0, len(env.Schema.Fields))
+		for _, f := range env.Schema.Fields {
+			names = append(names, f.Name)
+		}
+		return names
+	}
+	indexOf := func(names []string, want string) int {
+		for i, n := range names {
+			if n == want {
+				return i
+			}
+		}
+		return -1
+	}
+
+	firstEnv := decode(nestedFrames[0])
+	secondEnv := decode(nestedFrames[1])
+	firstNames := schemaNames(firstEnv)
+	secondNames := schemaNames(secondEnv)
+
+	assert.Equal(t, firstNames, secondNames, "nested frames under one nestedFrames cell must share a schema")
+	assert.Contains(t, firstNames, "http.method")
+	assert.Contains(t, firstNames, "db.system")
+
+	// Each subframe owns one of the two attributes; the other column must exist but
+	// be nil for the row so consumers don't misalign columns across subframes.
+	methodIdx := indexOf(firstNames, "http.method")
+	dbIdx := indexOf(firstNames, "db.system")
+	require.GreaterOrEqual(t, methodIdx, 0)
+	require.GreaterOrEqual(t, dbIdx, 0)
+
+	require.Len(t, firstEnv.Data.Values[methodIdx], 1)
+	require.Len(t, firstEnv.Data.Values[dbIdx], 1)
+	assert.Equal(t, "GET", firstEnv.Data.Values[methodIdx][0])
+	assert.Nil(t, firstEnv.Data.Values[dbIdx][0])
+
+	require.Len(t, secondEnv.Data.Values[methodIdx], 1)
+	require.Len(t, secondEnv.Data.Values[dbIdx], 1)
+	assert.Nil(t, secondEnv.Data.Values[methodIdx][0])
+	assert.Equal(t, "postgres", secondEnv.Data.Values[dbIdx][0])
 }
 
 func TestTransformSpanSearchResponse_NoSpanAttributes(t *testing.T) {

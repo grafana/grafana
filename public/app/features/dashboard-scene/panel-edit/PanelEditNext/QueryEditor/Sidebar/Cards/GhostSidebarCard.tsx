@@ -1,4 +1,4 @@
-import { type ActionItem } from '../../../Actions';
+import { type ActionItem } from '../../../actionItem';
 import { type QueryEditorType } from '../../../constants';
 
 import { SidebarCard } from './SidebarCard';
@@ -9,10 +9,10 @@ interface GhostSidebarCardProps {
 }
 
 export function GhostSidebarCard({ id, type }: GhostSidebarCardProps) {
-  const item: ActionItem = { name: '', type, isHidden: false };
+  const item: ActionItem = { id, type, isHidden: false };
 
   return (
-    <SidebarCard id={id} isSelected={false} item={item} onClick={() => {}} variant="ghost">
+    <SidebarCard id={id} isSelected={false} item={item} onSelect={() => {}} variant="ghost">
       {null}
     </SidebarCard>
   );

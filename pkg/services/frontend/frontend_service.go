@@ -18,10 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	settingservice "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -58,6 +59,7 @@ type frontendService struct {
 
 	index           *IndexProvider
 	settingsService settingservice.Service // nil if not configured
+	pluginsCDN      *pluginscdn.Service
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
@@ -77,6 +79,11 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		settingsService = settingsSvc
 	}
 
+	pluginsCDN, err := setupPluginsCDNService(cfg, features)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &frontendService{
 		cfg:             cfg,
 		features:        features,
@@ -87,6 +94,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		license:         license,
 		index:           index,
 		settingsService: settingsService,
+		pluginsCDN:      pluginsCDN,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -156,7 +164,7 @@ func (s *frontendService) addMiddlewares(m *web.Mux) {
 	m.UseMiddleware(loggermiddleware.Middleware())
 
 	// Must run before CSP middleware since CSP reads config from context
-	m.UseMiddleware(RequestConfigMiddleware(s.cfg, s.license, s.settingsService))
+	m.UseMiddleware(RequestConfigMiddleware(s.cfg, s.license, s.settingsService, s.pluginsCDN))
 
 	m.UseMiddleware(CSPMiddleware())
 
@@ -186,7 +194,7 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
 
 	s.routeGet(m, "/public-dashboards/:accessToken",
-		publicdashboardsapi.SetPublicDashboardAccessToken,
+		publicdashboards.SetPublicDashboardAccessToken,
 		s.index.HandleRequest,
 	)
 

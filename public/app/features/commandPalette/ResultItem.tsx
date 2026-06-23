@@ -3,7 +3,10 @@ import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { type ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 export const ResultItem = React.forwardRef(
   (
@@ -32,6 +35,13 @@ export const ResultItem = React.forwardRef(
     }, [action.ancestors, currentRootActionId]);
 
     const styles = useStyles2(getResultItemStyles);
+
+    // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
+    // but its TS type doesn't reflect custom properties like managedBy or url.
+    // See the same pattern for `url` in KBarResults.tsx and below command url
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
+    const showProvisionedBadge = config.featureToggles.provisioning && Boolean(managedBy);
 
     let name = action.name;
 
@@ -62,6 +72,7 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
         </div>
       </div>
     );

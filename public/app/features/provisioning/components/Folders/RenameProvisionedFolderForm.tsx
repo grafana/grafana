@@ -12,10 +12,13 @@ import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { type BaseProvisionedFormData } from '../../types/form';
-import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
+import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
 interface FormProps extends RenameProvisionedFolderFormProps {
@@ -39,13 +42,28 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const [workflow] = watch(['workflow']);
+
+  const title = watch('title');
+  const templateVars: CommitTemplateVars = {
+    action: 'rename',
+    resourceKind: 'folder',
+    resourceID: folder.uid,
+    title: title ?? '',
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(formState.dirtyFields.comment),
+    setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
+  });
 
   const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.rename-provisioned-folder-form.error-saving', 'Failed to rename folder')
       )
     );
@@ -83,13 +101,11 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     onDismiss?.();
   };
 
-  useProvisionedRequestHandler({
-    request,
+  const { handleSuccess } = useProvisionedRequestHandler({
     workflow,
     resourceType: 'folder',
     folderUID: folder.uid,
     repository,
-    selectedBranch: ref,
     successMessage: t(
       'browse-dashboards.rename-provisioned-folder-form.success-message',
       'Folder renamed successfully'
@@ -98,11 +114,10 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       onDismiss,
       onWriteSuccess,
       onBranchSuccess,
-      onError: showError,
     },
   });
 
-  const doSave = async ({ ref, title, workflow, comment }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     const folderPath = initialValues.path;
@@ -121,17 +136,20 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       repositoryType: repository?.type ?? 'unknown',
     });
 
-    // Success/error handling is done by useProvisionedRequestHandler via the `request` object.
-    replaceFile({
-      name: repoName,
-      path: folderPath,
-      ref: branchRef,
-      message: comment || t('browse-dashboards.rename-provisioned-folder-form.commit', 'Rename folder'),
-      body: {
-        metadata: { name: folder.uid },
-        spec: { title },
-      },
-    });
+    try {
+      const data = await replaceFile({
+        name: repoName,
+        path: folderPath,
+        ref: branchRef,
+        message,
+        body: {
+          spec: { title },
+        },
+      }).unwrap();
+      handleSuccess(data, { workflow, selectedBranch: ref });
+    } catch (err) {
+      showError(err);
+    }
   };
 
   return (
@@ -161,6 +179,8 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
             canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             hiddenFields={['path']}
+            lockComment={locked}
+            commitMessage={message}
           />
 
           {error && <ProvisioningAlert error={error} />}
@@ -182,32 +202,32 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 }
 
 export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisionedFolderFormProps) {
-  const { repository, initialValues, isReadOnlyRepo, canPushToConfiguredBranch } = useProvisionedFolderFormData({
-    folderUid: folder.uid,
-    title: folder.title,
-    branchPrefix: 'folder-rename',
-  });
-
-  if (isReadOnlyRepo || !initialValues) {
-    return (
-      <RepoInvalidStateBanner
-        noRepository={!initialValues}
-        isReadOnlyRepo={isReadOnlyRepo}
-        readOnlyMessage={t(
-          'browse-dashboards.rename-folder.read-only-message',
-          'To rename this folder, please update the folder in your repository directly.'
-        )}
-      />
-    );
-  }
+  const { repository, initialValues, isReadOnlyRepo, isMissingRepo, canPushToConfiguredBranch, isLoading } =
+    useProvisionedFolderFormData({
+      folderUid: folder.uid,
+      title: folder.title,
+      branchPrefix: 'folder-rename',
+    });
 
   return (
-    <FormContent
-      folder={folder}
-      onDismiss={onDismiss}
-      initialValues={initialValues}
-      repository={repository}
-      canPushToConfiguredBranch={canPushToConfiguredBranch}
-    />
+    <ProvisionedFormGate
+      isLoading={isLoading}
+      isMissingRepo={isMissingRepo}
+      isReadOnly={isReadOnlyRepo}
+      readOnlyMessage={t(
+        'browse-dashboards.rename-folder.read-only-message',
+        'To rename this folder, please update the folder in your repository directly.'
+      )}
+    >
+      {initialValues && (
+        <FormContent
+          folder={folder}
+          onDismiss={onDismiss}
+          initialValues={initialValues}
+          repository={repository}
+          canPushToConfiguredBranch={canPushToConfiguredBranch}
+        />
+      )}
+    </ProvisionedFormGate>
   );
 }

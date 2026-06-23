@@ -110,6 +110,13 @@ type JobSpec struct {
 	// This value is required, but will be popuplated from the job making the request
 	Repository string `json:"repository,omitempty"`
 
+	// Commit message for this job. Applies to job actions that produce
+	// commits (delete, move, migrate, push, fixFolderMetadata).
+	// When empty, the backend falls back to the action-specific message
+	// field (ExportJobOptions.Message, MigrateJobOptions.Message) for
+	// backwards compatibility, then to a built-in default.
+	Message string `json:"message,omitempty"`
+
 	// Pull request options
 	PullRequest *PullRequestJobOptions `json:"pr,omitempty"`
 
@@ -164,7 +171,9 @@ func (SyncJobOptions) OpenAPIModelName() string {
 }
 
 type ExportJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
 
 	// The source folder (or empty) to export
@@ -177,6 +186,19 @@ type ExportJobOptions struct {
 	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path string `json:"path,omitempty"`
+
+	// Resources to export. When empty, every unmanaged resource in the namespace
+	// is exported (legacy behavior). When non-empty, only the listed resources
+	// are exported — the folder hierarchy is still emitted so parent paths resolve.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. Use this to produce a portable export that creates
+	// new folders on a subsequent sync rather than taking over the originals.
+	// Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (ExportJobOptions) OpenAPIModelName() string {
@@ -184,8 +206,24 @@ func (ExportJobOptions) OpenAPIModelName() string {
 }
 
 type MigrateJobOptions struct {
-	// Message to use when committing the changes in a single commit
+	// Message to use when committing the changes in a single commit.
+	// Deprecated: set JobSpec.Message instead. This field is kept for
+	// backwards compatibility and is only used when JobSpec.Message is empty.
 	Message string `json:"message,omitempty"`
+
+	// Resources to migrate. When empty, every unmanaged resource in the namespace
+	// is migrated (legacy behavior). When non-empty, only the listed resources
+	// are exported to the repository — the folder hierarchy is still emitted so
+	// parent paths resolve, and the subsequent pull phase only takes ownership
+	// of those resources.
+	// Currently only unmanaged Dashboards are supported.
+	Resources []ResourceRef `json:"resources,omitempty"`
+
+	// GenerateNewFolderIDs writes a freshly generated identifier into each
+	// exported folder's metadata (_folder.json) instead of preserving the
+	// existing folder UID. The subsequent pull creates new folders rather than
+	// taking over the originals. Has no effect when folder metadata is not written.
+	GenerateNewFolderIDs bool `json:"generateNewFolderIDs,omitempty"`
 }
 
 func (MigrateJobOptions) OpenAPIModelName() string {

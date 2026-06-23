@@ -4,9 +4,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Checkbox, Tooltip, useStyles2 } from '@grafana/ui';
-import { ManagerKind } from 'app/features/apiserver/types';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSelectionRepoValidation } from 'app/features/provisioning/hooks/useSelectionRepoValidation';
+import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { useSelector } from 'app/types/store';
 
@@ -24,7 +24,7 @@ export default function CheckboxCell({
 
   // Get current selection state for repository validation
   const selectedItems = useSelector((state) => state.browseDashboards.selectedItems);
-  const { selectedItemsRepoUID, isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
+  const { isInLockedRepo, isUidInReadOnlyRepo } = useSelectionRepoValidation(selectedItems);
   const isProvisionedInstance = useIsProvisionedInstance();
 
   // Early returns for cases where we should show a spacer instead of checkbox
@@ -46,7 +46,7 @@ export default function CheckboxCell({
   }
 
   // Disable the checkbox for the root provisioned folder (if the entire instance is not provisioned)
-  if (!isProvisionedInstance && item.managedBy === ManagerKind.Repo && !item.parentUID) {
+  if (!isProvisionedInstance && isItemManagedByRepository(item) && !item.parentUID) {
     return <CheckboxSpacer />;
   }
 
@@ -67,7 +67,7 @@ export default function CheckboxCell({
   }
 
   // check if current item uid has different repo uid than selected items
-  if (selectedItemsRepoUID && !isInLockedRepo(item.uid)) {
+  if (!isInLockedRepo(item.uid)) {
     return (
       <Tooltip
         content={t(

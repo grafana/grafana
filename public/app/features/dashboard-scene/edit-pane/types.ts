@@ -1,3 +1,5 @@
+import { type SceneObject } from '@grafana/scenes';
+
 /**
  * Subset of DashboardEditPane used by assistant view-mode components
  * so they can avoid importing the full DashboardEditPane (which would
@@ -7,4 +9,12 @@ export interface EditPaneSelectionActions {
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
+}
+
+export interface DashboardSidebarPane extends SceneObject {
+  getId(): string;
+  /** Some panes like code editor require a wider pane  */
+  minWidth?: number;
+  /** Exclude this pane from the go back history */
+  excludeFromHistory?: boolean;
 }
