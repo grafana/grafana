@@ -6,9 +6,12 @@
 
 import { type z } from 'zod';
 
+import { SceneVariableSet } from '@grafana/scenes';
+
+import { dashboardEditActions } from '../../edit-pane/shared';
+
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import { replaceVariableSet } from './variableUtils';
 
 const removeVariablePayloadSchema = payloads.removeVariable;
 
@@ -29,7 +32,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
     try {
       const variables = scene.state.$variables;
-      if (!variables) {
+      if (!(variables instanceof SceneVariableSet)) {
         throw new Error('Dashboard has no variable set');
       }
 
@@ -40,8 +43,7 @@ export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
 
       const previousState = variable.state;
 
-      const updatedVariables = variables.state.variables.filter((v) => v.state.name !== name);
-      replaceVariableSet(scene, updatedVariables);
+      dashboardEditActions.removeVariable({ source: variables, removedObject: variable });
 
       return {
         success: true,
