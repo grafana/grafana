@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { getTemplateSrv } from 'app/features/templating/template_srv';

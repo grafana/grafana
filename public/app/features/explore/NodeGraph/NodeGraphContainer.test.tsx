@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen } from 'test/test-utils';
 
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
 import { type NodeDatum } from 'app/plugins/panel/nodeGraph/types';

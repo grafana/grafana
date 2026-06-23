@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Provider } from 'react-redux';
+import { render, screen } from 'test/test-utils';
 
 import { type TimeRange } from '@grafana/data';
 

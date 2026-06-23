@@ -3096,6 +3096,7 @@ __metadata:
     "@grafana/i18n": "npm:13.1.0-pre"
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.1.0-pre"
+    "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@monaco-editor/react": "npm:4.7.0"
     "@openfeature/react-sdk": "npm:^1.3.0"
