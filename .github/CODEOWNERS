@@ -154,7 +154,6 @@
 /pkg/middleware/ @grafana/grafana-backend-group
 /pkg/mocks/ @grafana/grafana-backend-group
 /pkg/models/ @grafana/grafana-backend-group
-/pkg/semconv/ @grafana/grafana-backend-group
 /pkg/server/ @grafana/grafana-backend-group
 /pkg/apiserver @grafana/grafana-app-platform-squad
 /pkg/aggregator @grafana/grafana-app-platform-squad
@@ -531,6 +530,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/prometheus-config.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-editor.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-variable-editor.spec.ts @grafana/data-sources-plugins
+/e2e-playwright/various-suite/recent-queries.spec.ts @grafana/datapro
+/e2e-playwright/various-suite/recent-queries-disabled.spec.ts @grafana/datapro
 /e2e-playwright/various-suite/query-editor.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/return-to-previous.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/solo-route.spec.ts @grafana/dashboards-squad
@@ -1124,6 +1125,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
 /scripts/webpack/ @grafana/frontend-ops
+/scripts/test-aliases.py @grafana/docs-tooling @jtvdez
 eslint-suppressions.json @grafanabot
 
 # Design system
@@ -1312,8 +1314,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-backend-services-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-backend-services-squad
-/.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
-/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
 /.github/workflows/scripts/fr-digest.mts @grafana/grafana-community-support
 /.github/workflows/scripts/fr-notify.mts @grafana/grafana-community-support
 /.github/workflows/scripts/pr-digest.mts @grafana/grafana-community-support

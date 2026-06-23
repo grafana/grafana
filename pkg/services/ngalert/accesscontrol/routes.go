@@ -104,7 +104,7 @@ func defaultRouteOnly[T models.Identified](eval ac.Evaluator) actionAccess[T] {
 		authorizeSome: eval,                  // satisfies pre-condition — user can access at least the default route
 		authorizeAll:  ac.EvalPermission(""), // never satisfied — does NOT grant access to all routes
 		authorizeOne: func(route models.Identified) ac.Evaluator {
-			if route.GetUID() == legacy_storage.UserDefinedRoutingTreeName {
+			if models.IsDefaultRoutingTreeName(route.GetUID()) {
 				return eval
 			}
 			return ac.EvalPermission("") // never satisfied — does not apply to non-default routes
@@ -252,17 +252,17 @@ func (s RouteAccess[T]) AuthorizeDelete(ctx context.Context, user identity.Reque
 
 // AuthorizeDeleteByUID checks if user has access to delete a route by name.
 func (s RouteAccess[T]) AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, name string) error {
-	return s.delete.Authorize(ctx, user, identified{uid: name})
+	return s.delete.Authorize(ctx, user, identified{uid: models.CanonicalizeRoutingTreeName(name)})
 }
 
 // AuthorizeUpdateByUID checks if user has access to update a route by name.
 func (s RouteAccess[T]) AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, name string) error {
-	return s.update.Authorize(ctx, user, identified{uid: name})
+	return s.update.Authorize(ctx, user, identified{uid: models.CanonicalizeRoutingTreeName(name)})
 }
 
 // AuthorizeReadByUID checks if user has access to read a route by name.
 func (s RouteAccess[T]) AuthorizeReadByUID(ctx context.Context, user identity.Requester, name string) error {
-	return s.read.Authorize(ctx, user, identified{uid: name})
+	return s.read.Authorize(ctx, user, identified{uid: models.CanonicalizeRoutingTreeName(name)})
 }
 
 func (s RouteAccess[T]) DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error {

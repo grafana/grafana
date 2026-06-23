@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	grafanasemconv "github.com/grafana/grafana/pkg/semconv"
+	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/component-base/tracing"
@@ -39,7 +39,7 @@ func (r *dataPlaneServiceHandler) ServeHTTP(w http.ResponseWriter, req *http.Req
 	ctx, span := tracing.Start(
 		req.Context(),
 		"grafana-aggregator",
-		grafanasemconv.K8sDataplaneserviceName(handlingInfo.name),
+		attribute.String("k8s.dataplaneservice.name", handlingInfo.name),
 		semconv.K8SNamespaceName(namespace),
 		semconv.HTTPMethod(req.Method),
 		semconv.HTTPURL(req.URL.String()),
