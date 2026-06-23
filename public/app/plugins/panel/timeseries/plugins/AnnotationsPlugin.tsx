@@ -14,11 +14,14 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
+import { AnnotationMarker2 } from 'app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker2';
+import { type AnnotationVals, type XYAnnoVals } from 'app/plugins/panel/timeseries/plugins/annotations/types';
+import {
+  ClusteringMode,
+  useAnnotationClustering,
+} from 'app/plugins/panel/timeseries/plugins/annotations/useAnnotationClustering';
+import { useAnnotations } from 'app/plugins/panel/timeseries/plugins/annotations/useAnnotations';
 
-import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
-import { type AnnotationVals, type XYAnnoVals } from './annotations2-cluster/types';
-import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
-import { useAnnotations } from './annotations2-cluster/useAnnotations';
 import {
   ANNOTATION_LANE_SIZE,
   getAnnoRegionBoxStyle,
@@ -70,7 +73,7 @@ function getVals<T = AnnotationVals | {}>(frame: DataFrame) {
  * @param options
  * @constructor
  */
-export const AnnotationsPlugin2Cluster = ({
+export const AnnotationsPlugin = ({
   annotations,
   timeZone,
   config,

@@ -16,7 +16,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DataTopic, HeatmapCalculationMode, TooltipDisplayMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
-import { type AnnotationsPlugin2Cluster } from '../timeseries/plugins/AnnotationsPlugin2Cluster';
+import { type AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 
 import { HeatmapPanel } from './HeatmapPanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
@@ -42,10 +42,10 @@ let tooltipRenderParamsForTest: {
 } | null = null;
 
 /** Captures the last props passed to AnnotationsPlugin for assertion in tests. */
-let lastAnnotationsPluginProps: React.ComponentProps<typeof AnnotationsPlugin2Cluster> | null = null;
+let lastAnnotationsPluginProps: React.ComponentProps<typeof AnnotationsPlugin> | null = null;
 
-jest.mock('../timeseries/plugins/AnnotationPlugin', () => ({
-  AnnotationsPlugin: (props: React.ComponentProps<typeof AnnotationsPlugin2Cluster>) => {
+jest.mock('../timeseries/plugins/AnnotationPluginWrap', () => ({
+  AnnotationsPlugin: (props: React.ComponentProps<typeof AnnotationsPlugin>) => {
     lastAnnotationsPluginProps = props;
     return props.annotations?.length ? (
       <div data-testid="annotations-plugin">{props.annotations.length} annotation(s)</div>

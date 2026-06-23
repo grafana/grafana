@@ -11,9 +11,10 @@ import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { annotationServer } from 'app/features/annotations/api';
 
 import { AnnotationTooltipHeaderCloseIcon } from './AnnotationTooltipHeaderCloseIcon';
+import { type AnnotationVals } from './types';
 
 interface Props {
-  annoVals: Record<string, any[]>;
+  annoVals: AnnotationVals;
   annoIdx: number;
   timeZone: string;
   dismiss: () => void;
@@ -59,12 +60,16 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const isRegionAnnotation = annoVals.isRegion?.[annoIdx];
   const operation = isUpdatingAnnotation ? updateAnnotation : createAnnotation;
   const stateIndicator = isUpdatingAnnotation ? updateAnnotationState : createAnnotationState;
-  const time = isRegionAnnotation
-    ? `${timeFormatter(annoVals.time[annoIdx])} - ${timeFormatter(annoVals.timeEnd[annoIdx])}`
-    : timeFormatter(annoVals.time[annoIdx]);
+  const timeEnd = annoVals.timeEnd?.[annoIdx];
+  const timeVal = annoVals.time[annoIdx];
+  const time =
+    isRegionAnnotation && timeEnd != null
+      ? `${timeFormatter(timeVal)} - ${timeFormatter(timeEnd)}`
+      : timeFormatter(timeVal);
 
   const onSubmit = ({ tags, description }: AnnotationEditFormDTO) => {
     operation({
+      // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
       id: annoVals.id?.[annoIdx] ?? undefined,
       tags,
       description,
@@ -98,18 +103,22 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
       </div>
       <Form<AnnotationEditFormDTO>
         onSubmit={onSubmit}
-        defaultValues={{ description: annoVals.text?.[annoIdx], tags: annoVals.tags?.[annoIdx] || [] }}
+        defaultValues={{ description: annoVals.text?.[annoIdx] ?? '', tags: annoVals.tags?.[annoIdx] || [] }}
       >
         {({ register, errors, control }) => {
           return (
             <>
               <div className={styles.content}>
+                {/* eslint-disable-next-line @grafana/require-no-margin */}
                 <Field
+                  htmlFor={'annotation-description-textarea'}
+                  autoFocus={true}
                   label={t('timeseries.annotation-editor2.label-description', 'Description')}
                   invalid={!!errors.description}
                   error={errors?.description?.message}
                 >
                   <TextArea
+                    id={'annotation-description-textarea'}
                     data-testid={'annotation-editor-description'}
                     className={styles.textarea}
                     {...register('description', {
@@ -117,13 +126,15 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
                     })}
                   />
                 </Field>
-                <Field label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
+                {/* eslint-disable-next-line @grafana/require-no-margin */}
+                <Field htmlFor={'annotation-tags-input'} label={t('timeseries.annotation-editor2.label-tags', 'Tags')}>
                   <Controller
                     control={control}
                     name="tags"
                     render={({ field: { ref, onChange, ...field } }) => {
                       return (
                         <TagFilter
+                          inputId={'annotation-tags-input'}
                           allowCustomValue
                           placeholder={t('timeseries.annotation-editor2.placeholder-add-tags', 'Add tags')}
                           onChange={onChange}

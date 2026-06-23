@@ -16,9 +16,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { type PanelContext, type UPlotConfigBuilder, usePanelContext } from '@grafana/ui';
 import { type TimeRange2 } from '@grafana/ui/internal';
+import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from 'app/plugins/panel/timeseries/plugins/annotations/constants';
 
-import { AnnotationsPlugin2Cluster } from './AnnotationsPlugin2Cluster';
-import { DEFAULT_CLUSTERING_ANNOTATION_SPACING } from './annotations2-cluster/constants';
+import { AnnotationsPlugin } from './AnnotationsPlugin';
 import {
   allAnnotationRegions,
   allAnnotations,
@@ -115,7 +115,7 @@ describe('AnnotationsPlugin2', () => {
   let hooks: Record<string, (u: uPlot) => {}> = {};
   let config: UPlotConfigBuilder;
   const setUp = (
-    props?: Partial<React.ComponentProps<typeof AnnotationsPlugin2Cluster>>,
+    props?: Partial<React.ComponentProps<typeof AnnotationsPlugin>>,
     configOverride?: UPlotConfigBuilder,
     uPlotProps?: Partial<uPlot.Options>,
     callReady = true
@@ -153,7 +153,7 @@ describe('AnnotationsPlugin2', () => {
 
     const result = render(
       <div>
-        <AnnotationsPlugin2Cluster
+        <AnnotationsPlugin
           options={{}}
           config={configOverride ?? config}
           timeZone={'browser'}
@@ -582,7 +582,7 @@ describe('AnnotationsPlugin2', () => {
           act(() => {
             rerender(
               <div>
-                <AnnotationsPlugin2Cluster
+                <AnnotationsPlugin
                   options={{ clustering }}
                   config={config}
                   timeZone={'browser'}
@@ -617,7 +617,7 @@ describe('AnnotationsPlugin2', () => {
           act(() => {
             rerender(
               <div>
-                <AnnotationsPlugin2Cluster
+                <AnnotationsPlugin
                   options={{ clustering }}
                   config={config}
                   timeZone={'browser'}
