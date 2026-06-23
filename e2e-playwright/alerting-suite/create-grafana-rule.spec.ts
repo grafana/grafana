@@ -2,11 +2,10 @@ import { test, expect, contactPoint, dataSource, ruleUidFromUrl } from './fixtur
 import { AlertRuleEditPage } from './pages/AlertRuleEditPage';
 import { AlertRuleViewPage } from './pages/AlertRuleViewPage';
 
-// All tests in this file share the same SQLite-backed Grafana instance.
-// Running them serially (one worker) prevents concurrent beforeEach folder
-// writes from saturating the 2-connection pool and returning SQLITE_BUSY.
-test.describe.configure({ mode: 'serial' });
-
+// These tests run in parallel across workers. The worker-scoped `folder` fixture (see
+// fixtures.ts) creates one folder per worker and reuses it, so folder writes stay at one
+// per worker instead of one per test — that's what keeps the 2-connection SQLite pool from
+// saturating and returning SQLITE_BUSY, which previously forced this file to run serially.
 test.use({
   featureToggles: {
     'alerting.rulesAPIV2': true,

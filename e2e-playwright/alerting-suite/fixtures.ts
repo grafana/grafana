@@ -1,4 +1,4 @@
-import { type APIRequestContext } from '@playwright/test';
+import { type APIRequestContext, type APIResponse } from '@playwright/test';
 
 import { test as base, expect } from '@grafana/plugin-e2e';
 
@@ -6,10 +6,26 @@ import { test as base, expect } from '@grafana/plugin-e2e';
 export const contactPoint = 'empty';
 export const dataSource = 'gdev-testdata';
 
+// POST that retries a transient failure with Playwright's built-in expect(...).toPass. At the worker
+// startup burst the write (or its folders:read authz check) can lose the SQLITE_BUSY race against the
+// e2e server's small SQLite connection pool and return a transient 403/500. Bounded to a few short
+// attempts so a genuine failure still surfaces quickly with its status/body.
+async function postWithRetry(request: APIRequestContext, url: string, data: unknown): Promise<APIResponse> {
+  let response: APIResponse | undefined;
+  await expect(async () => {
+    response = await request.post(url, { data });
+    expect(response.ok(), `POST ${url} -> ${response.status()} ${await response.text()}`).toBeTruthy();
+  }).toPass({ intervals: [200, 500, 1000, 2000], timeout: 5000 });
+  // toPass only resolves once the callback passed, so response is set; the guard narrows the type.
+  if (!response) {
+    throw new Error(`POST ${url} produced no response`);
+  }
+  return response;
+}
+
 type WorkerApi = {
   request: APIRequestContext;
   namespace: string;
-  dataSourceUid: string;
 };
 
 type Folder = {
@@ -17,10 +33,7 @@ type Folder = {
   title: string;
 };
 
-// Disposable rule fixture: every rule/group created through it is tracked and torn down
-// (LIFO) when the test ends. Disposers match the create path — ruler-seeded groups via the
-// ruler API, k8s-seeded and UI-created rules via the k8s alertrules API — so cleanup is
-// targeted rather than a folder-wide cascade delete.
+// Disposable rule fixture: every group/rule a test creates is tracked and deleted (LIFO) at test end.
 class AlertRulesFixture {
   private readonly disposers: Array<() => Promise<void>> = [];
 
@@ -30,109 +43,76 @@ class AlertRulesFixture {
     private readonly folder: Folder
   ) {}
 
-  // Seed a Grafana-managed evaluation group via the ruler API. Each group must contain at
-  // least one rule — we include a minimal placeholder. Named evaluation groups only exist in
-  // the ruler API (the k8s AlertRule spec has no group field), so the group picker is seeded here.
-  // Reference rule shape: public/app/features/alerting/unified/mocks/grafanaRulerApi.ts:33-73.
+  // Seed a named evaluation group via the ruler API (the only API with named groups). A group needs
+  // at least one rule; we use a paused constant `math` expression so seeding does no datasource or
+  // scheduler work — only the group name + interval matter to the tests that pick it.
   async seedGroup(groupName: string, interval: string, ruleTitle: string): Promise<void> {
-    const response = await this.request.post(`/api/ruler/grafana/api/v1/rules/${this.folder.uid}`, {
-      data: {
-        name: groupName,
-        interval,
-        rules: [
-          {
-            for: '0s',
-            annotations: {},
-            labels: {},
-            grafana_alert: {
-              title: ruleTitle,
-              condition: 'A',
-              no_data_state: 'NoData',
-              exec_err_state: 'Error',
-              data: [
-                {
-                  refId: 'A',
-                  datasourceUid: this.api.dataSourceUid,
-                  queryType: '',
-                  relativeTimeRange: { from: 600, to: 0 },
-                  model: {
-                    refId: 'A',
-                    scenarioId: 'random_walk',
-                    datasource: { type: 'grafana-testdata-datasource', uid: this.api.dataSourceUid },
-                  },
-                },
-              ],
-            },
+    await postWithRetry(this.request, `/api/ruler/grafana/api/v1/rules/${this.folder.uid}`, {
+      name: groupName,
+      interval,
+      rules: [
+        {
+          for: '0s',
+          annotations: {},
+          labels: {},
+          grafana_alert: {
+            title: ruleTitle,
+            condition: 'A',
+            no_data_state: 'NoData',
+            exec_err_state: 'Error',
+            is_paused: true,
+            data: [
+              {
+                refId: 'A',
+                datasourceUid: '__expr__',
+                queryType: '',
+                relativeTimeRange: { from: 600, to: 0 },
+                model: { refId: 'A', type: 'math', expression: '1 == 1' },
+              },
+            ],
           },
-        ],
-      },
+        },
+      ],
     });
-    if (!response.ok()) {
-      throw new Error(`Failed to seed rule group: ${response.status()} ${await response.text()}`);
-    }
     this.disposers.push(async () => {
       await this.request.delete(`/api/ruler/grafana/api/v1/rules/${this.folder.uid}/${encodeURIComponent(groupName)}`);
     });
   }
 
-  // Seed a single Grafana-managed rule via the k8s-style alertrule API (independent of the UI
-  // create form). Returns the rule UID (metadata.name), already tracked for disposal.
+  // Seed a single Grafana-managed rule via the k8s alertrule API (independent of the UI form).
+  // Returns the rule UID. Paused constant math expression — see seedGroup.
   async seedRule({ title, interval }: { title: string; interval: string }): Promise<string> {
-    const response = await this.request.post(
+    const response = await postWithRetry(
+      this.request,
       `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/${this.api.namespace}/alertrules`,
       {
-        data: {
-          apiVersion: 'rules.alerting.grafana.app/v0alpha1',
-          kind: 'AlertRule',
-          metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
-          spec: {
-            title,
-            trigger: { interval },
-            noDataState: 'NoData',
-            execErrState: 'Error',
-            notificationSettings: { type: 'SimplifiedRouting', receiver: contactPoint },
-            expressions: {
-              A: {
-                model: {
-                  datasource: { type: 'grafana-testdata-datasource', uid: this.api.dataSourceUid },
-                  refId: 'A',
-                  scenarioId: 'random_walk',
-                },
-                datasourceUID: this.api.dataSourceUid,
-                queryType: '',
-                relativeTimeRange: { from: '10m', to: '0' },
-                source: false,
-              },
-              B: {
-                model: { type: 'reduce', reducer: 'last', expression: 'A', refId: 'B' },
-                datasourceUID: '__expr__',
-                queryType: '',
-                source: false,
-              },
-              C: {
-                model: {
-                  type: 'threshold',
-                  expression: 'B',
-                  conditions: [{ evaluator: { type: 'gt', params: [0] } }],
-                  refId: 'C',
-                },
-                datasourceUID: '__expr__',
-                queryType: '',
-                source: true,
-              },
+        apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+        kind: 'AlertRule',
+        metadata: { annotations: { 'grafana.app/folder': this.folder.uid } },
+        spec: {
+          title,
+          trigger: { interval },
+          noDataState: 'NoData',
+          execErrState: 'Error',
+          paused: true,
+          notificationSettings: { type: 'SimplifiedRouting', receiver: contactPoint },
+          expressions: {
+            A: {
+              model: { refId: 'A', type: 'math', expression: '1 == 1' },
+              datasourceUID: '__expr__',
+              queryType: '',
+              source: true,
             },
           },
         },
       }
     );
-    expect(response.ok()).toBeTruthy();
     const uid = (await response.json()).metadata.name;
     this.trackRule(uid);
     return uid;
   }
 
-  // Register a rule for k8s DELETE on teardown. Used internally by seedRule and by tests to
-  // dispose rules created through the UI save flow (UID parsed from the post-save URL).
+  // Register a rule for deletion on teardown. Used by seedRule and by tests for UI-created rules.
   trackRule(uid: string): void {
     this.disposers.push(async () => {
       await this.request.delete(
@@ -141,14 +121,13 @@ class AlertRulesFixture {
     });
   }
 
-  // Run disposers in reverse registration order. A resource may already be gone (a UI rule
-  // and the seed group it joined both clean the same group), so failures are non-fatal.
+  // LIFO, best-effort: a resource may already be gone, and the worker folder delete is the backstop.
   async dispose(): Promise<void> {
     for (const disposer of this.disposers.reverse()) {
       try {
         await disposer();
       } catch {
-        // best-effort cleanup; the worker folder delete is the final backstop
+        // best-effort cleanup
       }
     }
   }
@@ -158,40 +137,43 @@ export const test = base.extend<
   { folder: Folder; alertRules: AlertRulesFixture },
   { workerApi: WorkerApi; workerFolder: Folder }
 >({
-  // Worker-scoped authenticated API context plus one-time lookups (namespace, datasource UID).
-  // The built-in request/namespace/grafanaAPIClient fixtures are test-scoped, so a worker
-  // fixture must build its own context from the project's saved auth state.
+  // Worker-scoped authenticated API context + namespace lookup, built from the project's saved auth
+  // state (the built-in request/namespace fixtures are test-scoped). Seeds run against the built-in
+  // __expr__ engine, so no datasource lookup is needed.
   workerApi: [
     async ({ playwright }, use, workerInfo) => {
       const { baseURL, storageState } = workerInfo.project.use;
       const request = await playwright.request.newContext({ baseURL, storageState });
-
       const settings = await (await request.get('/api/frontend/settings')).json();
-      // The ruler API needs the datasource UID, not its name — the UI form resolves this via
-      // the datasource picker. Mirror that lookup so seeds work regardless of how the dev env
-      // provisions the gdev datasources.
-      const ds = await (await request.get(`/api/datasources/name/${encodeURIComponent(dataSource)}`)).json();
-
-      await use({ request, namespace: settings.namespace ?? 'default', dataSourceUid: ds.uid });
+      await use({ request, namespace: settings.namespace ?? 'default' });
       await request.dispose();
     },
     { scope: 'worker' },
   ],
 
-  // One folder per worker, reused across all its tests. A per-invocation unique title keeps
-  // parallel workers from colliding and prevents orphans from crashed runs accumulating.
-  // Reusing the folder (instead of recreating it per test) avoids the folder create/delete
-  // churn that drives SQLITE_BUSY contention on the apiserver storage.
+  // One folder per worker, reused across its tests. A per-invocation unique name avoids cross-worker
+  // collisions and orphan accumulation. Reusing it (vs. one per test) keeps folder writes — the main
+  // SQLITE_BUSY contention source — to one per worker. Created via the App Platform (k8s) folders API.
   workerFolder: [
     async ({ workerApi }, use, workerInfo) => {
-      const title = `Infrastructure alerts w${workerInfo.workerIndex} ${crypto.randomUUID().slice(0, 8)}`;
-      const response = await workerApi.request.post('/api/folders', { data: { title } });
-      expect(response.ok()).toBeTruthy();
-      const { uid } = await response.json();
+      const suffix = crypto.randomUUID().slice(0, 8);
+      const uid = `e2e-alerting-w${workerInfo.workerIndex}-${suffix}`;
+      const title = `Infrastructure alerts w${workerInfo.workerIndex} ${suffix}`;
+      await postWithRetry(workerApi.request, `/apis/folder.grafana.app/v1/namespaces/${workerApi.namespace}/folders`, {
+        apiVersion: 'folder.grafana.app/v1',
+        kind: 'Folder',
+        metadata: { name: uid },
+        spec: { title },
+      });
 
       await use({ uid, title });
 
-      await workerApi.request.delete(`/api/folders/${uid}?forceDeleteRules=true`);
+      // Per-test disposers already removed the rules/groups, so a plain delete normally suffices;
+      // fall back to the cascade only if a test left something behind.
+      const deleted = await workerApi.request.delete(`/api/folders/${uid}`);
+      if (!deleted.ok()) {
+        await workerApi.request.delete(`/api/folders/${uid}?forceDeleteRules=true`);
+      }
     },
     { scope: 'worker' },
   ],
@@ -203,8 +185,7 @@ export const test = base.extend<
     { scope: 'test' },
   ],
 
-  // Not `auto`: only tests that create rules inject it, and its teardown disposes whatever
-  // they made.
+  // Not `auto`: only tests that create rules inject it, and its teardown disposes whatever they made.
   alertRules: [
     async ({ request, workerApi, folder }, use) => {
       const fixture = new AlertRulesFixture(request, workerApi, folder);
