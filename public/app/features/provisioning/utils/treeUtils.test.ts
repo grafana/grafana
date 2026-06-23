@@ -39,6 +39,16 @@ const mockFolderResource: ResourceListItem = {
   group: 'folder.grafana.app',
 };
 
+const mockPlaylistResource: ResourceListItem = {
+  path: 'my-playlist.json',
+  name: 'playlist-uid',
+  title: 'My Playlist',
+  resource: 'playlists',
+  hash: 'pl123',
+  folder: '',
+  group: 'playlist.grafana.app',
+};
+
 describe('mergeFilesAndResources', () => {
   it('should merge files and resources by path', () => {
     const files = [mockFileDetails];
@@ -172,6 +182,12 @@ describe('getItemType', () => {
     expect(result).toBe('Folder');
   });
 
+  it('should return Playlist for playlist resources', () => {
+    const result = getItemType('my-playlist.json', mockPlaylistResource);
+
+    expect(result).toBe('Playlist');
+  });
+
   it('should return File for unsynced files regardless of extension', () => {
     const result = getItemType('some/path/file.json', undefined);
 
@@ -200,6 +216,10 @@ describe('getIconName', () => {
   it('should return the icon for a known resource-backed item type', () => {
     expect(getIconName('Dashboard')).toBe('apps');
     expect(getIconName('Folder')).toBe('folder');
+  });
+
+  it('should return the icon for a playlist item type', () => {
+    expect(getIconName('Playlist')).toBe('presentation-play');
   });
 
   it('should fall back to the file icon for the non-resource File type', () => {
@@ -414,6 +434,36 @@ describe('buildTree', () => {
 
     const result = buildTree(mergedItems);
 
+    expect(result[0].status).toBe('pending');
+  });
+
+  it('should set synced status for a playlist when file and resource hashes match', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'pl123' },
+        resource: mockPlaylistResource, // mockPlaylistResource has hash: 'pl123'
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
+    expect(result[0].status).toBe('synced');
+  });
+
+  it('should set pending status for a playlist when file and resource hashes differ', () => {
+    const mergedItems = [
+      {
+        path: 'my-playlist.json',
+        file: { path: 'my-playlist.json', size: '100', hash: 'different-hash' },
+        resource: mockPlaylistResource,
+      },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].type).toBe('Playlist');
     expect(result[0].status).toBe('pending');
   });
 
