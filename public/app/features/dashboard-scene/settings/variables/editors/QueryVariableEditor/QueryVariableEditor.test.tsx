@@ -20,8 +20,13 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { getQueryVariableOptions } from './getQueryVariableOptions';
 import { QueryVariableEditor, Editor } from './QueryVariableEditor';
+import { getQueryVariableOptions } from './getQueryVariableOptions';
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaQueryVarEditorRedesign: () => false,
+}));
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',

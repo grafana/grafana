@@ -5615,7 +5615,8 @@
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
           "close": "Close",
-          "modal-title": "Query Variable",
+          "modal-title": "Query variable: {{name}}",
+          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "selection-options": {
@@ -7061,6 +7062,15 @@
       "title-above-dashboard_other": "Above dashboard ({{count}})",
       "title-controls-menu_one": "Controls menu ({{count}})",
       "title-controls-menu_other": "Controls menu ({{count}})"
+    },
+    "modal-editor": {
+      "apply": "Apply",
+      "content-drag-to-resize": "Drag to resize",
+      "discard": "Discard",
+      "on-click-apply-description": "Change variable query",
+      "preview-of-values": "Preview of values ({{ optionsCount }})",
+      "refresh-preview": "Refresh preview",
+      "show-preview": "Show preview"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
