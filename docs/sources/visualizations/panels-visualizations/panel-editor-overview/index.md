@@ -116,7 +116,7 @@ Panel styles are available for the following visualizations:
 
 However, plugin authors can add panel styles support to their own panel plugins as well.
 
-#### Copy and paste panel styles
+### Copy and paste panel styles
 
 You can duplicate the styles of one panel in another panel with the same visualization type.
 Use the **Copy styles** and **Paste styles** options to do so:
@@ -133,3 +133,7 @@ To copy and paste a panel style, follow these steps:
 1. Navigate to the panel on which you want to copy the style.
 1. Click the panel menu and select **Styles > Paste styles**.
 1. Save your changes.
+
+{{< admonition type="note" >}}
+Copying and pasting styles doesn't copy query information or field overrides.
+{{< /admonition >}}
