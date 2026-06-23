@@ -24,6 +24,12 @@ describe('resourceKinds registry', () => {
       resource: 'folders',
       itemType: 'Folder',
     });
+    expect(resourceKindInfos.playlist).toMatchObject({
+      group: 'playlist.grafana.app',
+      kind: 'Playlist',
+      resource: 'playlists',
+      itemType: 'Playlist',
+    });
   });
 
   it('sources icons from the search package', () => {
@@ -36,6 +42,7 @@ describe('getKindInfoByResource', () => {
   it('resolves by plural resource name', () => {
     expect(getKindInfoByResource('dashboards')).toBe(resourceKindInfos.dashboard);
     expect(getKindInfoByResource('folders')).toBe(resourceKindInfos.folder);
+    expect(getKindInfoByResource('playlists')).toBe(resourceKindInfos.playlist);
   });
 
   it('returns undefined for unknown or missing resources', () => {
@@ -74,6 +81,7 @@ describe('getRoute', () => {
   it('builds in-app routes per kind', () => {
     expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
     expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
+    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/play/pl1');
   });
 });
 
@@ -83,18 +91,26 @@ describe('countLabel', () => {
     expect(resourceKindInfos.dashboard.countLabel(3)).toBe('3 dashboards');
     expect(resourceKindInfos.folder.countLabel(1)).toBe('1 folder');
     expect(resourceKindInfos.folder.countLabel(3)).toBe('3 folders');
+    expect(resourceKindInfos.playlist.countLabel(1)).toBe('1 playlist');
+    expect(resourceKindInfos.playlist.countLabel(3)).toBe('3 playlists');
   });
 });
 
 describe('getAvailableResourceKinds', () => {
   it('falls back to all known kinds when availableResources is unset', () => {
-    expect(getAvailableResourceKinds(undefined)).toEqual([resourceKindInfos.folder, resourceKindInfos.dashboard]);
+    expect(getAvailableResourceKinds(undefined)).toEqual([
+      resourceKindInfos.folder,
+      resourceKindInfos.dashboard,
+      resourceKindInfos.playlist,
+    ]);
   });
 
   it('only returns kinds present and not disabled', () => {
     const available: SupportedResource[] = [
       { group: 'dashboard.grafana.app', kind: 'Dashboard' },
       { group: 'folder.grafana.app', kind: 'Folder', disabled: true },
+      // Playlists ship declared-but-disabled until the backend can round-trip them.
+      { group: 'playlist.grafana.app', kind: 'Playlist', disabled: true },
     ];
 
     const result = getAvailableResourceKinds(available);
@@ -102,6 +118,7 @@ describe('getAvailableResourceKinds', () => {
     expect(result).toEqual([resourceKindInfos.dashboard]);
     expect(isResourceKindAvailable(resourceKindInfos.dashboard, available)).toBe(true);
     expect(isResourceKindAvailable(resourceKindInfos.folder, available)).toBe(false);
+    expect(isResourceKindAvailable(resourceKindInfos.playlist, available)).toBe(false);
   });
 
   it('returns no kinds when none are declared', () => {
