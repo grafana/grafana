@@ -98,7 +98,8 @@ Panel styles are available for the following visualizations: time series, stat, 
 
 ### Copy and paste panel styles
 
-You can duplicate the styles of one panel in another panel with the same visualization type using the copy paste styles option:
+You can duplicate the styles of one panel in another panel with the same visualization type.
+Use the **Copy styles** and **Paste styles** options to do so:
 
 {{< video-embed src="/media/docs/grafana/panels-visualizations/screenrecord-copy-paste-styles.mp4" >}}
 
