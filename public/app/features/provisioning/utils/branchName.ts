@@ -38,6 +38,16 @@ export function sanitizeBranchName(name: string): string {
 }
 
 /**
+ * Substitutes the branch/PR template variables in `template` with raw values (no sanitisation).
+ * Unknown keys never match the regex; a recognised key with no value renders as ''. Assumes a
+ * non-empty template. Shared by renderBranchName (which then sanitises to a git ref) and the
+ * PR-title renderer (which keeps the result as free text).
+ */
+export function substituteBranchVars(template: string, vars: BranchTemplateVars & { random: string }): string {
+  return template.replace(BRANCH_TEMPLATE_VAR, (_, key: BranchTemplateKey) => vars[key] ?? '');
+}
+
+/**
  * Renders branch.nameTemplate with the supplied vars and sanitises the result.
  * Returns '' for an empty/blank template so the caller keeps the auto-generated name.
  */
@@ -49,6 +59,5 @@ export function renderBranchName(
   if (!trimmed) {
     return '';
   }
-  const substituted = trimmed.replace(BRANCH_TEMPLATE_VAR, (_, key: BranchTemplateKey) => vars[key] ?? '');
-  return sanitizeBranchName(substituted);
+  return sanitizeBranchName(substituteBranchVars(trimmed, vars));
 }

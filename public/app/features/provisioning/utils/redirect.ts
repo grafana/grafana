@@ -6,6 +6,7 @@ type ResourceBranchUrlOptions = {
   paramValue?: string;
   repoType?: string;
   action?: ResourceAction;
+  prTitle?: string;
 };
 
 export function buildResourceBranchRedirectUrl({
@@ -14,6 +15,7 @@ export function buildResourceBranchRedirectUrl({
   paramValue,
   repoType,
   action,
+  prTitle,
 }: ResourceBranchUrlOptions): string {
   const params = new URLSearchParams();
 
@@ -27,6 +29,10 @@ export function buildResourceBranchRedirectUrl({
 
   if (action) {
     params.set('action', action);
+  }
+
+  if (prTitle) {
+    params.set('pr_title', prTitle);
   }
 
   const queryString = params.toString();

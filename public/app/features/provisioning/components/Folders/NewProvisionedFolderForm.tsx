@@ -17,6 +17,7 @@ import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -75,6 +76,8 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
@@ -86,6 +89,9 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     }
     if (info.repoType) {
       params.repo_type = info.repoType;
+    }
+    if (prTitle) {
+      params.pr_title = prTitle;
     }
 
     if (Object.keys(params).length > 0) {

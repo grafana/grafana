@@ -23,6 +23,7 @@ import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type StatusInfo } from '../../types';
 import { type ProvisionedDashboardFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
@@ -90,6 +91,8 @@ export function MoveProvisionedDashboardForm({
     setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const { data: currentFileData, isLoading: isLoadingFileData } = useGetRepositoryFilesWithPathQuery({
     name: defaultValues.repo,
     path: defaultValues.path,
@@ -140,6 +143,7 @@ export function MoveProvisionedDashboardForm({
       paramName: 'new_pull_request_url',
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
+      prTitle,
     });
     navigate(url);
   };
