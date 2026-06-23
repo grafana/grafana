@@ -61,7 +61,7 @@ export const ColorValueEditor = ({
                     {value}
                   </button>
                 ) : (
-                  <button className={cx(resetButtonStyles, styles.placeholderText)} onClick={showColorPicker}>
+                  <button type="button" className={cx(resetButtonStyles, styles.placeholderText)} onClick={showColorPicker}>
                     {settings?.placeholder ?? 'Select color'}
                   </button>
                 )}
