@@ -1,5 +1,6 @@
 import { render, fireEvent, screen, waitFor, userEvent } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 
 import { SignupPage } from './SignupPage';
@@ -105,5 +106,34 @@ describe('Signup Page', () => {
       })
     );
     expect(window.location.assign).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('Signup Page - passwordless', () => {
+  beforeEach(() => {
+    config.disableLoginForm = true;
+    config.passkey = { enabled: true };
+    Object.defineProperty(window, 'PublicKeyCredential', { value: function () {}, configurable: true });
+  });
+  afterEach(() => {
+    config.disableLoginForm = false;
+    delete config.passkey;
+    delete (window as { PublicKeyCredential?: unknown }).PublicKeyCredential;
+  });
+
+  it('hides the password fields and shows the passkey button', () => {
+    render(<SignupPage {...props} />);
+
+    expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Confirm password')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create your passkey' })).toBeInTheDocument();
+  });
+
+  it('warns and disables submit when the browser lacks WebAuthn support', () => {
+    delete (window as { PublicKeyCredential?: unknown }).PublicKeyCredential;
+    render(<SignupPage {...props} />);
+
+    expect(screen.getByRole('button', { name: 'Create your passkey' })).toBeDisabled();
+    expect(screen.getByText(/does not support passkeys/i)).toBeInTheDocument();
   });
 });

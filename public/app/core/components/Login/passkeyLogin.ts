@@ -82,7 +82,14 @@ export function usePasskeyAutofill(): void {
   useEffect(() => {
     mounted.current = true;
 
-    if (!config.passkey?.enabled || typeof window === 'undefined' || !('PublicKeyCredential' in window)) {
+    // In passwordless mode the login form (and its autocomplete="webauthn" username field) is hidden,
+    // so there is no field for Conditional UI to attach to — the explicit button is the entry point.
+    if (
+      config.disableLoginForm ||
+      !config.passkey?.enabled ||
+      typeof window === 'undefined' ||
+      !('PublicKeyCredential' in window)
+    ) {
       return;
     }
 
@@ -137,7 +144,11 @@ export function usePasskeyButtonMode(): PasskeyButtonMode {
       // When the browser supports Conditional UI, the username field's autofill already offers the
       // passkey (including "from another device"), so the explicit button would be a redundant second
       // prompt. Hide it and let autofill be the single entry point.
-      if (await browserSupportsWebAuthnAutofill()) {
+      //
+      // Exception: in passwordless mode the login form — and therefore the username field autofill
+      // attaches to — is hidden, so autofill has nowhere to surface. Keep the explicit button as the
+      // entry point (its click runs the same discoverable login, no username field required).
+      if (!config.disableLoginForm && (await browserSupportsWebAuthnAutofill())) {
         if (!cancelled) {
           setMode('hidden');
         }

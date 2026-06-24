@@ -79,6 +79,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete config.passkey;
+  config.disableLoginForm = false;
 });
 
 describe('usePasskeyAutofill', () => {
@@ -105,6 +106,16 @@ describe('usePasskeyAutofill', () => {
 
   it('does not start a ceremony when passkeys are disabled', () => {
     config.passkey = { enabled: false };
+    mockSupportsAutofill.mockResolvedValue(true);
+
+    render(<Harness />);
+
+    expect(mockSupportsAutofill).not.toHaveBeenCalled();
+    expect(mockStartAuthentication).not.toHaveBeenCalled();
+  });
+
+  it('does not start a ceremony in passwordless mode (no username field to attach to)', () => {
+    config.disableLoginForm = true;
     mockSupportsAutofill.mockResolvedValue(true);
 
     render(<Harness />);
@@ -166,6 +177,17 @@ describe('usePasskeyButtonMode', () => {
     render(<ModeHarness />);
 
     await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('hidden'));
+  });
+
+  it('stays visible in passwordless mode even when autofill is supported', async () => {
+    // The login form (and the username field autofill attaches to) is hidden in passwordless mode, so
+    // the explicit button must remain the entry point rather than hiding behind autofill.
+    config.disableLoginForm = true;
+    mockSupportsAutofill.mockResolvedValue(true);
+
+    render(<ModeHarness />);
+
+    await waitFor(() => expect(screen.getByTestId('mode')).toHaveTextContent('secondary'));
   });
 
   it('is secondary even when the device has no platform authenticator (cross-device flow)', async () => {
