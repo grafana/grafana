@@ -2,7 +2,8 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
 import { useListPlaylistQuery } from 'app/api/clients/playlist/v1';
-import { AnnoKeyManagerKind } from 'app/features/apiserver/types';
+
+import { isManaged } from '../../utils/managedResource';
 
 interface PlaylistRow {
   uid: string;
@@ -40,11 +41,10 @@ export function usePlaylistMigrationData(enabled: boolean): State {
   const rows = useMemo<PlaylistRow[]>(() => {
     return (
       (data?.items ?? [])
-        // A resource is managed when the manager-kind annotation is *present*, even
-        // if its value is empty or a manager we don't recognize — matching how the
-        // rest of provisioning decides ownership. A truthy check would wrongly
-        // treat an explicit-but-empty manager as unmanaged.
-        .filter((playlist) => !(AnnoKeyManagerKind in (playlist.metadata?.annotations ?? {})))
+        // Already-managed playlists aren't migration targets. `isManaged` is the
+        // shared presence-check on the manager annotation, so it also covers
+        // managers we don't explicitly enumerate.
+        .filter((playlist) => !isManaged(playlist))
         .map((playlist) => ({
           uid: playlist.metadata?.name ?? '',
           title: playlist.spec?.title || playlist.metadata?.name || '',
@@ -55,10 +55,11 @@ export function usePlaylistMigrationData(enabled: boolean): State {
 
   return {
     data: rows,
-    // With the query skipped, RTK Query reports `isLoading: false` already, but
-    // be explicit so callers never block the table on a disabled kind.
+    // With the query skipped, RTK Query reports `isLoading: false`/`isError:
+    // false` already, but be explicit so a disabled kind never blocks or errors
+    // the table.
     isLoading: enabled ? isLoading : false,
-    isError,
+    isError: enabled ? isError : false,
     refetch,
   };
 }

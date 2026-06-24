@@ -84,7 +84,7 @@ export function Migrate() {
   }, [folders, playlists]);
 
   const breakdowns = useMemo(() => computeBreakdowns(data), [data]);
-  const totals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
+  const dashboardTotals = useMemo(() => aggregateDashboardTotals(breakdowns), [breakdowns]);
   const playlistTotals = useMemo(() => aggregatePlaylistTotals(breakdowns), [breakdowns]);
   const folderCounts = useMemo(() => aggregateFolderCounts(breakdowns), [breakdowns]);
   const selection = useMemo(
@@ -112,7 +112,7 @@ export function Migrate() {
     );
   }
 
-  if (totals.instanceTotal === 0 && folderCounts.total === 0 && playlistTotals.instanceTotal === 0) {
+  if (dashboardTotals.instanceTotal === 0 && folderCounts.total === 0 && playlistTotals.instanceTotal === 0) {
     return (
       <Stack direction="column" gap={3}>
         <MigrateToGitopsHeader />
@@ -137,7 +137,7 @@ export function Migrate() {
   // migrate-everything fallback when the folder list itself can't be loaded —
   // that job is stats-driven and doesn't need the per-folder enumeration.
   const hasUnmanaged =
-    Math.max(0, totals.instanceTotal - totals.managed) +
+    Math.max(0, dashboardTotals.instanceTotal - dashboardTotals.managed) +
       Math.max(0, folderCounts.total - folderCounts.managed) +
       Math.max(0, playlistTotals.instanceTotal - playlistTotals.managed) >
     0;
@@ -158,7 +158,7 @@ export function Migrate() {
   return (
     <Stack direction="column" gap={3}>
       <MigrateToGitopsHeader />
-      <OverviewStatCards dashboards={totals} playlists={playlistsEnabled ? playlistTotals : undefined} />
+      <OverviewStatCards dashboards={dashboardTotals} playlists={playlistsEnabled ? playlistTotals : undefined} />
 
       {isFoldersLoading || isPlaylistsLoading ? (
         <Stack direction="row" alignItems="center" gap={1}>
