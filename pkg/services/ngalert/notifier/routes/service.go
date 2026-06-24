@@ -237,6 +237,11 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		p = models.ManagerPropertiesToProvenance(manager)
+	}
 	// Backwards compatibility when managed routes FF is disabled. Only allow the default route.
 	if !nps.managedRoutesEnabled() && name != legacy_storage.UserDefinedRoutingTreeName {
 		return nil, models.ErrRouteNotFound.Errorf("route %q not found", name)
@@ -407,6 +412,11 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 		attribute.Bool("include_imported", nps.includeImported()),
 	))
 	defer span.End()
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		p = models.ManagerPropertiesToProvenance(manager)
+	}
 	// Backwards compatibility when managed routes FF is disabled. This is not allowed.
 	if !nps.managedRoutesEnabled() {
 		return nil, models.ErrMultipleRoutesNotSupported.Errorf("")
@@ -434,6 +444,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
+	created.Provenance = p
 
 	// Check if this conflicts with an imported config.
 	// When UIDs are introduced to managed routes, we can choose to de-duplicate the name as rules will reference the route by UID, not name.

@@ -184,6 +184,12 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		mt.Provenance = definitions.Provenance(models.ManagerPropertiesToProvenance(manager))
+	}
+
 	if err := svc.validator(ctx, models.ProvenanceNone, models.Provenance(mt.Provenance)); err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
@@ -227,6 +233,12 @@ func (svc *MuteTimingService) persistManagerOrProvenance(ctx context.Context, o 
 func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitions.MuteTimeInterval, orgID int64, manager utils.ManagerProperties) (definitions.MuteTimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return definitions.MuteTimeInterval{}, MakeErrTimeIntervalInvalid(err)
+	}
+
+	// When a rich manager is provided, derive the effective provenance from it so the validation,
+	// persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		mt.Provenance = definitions.Provenance(models.ManagerPropertiesToProvenance(manager))
 	}
 
 	revision, err := svc.configStore.Get(ctx, orgID)

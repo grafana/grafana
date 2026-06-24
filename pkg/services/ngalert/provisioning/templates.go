@@ -181,6 +181,11 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if tmpl.Kind == v1.TemplateKindMimir {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
 	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		tmpl.Provenance = models.ManagerPropertiesToProvenance(manager)
+	}
 	if err := t.validator(ctx, models.ProvenanceNone, tmpl.Provenance); err != nil {
 		return v1.TemplateGroup{}, err
 	}
@@ -239,6 +244,12 @@ func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl 
 	err := tmpl.Validate()
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
+	}
+
+	// When a rich manager is provided, derive the effective provenance from it so the validation,
+	// persisted provenance column and returned object all agree.
+	if manager.Kind != utils.ManagerKindUnknown {
+		tmpl.Provenance = models.ManagerPropertiesToProvenance(manager)
 	}
 
 	revision, err := t.configStore.Get(ctx, orgID)

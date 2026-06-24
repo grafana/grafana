@@ -1625,6 +1625,10 @@ func TestIntegrationRoutingTreeManagerPropertiesRoundTrip(t *testing.T) {
 
 		created, err := adminClient.Create(ctx, tree, v1.CreateOptions{})
 		require.NoError(t, err)
+		// The create response itself reflects the manager kind/identity and the derived provenance.
+		require.Equal(t, string(utils.ManagerKindTerraform), created.GetAnnotations()[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		require.Equal(t, string(models.ProvenanceAPI), created.GetProvenanceStatus())
 
 		// A fresh read resolves the manager from storage and preserves kind + identity losslessly,
 		// while the provenance view is the coarse ProvenanceAPI for legacy readers.

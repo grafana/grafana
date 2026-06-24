@@ -1879,6 +1879,10 @@ func TestIntegrationReceiverManagerPropertiesRoundTrip(t *testing.T) {
 
 		created, err := adminClient.Create(ctx, recv, v1.CreateOptions{})
 		require.NoError(t, err)
+		// The create response itself reflects the manager kind/identity and the derived provenance.
+		require.Equal(t, string(utils.ManagerKindTerraform), created.GetAnnotations()[utils.AnnoKeyManagerKind])
+		require.Equal(t, "my-terraform-workspace", created.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+		require.Equal(t, string(ngmodels.ProvenanceAPI), created.GetProvenanceStatus())
 
 		// A fresh read resolves the manager from storage (per-integration) and preserves kind +
 		// identity losslessly, while the provenance view is the coarse ProvenanceAPI.

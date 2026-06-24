@@ -402,6 +402,9 @@ func (rs *ReceiverService) CreateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "create")
 	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	r.Provenance = effectiveProvenance(r.Provenance, manager)
 	if err := rs.provenanceValidator(ctx, models.ProvenanceNone, r.Provenance); err != nil {
 		return nil, err
 	}
@@ -474,6 +477,9 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 	if r.Origin != models.ResourceOriginGrafana {
 		return nil, makeErrReceiverOrigin(r, "update")
 	}
+	// When a rich manager is provided, the effective provenance is derived from it so the
+	// validation, persisted provenance column and returned object all agree.
+	r.Provenance = effectiveProvenance(r.Provenance, manager)
 
 	if err := rs.authz.AuthorizeUpdate(ctx, user, r); err != nil {
 		return nil, err
@@ -721,6 +727,16 @@ func removedIntegrations(old, new *models.Receiver) []*models.Integration {
 		}
 	}
 	return removed
+}
+
+// effectiveProvenance returns the provenance derived from a rich manager, or the provided
+// provenance when the manager is unknown. Keeps create/update validation, the persisted
+// provenance column and the returned object consistent.
+func effectiveProvenance(provenance models.Provenance, manager utils.ManagerProperties) models.Provenance {
+	if manager.Kind != utils.ManagerKindUnknown {
+		return models.ManagerPropertiesToProvenance(manager)
+	}
+	return provenance
 }
 
 func (rs *ReceiverService) setReceiverProvenance(ctx context.Context, orgID int64, receiver *models.Receiver, manager utils.ManagerProperties) error {
