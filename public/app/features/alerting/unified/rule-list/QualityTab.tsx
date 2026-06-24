@@ -26,6 +26,13 @@ function ruleWeight(rule: IncompleteRule): number {
   return isHighSeverity(rule) ? HIGH_SEVERITY_WEIGHT : MEDIUM_SEVERITY_WEIGHT;
 }
 
+// Ranks rules for sorting: high-severity (missing a runbook URL) always sorts above
+// medium, and within a tier, rules missing more fields sort first. Higher = more severe.
+function severityRank(rule: IncompleteRule): number {
+  const tier = isHighSeverity(rule) ? 1000 : 0;
+  return tier + rule.missing.length;
+}
+
 // Score on a 0–10 scale, rounded to one decimal.
 function qualityScore(rules: IncompleteRule[], total: number): number {
   if (total === 0) {
@@ -43,8 +50,14 @@ function QualityTab() {
   const incompleteCount = flaggedRules.length;
   const score = qualityScore(flaggedRules, totalRules);
 
-  // Show the most severe rules (missing a runbook URL) first.
-  const sortedRules = [...flaggedRules].sort((a, b) => ruleWeight(b) - ruleWeight(a));
+  // Show the most severe rules first; ties broken by folder/group/name so the order is stable.
+  const sortedRules = [...flaggedRules].sort((a, b) => {
+    const diff = severityRank(b) - severityRank(a);
+    if (diff !== 0) {
+      return diff;
+    }
+    return `${a.folder}/${a.group}/${a.name}`.localeCompare(`${b.folder}/${b.group}/${b.name}`);
+  });
 
   return (
     <AlertingPageWrapper
