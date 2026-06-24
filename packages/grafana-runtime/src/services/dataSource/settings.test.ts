@@ -312,7 +312,7 @@ describe('instanceSettings', () => {
   });
 
   describe('getDataSourceInstanceList', () => {
-    it('returns an array of instance settings', async () => {
+    it('returns an array of list items', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const items = await getDataSourceInstanceList();
       expect(Array.isArray(items)).toBe(true);
