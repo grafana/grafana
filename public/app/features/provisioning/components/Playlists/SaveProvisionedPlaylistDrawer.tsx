@@ -12,6 +12,7 @@ import { useDispatch } from 'app/types/store';
 
 import { type ManagedResource } from '../../utils/managedResource';
 import { SaveProvisionedResourceDrawer } from '../Shared/SaveProvisionedResourceDrawer';
+import { slugifyForFilename } from '../utils/path';
 
 interface SaveProvisionedPlaylistDrawerProps {
   /** The playlist with the edited spec that should be committed to the repository. */
@@ -27,15 +28,9 @@ interface SaveProvisionedPlaylistDrawerProps {
   onDismiss?: () => void;
 }
 
-/** Repository file names allow letters, numbers, dashes and underscores; everything else collapses to a dash. */
+/** Builds the repository file path for a new playlist from its title, mirroring the dashboard slug. */
 function getNewPlaylistPath(title: string): string {
-  const slug =
-    title
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '') || 'playlist';
-  return `${slug}.json`;
+  return `${slugifyForFilename(title) || 'playlist'}.json`;
 }
 
 export function SaveProvisionedPlaylistDrawer({
