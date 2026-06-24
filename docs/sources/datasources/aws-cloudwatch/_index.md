@@ -28,6 +28,18 @@ Amazon CloudWatch is the AWS native monitoring and observability service that co
 
 Grafana includes native support for the Amazon CloudWatch plugin, so there's no need to install a plugin.
 
+## Supported features
+
+| Feature | Supported |
+| --- | --- |
+| Metrics | Yes |
+| Logs | Yes |
+| Traces | No. Use the [AWS X-Ray data source](https://grafana.com/docs/plugins/grafana-x-ray-datasource/latest/). |
+| Alerting | Yes |
+| Annotations | Yes |
+
+## Get started
+
 The following documents will help you get started working with the CloudWatch data source:
 
 - [Configure the CloudWatch data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/)
@@ -61,7 +73,7 @@ To import curated dashboards:
 
 To customize one of these dashboards, Grafana recommends saving it under a different name; otherwise, Grafana upgrades will overwrite your customizations with the new version.
 
-## Get the most out of the data source
+## Additional features
 
 After installing and configuring the Amazon CloudWatch data source, you can:
 
@@ -102,4 +114,10 @@ For more information, refer to the AWS documentation for [Service Quotas](https:
 
 The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
 
-To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions as described above.
+To use this feature, configure a monitoring and source account in the [AWS console under CloudWatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), and then add the necessary IAM permissions. Refer to [Permissions reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/configure/#permissions-reference) for the cross-account observability actions.
+
+## Related resources
+
+- [Amazon CloudWatch documentation](https://docs.aws.amazon.com/cloudwatch/)
+- [Troubleshoot CloudWatch issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/aws-cloudwatch/troubleshooting/)
+- [Grafana community forum](https://community.grafana.com/)
