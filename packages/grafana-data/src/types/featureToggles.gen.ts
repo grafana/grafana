@@ -1256,6 +1256,11 @@ export interface FeatureToggles {
   */
   pluginInsights?: boolean;
   /**
+  * Show the Plugin Scorecard — safety, quality and community scores — in the plugin detail page
+  * @default false
+  */
+  pluginScorecard?: boolean;
+  /**
   * Enables a new panel time settings drawer
   * @default false
   */

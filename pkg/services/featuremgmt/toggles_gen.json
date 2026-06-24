@@ -4060,6 +4060,20 @@
     },
     {
       "metadata": {
+        "name": "pluginInsightsScore",
+        "resourceVersion": "1782353839743",
+        "creationTimestamp": "2026-06-25T02:17:19Z",
+        "deletionTimestamp": "2026-06-25T02:57:02Z"
+      },
+      "spec": {
+        "description": "Show OpenSSF Scorecard security insights for plugins in the plugin details page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginInstallAPISync",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2025-10-24T12:09:26Z"
@@ -4080,6 +4094,47 @@
       "spec": {
         "description": "Preserve plugin proxy trailing slash.",
         "stage": "GA",
+        "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginScorecard",
+        "resourceVersion": "1782356222979",
+        "creationTimestamp": "2026-06-25T02:57:02Z"
+      },
+      "spec": {
+        "description": "Show the Plugin Scorecard — safety, quality and community scores — in the plugin detail page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginScorecardBadge",
+        "resourceVersion": "1782356222979",
+        "creationTimestamp": "2026-06-25T02:57:02Z",
+        "deletionTimestamp": "2026-06-25T03:07:20Z"
+      },
+      "spec": {
+        "description": "Show compact Plugin Scorecard badges on plugin cards in the catalog browse page",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-catalog",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginSecurityInsights",
+        "resourceVersion": "1782341771755",
+        "creationTimestamp": "2026-06-24T22:56:11Z",
+        "deletionTimestamp": "2026-06-25T02:17:19Z"
+      },
+      "spec": {
+        "description": "Show OpenSSF Scorecard security insights for plugins in the plugin details page",
+        "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
         "expression": "false"
       }

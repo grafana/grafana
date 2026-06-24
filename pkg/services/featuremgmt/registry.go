@@ -2297,6 +2297,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "pluginScorecard",
+			Description: "Show the Plugin Scorecard — safety, quality and community scores — in the plugin detail page",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Owner:       grafanaCatalogSquad,
+			Expression:  "false",
+		},
+		{
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},

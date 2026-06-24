@@ -718,6 +718,10 @@ const (
 	// Exclude redundant individual dashboard/folder permissions from managed roles at query time
 	FlagExcludeRedundantManagedPermissions = "excludeRedundantManagedPermissions"
 
+	// FlagPluginScorecard
+	// Show the Plugin Scorecard — safety, quality and community scores — in the plugin detail page
+	FlagPluginScorecard = "pluginScorecard"
+
 	// FlagPanelTimeSettings
 	// Enables a new panel time settings drawer
 	FlagPanelTimeSettings = "panelTimeSettings"
