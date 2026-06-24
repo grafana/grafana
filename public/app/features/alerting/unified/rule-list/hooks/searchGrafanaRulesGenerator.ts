@@ -66,6 +66,7 @@ function mapHitToGrafanaRuleWithOrigin(
     groupIdentifier,
     namespaceName: folderTitleByUid.get(folderUid) ?? folderUid,
     origin: 'grafana',
+    interval: hit.interval,
   };
 }
 

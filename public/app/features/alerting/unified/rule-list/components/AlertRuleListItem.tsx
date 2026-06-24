@@ -5,7 +5,7 @@ import { type ReactNode, forwardRef, memo, useEffect, useId } from 'react';
 import { AlertLabels, StateIcon } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type Rule,
   type RuleGroupIdentifierV2,
@@ -28,7 +28,8 @@ import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datas
 import { getGroupOriginName } from '../../utils/groupIdentifier';
 import { labelsSize } from '../../utils/labels';
 import { createContactPointSearchLink, makeDataSourceLink } from '../../utils/misc';
-import { type RulePluginOrigin } from '../../utils/rules';
+import { type RulePluginOrigin, isUngroupedRuleGroup } from '../../utils/rules';
+import { formatPrometheusDuration, safeParsePrometheusDuration } from '../../utils/time';
 
 import { GroupIntervalIndicator } from './GroupIntervalMetadata';
 import { ListItem } from './ListItem';
@@ -60,6 +61,13 @@ export interface AlertRuleListItemProps {
   operation?: 'creating' | 'deleting';
   // the grouped view doesn't need to show the location again – it's redundant
   showLocation?: boolean;
+  // Option 2: render the group as a ghost chip on the right of the row (before the actions) and
+  // drop it from the location breadcrumb (the folder is still shown, since a rule can live in a
+  // nested folder). The chip also carries the group's evaluation interval (`groupInterval`).
+  groupAsPill?: boolean;
+  // Group evaluation interval as a Prometheus duration (e.g. "1m"). Shown inside the row-level
+  // chip — alongside the group when there is one, or on its own for ungrouped rules.
+  groupInterval?: string;
   querySourceUIDs?: string[];
   // Evaluation interval (in seconds) for the rule. Only set for rules that belong to artificial
   // `no_group_for_rule_*` groups, where the group header — which normally surfaces this — isn't
@@ -93,22 +101,28 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
     actions = null,
     operation,
     showLocation = true,
+    groupAsPill = false,
+    groupInterval,
     querySourceUIDs = [],
     evalIntervalSeconds,
   } = props;
 
   const listItemAriaId = useId();
 
+  const showGroupPill = groupAsPill && hasRealGroup(group);
+
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation) {
+  if (namespace && (group || showGroupPill) && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation
           namespace={namespace}
-          group={group}
+          group={group ?? ''}
           groupUrl={groupUrl}
           rulesSource={rulesSource}
           application={application}
+          // In pill mode the group moves to a pill, so the breadcrumb shows the folder only.
+          hideGroup={showGroupPill}
         />
       </Text>
     );
@@ -184,11 +198,7 @@ export const AlertRuleListItem = (props: AlertRuleListItemProps) => {
       }
       actions={actions}
       meta={metadata}
-      metaRight={
-        evalIntervalSeconds !== undefined
-          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
-          : undefined
-      }
+      metaRight={buildRuleMetaRight({ groupAsPill, group, groupUrl, groupInterval, evalIntervalSeconds })}
     />
   );
 };
@@ -213,19 +223,25 @@ export function RecordingRuleListItem({
   origin,
   actions,
   showLocation = true,
+  groupAsPill = false,
+  groupInterval,
   querySourceUIDs = [],
   evalIntervalSeconds,
 }: RecordingRuleListItemProps) {
+  const showGroupPill = groupAsPill && hasRealGroup(group);
+
   const metadata: ReactNode[] = [];
-  if (namespace && group && showLocation) {
+  if (namespace && (group || showGroupPill) && showLocation) {
     metadata.push(
       <Text color="secondary" variant="bodySmall">
         <RuleLocation
           namespace={namespace}
-          group={group}
+          group={group ?? ''}
           groupUrl={groupUrl}
           rulesSource={rulesSource}
           application={application}
+          // In pill mode the group moves to a pill, so the breadcrumb shows the folder only.
+          hideGroup={showGroupPill}
         />
       </Text>
     );
@@ -255,11 +271,7 @@ export function RecordingRuleListItem({
       icon={<StateIcon type="recording" health={ruleHealth} isPaused={isPaused} />}
       actions={actions}
       meta={metadata}
-      metaRight={
-        evalIntervalSeconds !== undefined
-          ? [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />]
-          : undefined
-      }
+      metaRight={buildRuleMetaRight({ groupAsPill, group, groupUrl, groupInterval, evalIntervalSeconds })}
     />
   );
 }
@@ -313,6 +325,84 @@ export function RuleOperationListItem({
       icon={<StateIcon operation={operation} />}
       meta={metadata}
     />
+  );
+}
+
+/** A real group is a non-empty group that isn't the artificial `no_group_for_rule_*` sentinel. */
+function hasRealGroup(group: string | undefined): boolean {
+  return !!group && !isUngroupedRuleGroup(group);
+}
+
+interface BuildRuleMetaRightOptions {
+  groupAsPill: boolean;
+  group?: string;
+  groupUrl?: string;
+  groupInterval?: string;
+  evalIntervalSeconds?: number;
+}
+
+/**
+ * Right-aligned row metadata (rendered just before the actions). In the chip modes this is the
+ * ghost group/interval chip; otherwise it falls back to the legacy seconds-based interval used by
+ * the artificial `no_group_for_rule_*` rows.
+ */
+function buildRuleMetaRight(opts: BuildRuleMetaRightOptions): ReactNode[] | undefined {
+  const { groupAsPill, group, groupUrl, groupInterval, evalIntervalSeconds } = opts;
+
+  if (groupAsPill) {
+    const realGroup = hasRealGroup(group) ? group : undefined;
+    if (!realGroup && !groupInterval) {
+      return undefined;
+    }
+    return [<RuleGroupChip key="chip" group={realGroup} groupUrl={groupUrl} interval={groupInterval} />];
+  }
+
+  if (evalIntervalSeconds !== undefined) {
+    return [<GroupIntervalIndicator key="interval" seconds={evalIntervalSeconds} />];
+  }
+
+  return undefined;
+}
+
+interface RuleGroupChipProps {
+  group?: string;
+  groupUrl?: string;
+  interval?: string;
+}
+
+/**
+ * Ghost chip surfacing a rule's group and/or evaluation interval. A hairline outline with no fill
+ * (less invasive than a filled badge). The group name links to the group details page; the
+ * interval is rendered identically whether or not a group is present, so grouped and ungrouped
+ * rows stay visually consistent.
+ */
+function RuleGroupChip({ group, groupUrl, interval }: RuleGroupChipProps) {
+  const styles = useStyles2(getStyles);
+
+  const intervalLabel = interval ? formatPrometheusDuration(safeParsePrometheusDuration(interval)) : undefined;
+  if (!group && !intervalLabel) {
+    return null;
+  }
+
+  const chip = (
+    <span className={styles.ghostChip}>
+      {group && <span>{group}</span>}
+      {group && intervalLabel && <span className={styles.ghostChipSeparator}>·</span>}
+      {intervalLabel && (
+        <span className={styles.ghostChipInterval}>
+          <Icon name="clock-nine" size="xs" />
+          {intervalLabel}
+        </span>
+      )}
+    </span>
+  );
+
+  return group && groupUrl ? (
+    <a href={groupUrl} className={styles.ghostChipLink}>
+      {chip}
+    </a>
+  ) : (
+    chip
   );
 }
 
@@ -491,6 +581,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   resetMargin: css({
     margin: 0,
+  }),
+  ghostChip: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+    padding: theme.spacing(0.25, 0.75),
+    borderRadius: theme.shape.radius.default,
+    border: `1px solid ${theme.colors.border.weak}`,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+    lineHeight: theme.typography.bodySmall.lineHeight,
+    whiteSpace: 'nowrap',
+  }),
+  ghostChipInterval: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.25),
+  }),
+  ghostChipSeparator: css({
+    color: theme.colors.text.disabled,
+  }),
+  ghostChipLink: css({
+    textDecoration: 'none',
+    '&:hover > span': {
+      borderColor: theme.colors.border.medium,
+      color: theme.colors.text.primary,
+    },
   }),
   ruleLabels: {
     tooltip: css({
