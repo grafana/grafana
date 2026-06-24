@@ -68,8 +68,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   scorePill: (severity: 'error' | 'warning' | 'success') =>
     css({
       display: 'inline-block',
-      background: theme.colors[severity].main,
-      color: theme.colors[severity].contrastText,
+      backgroundColor: theme.colors[severity].transparent,
+      color: theme.colors[severity].text,
+      border: `1px solid ${theme.colors[severity].borderTransparent}`,
       borderRadius: theme.shape.radius.pill,
       padding: `${theme.spacing(0.25)} ${theme.spacing(0.75)}`,
       fontSize: theme.typography.bodySmall.fontSize,
