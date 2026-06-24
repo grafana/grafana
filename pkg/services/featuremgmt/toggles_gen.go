@@ -566,6 +566,10 @@ const (
 	// Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
 	FlagAzureMonitorBatchAPI = "azureMonitorBatchAPI"
 
+	// FlagAzureMonitorBatchFallback
+	// Falls back to the ARM batch endpoint when an Azure Monitor Metrics Batch API request fails with a retryable error
+	FlagAzureMonitorBatchFallback = "azureMonitor.batchFallback"
+
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
 	FlagAlertingRuleRecoverDeleted = "alertingRuleRecoverDeleted"

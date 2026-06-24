@@ -1782,6 +1782,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "azureMonitor.batchFallback",
+			Description: "Falls back to the ARM batch endpoint when an Azure Monitor Metrics Batch API request fails with a retryable error",
+			Generate:    Generate{Go: true},
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
+		},
+		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
 			Generate:     Generate{LegacyFrontend: true},

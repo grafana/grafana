@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -17,7 +18,7 @@ import (
 // isBatchableQuery reports whether a backend query can be sent to the Metrics
 // Batch API. Queries that use a custom namespace (custom metrics, Application
 // Insights custom telemetry) or a Guest OS / Windows Azure Diagnostics (WAD)
-// namespace must fall back to the legacy ARM metrics endpoint — those metrics
+// namespace must fall back to the legacy ARM metrics endpoint; those metrics
 // are not exposed via the metrics-batch data plane.
 func isBatchableQuery(query backend.DataQuery) bool {
 	var model dataquery.AzureMonitorQuery
@@ -159,7 +160,7 @@ func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, d
 		groupedResources[key] = append(groupedResources[key], r)
 	}
 
-	// All resources share the same (subscription, region) — no splitting needed.
+	// All resources share the same (subscription, region); no splitting needed.
 	if len(orderedKeys) == 1 {
 		q, err := e.buildQuery(query, dsInfo)
 		if err != nil {
@@ -269,26 +270,36 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 	batches := createBatches(groupQueriesForBatch(azureQueries))
 	batchResults := executeBatchRequests(ctx, batches, batchClient)
 
+	// When a batch fails with a retryable error, fall back to re-fetching that batch's
+	// resources via the ARM /batch endpoint (gated behind a flag). Build a RefID to original
+	// query map so the fallback can rebuild per-resource queries.
+	fallbackEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitor.batchFallback")
+	originalByRefID := make(map[string]backend.DataQuery, len(batchableQueries))
+	for _, q := range batchableQueries {
+		originalByRefID[q.RefID] = q
+	}
+
 	// For each batch: distribute frames to their RefID responses, then attribute
 	// any error (HTTP failure or per-metric parse error) to the affected queries.
 	// Frames from successful batches are preserved even when another batch fails.
 	azurePortalURL := dsInfo.Routes[types.RouteAzurePortal].URL
 	for _, br := range batchResults {
 		if br.Err != nil {
-			// HTTP-level failure: attribute the error to every query in the batch.
-			for _, q := range br.Batch.Queries {
-				attachErr(result, q.RefID, br.Err)
+			if fallbackEnabled && isRetryableStatus(br.StatusCode) {
+				e.fallbackBatch(ctx, br, originalByRefID, dsInfo, client, armURL, azurePortalURL, result)
+			} else {
+				// Not retryable (or fallback disabled): attribute the error to every
+				// query in the batch.
+				for _, q := range br.Batch.Queries {
+					attachErr(result, q.RefID, br.Err)
+				}
 			}
 			continue
 		}
 
 		// Successful HTTP response: parse and distribute frames.
 		frames, parseErr := parseBatchResponse(br, azurePortalURL)
-		for _, frame := range frames {
-			dr := result.Responses[frame.RefID]
-			dr.Frames = append(dr.Frames, frame)
-			result.Responses[frame.RefID] = dr
-		}
+		appendFrames(result, frames)
 		if parseErr != nil {
 			// Per-metric or parse error: surface to every query in the batch so
 			// users see it in the Grafana UI rather than it being silently dropped.

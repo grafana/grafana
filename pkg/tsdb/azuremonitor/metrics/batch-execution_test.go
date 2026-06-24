@@ -3,9 +3,11 @@ package metrics
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +41,14 @@ func (t *redirectTransport) RoundTrip(req *http.Request) (*http.Response, error)
 func batchCtx() context.Context {
 	cfg := config.NewGrafanaCfg(map[string]string{
 		featuretoggles.EnabledFeatures: "azureMonitorBatchAPI",
+	})
+	return config.WithGrafanaConfig(context.Background(), cfg)
+}
+
+// batchFallbackCtx enables both the batch API and the ARM /batch fallback flags.
+func batchFallbackCtx() context.Context {
+	cfg := config.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "azureMonitorBatchAPI,azureMonitor.batchFallback",
 	})
 	return config.WithGrafanaConfig(context.Background(), cfg)
 }
@@ -269,7 +279,7 @@ func TestExecuteBatchTimeSeriesQuery(t *testing.T) {
 		})
 
 		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
-		// Context has the feature flag but BatchAPIEnabled is false — should NOT use batch path
+		// Context has the feature flag but BatchAPIEnabled is false; should NOT use batch path
 		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
 		require.NoError(t, err)
 		assert.Contains(t, resp.Responses, "A")
@@ -307,4 +317,233 @@ func TestIsBatchableQuery(t *testing.T) {
 			assert.Equal(t, tt.want, isBatchableQuery(makeQuery(tt.metricNamespace, tt.customNamespace)))
 		})
 	}
+}
+
+func TestExecuteBatchTimeSeriesQueryFallback(t *testing.T) {
+	ds := &AzureMonitorDatasource{Logger: log.NewNullLogger()}
+	armResponse := loadTestFile(t, "azuremonitor/1-azure-monitor-response-avg.json")
+	armContent, _ := json.Marshal(armResponse)
+
+	// armBatchOK echoes each incoming sub-request name with a 200 + the metrics fixture,
+	// imitating the undocumented ARM /batch response envelope.
+	armBatchOK := func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Requests []struct {
+				Name string `json:"name"`
+			} `json:"requests"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		type sub struct {
+			Name           string          `json:"name"`
+			HTTPStatusCode int             `json:"httpStatusCode"`
+			Content        json.RawMessage `json:"content"`
+		}
+		out := struct {
+			Responses []sub `json:"responses"`
+		}{}
+		for _, req := range body.Requests {
+			out.Responses = append(out.Responses, sub{Name: req.Name, HTTPStatusCode: 200, Content: armContent})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		b, _ := json.Marshal(out)
+		_, _ = w.Write(b)
+	}
+
+	oneResource := []dataquery.AzureMonitorResource{
+		{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+	}
+
+	t.Run("retryable failure falls back to ARM /batch and returns frames", func(t *testing.T) {
+		var batchHit, fallbackHit bool
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case strings.Contains(r.URL.Path, "metrics:getBatch"):
+				batchHit = true
+				http.Error(w, `{"error":{"code":"TooManyRequests"}}`, http.StatusTooManyRequests)
+			case strings.HasSuffix(r.URL.Path, "/batch"):
+				fallbackHit = true
+				armBatchOK(w, r)
+			default:
+				t.Errorf("unexpected request path: %s", r.URL.Path)
+			}
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		assert.True(t, batchHit, "metrics:getBatch should have been attempted")
+		assert.True(t, fallbackHit, "ARM /batch fallback should have been called")
+		dr := resp.Responses["A"]
+		assert.Nil(t, dr.Error)
+		assert.NotEmpty(t, dr.Frames, "fallback should have produced frames")
+	})
+
+	t.Run("fallback flag off: error surfaced, no ARM /batch call", func(t *testing.T) {
+		var fallbackHit bool
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasSuffix(r.URL.Path, "/batch") {
+				fallbackHit = true
+			}
+			http.Error(w, `{"error":{"code":"TooManyRequests"}}`, http.StatusTooManyRequests)
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		// batchCtx() enables the batch API but NOT the fallback flag.
+		resp, err := ds.ExecuteTimeSeriesQuery(batchCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		assert.False(t, fallbackHit, "fallback must not run when the flag is off")
+		assert.NotNil(t, resp.Responses["A"].Error, "the batch error should be surfaced")
+	})
+
+	t.Run("non-retryable failure (400): no fallback", func(t *testing.T) {
+		var fallbackHit bool
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasSuffix(r.URL.Path, "/batch") {
+				fallbackHit = true
+			}
+			http.Error(w, `{"error":{"code":"BadRequest"}}`, http.StatusBadRequest)
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		assert.False(t, fallbackHit, "400 is not retryable; fallback must not run")
+		assert.NotNil(t, resp.Responses["A"].Error)
+	})
+
+	t.Run("ARM /batch itself fails: query fails, no fan-out to individual", func(t *testing.T) {
+		var individualHit bool
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case strings.Contains(r.URL.Path, "metrics:getBatch"):
+				http.Error(w, `{"error":{}}`, http.StatusTooManyRequests)
+			case strings.HasSuffix(r.URL.Path, "/batch"):
+				http.Error(w, `{"error":{}}`, http.StatusInternalServerError) // ARM /batch fails
+			case strings.Contains(r.URL.Path, "/providers/microsoft.insights/metrics"):
+				individualHit = true
+				w.Header().Set("Content-Type", "application/json")
+				b, _ := json.Marshal(armResponse)
+				_, _ = w.Write(b)
+			default:
+				// subscription-details lookup used for legend formatting
+				_, _ = w.Write([]byte(`{"displayName":"Test Sub"}`))
+			}
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", oneResource)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		assert.False(t, individualHit, "must not fan out to individual /metrics when ARM /batch fails")
+		assert.NotNil(t, resp.Responses["A"].Error, "query should fail when the ARM /batch fallback fails")
+	})
+
+	t.Run("more than maxARMBatchSize resources: fallback chunks into multiple ARM /batch calls", func(t *testing.T) {
+		const resourceCount = maxARMBatchSize + 5 // 25 -> chunks of 20 + 5
+		resources := make([]dataquery.AzureMonitorResource, 0, resourceCount)
+		for i := 0; i < resourceCount; i++ {
+			resources = append(resources, dataquery.AzureMonitorResource{
+				Subscription:  strPtr("sub-123"),
+				ResourceGroup: strPtr("rg"),
+				ResourceName:  strPtr(fmt.Sprintf("vm%d", i)),
+				Region:        strPtr("eastus"),
+			})
+		}
+
+		// The single failed batch fans out after wg.Wait(), so this counter is only
+		// ever touched from the calling goroutine.
+		var batchCalls int
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case strings.Contains(r.URL.Path, "metrics:getBatch"):
+				http.Error(w, `{"error":{"code":"TooManyRequests"}}`, http.StatusTooManyRequests)
+			case strings.HasSuffix(r.URL.Path, "/batch"):
+				batchCalls++
+				armBatchOK(w, r)
+			default:
+				t.Errorf("unexpected request path: %s", r.URL.Path)
+			}
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", resources)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		assert.Equal(t, 2, batchCalls, "25 resources should chunk into two ARM /batch calls (20 + 5)")
+		dr := resp.Responses["A"]
+		assert.Nil(t, dr.Error)
+		assert.NotEmpty(t, dr.Frames)
+	})
+
+	t.Run("partial failure in ARM /batch response: failed resource errors, others still return frames", func(t *testing.T) {
+		resources := []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub-123"), ResourceGroup: strPtr("rg"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		}
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch {
+			case strings.Contains(r.URL.Path, "metrics:getBatch"):
+				http.Error(w, `{"error":{}}`, http.StatusTooManyRequests)
+			case strings.HasSuffix(r.URL.Path, "/batch"):
+				// Return 200 for the first sub-request and 403 for the rest, so the
+				// response is a successful envelope carrying a per-resource failure.
+				var body struct {
+					Requests []struct {
+						Name string `json:"name"`
+					} `json:"requests"`
+				}
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				type sub struct {
+					Name           string          `json:"name"`
+					HTTPStatusCode int             `json:"httpStatusCode"`
+					Content        json.RawMessage `json:"content"`
+				}
+				out := struct {
+					Responses []sub `json:"responses"`
+				}{}
+				for i, req := range body.Requests {
+					if i == 0 {
+						out.Responses = append(out.Responses, sub{Name: req.Name, HTTPStatusCode: 200, Content: armContent})
+					} else {
+						out.Responses = append(out.Responses, sub{Name: req.Name, HTTPStatusCode: 403, Content: json.RawMessage(`{"error":{"code":"Forbidden"}}`)})
+					}
+				}
+				w.Header().Set("Content-Type", "application/json")
+				b, _ := json.Marshal(out)
+				_, _ = w.Write(b)
+			default:
+				t.Errorf("unexpected request path: %s", r.URL.Path)
+			}
+		}))
+		defer srv.Close()
+
+		dsInfo := makeBatchDsInfo(srv)
+		q := makeBatchQuery("A", "sub-123", "eastus", resources)
+		cli := &http.Client{Transport: &redirectTransport{target: mustParseURL(srv.URL)}}
+
+		resp, err := ds.ExecuteTimeSeriesQuery(batchFallbackCtx(), []backend.DataQuery{q}, dsInfo, cli, srv.URL, false)
+		require.NoError(t, err)
+		dr := resp.Responses["A"]
+		assert.NotNil(t, dr.Error, "the failed sub-response should surface an error")
+		assert.NotEmpty(t, dr.Frames, "the successful sub-response should still produce frames")
+	})
 }
