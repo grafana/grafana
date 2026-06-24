@@ -67,8 +67,26 @@ const DefaultRendererAuthToken = "-"
 
 // ProvisioningMaxFileSizeDefault is the default value for the
 // [provisioning] max_file_size key (5 MiB). It bounds files read from or
-// written to a provisioning repository through the files API.
+// written to a provisioning repository through the files API, and caps
+// single-object git fetches (blob/tree/commit) so an oversized response is
+// aborted mid-read instead of buffered in memory.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
+
+// ProvisioningMaxBulkFetchSizeDefault is the default value for the
+// [provisioning] max_bulk_fetch_size key (100 MiB). It caps multi-object git
+// fetches (recursive tree listings, commit comparisons) so a malicious or
+// misbehaving server cannot exhaust client memory.
+const ProvisioningMaxBulkFetchSizeDefault int64 = 100 * 1024 * 1024
+
+// ProvisioningMaxRefsSizeDefault is the default value for the
+// [provisioning] max_refs_size key (10 MiB). It caps git ref-listing and
+// protocol-detection responses.
+const ProvisioningMaxRefsSizeDefault int64 = 10 * 1024 * 1024
+
+// ProvisioningMaxPushResponseSizeDefault is the default value for the
+// [provisioning] max_push_response_size key (10 MiB). It caps the
+// git-receive-pack reply to a push.
+const ProvisioningMaxPushResponseSizeDefault int64 = 10 * 1024 * 1024
 
 var (
 	customInitPath = "conf/custom.ini"
@@ -173,6 +191,9 @@ type Cfg struct {
 	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxBulkFetchSize              int64         // bytes; default 100 MiB; <=0 = unlimited
+	ProvisioningMaxRefsSize                   int64         // bytes; default 10 MiB; <=0 = unlimited
+	ProvisioningMaxPushResponseSize           int64         // bytes; default 10 MiB; <=0 = unlimited
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
@@ -2563,6 +2584,9 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxBulkFetchSize = iniFile.Section("provisioning").Key("max_bulk_fetch_size").MustInt64(ProvisioningMaxBulkFetchSizeDefault)
+	cfg.ProvisioningMaxRefsSize = iniFile.Section("provisioning").Key("max_refs_size").MustInt64(ProvisioningMaxRefsSizeDefault)
+	cfg.ProvisioningMaxPushResponseSize = iniFile.Section("provisioning").Key("max_push_response_size").MustInt64(ProvisioningMaxPushResponseSizeDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 

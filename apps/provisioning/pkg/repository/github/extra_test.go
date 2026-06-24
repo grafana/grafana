@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,7 @@ func (m *mockSecureValues) CommitSigningKey(_ context.Context) (common.RawSecure
 }
 
 func TestExtra_Type(t *testing.T) {
-	e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false, 0)
+	e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false, git.Limits{})
 	assert.Equal(t, provisioning.GitHubRepositoryType, e.Type())
 }
 
@@ -362,7 +363,7 @@ func TestExtra_Build(t *testing.T) {
 			webhookBuilder := tt.setupWebhook(t, tt.repo)
 			factory := github.ProvideFactory()
 
-			e := github.Extra(decrypter, factory, webhookBuilder, repository.IncrementalSyncPolicy{}, false, 0)
+			e := github.Extra(decrypter, factory, webhookBuilder, repository.IncrementalSyncPolicy{}, false, git.Limits{})
 
 			result, err := e.Build(ctx, tt.repo)
 
@@ -492,7 +493,7 @@ func TestExtra_Mutate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 
-			e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false, 0)
+			e := github.Extra(nil, nil, nil, repository.IncrementalSyncPolicy{}, false, git.Limits{})
 
 			err := e.Mutate(ctx, tt.obj)
 

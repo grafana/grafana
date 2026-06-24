@@ -14,16 +14,15 @@ type extra struct {
 	decrypter repository.Decrypter
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
-	// maxFileSize caps, in bytes, the size of a single file read from the
-	// repository. 0 means unlimited.
-	maxFileSize int64
+	// limits caps, in bytes, the git response sizes read from the repository.
+	limits Limits
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool, maxFileSize int64) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, limits Limits) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
-		maxFileSize:   maxFileSize,
+		limits:        limits,
 	}
 }
 
@@ -58,7 +57,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
-		MaxFileSize:      e.maxFileSize,
+		Limits:           e.limits,
 	})
 }
 

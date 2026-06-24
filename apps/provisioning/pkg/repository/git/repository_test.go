@@ -2277,10 +2277,10 @@ func TestNewGitRepository(t *testing.T) {
 		{
 			name: "success - with max file size",
 			gitConfig: RepositoryConfig{
-				URL:         "https://git.example.com/owner/repo.git",
-				Branch:      "main",
-				Token:       "plain-token",
-				MaxFileSize: 1024,
+				URL:    "https://git.example.com/owner/repo.git",
+				Branch: "main",
+				Token:  "plain-token",
+				Limits: Limits{MaxFileSize: 1024},
 			},
 			wantError:      false,
 			expectURL:      "https://git.example.com/owner/repo.git",

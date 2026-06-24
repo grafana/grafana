@@ -39,19 +39,25 @@ func ProvideProvisioningOSSRepositoryExtras(
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure
+	limits := git.Limits{
+		MaxFileSize:         cfg.ProvisioningMaxFileSize,
+		MaxBulkFetchSize:    cfg.ProvisioningMaxBulkFetchSize,
+		MaxRefsSize:         cfg.ProvisioningMaxRefsSize,
+		MaxPushResponseSize: cfg.ProvisioningMaxPushResponseSize,
+	}
 	return []repository.Extra{
 		local.Extra(
 			cfg.HomePath,
 			cfg.PermittedProvisioningPaths,
 		),
-		git.Extra(decrypter, allowInsecure, cfg.ProvisioningMaxFileSize),
+		git.Extra(decrypter, allowInsecure, limits),
 		github.Extra(
 			decrypter,
 			ghFactory,
 			webhooksBuilder,
 			repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges),
 			allowInsecure,
-			cfg.ProvisioningMaxFileSize,
+			limits,
 		),
 	}
 }
