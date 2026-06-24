@@ -5,6 +5,7 @@ import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import {
   ensureAlertAnnotations,
+  generateAlertDescriptionForGrafanaRule,
   getMissingRequiredAnnotationFields,
   validateRequiredAlertAnnotations,
 } from './alert-annotations';
@@ -112,6 +113,17 @@ describe('validateRequiredAlertAnnotations', () => {
     expect(validateRequiredAlertAnnotations(values, setError)).toBe(false);
     expect(setError).toHaveBeenCalledWith('annotations.0.value', expect.objectContaining({ type: 'required' }));
     expect(setError).toHaveBeenCalledWith('annotations.1.value', expect.objectContaining({ type: 'required' }));
+  });
+});
+
+describe('generateAlertDescriptionForGrafanaRule', () => {
+  it('generates a description from rule title and queries', () => {
+    const dto = formValuesToRulerGrafanaRuleDTO(buildGrafanaAlertValues());
+    const description = generateAlertDescriptionForGrafanaRule(dto);
+
+    expect(description).toContain('Alert rule "API availability" monitors query A: up{job="api"} == 0');
+    expect(description).toContain('It fires when last() is above 0');
+    expect(description).toContain('The condition must hold for 5m before firing');
   });
 });
 

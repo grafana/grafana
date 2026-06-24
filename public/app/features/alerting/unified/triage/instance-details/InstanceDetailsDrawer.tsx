@@ -36,6 +36,7 @@ import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
 
 import { DrawerTimeRangeInfoBanner } from './DrawerTimeRangeInfoBanner';
+import { ExplainDrawer, ExplainDrawerLoading } from './ExplainDrawer';
 import { InstanceDetailsDrawerTitle } from './InstanceDetailsDrawerTitle';
 import { InstanceSilenceForm } from './InstanceSilenceForm';
 import { InstanceStateInfoBanner } from './InstanceStateInfoBanner';
@@ -86,6 +87,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   const theme = useTheme2();
   const { rightColumnWidth } = useWorkbenchContext();
   const [viewStack, setViewStack] = useState<DrawerView[]>([{ type: 'instance-details' }]);
+  const [isExplainOpen, setIsExplainOpen] = useState(false);
   const closeSilenceTimerRef = useRef<number | undefined>(undefined);
   const [isClosingSilenceDrawer, setIsClosingSilenceDrawer] = useState(false);
 
@@ -214,15 +216,32 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
     setViewStack((current) => [...current, { type: 'silence' }]);
   }, []);
 
+  const handleOpenExplain = useCallback(() => {
+    setIsExplainOpen(true);
+  }, []);
+
+  const handleCloseExplain = useCallback(() => {
+    setIsExplainOpen(false);
+  }, []);
+
   const sharedTitleProps = useMemo(
     () => ({
       instanceLabels,
       commonLabels,
       alertState: instanceState,
       onOpenSilence: handleOpenSilence,
+      onOpenExplain: handleOpenExplain,
     }),
-    [instanceLabels, commonLabels, instanceState, handleOpenSilence]
+    [instanceLabels, commonLabels, instanceState, handleOpenSilence, handleOpenExplain]
   );
+
+  const explainDrawer =
+    isExplainOpen &&
+    (rule ? (
+      <ExplainDrawer rule={rule} onClose={handleCloseExplain} />
+    ) : (
+      <ExplainDrawerLoading onClose={handleCloseExplain} />
+    ));
 
   const getDrawerTitle = () => <InstanceDetailsDrawerTitle {...sharedTitleProps} rule={rule?.grafana_alert} />;
 
@@ -302,9 +321,12 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   if (error || loading || !rule) {
     return (
-      <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
-        {getInstanceDetailsBody()}
-      </Drawer>
+      <>
+        <Drawer title={getDrawerTitle()} onClose={handleDrawerClose} width={drawerWidth}>
+          {getInstanceDetailsBody()}
+        </Drawer>
+        {explainDrawer}
+      </>
     );
   }
 
@@ -335,23 +357,27 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
         >
           <InstanceSilenceForm ruleUid={ruleUID} instanceLabels={instanceLabels} onClose={animateCloseSilenceDrawer} />
         </Drawer>
+        {explainDrawer}
       </>
     );
   }
 
   return (
-    <Drawer
-      title={
-        <Stack direction="column" gap={1}>
-          {canGoBack && <DrawerBackButton onClick={handleBack} />}
-          {getDrawerTitle()}
-        </Stack>
-      }
-      onClose={handleDrawerClose}
-      width={drawerWidth}
-    >
-      {getInstanceDetailsBody()}
-    </Drawer>
+    <>
+      <Drawer
+        title={
+          <Stack direction="column" gap={1}>
+            {canGoBack && <DrawerBackButton onClick={handleBack} />}
+            {getDrawerTitle()}
+          </Stack>
+        }
+        onClose={handleDrawerClose}
+        width={drawerWidth}
+      >
+        {getInstanceDetailsBody()}
+      </Drawer>
+      {explainDrawer}
+    </>
   );
 }
 

@@ -15,6 +15,7 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 import { MATCHER_ALERT_RULE_UID } from '../../utils/constants';
 import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '../../utils/misc';
 
+import { ExplainButton } from './ExplainButton';
 import { InstanceLocation } from './InstanceDetailsDrawer';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
@@ -48,6 +49,7 @@ interface InstanceDetailsDrawerTitleProps {
   alertState?: GrafanaAlertState | null;
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
+  onOpenExplain?: () => void;
   titleText?: string;
   /** Overrides the muted label above the title (defaults to Alert Instance). */
   sectionLabel?: ReactNode;
@@ -62,6 +64,7 @@ export function InstanceDetailsDrawerTitle({
   alertState,
   rule,
   onOpenSilence,
+  onOpenExplain,
   titleText,
   sectionLabel,
   hideActions = false,
@@ -120,6 +123,7 @@ export function InstanceDetailsDrawerTitle({
           </Stack>
           {!hideActions && (
             <Stack direction="row" gap={1} alignItems="center">
+              {onOpenExplain && <ExplainButton onClick={onOpenExplain} />}
               {silenceLink && (
                 <>
                   {canSilence && onOpenSilence && (

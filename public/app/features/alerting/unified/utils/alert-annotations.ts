@@ -4,9 +4,10 @@ import { t } from '@grafana/i18n';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType, reducerTypes, thresholdFunctions } from 'app/features/expressions/types';
-import { type AlertQuery } from 'app/types/unified-alerting-dto';
+import { type AlertQuery, type RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { type KVObject, type RuleFormValues } from '../types/rule-form';
+import { getDefaultFormValues } from '../rule-editor/formDefaults';
+import { type KVObject, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { Annotation } from './constants';
 import { isCloudAlertingRuleByType, isGrafanaAlertingRuleByType } from './rules';
@@ -237,6 +238,28 @@ function generateGrafanaAlertDescription(values: RuleFormValues): string {
   }
 
   return parts.join(' ');
+}
+
+export function generateAlertDescriptionForGrafanaRule(rule: RulerGrafanaRuleDTO): string {
+  const { grafana_alert: grafanaAlert, for: evaluateFor } = rule;
+  const values: RuleFormValues = {
+    ...getDefaultFormValues(RuleFormType.grafana),
+    name: grafanaAlert.title,
+    type: RuleFormType.grafana,
+    condition: grafanaAlert.condition,
+    queries: grafanaAlert.data,
+    evaluateFor: evaluateFor ?? '0',
+    evaluateEvery: grafanaAlert.intervalSeconds ? `${grafanaAlert.intervalSeconds}s` : '1m',
+    group: grafanaAlert.rule_group,
+    folder: { title: '', uid: grafanaAlert.namespace_uid },
+    isPaused: Boolean(grafanaAlert.is_paused),
+    noDataState: grafanaAlert.no_data_state ?? getDefaultFormValues(RuleFormType.grafana).noDataState,
+    execErrState: grafanaAlert.exec_err_state ?? getDefaultFormValues(RuleFormType.grafana).execErrState,
+    keepFiringFor: rule.keep_firing_for ?? '0',
+    editorSettings: grafanaAlert.metadata?.editor_settings,
+  };
+
+  return generateGrafanaAlertDescription(values);
 }
 
 function generateCloudAlertSummary(values: RuleFormValues): string {
