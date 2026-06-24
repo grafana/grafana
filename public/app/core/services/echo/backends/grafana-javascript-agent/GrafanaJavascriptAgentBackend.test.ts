@@ -1,6 +1,7 @@
 import { type BuildInfo } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { type Faro, type Instrumentation } from '@grafana/faro-core';
+import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import * as faroWebSdkModule from '@grafana/faro-web-sdk';
 import {
   type BrowserConfig,
@@ -13,10 +14,16 @@ import {
   NavigationInstrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
+import * as runtimeInternal from '@grafana/runtime/internal';
+import { GRAFANA_ROUTE_CONTENT_READY_EVENT } from 'app/core/navigation/routeContentReady';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { GrafanaJavascriptAgentBackend, TRACKING_URLS } from './GrafanaJavascriptAgentBackend';
 import { type GrafanaJavascriptAgentBackendOptions } from './types';
+
+jest.mock('@grafana/faro-instrumentation-replay', () => ({
+  ReplayInstrumentation: jest.fn(),
+}));
 
 describe('GrafanaJavascriptAgentEchoBackend', () => {
   let mockedSetUser: jest.Mock;
@@ -227,4 +234,109 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
   //     // check that our custom backend got it too
   //     expect(myCustomErrorBackend.addEvent).toHaveBeenCalledTimes(1);
   //   });
+
+  describe('session replay initialization', () => {
+    let rafCallbacks: Map<number, FrameRequestCallback>;
+    let nextRafId: number;
+    // Tracked so we can remove backends' listeners between tests: a backend
+    // registered with the flag on but never started would otherwise leak its
+    // listener onto window and fire alongside the next test's backend.
+    let routeReadyListeners: EventListenerOrEventListenerObject[];
+    // Captured up front so the addEventListener spy can call through to the real
+    // implementation without recursing into itself across tests.
+    const nativeAddEventListener = EventTarget.prototype.addEventListener;
+    const nativeRemoveEventListener = EventTarget.prototype.removeEventListener;
+
+    const getAddInstrumentation = () => initializeFaroMock.mock.results[0].value.instrumentations.add;
+
+    const flushAnimationFrame = () => {
+      const callbacks = [...rafCallbacks.entries()];
+      rafCallbacks.clear();
+      callbacks.forEach(([, cb]) => cb(performance.now()));
+    };
+
+    beforeEach(() => {
+      rafCallbacks = new Map();
+      nextRafId = 0;
+      routeReadyListeners = [];
+
+      jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+        const id = ++nextRafId;
+        rafCallbacks.set(id, cb);
+        return id;
+      });
+      jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+        rafCallbacks.delete(id);
+      });
+
+      jest.spyOn(window, 'addEventListener').mockImplementation((type, listener, options) => {
+        if (type === GRAFANA_ROUTE_CONTENT_READY_EVENT && listener) {
+          routeReadyListeners.push(listener);
+        }
+        return nativeAddEventListener.call(window, type, listener, options);
+      });
+
+      // The replay path is gated behind the FaroSessionReplay feature flag.
+      jest
+        .spyOn(runtimeInternal, 'getFeatureFlagClient')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockReturnValue({ getBooleanValue: () => true } as any);
+    });
+
+    afterEach(() => {
+      routeReadyListeners.forEach((listener) =>
+        nativeRemoveEventListener.call(window, GRAFANA_ROUTE_CONTENT_READY_EVENT, listener)
+      );
+    });
+
+    it('does not start replay before route content is ready', () => {
+      new GrafanaJavascriptAgentBackend(options);
+
+      expect(getAddInstrumentation()).not.toHaveBeenCalled();
+      expect(ReplayInstrumentation).not.toHaveBeenCalled();
+    });
+
+    it('starts replay once after the route-content-ready event and two animation frames', () => {
+      new GrafanaJavascriptAgentBackend(options);
+
+      window.dispatchEvent(new CustomEvent(GRAFANA_ROUTE_CONTENT_READY_EVENT));
+      expect(getAddInstrumentation()).not.toHaveBeenCalled();
+
+      flushAnimationFrame(); // first frame schedules the second
+      expect(getAddInstrumentation()).not.toHaveBeenCalled();
+
+      flushAnimationFrame(); // second frame starts replay
+      expect(getAddInstrumentation()).toHaveBeenCalledTimes(1);
+      expect(ReplayInstrumentation).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts replay only once even if the event fires repeatedly', () => {
+      new GrafanaJavascriptAgentBackend(options);
+
+      window.dispatchEvent(new CustomEvent(GRAFANA_ROUTE_CONTENT_READY_EVENT));
+      flushAnimationFrame();
+      // A second event arrives before the start completes (e.g. an immediate redirect).
+      window.dispatchEvent(new CustomEvent(GRAFANA_ROUTE_CONTENT_READY_EVENT));
+      flushAnimationFrame();
+      flushAnimationFrame();
+
+      // And another after replay has already started.
+      window.dispatchEvent(new CustomEvent(GRAFANA_ROUTE_CONTENT_READY_EVENT));
+      flushAnimationFrame();
+      flushAnimationFrame();
+
+      expect(getAddInstrumentation()).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops listening for the event after replay has started', () => {
+      new GrafanaJavascriptAgentBackend(options);
+      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+
+      window.dispatchEvent(new CustomEvent(GRAFANA_ROUTE_CONTENT_READY_EVENT));
+      flushAnimationFrame();
+      flushAnimationFrame();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(GRAFANA_ROUTE_CONTENT_READY_EVENT, expect.any(Function));
+    });
+  });
 });
