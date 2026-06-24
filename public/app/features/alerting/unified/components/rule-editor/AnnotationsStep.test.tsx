@@ -3,9 +3,12 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
+import { setupAdminConfigGet } from '../../mocks/server/configure/admin_config';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation } from '../../utils/constants';
@@ -36,12 +39,29 @@ const ui = {
 
 const server = setupMswServer();
 
+beforeEach(() => {
+  setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+});
+
 function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
 
   return (
     <FormProvider {...formApi}>
       <AnnotationsStep />
+    </FormProvider>
+  );
+}
+
+function FormWrapperWithSubmit({ formValues }: { formValues?: Partial<RuleFormValues> }) {
+  const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
+
+  return (
+    <FormProvider {...formApi}>
+      <form onSubmit={formApi.handleSubmit(() => {})}>
+        <AnnotationsStep />
+        <button type="submit">Save</button>
+      </form>
     </FormProvider>
   );
 }
@@ -286,6 +306,62 @@ describe('AnnotationsField', function () {
     const warnedPanel = await screen.findByRole('button', { name: /First panel/ });
 
     expect(within(warnedPanel).getByTestId('warning-icon')).toBeInTheDocument();
+  });
+
+  describe('Required annotation validation', () => {
+    it('shows required errors for summary and description when reject_alerts_without_descriptions is enabled', async () => {
+      setupAdminConfigGet(server, {
+        alertmanagersChoice: AlertmanagerChoice.Internal,
+        reject_alerts_without_descriptions: true,
+      });
+
+      const { user } = render(<FormWrapperWithSubmit />);
+
+      await user.click(await screen.findByRole('button', { name: 'Save' }));
+
+      const errors = await screen.findAllByText('Required.');
+      expect(errors).toHaveLength(2);
+    });
+
+    it('shows required error for runbook_url when reject_alerts_without_runbook_url is enabled', async () => {
+      setupAdminConfigGet(server, {
+        alertmanagersChoice: AlertmanagerChoice.Internal,
+        reject_alerts_without_runbook_url: true,
+      });
+
+      const { user } = render(<FormWrapperWithSubmit />);
+
+      await user.click(await screen.findByRole('button', { name: 'Save' }));
+
+      const errors = await screen.findAllByText('Required.');
+      expect(errors).toHaveLength(1);
+    });
+
+    it('does not show required errors when flags are disabled', async () => {
+      const { user } = render(<FormWrapperWithSubmit />);
+
+      await user.click(await screen.findByRole('button', { name: 'Save' }));
+
+      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+    });
+
+    it('clears required error once annotation value is filled in', async () => {
+      setupAdminConfigGet(server, {
+        alertmanagersChoice: AlertmanagerChoice.Internal,
+        reject_alerts_without_runbook_url: true,
+      });
+
+      const { user } = render(<FormWrapperWithSubmit />);
+
+      await user.click(await screen.findByRole('button', { name: 'Save' }));
+      expect(await screen.findByText('Required.')).toBeInTheDocument();
+
+      const runbookInput = screen.getByTestId('annotation-value-2');
+      await user.type(runbookInput, 'https://my-runbook.example.com');
+      await user.click(screen.getByRole('button', { name: 'Save' }));
+
+      expect(screen.queryByText('Required.')).not.toBeInTheDocument();
+    });
   });
 
   it('should render when panels do not contain certain fields', async () => {

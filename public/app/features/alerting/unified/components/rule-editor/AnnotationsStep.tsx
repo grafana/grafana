@@ -8,6 +8,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { type RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
@@ -36,6 +37,10 @@ const AnnotationsStep = () => {
   const type = watch('type');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
+
+  const { currentData: alertingConfig } = alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+  const requireDescriptions = alertingConfig?.reject_alerts_without_descriptions ?? false;
+  const requireRunbookURL = alertingConfig?.reject_alerts_without_runbook_url ?? false;
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = Number(annotations.find((annotation) => annotation.key === Annotation.panelID)?.value);
@@ -177,7 +182,24 @@ const AnnotationsStep = () => {
                       data-testid={`annotation-value-${index}`}
                       id={`annotation-${index}`}
                       className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                      {...register(`annotations.${index}.value`)}
+                      {...register(`annotations.${index}.value`, {
+                        validate: (value) => {
+                          if (
+                            requireDescriptions &&
+                            (annotation === Annotation.summary || annotation === Annotation.description)
+                          ) {
+                            return value?.trim()
+                              ? true
+                              : t('alerting.annotations-step.required-annotation-value', 'Required.');
+                          }
+                          if (requireRunbookURL && annotation === Annotation.runbookURL) {
+                            return value?.trim()
+                              ? true
+                              : t('alerting.annotations-step.required-annotation-value', 'Required.');
+                          }
+                          return true;
+                        },
+                      })}
                       placeholder={
                         isUrl
                           ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
