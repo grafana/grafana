@@ -14,7 +14,7 @@ export function QualityTabWarningSuffix({ className }: { className?: string }) {
     <Icon
       name="exclamation-triangle"
       className={cx(styles.warning, className)}
-      title={t('alerting.quality.needs-attention', 'Some alert rules are missing annotations')}
+      title={t('alerting.quality.needs-attention', 'Some alert rules are missing required details')}
     />
   );
 }

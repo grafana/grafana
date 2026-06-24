@@ -67,8 +67,7 @@ function QualityTab() {
         <Text variant="body" color="secondary">
           <Trans i18nKey="alerting.quality.description">
             These alert rules are missing a summary, description, or runbook URL. Select <strong>Edit</strong> on a rule
-            to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically, so
-            responders know what fired and what to do.
+            to add the missing details — or use <strong>Fix with AI</strong> to generate them automatically.
           </Trans>
         </Text>
 
