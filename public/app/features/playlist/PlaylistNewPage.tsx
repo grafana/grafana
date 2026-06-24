@@ -32,10 +32,6 @@ export const PlaylistNewPage = () => {
     locationService.push('/playlists');
   };
 
-  const repositorySelect = isAvailable
-    ? { repositories, value: selectedRepository, onChange: setSelectedRepository }
-    : undefined;
-
   const pageNav: NavModelItem = {
     text: t('playlist.playlist-new-page.page-nav.text.new-playlist', 'New playlist'),
     subTitle:
@@ -45,7 +41,14 @@ export const PlaylistNewPage = () => {
   return (
     <Page navId="dashboards/playlists" pageNav={pageNav}>
       <Page.Contents>
-        <PlaylistForm onSubmit={onSubmit} playlist={playlist} repositorySelect={repositorySelect} />
+        <PlaylistForm
+          onSubmit={onSubmit}
+          playlist={playlist}
+          showRepositorySelect={isAvailable}
+          repositories={repositories}
+          selectedRepository={selectedRepository}
+          onRepositoryChange={setSelectedRepository}
+        />
       </Page.Contents>
       {provisionedPlaylist && selectedRepository && (
         <SaveProvisionedPlaylistDrawer

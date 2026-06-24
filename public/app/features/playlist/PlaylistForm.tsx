@@ -17,29 +17,32 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
 
-/**
- * Repository selection for saving the playlist to a provisioning repository.
- * Read-only mode derives the value from the playlist itself (the repository can't be changed after
- * creation); editable mode is controlled by the caller.
- */
-export type PlaylistRepositorySelect =
-  | { repositories: RepositoryView[]; readOnly: true }
-  | {
-      repositories: RepositoryView[];
-      readOnly?: false;
-      /** Selected repository name. Empty string = "no repository" (save to Grafana). */
-      value: string;
-      onChange: (repositoryName: string) => void;
-    };
-
 interface Props {
   onSubmit: (playlist: Playlist) => void;
   playlist: Playlist;
-  /** When provided, renders a repository selector at the top of the form. */
-  repositorySelect?: PlaylistRepositorySelect;
+  /** Renders a repository selector at the top of the form. */
+  showRepositorySelect?: boolean;
+  /** Repositories to choose from (may be empty). */
+  repositories?: RepositoryView[];
+  /** Selected repository name. Empty string = "no repository" (save to Grafana). */
+  selectedRepository?: string;
+  onRepositoryChange?: (repositoryName: string) => void;
+  /**
+   * Locks the repository selector (the repository can't be changed after creation). The displayed
+   * value is then derived from the playlist itself rather than `selectedRepository`.
+   */
+  disableRepositorySelect?: boolean;
 }
 
-export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) => {
+export const PlaylistForm = ({
+  onSubmit,
+  playlist,
+  showRepositorySelect,
+  repositories = [],
+  selectedRepository,
+  onRepositoryChange,
+  disableRepositorySelect,
+}: Props) => {
   const [saving, setSaving] = useState(false);
   const playlistNameId = useId();
   const playlistIntervalId = useId();
@@ -50,14 +53,13 @@ export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) =>
 
   const { items, addByUID, addByTag, deleteItem, moveItem } = usePlaylistItems(propItems);
 
-  // In read-only mode the repository can't be changed, so derive the value from the playlist
-  // (its managing repository, or "no repository" when unmanaged). Editable mode is caller-controlled.
-  const repositoryFieldValue =
-    repositorySelect?.readOnly && isManagedByRepository(playlist)
+  // When the selector is locked the repository can't be changed, so derive the value from the
+  // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
+  const repositoryFieldValue = disableRepositorySelect
+    ? isManagedByRepository(playlist)
       ? (getManagerIdentity(playlist) ?? '')
-      : repositorySelect && !repositorySelect.readOnly
-        ? repositorySelect.value
-        : '';
+      : ''
+    : (selectedRepository ?? '');
 
   const doSubmit = (specUpdates: Playlist['spec']) => {
     setSaving(true);
@@ -80,13 +82,13 @@ export const PlaylistForm = ({ onSubmit, playlist, repositorySelect }: Props) =>
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0;
         return (
           <>
-            {repositorySelect && (
+            {showRepositorySelect && (
               <RepositorySelect
-                repositories={repositorySelect.repositories}
+                repositories={repositories}
                 value={repositoryFieldValue}
-                onChange={repositorySelect.readOnly ? () => {} : repositorySelect.onChange}
+                onChange={disableRepositorySelect ? () => {} : (onRepositoryChange ?? (() => {}))}
                 includeNoneOption
-                readOnly={repositorySelect.readOnly}
+                readOnly={disableRepositorySelect}
               />
             )}
             <Field

@@ -50,10 +50,6 @@ export const PlaylistEditPage = () => {
     locationService.push('/playlists');
   };
 
-  // The repository can't be changed after creation, so the selector is read-only on edit. The form
-  // derives the displayed value (managing repository, or "no repository") from the playlist itself.
-  const repositorySelect = isAvailable && data ? { repositories, readOnly: true as const } : undefined;
-
   const pageNav: NavModelItem = {
     text: t('playlist-edit.title', 'Edit playlist'),
     subTitle: t(
@@ -81,7 +77,17 @@ export const PlaylistEditPage = () => {
             {JSON.stringify(error)}
           </div>
         )}
-        {data && <PlaylistForm onSubmit={onSubmit} playlist={data} repositorySelect={repositorySelect} />}
+        {data && (
+          // The repository can't be changed after creation, so the selector is locked on edit; the
+          // form derives the displayed value (managing repository, or "no repository") from the playlist.
+          <PlaylistForm
+            onSubmit={onSubmit}
+            playlist={data}
+            showRepositorySelect={isAvailable}
+            repositories={repositories}
+            disableRepositorySelect
+          />
+        )}
       </Page.Contents>
       {provisionedPlaylist && (
         <SaveProvisionedPlaylistDrawer
